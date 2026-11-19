@@ -1023,9 +1023,10 @@ decides it (`share.rs`) — so a computer whose svrngs runs from login needs
 no terminal: `svrngs join` joins through the svrngs running there, asked
 as `room` and `leave` ask it, and so does `svrngs link`, `--relay` and
 `--device` included, at `/v1/links`, the page's own `link` behind the
-token, so a keeper changes where a group meets with one command. `svrngs
-new`, and `link --origin`, whose page the command checks itself, are the
-page's alone while it runs.
+token, so a keeper changes where a group meets with one command; and so
+does `svrngs new`, at `/v1/new`, `--relay` and `--origin` included, the
+page checked by the command before it asks. `link --origin`, whose route
+takes no page, is the page's alone while it runs.
 A group's folder goes where a joiner's does (`Folders::place`, one home for
 `new`, `join` and the page); a place another group's folder holds already,
 by its name or, on a disk that ignores case, a name differing only in case,

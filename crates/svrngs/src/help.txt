@@ -16,7 +16,9 @@ an app's page svrngs won't load, and what to change.
   svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]...
       Make a group called <name> and print its link: send it to the people
       you want in it. It works for a day, while this computer is on. The
-      group's folder is put at ~/svrngs/<name>.
+      group's folder is put at ~/svrngs/<name>. Where svrngs runs here
+      already, as on a computer it runs at login, that svrngs makes the
+      group and this command leaves, running nothing.
       --as is the name the group knows you by; else your full name as this
       computer shows it, or its user name.
       --origin also prints its links on a page address, from now on, for

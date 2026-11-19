@@ -292,3 +292,101 @@ async fn the_bare_command_prints_where_apps_reach_the_record() {
     let body: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert_eq!(body["kind"], "not_held");
 }
+
+/// **`svrngs new` while svrngs runs asks it to make the group**
+/// (new-while-running): the installer runs svrngs at every login, and
+/// `new` refused every installed person "svrngs is already running on
+/// this computer (… is held); stop it, then run this again" (cli.rs
+/// `Refusal::Busy`), though `svrngs help` and the guide teach it. Sam's
+/// svrngs holds the data dir's lock and serves its record; `svrngs new
+/// house --as Sam --relay <url>`, asked through `cli::Here` of its routes,
+/// says "Made house, with you as Sam.", a link that dials Sam's computer
+/// and carries the relay, and house's folder where Sam's svrngs places
+/// folders; it starts nothing (never "Leave this running"). The running
+/// svrngs holds house, met at that relay, with the one `Invite` the link
+/// names; a second `new house` says the first is there already; a page
+/// asked with `--origin` is kept; the branch is traced. Watched failing on the code before it: the lock's
+/// refusal, "svrngs is already running on this computer".
+#[tokio::test]
+async fn new_asks_the_svrngs_running_here_to_make_the_group() {
+    let (heard, _heard) = crate::node_common::heard("cli=debug,group=debug");
+    let wire = Wire::default();
+    let sam = computer(&wire, 1).await;
+    let _held = cli::claim(sam.dir.path()).expect("Sam's svrngs holds the data dir");
+    let relay = "http://10.0.0.1:3340/";
+    let new = |args: &str| {
+        let argv = format!("svrngs new {args}");
+        cli::parse(argv.split_whitespace().map(str::to_string)).unwrap()
+    };
+    let asked = new(&format!("house --as Sam --relay {relay}"));
+    let said = cli::answer(asked, &crate::Running(&sam), &no_relay()).await;
+    let said = said.expect("new, asked of the svrngs running here");
+    eprintln!("svrngs new house, svrngs running: {said}");
+    assert!(said.contains("Made house, with you as Sam."), "{said}");
+    assert!(
+        said.contains("Send this link to the people you want in it."),
+        "{said}"
+    );
+    assert!(!said.contains("already running"), "not refused: {said}");
+    assert!(!said.contains("Leave this running"), "runs nothing: {said}");
+    let line = said
+        .lines()
+        .find(|l| l.contains(CLIENT_PREFIX))
+        .expect(&said);
+    let link = Link::parse(line.trim()).expect("the link printed is whole");
+    assert_eq!(
+        issuer::key(&link.token),
+        sam.node.net().id(),
+        "it dials Sam"
+    );
+    assert!(
+        link.token.relays.iter().any(|r| r.to_string() == relay),
+        "the link carries the relay asked: {:?}",
+        link.token.relays
+    );
+    let places = sam.dir.path().join("svrngs").display().to_string();
+    assert!(
+        said.lines()
+            .any(|l| l.starts_with("house's folder is") && l.contains(&places)),
+        "{said}"
+    );
+    let held = group::groups(sam.dir.path());
+    let [house] = held.as_slice() else {
+        panic!("one group held: {held:?}")
+    };
+    let register = sam.node.rail().register(&house.id()).unwrap();
+    let meets: Vec<String> = (register.meets.unwrap_or_default().iter())
+        .map(ToString::to_string)
+        .collect();
+    assert_eq!(meets, [relay], "house meets at the relay asked");
+    let invites = invites(&sam.node, &house.id());
+    assert_eq!(invites.len(), 1, "{invites:?}");
+    assert_eq!(invites[0].0, actor_of(&link.token.key()), "{invites:?}");
+
+    let again = cli::answer(new("house --as Sam"), &crate::Running(&sam), &no_relay()).await;
+    let again = again.expect("a second house, asked of the svrngs running here");
+    assert!(
+        again.contains("You’re already in house (yours")
+            && again.contains("This is a second group called house."),
+        "{again}"
+    );
+    assert_eq!(group::groups(sam.dir.path()).len(), 2);
+
+    // `--origin`: the command checks the page (`checked_page`, a listener,
+    // new.rs's), then asks with it, and the svrngs running keeps it.
+    let page = "https://x.example/ours/";
+    let asked = serde_json::json!({ "name": "trip", "person": "Sam", "origin": page });
+    let (status, made) = ask(&sam.node, "POST", group::NEW_ROUTE, &asked).await;
+    assert!(status.is_success(), "{made}");
+    let made: group::NewMade = serde_json::from_str(&made).unwrap();
+    let https = made.https.unwrap_or_default();
+    assert!(https.starts_with(&format!("{page}#")), "{https}");
+
+    let heard = String::from_utf8(heard.0.lock().unwrap().clone()).unwrap();
+    for trace in [
+        "cli: new — svrngs runs here already, so it is asked to make the group",
+        "group: made for the command's `new` by the svrngs running here",
+    ] {
+        assert!(heard.contains(trace), "{trace}: {heard}");
+    }
+}

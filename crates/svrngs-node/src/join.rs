@@ -6,7 +6,8 @@
 //! command keeps what is its own: the wait for a relay, and its words.
 //! A computer whose svrngs runs from login joins through it too: the
 //! command asks the running one at [`JOINS_ROUTE`] (join-while-running),
-//! as it asks `room` and `leave`.
+//! as it asks `room` and `leave`; and makes a group through it, at
+//! [`group::NEW_ROUTE`].
 
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -274,7 +275,18 @@ pub(crate) fn router(asking: Asking) -> Router {
     Router::new()
         .route(JOINS_ROUTE, post(joined_here))
         .route(crate::home::LINKS_ROUTE, post(crate::home::link))
+        .route(group::NEW_ROUTE, post(made_here))
         .with_state(asking)
+}
+
+/// `POST /v1/new`: a group made by the svrngs running here for the
+/// command's `new` ([`Asking::made`]), or why not, refused as the record
+/// refuses.
+async fn made_here(State(at): State<Asking>, Json(asked): Json<group::NewAsk>) -> Response {
+    match at.made(asked).await {
+        Ok(made) => Json(made).into_response(),
+        Err(why) => not_taken(StatusCode::CONFLICT, "not_made", why),
+    }
 }
 
 /// An ask the record cannot take, in the record's one refusal shape.

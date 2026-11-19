@@ -175,8 +175,10 @@ fn an_opener_that_stays_does_not_hold_svrngs_open() {
 /// **A second bare command reminds where the home page is, and starts,
 /// opens and rewrites nothing**: while svrngs runs here, a bare `svrngs`
 /// says the home page's address from the one the first wrote, with how to
-/// open it; any other verb is refused, "stop it"; an address it cannot
-/// read is refused, never a reminder invented. svrngs running here is what
+/// open it; `new` asks it (cli.rs `new_running`), and with nothing
+/// answering at the address it wrote is told svrngs is not running, never
+/// "stop it"; an address it cannot read is refused, never a reminder
+/// invented. svrngs running here is what
 /// a second command reads of it: its data dir's lock held (cli::claim),
 /// and its address and token written as the node writes them (api.rs
 /// `write_address`, `TOKEN_FILE`), so no node runs and nothing is dialled.
@@ -242,8 +244,17 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
     );
     assert_eq!(std::fs::read(&api).unwrap(), saved);
     let other = invoke(&["new", "Lab", "--as", "Sam"]);
-    assert_eq!(other.status.code(), Some(1));
-    assert!(String::from_utf8_lossy(&other.stderr).contains("stop it"));
+    let refused = String::from_utf8_lossy(&other.stderr);
+    assert_eq!(other.status.code(), Some(3), "{refused}");
+    assert!(
+        refused.contains("svrngs is not running on this computer"),
+        "{refused}"
+    );
+    assert!(!refused.contains("stop it"), "{refused}");
+    assert!(
+        refused.contains("cli: new — svrngs runs here already, so it is asked"),
+        "{refused}"
+    );
     for broken in [None, Some("not an address")] {
         std::fs::remove_file(&api).unwrap();
         if let Some(text) = broken {

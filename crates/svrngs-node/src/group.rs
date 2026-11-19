@@ -370,6 +370,75 @@ impl crate::node::Asking {
         tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made for the home page");
         Ok((self.door.folders.place(&seed), seed, beside))
     }
+
+    /// A group made where svrngs runs, for the command's `new`, as the
+    /// command makes one where none runs (svrngs's cli.rs `new_group`):
+    /// founded by this computer's key as the person asked, beside the
+    /// groups called so already; met at the relays asked, else where this
+    /// computer is met once it has reached one; kept with its first link
+    /// minted before any other ([`crate::node::Host::keep_linked`]), on
+    /// the page asked, which the command checked; its folder placed as a
+    /// joiner's is.
+    pub(crate) async fn made(&self, asked: NewAsk) -> Result<NewMade, String> {
+        let parse = |n: &str| Name::parse(n).map_err(|e| e.to_string());
+        let (name, person) = (parse(&asked.name)?, parse(&asked.person)?);
+        let page = (asked.origin.as_deref())
+            .map(|o| Origin::parse(o).ok_or("not an http(s) address without a '#'"))
+            .transpose()?;
+        let host = &self.host;
+        let beside = namesakes(host.rail.root(), &name, &host.actor);
+        let seed = draw(name, person, host.rail.signer().verifying_key());
+        let mut own: Vec<Url> = asked.relays.into_iter().map(Into::into).collect();
+        host.meet_at(&own).await;
+        let online = host.online().await;
+        if own.is_empty() {
+            own = host.made_at();
+        }
+        tracing::debug!(target: "group", group = %seed.id(), online, ?own, page = ?page.as_ref().map(Origin::as_str), "group: made for the command's `new` by the svrngs running here, met at the relays asked, else where this computer is met");
+        let linked = (host.keep_linked(&seed, page.as_ref(), &own)?).map_err(|e| e.to_string())?;
+        let (dir, placed) = self.door.folders.place(&seed);
+        let https = (linked.page.as_ref()).map(|p| svrngs_core::link::https_link(p, &linked.token));
+        Ok(NewMade {
+            seed: seed.to_text(),
+            client: svrngs_core::link::client_link(&linked.token),
+            https,
+            beside,
+            dir: dir.display().to_string(),
+            placed: placed.err(),
+        })
+    }
+}
+
+/// Where the command asks `new` of the svrngs running here, as it asks a
+/// join ([`crate::join::JOINS_ROUTE`]): [`crate::node::Asking::made`],
+/// behind the record's checks.
+pub const NEW_ROUTE: &str = "/v1/new";
+
+/// What `svrngs new` asks of the svrngs running here: the group's name,
+/// the person who makes it, the page its https links print on, which the
+/// command checked as it checks one itself, and the relays it meets at.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NewAsk {
+    pub name: String,
+    pub person: String,
+    #[serde(default)]
+    pub origin: Option<String>,
+    #[serde(default)]
+    pub relays: Vec<RelayUrl>,
+}
+
+/// A group the svrngs running here made for `new`, for the command to say
+/// in its own words: its seed as `seed.json` holds it, its first link, the
+/// groups called so already, and where its folder was placed or why not.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct NewMade {
+    pub seed: String,
+    pub client: String,
+    pub https: Option<String>,
+    pub beside: Vec<Namesake>,
+    pub dir: String,
+    pub placed: Option<String>,
 }
 
 /// A group made, after where its folder is and whether it was placed, and
@@ -381,7 +450,7 @@ type Made = ((PathBuf, Result<(), String>), Seed, Vec<Namesake>);
 /// when this computer's key did — and since when this computer has held
 /// it: the time its seed was written, once, by `new` or `join`
 /// ([`crate::node::Host::keep_group`]); `None` when that cannot be read.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Namesake {
     pub name: String,
     pub maker: Option<String>,

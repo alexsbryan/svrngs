@@ -714,7 +714,9 @@ it is for and redeems it there (`svrngs_node::redeem`), writes the group's
 seed only once let in, and the origin only of an https link, syncs once from the issuer (`Host::sync_with`) and prints "You're in
 <group>", or, where the data dir's lock is held, asks the svrngs running
 there to join at `/v1/joins` (`svrngs_node::join`) and leaves, as `room`
-asks; each verb then runs the node until Ctrl-C, serving the record
+asks, and `new` asks it to make the group at `/v1/new`
+(`svrngs_node::group::NEW_ROUTE`), its `--origin` checked by the command
+first; each verb then runs the node until Ctrl-C, serving the record
 on `127.0.0.1` at a free port (`cli::API`), which the bare command prints,
 with what the people of its groups lend (`Node::lends`): "Sam's <name>"
 and an address on this computer. `share.rs` is `svrn publish`'s

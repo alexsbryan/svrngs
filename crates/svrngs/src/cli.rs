@@ -69,7 +69,10 @@
 //! One that answers no join — a build from before the route — is told as
 //! the lock's own refusal is, for stopping it is the way on from there.
 //! `link`, with no `--origin`, asks it too, so a keeper changes where a
-//! group meets with one command ([`svrngs_node::home::LINKS_ROUTE`]).
+//! group meets with one command ([`svrngs_node::home::LINKS_ROUTE`]); and
+//! `new` asks it to make the group ([`svrngs_node::group::NEW_ROUTE`]),
+//! since the installer keeps svrngs running from login, its `--origin`
+//! checked here first, as when `new` starts svrngs.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -879,6 +882,10 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             (Err(Refusal::Busy(lock)), link @ Verb::Link { origin: None, .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: link — svrngs runs here already, so it is asked, as `join` is");
                 link_running(here, link).await?.to_string()
+            }
+            (Err(Refusal::Busy(lock)), new @ Verb::New { .. }) => {
+                tracing::debug!(target: "cli", lock = %lock.display(), "cli: new — svrngs runs here already, so it is asked to make the group, as `join` is");
+                new_running(here, new).await?
             }
             (claimed, other) => return start(other, root, relay, claimed?, None).await,
         },
@@ -2033,6 +2040,58 @@ pub async fn link_to(
     let made = node.host().link(&seed.id(), device, page, None);
     let made = made.map_err(|e| unminted(&seed, e))?;
     Ok((seed, Printed::of(&made), made.device))
+}
+
+/// `svrngs new`, of the svrngs running here, the one writer of this
+/// computer's acts ([`group::NEW_ROUTE`]): its page checked here first,
+/// as a `new` that starts svrngs checks it ([`checked_page`]), and said as
+/// that one says it, less "Leave this running", for nothing runs. One that
+/// answers no group is an older build, said as [`link_running`] says it;
+/// its refusal, why traced, is that the group can't be kept.
+async fn new_running(here: &impl Here, new: Verb) -> Result<String, Refusal> {
+    let Verb::New {
+        name,
+        person,
+        origin,
+        relays,
+    } = new
+    else {
+        unreachable!("asked only of a new")
+    };
+    let person = person
+        .or_else(user_name)
+        .ok_or_else(|| Refusal::NoName(name.clone()))?;
+    let page = checked_page(origin).await?;
+    let asked = group::NewAsk {
+        name: name.as_str().into(),
+        person: person.as_str().into(),
+        origin: page.map(|p| p.as_str().into()),
+        relays,
+    };
+    let (ok, text) = here.ask(group::NEW_ROUTE, &asked).await?;
+    let made = serde_json::from_str::<group::NewMade>(&text).ok();
+    let Some(made) = made.filter(|_| ok) else {
+        let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
+        let why = told["error"].as_str().ok_or(Refusal::Older)?;
+        tracing::debug!(target: "cli", why, "cli: refused — the svrngs running here made no group");
+        return Err(Refusal::Keep(name.to_string()));
+    };
+    let seed = Seed::from_text(&made.seed).map_err(|_| Refusal::Older)?;
+    let page = (made.https.as_deref())
+        .and_then(Link::parse)
+        .and_then(|l| l.origin);
+    let link = Printed {
+        client: made.client,
+        https: made.https,
+        page,
+    };
+    let folder = Said::Folder {
+        group: seed.name().clone(),
+        dir: made.dir.into(),
+        placed: made.placed.map_or(Ok(()), Err),
+    };
+    let beside = made.beside;
+    Ok(format!("{}\n{folder}", Said::Made { seed, link, beside }))
 }
 
 /// `svrngs link`, of the svrngs running here, the one writer of this
