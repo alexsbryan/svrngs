@@ -28,8 +28,9 @@ pub enum Alpn {
     Port,
     /// A page's WebRTC offer, answered on the group's existing dial
     /// (webrtc-node; RELAY_COMMONS design 4): the one route that answers
-    /// with this computer's SDP answer, served to a dialer standing in a
-    /// group held there.
+    /// with this computer's SDP answer, served to a dialer holding a pass
+    /// for a lend this computer lends, as the door's own routes are
+    /// (webrtc-page).
     WebRtc,
 }
 

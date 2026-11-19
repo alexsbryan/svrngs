@@ -572,6 +572,9 @@ impl Node {
             .merge(people_router(asking.clone()))
             .merge(crate::folder::members_router(folders));
         let redeem = crate::redeem::router(asking.clone());
+        // The offer's route asks the door for a pass (webrtc-page), so its
+        // router is built once, with the door, and served to any dialer.
+        let webrtc = crate::webrtc::router(webrtc, asking.door.clone());
         // A dialer the keeper cut, on the members' protocol, is told so in
         // words on every route (U7), and served nothing else but the lines
         // that cut it, where it asks to sync (#179; ring_routes.rs `told_cut`).
@@ -583,7 +586,7 @@ impl Node {
                 Some(Alpn::Lend) => Admit::Serve(holders.clone()),
                 Some(Alpn::Blobs) => Admit::Blobs(blobs.0.clone(), blobs.1.clone()),
                 Some(Alpn::Port) => Admit::Port(Box::new(udp.clone())),
-                Some(Alpn::WebRtc) => Admit::Serve(crate::webrtc::router(webrtc.clone())),
+                Some(Alpn::WebRtc) => Admit::Serve(webrtc.clone()),
                 None if Alpn::of(alpn) == Some(Alpn::Member)
                     && rail.removed_anywhere(&key_actor(dialer)).is_some() =>
                 {
@@ -1238,20 +1241,20 @@ impl Asking {
 /// the rest (PLAN §4, U1's inventory, "the mesh" row — upstream asked the
 /// mesh, `acceptor.rs:47-61`). Asked once per connection, so a member
 /// admitted or removed since the last dial is answered as it stands now.
-/// The WebRTC protocol is a member's too: the offer names the data
-/// endpoint, and the page that makes it dials as its group already does
-/// (webrtc-node; RELAY_COMMONS design 4).
+/// The WebRTC protocol is a lend's too (webrtc-page): the offer names the
+/// data endpoint, and the phone that makes it holds a live pass for the
+/// lend it plays, which the route asks the door for (RELAY_COMMONS design 4).
 fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {
     let actor = key_actor(dialer);
     match Alpn::of(alpn) {
-        Some(Alpn::Member) | Some(Alpn::Blobs) | Some(Alpn::Port) | Some(Alpn::WebRtc) => {}
+        Some(Alpn::Member) | Some(Alpn::Blobs) | Some(Alpn::Port) => {}
         Some(Alpn::Redeem) => {
             tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
             return Some(Alpn::Redeem);
         }
-        Some(Alpn::Lend) => {
-            tracing::debug!(target: "node", actor, "node: admitted to present a pass for a lend — any dialer may, and the door asks the pass");
-            return Some(Alpn::Lend);
+        Some(Alpn::Lend) | Some(Alpn::WebRtc) => {
+            tracing::debug!(target: "node", actor, alpn = %String::from_utf8_lossy(alpn), "node: admitted to present a pass — any dialer may, and the route asks it");
+            return Alpn::of(alpn);
         }
         None => {
             tracing::debug!(target: "node", actor, alpn = %String::from_utf8_lossy(alpn), "node: refused — a protocol this node does not speak");

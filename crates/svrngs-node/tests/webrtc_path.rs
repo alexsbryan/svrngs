@@ -96,12 +96,14 @@ async fn bind(secret: SecretKey, url: &str, wire: Option<Arc<wire::Wire>>) -> ir
 }
 
 /// The offer POSTed on the WebRTC protocol to the node at `url`, its
-/// answer's JSON body read: what the group page's endpoint does.
+/// answer's JSON body read: what the phone's endpoint does, with the pass
+/// `pass` it presents (none, where the plant asks without one).
 async fn posted(
     signal: &iroh::Endpoint,
     node: iroh::EndpointId,
     url: &str,
     body: &serde_json::Value,
+    pass: Option<&str>,
 ) -> String {
     let at = EndpointAddr::from_parts(node, [TransportAddr::Relay(url.parse().unwrap())]);
     let conn = signal
@@ -110,8 +112,11 @@ async fn posted(
         .unwrap();
     let (mut send, mut recv) = conn.open_bi().await.unwrap();
     let body = serde_json::to_vec(body).unwrap();
+    let held = pass.map_or(String::new(), |pass| {
+        format!("{}: {pass}\r\n", svrngs_node::door::PASS_HEADER)
+    });
     let head = format!(
-        "POST {} HTTP/1.1\r\nHost: svrngs\r\ncontent-type: application/json\r\ncontent-length: {}\r\nConnection: close\r\n\r\n",
+        "POST {} HTTP/1.1\r\nHost: svrngs\r\ncontent-type: application/json\r\ncontent-length: {}\r\n{held}Connection: close\r\n\r\n",
         svrngs_node::webrtc::OFFER_ROUTE,
         body.len()
     );
@@ -265,7 +270,7 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
     ));
     let relay = Server::spawn(config).await.expect("a relay on 127.0.0.1");
     let url = format!("http://{}/", relay.http_addr().unwrap());
-    let (_dir, node, group) = node_at(&url).await;
+    let (dir, node, group) = node_at(&url).await;
     let by = Instant::now() + Duration::from_secs(15);
     while node
         .net()
@@ -283,6 +288,34 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
     let worker = SigningKey::from_bytes(&[10; 32]);
     let_in(&node, &group, &page, "page");
     let_in(&node, &group, &worker, "worker");
+    // A lend the phone plays, and the pass the page signs for it: an offer
+    // is answered only to a dialer holding one (webrtc-page).
+    let lend = svrngs_node::lend::Lend {
+        name: svrngs_node::lend::LendName::parse("page").unwrap(),
+        source: svrngs_node::lend::Source::Port(std::num::NonZeroU16::new(8096).unwrap()),
+        kind: svrngs_node::lend::Program::parse("page").unwrap(),
+        audience: svrngs_node::lend::Audience::Selected(vec![group.clone()]),
+        limit: std::num::NonZeroU16::new(4),
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in_with_svrngs: None,
+        asks: None,
+        sends: Vec::new(),
+    };
+    svrngs_node::lend::declare(dir.path(), &lend, None).unwrap();
+    let until = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 600;
+    let pass = svrngs_core::pass::Pass::sign(
+        &page,
+        &svrngs_node::actor_of(&page),
+        (lend.label(node.endpoint().id().as_bytes()), Vec::new()),
+        until,
+    )
+    .encode();
 
     // The page's two endpoints: the signalling one, and the fresh data one
     // whose wire carries the app's bytes.
@@ -310,7 +343,21 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
     change.add_channel("the app's bytes".into());
     let (offer, pending) = change.apply().expect("an offer");
     let asked_offer = serde_json::json!({ "key": data.id().to_string(), "offer": offer });
-    let answered = posted(&signal, node.endpoint().id(), &url, &asked_offer).await;
+    // Planted, watched red: the offer with no pass, refused; then the pass
+    // its holder holds, answered (webrtc-page; the offer's one gate).
+    let bare = posted(&signal, node.endpoint().id(), &url, &asked_offer, None).await;
+    assert!(
+        bare.contains("open this again from your group"),
+        "an offer with no pass must be refused: {bare}"
+    );
+    let answered = posted(
+        &signal,
+        node.endpoint().id(),
+        &url,
+        &asked_offer,
+        Some(&pass),
+    )
+    .await;
     let answer: SdpAnswer = serde_json::from_str(&answered).expect("an answer");
     rtc.sdp_api().accept_answer(pending, answer).unwrap();
     let close = Arc::new(AtomicBool::new(false));

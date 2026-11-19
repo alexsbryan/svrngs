@@ -46,7 +46,7 @@ use std::time::{Duration, Instant};
 use axum::extract::State;
 use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum::Json;
+use axum::{Extension, Json};
 use iroh::EndpointId;
 use str0m::change::SdpOffer;
 use str0m::net::{Protocol, Receive};
@@ -233,11 +233,13 @@ async fn routed(mut told: UnboundedReceiver<Route>) {
 }
 
 /// The WebRTC protocol's router: one offer answered per request, for a
-/// dialer the acceptor admitted.
-pub fn router(webrtc: Arc<WebRtc>) -> axum::Router {
+/// dialer holding a live pass for a lend this computer lends (webrtc-page):
+/// the phone that plays a film asks for the path, and no one else
+/// ([`crate::door::holder_of_offer`], the door's own check).
+pub fn router(webrtc: Arc<WebRtc>, door: crate::door::Door) -> axum::Router {
     axum::Router::new()
         .route(OFFER_ROUTE, axum::routing::post(offer))
-        .with_state(webrtc)
+        .with_state((webrtc, door))
 }
 
 /// What an offer names: the data endpoint whose datagrams the channel
@@ -248,7 +250,18 @@ struct Offered {
     offer: serde_json::Value,
 }
 
-async fn offer(State(webrtc): State<Arc<WebRtc>>, Json(asked): Json<Offered>) -> Response {
+async fn offer(
+    State((webrtc, door)): State<(Arc<WebRtc>, crate::door::Door)>,
+    dialer: Option<Extension<crate::iroh::Dialer>>,
+    headers: axum::http::HeaderMap,
+    Json(asked): Json<Offered>,
+) -> Response {
+    let Some(Extension(dialer)) = dialer else {
+        return refused("no verified dialer, so the offer did not come on an iroh stream".into());
+    };
+    if let Err(refusal) = crate::door::holder_of_offer(&door, &dialer, &headers).await {
+        return refusal;
+    }
     let Some(data) = asked.key.parse::<EndpointId>().ok().map(|k| *k.as_bytes()) else {
         return refused("the offer names no data key".into());
     };

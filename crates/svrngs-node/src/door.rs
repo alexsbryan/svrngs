@@ -1346,6 +1346,36 @@ async fn holder_of(
     })
 }
 
+/// The pass a WebRTC offer presents (webrtc-page; RELAY_COMMONS design 4):
+/// the dialer holds a live pass for a lend this computer lends, its signer
+/// standing in a group that lend reaches — a currently authorized phone, and
+/// no one else, as the offer's socket is opened for one. The check is the
+/// door's own ([`holder_of`], the one home for "a pass opens this lend to
+/// that key"); `Err` is the refusal the offer is answered with.
+pub(crate) async fn holder_of_offer(
+    door: &Door,
+    dialer: &Dialer,
+    headers: &HeaderMap,
+) -> Result<(), Response> {
+    let refused = |why: &str| {
+        tracing::debug!(target: "door", dialer = dialer.actor(), why, "door: an offer refused — no pass opens a lend here");
+        LendRefusal::Pass.say(
+            StatusCode::FORBIDDEN,
+            "open this again from your group’s page, then ask for the direct path".to_string(),
+        )
+    };
+    let pass = headers
+        .get(PASS_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .and_then(Pass::decode)
+        .ok_or_else(|| refused("no pass, or none that reads"))?;
+    let lend = find(door, &pass.app.to_string())
+        .ok()
+        .flatten()
+        .ok_or_else(|| refused("the pass names no lend this computer lends"))?;
+    holder_of(door, dialer, headers, &lend).await.map(|_| ())
+}
+
 /// The guest whose visit's key `key` signed a pass (guests-door; GUESTS §3.4-§3.6,
 /// §5 "The door"): let in as themselves, their host's guest, only while the
 /// fold says the visit is live ([`svrngs_core::Guest::live`]) and it names
