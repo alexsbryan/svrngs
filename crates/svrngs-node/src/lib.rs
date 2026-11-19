@@ -84,8 +84,8 @@ mod session;
 // Where this computer is, and on which network: the router's hardware
 // address, this computer's address there, a caller's (the room; the door).
 pub mod network;
-// Whose a socket on this computer is: the uid the kernel's table records
-// (svrn-docs rings/current/LEND_OWNER.md §2).
+// Whose a socket on this computer is: the account holding it (svrn-docs
+// rings/current/LEND_OWNER.md §2).
 pub mod uid;
 // The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
 // turns on, served by the running node on the network each was turned on at.

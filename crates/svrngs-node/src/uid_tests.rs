@@ -11,6 +11,13 @@ fn conn(local: &str, peer: &str) -> Conn {
     }
 }
 
+/// The one uid among `rows` holding the socket at `side` of `c`, as the
+/// Linux reader answers it.
+fn answer(rows: &[(Ends, u32)], raw: Raw, c: Conn, side: Side) -> Owner {
+    let (at, to) = ends(c, side);
+    one(rows.iter().filter(|r| holds(raw, r.0, at, to)).map(|r| r.1))
+}
+
 /// `/proc/net/tcp` on a computer where uid 1000 dialled root's
 /// 127.0.0.1:631 from 127.0.0.1:53696, its rows for that connection as read
 /// (`python3`, 2026-11-18): the accepted socket's row is root's, the
@@ -41,7 +48,7 @@ const UDP: &str = "   sl  local_address rem_address   st tx_queue rx_queue tr tm
 /// far end is root's and its own end 1000's; the accepted socket of a
 /// dual-stack listener, listed in `tcp6` as an IPv4 address written as IPv6,
 /// is found; a datagram to 127.0.0.53:53 reaches resolved's socket alone.
-/// Planted, each watched failing: the two ends swapped in `answer` (the far
+/// Planted, each watched failing: the two ends swapped in `ends` (the far
 /// end read 1000); the IPv6 form of an IPv4 address compared as written
 /// (the `tcp6` row missed, could not judge).
 #[test]
@@ -99,71 +106,57 @@ fn what_the_uid_column_can_t_settle_is_never_an_answer() {
     assert!(proc_net::rows(&format!("{TCP}  33: not a row\n")).is_err());
 }
 
-/// The table `net.inet.tcp.pcblist_n` answered on a computer where
-/// uid 502 dialled root's 127.0.0.1:49153 from 127.0.0.1:58408 (2026-11-18,
-/// `python3` with ctypes): its header, the two sockets' records, each
-/// socket's six, and its trailer, kernel pointers zeroed.
-fn captured() -> Vec<u8> {
-    hex::decode(include_str!("fixtures/pcblist_n.tcp.hex").trim()).unwrap()
+/// The `socket_fdinfo` `PROC_PIDFDSOCKETINFO` answered for a TCP socket that
+/// had dialled 127.0.0.1:61125 from 127.0.0.1:61126, and for a UDP socket on
+/// 127.0.0.1:63655 (2026-11-18, a C program), kernel pointers zeroed.
+fn record(protocol: &str) -> Vec<u8> {
+    let hex = match protocol {
+        "tcp" => include_str!("fixtures/socket_fdinfo.tcp.hex"),
+        _ => include_str!("fixtures/socket_fdinfo.udp.hex"),
+    };
+    hex::decode(hex.trim()).unwrap()
 }
 
-/// **A captured `pcblist_n` answers whose each end is** (LEND_OWNER §5, 2):
-/// the accepted socket root's, the dialler's 502's. Planted: `so_uid` read
-/// at 68, `so_last_pid` (1077, root's listener's pid, not 0).
+/// **libproc's records are read where they hold it** (LEND_OWNER §5, 2): a
+/// captured TCP socket's local and foreign address; a UDP socket's, bound
+/// and connected to none; a socket of neither, none; the `proc_bsdinfo` a
+/// process read of itself, uid 502, and a record of another length, none.
+/// Planted, each watched failing: the local and foreign addresses' offsets
+/// swapped (the ends read backwards); the uid read at 24, `pbi_gid` (20).
 #[test]
-fn a_captured_pcblist_answers_whose_each_end_is() {
-    let rows = pcblist::rows(&captured()).unwrap();
-    let dialled = conn("127.0.0.1:58408", "127.0.0.1:49153");
-    assert_eq!(answer(&rows, Raw::Tcp, dialled, Side::Peer), Owner::Uid(0));
+fn libproc_s_records_are_read_where_they_hold_it() {
+    let tcp = record::socket(&record("tcp"));
+    let dialled = (at("127.0.0.1:61126"), at("127.0.0.1:61125"));
+    assert_eq!(tcp, Some((Raw::Tcp, dialled)));
+    let udp = record::socket(&record("udp"));
     assert_eq!(
-        answer(&rows, Raw::Tcp, dialled, Side::Local),
-        Owner::Uid(502)
+        udp,
+        Some((Raw::Udp, (at("127.0.0.1:63655"), at("0.0.0.0:0"))))
     );
+    let mut unix = record("tcp");
+    unix[256..260].copy_from_slice(&0u32.to_ne_bytes());
+    assert_eq!(record::socket(&unix), None);
+    let bsd = hex::decode(include_str!("fixtures/proc_bsdinfo.hex").trim()).unwrap();
+    assert_eq!(record::uid(&bsd), Some(502));
+    assert_eq!(record::uid(&bsd[..128]), None);
 }
 
-/// **A `pcblist_n` laid out otherwise is refused, never read**: a socket's
-/// record of a length this reader wasn't built for; a table cut off inside
-/// a record; a hand-made one whose addresses' record is too short for them;
-/// and a socket's record with no addresses before it. Planted: the length
-/// unchecked (the longer record read as before, an answer).
-#[test]
-fn a_pcblist_laid_out_otherwise_is_refused() {
-    let table = captured();
-    let mut longer = table.clone();
-    // The first socket's `xsocket_n`, after the header (24) and its
-    // `xinpcb_n` (104): its length, 104, said 112.
-    assert_eq!(pcblist::word(&longer, 128), Some(104));
-    longer[128..132].copy_from_slice(&112u32.to_ne_bytes());
-    assert!(pcblist::rows(&longer).is_err());
-    assert!(pcblist::rows(&table[..400]).is_err());
-    let mut made = 24u32.to_ne_bytes().to_vec();
-    made.extend([0; 20]);
-    made.extend(
-        40u32
-            .to_ne_bytes()
-            .iter()
-            .chain(&pcblist::XSO_INPCB.to_ne_bytes()),
-    );
-    made.extend([0; 32]);
-    made.extend(24u32.to_ne_bytes().iter().chain(&[0; 20]));
-    assert!(pcblist::rows(&made).is_err());
-    let mut socket_first = table[..24].to_vec();
-    socket_first.extend(&table[128..232]);
-    socket_first.extend(&table[table.len() - 24..]);
-    assert!(pcblist::rows(&socket_first).is_err());
-}
-
-/// **This computer's own table answers for a connection and a flow made
-/// here**: a listener and the socket that dialled it, each end ours, the
-/// uid that owns the folder this test made; a UDP socket and one connected
-/// to it, ours. Read from `/proc/net` or `pcblist_n` as this computer has
-/// it, so it passes on both only with both readers right.
+/// **This computer answers for a connection and a flow made here**: a
+/// listener and the socket that dialled it, each end ours, the uid that
+/// owns the folder this test made, which [`mine`] says too; a UDP socket and
+/// one connected to it, ours. On a Mac also: a connection its listener
+/// accepts 30 ms late, in no process's files until then, found within
+/// [`ACCEPT_WITHIN`]; one never accepted is not this account's; a port of no
+/// socket of ours is not. Read as this computer reads them, so it passes on
+/// each only with its reader right. Planted on the Mac, watched failing:
+/// one scan, no look again (the late accept not this account's).
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[test]
-fn this_computer_s_own_table_answers_for_a_connection_made_here() {
+fn this_computer_answers_for_a_connection_made_here() {
     use std::os::unix::fs::MetadataExt as _;
     let dir = tempfile::tempdir().unwrap();
-    let ours = Owner::Uid(std::fs::metadata(dir.path()).unwrap().uid());
+    let uid = std::fs::metadata(dir.path()).unwrap().uid();
+    assert_eq!(mine(), Ok(uid));
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let dialled = std::net::TcpStream::connect(listener.local_addr().unwrap()).unwrap();
     let _accepted = listener.accept().unwrap();
@@ -171,14 +164,47 @@ fn this_computer_s_own_table_answers_for_a_connection_made_here() {
         local: dialled.local_addr().unwrap(),
         peer: dialled.peer_addr().unwrap(),
     };
-    assert_eq!(owner(Raw::Tcp, made, Side::Peer), ours);
-    assert_eq!(owner(Raw::Tcp, made, Side::Local), ours);
+    assert_eq!(owner(Raw::Tcp, made, Side::Peer), Owner::Uid(uid));
+    assert_eq!(owner(Raw::Tcp, made, Side::Local), Owner::Uid(uid));
     let service = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
     let flow = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
     flow.connect(service.local_addr().unwrap()).unwrap();
-    let made = Conn {
+    let sent = Conn {
         local: flow.local_addr().unwrap(),
         peer: service.local_addr().unwrap(),
     };
-    assert_eq!(owner(Raw::Udp, made, Side::Peer), ours);
+    assert_eq!(owner(Raw::Udp, sent, Side::Peer), Owner::Uid(uid));
+    #[cfg(target_os = "macos")]
+    {
+        let late = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(30));
+            listener.accept().map(|(kept, _)| (listener, kept))
+        });
+        let queued = std::net::TcpStream::connect(made.peer).unwrap();
+        let queued = Conn {
+            local: queued.local_addr().unwrap(),
+            peer: queued.peer_addr().unwrap(),
+        };
+        assert_eq!(
+            owner(Raw::Tcp, queued, Side::Peer),
+            Owner::Uid(uid),
+            "accepted late"
+        );
+        let (listener, _kept) = late.join().unwrap().unwrap();
+        let never = std::net::TcpStream::connect(listener.local_addr().unwrap()).unwrap();
+        let never = Conn {
+            local: never.local_addr().unwrap(),
+            peer: never.peer_addr().unwrap(),
+        };
+        assert_eq!(
+            owner(Raw::Tcp, never, Side::Peer),
+            Owner::NotMine,
+            "never accepted"
+        );
+        let nobody = Conn {
+            local: sent.local,
+            peer: at("127.0.0.1:1"),
+        };
+        assert_eq!(owner(Raw::Udp, nobody, Side::Peer), Owner::NotMine);
+    }
 }

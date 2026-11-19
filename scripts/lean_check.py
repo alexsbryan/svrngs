@@ -12,7 +12,7 @@
    One `unsafe`: every product crate root (crates/*/src/lib.rs and main.rs,
    web/src/lib.rs) denies `unsafe_code`, so the compiler refuses any other,
    and no source under crates/ or web/src/ exempts code from it but
-   `UNSAFE_HOME`'s one function, the socket table's read (DESIGN §5).
+   `UNSAFE_HOME`'s one function, libproc's read of sockets (DESIGN §5).
 4. Lines of code — not blank, not a comment, not a test — stay under the
    caps `BUDGET` holds below, their one home (#197), scripts included. The
    budget counts the product: apps/, installed packages (any
@@ -29,7 +29,7 @@ from pathlib import Path
 TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
 ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
-# The one file whose one function may allow `unsafe_code` (its `sysctl`).
+# The one file whose one function may allow `unsafe_code` (its `kernel`).
 UNSAFE_HOME = "crates/svrngs-node/src/uid.rs"
 # An exemption from the lint, however spelled: `allow`, `expect` or `warn`,
 # alone or among other lints, inner or outer, under a `cfg_attr` too.
@@ -925,7 +925,7 @@ def main():
             continue
         found = len(EXEMPT.findall(f.read_text(errors="replace")))
         if found > (rel == UNSAFE_HOME):
-            broken.append(f"{rel} exempts code from `unsafe_code`: svrngs's one `unsafe` is the socket table's read, {UNSAFE_HOME}'s `sysctl` (DESIGN §5); write this safe")
+            broken.append(f"{rel} exempts code from `unsafe_code`: svrngs's one `unsafe` is libproc's read of sockets, {UNSAFE_HOME}'s `kernel` (DESIGN §5); write this safe")
     print("Lines of code, tests and apps/ not counted, and the most each may have:")
     for rung, cap in BUDGET.items():
         n = code_lines(ROOT, RUNG_KINDS[rung]) if rung in RUNG_KINDS else code_lines(ROOT / rung)

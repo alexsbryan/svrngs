@@ -654,19 +654,21 @@ spellings.
 
 Whose a socket on this computer is, is `uid.rs` (svrn-docs LEND_OWNER §2):
 `uid::owner`, for a connection named by its two ends (`uid::Conn`) and
-the end asked about (`uid::Side`), the uid the kernel's table records for
-that socket, or a UDP flow's, read at each ask and never kept:
-`/proc/net/tcp`, `tcp6`, `udp` and `udp6`'s uid column, or the
-`pcblist_n` sysctls `netstat` reads, each socket's records walked by their
-own length and kind; elsewhere `Owner::NoReader`. The sysctls list another
-program's sockets only to a program signed with a dotted identifier; one
-signed as the linker signs it is shown its own alone, and another's socket
-is not found. Only sockets whose
-addresses are the connection's answer, and none, two accounts, a table not
-read or a record of a length it wasn't built for is `Owner::Unjudged`.
-`uid::sysctl` is svrngs's one `unsafe` (DESIGN §5). `src/uid_tests.rs`
-reads a captured `/proc/net` table and a captured `pcblist_n`, and this
-computer's own.
+the end asked about (`uid::Side`), the account holding that socket, or a
+UDP flow's, read at each ask and never kept. On Linux, any account's:
+`/proc/net/tcp`, `tcp6`, `udp` and `udp6`'s uid column, only sockets whose
+addresses are the end's, none or two accounts `Owner::Unjudged`. On a Mac,
+this account's alone, by libproc: this uid's pids, each one's files, each
+socket's `socket_fdinfo`; found, `Owner::Uid` of this account, else
+`Owner::NotMine`. A Mac shows a program signed as svrngs is no other
+account's sockets, neither in the table nor in a `netstat` it runs. A TCP
+end is looked for again until `uid::ACCEPT_WITHIN` (100 ms), since a
+connection is in no process's files until its listener accepts it.
+Elsewhere `Owner::NoReader`. `uid::mine` is this process's own uid.
+`kernel`, the libproc calls, is svrngs's one `unsafe` (DESIGN §5).
+`src/uid_tests.rs` reads a captured `/proc/net` table, captured
+`socket_fdinfo` and `proc_bsdinfo` records, and this computer's own
+sockets, a late accept among them.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
