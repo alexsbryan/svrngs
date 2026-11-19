@@ -20,13 +20,23 @@ them as recommendations):
   timed clear would let a second throttling stall with no words.
   share-refusal removes the minute's timer and `Net::remade`. The refusal
   holds until the connection to the build's relay ends of itself.
-- **Each row's own allowance is its ceiling**, for product and tests alike.
-  Past it, after an economizing pass, stop with the counts and a ready diff
-  (`ralph-result needs-human`). Do not carry on because the queue's total
-  holds.
+- **A row's allowance is its estimate; the caps and the queue's envelope
+  decide** (operator, 2026-11-19: "It's unclear what decision is needed
+  from me that can't be answered from principles"). Past the estimate, make
+  the economizing pass (AGENTS.md "Done"). If `lean_check` holds and the
+  queue's test envelope holds, land the row, and its commit gives a `Size:`
+  paragraph: the counts, what the pass cut, and why the rest stays. Stop
+  with `needs-human` only when a cap or the envelope would not hold.
+- **An advisory that blocks commits is judged by reachability** (675b0cc1).
+  If none of its affected functions is called (advisory-db
+  `[affected.functions]`, then grep the crate that pulls it in and its
+  callers), add a `deny.toml` exception whose reason gives that evidence,
+  with a review date two weeks out. If one is called, or this cannot be
+  shown, stop.
 - **The queue's test envelope is 1,400** (from 900, then 1,200; operator,
   2026-11-19). It takes in n0-emergency's 240 against 120, share-refusal's
-  325 against 150 and webrtc-node's 310 against 200.
+  325 against 150, webrtc-node's 310 against 200 and webrtc-network's 218
+  against 150: 1,396 at 6807cb53.
 - **DESIGN's 60 lines are net growth**, added minus removed.
 - **JavaScript gets no raise in advance.** At its cap, stop with the
   measured counts.
