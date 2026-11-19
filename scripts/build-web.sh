@@ -54,17 +54,16 @@ if [ -n "$LINT" ]; then echo "linting $APP for wasm32-unknown-unknown…"; else 
 # LLVM does have the backend; default to it on macOS so `npm run deploy`
 # needs no remembered environment. An explicit CC and Linux are untouched.
 if [ "$(uname -s)" = "Darwin" ] && [ -z "${CC_wasm32_unknown_unknown:-}" ]; then
-  found=""
   for p in /opt/homebrew/opt/llvm/bin /usr/local/opt/llvm/bin; do
     if [ -x "$p/clang" ]; then
       export CC_wasm32_unknown_unknown="$p/clang"
       if [ -x "$p/llvm-ar" ]; then export AR_wasm32_unknown_unknown="$p/llvm-ar"; fi
       echo "macOS: using $p/clang for the wasm C sources (Apple clang cannot target wasm32)"
-      found=1
       break
     fi
   done
-  if [ -z "$found" ]; then
+  # Set above only where a clang was found: unset or empty on entry.
+  if [ -z "${CC_wasm32_unknown_unknown:-}" ]; then
     echo "build-web: on macOS the wasm build needs an LLVM clang with a" >&2
     echo "  wasm32 backend (brew install llvm), or pass one explicitly:" >&2
     echo "  CC_wasm32_unknown_unknown=<path-to-clang> $(basename "$0")" >&2
