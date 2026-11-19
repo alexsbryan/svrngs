@@ -191,6 +191,20 @@ So `web/`'s existing pins (`web/Cargo.toml:25-27`) survive the bump:
 0.3.105, `n0-future` 0.3.2. The web probe carries
 `unstable-custom-transports` too, so the page's carrier resolves for wasm.
 
+The workspace itself, not just its set: a copy of the manifests and
+sources under `target/relay-survey/workspace-copy/` (`Cargo.toml`,
+`crates/`, `apps/`, no lock), with `iroh`/`iroh-relay` at `=1.4.2`,
+`iroh-blobs` at `=0.104.0`, `str0m` 0.25 (rust-crypto) added to
+`svrngs-node` and `unstable-custom-transports` on its iroh, resolves
+fresh: `cargo tree -e normal`, exit 0, with one `iroh` 1.4.2, `iroh-relay`
+1.4.2, `iroh-base` 1.4.2, `iroh-blobs` 0.104.0, `irpc` 0.17.0, `str0m`
+0.25.0. Every other pin in the workspace (`netdev` =0.45.0, `notify`
+=8.2.0, `reqwest` 0.13, `rustls` 0.23, `ed25519-dalek` 2, …) agrees. The
+bump also moves the lock's `ed25519-dalek` 3.0.0-rc.0 to 3.0.0 and its
+`curve25519-dalek` 5.0.0-rc.0 to 5.0.0 — the only holder of those rc's is
+iroh 1.0.2's tree (`cargo tree -i curve25519-dalek@5.0.0-rc.0`) — the
+versions the transport spike found. No edit to either real lock.
+
 The API each dependent row needs, checked in the resolved crates
 (`~/.cargo/registry/src/index.crates.io-*/`; paths below are
 crate-relative):
