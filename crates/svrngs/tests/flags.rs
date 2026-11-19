@@ -49,4 +49,9 @@ fn update_is_a_verb_of_its_own_and_says_which_verdict_it_reached() {
     use svrngs_node::update::UpdateError;
     assert_eq!(cli::Refusal::Update(UpdateError::NoPage).exit_code(), 3);
     assert_eq!(cli::Refusal::Update(UpdateError::Mismatch).exit_code(), 1);
+    // A release refused for its signature is a refusal; a page with no such
+    // file, a precondition absent.
+    let unsigned = UpdateError::Unsigned("group.svrnme.sh".into());
+    assert_eq!(cli::Refusal::Update(unsigned).exit_code(), 1);
+    assert_eq!(cli::Refusal::Update(UpdateError::Missing).exit_code(), 3);
 }

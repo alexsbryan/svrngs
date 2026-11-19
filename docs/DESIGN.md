@@ -2677,6 +2677,27 @@ relay` running instead: a LaunchAgent of its own on macOS; on Linux, where
 only the system gives ports 80 and 443, it prints a system unit for whoever
 runs the server to install as root, and installs none.
 
+**A computer updates only from a signed release.** `svrngs update`, and the
+home page's offer, which makes the same check (`crates/svrngs-node/src/update.rs`
+`latest`), replace svrngs only with a tarball whose sha256 is listed in a
+`SHA256SUMS` signed by a key built into svrngs, the signature made no earlier
+than the one it last accepted. The page serves the signature beside the sums,
+`get/SHA256SUMS.sig`, and it is read before a line of them. The key is the
+release key, whose one home is `svrngs-release-key.asc`, or the one a build
+pins as hex in `SVRNGS_RELEASE_KEY`, so a fork that runs its own page updates
+from its own signatures (`update/signed.rs` `RELEASE_KEYS`). The check is pure
+and reads exactly one OpenPGP signature packet of the release key's shape:
+version 4 over a file, EdDSA on Ed25519, SHA-512 or SHA-256, a hashed creation
+time, and no critical subpacket it does not read. Anything else is refused,
+never skipped. `release` in the data dir keeps the accepted signature's
+creation time on a second line, beside the hash; a computer with none kept, as
+`install.sh` leaves it, takes any validly signed sums, and its first checked
+update sets the floor. A missing, foreign or older signature is never offered:
+the home page says, where the offer would be, what stopped, why and the fix,
+and `svrngs update` says the same and exits 1. The install line is not
+covered, since it runs whatever the page serves; pacman checks the release key
+itself (`packaging/arch`).
+
 *A computer that keeps apps* gets Give's program from the same line, with
 `--give` after the link or the page's address. The page host serves it
 beside svrngs, a tarball per platform under `get/` listed in the same

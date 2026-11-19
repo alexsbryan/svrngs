@@ -128,6 +128,19 @@ test('the ask is headed in question.js’s one wording, and one of nothing lent 
   );
 });
 
+// A release whose signature is refused (update.rs `Unsigned`, its words),
+// as home.rs `update_check` answers it, `held`: said where the update would
+// be offered, as the page opens, with nothing to press. Planted, watched
+// failing: update-line.js SHOWN without `held` (nothing drawn); update.js
+// reading `held` as unread (nothing drawn).
+test('a release whose signature is refused is said where the update would be offered', async () => {
+  const why =
+    'No update: group.svrnme.sh offers a new svrngs without the svrngs release key’s signature (get/SHA256SUMS.sig), so it can’t be told from anyone’s. Whoever runs that page can add the signature from the release.';
+  const page = await home(ada({ 'GET /update': { state: 'held', why } }));
+  assert.deepEqual(page.text('#update p'), [why]);
+  assert.deepEqual(page.all('#update button'), []);
+});
+
 // browser::the_home_page_says_its_address_as_the_command_does: the page's
 // own address last, as home.rs `address(port)` writes it
 // (session_tests.rs pins that to this origin and `/`).

@@ -5,9 +5,12 @@
 //! record of what this computer installed. A computer whose record is that
 //! hash is current; one whose record differs downloads the tarball the
 //! sums name, checks it, unpacks only `svrngs`, and renames the new one
-//! over it. Nothing is signed and nothing is guessed: the page's HTTPS and
-//! the same sums `install.sh` checks are the trust, as they are for the
-//! install line.
+//! over it. Nothing is guessed, and the page is not the trust: its sums
+//! are read only once [`signed`] finds them signed by a key built into
+//! svrngs, the signature made no earlier than the one this computer last
+//! accepted, which `release` keeps (DESIGN §7, "A computer updates only
+//! from a signed release"). `install.sh` trusts the page's HTTPS alone, as
+//! the install line does.
 //!
 //! A refusal keeps the running binary. A check that cannot be judged — no
 //! page kept, no line for this platform, a page that does not answer — is
@@ -31,8 +34,10 @@ use svrngs_core::link::Origin;
 pub mod signed;
 
 /// What `install.sh` writes, and the updater reads and writes: the hash of
-/// the tarball this computer installed, under the data dir. `web/install.sh`
-/// spells the same file in shell; `tests/install.rs` pins the pair.
+/// the tarball this computer installed, under the data dir, and on a second
+/// line the time of the signature an update accepted it under, which
+/// `install.sh` never writes. `web/install.sh` spells the same file in
+/// shell; `tests/install.rs` pins the pair.
 pub const RELEASE_FILE: &str = "release";
 
 /// What a package beside svrngs's binary says of how it is updated, from
@@ -45,6 +50,7 @@ const PACKAGED: &str = "svrngs updates with this computer's system updates.";
 
 const LOCK_FILE: &str = "update.lock";
 const MAX_SUMS: usize = 64 * 1024;
+const MAX_SIG: usize = 4 * 1024;
 const MAX_TARBALL: usize = 64 * 1024 * 1024;
 
 struct Latest {
@@ -52,6 +58,7 @@ struct Latest {
     tarball: String,
     base: String,
     installed: Option<String>,
+    signed: signed::Signed,
 }
 
 /// Whether the page has a svrngs this computer is not running, or a
@@ -96,6 +103,15 @@ pub enum UpdateError {
     Mismatch,
     #[error("an update is running already")]
     Busy,
+    /// The page has no such file, as [`fetch`] reads a 404.
+    #[error("the page answered 404 Not Found")]
+    Missing,
+    #[error("No update: {0} offers a new svrngs without the svrngs release key’s signature (get/SHA256SUMS.sig), so it can’t be told from anyone’s. Whoever runs that page can add the signature from the release.")]
+    Unsigned(String),
+    #[error("No update: {0} offers a new svrngs whose signature (get/SHA256SUMS.sig) is not the svrngs release key’s ({1}), so it can’t be told from anyone’s. Whoever runs that page can put the release’s own signature there.")]
+    BadSignature(String, signed::Refusal),
+    #[error("No update: {0} offers a svrngs signed earlier than the one this computer last installed, and svrngs never goes back. Whoever runs that page can put the newest release there.")]
+    Older(String),
     #[error("{0}")]
     CouldNotJudge(String),
     #[error("{0}")]
@@ -106,7 +122,15 @@ impl UpdateError {
     /// Whether the update ran and refused, rather than being unable to
     /// judge the page (the command's exit 1, against exit 3).
     pub fn judged(&self) -> bool {
-        matches!(self, Self::Mismatch | Self::Busy | Self::Refused(_))
+        matches!(
+            self,
+            Self::Mismatch
+                | Self::Busy
+                | Self::Refused(_)
+                | Self::Unsigned(_)
+                | Self::BadSignature(..)
+                | Self::Older(_)
+        )
     }
 }
 
@@ -120,15 +144,16 @@ impl<F: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError>> Get for F {}
 pub async fn check(dir: &Path) -> Result<Check, UpdateError> {
     match std::env::current_exe().ok().as_deref().and_then(packaged) {
         Some(words) => Ok(Check::Packaged(words)),
-        None => check_by(dir, fetch).await,
+        None => check_by(dir, fetch, signed::RELEASE_KEYS).await,
     }
 }
 
-/// [`check`], the page's files read by `get`.
-pub async fn check_by(dir: &Path, get: impl Get) -> Result<Check, UpdateError> {
-    let latest = latest(dir, &get).await?;
+/// [`check`], the page's files read by `get`, its sums signed by one of
+/// `keys`.
+pub async fn check_by(dir: &Path, get: impl Get, keys: &[[u8; 32]]) -> Result<Check, UpdateError> {
+    let latest = latest(dir, &get, keys).await?;
     let current = latest.installed.as_deref() == Some(latest.want.as_str());
-    tracing::debug!(target: "update", page = %latest.base, want = %latest.want, installed = ?latest.installed, current, "update: the page’s release read");
+    tracing::debug!(target: "update", page = %latest.base, want = %latest.want, installed = ?latest.installed, created = latest.signed.created(), current, "update: the page’s release read");
     Ok(if current {
         Check::Current
     } else {
@@ -141,17 +166,23 @@ pub async fn check_by(dir: &Path, get: impl Get) -> Result<Check, UpdateError> {
 pub async fn apply(dir: &Path) -> Result<Outcome, UpdateError> {
     let exe =
         std::env::current_exe().map_err(refused("this computer cannot find the svrngs it runs"))?;
-    apply_at(dir, &exe, fetch).await
+    apply_at(dir, &exe, fetch, signed::RELEASE_KEYS).await
 }
 
-/// [`apply`] over `exe`, the page's files read by `get`: for a test whose
-/// svrngs is not the running one, and whose page is no socket.
-pub async fn apply_at(dir: &Path, exe: &Path, get: impl Get) -> Result<Outcome, UpdateError> {
+/// [`apply`] over `exe`, the page's files read by `get`, its sums signed by
+/// one of `keys`: for a test whose svrngs is not the running one, whose
+/// page is no socket, and whose release a key of its own signed.
+pub async fn apply_at(
+    dir: &Path,
+    exe: &Path,
+    get: impl Get,
+    keys: &[[u8; 32]],
+) -> Result<Outcome, UpdateError> {
     if let Some(words) = packaged(exe) {
         return Ok(Outcome::Packaged(words));
     }
     let _held = claim(dir)?;
-    let latest = latest(dir, &get).await?;
+    let latest = latest(dir, &get, keys).await?;
     if latest.installed.as_deref() == Some(latest.want.as_str()) {
         tracing::debug!(target: "update", tarball = %latest.tarball, "update: the release is the one this computer installed");
         return Ok(Outcome::Current);
@@ -196,43 +227,92 @@ pub async fn apply_at(dir: &Path, exe: &Path, get: impl Get) -> Result<Outcome, 
     fs::set_permissions(&new, std::os::unix::fs::PermissionsExt::from_mode(0o755))
         .map_err(refused("the new svrngs cannot be made runnable"))?;
     fs::rename(&new, exe).map_err(refused("the new svrngs cannot replace this one"))?;
-    // Keep the hash of the release now in place. A failure here is said and
-    // not fatal: the bytes are already the release, and the next check reads
+    // Keep the hash of the release now in place, and when its signature was
+    // made, the floor the next is held to. A failure here is said and not
+    // fatal: the bytes are already the release, and the next check reads
     // the page and the running bytes again.
     let path = dir.join(RELEASE_FILE);
-    if let Err(e) = fs::write(&path, &latest.want) {
+    let created = latest.signed.created();
+    if let Err(e) = fs::write(&path, format!("{}\n{created}\n", latest.want)) {
         tracing::warn!(target: "update", path = %path.display(), error = %e, "update: the new svrngs is in place, but what it installed cannot be kept");
     }
-    tracing::info!(target: "update", exe = %exe.display(), release = %latest.want, "update: the new svrngs is in place");
+    tracing::info!(target: "update", exe = %exe.display(), release = %latest.want, created, "update: the new svrngs is in place");
     Ok(Outcome::Updated)
 }
 
-/// The page’s release and this computer’s record of what it installed.
-async fn latest(dir: &Path, get: &impl Get) -> Result<Latest, UpdateError> {
+/// The page’s release, its sums read only once found signed by one of
+/// `keys` no earlier than the last signature accepted here, and this
+/// computer’s record of what it installed.
+async fn latest(dir: &Path, get: &impl Get, keys: &[[u8; 32]]) -> Result<Latest, UpdateError> {
     let page = page(dir)?;
     let platform =
         platform_of(std::env::consts::OS, std::env::consts::ARCH).ok_or(UpdateError::Platform)?;
     let tarball = format!("svrngs-{platform}.tar.gz");
     let base = format!("{}/get/", page.as_str().trim_end_matches('/'));
     let sums = get(&format!("{base}SHA256SUMS"), MAX_SUMS).await?;
+    let named = named(&page);
+    let sig = match get(&format!("{base}SHA256SUMS.sig"), MAX_SIG).await {
+        Err(UpdateError::Missing) => {
+            tracing::debug!(target: "update", page = %named, "update: refused — the page serves its sums with no signature");
+            return Err(UpdateError::Unsigned(named));
+        }
+        sig => sig?,
+    };
+    let signed = match signed::verify(&sums, &sig, keys) {
+        Ok(signed) => signed,
+        Err(why) => {
+            tracing::debug!(target: "update", page = %named, ?why, "update: refused — the page’s sums are not signed by a release key");
+            return Err(UpdateError::BadSignature(named, why));
+        }
+    };
+    let (installed, floor) = installed(dir)?;
+    if floor.is_some_and(|floor| signed.created() < floor) {
+        tracing::debug!(target: "update", page = %named, created = signed.created(), ?floor, "update: refused — the page’s release was signed earlier than the one last installed");
+        return Err(UpdateError::Older(named));
+    }
+    tracing::debug!(target: "update", created = signed.created(), ?floor, "update: the page’s sums are signed by a release key, no earlier than the last accepted");
     let sums = String::from_utf8(sums)
         .map_err(|e| UpdateError::CouldNotJudge(format!("the page’s answer is not text: {e}")))?;
     let want = wanted(&sums, &tarball)?;
-    let installed = match fs::read_to_string(dir.join(RELEASE_FILE)) {
-        Ok(raw) => Some(raw.trim().to_ascii_lowercase()).filter(|s| !s.is_empty()),
-        Err(e) if e.kind() == ErrorKind::NotFound => None,
-        Err(e) => {
-            return Err(UpdateError::CouldNotJudge(format!(
-                "what this computer last installed cannot be read: {e}"
-            )))
-        }
-    };
     Ok(Latest {
         want,
         tarball,
         base,
         installed,
+        signed,
     })
+}
+
+/// What this computer last installed, as `release` keeps it: the
+/// tarball’s hash, and the time of the signature it was accepted under,
+/// when one was kept.
+fn installed(dir: &Path) -> Result<(Option<String>, Option<u32>), UpdateError> {
+    let unread = |e: String| {
+        UpdateError::CouldNotJudge(format!(
+            "what this computer last installed cannot be read: {e}"
+        ))
+    };
+    let raw = match fs::read_to_string(dir.join(RELEASE_FILE)) {
+        Ok(raw) => raw,
+        Err(e) if e.kind() == ErrorKind::NotFound => return Ok((None, None)),
+        Err(e) => return Err(unread(e.to_string())),
+    };
+    let mut lines = raw.lines().map(str::trim);
+    let hash = lines.next().map(str::to_ascii_lowercase);
+    let floor = lines.next().filter(|line| !line.is_empty());
+    let floor = floor.map(str::parse::<u32>).transpose();
+    Ok((
+        hash.filter(|hash| !hash.is_empty()),
+        floor.map_err(|e| unread(e.to_string()))?,
+    ))
+}
+
+/// The page as a person names it: its address with no scheme, nor a last
+/// `/`.
+fn named(page: &Origin) -> String {
+    let raw = page.as_str();
+    let named = raw.split_once("://").map_or(raw, |(_, rest)| rest);
+    named.trim_end_matches('/').to_string()
 }
 
 /// The page this computer was installed from, kept by `install.sh`.
@@ -305,6 +385,10 @@ pub async fn fetch(url: &str, max: usize) -> Result<Vec<u8>, UpdateError> {
             tracing::debug!(target: "update", url, error = %e, "update: the page did not answer");
             UpdateError::CouldNotJudge(format!("cannot reach the page svrngs came from: {e}"))
         })?;
+    if answer.status() == reqwest13::StatusCode::NOT_FOUND {
+        tracing::debug!(target: "update", url, "update: the page has no such file");
+        return Err(UpdateError::Missing);
+    }
     if !answer.status().is_success() {
         tracing::debug!(target: "update", url, status = %answer.status(), "update: the page answered with no file");
         return Err(UpdateError::CouldNotJudge(format!(

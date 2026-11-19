@@ -9,13 +9,15 @@ import { START, UPDATE } from './update.js?v=__VERSION__';
 /** @import { State } from './update.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 
-const SHOWN = new Set(['available', 'updating', 'updated', 'stuck', 'refused']);
+const SHOWN = new Set(['available', 'held', 'updating', 'updated', 'stuck', 'refused']);
 
 /** @param {State} state */
 const said = (state) => {
   switch (state.at.update) {
     case 'available':
-      return 'A new svrngs is ready. It comes from the page this computer was installed from, and is checked against that page’s checksum before it replaces this one.';
+      return 'A new svrngs is ready. It comes from the page this computer was installed from, and is checked against the svrngs release key’s signature before it replaces this one.';
+    case 'held':
+      return state.why ?? '';
     case 'updating':
       return 'Updating svrngs. This page restarts it when the new one is in place.';
     case 'updated':

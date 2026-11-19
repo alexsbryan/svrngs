@@ -1,10 +1,13 @@
 //! The home page’s update (PLAN §1, the update row): the page’s
-//! `SHA256SUMS` is the one decider of its release, `release` in the data
-//! dir the one record of what this computer installed, and only a tarball
-//! that matches the page’s sum and unpacks to a regular file replaces the
+//! `SHA256SUMS`, once found signed by a release key no earlier than the
+//! last signature accepted (DESIGN §7), is the one decider of its release,
+//! `release` in the data dir the one record of what this computer
+//! installed and when its signature was made, and only a tarball that
+//! matches the page’s sum and unpacks to a regular file replaces the
 //! binary. Each refusal keeps the running bytes. The page is no socket:
-//! its files are read by a `Get` (update.rs `check_by`, `apply_at`), and
-//! the product's own, `fetch`, is asked only where no request can go.
+//! its files are read by a `Get` (update.rs `check_by`, `apply_at`), its
+//! release signed by a test's own key, and the product's own `fetch` is
+//! asked only where no request can go.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
@@ -74,6 +77,37 @@ fn exe(dir: &Path) -> std::path::PathBuf {
     dir.join("svrngs")
 }
 
+/// When the tests' releases are signed, unless one says otherwise.
+const SIGNED_AT: u32 = 1_800_000_000;
+
+/// The key the tests' pages sign their releases with, never the release
+/// key, and the keys their updates are held to: that one alone.
+fn page_key() -> Ed25519KeyPair {
+    test_key(9)
+}
+
+fn keys() -> [[u8; 32]; 1] {
+    [point(&page_key())]
+}
+
+/// A page's `SHA256SUMS`, `sums`, and its signature by [`page_key`] made at
+/// `created`.
+fn signed_page(sums: Vec<u8>, created: u32) -> HashMap<String, Vec<u8>> {
+    let sig = Packet::at(created).sign(&sums, &page_key());
+    HashMap::from([
+        ("get/SHA256SUMS".to_string(), sums),
+        ("get/SHA256SUMS.sig".to_string(), sig),
+    ])
+}
+
+/// A page's release of `tarball` as `name`: its sums, their signature made
+/// at `created`, and the tarball.
+fn release(name: &str, tarball: Vec<u8>, created: u32) -> HashMap<String, Vec<u8>> {
+    let mut files = signed_page(sums(name, &tarball), created);
+    files.insert(format!("get/{name}"), tarball);
+    files
+}
+
 #[tokio::test]
 async fn an_update_already_running_is_refused() {
     let dir = tempfile::tempdir().unwrap();
@@ -82,7 +116,7 @@ async fn an_update_already_running_is_refused() {
     std::fs::write(exe(dir.path()), b"the old svrngs").unwrap();
 
     assert!(matches!(
-        apply_at(dir.path(), &exe(dir.path()), fetch).await,
+        apply_at(dir.path(), &exe(dir.path()), fetch, &keys()).await,
         Err(UpdateError::Busy)
     ));
 }
@@ -97,7 +131,7 @@ fn page(files: &HashMap<String, Vec<u8>>) -> impl Get + '_ {
     async move |url: &str, _max: usize| {
         let path = url.strip_prefix(PAGE).unwrap_or(url);
         let file = files.get(path).cloned();
-        file.ok_or_else(|| UpdateError::CouldNotJudge(format!("the page answered 404 for {url}")))
+        file.ok_or(UpdateError::Missing)
     }
 }
 
@@ -108,36 +142,33 @@ fn installed(dir: &Path) {
 }
 
 /// **A page's release is checked and its verified bytes replace the
-/// binary, with no socket**: the page's `get/SHA256SUMS` and tarball read
-/// by a [`Get`] (update.rs `check_by`, `apply_at`); Available, Updated,
-/// the new bytes in place, the release file the tarball's hash, then
-/// Current. Planted: the release file not written after
-/// the rename (`check` then says Available); the tarball's hash compared
-/// to the installed record, not the page's sum (Mismatch).
+/// binary, with no socket**: the page's `get/SHA256SUMS`, its signature and
+/// tarball read by a [`Get`] (update.rs `check_by`, `apply_at`); Available,
+/// Updated, the new bytes in place, the release file the tarball's hash and
+/// the signature's time, then Current. Planted: the release file not
+/// written after the rename (`check` then says Available); the tarball's
+/// hash compared to the installed record, not the page's sum (Mismatch).
 #[tokio::test]
 async fn a_page_s_release_replaces_the_binary_read_with_no_socket() {
     let dir = tempfile::tempdir().unwrap();
     let name = tarball_name();
     let tarball = tarball(dir.path(), &name, b"the new svrngs");
-    let files = HashMap::from([
-        ("get/SHA256SUMS".to_string(), sums(&name, &tarball)),
-        (format!("get/{name}"), tarball.clone()),
-    ]);
+    let files = release(&name, tarball.clone(), SIGNED_AT);
     installed(dir.path());
 
     assert_eq!(
-        check_by(dir.path(), page(&files)).await.unwrap(),
+        check_by(dir.path(), page(&files), &keys()).await.unwrap(),
         Check::Available
     );
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files)).await;
+    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
     assert_eq!(applied.unwrap(), Outcome::Updated);
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the new svrngs");
     assert_eq!(
         std::fs::read_to_string(dir.path().join(RELEASE_FILE)).unwrap(),
-        hex::encode(Sha256::digest(&tarball))
+        format!("{}\n{SIGNED_AT}\n", hex::encode(Sha256::digest(&tarball)))
     );
     assert_eq!(
-        check_by(dir.path(), page(&files)).await.unwrap(),
+        check_by(dir.path(), page(&files), &keys()).await.unwrap(),
         Check::Current
     );
 }
@@ -153,13 +184,11 @@ async fn a_tarball_not_the_page_s_is_refused_read_with_no_socket() {
     let tarball = tarball(dir.path(), &name, b"the new svrngs");
     let mut sums = sums(&name, &tarball);
     sums[0] = if sums[0] == b'0' { b'1' } else { b'0' };
-    let files = HashMap::from([
-        ("get/SHA256SUMS".to_string(), sums),
-        (format!("get/{name}"), tarball),
-    ]);
+    let mut files = signed_page(sums, SIGNED_AT);
+    files.insert(format!("get/{name}"), tarball);
     installed(dir.path());
 
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files)).await;
+    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
     assert!(matches!(applied, Err(UpdateError::Mismatch)), "{applied:?}");
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
     assert!(!dir.path().join(RELEASE_FILE).exists());
@@ -174,13 +203,10 @@ async fn a_tarball_whose_svrngs_is_a_symlink_is_refused_read_with_no_socket() {
     let dir = tempfile::tempdir().unwrap();
     let name = tarball_name();
     let tarball = symlink_tarball(dir.path(), &name);
-    let files = HashMap::from([
-        ("get/SHA256SUMS".to_string(), sums(&name, &tarball)),
-        (format!("get/{name}"), tarball),
-    ]);
+    let files = release(&name, tarball, SIGNED_AT);
     installed(dir.path());
 
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files)).await;
+    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
     assert!(
         matches!(applied, Err(UpdateError::Refused(_))),
         "{applied:?}"
@@ -196,9 +222,9 @@ async fn a_page_with_no_line_for_this_computer_is_not_current_read_with_no_socke
     let dir = tempfile::tempdir().unwrap();
     let other =
         b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  svrngs-other.tar.gz\n";
-    let files = HashMap::from([("get/SHA256SUMS".to_string(), other.to_vec())]);
+    let files = signed_page(other.to_vec(), SIGNED_AT);
     installed(dir.path());
-    let checked = check_by(dir.path(), page(&files)).await;
+    let checked = check_by(dir.path(), page(&files), &keys()).await;
     assert!(
         matches!(checked, Err(UpdateError::NotListed)),
         "{checked:?}"
@@ -221,7 +247,7 @@ async fn a_page_that_does_not_answer_is_not_current_with_no_socket() {
     let dir = tempfile::tempdir().unwrap();
     installed(dir.path());
     let unanswered = async |url: &str, max: usize| fetch(&format!("http://[{url}"), max).await;
-    let checked = check_by(dir.path(), unanswered).await;
+    let checked = check_by(dir.path(), unanswered, &keys()).await;
     assert!(
         matches!(checked, Err(UpdateError::CouldNotJudge(_))),
         "{checked:?}"
@@ -252,13 +278,10 @@ async fn a_svrngs_a_package_updates_never_replaces_itself() {
     let dir = tempfile::tempdir().unwrap();
     let name = tarball_name();
     let tarball = tarball(dir.path(), &name, b"the new svrngs");
-    let files = HashMap::from([
-        ("get/SHA256SUMS".to_string(), sums(&name, &tarball)),
-        (format!("get/{name}"), tarball),
-    ]);
+    let files = release(&name, tarball, SIGNED_AT);
     let exe = packaged(dir.path(), "\n  Updated with pacman.  \nignored\n");
 
-    let applied = apply_at(dir.path(), &exe, page(&files)).await;
+    let applied = apply_at(dir.path(), &exe, page(&files), &keys()).await;
     assert_eq!(
         applied.unwrap(),
         Outcome::Packaged("Updated with pacman.".into())
@@ -283,10 +306,7 @@ async fn a_svrngs_that_cannot_write_beside_itself_is_refused_before_the_download
     let dir = tempfile::tempdir().unwrap();
     let name = tarball_name();
     let tarball = tarball(dir.path(), &name, b"the new svrngs");
-    let files = HashMap::from([
-        ("get/SHA256SUMS".to_string(), sums(&name, &tarball)),
-        (format!("get/{name}"), tarball),
-    ]);
+    let files = release(&name, tarball, SIGNED_AT);
     installed(dir.path());
     let held = dir.path().join("held");
     std::fs::create_dir(&held).unwrap();
@@ -299,7 +319,7 @@ async fn a_svrngs_that_cannot_write_beside_itself_is_refused_before_the_download
         asked.lock().unwrap().push(url.to_string());
         page(&files)(url, max).await
     };
-    let applied = apply_at(dir.path(), &exe, watched).await;
+    let applied = apply_at(dir.path(), &exe, watched, &keys()).await;
     std::fs::set_permissions(&held, std::fs::Permissions::from_mode(0o755)).unwrap();
 
     assert!(
@@ -308,6 +328,194 @@ async fn a_svrngs_that_cannot_write_beside_itself_is_refused_before_the_download
     );
     assert!(!asked.lock().unwrap().iter().any(|u| u.ends_with(&name)));
     assert_eq!(std::fs::read(&exe).unwrap(), b"the old svrngs");
+}
+
+/// What a page asks of the computer it updates, as `apply_at` asks it,
+/// kept so a test can say the tarball was never fetched.
+fn asked_of<'a>(
+    files: &'a HashMap<String, Vec<u8>>,
+    asked: &'a std::sync::Mutex<Vec<String>>,
+) -> impl Get + 'a {
+    async move |url: &str, max: usize| {
+        asked.lock().unwrap().push(url.to_string());
+        page(files)(url, max).await
+    }
+}
+
+/// **A page serving no signature beside its sums offers nothing, and says
+/// why** (update.rs `latest`): `check` and `apply` refuse Unsigned in a
+/// person's words, naming the page, the file and the fix; judged, so the
+/// home page draws it where the offer would be (home.rs `update_check`,
+/// `held`); the tarball never asked, the binary and release file kept.
+/// Planted: the signature's 404 passed on as the page's (Missing, "the page
+/// answered 404 Not Found").
+#[tokio::test]
+async fn an_unsigned_page_offers_nothing_and_says_why() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let mut files = release(&name, tarball, SIGNED_AT);
+    files.remove("get/SHA256SUMS.sig");
+    installed(dir.path());
+
+    let checked = check_by(dir.path(), page(&files), &keys()).await;
+    let Err(refused) = checked else {
+        panic!("{checked:?}")
+    };
+    assert!(
+        matches!(&refused, UpdateError::Unsigned(at) if at == "page.invalid"),
+        "{refused:?}"
+    );
+    assert!(refused.judged());
+    assert_eq!(
+        refused.to_string(),
+        "No update: page.invalid offers a new svrngs without the svrngs release key’s signature (get/SHA256SUMS.sig), so it can’t be told from anyone’s. Whoever runs that page can add the signature from the release."
+    );
+    let asked = std::sync::Mutex::new(Vec::new());
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        asked_of(&files, &asked),
+        &keys(),
+    )
+    .await;
+    assert!(
+        matches!(applied, Err(UpdateError::Unsigned(_))),
+        "{applied:?}"
+    );
+    assert!(!asked.lock().unwrap().iter().any(|u| u.ends_with(&name)));
+    assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
+    assert!(!dir.path().join(RELEASE_FILE).exists());
+}
+
+/// **A release signed by another key offers nothing, and says why**: a
+/// page's sums signed by a key the update is not held to, BadSignature
+/// with `verify`'s Key; sums changed after they were signed, Digest; both
+/// judged, the binary kept. Planted: any key accepted in update/signed.rs
+/// `verify` (Updated, the other key's tarball in place).
+#[tokio::test]
+async fn a_release_signed_by_another_key_offers_nothing() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let mut files = release(&name, tarball, SIGNED_AT);
+    let theirs = Packet::at(SIGNED_AT).sign(&files["get/SHA256SUMS"], &test_key(5));
+    files.insert("get/SHA256SUMS.sig".to_string(), theirs);
+    installed(dir.path());
+
+    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
+    let Err(refused) = applied else {
+        panic!("{applied:?}")
+    };
+    assert!(
+        matches!(&refused, UpdateError::BadSignature(at, Refusal::Key) if at == "page.invalid"),
+        "{refused:?}"
+    );
+    assert!(refused.judged());
+    assert!(refused.to_string().starts_with("No update: page.invalid offers a new svrngs whose signature (get/SHA256SUMS.sig) is not the svrngs release key’s (no release key made it)"), "{refused}");
+    assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
+
+    let mut files = release(&name, files[&format!("get/{name}")].clone(), SIGNED_AT);
+    files.get_mut("get/SHA256SUMS").unwrap().push(b'\n');
+    let checked = check_by(dir.path(), page(&files), &keys()).await;
+    assert!(
+        matches!(checked, Err(UpdateError::BadSignature(_, Refusal::Digest))),
+        "{checked:?}"
+    );
+}
+
+/// `dir`'s computer as an update left it: `release` keeping a hash not the
+/// page's and the time of the signature it was accepted under.
+fn updated_at(dir: &Path, created: u32) {
+    installed(dir);
+    let kept = format!("{}\n{created}\n", "a".repeat(64));
+    std::fs::write(dir.join(RELEASE_FILE), kept).unwrap();
+}
+
+/// **A validly signed release older than the last one accepted is
+/// refused**: signed a second before the kept time, `check` and `apply`
+/// refuse Older in a person's words, judged, the binary and the kept time
+/// unchanged; one signed at the kept time itself is offered. Planted: the
+/// floor not compared (Updated, the older release in place).
+#[tokio::test]
+async fn a_signed_release_older_than_the_last_accepted_is_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"an older svrngs");
+    let older = release(&name, tarball.clone(), SIGNED_AT - 1);
+    updated_at(dir.path(), SIGNED_AT);
+
+    let checked = check_by(dir.path(), page(&older), &keys()).await;
+    assert!(
+        matches!(&checked, Err(UpdateError::Older(at)) if at == "page.invalid"),
+        "{checked:?}"
+    );
+    let applied = apply_at(dir.path(), &exe(dir.path()), page(&older), &keys()).await;
+    let Err(refused) = applied else {
+        panic!("{applied:?}")
+    };
+    assert!(refused.judged());
+    assert_eq!(
+        refused.to_string(),
+        "No update: page.invalid offers a svrngs signed earlier than the one this computer last installed, and svrngs never goes back. Whoever runs that page can put the newest release there."
+    );
+    assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
+    let kept = std::fs::read_to_string(dir.path().join(RELEASE_FILE)).unwrap();
+    assert!(kept.ends_with(&format!("\n{SIGNED_AT}\n")), "{kept}");
+
+    let same = release(&name, tarball, SIGNED_AT);
+    let checked = check_by(dir.path(), page(&same), &keys()).await;
+    assert_eq!(checked.unwrap(), Check::Available);
+}
+
+/// **A newer signed release installs and keeps its time**: signed a second
+/// after the kept time, Updated, its bytes in place, `release` its hash and
+/// its signature's time; then Current. Planted: only the hash kept (the
+/// time lost, the release file one line).
+#[tokio::test]
+async fn a_newer_signed_release_installs_and_keeps_its_time() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let newer = release(&name, tarball.clone(), SIGNED_AT + 1);
+    updated_at(dir.path(), SIGNED_AT);
+
+    let applied = apply_at(dir.path(), &exe(dir.path()), page(&newer), &keys()).await;
+    assert_eq!(applied.unwrap(), Outcome::Updated);
+    assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the new svrngs");
+    let hash = hex::encode(Sha256::digest(&tarball));
+    assert_eq!(
+        std::fs::read_to_string(dir.path().join(RELEASE_FILE)).unwrap(),
+        format!("{hash}\n{}\n", SIGNED_AT + 1)
+    );
+    let checked = check_by(dir.path(), page(&newer), &keys()).await;
+    assert_eq!(checked.unwrap(), Check::Current);
+}
+
+/// **`release` as `install.sh` writes it, one line, is still read**: its
+/// hash the page's, Current, with no floor; a second line that is no time
+/// cannot be judged, never read as none. Planted: the hash read as the
+/// whole file (the hash then read as the time: CouldNotJudge, here and in
+/// each test above that keeps a time); a second line that is no time read
+/// as none (Current).
+#[tokio::test]
+async fn install_sh_s_one_line_release_is_still_read() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let files = release(&name, tarball.clone(), SIGNED_AT);
+    installed(dir.path());
+    let hash = hex::encode(Sha256::digest(&tarball));
+    std::fs::write(dir.path().join(RELEASE_FILE), &hash).unwrap();
+
+    let checked = check_by(dir.path(), page(&files), &keys()).await;
+    assert_eq!(checked.unwrap(), Check::Current);
+    std::fs::write(dir.path().join(RELEASE_FILE), format!("{hash}\nsoon\n")).unwrap();
+    let checked = check_by(dir.path(), page(&files), &keys()).await;
+    assert!(
+        matches!(checked, Err(UpdateError::CouldNotJudge(_))),
+        "{checked:?}"
+    );
 }
 
 // The signed-update check (update/signed.rs `verify`), against v1.11.2's

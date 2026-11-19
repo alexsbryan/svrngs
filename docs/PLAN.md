@@ -1988,4 +1988,9 @@ Release that keeps each version for packages. `packaging/arch/PKGBUILD`
 builds svrngs, and Give as a package of its own, from that release, each
 download checked against the release key; on Omarchy it installs, runs,
 says the package's line to `svrngs update` and removes cleanly, and refuses
-a wrong key or sum (`demo/runs/pacman/2026-11-18/`).
+a wrong key or sum (`demo/runs/pacman/2026-11-18/`). From 2026-11-18 (the
+operator approved the signed-updates design, the release key backed up
+offline first), the page's sums are read only once signed by the release key,
+no earlier than the last signature accepted, and the page serves that
+signature beside them (DESIGN §7, "A computer updates only from a signed
+release").

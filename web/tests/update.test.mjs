@@ -45,6 +45,13 @@ test('a svrngs a package updates offers nothing, and runs nothing', () => {
   assert.deepEqual([checked.state.at.update, checked.effects], ['packaged', []]);
 });
 
+test('a release whose signature is refused is held: never offered, its why kept', () => {
+  const why =
+    'No update: page.invalid offers a new svrngs without the svrngs release key’s signature';
+  const held = step(FIRST, { type: 'checked', state: 'held', why });
+  assert.deepEqual([held.state.at.update, held.state.why, held.effects], ['held', why, []]);
+});
+
 test('an unknown answer is unread, never current', () => {
   const checked = step(FIRST, { type: 'checked', state: 'unknown', why: 'no page kept' });
   assert.deepEqual([checked.state.at.update, checked.state.why], ['unread', 'no page kept']);

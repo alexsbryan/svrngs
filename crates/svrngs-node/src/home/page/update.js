@@ -5,7 +5,8 @@
 // button posts /update. A new binary is in place only after the page's
 // checksum matched it; the node then stops, and the one that starts in its
 // place is the new binary. The page waits for it and reloads. A svrngs a
-// package updates is `packaged`, and the page offers nothing.
+// package updates is `packaged`, and the page offers nothing. A release
+// whose signature is refused is `held`: never offered, its why said.
 import { assertNever, go } from '../ui/machine.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
@@ -15,7 +16,7 @@ import { get, post } from './routes.js?v=__VERSION__';
  * the page made as it opened says nothing when it cannot be judged), and
  * the last answer's why.
  * @typedef {object} State
- * @property {{ update: 'checking' | 'current' | 'available' | 'packaged' | 'updating' | 'updated' | 'stuck' | 'unread' | 'refused' | 'dismissed' }} at
+ * @property {{ update: 'checking' | 'current' | 'available' | 'packaged' | 'held' | 'updating' | 'updated' | 'stuck' | 'unread' | 'refused' | 'dismissed' }} at
  * @property {boolean} [tried]
  * @property {string} [why]
  */
@@ -49,6 +50,7 @@ export const UPDATE = {
       'current',
       'available',
       'packaged',
+      'held',
       'updating',
       'updated',
       'stuck',
@@ -72,6 +74,7 @@ export const UPDATE = {
         if (message.state === 'current') return go(state, { update: 'current' });
         if (message.state === 'available') return go(state, { update: 'available' });
         if (message.state === 'packaged') return go(state, { update: 'packaged' });
+        if (message.state === 'held') return go(state, { update: 'held' }, { why: message.why });
         return go(state, { update: 'unread' }, { why: message.why });
       case 'unread':
       case 'refused':

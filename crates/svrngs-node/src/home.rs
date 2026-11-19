@@ -350,7 +350,9 @@ fn update_state(state: &str) -> Response {
 
 /// `GET /update`: whether the page this computer came from offers a svrngs
 /// it does not run; `unknown` when that cannot be judged, never `current`;
-/// `packaged` when a package updates this one.
+/// `held` when the page's release is refused (its signature missing, not a
+/// release key's, or older than the last accepted), said where the offer
+/// would be; `packaged` when a package updates this one.
 async fn update_check(State(at): State<Asking>) -> Response {
     match crate::update::check(&at.door.data_dir).await {
         Ok(crate::update::Check::Current) => update_state("current"),
@@ -358,8 +360,9 @@ async fn update_check(State(at): State<Asking>) -> Response {
         // A package updates this svrngs: the page offers nothing.
         Ok(crate::update::Check::Packaged(_)) => update_state("packaged"),
         Err(e) => {
-            tracing::debug!(target: "home", error = %e, "home: an update cannot be judged");
-            Json(serde_json::json!({ "state": "unknown", "why": e.to_string() })).into_response()
+            let state = if e.judged() { "held" } else { "unknown" };
+            tracing::debug!(target: "home", error = %e, state, "home: an update cannot be judged, or the page's release was refused");
+            Json(serde_json::json!({ "state": state, "why": e.to_string() })).into_response()
         }
     }
 }
