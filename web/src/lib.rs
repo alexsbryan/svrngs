@@ -809,33 +809,19 @@ mod wire;
 #[rustfmt::skip]
 mod paths;
 
-/// The wire's receive side: the queue of datagrams the window's channel
-/// brought, and the sender [`data_push`] fills it through.
-type Arrived = Option<tokio::sync::mpsc::UnboundedSender<(wire::PeerKey, Vec<u8>)>>;
+/// The wire's receive side: the sender the window's channel's datagrams
+/// go in through, each attempt's own (the director's finding 2, 3d40e17c:
+/// thread-locals here were one per worker, so a second attempt there sent
+/// the first one's datagrams to its own window).
+type Arrived = tokio::sync::mpsc::UnboundedSender<(wire::PeerKey, Vec<u8>)>;
 
-thread_local! {
-    /// The function each datagram out is handed to — the worker's port to
-    /// the window — and the peer the channel brings datagrams from, as the
-    /// spike's page held them (page/src/lib.rs:210-235): wasm runs on one
-    /// thread, so the wire's send function holds nothing.
-    static OUT: std::cell::RefCell<Option<js_sys::Function>> = std::cell::RefCell::default();
-    static PEER: std::cell::RefCell<wire::PeerKey> = const { std::cell::RefCell::new([0; 32]) };
-    static ARRIVED: std::cell::RefCell<Arrived> = std::cell::RefCell::default();
-}
-
-/// A datagram the window's channel brought, from the lender. A free
-/// function, not a method: the data endpoint's dial holds its object
+/// A datagram the window's channel brought, from `peer`, into `arrived`.
+/// A free function, not a method: the data endpoint's dial holds its object
 /// borrowed while it waits, and wasm-bindgen refuses every other call on
 /// it meanwhile, so the handshake's own replies would be thrown away (the
 /// spike's README, "A trap on the way"; page/src/lib.rs:210-235).
-#[wasm_bindgen]
-pub fn data_push(datagram: js_sys::Uint8Array) {
-    let (peer, bytes) = (PEER.with(|p| *p.borrow()), datagram.to_vec());
-    ARRIVED.with(|a| {
-        if let Some(tx) = a.borrow().as_ref() {
-            let _ = tx.send((peer, bytes));
-        }
-    });
+fn data_push(arrived: &Arrived, peer: wire::PeerKey, datagram: js_sys::Uint8Array) {
+    let _ = arrived.send((peer, datagram.to_vec()));
 }
 
 /// The fresh data endpoint of a lend's direct path, and the connection it
@@ -846,6 +832,7 @@ pub struct Direct {
     conn: Option<iroh::endpoint::Connection>,
     peer: iroh::EndpointId,
     relay: Option<RelayUrl>,
+    arrived: Arrived,
 }
 
 /// Bind the data endpoint for the lender whose key is `lender`, 64 hex,
@@ -886,18 +873,21 @@ pub async fn direct_start(
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
-    OUT.with(|o| *o.borrow_mut() = Some(out));
-    PEER.with(|p| *p.borrow_mut() = *lender.as_bytes());
     let secret = iroh::SecretKey::generate();
     let me = *secret.public().as_bytes();
     let (arrived, arrivals) = tokio::sync::mpsc::unbounded_channel();
-    ARRIVED.with(|a| *a.borrow_mut() = Some(arrived));
-    let send: wire::Send = std::sync::Arc::new(|_to: &wire::PeerKey, datagram: &[u8]| {
-        OUT.with(|o| {
-            if let Some(f) = o.borrow().as_ref() {
-                let _ = f.call1(&JsValue::NULL, &js_sys::Uint8Array::from(datagram));
-            }
-        });
+    // The wire's send must be `Send`, which `out` is not: it takes the
+    // datagram into this attempt's own queue, and a task of this thread,
+    // owning `out`, hands each to the window. The task ends when the wire,
+    // and so the endpoint, is dropped.
+    let (sent, mut sending) = tokio::sync::mpsc::unbounded_channel::<Vec<u8>>();
+    wasm_bindgen_futures::spawn_local(async move {
+        while let Some(datagram) = sending.recv().await {
+            let _ = out.call1(&JsValue::NULL, &js_sys::Uint8Array::from(&datagram[..]));
+        }
+    });
+    let send: wire::Send = std::sync::Arc::new(move |_to: &wire::PeerKey, datagram: &[u8]| {
+        let _ = sent.send(datagram.to_vec());
     });
     let data = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
@@ -916,6 +906,7 @@ pub async fn direct_start(
         conn: None,
         peer: lender,
         relay: named.or_else(|| parsed.first().cloned()),
+        arrived,
     })
 }
 
@@ -1026,12 +1017,13 @@ impl Direct {
         told(&port, "open").await?;
         // The channel is open: what it brings goes to the free `data_push`,
         // and the data endpoint dials (WebRTC alone, then with the relay).
-        let push = Closure::wrap(Box::new(|event: web_sys::MessageEvent| {
+        let (arrived, peer) = (self.arrived.clone(), *self.peer.as_bytes());
+        let push = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
             if let Some(bytes) = js_sys::Reflect::get(&event.data(), &"datagram".into())
                 .ok()
                 .filter(|v| !v.is_undefined())
             {
-                data_push(js_sys::Uint8Array::new(&bytes));
+                data_push(&arrived, peer, js_sys::Uint8Array::new(&bytes));
             }
         }) as Box<dyn FnMut(web_sys::MessageEvent)>);
         port.set_onmessage(Some(push.as_ref().unchecked_ref()));
