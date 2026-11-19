@@ -716,14 +716,7 @@ pub fn admit(
     // even for a pair the fork check somehow let through. Only within-actor,
     // within-second order changes.
     let mut order: Vec<&Candidate<'_>> = admitted.values().collect();
-    order.sort_by(|x, y| {
-        (x.op.ts_unix, &x.op.actor, x.op.kind.seq, &x.id).cmp(&(
-            y.op.ts_unix,
-            &y.op.actor,
-            y.op.kind.seq,
-            &y.id,
-        ))
-    });
+    order.sort_by_key(|a| (a.op.ts_unix, &a.op.actor, a.op.kind.seq, &a.id));
 
     let synced = crate::synced::written(order.iter().map(|a| (a.first.as_str(), &a.person, a.op)));
     let out: Vec<AdmittedOp> = order
@@ -737,7 +730,6 @@ pub fn admit(
                 RailAct::Correct { corrects, .. } => Some(corrects.clone()),
                 _ => None,
             };
-            let payload = a.op.kind.act.payload().cloned();
             AdmittedOp {
                 id: a.id.clone(),
                 actor: a.op.actor.clone(),
@@ -747,7 +739,7 @@ pub fn admit(
                 ts_unix: a.op.ts_unix,
                 corrects,
                 voided: m.voided.contains(&a.id),
-                payload,
+                payload: a.op.kind.act.payload().cloned(),
                 on_behalf_of: a.op.kind.on_behalf_of.clone(),
             }
         })
