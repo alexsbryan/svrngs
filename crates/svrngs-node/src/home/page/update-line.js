@@ -25,7 +25,7 @@ const said = (state) => {
     case 'stuck':
       return 'Updated. If this page does not come back, open svrngs from your Applications, or on Linux your applications menu.';
     case 'refused':
-      return `The update did not finish: ${state.why ?? 'the page’s answer could not be used'}.`;
+      return `The update did not finish: ${(state.why ?? 'the page’s answer could not be used').replace(/\.$/, '')}.`;
     case 'unread':
       return `Couldn’t check for updates: ${state.why ?? 'the page did not answer'}.`;
     case 'checking':

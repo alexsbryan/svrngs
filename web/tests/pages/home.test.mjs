@@ -141,6 +141,19 @@ test('a release whose signature is refused is said where the update would be off
   assert.deepEqual(page.all('#update button'), []);
 });
 
+// The same words when the page changed between the check and the press:
+// the update refused says them once, as one sentence. Planted, watched
+// failing: update-line.js wrapping the why as given ("…from the release..").
+test('an update refused for its signature says the why as one sentence', async () => {
+  const why =
+    'No update: group.svrnme.sh offers a new svrngs without the svrngs release key’s signature (get/SHA256SUMS.sig), so it can’t be told from anyone’s. Whoever runs that page can add the signature from the release.';
+  const page = await home(
+    ada({ 'GET /update': { state: 'available' }, 'POST /update': refused(502, why) }),
+  );
+  await page.press('#update button', 'Update and restart');
+  assert.equal(page.text('#update p')[0], `The update did not finish: ${why}`);
+});
+
 // browser::the_home_page_says_its_address_as_the_command_does: the page's
 // own address last, as home.rs `address(port)` writes it
 // (session_tests.rs pins that to this origin and `/`).
