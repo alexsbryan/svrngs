@@ -17,6 +17,8 @@ The row then says *"You lent jellyfin, at http://localhost:8096: the groups you 
 
 If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say which program it is, each one word…"*. Fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
 
+For a program apps may also send to, such as llama-server, the first press lends nothing yet: the row says where apps your friends open could send to it, and pressing again lends it ([models.md](models.md#lend-your-llama-server)).
+
 The home page asks for a password in two places: the account apps read through, in the next paragraph, and a header the program wants on each request, such as its API key (below). Each goes to this computer and nowhere else.
 
 If apps read the program, as Movie Night reads Jellyfin, its line under **What you lend** opens to say *"Apps can't read your jellyfin yet. To let them, make one account for your group."* Unfold **How to make the account**, make it the way that says, type its name and password, and press **Save the account**. svrngs signs in once and keeps only what the program gives it, not the password. The row then says *"Apps your friends open can read your jellyfin with the account you made. They can't change anything."*
@@ -34,6 +36,8 @@ svrngs share 5006 --program actual --group <group>
 ```
 
 Without `--program` on a port it doesn't know, svrngs says *"say which program is on port 5006: `svrngs share 5006 --program <name>`, its own name if it is one svrngs knows: audiobookshelf, calibre-web, factorio, immich, jellyfin, kokoro, llama-server, minecraft, navidrome"*. If nothing is running there, it says *"nothing answers on port 5006 on this computer: start it, then share it"*.
+
+For a program apps may also send to, such as llama-server, `share` first asks whether to let them. People in your group use it either way; the question is only about apps your friends open, which only read it unless you type `y` ([models.md](models.md#lend-your-llama-server)).
 
 If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ctrl-C stops it."* Usually it already runs, and `share` ends with *"svrngs is running here already, so they can open it now."*
 

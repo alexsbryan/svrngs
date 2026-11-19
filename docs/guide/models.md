@@ -14,7 +14,7 @@ llama-server -m my-model.gguf --host 127.0.0.1 --port 8101
 
 When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, it's ready. (Without `--port`, llama-server uses 8080.)
 
-**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so the row says *"Something at http://localhost:8101. To lend it, give it a name and say which program it is, each one word; if it is llama-server, say that."* Type a name in **Its name:** (`coder`) and `llama-server` in **Which program:**, tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
+**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so the row says *"Something at http://localhost:8101. To lend it, give it a name and say which program it is, each one word; if it is llama-server, say that."* Type a name in **Its name:** (`coder`) and `llama-server` in **Which program:**, tick who can open it, then press **Lend it to House** (the button names the groups you ticked). The first press lends nothing yet: the row says *"People in your group can use all of llama-server that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at /v1/embeddings, each app only after the friend who opened it says yes. To lend it with these, press Lend again."* Press it again to lend it.
 
 **From a terminal:**
 
@@ -22,7 +22,15 @@ When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, i
 svrngs share 8101 --program llama-server --name coder --group <group>
 ```
 
-It asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. (Lent from your home page, add it as a header in its line under **What you lend** instead: [Lend something that takes a password on each request](lend.md#lend-something-that-takes-a-password-on-each-request).) Then:
+It first asks:
+
+```
+People in your group can use all of coder that isn't kept back. Apps your friends open on their computers can only read it, unless you let them also send to it at /v1/embeddings; even then, each app sends only after the friend who opened it says yes. Let apps send? Type y, then press Enter:
+```
+
+Your friends chat with coder, and call it from their programs, either way. This is only about an app such as [Taste](examples.md), which sends coder the films in your friends' libraries to make its guesses: type `y` if your group uses one, or press Enter and apps only read coder.
+
+Then it asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. (Lent from your home page, add it as a header in its line under **What you lend** instead: [Lend something that takes a password on each request](lend.md#lend-something-that-takes-a-password-on-each-request).) Then:
 
 ```
 You lend coder (port 8101) to the groups you chose, as many at once as want it. …

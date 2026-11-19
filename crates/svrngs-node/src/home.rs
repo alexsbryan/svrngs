@@ -838,7 +838,9 @@ async fn lend_one(
 /// to it by those and svrngs's ([`share::sends_of`]), and the text the page
 /// posts back with the next press, so the lend keeps what they saw
 /// (CONTRACTS §2, "The lend is the yes"; §6.8). That press is the yes to
-/// its sends: a lend with any is drawn first, even with no group's file.
+/// its sends: a lend with any is drawn first, even with no group's file,
+/// and opens with what it doesn't govern, as `svrngs share`'s question
+/// does: people in the group reach all but what's kept back.
 fn drawn(word: &Program, text: String, by: &str) -> Response {
     let rows: Vec<String> = (share::rows_in(&text).flatten())
         .map(|(_, k, how)| format!("{k} {how}"))
@@ -852,7 +854,7 @@ fn drawn(word: &Program, text: String, by: &str) -> Response {
     };
     let sends = match paths.is_empty() {
         true => String::new(),
-        false => format!("Apps your friends open on their computers can send to {word} at {}, if each says yes. ", paths.join(" and ")),
+        false => format!("People in your group can use all of {word} that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at {}, each app only after the friend who opened it says yes. ", paths.join(" and ")),
     };
     let said = format!("{terms}{sends}To lend it with these, press Lend again.");
     Json(serde_json::json!({ "terms": text, "said": said })).into_response()

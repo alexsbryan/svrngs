@@ -1953,7 +1953,7 @@ async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
     );
     assert_eq!(
         first["said"],
-        "Apps your friends open on their computers can send to llama-server at /v1/embeddings, if each says yes. To lend it with these, press Lend again."
+        "People in your group can use all of llama-server that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at /v1/embeddings, each app only after the friend who opened it says yes. To lend it with these, press Lend again."
     );
     let sends = || {
         let lend =

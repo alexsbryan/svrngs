@@ -1586,20 +1586,24 @@ fn joined_said(joined: &Joined) -> String {
 
 /// Whether `lend`'s lender says yes, y at this terminal, to apps sending to
 /// it where its terms say (svrn-docs `rings/current/CONTRACTS.md` §2, "The
-/// lend is the yes"): with no terminal to answer, no, and said so.
+/// lend is the yes"): with no terminal to answer, no, and said so. The
+/// question opens with what it doesn't govern, since a lender read the
+/// paths alone as all their group could reach (§10, "How a lightly
+/// technical lender reads `sends:` at the yes"): people in the group reach
+/// all but what's kept back, and only another app is held to reading.
 fn sends_said(here: &impl Here, lend: &Lend) -> Result<bool, Refusal> {
     use std::io::IsTerminal;
     let paths: Vec<&str> = lend.sends.iter().map(|s| s.path()).collect();
     let (name, at) = (&lend.name, paths.join(" and "));
     let terminal = std::io::stdin().is_terminal();
-    let words = format!("Apps your friends open on their computers can send to {name} at {at}, if each says yes. Let them? Type y, then press Enter: ");
+    let words = format!("People in your group can use all of {name} that isn't kept back. Apps your friends open on their computers can only read it, unless you let them also send to it at {at}; even then, each app sends only after the friend who opened it says yes. Let apps send? Type y, then press Enter: ");
     let yes = terminal
         && here
             .prompt(name, &words, true)?
             .is_some_and(|y| ["y", "yes"].contains(&y.to_lowercase().as_str()));
     tracing::debug!(target: "cli", lend = %name, terminal, yes, "cli: share — its lender's yes to apps sending to it, or none");
     if !yes {
-        eprintln!("{name} is lent without sending: apps can only read it. To let them send, run this again in a terminal and type y.");
+        eprintln!("Apps your friends open on their computers can only read {name}, not send to it at {at}; people in your group still use all of it that isn't kept back. To let apps send, run this again in a terminal and type y.");
     }
     Ok(yes)
 }

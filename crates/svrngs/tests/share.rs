@@ -990,8 +990,9 @@ fn share_readers_signs_in_once_and_keeps_what_readers_are_let_in_with() {
 /// **A `sends:` is kept only on its lender's yes** (svrn-docs
 /// `rings/current/CONTRACTS.md` §2, "The lend is the yes"): llama-server's
 /// terms let apps send to `POST /v1/embeddings`, and `svrngs share` with
-/// no terminal to answer y keeps none of it: the lend reads only, and its
-/// lender is told so and how to say yes. Planted, watched failing:
+/// no terminal to answer y keeps none of it: apps read it only, and its
+/// lender is told so, that their group still uses all of it but what's
+/// kept back, and how to say yes. Planted, watched failing:
 /// `sends_said` answering yes with no terminal (the declaration holds the
 /// row).
 #[cfg(unix)]
@@ -1023,7 +1024,7 @@ fn a_send_is_kept_only_on_its_lender_s_yes() {
     assert!(!declared.contains("sends"), "{declared}");
     let log = std::fs::read_to_string(&log).unwrap();
     assert!(
-        log.contains("llama-server is lent without sending: apps can only read it. To let them send, run this again in a terminal and type y."),
+        log.contains("Apps your friends open on their computers can only read llama-server, not send to it at /v1/embeddings; people in your group still use all of it that isn't kept back. To let apps send, run this again in a terminal and type y."),
         "its lender is told: {log}"
     );
     assert!(
