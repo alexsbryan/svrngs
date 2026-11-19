@@ -115,6 +115,9 @@ pub mod group;
 pub mod invite;
 mod publication;
 pub mod tiers;
+// The WebRTC path: the carrier and, in the node's half, the offer it
+// answers (webrtc-node; RELAY_COMMONS design 4).
+pub mod webrtc;
 // Joining a group by its link (arch-command (a)).
 pub mod join;
 pub mod node;
