@@ -172,6 +172,10 @@ operator-only blocker gets a committed package and `ralph-result needs-human`.
   own relay, both down, still meets at n0's, and says so on the home page.
 
 **webrtc-page's stall: the director's read of the second session's runs**
+(Update: 36a118cf answers 1. The connection on the window's channel is kept,
+and `the_channel_closed_mid_film_completes_over_the_relay` passes in both
+engines, several runs. 2 stands. For 3, check whether the stall still
+occurs over repeated runs; if it does not, say so in the row's close.)
 (2026-11-19, from target/webrtc-page-browser-all-5.log and -6.log):
 1. **The data connection has no relay path, so nothing can fall back.**
    Each failing run's own trace: `page goes direct: [{"kind":"webrtc",
