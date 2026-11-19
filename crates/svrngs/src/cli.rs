@@ -129,7 +129,6 @@ use svrngs_node::update;
 use svrngs_node::{Joined, Person, SigningKey};
 
 use crate::group::{self, Name, Seed};
-use crate::handoff;
 use crate::identity::{self, KeyError};
 use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal, Terms};
@@ -589,8 +588,6 @@ pub enum Refusal {
     NotRunning,
     #[error("svrngs running here did not open your home page: {0}")]
     Unopened(String),
-    #[error("your home page was not opened: its one-use code reaches your browser through {0}, which cannot be kept to your account alone ({1}). Run `svrngs open --print` and open the address it shows, or remove {0} so svrngs makes it again")]
-    Unhanded(PathBuf, String),
     /// `check`'s findings, or the folder holding no page.
     #[error("{0}")]
     Unfit(String),
@@ -660,7 +657,6 @@ impl Refusal {
             | Refusal::Older
             | Refusal::Readers(..)
             | Refusal::Terms(_)
-            | Refusal::Unhanded(..)
             | Refusal::Busy(_) => 1,
             Refusal::Update(_)
             | Refusal::NoDataDir
@@ -964,37 +960,18 @@ fn said(
 
 /// `svrngs open`: an address with a code that opens the home page once,
 /// as its session there (give-session), asked of svrngs running here and
-/// handed to this computer's browser by a page only this account can read
-/// ([`handoff`]), never in the opener's arguments, which any account can
-/// read; refused where that page cannot be kept private. Shown instead on
-/// this terminal with `print`, for another browser, or where none opens.
-#[expect(
-    clippy::disallowed_methods,
-    reason = "the opener's adapter: its page's name drawn and the clock read where the page is written"
-)]
+/// handed to this computer's opener; shown instead with `print`, for
+/// another browser, or where none opens. Any account can read the
+/// opener's arguments, and the code lets in only a browser this account
+/// runs (svrngs-node session.rs `Sessions::ours`).
 async fn open(here: &impl Here, at: Option<&str>, print: bool) -> Result<String, Refusal> {
     let asked = serde_json::json!({ "at": at });
     let (ok, text) = here.ask("/v1/open", &asked).await?;
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
-    let at = open.and_then(|o| url::Url::parse(o["open"].as_str()?).ok());
-    let at = at.filter(|a| a.scheme() == "http").ok_or_else(|| {
-        tracing::debug!(target: "cli", ok, "cli: refused — svrngs running here answered no http address to open");
-        Refusal::Unopened(text.trim().into())
-    })?;
-    if print {
-        tracing::debug!(target: "cli", "cli: open — shown on this terminal alone, for another browser; no opener handed it");
-        return Ok(format!("Open this in your browser within a minute: {at}\n"));
-    }
-    let unhanded = |(path, why): (PathBuf, String)| {
-        tracing::debug!(target: "cli", path = %path.display(), why, "cli: refused — open's page not kept to this account, so nothing handed to the opener");
-        Refusal::Unhanded(path, why)
-    };
-    let mut name = [0; 16];
-    let folder = here.root().join(handoff::DIR);
-    getrandom::fill(&mut name).map_err(|e| unhanded((folder, e.to_string())))?;
-    let page = handoff::hand(here.root(), &at, name, std::time::SystemTime::now());
-    let opened = here.browse(page.map_err(unhanded)?.as_str().as_ref());
-    tracing::debug!(target: "cli", opened, "cli: open — the page handing the browser its code given to the opener, else the address shown on this terminal");
+    let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
+    let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
+    let opened = !print && here.browse(at.as_ref());
+    tracing::debug!(target: "cli", opened, print, "cli: open — the home page, with a code for its session, given to the browser, else shown");
     Ok(match opened {
         true => "Your home page is open in your browser.\n".into(),
         false => format!("Open this in your browser within a minute: {at}\n"),

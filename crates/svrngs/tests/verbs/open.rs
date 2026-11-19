@@ -1,12 +1,12 @@
-//! `svrngs open --print` on the wire: install.rs's claim that a second
-//! browser is told how to come in, and can, asked of a node's routes in
-//! this process (cli.rs `Here`; docs/seams.tsv). The pasted line that
-//! installs and starts svrngs stays install.rs's.
+//! `svrngs open` on the wire: what its opener is handed and who can use it,
+//! and install.rs's claim that a second browser is told how to come in, and
+//! can, asked of a node's routes in this process (cli.rs `Here`;
+//! docs/seams.tsv). The pasted line that installs and starts svrngs stays
+//! install.rs's.
 
 use std::cell::RefCell;
 use std::ffi::{OsStr, OsString};
-use std::os::unix::fs::PermissionsExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use axum::body::Body;
 use axum::http::Request;
@@ -58,113 +58,41 @@ impl Opener<'_> {
     }
 }
 
-/// The file a `file://` address `handed` names.
-fn page_of(handed: &str) -> PathBuf {
-    assert!(
-        handed.starts_with("file:///"),
-        "not a page's address: {handed}"
-    );
-    let url = reqwest::Url::parse(handed).unwrap();
-    url.to_file_path().unwrap()
-}
-
-/// The address the page at `page` sends its browser on to, as its script
-/// gives it to `location.replace`.
-fn sent_on_to(page: &Path) -> String {
-    let text = std::fs::read_to_string(page).unwrap();
-    let (_, rest) = text.split_once("location.replace(").expect("a script");
-    let (json, _) = rest.split_once(')').unwrap();
-    serde_json::from_str(json).unwrap()
-}
-
-fn mode(path: &Path) -> u32 {
-    std::fs::symlink_metadata(path)
-        .unwrap()
-        .permissions()
-        .mode()
-        & 0o777
-}
-
-/// **The open reaches the browser by a page only this account reads, never
-/// as the opener's argument** (svrn-docs MARKETPLACE_REVIEW_SVRNGS.md §3):
-/// any account on the computer reads a program's arguments (`ps`, Linux's
-/// `/proc/<pid>/cmdline`), so the opener is handed the `file://` address of
-/// a page in a folder of the data dir, the folder 0700 and the page 0600,
-/// and the page sends the browser on to the open, which still lets it in
-/// once. A page older than five minutes is cleared at the next open, a newer
-/// one kept. Watched failing on cli.rs before the hand-off: the opener was
-/// handed the open's address, its code in it.
+/// **The opener is handed the open, and only this account's browser can
+/// use it** (svrn-docs LEND_OWNER §3): `svrngs open` gives the program that
+/// opens addresses the open's own address, its code in it, where any
+/// account can read it in the opener's arguments; posted from a socket of
+/// another account, the code lets nothing in and stays unspent, and from
+/// this account's it lets the browser in, once (svrngs-node session.rs
+/// `Sessions::ours`). Watched failing on ffe54450's page: the opener handed
+/// a `file://` page, not the open.
 #[tokio::test]
-async fn the_open_reaches_the_browser_by_a_private_page_never_an_argument() {
+async fn the_opener_is_handed_the_open_and_only_this_account_s_browser_can_use_it() {
+    use svrngs_node::uid::Owner;
     let wire = Wire::default();
     let alex = computer(&wire, 2).await;
     let opener = Opener(Running(&alex), RefCell::default());
     let (said, handed) = opener.open().await;
     assert_eq!(said.unwrap(), "Your home page is open in your browser.\n");
-    let handed = handed.expect("the opener was handed something");
-    assert!(
-        !handed.contains("code="),
-        "the code in an argument: {handed}"
-    );
-    let first = page_of(&handed);
-    let folder = first.parent().unwrap();
-    assert_eq!((mode(folder), mode(&first)), (0o700, 0o600), "{handed}");
-    let open = sent_on_to(&first);
-    let (_, code) = open.split_once("/svrngs-open?code=").expect(&open);
-    assert!(!handed.contains(code), "the code in an argument: {handed}");
-    let (at, path) = open
-        .strip_prefix("http://")
-        .unwrap()
-        .split_once('/')
-        .unwrap();
+    let handed = handed.expect("the opener was handed the open");
+    let at = format!("svrngs.localhost:{}", alex.node.api_addr().port());
+    let path = handed
+        .strip_prefix(&format!("http://{at}"))
+        .filter(|p| p.starts_with("/svrngs-open?code="))
+        .unwrap_or_else(|| panic!("not the open: {handed}"));
     let origin = format!("http://{at}");
-    let path = format!("/{path}");
-    let (status, keyed, body) = browsed(&alex.node, ("POST", at, &path), Some(&origin)).await;
+    let mine = svrngs_node::uid::mine().unwrap();
+    // `browsed` asks from 127.0.0.1:50000, which the wire says is whose.
+    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine + 1));
+    let (status, keyed, _) = browsed(&alex.node, ("POST", &at, path), Some(&origin)).await;
+    assert_eq!((status, keyed), (401, false), "another account's program");
+    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine));
+    let (status, keyed, body) = browsed(&alex.node, ("POST", &at, path), Some(&origin)).await;
     assert_eq!(
         (status, keyed),
         (200, true),
-        "the page's open lets it in: {body}"
+        "this account's browser: {body}"
     );
-
-    let aged = std::fs::File::options().write(true).open(&first).unwrap();
-    let long_ago = std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1);
-    aged.set_modified(long_ago).unwrap();
-    let fresh = folder.join("fresh.html");
-    std::fs::write(&fresh, "a page an open wrote a moment ago").unwrap();
-    let (said, handed) = opener.open().await;
-    assert!(said.is_ok(), "{said:?}");
-    let second = page_of(&handed.unwrap());
-    assert_ne!(second, first);
-    assert!(
-        second.exists() && fresh.exists(),
-        "a page newer than five minutes cleared"
-    );
-    assert!(!first.exists(), "a page older than five minutes kept");
-}
-
-/// **No folder only this account reads, no open handed over**: where the
-/// folder cannot be kept private (here a file stands in its place), `open`
-/// refuses, says where and why and how to come in instead, and hands its
-/// opener nothing; never the address as an argument. Watched failing on
-/// cli.rs before the hand-off, which handed the address.
-#[tokio::test]
-async fn an_open_with_no_private_folder_to_hand_it_through_is_refused() {
-    let wire = Wire::default();
-    let alex = computer(&wire, 3).await;
-    let opener = Opener(Running(&alex), RefCell::default());
-    let (_, handed) = opener.open().await;
-    let handed = handed.expect("the opener was handed something");
-    let folder = page_of(&handed).parent().unwrap().to_path_buf();
-    std::fs::remove_dir_all(&folder).unwrap();
-    std::fs::write(&folder, "not a folder").unwrap();
-    let (said, handed) = opener.open().await;
-    let refused = said
-        .expect_err("an open with no private folder")
-        .to_string();
-    assert_eq!(handed, None, "handed over anyway");
-    let named = alex.dir.path().join(folder.file_name().unwrap());
-    assert!(refused.contains(&named.display().to_string()), "{refused}");
-    assert!(refused.contains("svrngs open --print"), "{refused}");
 }
 
 /// `method` of `path` at `host`, asked of `node`'s routes as a browser on

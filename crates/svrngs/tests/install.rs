@@ -462,8 +462,8 @@ async fn native_arrival_retries_one_identity_and_opens_the_exact_group() {
         let key = std::fs::read(home.path().join(".svrngs/identity")).unwrap();
         assert_eq!(identity.get_or_insert(key.clone()), &key);
         let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
-        let url = sent_on_to(opened.lines().last().unwrap());
-        let url = reqwest::Url::parse(&url).unwrap();
+        let url = opened.lines().last().unwrap();
+        let url = reqwest::Url::parse(url).unwrap();
         let reply: serde_json::Value = reqwest::Client::new()
             .post(format!(
                 "http://127.0.0.1:{}{}?{}",
@@ -555,10 +555,9 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     let port_home = api.trim().rsplit(':').next().unwrap().to_string();
     let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
     let address = format!("http://svrngs.localhost:{port_home}/");
-    let open = sent_on_to(opened.lines().next().unwrap());
     assert!(
-        open.starts_with(&format!("{address}svrngs-open?code=")),
-        "{open}"
+        opened.starts_with(&format!("{address}svrngs-open?code=")),
+        "{opened}"
     );
     // As the command and the home page say it, and the same the second time
     // (start-address (b)).
@@ -696,17 +695,6 @@ async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page
     }
 }
 
-/// The address the page an opener was `handed` sends its browser on to, as
-/// its script gives it (svrngs::handoff `page`): the open's code is in the
-/// page, never in what the opener is handed.
-fn sent_on_to(handed: &str) -> String {
-    assert!(!handed.contains("code="), "a code in an argument: {handed}");
-    let page = reqwest::Url::parse(handed).unwrap().to_file_path().unwrap();
-    let page = std::fs::read_to_string(page).unwrap();
-    let (_, script) = page.split_once("location.replace(").unwrap();
-    serde_json::from_str(script.split_once(')').unwrap().0).unwrap()
-}
-
 /// What svrngs answers the open `url` redeemed as a browser's bootstrap
 /// redeems it, by a POST from its own origin (home/session.js): its status,
 /// and whether it gave the origin its key (session.rs `redeem`).
@@ -737,11 +725,15 @@ async fn redeemed(url: &str) -> (u16, bool) {
 /// stubs on `PATH`, as install.sh ran, so no browser of this computer's is
 /// opened. Red before the opener: no app, no entry, and the home page
 /// opened at its bare address, which a browser with no session is refused.
-/// What the opener is handed is a page, the open never in its arguments
-/// ([`sent_on_to`]).
 async fn the_opener_opens_the_home_page(home: &Path, linux: bool, address: &str, said: &str) {
     let opened = || std::fs::read_to_string(home.join("stubs/opened")).unwrap();
-    let open = |n: usize| opened().lines().nth(n).map(sent_on_to).unwrap_or_default();
+    let open = |n: usize| {
+        opened()
+            .lines()
+            .nth(n)
+            .map(String::from)
+            .unwrap_or_default()
+    };
     let first = open(0);
     assert!(
         first.starts_with(&format!("{address}svrngs-open?code=")),
@@ -1093,9 +1085,8 @@ fn install_sh_refuses_give_off_its_sum_and_installs_nothing() {
 }
 
 /// **A refused open is said at once, not waited out**: where `svrngs open`
-/// refuses (exit 1; here a stand-in, as svrngs refuses when the folder it
-/// hands the browser its code through cannot be kept private, cli.rs
-/// `Unhanded`), the line stops with svrngs's own words, never retrying for
+/// refuses (exit 1; here a stand-in for any refusal of svrngs's own), the
+/// line stops with svrngs's own words, never retrying for
 /// 30 s and then calling it a start that did not come. Watched failing on
 /// install.sh before: "svrngs did not start within 30 seconds" after 30 tries.
 #[test]
