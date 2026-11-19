@@ -299,9 +299,14 @@ async fn token(
     headers: HeaderMap,
     Form(form): Form<TokenForm>,
 ) -> Result<Response, Response> {
+    // A refused grant or client, as the `Err` of whatever its step answers.
+    fn grant<T>(why: &str) -> Result<T, Response> {
+        Err(refuse(StatusCode::BAD_REQUEST, "invalid_grant", why))
+    }
+    fn bad_client<T>(why: &str) -> Result<T, Response> {
+        Err(refuse(StatusCode::UNAUTHORIZED, "invalid_client", why))
+    }
     let (name, declared, config) = p.declared(&lend).ok_or_else(|| missing(&lend))?;
-    let grant = |why: &str| Err(refuse(StatusCode::BAD_REQUEST, "invalid_grant", why));
-    let bad_client = |why: &str| Err(refuse(StatusCode::UNAUTHORIZED, "invalid_client", why));
     let bad = |error: &str, why: &str| Err(refuse(StatusCode::BAD_REQUEST, error, why));
     if form.grant_type.as_deref() != Some("authorization_code") {
         return bad(
@@ -309,10 +314,7 @@ async fn token(
             "the only grant is authorization_code",
         );
     }
-    let (client_id, secret) = match client_of(&headers, &form) {
-        Ok(client) => client,
-        Err(why) => return bad_client(&why),
-    };
+    let (client_id, secret) = client_of(&headers, &form).or_else(|why| bad_client(&why))?;
     if client_id != config.client_id {
         return bad_client(&format!("{client_id} is not this lend's client"));
     }
@@ -322,10 +324,7 @@ async fn token(
     let Some(text) = form.code.as_deref() else {
         return bad("invalid_request", "no code was presented");
     };
-    let code = match p.codes.redeem(text) {
-        Ok(code) => code,
-        Err(why) => return grant(why),
-    };
+    let code = p.codes.redeem(text).or_else(grant)?;
     if code.lend != name {
         return grant("the code was minted for another lend");
     }
