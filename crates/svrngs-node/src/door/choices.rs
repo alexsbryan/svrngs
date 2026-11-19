@@ -373,11 +373,8 @@ pub(crate) async fn own_reaching(door: &Door, app: Label, told: Told) -> Respons
     let (said, mut reads, mut left, mut sends) = told;
     let shown: Vec<Label> = reads.iter().chain(&left).cloned().collect();
     // A yes it cannot read beside this is said when it is kept (`load`).
-    if let Some(choice) = reaching(door, &app)
-        .ok()
-        .flatten()
-        .filter(|_| said == Said::Yes)
-    {
+    let earlier = reaching(door, &app).ok().flatten();
+    if let Some(choice) = earlier.filter(|_| said == Said::Yes) {
         reads.extend(choice.reads.into_iter().filter(|l| !shown.contains(l)));
         left.extend(choice.left.into_iter().filter(|l| !shown.contains(l)));
         sends.extend(choice.sends.into_iter().filter(|l| !shown.contains(l)));
