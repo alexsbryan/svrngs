@@ -19,9 +19,11 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-# The LOCKED pin (Cargo.lock of the measuring build, browser-dial bd-1): the
-# browser dial was measured WORKED at exactly these versions.
-iroh = "=1.0.2"
+# The browser dial was measured WORKED at these pins (Cargo.lock of the
+# measuring build, browser-dial bd-1); iroh is bumped to the relay queue's
+# version (relay-survey: demo/runs/relay-commons/SURVEY.md, "The chosen
+# versions"), whose web probe resolves the same wasm-bindgen set.
+iroh = "=1.4.2"
 wasm-bindgen = "=0.2.128"
 wasm-bindgen-futures = "=0.4.78"
 js-sys = "=0.3.105"

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! `svrngs relay` (relay-verb; DESIGN §3, "A relay anyone runs"): iroh's
-//! own relay server, iroh-relay 1.0.2, the one the computers that dial it
+//! own relay server, iroh-relay 1.4.2, the one the computers that dial it
 //! are built with, so the relay svrngs runs for everyone is the one anyone
 //! runs for themselves (ralph/next/relay/CHARTER.md).
 //!

@@ -22,9 +22,9 @@ hex = { workspace = true }
 # (u5-10), and `share --folder` the node running here (gf-1): the one
 # client svrngs-node's `http` builds, iroh's reqwest 0.13.
 # `svrngs relay` (relay-verb): iroh's own relay server, at the version
-# iroh =1.0.2 resolves, so the relay anyone runs is the one the computers
+# iroh =1.4.2 resolves, so the relay anyone runs is the one the computers
 # that dial it were built with; the tests run it on 127.0.0.1 too.
-iroh-relay = { version = "=1.0.2", features = ["server"] }
+iroh-relay = { version = "=1.4.2", features = ["server"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -61,7 +61,7 @@ axum = "0.8"
 tower = { version = "0.5", features = ["util"] }
 # relay.rs dials the verb's relay as iroh's relay client does, which asks a
 # resolver: iroh's, at the version svrngs-node pins.
-iroh = "=1.0.2"
+iroh = "=1.4.2"
 
 # Upstream's posture, as svrngs-core and svrngs-node carry it.
 [lints.clippy]

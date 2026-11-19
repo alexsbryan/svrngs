@@ -20,16 +20,18 @@ tracing = { workspace = true }
 ed25519-dalek = { workspace = true }
 getrandom = "0.3"
 # The dialling half (U1): upstream's requirements at e1a43bcd2. iroh is pinned
-# where upstream's Cargo.lock held it (a bare "1.0" resolves 1.3.0), and the
-# lock takes compatible security updates of its tree. scripts/advisories.py
-# checks both workspaces; upstream's vulnerable transitive versions are not pins.
-iroh = "=1.0.2"
+# to the version the relay queue chose (relay-survey:
+# demo/runs/relay-commons/SURVEY.md, "The chosen versions"), whose relay fixes
+# and `Status::RateLimited` the queue's rows need; scripts/advisories.py checks
+# both workspaces.
+iroh = "=1.4.2"
 # The stream an address lookup answers with, as iroh names it (src/relay.rs):
 # iroh's own, at the version the lock already holds.
 n0-future = "0.3"
 # The room's network (room.rs `look`): the default route's interface, its
-# addresses and its router's, as iroh's netwatch reads them, at the version
-# the lock already holds through it, so no new crate.
+# addresses and its router's, at the version room.rs was written against.
+# iroh 1.4.2's netwatch brings its own netdev 0.47.0 beside this one, so the
+# lock holds both; this pin does not move with iroh's.
 netdev = "=0.45.0"
 # A synced directory's changes as the OS reports them (FSEvents, inotify),
 # so a step looks only at what changed (perf-2 f; the operator's yes,
@@ -73,8 +75,10 @@ tower = { version = "0.5", features = ["util"] }
 # retried or rewritten but what the door names ("client"); and to a member,
 # a request on a bi-stream of the iroh connection (arch-peer).
 # A group's folders (gf-1, sy-1): the store, its provider and verified range
-# fetch, without the rpc default, over the lock's iroh 1.0.2.
-iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
+# fetch, without the rpc default, over the lock's iroh 1.4.2. 0.104.0 is the
+# newest that keeps irpc 0.17.0 (0.105.0 needs irpc 1.0.0; relay-survey,
+# "Why iroh-blobs 0.104.0 and not 0.105.0").
+iroh-blobs = { version = "=0.104.0", default-features = false, features = ["fs-store"] }
 irpc = { version = "=0.17.0", default-features = false }
 # The day a computer's person left a group, said by its old lend addresses
 # in this computer's time as the command says one (origin.rs `cut_from`,
@@ -120,8 +124,8 @@ tokio = { version = "1", features = ["full"] }
 sha2 = "0.10"
 # The browser tests (tests/browser) run a relay on 127.0.0.1, plain HTTP, so
 # a page in a headless browser reaches a node with nothing from the
-# internet: iroh's own relay server, at the version iroh =1.0.2 resolves.
-iroh-relay = { version = "=1.0.2", features = ["server"] }
+# internet: iroh's own relay server, at the version iroh =1.4.2 resolves.
+iroh-relay = { version = "=1.4.2", features = ["server"] }
 # The conformance canary keeps the door's `carriage` lines beside what the
 # browser saw (u5-11): the subscriber the command itself uses.
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

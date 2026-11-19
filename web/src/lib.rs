@@ -207,7 +207,7 @@ async fn bind(
     relays: Vec<RelayUrl>,
     held: bool,
 ) -> Result<Bound, JsError> {
-    t!("LAYER page: wasm module loaded and dial entered (iroh =1.0.2)");
+    t!("LAYER page: wasm module loaded and dial entered (iroh =1.4.2)");
 
     // ── LAYER 1: the person's key, then the link's token ───────────────────
     let secret = match <[u8; 32]>::try_from(key.as_slice()) {
