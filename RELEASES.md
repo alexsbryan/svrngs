@@ -20,6 +20,28 @@ exactly the file you checked, and the link's page only joins:
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/sign-release.sh`).
 
+## V1.12.1, 19 November 2026
+
+V1.12.1 keeps each lend to the app you lent, not only to your account.
+
+**A lend stays with the app you lent.** When you lend a program, svrngs
+now also notes the app sandbox it runs in, if any. On Linux that's a
+Flatpak. On a Mac it's Apple's App Sandbox, which every App Store app runs
+in. svrngs passes your friends only to a program in that same sandbox, or
+in none. If another app answers in its place, your friends get a closed
+lend, and its line on your home page says: *"Another program is answering
+on shelf's port, so nobody can open shelf. Start shelf again, or stop
+lending it and lend what runs there now."* A Flatpak or App Sandbox app
+you lend keeps its lend when it restarts.
+
+Groups and the record work as in V1.12.0. Press **Update and restart** on
+your home page, or run `svrngs update` and then `svrngs restart`. Your
+phone's page updates itself.
+
+V1.12.1 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.12.1`. Its publication and readback are recorded in
+`demo/runs/v1.12.1/2026-11-19/README.md`.
+
 ## V1.12.0, 18 November 2026
 
 V1.12.0 installs an update only when it is signed, and keeps each lend to
