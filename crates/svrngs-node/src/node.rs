@@ -120,32 +120,25 @@ pub const ONLINE_WAIT: Duration = Duration::from_secs(10);
 /// rate limited (share-refusal; RELAY_COMMONS design 3, "The signal").
 const SHARE_ASKED_EVERY: Duration = Duration::from_secs(1);
 
-/// How long after the last large request over the build's relay — or after
-/// the relay's report itself, with none — the node leaves its relay
-/// connection and takes it again: the minute RELAY_COMMONS design 3, "How
-/// it clears", waits, which is also about the time the relay's bucket
-/// takes to refill its 8 MiB burst at 125,000 bytes a second
-/// (`crates/svrngs/src/relay.rs` `SHARE_RATE`, `SHARE_BURST`).
-pub const SHARE_WAITED: Duration = Duration::from_secs(60);
-
 /// What this computer's connection to the build's relay has done
 /// (share-refusal; RELAY_COMMONS design 3): the relay's `RateLimited`
 /// report, counted in `relay_conns_ratelimited` (iroh 1.4.2
 /// `socket/metrics.rs:55-60`, incremented at most once per connection,
 /// `socket/transports/relay/actor.rs:810-816`), and each large request the
-/// door refused over it. The door refuses while [`Share::limited`] is
-/// set; [`Host::watch_share`] clears it a minute after the last refusal,
-/// leaving the connection and taking it again.
+/// door refused over it. The door refuses while [`Share::limited`] is set,
+/// and a spent share stays spent for the life of that connection: iroh
+/// 1.4.2 cannot remake one, so a timed clear would let a second
+/// throttling stall with no words (the operator, 2026-11-18; 2dc7ebe4).
+/// [`Host::watch_share`] clears it when this computer no longer holds the
+/// build's relay, the connection to it ended.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Share {
-    /// When the relay last reported this computer's connection rate
-    /// limited, while it has not been left and taken again since; `None`
-    /// when the share is not spent.
-    pub(crate) limited: Option<tokio::time::Instant>,
+    /// Whether the relay has reported this computer's connection rate
+    /// limited, while this computer still holds the build's relay.
+    pub(crate) limited: bool,
     /// When the door last refused a large request over the build's relay,
-    /// on the monotonic clock and the wall clock (unix seconds, which the
-    /// home page says); `None` when none was.
-    pub(crate) refused: Option<(tokio::time::Instant, Option<i64>)>,
+    /// unix seconds, which the home page says; `None` when none was.
+    pub(crate) refused: Option<i64>,
 }
 
 /// Until this process is asked to stop: Ctrl-C, or SIGTERM, which a
@@ -641,23 +634,18 @@ impl Host {
     }
 
     /// The relay's count of connections it reported rate limited, read
-    /// every [`SHARE_ASKED_EVERY`] for its connection to the build's relay;
-    /// and, a minute with nothing large refused after the report, the
-    /// connection left and taken again, once per report, traced
-    /// (share-refusal; RELAY_COMMONS design 3, "The signal" and "How it
-    /// clears").
+    /// every [`SHARE_ASKED_EVERY`] for its connection to the build's relay:
+    /// a rise while this computer holds it spends the share, and the share
+    /// is unspent once this computer no longer holds it — the connection
+    /// ended of itself (share-refusal; RELAY_COMMONS design 3, "The
+    /// signal"; the operator, 2026-11-18: a spent share stays spent for the
+    /// life of the connection, 2dc7ebe4).
     ///
     /// The count is the endpoint's, not one relay's, so it is read only
     /// while this computer holds the build's relay, which alone carries the
     /// share; a report while it holds a group's own or n0's says nothing of
-    /// it. iroh 1.4.2 keeps a relay connection a map removal does not close
-    /// (measured on a relay on 127.0.0.1: `relay_conns_success` unchanged
-    /// after remove+insert, `network_change` and 70 s removed), so the
-    /// connection left and taken again may be the same one; the minute is
-    /// also what the bucket takes to refill its burst, so the large
-    /// requests it was holding pass again either way.
+    /// it.
     pub(crate) async fn watch_share(self: Arc<Self>) {
-        let build: Vec<_> = self.build.iter().cloned().map(Into::into).collect();
         let mut every = tokio::time::interval(SHARE_ASKED_EVERY);
         let mut seen = self.transport.ratelimited();
         loop {
@@ -669,29 +657,15 @@ impl Host {
                 .relays
                 .iter()
                 .any(|r| self.build.contains(r));
-            if count > seen && at_build {
-                self.share
-                    .send_modify(|s| s.limited = Some(tokio::time::Instant::now()));
-            }
-            tracing::debug!(target: "share", count, seen, at_build,
+            let spent = at_build && (count > seen || self.share.borrow().limited);
+            self.share.send_if_modified(|s| {
+                let was = s.limited;
+                s.limited = spent;
+                was != spent
+            });
+            tracing::debug!(target: "share", count, seen, at_build, spent,
                 "share: the relay's count of connections it reported rate limited, and whether this computer holds the build's relay");
             seen = count;
-            let remake = at_build
-                && self.share.send_if_modified(|s| {
-                    let Some(limited) = s.limited else {
-                        return false;
-                    };
-                    if s.refused.map_or(limited, |(at, _)| at).elapsed() < SHARE_WAITED {
-                        return false;
-                    }
-                    s.limited = None;
-                    true
-                });
-            if remake {
-                tracing::debug!(target: "share", relays = build.len(),
-                    "share: a minute with nothing large refused, so this computer leaves its relay connection and takes it again");
-                self.transport.remade(&build).await;
-            }
         }
     }
 

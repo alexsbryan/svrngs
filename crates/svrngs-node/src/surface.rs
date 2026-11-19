@@ -306,9 +306,10 @@ async fn groups(State(at): State<Asking>) -> Response {
     // This computer's key, so its home page tells its own devices from
     // others' among a group's people (capability-what-acts); and when the
     // door last refused a large answer over the shared relay, unix seconds,
-    // which the lender's home page says (share-refusal; RELAY_COMMONS
-    // design 3, "The words").
-    let share = at.host.share.borrow().refused.and_then(|(_, at)| at);
+    // which the lender's home page says while its share is spent
+    // (share-refusal; RELAY_COMMONS design 3, "The words").
+    let share = at.host.share.borrow();
+    let share = share.limited.then_some(share.refused).flatten();
     Json(serde_json::json!({ "groups": held, "key": me, "share": share })).into_response()
 }
 

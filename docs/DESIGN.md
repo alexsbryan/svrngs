@@ -1893,7 +1893,15 @@ megabit, with an 8 MiB burst (`SHARE_RATE` and `SHARE_BURST`). The numbers
 come from measurement: an AI answer passes whole (0.057 Mbit/s), a first
 open fits the burst (Jellyfin's 2.11 MB brotli, 5.66 MB decoded), and a
 film (3.73 Mbit/s) is held once its burst is spent, by the shape of the
-traffic alone, with no list of apps. Only the commons' relay is held; a
+traffic alone, with no list of apps. A computer the relay held answers a
+large request that came over it — a range, or a body over the burst —
+with 429, `x-svrngs-refused: share`, and the design's words in the
+lender's name (`door.rs` `over_share`, `spent_words`), which its home page
+says the day of while the share is spent; nothing over a direct path or a
+group's own relay is refused, and the refusal holds until the connection
+to the relay ends of itself, since iroh 1.4.2 cannot remake one and
+nothing may clear it silently (the operator, 2026-11-18). Only the
+commons' relay is held; a
 group's own, and anyone's, is not. At a name the relay serves its
 counters on loopback (`metrics_addr`) and logs at warn, so a host's capped
 journal keeps what went wrong and never the debug decisions' keys and

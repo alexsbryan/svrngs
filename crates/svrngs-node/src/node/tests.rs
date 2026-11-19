@@ -564,22 +564,28 @@ async fn a_home_that_flips_and_comes_back_is_said_once() {
     assert_eq!((lines(), named()), (2, Some(b)), "A, then B");
 }
 
-/// **The relay's report spends the share, and the connection is left and
-/// taken again a minute after the last large refusal** (share-refusal;
-/// RELAY_COMMONS design 3, "The signal" and "How it clears"): the count of
-/// connections the relay reported rate limited rises while this computer
-/// holds the build's relay, so the door refuses large answers over it; a
-/// refusal restarts the minute; a minute with none leaves the relay and
-/// takes it again, and the share is not spent. Planted, watched red: the
-/// report read without the build's relay being left and taken again, where
-/// the share stays spent past the minute.
+/// **The relay's report spends the share, and it stays spent while this
+/// computer holds the build's relay** (share-refusal; RELAY_COMMONS design
+/// 3, "The signal"; the operator, 2026-11-18: a spent share stays spent
+/// for the life of the connection, 2dc7ebe4): the count of connections the
+/// relay reported rate limited rises while this computer holds the build's
+/// relay, so the door refuses large answers over it; a minute with nothing
+/// large refused clears nothing, and the share is not spent once the
+/// connection to the build's relay ends — the tier moved to the group's
+/// own. Planted, watched red: a minute after the report clearing the share,
+/// where it stayed spent past it; and the build's relay leaving the held
+/// set spending nothing, where the share stayed spent.
 #[tokio::test(start_paused = true)]
-async fn the_relay_s_report_spends_the_share_until_the_connection_is_remade() {
+async fn the_relay_s_report_spends_the_share_for_the_life_of_the_connection() {
     let dir = tempfile::tempdir().unwrap();
     let key = SigningKey::from_bytes(&[98; 32]);
     let wire = Wire::default();
-    let build: Url = "http://127.0.0.1:9/".parse().unwrap();
+    let (build, own): (Url, Url) = (
+        "http://127.0.0.1:9/".parse().unwrap(),
+        "http://127.0.0.1:10/".parse().unwrap(),
+    );
     wire.relay(&crate::iroh::RelayUrl::from(build.clone()), Relaying::Up);
+    wire.relay(&crate::iroh::RelayUrl::from(own.clone()), Relaying::Up);
     let node = Node::on_wire_relayed(
         &wire,
         (dir.path().into(), key),
@@ -588,7 +594,7 @@ async fn the_relay_s_report_spends_the_share_until_the_connection_is_remade() {
             n0_services: false,
             loopback_only: false,
         },
-        &[],
+        &[own.clone()],
         Duration::from_secs(3600),
     )
     .await
@@ -604,28 +610,32 @@ async fn the_relay_s_report_spends_the_share_until_the_connection_is_remade() {
     wire.ratelimited(id);
     tokio::time::sleep(Duration::from_secs(2)).await;
     assert!(
-        host.share.borrow().limited.is_some(),
+        host.share.borrow().limited,
         "the relay's report spends the share"
     );
 
-    // A refusal restarts the minute.
-    host.share
-        .send_modify(|s| s.refused = Some((tokio::time::Instant::now(), Some(1_000))));
-    tokio::time::sleep(Duration::from_secs(59)).await;
-    assert!(wire.remade(id).is_empty(), "the minute has not passed");
+    // A minute with nothing large refused clears nothing.
+    tokio::time::sleep(Duration::from_secs(90)).await;
     assert!(
-        host.share.borrow().limited.is_some(),
-        "and the share is spent meanwhile"
+        host.share.borrow().limited,
+        "the share stays spent past the minute a timer would have cleared it"
     );
+
+    // The connection to the build's relay ends: this computer is given the
+    // group's own instead, and the share is not spent.
+    wire.relay(&crate::iroh::RelayUrl::from(build.clone()), Relaying::Down);
+    let t = tokio::time::Instant::now();
+    while host.held.borrow().relays.contains(&build) {
+        assert!(
+            t.elapsed() < Duration::from_secs(60),
+            "the build's relay left the held set"
+        );
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
     tokio::time::sleep(Duration::from_secs(2)).await;
-    assert_eq!(
-        wire.remade(id),
-        vec![crate::iroh::RelayUrl::from(build)],
-        "the relay left and taken again"
-    );
     assert!(
-        host.share.borrow().limited.is_none(),
-        "the share is not spent once the connection is left and taken again"
+        !host.share.borrow().limited,
+        "the share is not spent once the connection to the build's relay ends"
     );
 }
 
@@ -672,7 +682,7 @@ async fn a_report_while_this_computer_holds_no_build_relay_spends_nothing() {
     wire.ratelimited(node.net().id());
     tokio::time::sleep(Duration::from_secs(2)).await;
     assert!(
-        node.host().share.borrow().limited.is_none(),
+        !node.host().share.borrow().limited,
         "the report is not about the build's relay, so nothing is spent"
     );
 }

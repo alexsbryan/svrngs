@@ -266,12 +266,6 @@ pub trait Net: Fetch + std::any::Any {
     fn ratelimited(&self) -> u64;
     /// `add` given to the endpoint as relays, and `drop` taken from it.
     fn relays(&self, add: Vec<RelayUrl>, drop: Vec<RelayUrl>) -> Later<'_, ()>;
-    /// Each of `relays` left and taken again, one after the other
-    /// (`Endpoint::remove_relay`, `Endpoint::insert_relay`): what a relay
-    /// that reported this computer's connection rate limited may give a
-    /// new connection, and with it a new share (share-refusal;
-    /// RELAY_COMMONS design 3, "How it clears").
-    fn remade(&self, relays: &[RelayUrl]) -> Later<'_, ()>;
     fn send<'a>(&'a self, peer: &'a Contact, req: Request) -> Sent<'a, Streamed>;
     /// A connection to `to` on `alpn`, as [`dialled`].
     fn dial(&self, to: EndpointAddr, alpn: Alpn, within: Option<Duration>) -> Sent<'_, Connection>;
@@ -346,16 +340,6 @@ impl Net for IrohTransport {
             }
             for relay in drop {
                 self.endpoint.remove_relay(&relay).await;
-            }
-        })
-    }
-    fn remade(&self, relays: &[RelayUrl]) -> Later<'_, ()> {
-        let relays = relays.to_vec();
-        Box::pin(async move {
-            for relay in relays {
-                self.endpoint.remove_relay(&relay).await;
-                let config = Arc::new(relay.clone().into());
-                self.endpoint.insert_relay(relay, config).await;
             }
         })
     }

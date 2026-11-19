@@ -1752,15 +1752,14 @@ fn over_share(spent: bool, range: bool, length: Option<u64>) -> bool {
 }
 
 /// A large request over the build's relay refused while its share is spent
-/// (share-refusal): `429`, `x-svrngs-refused: share`, and the words. The
-/// refusal restarts the minute after which the connection is left and
-/// taken again ([`crate::node::SHARE_WAITED`]).
+/// (share-refusal): `429`, `x-svrngs-refused: share`, and the words, which
+/// the lender's home page says the day of while the share is spent
+/// ([`crate::surface`]).
 fn share_spent(door: &Door, lend: &Lend) -> Response {
-    let at = (tokio::time::Instant::now(), unix_now());
     door.folders
         .host
         .share
-        .send_modify(|s| s.refused = Some(at));
+        .send_modify(|s| s.refused = unix_now().or(s.refused));
     tracing::info!(target: "share", lend = %lend.name, "share: refused — a large answer over the build's relay while its share is spent");
     LendRefusal::Share.say(StatusCode::TOO_MANY_REQUESTS, spent_words(lender_of(door)))
 }
@@ -2027,7 +2026,7 @@ async fn forward(
     let actor = whose.as_str();
     let relay = via.as_ref().and_then(Via::observe).and_then(|o| o.relay);
     let over_build = relay.is_some_and(|r| door.folders.host.build.contains(&r.into()));
-    let spent = over_build && door.folders.host.share.borrow().limited.is_some();
+    let spent = over_build && door.folders.host.share.borrow().limited;
     if over_share(spent, req.headers().contains_key(header::RANGE), None) {
         return Err(share_spent(door, lend));
     }
