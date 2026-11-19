@@ -25,6 +25,10 @@
 #
 #   sh install.sh --archive <file> '<link or page>' [--give --give-archive <file>]
 #
+# or, to take svrngs off this computer, `--uninstall` where the link goes:
+#
+#   curl -fsSL <page>install.sh | sh -s -- --uninstall
+#
 # It gets svrngs for this computer from the page's address the link names
 # (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, or
 # takes it from --archive's file as given, asking the page for no sums: a
@@ -69,6 +73,11 @@ while [ "$n" -gt 0 ]; do
 done
 link="${1:-}"
 if [ $# -gt 0 ]; then shift; fi # what follows the link, `--as <name>`, is join's
+uninstall=""
+if [ "$link" = --uninstall ]; then
+  uninstall=yes
+  [ $# -eq 0 ] || no "--uninstall takes nothing after it, not $*."
+fi
 relay=""
 if [ "${1:-}" = --relay ]; then
   relay="${2:-}"
@@ -87,13 +96,78 @@ if [ "${1:-}" = --at ]; then
   shift 2
 fi
 from="${SVRNGS_FROM:-${link%%#*}}"
-case "$from" in http://* | https://*) ;; *) no "paste the whole line from your group's page, its link included: it says where svrngs comes from." ;; esac
-case "$from" in */) ;; *) from="$from/" ;; esac
+if [ -z "$uninstall" ]; then
+  case "$from" in http://* | https://*) ;; *) no "paste the whole line from your group's page, its link included: it says where svrngs comes from." ;; esac
+  case "$from" in */) ;; *) from="$from/" ;; esac
+fi
 
 case "$(uname -s)" in Darwin) os=darwin ;; Linux) os=linux ;; *) os="" ;; esac
 case "$(uname -m)" in arm64 | aarch64) arch=aarch64 ;; x86_64 | amd64) arch=x86_64 ;; *) arch="" ;; esac
 [ -n "$os" ] && [ -n "$arch" ] ||
   no "svrngs runs on Mac and Linux computers, Intel or ARM; this one is $(uname -s) on $(uname -m), so nothing was installed."
+
+dir="${SVRNGS_DIR:-$HOME/.svrngs}"
+bin="$HOME/.local/bin"
+label="sh.svrnme.svrngs"
+unit=svrngs
+run="$bin/svrngs"
+[ -z "$relay" ] || label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
+# What runs at login finds svrngs and Podman (its installer's place, then
+# Homebrew's) here, since launchd and systemd give it no shell's PATH.
+paths="$bin:/opt/podman/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# $label's (launchd) or $unit's (systemd) file, and stopping it if kept.
+if [ "$os" = darwin ]; then
+  at() { kept="$HOME/Library/LaunchAgents/$label.plist"; }
+  # bootout returns before launchd lets go, and until then a bootstrap fails
+  # with 5. No limit: launchd ends a service, and Give (ExitTimeOut 0) finishes.
+  stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null && while launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; do sleep 0.1; done; }
+else
+  at() { kept="$HOME/.config/systemd/user/$unit.service"; }
+  stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }
+fi
+stopped() { at && if [ -f "$kept" ] && stop; then restart=yes; say "Stopped $unit, to update it."; fi; }
+# The opener, in the person's Applications on macOS and their applications
+# menu on Linux (below).
+if [ "$os" = darwin ]; then opener="$HOME/Applications/svrngs.app"
+else opener="${XDG_DATA_HOME:-$HOME/.local/share}/applications/svrngs.desktop"; fi
+# A svrngs started by hand holds its data dir's lock, and no launchd or
+# systemd stops it: stopped by that lock, waited for, for a limit.
+by_hand() {
+  for pid in $(lsof -t "$dir/lock" 2>/dev/null); do kill "$pid" && say "Stopped the svrngs running here$1."; tries=0; while [ "$tries" -lt 50 ] && lsof -t "$dir/lock" >/dev/null 2>&1; do tries=$((tries + 1)); sleep 0.1; done; done
+}
+
+# --uninstall takes away what this line put here, each step said: what runs
+# at login (svrngs, a relay's, Give's), the programs, the opener. It keeps
+# the data dir, the person's key and their groups' copies, and the profile's
+# PATH line, which other programs in $bin may need: each said, with how to
+# remove it. A relay's Linux system unit is root's, so said and left.
+if [ -n "$uninstall" ]; then
+  for kept_as in sh.svrnme.svrngs:svrngs sh.svrnme.svrngs.relay:svrngs-relay sh.svrnme.give:give; do
+    label="${kept_as%%:*}" unit="${kept_as#*:}"
+    at
+    [ -f "$kept" ] || continue
+    stop || :
+    [ "$os" = darwin ] || systemctl --user disable --quiet "$unit.service" 2>/dev/null || :
+    rm -f "$kept" && say "Stopped $unit, and took it off what runs when you log in ($kept)."
+  done
+  [ "$os" = darwin ] || systemctl --user daemon-reload 2>/dev/null || :
+  by_hand ""
+  for program in svrngs give; do
+    [ ! -e "$bin/$program" ] || { rm -f "$bin/$program" && say "Removed $program from $bin."; }
+  done
+  [ ! -e "$opener" ] || { rm -rf "$opener" && say "Removed the svrngs opener, $opener."; }
+  relay_unit=/etc/systemd/system/svrngs-relay.service
+  [ ! -f "$relay_unit" ] || say "A relay runs from $relay_unit, which is root's: as root, run systemctl disable --now svrngs-relay and remove it."
+  for profile in "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.bashrc"; do
+    ! grep -qF "export PATH=\"$bin:\$PATH\"" "$profile" 2>/dev/null ||
+      say "$profile still adds $bin to where your terminal looks for programs, since others may live there; remove that line if none do."
+  done
+  if [ -d "$dir" ]; then
+    say "Kept $dir: your key and your groups' copies. To delete them too: rm -rf '$dir'"
+  fi
+  say "svrngs is uninstalled. It left none of your groups: to leave one, run svrngs leave <group> before you uninstall."
+  exit 0
+fi
 
 tmp="$(mktemp -d)"
 restart=""
@@ -142,32 +216,12 @@ get svrngs "$archive" ""
 svrngs_sum="$want"
 [ -z "$give" ] || get give "$give_archive" give-
 
-dir="${SVRNGS_DIR:-$HOME/.svrngs}"
-bin="$HOME/.local/bin"
-label="sh.svrnme.svrngs"
-unit=svrngs
-run="$bin/svrngs"
-[ -z "$relay" ] || label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
-# What runs at login finds svrngs and Podman (its installer's place, then
-# Homebrew's) here, since launchd and systemd give it no shell's PATH.
-paths="$bin:/opt/podman/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-# $label's (launchd) or $unit's (systemd) file, and stopping it if kept.
-if [ "$os" = darwin ]; then
-  at() { kept="$HOME/Library/LaunchAgents/$label.plist"; }
-  # bootout returns before launchd lets go, and until then a bootstrap fails
-  # with 5. No limit: launchd ends a service, and Give (ExitTimeOut 0) finishes.
-  stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null && while launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; do sleep 0.1; done; }
-else
-  at() { kept="$HOME/.config/systemd/user/$unit.service"; }
-  stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }
-fi
-stopped() { at && if [ -f "$kept" ] && stop; then restart=yes; say "Stopped $unit, to update it."; fi; }
 # A svrngs kept running holds its data, which joining needs: stopped
 # first, started again below on the new one. One started by hand holds it
 # too, and no launchd or systemd stops it: stopped here, kept at login below.
 # Waited for by its lock, for a limit: if it stays, joining says so.
 stopped
-[ -n "$relay" ] || for pid in $(lsof -t "$dir/lock" 2>/dev/null); do kill "$pid" && say "Stopped the svrngs running here, to update it."; tries=0; while [ "$tries" -lt 50 ] && lsof -t "$dir/lock" >/dev/null 2>&1; do tries=$((tries + 1)); sleep 0.1; done; done
+[ -n "$relay" ] || by_hand ", to update it"
 
 mkdir -p "$bin" "$dir"
 # The page it came from, by the name the node reads (svrngs-node invite.rs
@@ -263,12 +317,12 @@ fi
 # menu on Linux, where "Open svrngs from your computer" sends them: it runs
 # `svrngs open`, so the home page opens again with no terminal (give-session).
 if [ "$os" = darwin ]; then
-  app="$HOME/Applications/svrngs.app/Contents" where=Applications && mkdir -p "$app/MacOS"
+  app="$opener/Contents" where=Applications && mkdir -p "$app/MacOS"
   printf '<plist version="1.0"><dict><key>CFBundleExecutable</key><string>svrngs</string></dict></plist>\n' >"$app/Info.plist"
   printf '#!/bin/sh\nSVRNGS_DIR="%s" exec "%s/svrngs" open\n' "$dir" "$bin" >"$app/MacOS/svrngs" && chmod +x "$app/MacOS/svrngs"
 else
-  app="${XDG_DATA_HOME:-$HOME/.local/share}/applications" where="applications menu" && mkdir -p "$app"
-  printf '[Desktop Entry]\nType=Application\nName=svrngs\nExec=env "SVRNGS_DIR=%s" "%s/svrngs" open\n' "$dir" "$bin" >"$app/svrngs.desktop"
+  where="applications menu" && mkdir -p "$(dirname "$opener")"
+  printf '[Desktop Entry]\nType=Application\nName=svrngs\nExec=env "SVRNGS_DIR=%s" "%s/svrngs" open\n' "$dir" "$bin" >"$opener"
 fi
 # The home page opened, once svrngs answers there: `svrngs open` asks it as
 # any program asks it, with the token beside the address it writes to its

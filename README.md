@@ -29,6 +29,8 @@ phone type their name and tap **Join**. Nobody signs up, and nobody asks
 us.
 
 Every step, with what the pages say: [`docs/guide/start.md`](docs/guide/start.md).
+To take svrngs off a computer, with your data kept in `~/.svrngs`:
+`curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- --uninstall`.
 
 Join once from the chat link. Everything your group lends has an address
 that never changes. Bookmark it on your phone or your laptop, and it opens.

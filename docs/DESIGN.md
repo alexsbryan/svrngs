@@ -2696,7 +2696,10 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
 - keeps svrngs running at login as the person (a LaunchAgent on macOS, a
   `systemd --user` unit on Linux), and opens the home page.
 
-Run again, it updates in place and joins nothing twice. The person is named
+Run again, it updates in place and joins nothing twice. With `--uninstall`
+where the link goes, it stops and takes away what it kept at login, the
+programs and the opener, and keeps the data dir and the profile's PATH line,
+saying each and how to remove it. The person is named
 as their computer shows them: the full name of the account `$USER` names,
 else `$USER`. *A founder's line* has the page's address where the link goes:
 it does all of the above but join, and the home page it opens is where they

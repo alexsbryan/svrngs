@@ -1500,6 +1500,113 @@ fn install_sh_installs_and_keeps_give_beside_svrngs_only_when_asked() {
     }
 }
 
+/// **`--uninstall`** where the link goes takes away what the line put
+/// here — what runs at login, svrngs and Give's program, the opener — and
+/// keeps the data dir and the profile's PATH line, each said, fetching
+/// nothing past install.sh itself; anything after it is refused before
+/// anything is taken, and run again it finds nothing left to take.
+/// Planted, watched failing: install.sh as 94413a92 left it, which refuses
+/// `--uninstall` as a link that names no page.
+#[test]
+fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
+    let site = stand_in_site(None);
+    as_linux(site.path());
+    let mac = cfg!(target_os = "macos").then_some(None);
+    for uname in mac.into_iter().chain([Some("Linux x86_64")]) {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        let h = home.path();
+        let zsh = Some("/bin/zsh");
+        let installed = line(site.path(), PAGE, " --give", h, uname, zsh);
+        let err = String::from_utf8_lossy(&installed.stderr);
+        assert!(installed.status.success(), "{uname:?}: {err}");
+        let bin = h.join(".local/bin");
+        let (agents, opener) = match uname {
+            None => (
+                h.join("Library/LaunchAgents"),
+                h.join("Applications/svrngs.app"),
+            ),
+            Some(_) => (
+                h.join(".config/systemd/user"),
+                h.join(".local/share/applications/svrngs.desktop"),
+            ),
+        };
+        let kept: Vec<PathBuf> = match uname {
+            None => vec![
+                agents.join("sh.svrnme.svrngs.plist"),
+                agents.join("sh.svrnme.give.plist"),
+            ],
+            Some(_) => vec![agents.join("svrngs.service"), agents.join("give.service")],
+        };
+        let placed: Vec<PathBuf> = (kept.into_iter())
+            .chain([bin.join("svrngs"), bin.join("give"), opener.clone()])
+            .collect();
+        for p in &placed {
+            assert!(p.exists(), "{uname:?}: not installed: {}", p.display());
+        }
+
+        let more = line(site.path(), "--uninstall", " --give", h, uname, zsh);
+        let err = String::from_utf8_lossy(&more.stderr);
+        assert_eq!(more.status.code(), Some(1), "{uname:?}: {err}");
+        assert!(
+            err.contains("--uninstall takes nothing after it, not --give."),
+            "{err}"
+        );
+        for p in &placed {
+            assert!(p.exists(), "{uname:?}: taken by a refusal: {}", p.display());
+        }
+
+        let fetched = h.join("stubs/fetched");
+        let before = std::fs::read_to_string(&fetched).unwrap();
+        let out = line(site.path(), "--uninstall", "", h, uname, zsh);
+        let said = String::from_utf8_lossy(&out.stdout);
+        let err = String::from_utf8_lossy(&out.stderr);
+        assert!(out.status.success(), "{uname:?}: {said}{err}");
+        for p in &placed {
+            assert!(!p.exists(), "{uname:?}: left: {}", p.display());
+        }
+        assert!(
+            !h.join("stubs/pid").exists(),
+            "{uname:?}: svrngs still runs"
+        );
+        let data = h.join(".svrngs");
+        assert!(data.join(ORIGIN_FILE).exists(), "{uname:?}: data taken");
+        for words in [
+            "Stopped svrngs, and took it off what runs when you log in".to_string(),
+            "Stopped give, and took it off what runs when you log in".into(),
+            format!("Removed svrngs from {}.", bin.display()),
+            format!("Removed give from {}.", bin.display()),
+            format!("Removed the svrngs opener, {}.", opener.display()),
+            format!(".zshrc still adds {}", bin.display()),
+            format!("Kept {}: your key and your groups' copies.", data.display()),
+            "svrngs is uninstalled.".into(),
+        ] {
+            assert!(
+                said.contains(&words),
+                "{uname:?}, not said: {words}\n{said}"
+            );
+        }
+        let now = std::fs::read_to_string(&fetched).unwrap();
+        assert_eq!(&now[before.len()..], format!("{PAGE}install.sh\n"));
+        if uname.is_some() {
+            let asked = std::fs::read_to_string(h.join("stubs/said")).unwrap();
+            for unit in ["svrngs", "give"] {
+                let disabled = format!("systemctl --user disable --quiet {unit}.service");
+                assert!(asked.contains(&disabled), "{asked}");
+            }
+        }
+
+        let again = line(site.path(), "--uninstall", "", h, uname, zsh);
+        let said = String::from_utf8_lossy(&again.stdout);
+        assert!(again.status.success(), "{uname:?}: {said}");
+        assert!(
+            !said.contains("Removed") && !said.contains("Stopped"),
+            "{said}"
+        );
+        assert!(said.contains("svrngs is uninstalled."), "{said}");
+    }
+}
+
 /// `svrngs restart` asks what keeps svrngs running, and says so plainly
 /// when nothing does (cli.rs `restart`): this build's svrngs, which
 /// starts no node for it, so its build's relay is never dialled, asked
