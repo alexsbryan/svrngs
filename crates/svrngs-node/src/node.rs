@@ -67,8 +67,8 @@ use svrngs_core::relay::{Meeting, Url};
 
 use crate::door::LENDS_ROUTE;
 use crate::iroh::{
-    actor_key, build_relayed_endpoint, key_actor, Admit, Alpn, Contact, Dialer, EndpointAddr,
-    Fetch, IrohAcceptor, IrohTransport, Net, PublicKey, RelayConfig, SecretKey, Unsent,
+    actor_key, key_actor, Admit, Alpn, Contact, Dialer, EndpointAddr, Fetch, IrohAcceptor,
+    IrohTransport, Net, PublicKey, RelayConfig, SecretKey, Unsent,
 };
 use crate::lend::Offered;
 use crate::rail::{carry, visiting, LiveBuffer, RailApi, CARRY_ROUTE};
@@ -383,7 +383,10 @@ impl Node {
             relay_urls: relays.iter().map(ToString::to_string).collect(),
             ..relay.clone()
         };
-        let endpoint = build_relayed_endpoint(
+        // The WebRTC wire is bound with the endpoint, so an offer's peer
+        // rides this computer's own network and nothing above iroh changes
+        // (webrtc-node; RELAY_COMMONS design 4).
+        let (endpoint, webrtc) = crate::webrtc::endpoint(
             secret,
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
             &at,
@@ -405,14 +408,20 @@ impl Node {
             seeds,
             (token, port, Box::new(serve) as Serve),
             every,
+            webrtc,
         )
         .await
     }
 
     /// [`Self::start_every`] once its endpoint and the record API's
-    /// listener are bound: the node over `net`, its API served by `serve`.
-    /// A test passes a network and a serving of its own, so a node runs
-    /// with no socket (docs/CHECKS.md, harness 3).
+    /// listener are bound: the node over `net`, its API served by `serve`,
+    /// and the WebRTC handle its offers are answered through. A test
+    /// passes a network and a serving of its own, so a node runs with no
+    /// socket (docs/CHECKS.md, harness 3).
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "one call per node start: what it signs with, what it serves, and the wire it answers offers on"
+    )]
     pub(crate) async fn start_on(
         transport: Arc<dyn Net>,
         (data_dir, places): (PathBuf, Option<PathBuf>),
@@ -421,6 +430,7 @@ impl Node {
         seeds: SeedText,
         (token, api_port, serve): (crate::api::Bearer, u16, Serve),
         every: Duration,
+        webrtc: Arc<crate::webrtc::WebRtc>,
     ) -> Result<Self, NodeError> {
         let actor = actor_of(rail.signer());
         let mut stood_in = rail.namespaces().unwrap_or_default();
@@ -567,6 +577,7 @@ impl Node {
                 Some(Alpn::Lend) => Admit::Serve(holders.clone()),
                 Some(Alpn::Blobs) => Admit::Blobs(blobs.0.clone(), blobs.1.clone()),
                 Some(Alpn::Port) => Admit::Port(Box::new(udp.clone())),
+                Some(Alpn::WebRtc) => Admit::Serve(crate::webrtc::router(webrtc.clone())),
                 None if Alpn::of(alpn) == Some(Alpn::Member)
                     && rail.removed_anywhere(&key_actor(dialer)).is_some() =>
                 {
@@ -1221,10 +1232,13 @@ impl Asking {
 /// the rest (PLAN §4, U1's inventory, "the mesh" row — upstream asked the
 /// mesh, `acceptor.rs:47-61`). Asked once per connection, so a member
 /// admitted or removed since the last dial is answered as it stands now.
+/// The WebRTC protocol is a member's too: the offer names the data
+/// endpoint, and the page that makes it dials as its group already does
+/// (webrtc-node; RELAY_COMMONS design 4).
 fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {
     let actor = key_actor(dialer);
     match Alpn::of(alpn) {
-        Some(Alpn::Member) | Some(Alpn::Blobs) | Some(Alpn::Port) => {}
+        Some(Alpn::Member) | Some(Alpn::Blobs) | Some(Alpn::Port) | Some(Alpn::WebRtc) => {}
         Some(Alpn::Redeem) => {
             tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
             return Some(Alpn::Redeem);

@@ -26,13 +26,18 @@ pub enum Alpn {
     /// A lent port's own bytes, raw (give-udp): UDP datagrams, served to
     /// a dialer standing in a group held there.
     Port,
+    /// A page's WebRTC offer, answered on the group's existing dial
+    /// (webrtc-node; RELAY_COMMONS design 4): the one route that answers
+    /// with this computer's SDP answer, served to a dialer standing in a
+    /// group held there.
+    WebRtc,
 }
 
-use Alpn::{Blobs, Lend, Member, Port, Redeem};
+use Alpn::{Blobs, Lend, Member, Port, Redeem, WebRtc};
 
 impl Alpn {
     /// Every protocol, as the endpoint advertises them.
-    pub const ALL: [Alpn; 5] = [Member, Redeem, Lend, Blobs, Port];
+    pub const ALL: [Alpn; 6] = [Member, Redeem, Lend, Blobs, Port, WebRtc];
 
     /// The bytes negotiated on the wire.
     pub const fn bytes(self) -> &'static [u8] {
@@ -46,6 +51,7 @@ impl Alpn {
             // here since the core takes no I/O dependency.
             Alpn::Blobs => b"/iroh-bytes/4",
             Alpn::Port => b"svrngs/port/0",
+            Alpn::WebRtc => b"svrngs/webrtc/0",
         }
     }
 

@@ -836,6 +836,10 @@ impl Node {
             .await;
         let places = Some(data_dir.join("svrngs"));
         let seeds: SeedText = |_| Ok(None);
+        // A test's network has no wire; the handle is what the acceptor's
+        // WebRTC route answers through, and it binds nothing until an offer
+        // comes (webrtc-node).
+        let (webrtc, _wire) = crate::webrtc::WebRtc::new(net.id().as_bytes());
         Self::start_on(
             net,
             (data_dir, places),
@@ -844,6 +848,7 @@ impl Node {
             seeds,
             (token, port, unbound),
             every,
+            webrtc,
         )
         .await
     }
@@ -875,6 +880,7 @@ impl Node {
         };
         let places = Some(data_dir.join("svrngs"));
         let every = crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+        let (webrtc, _wire) = crate::webrtc::WebRtc::new(net.id().as_bytes());
         Self::start_on(
             net,
             (data_dir, places),
@@ -883,6 +889,7 @@ impl Node {
             seeds,
             (token, port, serve),
             every,
+            webrtc,
         )
         .await
     }

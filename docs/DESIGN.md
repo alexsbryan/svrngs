@@ -1990,6 +1990,20 @@ fallback, or at n0's while ours does not answer. A computer that reaches
 none of its relays in 10 s says which it
 tried, and goes on trying.
 
+**At home a phone goes direct.** The bytes of a film need not cross a
+relay when the phone and its lender are on one Wi-Fi: the group page's
+endpoint offers the lender a WebRTC path on the dial it already holds
+(`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend worker's
+fresh endpoint, and the computer answers with a str0m peer on a UDP
+socket of its own network, host candidates alone — no STUN, no TURN, so
+the phone reaches it on this Wi-Fi and nothing past it. iroh takes the
+path with the relay kept as backup, and nothing above iroh changes: the
+door, the pass and the HTTP on the dial stay as they are. A path is given
+up after 3 s of silence with a 1 s keep-alive (`webrtc.rs` `PATH_IDLE`),
+so a phone that leaves the Wi-Fi falls back to the relay within seconds
+and a film finishes. Cellular is never direct: it stays on the relay, and
+meets the share.
+
 ## 4. Domains, and the fork
 
 | Domain | What it owns | Meets svrngs by |
