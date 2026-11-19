@@ -390,6 +390,15 @@ not declared, a path the lend refuses, and a newcomer past the lend's
 limit; each answer it makes in a lend's place, the lend's origin's and the
 room's too, carries `x-svrngs-refused` and the body's `kind`, one of
 `door::LendRefusal`, and a service's own `x-svrngs-refused` is dropped (mnp-1).
+Each connection to a lend's port is asked whose program answers it
+(LEND_OWNER §3): `Net::service` gives the connection's two ends,
+`Net::owner` the account at its far end (`uid::owner` off the runtime; the
+test wire's `Wire::owns` per port), and `door::bound`, the one decider,
+carries it when that is the account the lend recorded (`Lend::owner`, kept
+by `svrngs share` and the home page from `share::owner_at`), records the one
+read for a lend from before owners, and else holds it: 502 `away` in
+`door::held_words`, and `Offered::held` on its lender's list
+(`door::answering`). Raw TCP and UDP ask it of the live declaration.
 Who is let in is `door/limit.rs` (u3-6), a pure decision with the
 time an argument, in `fair_share_cap`'s shape counted in people: a person is
 counted on a lend while a request of theirs is in flight or within
@@ -501,7 +510,9 @@ or a program showing the token, every answer `default-src 'self';
 frame-ancestors 'none'`. `session.rs` holds this computer's opens and
 sessions for the home page and every lend's origin alike: `POST /v1/open`
 behind the token (`svrngs open`), the home page's `/to`, and `/svrngs-open`
-whose bootstrap redeems a one-use code by own-origin POST and imports a
+whose bootstrap redeems a one-use code by own-origin POST, only from a
+connection whose far end is a socket of the account svrngs runs as
+(`Sessions::ours`, read before the code is spent), and imports a
 nonextractable HMAC key into that exact origin/port's IndexedDB. Cookies no
 longer authorize. `home/session.js`, `session-worker.js` and `session-client.js`
 prove each request's host/port, method, path/query, write intent, boot epoch and

@@ -1563,6 +1563,51 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
     alex.net().close().await;
 }
 
+/// **A program of another account is refused where it is lent, with the
+/// fix** (LEND_OWNER §4): lending from the page a port whose program no
+/// process of this account holds, as a Mac reads another account's, is
+/// refused 400 in the words `svrngs share` says, and nothing is lent; read
+/// as uid 4242's, it is lent, keeping that account. Planted, watched
+/// failing: `share::bound` not asked (lent, its owner none).
+#[tokio::test]
+async fn a_program_of_another_account_is_refused_where_it_is_lent() {
+    use svrngs_node::uid::Owner;
+    let dir = tempfile::tempdir().unwrap();
+    let alex = on_wire::start(1, dir.path()).await;
+    let seed = Roster::new(
+        [(
+            svrngs_node::Person::parse("alex").unwrap(),
+            vec![svrngs_node::actor_of(&signing(1))],
+        )]
+        .into_iter()
+        .collect(),
+    );
+    alex.rail().set_seed(NS, &seed).unwrap();
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = running.local_addr().unwrap().port();
+    let body = format!(r#"{{"port":{port},"name":"pad","kind":"pad","groups":["{NS}"]}}"#);
+    on_wire::owns(&alex, port, Owner::NotMine);
+    let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &body).await;
+    let words = format!("svrngs can't lend port {port}: the program there doesn't run as you, and on a Mac svrngs can keep a lend only to programs that run as you. Run it as you, then lend it again.");
+    assert_eq!(
+        (got.status, got.json()["error"].as_str()),
+        (400, Some(words.as_str()))
+    );
+    let pad = lend::LendName::parse("pad").unwrap();
+    assert_eq!(lend::read(dir.path(), &pad).unwrap(), None, "nothing lent");
+    on_wire::owns(&alex, port, Owner::Uid(4242));
+    let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &body).await;
+    assert_eq!(got.status, 200, "{}", got.body);
+    assert_eq!(
+        lend::read(dir.path(), &pad).unwrap().unwrap().owner,
+        Some(4242)
+    );
+    alex.net().close().await;
+}
+
 /// **Looking for what runs here, a failed read said and traced by which**
 /// (v1ui-findings (d); #160): Alex's computer cannot read what it lends —
 /// its lends' directory is a file — so `GET /running` refuses, saying

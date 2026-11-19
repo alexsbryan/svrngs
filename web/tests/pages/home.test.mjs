@@ -851,6 +851,27 @@ test('each lend is one line with its form folded under it, and the wide button i
   assert.ok(phone.includes('<tbody id="lent">'));
 });
 
+// A lend whose port another account's program answers, or whose program
+// svrngs can't tell, says so on its lender's line (door.rs `answering`,
+// lent-row.js `HELD`), what to do beside it. Planted, watched failing:
+// lent-row.js not reading `held`.
+test('a lend held from another account’s program says why on its lender’s line', async () => {
+  const summary = async (/** @type {string} */ held) =>
+    (await home(ada({ lent: [lend('shelf', { answering: true, held })] }))).text(
+      '#lent li details summary',
+    )[0];
+  assert.ok(
+    (await summary('another')).includes(
+      'Another account’s program is answering on shelf’s port, so nobody can open shelf. Start shelf again, or stop lending it and lend what runs there now.',
+    ),
+  );
+  assert.ok(
+    (await summary('unjudged')).includes(
+      'svrngs can’t tell whose program is on shelf’s port, so nobody can open shelf. Start it again, or lend it again.',
+    ),
+  );
+});
+
 // The overview's card says a line of what the group's hidden section read:
 // who is on, how many apps, versions to review. A read that failed is said
 // as that, never counted, and a group not yet told says nothing. Planted,

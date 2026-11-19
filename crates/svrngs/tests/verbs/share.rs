@@ -10,6 +10,7 @@ use svrngs::cli::{self, Refusal, Said};
 use svrngs::share::{self, Share};
 use svrngs_node::lend::Program as LentProgram;
 use svrngs_node::node::Wire;
+use svrngs_node::uid::Owner;
 
 use crate::{computer, name, no_relay};
 
@@ -233,6 +234,8 @@ struct Lender<'a> {
     running: crate::Running<'a>,
     typed: &'a str,
     asked: std::cell::RefCell<Vec<String>>,
+    /// Whose program each port's is, where a test says; else as `running`'s.
+    owner: Option<Owner>,
 }
 
 impl<'a> Lender<'a> {
@@ -242,6 +245,7 @@ impl<'a> Lender<'a> {
             running,
             typed,
             asked,
+            owner: None,
         }
     }
 }
@@ -255,6 +259,9 @@ impl cli::Here for Lender<'_> {
     }
     fn listens(&self, port: NonZeroU16) -> bool {
         self.running.listens(port)
+    }
+    fn owner(&self, raw: Option<svrngs_node::lend::Raw>, port: NonZeroU16) -> Owner {
+        self.owner.unwrap_or_else(|| self.running.owner(raw, port))
     }
     fn prompt(&self, _: &svrngs_node::lend::LendName, asked: &str, _: bool) -> cli::Prompted {
         self.asked.borrow_mut().push(asked.to_string());
@@ -629,4 +636,42 @@ async fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
         )),
         "{said}"
     );
+}
+
+/// **A lend keeps the account its program runs as, and on a Mac only this
+/// one's** (LEND_OWNER §4): `share 4533`, its program read as uid 4242's,
+/// is lent with that account kept beside it; read as no program of this
+/// account's, as a Mac reads another account's, it is refused, exit 1, in
+/// words that say what stopped it and the fix, and nothing is lent. The
+/// home page's Lend says the same words (svrngs-node tests/home.rs
+/// `a_program_of_another_account_is_refused_where_it_is_lent`). Planted,
+/// watched failing: `share::bound` not asked (lent, no owner kept).
+#[tokio::test]
+async fn a_lend_keeps_its_program_s_account_and_a_mac_only_this_one_s() {
+    use svrngs_node::lend::{self, LendName};
+    let wire = Wire::default();
+    let (sam, _held) = sams_lab(&wire).await;
+    let navidrome = LendName::parse("navidrome").unwrap();
+    let mut theirs = Lender::of(&sam, SECRET);
+    theirs.owner = Some(Owner::NotMine);
+    let refused = shares(&theirs, &["4533", "--group", "Lab"])
+        .await
+        .unwrap_err();
+    let words = "svrngs can't lend port 4533: the program there doesn't run as you, and on a Mac svrngs can keep a lend only to programs that run as you. Run it as you, then lend it again.";
+    assert_eq!(
+        (refused.to_string().as_str(), refused.exit_code()),
+        (words, 1)
+    );
+    assert_eq!(
+        lend::read(sam.dir.path(), &navidrome).unwrap(),
+        None,
+        "nothing lent"
+    );
+    let mut kept = Lender::of(&sam, SECRET);
+    kept.owner = Some(Owner::Uid(4242));
+    shares(&kept, &["4533", "--group", "Lab"])
+        .await
+        .expect("navidrome is lent");
+    let lent = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
+    assert_eq!(lent.owner, Some(4242));
 }

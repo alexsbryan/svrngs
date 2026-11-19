@@ -224,7 +224,9 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     if req.uri().path() == crate::session::OPEN_PATH {
-        return Ok(at.sessions.redeem(label.as_str(), &req));
+        let from = crate::session::peer(&req);
+        let ours = at.sessions.ours(from, &*at.host.transport).await;
+        return Ok(at.sessions.redeem(label.as_str(), &req, ours));
     }
     if let Some(answer) = at.sessions.public(label.as_str(), &req) {
         return Ok(answer);

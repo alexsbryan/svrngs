@@ -25,6 +25,8 @@ thread_local! {
     /// thread of its own.
     static APIS: RefCell<HashMap<SocketAddr, (PublicKey, axum::Router)>> = RefCell::default();
     static WIRE: Wire = Wire::default();
+    /// Each started node's key whose API listens on a socket, over QUIC.
+    static QUIC: RefCell<std::collections::HashSet<PublicKey>> = RefCell::default();
     /// Each [`bridge_as`]'s address: the key it asks as, of whom, on what.
     static BRIDGES: RefCell<HashMap<SocketAddr, Bridged>> = RefCell::default();
 }
@@ -305,6 +307,16 @@ pub fn asleep(key: PublicKey) {
     WIRE.with(|w| w.asleep(key));
 }
 
+/// The socket at `port` on `node`'s computer is `owner`'s on this test's
+/// wire ([`Wire::owns`]): another account's program, or browser.
+#[allow(
+    dead_code,
+    reason = "only the binaries that hold a lend or an open to its account ask it"
+)]
+pub fn owns(node: &Node, port: u16, owner: svrngs_node::uid::Owner) {
+    WIRE.with(|w| w.owns(node.net().id(), port, owner));
+}
+
 /// A Blobs holder at `key` on this test's wire that is the test's script
 /// ([`Wire::holder`]): each get of it, its ask and its answer's pipe.
 pub fn holder(key: PublicKey) -> Holding {
@@ -370,6 +382,10 @@ impl Client {
 /// over QUIC included.
 pub fn served(node: &Node) {
     let (at, key) = (node.api_addr(), node.net().id());
+    let net: &dyn std::any::Any = node.net();
+    if net.is::<svrngs_node::iroh::IrohTransport>() {
+        QUIC.with(|q| q.borrow_mut().insert(key));
+    }
     let was = APIS.with(|a| a.borrow_mut().insert(at, (key, node.api_routes())));
     // The same key again is its computer restarted; another's would be
     // asked in its place.
@@ -510,15 +526,22 @@ impl Asked {
             let wire = WIRE.with(Clone::clone);
             return wire.ask_as(&key, &to, alpn, req).await;
         }
-        let routes = APIS.with(|a| a.borrow().get(&self.at).map(|(_, r)| r.clone()));
-        let routes = routes.unwrap_or_else(|| panic!("no node's API at {}", self.at));
-        let caller = SocketAddr::from(([127, 0, 0, 1], 50_000));
+        let routes = APIS.with(|a| a.borrow().get(&self.at).map(|(k, r)| (*k, r.clone())));
+        let (key, routes) = routes.unwrap_or_else(|| panic!("no node's API at {}", self.at));
+        // A node over QUIC reads whose its caller is from this computer's
+        // sockets (svrngs-node uid.rs): it is asked from one of this
+        // process's, connected to its API, held until it answers. One on the
+        // wire is asked from port 50000, which `Wire::owns` speaks for.
+        let over_quic = QUIC.with(|q| q.borrow().contains(&key));
+        let held =
+            over_quic.then(|| std::net::TcpStream::connect(self.at).expect("its API listens"));
+        let caller = (held.as_ref().map(|s| s.local_addr().unwrap()))
+            .unwrap_or(SocketAddr::from(([127, 0, 0, 1], 50_000)));
         req.extensions_mut()
             .insert(axum::extract::ConnectInfo(caller));
-        Ok(routes
-            .oneshot(req)
-            .await
-            .unwrap_or_else(|never| match never {}))
+        let answer = routes.oneshot(req).await;
+        drop(held);
+        Ok(answer.unwrap_or_else(|never| match never {}))
     }
 }
 

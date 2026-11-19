@@ -633,6 +633,20 @@ fn a_misspelled_program_is_told_at_share_time() {
     }
 }
 
+/// A program on 127.0.0.1 that accepts each connection and holds it, as a
+/// service does: on a Mac, share reads whose a program is from the socket
+/// it accepted (svrngs-node uid.rs), and a listener that never accepts holds
+/// none.
+fn accepting() -> std::net::TcpListener {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let taking = listener.try_clone().unwrap();
+    std::thread::spawn(move || {
+        let held: Vec<_> = taking.incoming().map_while(Result::ok).collect();
+        drop(held);
+    });
+    listener
+}
+
 /// `svrngs share` as a person runs it, twice: with svrngs not running it
 /// declares the lend and runs; then, with that one running, a second
 /// share declares its lend and leaves. Each reads the password from its
@@ -643,8 +657,7 @@ fn a_misspelled_program_is_told_at_share_time() {
 fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     let dir = tempfile::tempdir().unwrap();
     let logs = tempfile::tempdir().unwrap();
-    let first = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let second = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let (first, second) = (accepting(), accepting());
     let (p1, p2) = (
         first.local_addr().unwrap().port().to_string(),
         second.local_addr().unwrap().port().to_string(),
@@ -796,7 +809,7 @@ fn room_of(dir: &Path) -> serde_json::Value {
 fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
     let dir = tempfile::tempdir().unwrap();
     let logs = tempfile::tempdir().unwrap();
-    let pad = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let pad = accepting();
     let port = pad.local_addr().unwrap().port().to_string();
     holds_lab(dir.path(), logs.path());
     let argv = ["share", port.as_str(), "--kind", "pad", "--group", "Lab"];
@@ -1000,7 +1013,7 @@ fn share_readers_signs_in_once_and_keeps_what_readers_are_let_in_with() {
 fn a_send_is_kept_only_on_its_lender_s_yes() {
     let dir = tempfile::tempdir().unwrap();
     let logs = tempfile::tempdir().unwrap();
-    let stand_in = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let stand_in = accepting();
     let port = stand_in.local_addr().unwrap().port().to_string();
     let log = logs.path().join("share");
     holds_lab(dir.path(), logs.path());

@@ -47,6 +47,9 @@ use iroh_blobs::protocol::GetRequest;
 use n0_future::boxed::BoxStream;
 use tokio::time::timeout;
 
+use crate::lend::Raw;
+use crate::uid::{Conn, Owner, Side};
+
 use n0_future::task::AbortOnDropHandle;
 use std::sync::Arc;
 use std::time::Duration;
@@ -275,8 +278,12 @@ pub trait Net: Fetch + std::any::Any {
     fn accept(&self, admit: Admitting) -> IrohAcceptor;
     fn close(&self) -> Later<'_, ()>;
     /// A connection to the lend's service at this computer's `port`
-    /// ([`crate::door`]'s upstream): TCP on loopback in the product.
-    fn service(&self, port: u16) -> Later<'_, std::io::Result<Box<dyn Duplex>>>;
+    /// ([`crate::door`]'s upstream), and its two ends: TCP on loopback in
+    /// the product.
+    fn service(&self, port: u16) -> Later<'_, std::io::Result<(Box<dyn Duplex>, Conn)>>;
+    /// Whose the socket at `side` of `conn` on this computer is
+    /// ([`crate::uid::owner`]): read off the async runtime in the product.
+    fn owner(&self, raw: Raw, conn: Conn, side: Side) -> Later<'_, Owner>;
 }
 
 /// A connection's two halves as one, as a lend's service is spoken to.
@@ -427,9 +434,20 @@ impl Net for IrohTransport {
     fn close(&self) -> Later<'_, ()> {
         Box::pin(self.endpoint.close())
     }
-    fn service(&self, port: u16) -> Later<'_, std::io::Result<Box<dyn Duplex>>> {
+    fn service(&self, port: u16) -> Later<'_, std::io::Result<(Box<dyn Duplex>, Conn)>> {
         let to = (std::net::Ipv4Addr::LOCALHOST, port);
-        Box::pin(async move { Ok(Box::new(tokio::net::TcpStream::connect(to).await?) as _) })
+        Box::pin(async move {
+            let stream = tokio::net::TcpStream::connect(to).await?;
+            let conn = Conn {
+                local: stream.local_addr()?,
+                peer: stream.peer_addr()?,
+            };
+            Ok((Box::new(stream) as _, conn))
+        })
+    }
+    fn owner(&self, raw: Raw, conn: Conn, side: Side) -> Later<'_, Owner> {
+        let read = tokio::task::spawn_blocking(move || crate::uid::owner(raw, conn, side));
+        Box::pin(async move { read.await.unwrap_or(Owner::Unjudged("the read stopped")) })
     }
 }
 

@@ -289,6 +289,7 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
         sign_in_with_svrngs: None,
         asks: None,
         sends: Vec::new(),
+        owner: None,
     }
 }
 
@@ -952,4 +953,37 @@ async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again()
         .2
         .is_some_and(|w| w
             .contains("because the lender’s computer serves it. It can read again in 3 seconds.")));
+}
+
+/// **A connection is carried only to the account its lend recorded**
+/// (LEND_OWNER §3; `bound`): the same uid carries, a restart under it
+/// included; another uid is held as another's; a lend from before owners
+/// records the first uid read; a Mac's "none of this account's", and any
+/// read that can't be judged, hold it as unjudged, recorded or not; where
+/// no reader is, it carries as before. Planted, each watched failing:
+/// another uid carried anyway; a lend from before carried without its
+/// record.
+#[test]
+fn a_connection_is_carried_only_to_the_account_its_lend_recorded() {
+    use crate::lend::Hold;
+    use crate::uid::Owner;
+    let why = "no socket at that end on this computer";
+    for (recorded, read, decided) in [
+        (Some(1000), Owner::Uid(1000), Bound::Carry),
+        (Some(1000), Owner::Uid(1001), Bound::Held(Hold::Another)),
+        (Some(0), Owner::Uid(1000), Bound::Held(Hold::Another)),
+        (None, Owner::Uid(1000), Bound::Record(1000)),
+        (Some(502), Owner::NotMine, Bound::Held(Hold::Unjudged)),
+        (None, Owner::NotMine, Bound::Held(Hold::Unjudged)),
+        (
+            Some(1000),
+            Owner::Unjudged(why),
+            Bound::Held(Hold::Unjudged),
+        ),
+        (None, Owner::Unjudged(why), Bound::Held(Hold::Unjudged)),
+        (Some(1000), Owner::NoReader, Bound::Carry),
+        (None, Owner::NoReader, Bound::Carry),
+    ] {
+        assert_eq!(bound(recorded, read), decided, "{recorded:?} {read:?}");
+    }
 }

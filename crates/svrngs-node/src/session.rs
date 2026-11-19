@@ -41,7 +41,11 @@
 //! A cookie opens nothing: one a browser kept from before is taken off,
 //! with the proof, the token and the intent, before a lend's service sees
 //! the request ([`Sessions::strip`]).
+use crate::iroh::Net;
+use crate::lend::Raw;
+use crate::uid::{Conn, Owner, Side};
 use crate::{api::Bearer, oidc::provider::Codes};
+use axum::extract::ConnectInfo;
 use axum::{
     extract::{Request, State},
     http::{header, HeaderMap, Method, StatusCode},
@@ -51,6 +55,7 @@ use axum::{
 };
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use std::collections::{BTreeMap, BTreeSet};
+use std::net::SocketAddr;
 use std::sync::Arc;
 #[expect(
     clippy::disallowed_types,
@@ -473,7 +478,11 @@ impl Sessions {
         valid
     }
 
-    pub(crate) fn redeem(&self, name: &str, req: &Request) -> Response {
+    /// An open's code redeemed by its origin's own page, once, and only from
+    /// a browser this account runs, `ours` ([`Sessions::ours`]): read before
+    /// the code is spent, so another account's program that reads the code
+    /// redeems nothing.
+    pub(crate) fn redeem(&self, name: &str, req: &Request, ours: bool) -> Response {
         if req.method() == Method::GET {
             tracing::debug!(target: "session", name, "session: an open's address read, which enrolls nothing until its page posts it");
             return self.refused("");
@@ -488,6 +497,10 @@ impl Sessions {
         if req.method() != Method::POST || !own {
             tracing::debug!(target: "session", name, own, "session: enrollment refused outside its own origin");
             return StatusCode::FORBIDDEN.into_response();
+        }
+        if !ours {
+            return self
+                .refused("This open can be used only by a browser you run on this computer.");
         }
         let query = req.uri().query().unwrap_or_default();
         let code = query
@@ -508,6 +521,27 @@ impl Sessions {
                 self.refused("This open was spent or expired.")
             }
         }
+    }
+
+    /// Whether a request `from` an address came from a socket of the account
+    /// svrngs runs as: its connection to this port, from that address, as a
+    /// browser's on loopback is ([`peer`]). Where no reader is, as before.
+    pub(crate) async fn ours(&self, from: Option<SocketAddr>, net: &dyn Net) -> bool {
+        let me = crate::uid::mine();
+        let read = match from {
+            Some(peer) => {
+                let local = SocketAddr::new(peer.ip(), self.port);
+                net.owner(Raw::Tcp, Conn { local, peer }, Side::Peer).await
+            }
+            None => Owner::Unjudged("no connection to read"),
+        };
+        let ours = match (read, me) {
+            (Owner::Uid(uid), Ok(me)) => uid == me,
+            (Owner::NoReader, _) => true,
+            _ => false,
+        };
+        tracing::debug!(target: "session", ?from, ?read, ?me, ours, "session: whose browser redeems an open, this account's or not");
+        ours
     }
 
     pub(crate) fn strip(&self, headers: &mut HeaderMap) {
@@ -598,6 +632,13 @@ async fn open(State(s): State<Sessions>, Json(o): Json<Opening>) -> Json<serde_j
     Json(
         serde_json::json!({ "open": s.open(o.lend.as_ref().map_or(HOME, Label::as_str), o.at.as_deref()) }),
     )
+}
+
+/// The address `req`'s connection came from.
+pub(crate) fn peer(req: &Request) -> Option<SocketAddr> {
+    req.extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .map(|c| c.0)
 }
 
 pub(crate) fn router(sessions: Sessions) -> Router {

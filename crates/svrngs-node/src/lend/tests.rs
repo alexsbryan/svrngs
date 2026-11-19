@@ -137,10 +137,12 @@ fn lend(name: &str, port: u16) -> Lend {
         sign_in_with_svrngs: None,
         asks: None,
         sends: Vec::new(),
+        owner: None,
     }
 }
 
-/// What `declare` writes, `read` and `all` read back; `withdraw` takes it
+/// What `declare` writes, `read` and `all` read back, the account its
+/// program ran as with it; `withdraw` takes it
 /// back, its secret with it, and says when there was nothing to take.
 #[test]
 fn a_lend_declared_is_read_back_and_withdrawn_whole() {
@@ -152,6 +154,9 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
         Program::parse("films").unwrap(),
         Program::parse("music").unwrap(),
     ];
+    // The account its program ran as (LEND_OWNER §5, 7); planted, watched
+    // failing: `write` leaving it out (read back as none).
+    shelf.owner = Some(1000);
     declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
     declare(root.path(), &lend("pad", 9000), None).unwrap();
     assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
@@ -406,6 +411,7 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
         raw: None,
         sends: Vec::new(),
         answering: None,
+        held: None,
     };
     assert!(offered(Some(vec!["house".into()]), None).listed(house));
     assert!(!offered(Some(vec!["house".into()]), None).listed(|g| g == "trip"));

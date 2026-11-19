@@ -39,6 +39,7 @@ use std::time::Duration;
 
 use crate::lend::SendRow;
 use crate::lend::{Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source, Upload};
+use crate::uid::{Conn, Owner, Side};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
 /// `<word>.txt`, so adding a program is adding a file; each holds that word's
@@ -234,6 +235,10 @@ pub enum ShareRefusal {
     NoKind(NonZeroU16),
     #[error("your group's programs/{0}.txt says {0} is lent as {1}, not as a page: `svrngs share <port> --{1} --program {0} --group <group>`")]
     Carries(Program, &'static str),
+    #[error("svrngs can't lend port {0}: the program there doesn't run as you, and on a Mac svrngs can keep a lend only to programs that run as you. Run it as you, then lend it again.")]
+    NotYours(NonZeroU16),
+    #[error("svrngs can't lend port {0}: it can't tell which account runs the program there ({1}). Start it again, then lend it again.")]
+    Unowned(NonZeroU16, &'static str),
 }
 
 /// The kind [`PROGRAMS`] names for `port`, if any.
@@ -501,6 +506,44 @@ fn answers(port: &NonZeroU16) -> bool {
     std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_ok()
 }
 
+/// Whose program answers on `port` now ([`crate::uid::owner`]): by a TCP
+/// connection to it, held while it is read; for UDP, the socket a datagram
+/// from this computer's 127.0.0.1 would reach, asked of no socket of ours,
+/// since one a program serves from is connected to no one.
+pub fn owner_at(raw: Option<Raw>, port: NonZeroU16) -> Owner {
+    let to = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
+    let from = |local| Conn { local, peer: to };
+    if raw == Some(Raw::Udp) {
+        let nowhere = std::net::SocketAddr::from(([127, 0, 0, 1], 0));
+        return crate::uid::owner(Raw::Udp, from(nowhere), Side::Peer);
+    }
+    match std::net::TcpStream::connect_timeout(&to, Duration::from_millis(500)) {
+        Ok(asked) => match asked.local_addr() {
+            Ok(local) => crate::uid::owner(Raw::Tcp, from(local), Side::Peer),
+            Err(_) => Owner::Unjudged("nothing could be asked on the port"),
+        },
+        Err(_) => Owner::Unjudged("nothing answers on the port"),
+    }
+}
+
+/// `lend` bound to the account `read` names as its program's (LEND_OWNER
+/// §4): recorded, the door carries only to it; none where no reader is;
+/// refused on a Mac when no program of this account's answers, and
+/// wherever whose it is can't be told.
+pub fn bound(lend: &mut Lend, read: Owner) -> Result<(), ShareRefusal> {
+    let (Source::Port(port) | Source::Raw(_, port)) = lend.source else {
+        return Ok(());
+    };
+    tracing::debug!(target: "share", lend = %lend.name, port, ?read, "share: the account whose program answers, recorded with the lend or why it isn't lent");
+    match read {
+        Owner::Uid(uid) => lend.owner = Some(uid),
+        Owner::NoReader => lend.owner = None,
+        Owner::NotMine => return Err(ShareRefusal::NotYours(port)),
+        Owner::Unjudged(why) => return Err(ShareRefusal::Unowned(port, why)),
+    }
+    Ok(())
+}
+
 /// The ports something on this computer listens on, each probed as
 /// [`listens`] probes one, a thread to each thousand (v1ui-lend (b): the
 /// home page's "Already running here"). From 1024, below which only the
@@ -595,5 +638,6 @@ pub fn lend_of(
         sign_in_with_svrngs: None,
         asks: share.asks.clone(),
         sends,
+        owner: None,
     })
 }

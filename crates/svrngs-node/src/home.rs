@@ -75,9 +75,11 @@ use svrngs_core::pass::Label;
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
 use crate::join::{Entered, NotJoined};
+use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
 use crate::share::{self, Share, ShareRefusal};
+use crate::uid::{Conn, Owner, Side};
 
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
@@ -224,7 +226,9 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
         .is_some_and(|h| h == "yes");
     let closed = || LendRefusal::closed("this page answers only itself");
     let answer = if opening {
-        at.sessions.redeem(crate::session::HOME, &req)
+        let from = crate::session::peer(&req);
+        let ours = at.sessions.ours(from, &*at.host.transport).await;
+        at.sessions.redeem(crate::session::HOME, &req, ours)
     } else if shown == crate::session::Shown::Neither {
         tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — neither its session's proof nor the token");
         at.sessions.refused("")
@@ -814,11 +818,25 @@ async fn lend_one(
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
-    let lend = share::lend_of(&asked, share::listens, known, &terms).map_err(|e| match e {
+    let lent = share::lend_of(&asked, share::listens, known, &terms);
+    let mut lend = lent.map_err(|e| match e {
         ShareRefusal::NothingListens(_) => refused(&silent, &e),
         ShareRefusal::NoKind(_) => refused(unknown, &e),
-        ShareRefusal::Carries(..) => refused(&e.to_string(), &e),
+        _ => refused(&e.to_string(), &e),
     })?;
+    // Whose program answers, read through the transport, so a test says it.
+    let asked = tokio::net::TcpStream::connect(("127.0.0.1", port.get())).await;
+    let ends = |s: &tokio::net::TcpStream| {
+        Some(Conn {
+            local: s.local_addr().ok()?,
+            peer: s.peer_addr().ok()?,
+        })
+    };
+    let read = match asked.as_ref().ok().and_then(ends) {
+        Some(conn) => at.host.transport.owner(Raw::Tcp, conn, Side::Peer).await,
+        None => Owner::Unjudged("nothing answers on the port"),
+    };
+    share::bound(&mut lend, read).map_err(|e| refused(&e.to_string(), &e))?;
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
     let declared = stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None)));

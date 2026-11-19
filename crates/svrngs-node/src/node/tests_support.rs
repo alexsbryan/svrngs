@@ -5,6 +5,7 @@
 
 use super::*;
 use crate::iroh::Endpoint;
+use crate::uid::{Conn, Owner, Side};
 
 impl Node {
     /// Hold a deliberately historical or synthetic journal fixture still
@@ -228,6 +229,9 @@ struct Met {
     parted: std::collections::BTreeSet<([u8; 32], [u8; 32])>,
     asleep: std::collections::BTreeSet<[u8; 32]>,
     services: std::collections::BTreeMap<([u8; 32], u16), Listening>,
+    /// Whose each computer's socket at a port is, where a test says
+    /// ([`Wire::owns`]); else this account's.
+    owners: std::collections::BTreeMap<([u8; 32], u16), crate::uid::Owner>,
     holders: std::collections::BTreeMap<[u8; 32], Holding>,
     relays: std::collections::BTreeMap<crate::iroh::RelayUrl, Relaying>,
     /// Each computer's relays held, as its endpoint was given them
@@ -317,6 +321,15 @@ impl Wire {
         let mut met = self.0.lock().unwrap();
         met.services.insert((*key.as_bytes(), port), to);
         at
+    }
+
+    /// The socket at `port` on `key`'s computer is `owner`'s from here on, as
+    /// that computer reads it ([`Net::owner`]): another account's program
+    /// answering a lend, or a browser of another account opening svrngs.
+    /// Unsaid, every socket is this account's, as this test's process is.
+    pub fn owns(&self, key: PublicKey, port: u16, owner: crate::uid::Owner) {
+        let mut met = self.0.lock().unwrap();
+        met.owners.insert((*key.as_bytes(), port), owner);
     }
 
     /// A Blobs holder at `key` that is a test's script, past any store and
@@ -464,21 +477,39 @@ impl iroh_blobs::util::AsyncWriteSendStreamExtra for Half<tokio::io::DuplexStrea
 
 impl Net for OnWire {
     /// [`Wire::listen`]'s service at `port` on this computer, a pipe's end.
+    /// Its two ends as a loopback connection's, this side's port none.
     fn service(
         &self,
         port: u16,
-    ) -> crate::iroh::Later<'_, std::io::Result<Box<dyn crate::iroh::Duplex>>> {
+    ) -> crate::iroh::Later<'_, std::io::Result<(Box<dyn crate::iroh::Duplex>, Conn)>> {
         let (ours, theirs) = tokio::io::duplex(64 * 1024);
         let met = self.wire.0.lock().unwrap();
         let to = met.services.get(&(*self.key.as_bytes(), port));
         let taken = to.is_some_and(|to| to.send(theirs).is_ok());
         drop(met);
+        let at = |port| SocketAddr::from(([127, 0, 0, 1], port));
+        let conn = Conn {
+            local: at(0),
+            peer: at(port),
+        };
         Box::pin(async move {
             match taken {
-                true => Ok(Box::new(ours) as Box<dyn crate::iroh::Duplex>),
+                true => Ok((Box::new(ours) as Box<dyn crate::iroh::Duplex>, conn)),
                 false => Err(std::io::ErrorKind::ConnectionRefused.into()),
             }
         })
+    }
+    /// What [`Wire::owns`] says of the asked end's port, else this account's.
+    fn owner(&self, _: crate::lend::Raw, conn: Conn, side: Side) -> crate::iroh::Later<'_, Owner> {
+        let port = match side {
+            Side::Local => conn.local.port(),
+            Side::Peer => conn.peer.port(),
+        };
+        let met = self.wire.0.lock().unwrap();
+        let said = met.owners.get(&(*self.key.as_bytes(), port)).copied();
+        let owner =
+            said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, Owner::Uid));
+        Box::pin(async move { owner })
     }
     fn id(&self) -> PublicKey {
         self.key

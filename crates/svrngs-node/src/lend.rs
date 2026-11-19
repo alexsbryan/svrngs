@@ -359,6 +359,12 @@ pub struct Lend {
     /// lend is the yes"): where a carried app may send to it, as its person
     /// says ([`crate::door::admit`]). None for a carried app's own.
     pub sends: Vec<SendRow>,
+    /// The uid of the account whose program answered on its port when it
+    /// was lent (svrn-docs LEND_OWNER §4): the door carries a connection
+    /// only to that account's ([`crate::door::bound`]). None for a carried
+    /// app, which svrngs serves itself, for one lent before this, which its
+    /// first connection records, and where this computer has no reader.
+    pub owner: Option<u32>,
 }
 
 impl Lend {
@@ -411,6 +417,7 @@ impl Lend {
             sign_in_with_svrngs: None,
             asks: None,
             sends: Vec::new(),
+            owner: None,
         })
     }
 
@@ -462,6 +469,10 @@ struct LendFile {
     /// it as a lend that sends nothing.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     sends: Vec<SendRow>,
+    /// An svrngs from before owners refuses a file that holds one
+    /// (`deny_unknown_fields`), so a downgrade lends nothing unbound.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    owner: Option<u32>,
 }
 
 /// The characters a sign-in client's id and secret may be made of
@@ -560,6 +571,21 @@ pub struct Offered {
     /// from an svrngs from before this, which said nothing.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub answering: Option<bool>,
+    /// Why nobody can open it while its program runs (LEND_OWNER §4), its
+    /// lender's row says: absent when nothing holds it, and passed over by
+    /// an svrngs from before this.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub held: Option<Hold>,
+}
+
+/// Why a lend's port answers and nobody can open it (LEND_OWNER §4).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Hold {
+    /// Another account's program answers there, not the one it recorded.
+    Another,
+    /// Whose program answers there can't be told.
+    Unjudged,
 }
 
 impl Offered {
@@ -724,6 +750,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         sign_in_with_svrngs,
         asks: file.asks,
         sends: file.sends,
+        owner: file.owner,
     }))
 }
 
@@ -928,6 +955,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         sign_in_with_svrngs: lend.sign_in_with_svrngs.clone(),
         asks: lend.asks.clone(),
         sends: lend.sends.clone(),
+        owner: lend.owner,
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));

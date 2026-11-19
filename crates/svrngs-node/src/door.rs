@@ -98,11 +98,12 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Duplex, Via};
-use crate::lend::{self, Lend, LendName, Offered, Raw, Source};
+use crate::lend::{self, Hold, Lend, LendName, Offered, Raw, Source};
 use crate::network::Whereabouts;
 use crate::register::Member;
 use crate::ring_routes::err;
 use crate::surface::AppRoute;
+use crate::uid::{Conn, Owner, Side};
 use crate::{register::Visiting, Person, RingRail};
 use eudoxia_community::app;
 use eudoxia_community::lend::{self as rules, Admit, Asked};
@@ -641,7 +642,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
         };
         let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
         let Ok(reads) = reads else { return None };
-        let answering = answering(&lend.source).await;
+        let (answering, held) = answering(door, &lend).await;
         let (group, groups, raw) = match lend.source {
             Source::Carried(_, group) => (Some(group.clone()), Some(vec![group]), None),
             Source::Port(_) => (None, lend.audience.ids().map(<[String]>::to_vec), None),
@@ -660,6 +661,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             raw,
             sends: lend.sends,
             answering,
+            held,
         })
     });
     let offered = n0_future::join_all(each).await;
@@ -671,17 +673,41 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
 const ANSWER_WAIT: Duration = Duration::from_millis(300);
 
 /// Whether a lend's service takes a TCP connection on 127.0.0.1, asked as
-/// its lender lists it ([`Offered::answering`]); none for what is not a
-/// port this can ask so: a carried app, or a UDP one.
-async fn answering(source: &Source) -> Option<bool> {
-    let port = match source {
-        Source::Port(port) | Source::Raw(Raw::Tcp, port) => *port,
-        _ => return None,
+/// its lender lists it ([`Offered::answering`]), and whether what takes it
+/// is held ([`bound`], [`Offered::held`]), never recorded here; none for
+/// what is not a port this can ask so: a carried app, or a UDP one.
+async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
+    let port = match lend.source {
+        Source::Port(port) | Source::Raw(Raw::Tcp, port) => port,
+        _ => return (None, None),
     };
     let dialed = tokio::net::TcpStream::connect((std::net::Ipv4Addr::LOCALHOST, port.get()));
-    let took = matches!(tokio::time::timeout(ANSWER_WAIT, dialed).await, Ok(Ok(_)));
-    tracing::debug!(target: "door", port = port.get(), took, "door: lends — whether a lend's port takes a connection");
-    Some(took)
+    let took = tokio::time::timeout(ANSWER_WAIT, dialed)
+        .await
+        .ok()
+        .and_then(Result::ok);
+    let ends = |s: &tokio::net::TcpStream| {
+        Some(Conn {
+            local: s.local_addr().ok()?,
+            peer: s.peer_addr().ok()?,
+        })
+    };
+    let held = match took.as_ref().and_then(ends) {
+        Some(conn) => match bound(
+            lend.owner,
+            door.folders
+                .host
+                .transport
+                .owner(Raw::Tcp, conn, Side::Peer)
+                .await,
+        ) {
+            Bound::Held(held) => Some(held),
+            Bound::Carry | Bound::Record(_) => None,
+        },
+        None => None,
+    };
+    tracing::debug!(target: "door", port = port.get(), took = took.is_some(), ?held, "door: lends — whether a lend's port takes a connection, and from whose program");
+    (Some(took.is_some()), held)
 }
 
 /// A name as upstream's `rewrite_head` compared it (`compare_name`,
@@ -1724,32 +1750,110 @@ fn busy_words(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> String {
     )
 }
 
+/// What a connection to a lend's program may do, by the account its lend
+/// recorded and the one read at the connection's far end (LEND_OWNER §3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Bound {
+    /// Carry it: the account read is the one recorded, or no reader here.
+    Carry,
+    /// Carry it, and record the account read: a lend from before owners.
+    Record(u32),
+    /// Refuse it, held as its lender is told.
+    Held(Hold),
+}
+
+/// The one decider of [`Bound`]. A Mac's "none of this account's" holds it
+/// as unjudged: there whose it is can't be read.
+pub(crate) fn bound(recorded: Option<u32>, read: Owner) -> Bound {
+    match (recorded, read) {
+        (_, Owner::NoReader) => Bound::Carry,
+        (Some(was), Owner::Uid(uid)) if was == uid => Bound::Carry,
+        (Some(_), Owner::Uid(_)) => Bound::Held(Hold::Another),
+        (None, Owner::Uid(uid)) => Bound::Record(uid),
+        (_, Owner::NotMine | Owner::Unjudged(_)) => Bound::Held(Hold::Unjudged),
+    }
+}
+
+/// Whether the program at the far end of `conn` may have `lend`'s
+/// connection ([`bound`]), read at each one, never kept; a lend from before
+/// owners records the account read; or how it is held.
+pub(crate) async fn kept(door: &Door, lend: &Lend, conn: Conn) -> Result<(), Hold> {
+    let raw = match lend.source {
+        Source::Raw(Raw::Udp, _) => Raw::Udp,
+        _ => Raw::Tcp,
+    };
+    let read = door
+        .folders
+        .host
+        .transport
+        .owner(raw, conn, Side::Peer)
+        .await;
+    let bound = bound(lend.owner, read);
+    tracing::debug!(target: "door", lend = %lend.name, recorded = ?lend.owner, ?read, ?bound, "door: whose program answers the lend, by the account it recorded");
+    match bound {
+        Bound::Carry => Ok(()),
+        Bound::Record(uid) => {
+            let kept = lend::mutate(&door.data_dir, &lend.name, |l| l.owner = Some(uid));
+            tracing::info!(target: "door", lend = %lend.name, uid, ?kept, "door: a lend from before owners records the account its program runs as");
+            Ok(())
+        }
+        Bound::Held(held) => {
+            tracing::warn!(target: "door", lend = %lend.name, recorded = ?lend.owner, ?read, ?held, "door: refused — not the account the lend recorded answers it, or whose can't be told");
+            Err(held)
+        }
+    }
+}
+
+/// What someone opening `name`, lent by `lender` (none known: "its
+/// lender"), is told while it is held (LEND_OWNER §4).
+pub(crate) fn held_words(lender: Option<&str>, name: &LendName, held: Hold) -> String {
+    let who = lender.unwrap_or("its lender");
+    let whose = |at: &str| lender.map_or(format!("{at} lender’s"), |p| format!("{p}’s"));
+    let (opens, lends) = (whose("Its"), whose("its"));
+    let fix = format!("Try again once {who} starts {name} again.");
+    match held {
+        Hold::Another => format!("{opens} {name} is closed for now: another program is answering in its place on {lends} computer. {fix}"),
+        Hold::Unjudged => format!("{opens} {name} is closed for now: {lends} computer can’t tell whose program is answering for it. {fix}"),
+    }
+}
+
+/// Why a request through the door has no answer from the lend's program.
+enum Unsent {
+    /// Nothing took the connection, or answered on it.
+    Away,
+    /// Something answered that the lend doesn't carry to ([`kept`]).
+    Held(Hold),
+}
+
 /// A connection to `lend`'s service at `port`, when it takes one within
-/// [`CONNECT_WITHIN`]; `None`, named at warn with why, when it does not —
+/// [`CONNECT_WITHIN`] and [`kept`] carries to it; why not, named at warn —
 /// what [`send_to`] carries a request on.
-async fn connected(door: &Door, port: u16, lend: &str) -> Option<Box<dyn Duplex>> {
+async fn connected(door: &Door, (lend, port): (&Lend, u16)) -> Result<Box<dyn Duplex>, Unsent> {
     let net = &door.folders.host.transport;
     let taken = tokio::time::timeout(CONNECT_WITHIN, net.service(port)).await;
     let taken = taken.unwrap_or_else(|_| Err(std::io::ErrorKind::TimedOut.into()));
-    let why = |e: &std::io::Error| tracing::warn!(target: "door", lend, port, error = %e, within = ?CONNECT_WITHIN, "door: the lend's service took no connection, refused or not in time");
-    taken.inspect_err(why).ok()
+    let name = lend.name.as_str();
+    let why = |e: &std::io::Error| tracing::warn!(target: "door", lend = name, port, error = %e, within = ?CONNECT_WITHIN, "door: the lend's service took no connection, refused or not in time");
+    let (tcp, conn) = taken.inspect_err(why).map_err(|_| Unsent::Away)?;
+    kept(door, lend, conn).await.map_err(Unsent::Held)?;
+    Ok(tcp)
 }
 
 /// Send `request` on a new HTTP/1 connection to `lend`'s service at
-/// `port`, driven with upgrades, and answer the response; `None`, named at
+/// `port`, driven with upgrades, and answer the response; why not, named at
 /// warn by `lend`, when nothing there takes the connection ([`connected`])
 /// or answers.
 async fn send_to(
-    (door, port): (&Door, u16),
+    (door, lend, port): (&Door, &Lend, u16),
     request: axum::http::Request<Body>,
-    lend: &str,
-) -> Option<axum::http::Response<hyper::body::Incoming>> {
-    let tcp = connected(door, port, lend).await?;
+) -> Result<axum::http::Response<hyper::body::Incoming>, Unsent> {
+    let tcp = connected(door, (lend, port)).await?;
+    let lend = lend.name.as_str();
     let handshake = hyper::client::conn::http1::handshake(hyper_util::rt::TokioIo::new(tcp));
     let shaken = handshake.await.inspect_err(|e| {
         tracing::warn!(target: "door", lend, error = %e, "door: no HTTP/1 connection to the lend's service");
     });
-    let (mut sender, conn) = shaken.ok()?;
+    let (mut sender, conn) = shaken.map_err(|_| Unsent::Away)?;
     // Drives the connection until the response body is read to its end.
     let name = lend.to_string();
     tokio::spawn(async move {
@@ -1760,7 +1864,7 @@ async fn send_to(
     let answer = sender.send_request(request).await.inspect_err(|e| {
         tracing::warn!(target: "door", lend, error = %e, "door: the lend's service did not answer");
     });
-    answer.ok()
+    answer.map_err(|_| Unsent::Away)
 }
 
 /// One request's carriage, traced at debug under `carriage` from asked to
@@ -1882,7 +1986,8 @@ async fn forward(
     tracing::debug!(target: "door", actor, user = ?identity[2].1, "door: the account the lend is told");
     let (lender, name) = (lender_of(door), &lend.name);
     tracing::debug!(target: "door", actor, lender = ?lender.as_ref().map(|p| p.as_str()), "door: the lend's lender, by whom a refusal names it; none here names this computer, so \"Its lender\"");
-    let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
+    let named = lender.as_ref().map(|p| p.as_str());
+    let lender = named.unwrap_or("Its lender");
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let label = lend.label(&door.key);
     let target = parts
@@ -1923,10 +2028,17 @@ async fn forward(
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
 
-    let Some(mut answer) = send_to((door, port.get()), request, lend.name.as_str()).await else {
-        let unanswered = LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away);
-        carriage.answered = Some((unanswered.status().as_u16(), None));
-        return Err(unanswered);
+    let mut answer = match send_to((door, lend, port.get()), request).await {
+        Ok(answer) => answer,
+        Err(unsent) => {
+            let words = match unsent {
+                Unsent::Away => away,
+                Unsent::Held(held) => held_words(named, name, held),
+            };
+            let unanswered = LendRefusal::Away.say(StatusCode::BAD_GATEWAY, words);
+            carriage.answered = Some((unanswered.status().as_u16(), None));
+            return Err(unanswered);
+        }
     };
     let switched =
         upgrade_of(answer.headers()).filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);

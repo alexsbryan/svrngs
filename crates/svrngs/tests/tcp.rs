@@ -433,3 +433,41 @@ async fn a_port_its_group_is_taken_from_is_cut_and_no_other() {
     let still = asks(&mut o, b"two").await;
     assert_eq!(still.as_deref(), Some(&b"two"[..]), "other carries on");
 }
+
+/// **A raw TCP lend's port answered by another account than it recorded
+/// is held** (LEND_OWNER §5, 6): Sam's echo runs as this test's account;
+/// its lend recorded as another's, Alex's connection is told so in Sam's
+/// words and closed, its bytes carried nowhere; recorded as this one's, it
+/// crosses. Read by this computer's own reader (svrngs-node uid.rs), so
+/// it passes only with it right. Planted, watched failing: the held
+/// connection carried anyway (the echo answered).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_port_answered_by_another_account_than_its_lend_recorded_is_held() {
+    let (sam, them, _) = house(&[(2, "Alex")]).await;
+    let lend = share_tcp(&sam, echo().await, &[]);
+    let mine = svrngs_node::uid::mine().unwrap();
+    let recorded =
+        |uid| svrngs_node::lend::mutate(sam.dir.path(), &lend.name, |l| l.owner = Some(uid));
+    assert_eq!(recorded(mine + 1).ok(), Some(true));
+    let (carried, local) = open(&them[0], &sam, &lend).await;
+    let (mut told, _alex) = carried.expect("Alex's computer opens Sam's echo");
+    let mut theirs = TcpStream::connect(local).await.unwrap();
+    let _ = theirs.write_all(b"held").await;
+    let mut heard = Vec::new();
+    let read = timeout(Duration::from_secs(5), theirs.read_to_end(&mut heard));
+    let _ = read.await.expect("the connection is closed within 5s");
+    assert!(
+        heard.is_empty(),
+        "carried to another account's program: {heard:?}"
+    );
+    let told = timeout(Duration::from_secs(5), told.recv()).await;
+    let told = told.expect("told within 5s").expect("the lender's words");
+    let words = "echo is closed for now: another program is answering in its place";
+    assert!(told.contains(words), "{told}");
+    assert_eq!(recorded(mine).ok(), Some(true));
+    let mut ours = TcpStream::connect(local).await.unwrap();
+    assert_eq!(
+        asks(&mut ours, b"ours").await.as_deref(),
+        Some(&b"ours"[..])
+    );
+}

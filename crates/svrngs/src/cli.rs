@@ -116,7 +116,7 @@ use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{Entered, JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
 use svrngs_node::lend::{
-    self, Audience, Lend, LendName, Program, RefusedPath, SignInWithSvrngs, Source, Upload,
+    self, Audience, Lend, LendName, Program, Raw, RefusedPath, SignInWithSvrngs, Source, Upload,
 };
 use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::relay::n0_relays;
@@ -124,6 +124,7 @@ use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
 };
 use svrngs_node::room;
+use svrngs_node::uid::Owner;
 use svrngs_node::update;
 use svrngs_node::{Joined, Person, SigningKey};
 
@@ -826,6 +827,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             };
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
             let mut lend = share::lend_of(&asked, |p| here.listens(p), known, theirs)?;
+            share::bound(&mut lend, here.owner(asked.raw, asked.port))?;
             if !lend.sends.is_empty() && !sends_said(here, &lend)? {
                 lend.sends.clear();
             }
@@ -1026,6 +1028,8 @@ pub trait Here {
     fn root(&self) -> &Path;
     fn ask(&self, route: &str, body: &impl serde::Serialize) -> impl Future<Output = Asked>;
     fn listens(&self, port: NonZeroU16) -> bool;
+    /// Whose program answers on `port`, lent as `raw` ([`share::owner_at`]).
+    fn owner(&self, raw: Option<Raw>, port: NonZeroU16) -> Owner;
     fn prompt(&self, name: &LendName, asked: &str, shown: bool) -> Prompted;
     /// Whether the program that opens addresses on this computer took `what`:
     /// the one way the command reaches a browser, so a test stands in for it.
@@ -1043,6 +1047,9 @@ impl Here for PathBuf {
     }
     fn listens(&self, port: NonZeroU16) -> bool {
         share::listens(port)
+    }
+    fn owner(&self, raw: Option<Raw>, port: NonZeroU16) -> Owner {
+        share::owner_at(raw, port)
     }
     /// macOS's `open`, `xdg-open` anywhere else (svrngs-node home.rs `opened`).
     fn browse(&self, what: &std::ffi::OsStr) -> bool {

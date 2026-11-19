@@ -221,8 +221,13 @@ async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, 
     let unreached = |e: std::io::Error| format!("{} cannot be reached here: {e}", lend.name);
     let socket = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).await;
     let socket = socket.map_err(unreached)?;
-    let to = (Ipv4Addr::LOCALHOST, port.get());
+    let to = std::net::SocketAddr::from((Ipv4Addr::LOCALHOST, port.get()));
     socket.connect(to).await.map_err(unreached)?;
+    let ends = crate::uid::Conn {
+        local: socket.local_addr().map_err(unreached)?,
+        peer: to,
+    };
+    kept_live(lent.0, lend, ends).await?;
     tracing::debug!(target: "door", actor, lend = %lend.name, flow, port, counted = held.is_some(), "udp: a flow opened, its socket connected to the lent port");
     let (packets, sent) = mpsc::channel(256);
     tokio::spawn(flowing(socket, (conn.clone(), flow), sent, held));
@@ -273,6 +278,20 @@ pub(super) fn live(door: &Door, lend: &Lend) -> Result<Lend, String> {
             Err(format!("{} cannot be read here now", lend.name))
         }
     }
+}
+
+/// Whether the program at the far end of `ends` may have a use of `lend`,
+/// as its declaration says now ([`live`], [`super::kept`]); or what its
+/// user is told while it is held ([`super::held_words`]).
+pub(super) async fn kept_live(
+    door: &Door,
+    lend: &Lend,
+    ends: crate::uid::Conn,
+) -> Result<(), String> {
+    let live = live(door, lend)?;
+    let lender = super::lender_of(door);
+    let said = |held| super::held_words(lender.as_ref().map(|p| p.as_str()), &lend.name, held);
+    super::kept(door, &live, ends).await.map_err(said)
 }
 
 /// One flow: its packets to the lent port, and the port's answers to the

@@ -323,3 +323,41 @@ async fn proved(
     let tag = URL_SAFE_NO_PAD.encode(ring::hmac::sign(&key, message.as_bytes()));
     format!("Origin: http://{host}\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nX-Svrngs-Browser: {stamp}.{tag}\r\nX-Svrngs-Body: {digest}\r\nX-Svrngs-Intent: yes\r\n")
 }
+
+/// **An open lets in only a browser this account runs** (LEND_OWNER §3,
+/// opens): the browser's socket read as another account's, the open's page
+/// posting its code is refused in words that say who may use it, and the
+/// code is not spent; read as this account's, the same code lets it in, at
+/// the home page and at a lend's origin alike. Planted, watched failing:
+/// `Sessions::ours` not asked (the other account's browser let in).
+#[tokio::test]
+async fn an_open_lets_in_only_a_browser_this_account_runs() {
+    use svrngs_node::uid::Owner;
+    let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, _sam) = wire_pair(a.path(), b.path()).await;
+    let (api, mine) = (alex.api_addr(), svrngs_node::uid::mine().unwrap());
+    let night = Label::of(&signing(1).verifying_key().to_bytes(), "night").to_string();
+    let lent = serde_json::json!({ "lend": night }).to_string();
+    for (name, body) in [("svrngs", "{}"), (night.as_str(), lent.as_str())] {
+        let auth = format!("Authorization: Bearer {}\r\n", alex.token());
+        let opened = ask(api, "POST", &api.to_string(), "/v1/open", &auth, body).await;
+        let json: serde_json::Value = serde_json::from_str(&opened.body).unwrap();
+        let path = path_of(json["open"].as_str().unwrap());
+        let host = format!("{name}.localhost:{}", api.port());
+        let headers = format!("Origin: http://{host}\r\nSec-Fetch-Site: same-origin\r\n");
+        // The port every on-wire ask comes from (common/on_wire.rs `sent`).
+        on_wire::owns(&alex, 50_000, Owner::Uid(mine + 1));
+        let theirs = ask(api, "POST", &host, &path, &headers, "").await;
+        assert_eq!(theirs.status, 401, "{name}: {}", theirs.body);
+        assert!(
+            theirs
+                .body
+                .contains("This open can be used only by a browser you run on this computer."),
+            "{}",
+            theirs.body
+        );
+        on_wire::owns(&alex, 50_000, Owner::Uid(mine));
+        let ours = ask(api, "POST", &host, &path, &headers, "").await;
+        assert_eq!(ours.status, 200, "{name}: the code unspent: {}", ours.body);
+    }
+}

@@ -225,6 +225,23 @@ never stale. The lender's own lend, opened on their own computer, goes
 through their own door's rules too, its secret injected and its limit
 counted (`door::Who::Own`).
 
+**A lend is kept to the account its program runs as** (svrn-docs
+`rings/current/LEND_OWNER.md`). Whatever answers on a lend's port receives
+who asks, the lender's credential and what people send, and answers as the
+program, its acts written into the group's record as each person who opened
+it. So a lend records, when it is lent, the account whose program answered on
+its port (`Lend::owner`), and the door carries each connection, each HTTP
+request, each raw TCP connection and each UDP flow's first packet, only to a
+program of that account, read from this computer's sockets at the connection
+and never kept (`crates/svrngs-node/src/uid.rs`, `door::bound`). A restart
+under the same account keeps the lend. Another account's program in its place
+is refused 502, its asker told it is closed for now and why, and its lender's
+line says so with what to do. On Linux a program of any account can be lent,
+kept to its uid. On a Mac svrngs sees only this account's sockets, so lending
+another account's program is refused with the fix, to run it as you. A lend
+from before this records the account read at its first connection. Where no
+reader is, a lend carries as it did.
+
 **A port, not a page.** A program that speaks UDP or TCP is lent with
 `svrngs share <port> --udp --program <name>`, or `--tcp`: its declaration says
 `"raw": "udp"` or `"raw": "tcp"`, and the door carries it on a protocol of

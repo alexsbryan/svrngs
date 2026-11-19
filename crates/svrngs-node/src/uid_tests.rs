@@ -125,6 +125,11 @@ fn record(protocol: &str) -> Vec<u8> {
 /// swapped (the ends read backwards); the uid read at 24, `pbi_gid` (20).
 #[test]
 fn libproc_s_records_are_read_where_they_hold_it() {
+    assert_eq!(
+        record("tcp").len(),
+        record::SOCKET_LEN,
+        "the capture's length"
+    );
     let tcp = record::socket(&record("tcp"));
     let dialled = (at("127.0.0.1:61126"), at("127.0.0.1:61125"));
     assert_eq!(tcp, Some((Raw::Tcp, dialled)));

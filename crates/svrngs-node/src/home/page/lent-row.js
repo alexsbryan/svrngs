@@ -143,6 +143,17 @@ function Headers({ name, kept, state, doing, send }) {
   `;
 }
 
+// Why nobody can open a lend while its program runs (door.rs `answering`):
+// whose program answers on its port isn't the account it was lent from.
+const HELD = {
+  another: (/** @type {string} */ name) =>
+    ` Another account’s program is answering on ${name}’s port, so nobody can open ${name}. Start ${name} again, or stop lending it and lend what runs there now.`,
+  unjudged: (/** @type {string} */ name) =>
+    ` svrngs can’t tell whose program is on ${name}’s port, so nobody can open ${name}. Start it again, or lend it again.`,
+};
+/** @param {{ name: string, held?: 'another' | 'unjudged' }} lend */
+const heldWords = (lend) => (lend.held ? HELD[lend.held](lend.name) : '');
+
 // Whether apps wait on the lender: an account or key to make, or why not.
 const undone = (/** @type {AppsAccount | undefined} */ account) =>
   account !== undefined && !account.kept;
@@ -160,7 +171,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const limited = (limit ?? 0) > 0;
   const people = limit === 1 ? 'person' : 'people';
   const howMany = limited ? `up to ${limit} ${people}` : 'everyone in the groups you chose';
-  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')} ${lentTo(lend, groups)}`;
+  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
   const letEveryone =

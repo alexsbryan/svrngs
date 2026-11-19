@@ -22,7 +22,9 @@ use axum::http::StatusCode;
 use svrngs::cli;
 use svrngs::group::{self, Name};
 use svrngs_node::iroh::RelayConfig;
+use svrngs_node::lend::Raw;
 use svrngs_node::node::{Node, Wire};
+use svrngs_node::uid::Owner;
 use svrngs_node::SigningKey;
 use tower::ServiceExt;
 
@@ -110,6 +112,11 @@ impl cli::Here for Running<'_> {
     /// Every port listens: a test of a lend says what its service is.
     fn listens(&self, _: std::num::NonZeroU16) -> bool {
         true
+    }
+    /// Every port's program is this account's, as the wire says of each
+    /// socket nobody says otherwise of (svrngs-node `Wire::owns`).
+    fn owner(&self, _: Option<Raw>, _: std::num::NonZeroU16) -> Owner {
+        svrngs_node::uid::mine().map_or_else(Owner::Unjudged, Owner::Uid)
     }
     /// Nobody types.
     fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {

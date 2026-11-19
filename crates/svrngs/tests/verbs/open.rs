@@ -31,6 +31,13 @@ impl cli::Here for Opener<'_> {
     fn listens(&self, port: std::num::NonZeroU16) -> bool {
         self.0.listens(port)
     }
+    fn owner(
+        &self,
+        raw: Option<svrngs_node::lend::Raw>,
+        port: std::num::NonZeroU16,
+    ) -> svrngs_node::uid::Owner {
+        self.0.owner(raw, port)
+    }
     fn prompt(&self, n: &svrngs_node::lend::LendName, a: &str, s: bool) -> cli::Prompted {
         self.0.prompt(n, a, s)
     }

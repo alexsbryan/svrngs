@@ -49,9 +49,10 @@ async fn connection(lent: Lending<'_>, mut send: SendStream, mut recv: RecvStrea
     let _ = recv.read_exact(&mut [0; 1]).await;
     let unreached = |e| format!("{} cannot be reached here: {e}", lend.name);
     let opened = match admitted(&lent, "tcp: a connection").await {
-        Ok(held) => (door.folders.host.transport.service(port.get()).await)
-            .map(|to| (to, held))
-            .map_err(unreached),
+        Ok(held) => match door.folders.host.transport.service(port.get()).await {
+            Ok((to, ends)) => (super::udp::kept_live(door, lend, ends).await).map(|()| (to, held)),
+            Err(e) => Err(unreached(e)),
+        },
         Err(words) => Err(words),
     };
     let (mut to, held) = match opened {

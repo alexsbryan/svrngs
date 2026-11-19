@@ -982,6 +982,13 @@ impl cli::Here for Older {
     fn listens(&self, _: std::num::NonZeroU16) -> bool {
         unreachable!("a join probes no port")
     }
+    fn owner(
+        &self,
+        _: Option<svrngs_node::lend::Raw>,
+        _: std::num::NonZeroU16,
+    ) -> svrngs_node::uid::Owner {
+        unreachable!("a join probes no port")
+    }
     fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {
         unreachable!("a join asks nothing at the terminal")
     }
