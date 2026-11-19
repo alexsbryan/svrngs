@@ -115,4 +115,8 @@ impl cli::Here for Running<'_> {
     fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {
         Ok(None)
     }
+    /// No browser opens here: what would be opened is shown.
+    fn browse(&self, _: &std::ffi::OsStr) -> bool {
+        false
+    }
 }

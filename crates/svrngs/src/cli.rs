@@ -959,13 +959,11 @@ async fn open(here: &impl Here, at: Option<&str>, print: bool) -> Result<String,
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
     let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
     let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
-    let opener = (!print)
-        .then(|| svrngs_node::home::opened(at.as_ref()))
-        .flatten();
-    tracing::debug!(target: "cli", ?opener, "cli: open — the home page, with a code for its session, given to the browser");
-    Ok(match opener {
-        Some(_) => "Your home page is open in your browser.\n".into(),
-        None => format!("Open this in your browser within a minute: {at}\n"),
+    let opened = !print && here.browse(at.as_ref());
+    tracing::debug!(target: "cli", opened, print, "cli: open — the home page, with a code for its session, given to the browser, else shown");
+    Ok(match opened {
+        true => "Your home page is open in your browser.\n".into(),
+        false => format!("Open this in your browser within a minute: {at}\n"),
     })
 }
 
@@ -997,6 +995,9 @@ pub trait Here {
     fn ask(&self, route: &str, body: &impl serde::Serialize) -> impl Future<Output = Asked>;
     fn listens(&self, port: NonZeroU16) -> bool;
     fn prompt(&self, name: &LendName, asked: &str, shown: bool) -> Prompted;
+    /// Whether the program that opens addresses on this computer took `what`:
+    /// the one way the command reaches a browser, so a test stands in for it.
+    fn browse(&self, what: &std::ffi::OsStr) -> bool;
 }
 
 pub type Asked = Result<(bool, String), Refusal>;
@@ -1010,6 +1011,10 @@ impl Here for PathBuf {
     }
     fn listens(&self, port: NonZeroU16) -> bool {
         share::listens(port)
+    }
+    /// macOS's `open`, `xdg-open` anywhere else (svrngs-node home.rs `opened`).
+    fn browse(&self, what: &std::ffi::OsStr) -> bool {
+        svrngs_node::home::opened(what).is_some()
     }
     /// Ask for the lend's password on this terminal, never echoed, and read
     /// one line from standard input: `None` for an empty line or none. The

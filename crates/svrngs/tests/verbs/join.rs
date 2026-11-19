@@ -985,6 +985,9 @@ impl cli::Here for Older {
     fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {
         unreachable!("a join asks nothing at the terminal")
     }
+    fn browse(&self, _: &std::ffi::OsStr) -> bool {
+        unreachable!("a join opens no browser")
+    }
 }
 
 /// **A join the svrngs running here did not answer says it is too old**

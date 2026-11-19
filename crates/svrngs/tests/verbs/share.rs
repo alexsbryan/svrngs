@@ -260,6 +260,9 @@ impl cli::Here for Lender<'_> {
         self.asked.borrow_mut().push(asked.to_string());
         Ok(Some(self.typed.to_string()))
     }
+    fn browse(&self, what: &std::ffi::OsStr) -> bool {
+        self.running.browse(what)
+    }
 }
 
 /// `svrngs share <args>` as Sam types it, asked of `lender`: what it says.
