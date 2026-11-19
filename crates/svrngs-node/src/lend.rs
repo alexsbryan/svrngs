@@ -200,7 +200,6 @@ impl SendRow {
     /// unreserved segments.
     fn fits(raw: &str) -> bool {
         let (method, path) = raw.split_once(' ').unwrap_or_default();
-        let unreserved = |b: u8| b.is_ascii_alphanumeric() || b"._~-".contains(&b);
         let segment = |s: &str| !matches!(s, "" | "." | "..") && s.bytes().all(unreserved);
         let at = path
             .strip_prefix('/')
@@ -520,10 +519,13 @@ struct LendFile {
 /// `[A-Za-z0-9-._~]` only, because clients disagree on encoding Basic
 /// credentials"): RFC 3986's unreserved set, and no others.
 pub fn client_alphabet(raw: &str) -> bool {
-    !raw.is_empty()
-        && raw
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b))
+    !raw.is_empty() && raw.bytes().all(unreserved)
+}
+
+/// RFC 3986's unreserved bytes: what a sign-in client and a `sends:` row's
+/// path segment are each made of.
+fn unreserved(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || b"-._~".contains(&b)
 }
 
 /// A lend's OpenID Connect client, as its lender's declaration keeps it
@@ -641,11 +643,8 @@ impl Offered {
     pub(crate) fn label(&self, lender: &str, version: u32) -> Option<Label> {
         let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
         let once = crate::version::carried_once(Some(version));
-        let carried = self
-            .group
-            .as_deref()
-            .filter(|_| once)
-            .map(|g| (self.kind.as_str(), g));
+        let group = self.group.as_deref().filter(|_| once);
+        let carried = group.map(|g| (self.kind.as_str(), g));
         Some(Label::lent(&key, self.name.as_str(), carried))
     }
 
