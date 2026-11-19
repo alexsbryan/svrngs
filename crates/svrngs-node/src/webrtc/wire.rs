@@ -140,10 +140,9 @@ impl CustomEndpoint for Bound {
                 Poll::Ready(None) | Poll::Pending => break,
             }
         }
-        if n == 0 {
-            Poll::Pending
-        } else {
-            Poll::Ready(Ok(n))
+        match n {
+            0 => Poll::Pending,
+            n => Poll::Ready(Ok(n)),
         }
     }
 }
