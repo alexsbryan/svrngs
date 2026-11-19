@@ -198,14 +198,13 @@ pub(crate) fn written<'a>(
                 (out.2.changed).insert(kind.into(), (first.into(), person.clone(), op.ts_unix));
             }
             let entry = Entry { key, seq, path };
-            let (folder, beside) = (folder.clone(), false);
             let placed = Placed {
-                folder,
+                folder: folder.clone(),
                 path: entry.path.clone(),
                 hash,
                 size,
                 entry,
-                beside,
+                beside: false,
             };
             out.1.push((placed, person.clone()));
         }

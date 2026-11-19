@@ -261,18 +261,16 @@ pub fn sign_act(
     view: Option<crate::Digest>,
     grant: Option<crate::pass::Pass>,
 ) -> Op<SignedOp> {
-    let on_behalf_of = on_behalf_of.map(str::to_string);
-    let (sig, actor) = (String::new(), actor_of(signer));
     let kind = SignedOp {
         seq,
         prev,
-        sig,
+        sig: String::new(),
         act,
-        on_behalf_of,
+        on_behalf_of: on_behalf_of.map(str::to_string),
         view,
         grant,
     };
-    let mut op = unsigned_act(actor, namespace, ts_unix, kind);
+    let mut op = unsigned_act(actor_of(signer), namespace, ts_unix, kind);
     op.kind.sig = sign_ring_op(signer, &op.id);
     op
 }
