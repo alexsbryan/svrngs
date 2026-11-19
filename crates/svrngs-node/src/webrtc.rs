@@ -123,13 +123,12 @@ impl WebRtc {
         let send: wire::Send = Arc::new(move |to: &PeerKey, datagram: &[u8]| {
             let _ = send_routes.send(Route::Send(*to, datagram.to_vec()));
         });
-        let open = Arc::new(AtomicUsize::new(0));
         (
             Arc::new(Self {
                 arrived,
                 routes,
                 direct,
-                open,
+                open: Arc::new(AtomicUsize::new(0)),
             }),
             Wire::new(me, arrivals, send),
         )
@@ -202,11 +201,7 @@ async fn routed(mut told: UnboundedReceiver<Route>) {
                 tracing::debug!(target: "webrtc", peer = %hex::encode(key), "webrtc: a channel ended");
                 open.remove(&key);
             }
-            Route::Send(key, datagram) => {
-                if let Some(out) = open.get(&key) {
-                    let _ = out.send(datagram);
-                }
-            }
+            Route::Send(key, datagram) => drop(open.get(&key).map(|out| out.send(datagram))),
         }
     }
 }
