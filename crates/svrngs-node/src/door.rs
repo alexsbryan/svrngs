@@ -512,11 +512,9 @@ impl Using {
                         let verdict = (wait.map(Verdict::TooFast))
                             .unwrap_or_else(|| counts.ask(&lend, &actor, whereabouts, now));
                         let held = match (verdict, hold.upgrade()) {
-                            (Verdict::In { .. }, Some(using)) => Some(InFlight {
-                                using,
-                                lend: lend.name.clone(),
-                                actor,
-                            }),
+                            (Verdict::In { .. }, Some(using)) => {
+                                Some(InFlight(using, lend.name.clone(), actor))
+                            }
                             (Verdict::In { .. }, None) => {
                                 counts.end(&lend.name, &actor, now);
                                 continue;
@@ -562,19 +560,15 @@ impl Using {
     }
 }
 
-/// One request's use of a lend, ended when dropped.
-struct InFlight {
-    using: mpsc::UnboundedSender<Use>,
-    lend: LendName,
-    actor: String,
-}
+/// One request's use of a lend, ended when dropped: the count's task told,
+/// the lend, and the person using it.
+struct InFlight(mpsc::UnboundedSender<Use>, LendName, String);
 
 impl Drop for InFlight {
     fn drop(&mut self) {
-        let _ = self.using.send(Use::Ended(
-            self.lend.clone(),
-            std::mem::take(&mut self.actor),
-        ));
+        let _ = self
+            .0
+            .send(Use::Ended(self.1.clone(), std::mem::take(&mut self.2)));
     }
 }
 
@@ -690,21 +684,17 @@ async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
         _ => return (None, None),
     };
     let dialed = tokio::net::TcpStream::connect((std::net::Ipv4Addr::LOCALHOST, port.get()));
-    let took = tokio::time::timeout(ANSWER_WAIT, dialed)
-        .await
-        .ok()
-        .and_then(Result::ok);
+    let took = tokio::time::timeout(ANSWER_WAIT, dialed).await;
+    let took = took.ok().and_then(Result::ok);
     let ends = |s: &tokio::net::TcpStream| {
         Some(Conn {
             local: s.local_addr().ok()?,
             peer: s.peer_addr().ok()?,
         })
     };
+    let net = &door.folders.host.transport;
     let held = match took.as_ref().and_then(ends) {
-        Some(conn) => match bound(
-            recorded(lend),
-            &door.folders.host.transport.program(Raw::Tcp, conn).await,
-        ) {
+        Some(conn) => match bound(recorded(lend), &net.program(Raw::Tcp, conn).await) {
             Bound::Held(held) => Some(held),
             Bound::Carry | Bound::Record(..) => None,
         },
@@ -743,25 +733,23 @@ fn split_lend(path: &str) -> Option<(&str, String)> {
 /// names; answer how many went.
 pub(crate) fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
     let named: Vec<String> = connection(headers).collect();
-    remove_counted(headers, |name| {
-        HOP_BY_HOP.contains(&name) || named.iter().any(|n| n == name)
-    })
+    let gone =
+        |name: &str, _: &HeaderValue| HOP_BY_HOP.contains(&name) || named.iter().any(|n| n == name);
+    strip(headers, gone).len()
 }
 
-/// Remove every header whose name, as [`compare_name`] reads it, `goes`;
-/// answer how many values went.
-fn remove_counted(headers: &mut HeaderMap, goes: impl Fn(&str) -> bool) -> usize {
-    let gone: Vec<HeaderName> = headers
-        .keys()
-        .filter(|n| goes(&compare_name(n.as_str())))
-        .cloned()
-        .collect();
-    let mut n = 0;
-    for name in gone {
-        n += headers.get_all(&name).iter().count();
-        headers.remove(&name);
+/// Remove every header of a name that `goes`, by the name as
+/// [`compare_name`] reads it or by one of its values; answer the name once
+/// for each value that went by it, so its length is how many values went.
+/// The one remover of the door's headers, in and out.
+fn strip(headers: &mut HeaderMap, goes: impl Fn(&str, &HeaderValue) -> bool) -> Vec<HeaderName> {
+    let went =
+        |(n, v): (&HeaderName, &HeaderValue)| goes(&compare_name(n.as_str()), v).then(|| n.clone());
+    let gone: Vec<HeaderName> = headers.iter().filter_map(went).collect();
+    for name in &gone {
+        headers.remove(name);
     }
-    n
+    gone
 }
 
 /// The protocol a message asks to switch to: its `Upgrade`, when its
@@ -927,13 +915,9 @@ fn rewrite_headers(
     secret: &[(HeaderName, HeaderValue)],
 ) -> usize {
     strip_hop_by_hop(headers);
-    let declared: Vec<String> = secret
-        .iter()
-        .map(|(n, _)| compare_name(n.as_str()))
-        .collect();
-    let displaced = remove_counted(headers, |name| {
-        name.starts_with(IDENTITY_PREFIX) || declared.iter().any(|d| d == name)
-    });
+    let declared = |name: &str| secret.iter().any(|(d, _)| compare_name(d.as_str()) == name);
+    let door = |name: &str, _: &HeaderValue| name.starts_with(IDENTITY_PREFIX) || declared(name);
+    let displaced = strip(headers, door).len();
     for (name, value) in identity.into_iter().chain(secret.iter().cloned()) {
         headers.append(name, value);
     }
@@ -1129,15 +1113,8 @@ fn drop_echoed_secret(
             !s.is_empty() && v.as_bytes().windows(s.len()).any(|w| w == s)
         })
     };
-    let echoed: Vec<HeaderName> = headers
-        .iter()
-        .filter(|(_, v)| holds(v))
-        .map(|(n, _)| n.clone())
-        .collect();
-    for name in &echoed {
-        headers.remove(name);
-    }
-    echoed.iter().map(|n| n.to_string()).collect()
+    let echoed = strip(headers, |_, v| holds(v));
+    echoed.iter().map(HeaderName::to_string).collect()
 }
 
 /// Who asks for a lend through the door: a closed set (AGENTS 9), each
@@ -1280,13 +1257,9 @@ async fn holder_of(
     let key = holder.actor();
     let refused = |why: &str| {
         tracing::debug!(target: "door", holder = key, lend = %lend.name, why, "door: refused — a pass that does not open this lend");
-        LendRefusal::Pass.say(
-            StatusCode::FORBIDDEN,
-            format!(
-                "{} is not open to you here; open it again from your group's page",
-                lend.name
-            ),
-        )
+        let name = &lend.name;
+        let words = format!("{name} is not open to you here; open it again from your group's page");
+        LendRefusal::Pass.say(StatusCode::FORBIDDEN, words)
     };
     let pass = (headers.get(PASS_HEADER)).and_then(|v| Pass::decode(v.to_str().ok()?));
     let pass = pass.ok_or_else(|| refused("no pass, or none that reads"))?;
@@ -1359,20 +1332,13 @@ pub(crate) async fn holder_of_offer(
 ) -> Result<(), Response> {
     let refused = |why: &str| {
         tracing::debug!(target: "door", dialer = dialer.actor(), why, "door: an offer refused — no pass opens a lend here");
-        LendRefusal::Pass.say(
-            StatusCode::FORBIDDEN,
-            "open this again from your group’s page, then ask for the direct path".to_string(),
-        )
+        let words = "open this again from your group’s page, then ask for the direct path";
+        LendRefusal::Pass.say(StatusCode::FORBIDDEN, words)
     };
-    let pass = headers
-        .get(PASS_HEADER)
-        .and_then(|v| v.to_str().ok())
-        .and_then(Pass::decode)
-        .ok_or_else(|| refused("no pass, or none that reads"))?;
-    let lend = find(door, &pass.app.to_string())
-        .ok()
-        .flatten()
-        .ok_or_else(|| refused("the pass names no lend this computer lends"))?;
+    let pass = (headers.get(PASS_HEADER)).and_then(|v| Pass::decode(v.to_str().ok()?));
+    let pass = pass.ok_or_else(|| refused("no pass, or none that reads"))?;
+    let lend = find(door, &pass.app.to_string()).ok().flatten();
+    let lend = lend.ok_or_else(|| refused("the pass names no lend this computer lends"))?;
     holder_of(door, dialer, headers, &lend).await.map(|_| ())
 }
 
@@ -1722,12 +1688,7 @@ pub(crate) async fn lend_for(
         (host.as_ref(), via),
         service_path,
         req,
-        Told {
-            share,
-            held,
-            watched,
-            secret,
-        },
+        (share, held, watched, secret),
     )
     .await
 }
@@ -1736,19 +1697,18 @@ pub(crate) async fn lend_for(
 const UNCOUNTED: &str =
     "the computer that lends this cannot count who is using it now, so it lets nobody in";
 
-/// What the door decided for a request let in: the share it is told, and
-/// the use it holds until its answer is whole or abandoned (none for a
-/// person guessed home, who is not counted).
-struct Told {
-    share: Option<u64>,
-    held: Option<InFlight>,
-    /// Whose use the answer is cut by, and when the pass that let it in
-    /// lapses ([`Asker`]'s `until`); none for an owner's ([`withdrawn`]).
-    watched: Option<(Watched, Option<i64>)>,
-    /// The headers [`admit`]'s credential sends, the lend's own or the
-    /// readers', none for an app's bare read.
-    secret: Vec<(HeaderName, HeaderValue)>,
-}
+/// What the door decided for a request let in: the share it is told; the
+/// use it holds until its answer is whole or abandoned (none for a person
+/// guessed home, who is not counted); whose use the answer is cut by, and
+/// when the pass that let it in lapses ([`Asker`]'s `until`), none for an
+/// owner's ([`withdrawn`]); and the headers [`admit`]'s credential sends,
+/// the lend's own or the readers', none for an app's bare read.
+type Told = (
+    Option<u64>,
+    Option<InFlight>,
+    Option<(Watched, Option<i64>)>,
+    Vec<(HeaderName, HeaderValue)>,
+);
 
 /// The largest answer the door carries over the build's relay while the
 /// relay has reported this computer's share spent (share-refusal;
@@ -2049,12 +2009,7 @@ async fn forward(
     (host, via): (Option<&Person>, Option<Via>),
     path: String,
     mut req: Request,
-    Told {
-        share,
-        held,
-        watched,
-        secret,
-    }: Told,
+    (share, held, watched, secret): Told,
 ) -> Result<Response, Response> {
     let actor = whose.as_str();
     let relay = via.as_ref().and_then(Via::observe).and_then(|o| o.relay);
@@ -2102,19 +2057,15 @@ async fn forward(
     let lender = named.unwrap_or("Its lender");
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let label = lend.label(&door.key);
-    let target = parts
-        .uri
-        .query()
-        .map_or(path.clone(), |q| format!("{path}?{q}"));
+    let query = parts.uri.query();
+    let target = query.map_or(path.clone(), |q| format!("{path}?{q}"));
     let displaced = rewrite_headers(&mut parts.headers, identity, &secret);
     let said =
         |l: &Label| HeaderValue::from_str(l.as_str()).expect("a label is base32, so a header");
     let app = app.map(|a| (HeaderName::from_static(APP_HEADER), said(a)));
     let pages = pages(&door.rail, device, lend).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
-    let told = [(HeaderName::from_static(LABEL_HEADER), said(&label))];
-    parts
-        .headers
-        .extend(told.into_iter().chain(app).chain(pages));
+    parts.headers.insert(LABEL_HEADER, said(&label));
+    parts.headers.extend(app.into_iter().chain(pages));
     if displaced > 0 {
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
@@ -2186,10 +2137,8 @@ async fn forward(
     tell_share(&mut parts.headers, share);
     tracing::debug!(target: "door", actor, lend = %lend.name, status = parts.status.as_u16(),
         "door: the lend's service answered; streaming it back");
-    let length = parts
-        .headers
-        .get(header::CONTENT_LENGTH)
-        .and_then(|l| l.to_str().ok()?.parse().ok());
+    let length = parts.headers.get(header::CONTENT_LENGTH);
+    let length = length.and_then(|l| l.to_str().ok()?.parse().ok());
     if over_share(spent, false, length) {
         return Err(share_spent(door, lend));
     }
@@ -2208,17 +2157,10 @@ async fn forward(
         frame
     });
     let body = match watched {
-        Some(watched) => cut_by(
-            body,
-            withdrawn(door, lend, Some(watched)),
-            lend.name.to_string(),
-        ),
+        Some(_) => cut_by(body, withdrawn(door, lend, watched), lend.name.to_string()),
         None => Body::new(body),
     };
-    let mut response = Response::new(body);
-    *response.status_mut() = parts.status;
-    *response.headers_mut() = parts.headers;
-    Ok(response.into_response())
+    Ok((parts.status, parts.headers, body).into_response())
 }
 
 #[cfg(test)]
