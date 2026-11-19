@@ -1886,7 +1886,13 @@ end-to-end encrypted QUIC, a phone's page cannot use it (a browser refuses
 plain HTTP from an HTTPS page), and it admits as below. By default it
 lets through only the computers and phones that stand in a group its
 computer holds, read from the record on disk and asked again on each
-connection, each refusal traced; a computer in no group is refused the
+connection, each refusal traced, and a pass's holder for the group's
+lends: the token a lend's page presents at the relay's handshake is read
+as a pass, admitted when it is signed by the person it names, is live,
+names the dialing key as its holder, and its person stands in a group
+held here (self-host) — so a group's own relay need not be `--open` for
+the lends of its members, whose pages dial from a fresh key that stands
+in no group. A computer in no group is refused the
 verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each held to the share: 125,000 bytes a second, about a
 megabit, with an 8 MiB burst (`SHARE_RATE` and `SHARE_BURST`). The numbers
@@ -2887,11 +2893,11 @@ switch it cannot read it refuses.
    ours rather than n0's — with `svrngs relay` the way out anyone can take,
    and n0's public relays stay in every build as the emergency behind ours:
    a computer whose groups name no relay meets at n0's only while svrngs's
-   relay does not answer (§3), so an outage of ours is not an outage of the
-   groups. A relay that admits only its
-   group cannot yet carry a phone's lends: the
-   page opens each lend from a fresh key holding a pass, which stands in no
-   group. And whoever serves a group's page serves the code that holds the
+    relay does not answer (§3), so an outage of ours is not an outage of the
+    groups. A group's own relay carries a phone's lends too: it admits a
+    pass's holder, the fresh key a lend's page dials from, by the pass its
+    person signed (§3, "A relay anyone runs"; self-host). And whoever
+    serves a group's page serves the code that holds the
    person's key, its bytes unsealed while the page runs, so a group that does
    not trust svrnme.sh serves the page from its own origin. Likewise a
    lend's own pages can read the pass its page was handed and the pass's

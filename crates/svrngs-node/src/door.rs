@@ -1245,9 +1245,9 @@ fn find(door: &Door, raw: &str) -> Result<Option<Lend>, lend::LendError> {
 
 #[expect(
     clippy::disallowed_methods,
-    reason = "the door's clock: whether a pass has lapsed, and until when a computer's own lasts"
+    reason = "the door's and the relay's clock: whether a pass has lapsed, and until when a computer's own lasts"
 )]
-pub(crate) fn unix_now() -> Option<i64> {
+pub fn unix_now() -> Option<i64> {
     unix_secs(std::time::SystemTime::now())
 }
 

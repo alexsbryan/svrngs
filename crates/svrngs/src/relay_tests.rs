@@ -38,8 +38,8 @@ async fn a_read_that_panicked_is_refused_as_that_never_as_no_group() {
         panic!("planted: the record's read panicked")
     });
     let refused = Access::Deny { reason: None };
-    assert_eq!(verdict("a1", panicked.await), refused);
-    assert_eq!(verdict("b2", Ok(None)), refused);
+    assert_eq!(verdict("a1", None, panicked.await), refused);
+    assert_eq!(verdict("b2", None, Ok(None)), refused);
     let traced = String::from_utf8_lossy(&TRACES.lock().unwrap()).into_owned();
     let of = |key: &str| -> Vec<String> {
         (traced.lines())

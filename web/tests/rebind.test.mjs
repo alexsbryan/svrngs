@@ -86,22 +86,28 @@ test("a guest's lends name no one relay, so every route the link carries is race
 // `relays`, and the wasm glue reads `relays.length` for its Vec<String>
 // (svrngs_web.js `passArrayJsValueToWasm0`), so the worker's open threw.
 // Watched failing at 11c5c342: "Cannot read properties of undefined".
-test('a pass kept before relay fallbacks opens at its one relay', async () => {
+// And the pass itself is handed to the endpoint (self-host): a group's own
+// relay admits the holder by it, the fresh key standing in no group.
+test('a pass kept before relay fallbacks opens at its one relay, the pass handed to it', async () => {
+  let handedPass;
   const context = {
-    handed: { seed: 'ab', relay: 'https://own/' },
+    handed: { seed: 'ab', relay: 'https://own/', pass: 'the-pass' },
     init: async () => {},
     store: { runtime: () => '' },
     fromHex: () => new Uint8Array(32),
     trace: () => {},
     // As the glue passes a Vec<String>: its length, then each.
-    holder_endpoint: async (_, relays) =>
-      Array.from({ length: relays.length }, (_, i) => relays[i]),
+    holder_endpoint: async (_, relays, pass) => {
+      handedPass = pass;
+      return Array.from({ length: relays.length }, (_, i) => relays[i]);
+    },
   };
   const opened = runInNewContext(
     `let loaded, linked;\n${cut('lend.js', 'opened')}\nopened;`,
     context,
   );
   assert.deepEqual(Array.from(await opened()), ['https://own/']);
+  assert.equal(handedPass, 'the-pass', 'the pass is presented where the relay admits by it');
 });
 
 // Review F6: a relay the record names for a lend that the page's policy

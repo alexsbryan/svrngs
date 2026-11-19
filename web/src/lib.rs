@@ -183,7 +183,7 @@ async fn bind_for(key: Vec<u8>, token: &str, meets: &[String], held: bool) -> Re
     if relays.is_empty() {
         refuse!("LAYER parse: REFUSED — the link names no relay this page's policy takes")
     }
-    bind(key, Some(issuer), relays, held).await
+    bind(key, Some(issuer), relays, held, None).await
 }
 
 /// Bind an endpoint as the person whose key is `key` — or a pass's holder —
@@ -199,13 +199,17 @@ async fn bind_for(key: Vec<u8>, token: &str, meets: &[String], held: bool) -> Re
 /// token's, the fragment of `<origin>#<token>`, parsed by svrngs-core as
 /// the command parses it (call 5), each the page's policy takes; iroh
 /// chooses among them the fastest that answers, and a dial may be tried at
-/// every one. No bearer rides a request: the node knows the person by the
-/// key that dialled, or the pass its holder shows.
+/// every one. A pass's holder (self-host) presents `token` — the pass
+/// itself — as the token a group's own relay admits it by, since the fresh
+/// key a lend's page dials from stands in no group; the group's page's own
+/// endpoint presents none. No bearer rides a request to a lend: the node
+/// knows the person by the key that dialled, or the pass its holder shows.
 async fn bind(
     key: Vec<u8>,
     issuer: Option<iroh::PublicKey>,
     relays: Vec<RelayUrl>,
     held: bool,
+    token: Option<String>,
 ) -> Result<Bound, JsError> {
     t!("LAYER page: wasm module loaded and dial entered (iroh =1.4.2)");
 
@@ -223,9 +227,22 @@ async fn bind(
     // (relay-default), as upstream refused a dial string with no relay
     // (ring-runtime/src/lib.rs:91-99). Dotless, as WebKit reaches them.
     relays.iter().for_each(|relay| t!("LAYER parse: ok — relay {relay}"));
+    // A pass's holder presents the pass to every relay it was handed: the
+    // group's own admits it by the pass (self-host); the build's fallback
+    // and n0's ignore the token.
+    let mode = match token {
+        Some(token) => iroh::RelayMode::Custom(
+            relays
+                .iter()
+                .cloned()
+                .collect::<iroh::RelayMap>()
+                .with_auth_token(token),
+        ),
+        None => iroh::RelayMode::custom(relays.clone()),
+    };
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
-        .relay_mode(iroh::RelayMode::custom(relays.clone()))
+        .relay_mode(mode)
         .transport_config(if held { dial::held(None) } else { Default::default() });
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
@@ -457,9 +474,12 @@ pub async fn endpoint(key: Vec<u8>, token: String, meets: Option<Vec<String>>) -
 /// group through `relays` — every relay the group's link carries that this
 /// page's policy takes, its public fallback among them — refused with
 /// none: a lend's origin's worker (u5-2; DESIGN §3, "Lent apps", call 6).
-/// It is handed no link's token, which would let it join the group.
+/// It is handed no link's token, which would let it join the group, and
+/// `pass` is presented at the relays it is handed, since a group's own
+/// relay admits the holder by it, the fresh key standing in no group
+/// (self-host).
 #[wasm_bindgen]
-pub async fn holder_endpoint(key: Vec<u8>, relays: Vec<String>) -> Result<Endpoint, JsError> {
+pub async fn holder_endpoint(key: Vec<u8>, relays: Vec<String>, pass: String) -> Result<Endpoint, JsError> {
     let parsed: Vec<RelayUrl> = relays
         .iter()
         .map(|relay| relay::parse(relay))
@@ -469,7 +489,7 @@ pub async fn holder_endpoint(key: Vec<u8>, relays: Vec<String>) -> Result<Endpoi
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
     Ok(Endpoint {
-        bound: bind(key, None, parsed, true).await?,
+        bound: bind(key, None, parsed, true, Some(pass)).await?,
     })
 }
 

@@ -1,8 +1,9 @@
 //! `svrngs relay` (relay-verb (b)): a relay the verb starts on 127.0.0.1,
 //! over the data of a computer that runs svrngs beside it, lets through a
-//! key standing in a group that computer holds and refuses one that stands
-//! in none; `--open` lets both through; a computer in no group is refused
-//! the verb. Planted: every key let through, as an open relay would.
+//! key standing in a group that computer holds and a pass's holder for the
+//! group's lends, and refuses one that stands in none and holds no pass;
+//! `--open` lets both through; a computer in no group is refused the verb.
+//! Planted: every key let through, as an open relay would.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
@@ -16,7 +17,9 @@ use iroh_relay::client::{ClientBuilder, ConnectError};
 use svrngs::cli::{self, Refusal};
 use svrngs::group::Name;
 use svrngs::relay::{self, At, Relay, SHARE_BURST, SHARE_RATE};
+use svrngs_core::pass::{Label, Pass};
 use svrngs_node::iroh::{RelayUrl, SecretKey};
+use svrngs_node::SigningKey;
 
 const SAM: u8 = 31;
 
@@ -29,16 +32,17 @@ async fn relay_over(
     relay::spawn(&Relay { at, open }, root).await
 }
 
-/// A client at `server` with the key of `seed`, as the computers that dial
-/// it build one: plain HTTP, but the TLS config built all the same.
-async fn client_at(
+/// A client at `server` with `key`, presenting `token` when given, as the
+/// computers and phones that dial it build one: plain HTTP, but the TLS
+/// config built all the same.
+async fn client_with(
     server: &iroh_relay::server::Server,
-    seed: u8,
+    key: &SecretKey,
+    token: Option<&str>,
 ) -> Result<iroh_relay::client::Client, ConnectError> {
     let url: RelayUrl = format!("http://{}/", server.http_addr().unwrap())
         .parse()
         .unwrap();
-    let key = SecretKey::from_bytes(&[seed; 32]);
     let tls = rustls::ClientConfig::builder_with_provider(std::sync::Arc::new(
         rustls::crypto::ring::default_provider(),
     ))
@@ -46,15 +50,31 @@ async fn client_at(
     .unwrap()
     .with_root_certificates(rustls::RootCertStore::empty())
     .with_no_client_auth();
-    ClientBuilder::new(url, key, DnsResolver::new())
-        .tls_client_config(tls)
-        .connect()
-        .await
+    let builder = ClientBuilder::new(url, key.clone(), DnsResolver::new()).tls_client_config(tls);
+    match token {
+        Some(token) => builder.auth_token(token),
+        None => builder,
+    }
+    .connect()
+    .await
 }
 
-/// Whether the relay at `server` lets the key of `seed` through.
-async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
-    match client_at(server, seed).await {
+/// A client at `server` with the key of `seed`, presenting no token.
+async fn client_at(
+    server: &iroh_relay::server::Server,
+    seed: u8,
+) -> Result<iroh_relay::client::Client, ConnectError> {
+    client_with(server, &SecretKey::from_bytes(&[seed; 32]), None).await
+}
+
+/// Whether the relay at `server` lets `key` through, presenting `token`
+/// when given.
+async fn admits_with(
+    server: &iroh_relay::server::Server,
+    key: &SecretKey,
+    token: Option<&str>,
+) -> bool {
+    match client_with(server, key, token).await {
         Ok(_) => true,
         Err(e @ ConnectError::Handshake { .. }) => {
             assert!(e.to_string().contains("relay denied"), "{e}");
@@ -62,6 +82,11 @@ async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
         }
         Err(e) => panic!("the relay neither let it through nor refused it: {e:?}"),
     }
+}
+
+/// Whether the relay at `server` lets the key of `seed` through.
+async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
+    admits_with(server, &SecretKey::from_bytes(&[seed; 32]), None).await
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -91,6 +116,54 @@ async fn a_relay_lets_through_its_groups_alone_and_open_everyone() {
     assert!(
         admits(&open, 99).await,
         "an open relay lets a stranger through"
+    );
+    sam.endpoint().close().await;
+}
+
+/// **A group-only relay admits a pass's holder for the group's lends**
+/// (self-host; RELAY_COMMONS design 6): Sam's relay, group-only, refuses a
+/// stranger's key; the same fresh key presenting the pass Sam signed for
+/// it, naming a lend of Sam's, is let through — a lend's page dials from a
+/// key that stands in no group, and the pass its person signed is what a
+/// group's own relay admits it by, as the door admits it for the pass's
+/// lends. A key the pass does not name, presenting it, is refused. Planted,
+/// watched red: the pass branch removed, and the holder was refused as a
+/// stranger.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_group_only_relay_admits_a_pass_s_holder_for_the_group_s_lends() {
+    let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
+    let house = Name::parse("house").unwrap();
+    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[], &ours)
+        .await
+        .expect("Sam makes house");
+    let groups = relay_over(dir.path(), false)
+        .await
+        .expect("Sam's relay starts");
+
+    // The phone's fresh key, and the pass Sam signs for it.
+    let sam_key = SigningKey::from_bytes(&[SAM; 32]);
+    let holder = SecretKey::from_bytes(&[7; 32]);
+    let holder_hex = hex::encode(holder.public().as_bytes());
+    let app = Label::of(&sam_key.verifying_key().to_bytes(), "film");
+    let until = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("this host's clock reads after 1970")
+        .as_secs() as i64
+        + 3600;
+    let pass = Pass::sign(&sam_key, &holder_hex, (app, vec![]), until).encode();
+
+    assert!(
+        !admits_with(&groups, &holder, None).await,
+        "a key of no group is still refused there"
+    );
+    assert!(
+        admits_with(&groups, &holder, Some(&pass)).await,
+        "the pass's holder is let through for the group's lends"
+    );
+    let other = SecretKey::from_bytes(&[8; 32]);
+    assert!(
+        !admits_with(&groups, &other, Some(&pass)).await,
+        "the pass names its holder, and another key presenting it is refused"
     );
     sam.endpoint().close().await;
 }
