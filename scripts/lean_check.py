@@ -833,12 +833,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # came before (59851ecb, -1). JavaScript 8,535 -> 8,544.
 # (2026-11-18) Merged with PR #3: the shared database's ceiling keeps its
 # +107 of JavaScript over the 8,544 PR #3 leaves. JavaScript -> 8,651.
+# (2026-11-19) Raised by the operator for webrtc-page (relay-commons): the
+# window holds the direct path's RTCPeerConnection, since a worker cannot
+# (shim.js +25), and lend.js starts the attempt (+31). +56 against 40 free;
+# the pass's inlinings break the linter's complexity bound and
+# lend-worker.test.mjs, so +16. JavaScript 8,651 -> 8,667.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
     ".": 23102,
 
-    "js": 8652,
+    "js": 8668,
 
     "swift": 1,
 }
