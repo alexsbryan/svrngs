@@ -33,7 +33,7 @@ pub mod direct;
 pub mod paths;
 pub mod wire;
 
-pub use paths::{quick_paths, KEEP_ALIVE, PATH_IDLE};
+pub use paths::{quick_paths, KEEP_ALIVE, OFFER_ROUTE, PATH_IDLE};
 
 #[cfg(test)]
 pub(crate) mod tests;
@@ -74,11 +74,6 @@ const SETUP: Duration = Duration::from_secs(10);
 /// ([`KEEP_ALIVE`]) keeps a live path's channel busy, so this closes a
 /// socket nothing has used for half a minute.
 const IDLE: Duration = Duration::from_secs(30);
-
-/// Where the page offers a path: the route the offer and answer cross on
-/// [`Alpn::WebRtc`](crate::alpn::Alpn::WebRtc), JSON in and out, as the
-/// spike's `S` stream was (native/src/main.rs:135-148).
-pub const OFFER_ROUTE: &str = "/offer";
 
 /// The WebRTC half's handle: the wire's send side, and what an offer is
 /// answered through. One [`Route`] owner is told of each peer's channel

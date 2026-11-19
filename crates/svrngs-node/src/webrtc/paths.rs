@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The path timing both ends of a WebRTC path carry (webrtc-node;
-//! webrtc-page; RELAY_COMMONS design 4): the node's endpoint
-//! ([`crate::webrtc`]) and the page's data endpoint (web/src/lib.rs,
-//! which compiles this file by `#[path]`; the port map,
-//! demo/runs/relay-commons/PORT_MAP.md) are built with it, since the
+//! What both ends of a WebRTC path spell alike (webrtc-node; webrtc-page;
+//! RELAY_COMMONS design 4): the node ([`crate::webrtc`]) and the page
+//! (web/src/lib.rs, which compiles this file by `#[path]`; the port map,
+//! demo/runs/relay-commons/PORT_MAP.md) carry the same path timing — the
 //! computer sends the film and must find a dead path too (the spike's
-//! README, "The pre-requisites" 1).
+//! README, "The pre-requisites" 1) — and the same route the offer and
+//! answer cross.
 
 /// How long a path with no answer is given up after (the spike's
 /// `PATH_IDLE_MS` 3000; RELAY_COMMONS design 4): inside any player's
@@ -23,3 +23,8 @@ pub fn quick_paths() -> iroh::endpoint::QuicTransportConfig {
         .default_path_keep_alive_interval(KEEP_ALIVE)
         .build()
 }
+
+/// Where the page offers a path: the route the offer and answer cross on
+/// `Alpn::WebRtc` (webrtc-node; webrtc-page), JSON in and out, as the
+/// spike's `S` stream was (native/src/main.rs:135-148).
+pub const OFFER_ROUTE: &str = "/offer";
