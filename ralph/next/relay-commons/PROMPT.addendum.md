@@ -23,12 +23,16 @@ dirty files.
 - **Only CHARTER's new dependencies:** iroh 1.4.x and its matching set, and
   str0m 0.25. CSP and the trust floor stay unchanged.
 
-**`~/.cargo` is outside your reach**, and a command that names it is
-refused and ends your session (sessions 1 and 2 of relay-survey:
-`external_directory (/home/alexbryan/.cargo/*); auto-rejecting`).
-- To read a crate's source (iroh, iroh-relay, str0m), vendor it into this
-  worktree and read it there: `cargo vendor --versioned-dirs target/vendor`.
-  For iroh 1.4, run it in the survey's scratch copy under `target/`.
+**Do not read `~/.cargo` itself.** That means `~/.cargo/config.toml` and its
+like. Every refusal so far was the same command, `ls ~/.cargo/config.toml;
+cat ~/.cargo/config.toml`, retried until the session ended (relay-survey 1
+and 2: `external_directory (/home/alexbryan/.cargo/*); auto-rejecting`).
+- The build uses this repo's own config alone, so there is nothing there to
+  find.
+- Crate sources are readable at `~/.cargo/registry/src/**`, by this
+  worktree's `.opencode/opencode.json`.
+- If such a read is refused, vendor the crate into this worktree and read it
+  there: `cargo vendor --versioned-dirs target/vendor`.
 - `cargo tree`, `cargo metadata` and `cargo info` need no path.
 - `~/dev/*`, the svrn-docs spikes among them, is readable.
 
