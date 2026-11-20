@@ -879,10 +879,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # approves (cli.rs): 24,204. Its pass cut 5 there.
 # Then 12 for a Mac to refuse a UDP socket on every address that lets
 # another bind beside it (uid.rs 10, share.rs 2): 24,216. Its pass cut 1.
+# Then 13 for a Mac's TCP socket to be approved by its id in this boot
+# (uid.rs): 24,229. Its pass cut 9 there.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24217,
+    ".": 24230,
 
     "js": 8694,
 
