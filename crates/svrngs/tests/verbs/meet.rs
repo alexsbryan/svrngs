@@ -130,7 +130,10 @@ async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
     assert!(refused.is_err(), "a member who is not keeper is refused");
     let refused = cli::link_to(&alex, "house", None, &ours, false, &[old.clone()]).await;
     assert!(
-        matches!(refused, Err(svrngs::cli::Refusal::Meet(_))),
+        matches!(
+            refused,
+            Err(svrngs::cli::Refusal::Refused(svrngs::cli::Refused::Meet(_)))
+        ),
         "the command refuses before it mints a link"
     );
     assert_eq!(acts(&alex, &seed.id()), before, "the refusal writes no act");

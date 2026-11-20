@@ -102,7 +102,13 @@ async fn every_relay_down_a_join_ends_bounded_and_leaves_nothing_running() {
     let tried = tokio::time::timeout(BOUND, cli::join_group(&node, &key, &link, &person)).await;
     eprintln!("every relay down: {:?}", began.elapsed());
     let tried = tried.unwrap_or_else(|_| panic!("the join still waits after {BOUND:?}"));
-    assert!(matches!(tried, Err(cli::Refusal::IssuerAway)), "{tried:?}");
+    assert!(
+        matches!(
+            tried,
+            Err(cli::Refusal::Unjudged(cli::Unjudged::IssuerAway))
+        ),
+        "{tried:?}"
+    );
 
     let (endpoint, taken) = (node.endpoint().clone(), [b, o, t]);
     tokio::time::timeout(Duration::from_secs(10), endpoint.close())
@@ -183,7 +189,10 @@ async fn the_program_joins_at_home_with_the_public_relay_gone() {
     let refused = cli::join_group(&late, &key, &old, &lee);
     let refused = tokio::time::timeout(BOUND, refused).await.expect("bounded");
     assert!(
-        matches!(refused, Err(cli::Refusal::IssuerAway)),
+        matches!(
+            refused,
+            Err(cli::Refusal::Unjudged(cli::Unjudged::IssuerAway))
+        ),
         "{refused:?}"
     );
 

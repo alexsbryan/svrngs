@@ -7,7 +7,7 @@
 //! 40; traced, each refusal came while that child still ran the test's own
 //! image, and the claim was free again just before the spawn returned.
 
-use svrngs::cli::{self, Refusal};
+use svrngs::cli::{self, Refusal, Refused};
 
 /// A second claim is refused while the first is held, and taken once it
 /// is let go.
@@ -15,7 +15,10 @@ use svrngs::cli::{self, Refusal};
 fn a_second_svrngs_on_one_data_dir_is_refused() {
     let dir = tempfile::tempdir().unwrap();
     let held = cli::claim(dir.path()).expect("the first claim");
-    assert!(matches!(cli::claim(dir.path()), Err(Refusal::Busy(_))));
+    assert!(matches!(
+        cli::claim(dir.path()),
+        Err(Refusal::Refused(Refused::Busy(_)))
+    ));
     drop(held);
     cli::claim(dir.path()).expect("free again");
 }

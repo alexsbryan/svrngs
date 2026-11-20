@@ -5,7 +5,7 @@
 //! `cli::link_to`, are verbs/new.rs's, on the wire (docs/seams.tsv).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
-use svrngs::cli::{self, Refusal, Verb};
+use svrngs::cli::{self, Refusal, Refused, Unjudged, Verb};
 use svrngs::group::{self, Name};
 use svrngs_core::relay::Meeting;
 use svrngs_node::invite::kept_page;
@@ -251,24 +251,26 @@ fn a_wrong_argument_is_an_error_not_a_guess() {
 #[test]
 fn refusals_use_only_a_persons_words() {
     let refusals = [
-        Refusal::NoDataDir,
-        Refusal::Busy("/home/sam/.svrngs/lock".into()),
-        Refusal::Start,
-        Refusal::NoName(name("house")),
-        Refusal::Keep("house".into()),
-        Refusal::NoGroup("work".into()),
-        Refusal::Ambiguous {
+        Refusal::Unjudged(Unjudged::NoDataDir),
+        Refusal::Refused(Refused::Busy("/home/sam/.svrngs/lock".into())),
+        Refusal::Unjudged(Unjudged::Start),
+        Refusal::Refused(Refused::NoName(name("house"))),
+        Refusal::Unjudged(Unjudged::Keep("house".into())),
+        Refusal::Refused(Refused::NoGroup("work".into())),
+        Refusal::Refused(Refused::Ambiguous {
             name: "house".into(),
             ids: vec!["3f2a91c0".into()],
-        },
-        Refusal::NotIn(name("house")),
+        }),
+        Refusal::Refused(Refused::NotIn(name("house"))),
     ];
     // This computer's key, too short to read, refused with its file named;
     // the temporary directory's own name is not the command's to choose.
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join(svrngs::identity::NODE_KEY_FILE), b"short").unwrap();
     let unreadable = svrngs::identity::load_or_generate_node_key(dir.path()).unwrap_err();
-    let refusals = refusals.into_iter().chain([Refusal::Key(unreadable)]);
+    let refusals = refusals
+        .into_iter()
+        .chain([Refusal::Unjudged(Unjudged::Key(unreadable))]);
     for r in refusals {
         let said = r
             .to_string()
@@ -320,7 +322,10 @@ async fn page_host(elsewhere: Elsewhere) -> Origin {
 /// saying what its host must do.
 #[track_caller]
 fn no_app_address(refused: &Refusal) {
-    assert!(matches!(refused, Refusal::NoAppAddress(_)), "{refused}");
+    assert!(
+        matches!(refused, Refusal::Refused(Refused::NoAppAddress(_))),
+        "{refused}"
+    );
     assert_eq!(refused.exit_code(), 1);
     let said = refused.to_string();
     assert!(
@@ -389,7 +394,10 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
     let away = cli::checked_page(page("https://nowhere.invalid/"))
         .await
         .unwrap_err();
-    assert!(matches!(away, Refusal::CannotCheck(_)), "{away}");
+    assert!(
+        matches!(away, Refusal::Unjudged(Unjudged::CannotCheck(_))),
+        "{away}"
+    );
     assert_eq!(away.exit_code(), 3);
 
     let dir = tempfile::tempdir().unwrap();
@@ -471,9 +479,9 @@ fn room_names_lends_and_says_who_can_open_them() {
         "{said}"
     );
     println!("{said}");
-    let refusals = [Refusal::Room(
+    let refusals = [Refusal::Refused(Refused::Room(
         "nobody in your groups lends jellyfin to this computer now".into(),
-    )];
+    ))];
     for line in refusals.iter().map(ToString::to_string).chain([said]) {
         let lower = line.to_lowercase();
         for word in ["ring", "member", "key", "sync", "journal", "node", "relay"] {

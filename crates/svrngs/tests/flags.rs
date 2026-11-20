@@ -63,7 +63,7 @@ fn update_is_a_verb_of_its_own_and_says_which_verdict_it_reached() {
 /// pins. Red on the plant of any one moved to the other code.
 #[test]
 fn every_refusal_keeps_its_exit_code() {
-    use cli::Refusal as R;
+    use cli::{Refused as R, Unjudged as U};
     use std::path::PathBuf;
     let port = std::num::NonZeroU16::new(8080).unwrap();
     let name = || svrngs::group::Name::parse("house").unwrap();
@@ -110,24 +110,26 @@ fn every_refusal_keeps_its_exit_code() {
         R::Busy(path()),
     ];
     let unjudged = [
-        R::NoDataDir,
-        R::DataDir(path(), io()),
-        R::Key(key),
-        R::Start,
-        R::Taken(at, path()),
-        R::Api(svrngs_node::api::ApiError::NoAddress(path())),
-        R::IssuerAway,
-        R::Prompt(io()),
-        R::SignIn(svrngs_node::oidc::KeyFailure::Store(path(), io())),
-        R::CannotCheck("https://svrnme.sh".into()),
-        R::NotRunning,
-        R::Unopened("no".into()),
-        R::NoClient("no".into()),
-        R::Unchanged(name()),
-        R::RelayStart("no".into()),
-        R::GroupsUnread("no".into()),
-        R::Keep("house".into()),
+        U::NoDataDir,
+        U::DataDir(path(), io()),
+        U::Key(key),
+        U::Start,
+        U::Taken(at, path()),
+        U::Api(svrngs_node::api::ApiError::NoAddress(path())),
+        U::IssuerAway,
+        U::Prompt(io()),
+        U::SignIn(svrngs_node::oidc::KeyFailure::Store(path(), io())),
+        U::CannotCheck("https://svrnme.sh".into()),
+        U::NotRunning,
+        U::Unopened("no".into()),
+        U::NoClient("no".into()),
+        U::Unchanged(name()),
+        U::RelayStart("no".into()),
+        U::GroupsUnread("no".into()),
+        U::Keep("house".into()),
     ];
+    let refused = refused.map(cli::Refusal::from);
+    let unjudged = unjudged.map(cli::Refusal::from);
     for (code, each) in [(1, Vec::from(refused)), (3, Vec::from(unjudged))] {
         for r in each {
             assert_eq!(r.exit_code(), code, "{r:?}");

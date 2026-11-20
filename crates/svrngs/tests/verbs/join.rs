@@ -13,7 +13,7 @@
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 
-use svrngs::cli::{self, Printed, Refusal, Said, Verb};
+use svrngs::cli::{self, Printed, Refusal, Refused, Said, Unjudged, Verb};
 use svrngs::group::{self, Seed};
 use svrngs_node::iroh::{Alpn, RelayUrl, Unsent};
 use svrngs_node::join as issuer;
@@ -263,7 +263,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let closed = present(&dee, &link, &group, &invite, "Dee").await;
     let refused = cli::join_group(&dee.node, &dee.key, &link, &name("Dee")).await;
     assert!(
-        matches!(refused, Err(Refusal::LinkRefused)),
+        matches!(refused, Err(Refusal::Refused(Refused::LinkRefused))),
         "Dee with the old link: {}",
         refused.map_or_else(|e| e.to_string(), |s| s.to_string())
     );
@@ -291,7 +291,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let never = present(&fay, &forged, &group, &open_invite, "Fay").await;
     assert!(matches!(
         cli::join_group(&fay.node, &fay.key, &forged, &name("Fay")).await,
-        Err(Refusal::LinkRefused)
+        Err(Refusal::Refused(Refused::LinkRefused))
     ));
     assert!(!stands(&sam.node, &group, &fay.key));
 
@@ -339,7 +339,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let past = present(&eve, &lapsed_link, &group, &lapsed.id, "Eve").await;
     assert!(matches!(
         cli::join_group(&eve.node, &eve.key, &lapsed_link, &name("Eve")).await,
-        Err(Refusal::LinkRefused)
+        Err(Refusal::Refused(Refused::LinkRefused))
     ));
     assert!(!stands(&sam.node, &group, &eve.key));
 
@@ -401,9 +401,9 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         .to_string(),
     );
     for r in [
-        Refusal::NoNameToJoin,
-        Refusal::LinkRefused,
-        Refusal::IssuerAway,
+        Refusal::Refused(Refused::NoNameToJoin),
+        Refusal::Refused(Refused::LinkRefused),
+        Refusal::Unjudged(Unjudged::IssuerAway),
     ] {
         said.push(r.to_string());
     }
@@ -506,7 +506,7 @@ async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
         .expect_err("a second sam is refused");
     let words = refused.to_string();
     assert!(
-        matches!(&refused, Refusal::NameTaken { holder, .. } if *holder == name("Sam")),
+        matches!(&refused, Refusal::Refused(Refused::NameTaken { holder, .. }) if *holder == name("Sam")),
         "{refused:?}"
     );
     // How to add this computer as Sam, if it is Sam's (bash-devices (d)).
@@ -836,7 +836,7 @@ async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
     let link = parsed(&printed, &sam.node);
     let refused = cli::join_group(&again.node, &again.key, &link, &name("Hal")).await;
     assert!(
-        matches!(&refused, Err(Refusal::Left(g)) if *g == name("house")),
+        matches!(&refused, Err(Refusal::Refused(Refused::Left(g))) if *g == name("house")),
         "{refused:?}"
     );
     let said = String::from_utf8(said.0.lock().unwrap().clone()).unwrap();
@@ -1000,9 +1000,9 @@ impl cli::Here for Older {
 /// **A join the svrngs running here did not answer says it is too old**
 /// (join-while-running): svrngs holds the data dir and answers no
 /// `/v1/joins`, a build from before the route, and `svrngs join` gives the
-/// way on. Watched failing on two plants: the fallback at `Refusal::Busy`,
+/// way on. Watched failing on two plants: the fallback at `Refused::Busy`,
 /// the refusal this was until an operator hit it (cli.rs `answer`), and
-/// `Refusal::Older`'s words without `svrngs restart` (cli.rs).
+/// `Refused::Older`'s words without `svrngs restart` (cli.rs).
 #[tokio::test]
 async fn a_join_an_older_svrngs_did_not_answer_says_it_is_too_old() {
     let older = Older(tempfile::tempdir().unwrap());
@@ -1023,7 +1023,10 @@ async fn a_join_an_older_svrngs_did_not_answer_says_it_is_too_old() {
         .as_ref()
         .expect_err("no join, for nothing answered it")
         .to_string();
-    assert!(matches!(refused, Err(Refusal::Older)), "{words}");
+    assert!(
+        matches!(refused, Err(Refusal::Refused(Refused::Older))),
+        "{words}"
+    );
     assert!(
         words.contains("svrngs update") && words.contains("svrngs restart"),
         "{words}"

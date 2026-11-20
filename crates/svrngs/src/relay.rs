@@ -41,7 +41,7 @@ use svrngs_node::register::Member;
 use svrngs_node::{namespaces_in, RailError, RingRail, SigningKey};
 use tokio::task::JoinError;
 
-use crate::cli::Refusal;
+use crate::cli::{Refusal, Refused, Unjudged};
 use crate::identity;
 
 /// What an `--open` relay holds each computer or phone to, in bytes a
@@ -195,13 +195,13 @@ fn verdict(
 pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
     let unread = |e: RailError| {
         tracing::debug!(target: "relay", root = %root.display(), error = %e, "relay: refused — the groups this computer holds cannot be read");
-        Refusal::GroupsUnread(e.to_string())
+        Unjudged::GroupsUnread(e.to_string())
     };
     let admits = if relay.open {
         Admits(None)
     } else if namespaces_in(root).map_err(unread)?.is_empty() {
         tracing::debug!(target: "relay", root = %root.display(), "relay: refused — this computer holds no group");
-        return Err(Refusal::RelayForNobody);
+        return Err(Refused::RelayForNobody.into());
     } else {
         let key = identity::load_or_generate_node_key(root)?;
         Admits(Some((root.to_path_buf(), Arc::new(key))))
@@ -255,7 +255,7 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
     }
     Server::spawn(server).await.map_err(|e| {
         tracing::debug!(target: "relay", error = %e, "relay: refused — it did not start");
-        Refusal::RelayStart(e.to_string())
+        Unjudged::RelayStart(e.to_string()).into()
     })
 }
 

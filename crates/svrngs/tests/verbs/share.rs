@@ -6,7 +6,7 @@
 
 use std::num::NonZeroU16;
 
-use svrngs::cli::{self, Refusal, Said};
+use svrngs::cli::{self, Refusal, Refused, Said, Unjudged};
 use svrngs::share::{self, Share};
 use svrngs_node::lend::Program as LentProgram;
 use svrngs_node::node::Wire;
@@ -68,7 +68,10 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     let both = cli::audience_of(dir, port, &named(&["house", "trip"])).unwrap();
     assert_eq!(both, Audience::Selected(seeds.clone()));
     let yard = cli::audience_of(dir, port, &named(&["yard"]));
-    assert!(matches!(yard, Err(Refusal::NoGroup(_))), "{yard:?}");
+    assert!(
+        matches!(yard, Err(Refusal::Refused(Refused::NoGroup(_)))),
+        "{yard:?}"
+    );
 
     let asked = Share {
         audience: both,
@@ -105,7 +108,7 @@ async fn two_groups_of_one_name_are_chosen_by_id_never_by_name() {
     let (dir, port) = (sam.dir.path(), std::num::NonZeroU16::new(8096).unwrap());
     let both = cli::audience_of(dir, port, &["House".to_string()]);
     assert!(
-        matches!(&both, Err(Refusal::Ambiguous { ids: i, .. }) if i.len() == 2),
+        matches!(&both, Err(Refusal::Refused(Refused::Ambiguous { ids: i, .. })) if i.len() == 2),
         "{both:?}"
     );
     let second = cli::audience_of(dir, port, &[ids[1][..8].to_string()]).unwrap();
@@ -179,7 +182,7 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
     let running = crate::Running(&sam);
     let nope = cli::answer(folder("nope"), &running, &relay).await;
     assert!(
-        matches!(&nope, Err(Refusal::NoGroup(g)) if g == "nope"),
+        matches!(&nope, Err(Refusal::Refused(Refused::NoGroup(g))) if g == "nope"),
         "{nope:?}"
     );
     let synced = cli::answer(folder("house"), &running, &relay).await;
@@ -187,7 +190,10 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
 
     let away = sam.dir.path().to_path_buf();
     let refused = cli::answer(folder("house"), &away, &relay).await;
-    assert!(matches!(refused, Err(Refusal::NotRunning)), "{refused:?}");
+    assert!(
+        matches!(refused, Err(Refusal::Unjudged(Unjudged::NotRunning))),
+        "{refused:?}"
+    );
     assert_eq!(refused.unwrap_err().exit_code(), 3);
 }
 
@@ -197,10 +203,10 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
 fn unshare_of_nothing_lent_says_what_is() {
     let lend = |n: &str| svrngs_node::lend::LendName::parse(n).unwrap();
     let said = |lent: Vec<_>| {
-        Refusal::NotLent {
+        Refusal::Refused(Refused::NotLent {
             name: lend("pad"),
             lent,
-        }
+        })
         .to_string()
     };
     assert_eq!(

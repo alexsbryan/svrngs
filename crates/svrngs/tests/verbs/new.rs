@@ -5,7 +5,7 @@
 //! printed whose key the `Invite` names (u2-8). What stays in new.rs: a
 //! page's host asked whether it serves the page at every name, a listener.
 
-use svrngs::cli::{self, Printed, Refusal};
+use svrngs::cli::{self, Printed, Refusal, Refused};
 use svrngs::group;
 use svrngs_node::invite::LINK_LIFE_SECS;
 use svrngs_node::join as issuer;
@@ -192,14 +192,14 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
 
     assert!(matches!(
         cli::link_to(node, "work", None, &no_relay(), false, &[]).await,
-        Err(Refusal::NoGroup(_))
+        Err(Refusal::Refused(Refused::NoGroup(_)))
     ));
     let (other, _) = cli::new_group(node, name("house"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
     assert!(matches!(
         cli::link_to(node, "house", None, &no_relay(), false, &[]).await,
-        Err(Refusal::Ambiguous { .. })
+        Err(Refusal::Refused(Refused::Ambiguous { .. }))
     ));
     let (picked, _, _) = cli::link_to(node, &other.id()[..8], None, &no_relay(), false, &[])
         .await
@@ -297,7 +297,7 @@ async fn the_bare_command_prints_where_apps_reach_the_record() {
 /// (new-while-running): the installer runs svrngs at every login, and
 /// `new` refused every installed person "svrngs is already running on
 /// this computer (… is held); stop it, then run this again" (cli.rs
-/// `Refusal::Busy`), though `svrngs help` and the guide teach it. Sam's
+/// `Refused::Busy`), though `svrngs help` and the guide teach it. Sam's
 /// svrngs holds the data dir's lock and serves its record; `svrngs new
 /// house --as Sam --relay <url>`, asked through `cli::Here` of its routes,
 /// says "Made house, with you as Sam.", a link that dials Sam's computer

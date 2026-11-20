@@ -133,6 +133,7 @@ use crate::identity::{self, KeyError};
 use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal, Terms};
 use svrngs_node::link::{client_link, https_link, Link, Origin};
+use svrngs_node::oidc::KeyFailure;
 
 pub const USAGE: &str = include_str!("help.txt");
 
@@ -518,14 +519,36 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     }
 }
 
-/// Why the command stopped. Its words are a person's (DESIGN §1); what is
-/// behind each is traced at debug where it is raised.
+/// Why the command stopped: refused (exit 1), or not judged, a
+/// precondition absent (exit 3), each by its type (the module docs, "Exit
+/// codes"); `update`'s by its verdict. Its words are a person's (DESIGN
+/// §1); what is behind each is traced at debug where it is raised.
 #[derive(Debug, thiserror::Error)]
 pub enum Refusal {
-    #[error("no place for svrngs's data: set $SVRNGS_DIR, or $HOME for ~/.svrngs")]
-    NoDataDir,
-    #[error("cannot make {0}: {1}")]
-    DataDir(PathBuf, std::io::Error),
+    #[error(transparent)]
+    Refused(#[from] Refused),
+    #[error(transparent)]
+    Unjudged(#[from] Unjudged),
+    /// `update` could not judge the page, or refused what it offered.
+    #[error(transparent)]
+    Update(#[from] svrngs_node::update::UpdateError),
+}
+
+/// Another module's refusal, by `?`, as the kind it is.
+macro_rules! refusal_from {
+    ($($e:ty => $kind:ident),*) => {
+        $(impl From<$e> for Refusal {
+            fn from(e: $e) -> Self {
+                Refusal::$kind(e.into())
+            }
+        })*
+    };
+}
+refusal_from!(KeyError => Unjudged, ApiError => Unjudged, KeyFailure => Unjudged, ShareRefusal => Refused);
+
+/// It ran and refused: exit 1.
+#[derive(Debug, thiserror::Error)]
+pub enum Refused {
     #[error(
         "svrngs is already running on this computer ({0} is held); stop it, then run this again"
     )]
@@ -534,15 +557,6 @@ pub enum Refusal {
     NotKept,
     #[error("the svrngs running here is too old to do this: run `svrngs update`, then `svrngs restart`, then run this again")]
     Older,
-    #[error(transparent)]
-    Key(#[from] KeyError),
-    #[error("this computer cannot be reached from here yet (RUST_LOG=debug says why)")]
-    Start,
-    #[error("Another program on this computer holds {0}, where svrngs keeps your home page, {home}, and what your groups lend: stop that program, then start svrngs again. Or delete {file}, and svrngs takes a new address as it starts, which bookmarks and programs set to this one do not reach",
-        file = .1.display(), home = svrngs_node::home::address(.0.port()))]
-    Taken(SocketAddr, PathBuf),
-    #[error(transparent)]
-    Api(#[from] ApiError),
     #[error("who are you in {0}? say `svrngs new {0} --as <your name>`")]
     NoName(Name),
     #[error("who are you? open the link again with `svrngs join <link> --as <your name>`")]
@@ -551,12 +565,6 @@ pub enum Refusal {
     LinkRefused,
     #[error("someone in {group} already goes by {holder}, so you were not let in as them. If that's you, add this computer from one of yours: `svrngs link {group} --device` there makes a link it joins as you by. Else join under another name, with `--as <your name>` after the link")]
     NameTaken { holder: Name, group: Name },
-    #[error(
-        "the computer that sent this link cannot be reached; it may be off, so try again later"
-    )]
-    IssuerAway,
-    #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
-    Keep(String),
     #[error("you're no longer in {0} on this computer, and you can't join it again from here yet: join from your phone or another computer instead")]
     Left(Name),
     #[error("you are in no group called {0} on this computer")]
@@ -572,15 +580,11 @@ pub enum Refusal {
     NotIn(Name),
     #[error(transparent)]
     Share(#[from] ShareRefusal),
-    #[error("cannot read the password: {0}")]
-    Prompt(std::io::Error),
     #[error("{0}'s readers were not let in: {1}")]
     Readers(LendName, String),
     /// A group's own terms for the program refused, in their words.
     #[error("{0}")]
     Terms(String),
-    #[error("cannot make a sign-in for it on this computer: {0}")]
-    SignIn(#[from] svrngs_node::oidc::KeyFailure),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
     NotLent { name: LendName, lent: Vec<LendName> },
     #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Use a host that serves your page at every name under it, as group.svrnme.sh does")]
@@ -588,32 +592,57 @@ pub enum Refusal {
     /// `room` refused by svrngs running here, in its words.
     #[error("{0}")]
     Room(String),
-    #[error("svrngs is not running on this computer: start it, then run this again")]
-    NotRunning,
-    #[error("svrngs running here did not open your home page: {0}")]
-    Unopened(String),
     /// `check`'s findings, or the folder holding no page.
     #[error("{0}")]
     Unfit(String),
     #[error("the folder was refused: {0}")]
     Folder(String),
-    #[error("cannot ask svrngs running here: no HTTP client ({0})")]
-    NoClient(String),
-    #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
-    CannotCheck(String),
     /// `remove` or `handover` refused, in the words [`Said::Removal`] says.
     #[error("{0}")]
     Removal(String),
     /// `link --relay` refused, in the node's words.
     #[error("{0}")]
     Meet(String),
-    #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
-    Unchanged(Name),
-    /// `update` could not judge the page, or refused what it offered.
-    #[error(transparent)]
-    Update(#[from] svrngs_node::update::UpdateError),
     #[error("you are in no group on this computer, so a relay for your groups would let nobody through: join one first, or say --open to relay for everyone")]
     RelayForNobody,
+}
+
+/// A precondition of the run is absent, so nothing is claimed: exit 3.
+#[derive(Debug, thiserror::Error)]
+pub enum Unjudged {
+    #[error("no place for svrngs's data: set $SVRNGS_DIR, or $HOME for ~/.svrngs")]
+    NoDataDir,
+    #[error("cannot make {0}: {1}")]
+    DataDir(PathBuf, std::io::Error),
+    #[error(transparent)]
+    Key(#[from] KeyError),
+    #[error("this computer cannot be reached from here yet (RUST_LOG=debug says why)")]
+    Start,
+    #[error("Another program on this computer holds {0}, where svrngs keeps your home page, {home}, and what your groups lend: stop that program, then start svrngs again. Or delete {file}, and svrngs takes a new address as it starts, which bookmarks and programs set to this one do not reach",
+        file = .1.display(), home = svrngs_node::home::address(.0.port()))]
+    Taken(SocketAddr, PathBuf),
+    #[error(transparent)]
+    Api(#[from] ApiError),
+    #[error(
+        "the computer that sent this link cannot be reached; it may be off, so try again later"
+    )]
+    IssuerAway,
+    #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
+    Keep(String),
+    #[error("cannot read the password: {0}")]
+    Prompt(std::io::Error),
+    #[error("cannot make a sign-in for it on this computer: {0}")]
+    SignIn(#[from] KeyFailure),
+    #[error("svrngs is not running on this computer: start it, then run this again")]
+    NotRunning,
+    #[error("svrngs running here did not open your home page: {0}")]
+    Unopened(String),
+    #[error("cannot ask svrngs running here: no HTTP client ({0})")]
+    NoClient(String),
+    #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
+    CannotCheck(String),
+    #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
+    Unchanged(Name),
     #[error("the groups this computer is in cannot be read on it ({0}), so a relay for them could not tell whom to let through")]
     GroupsUnread(String),
     #[error("the relay did not start: {0}")]
@@ -638,48 +667,8 @@ impl Refusal {
     pub fn exit_code(&self) -> u8 {
         match self {
             Refusal::Update(e) if e.judged() => 1,
-            Refusal::NoName(_)
-            | Refusal::NoNameToJoin
-            | Refusal::LinkRefused
-            | Refusal::NameTaken { .. }
-            | Refusal::Left(_)
-            | Refusal::NoGroup(_)
-            | Refusal::MadeOlder(_)
-            | Refusal::NoAudience(_)
-            | Refusal::Ambiguous { .. }
-            | Refusal::NotIn(_)
-            | Refusal::Share(_)
-            | Refusal::NotLent { .. }
-            | Refusal::NoAppAddress(_)
-            | Refusal::Room(_)
-            | Refusal::Folder(_)
-            | Refusal::Unfit(_)
-            | Refusal::Removal(_)
-            | Refusal::Meet(_)
-            | Refusal::RelayForNobody
-            | Refusal::NotKept
-            | Refusal::Older
-            | Refusal::Readers(..)
-            | Refusal::Terms(_)
-            | Refusal::Busy(_) => 1,
-            Refusal::Update(_)
-            | Refusal::NoDataDir
-            | Refusal::DataDir(..)
-            | Refusal::Key(_)
-            | Refusal::Start
-            | Refusal::Taken(..)
-            | Refusal::Api(_)
-            | Refusal::IssuerAway
-            | Refusal::Prompt(_)
-            | Refusal::SignIn(_)
-            | Refusal::CannotCheck(_)
-            | Refusal::NotRunning
-            | Refusal::Unopened(_)
-            | Refusal::NoClient(_)
-            | Refusal::Unchanged(_)
-            | Refusal::RelayStart(_)
-            | Refusal::GroupsUnread(_)
-            | Refusal::Keep(_) => 3,
+            Refusal::Refused(_) => 1,
+            Refusal::Unjudged(_) | Refusal::Update(_) => 3,
         }
     }
 }
@@ -690,7 +679,7 @@ pub fn data_dir() -> Result<PathBuf, Refusal> {
         tracing::debug!(target: "cli", dir = ?dir, "cli: data dir from $SVRNGS_DIR");
         return Ok(PathBuf::from(dir));
     }
-    let home = home().ok_or(Refusal::NoDataDir)?;
+    let home = home().ok_or(Unjudged::NoDataDir)?;
     tracing::debug!(target: "cli", home = ?home, "cli: data dir ~/.svrngs");
     Ok(home.join(".svrngs"))
 }
@@ -707,9 +696,10 @@ fn home() -> Option<PathBuf> {
 /// Hold `<root>/lock` for as long as the file lives: one svrngs per data
 /// dir, so each group's record has one writer (RUST_ARCH 3).
 pub fn claim(root: &Path) -> Result<File, Refusal> {
-    svrngs_node::declared::secret_dir(root).map_err(|e| Refusal::DataDir(root.to_path_buf(), e))?;
+    svrngs_node::declared::secret_dir(root)
+        .map_err(|e| Unjudged::DataDir(root.to_path_buf(), e))?;
     let path = root.join("lock");
-    let file = File::create(&path).map_err(|e| Refusal::DataDir(path.clone(), e))?;
+    let file = File::create(&path).map_err(|e| Unjudged::DataDir(path.clone(), e))?;
     match file.try_lock() {
         Ok(()) => {
             tracing::debug!(target: "cli", lock = %path.display(), "cli: data dir claimed");
@@ -717,7 +707,7 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
         }
         Err(e) => {
             tracing::debug!(target: "cli", lock = %path.display(), error = %e, "cli: refused — another svrngs holds the data dir");
-            Err(Refusal::Busy(path))
+            Err(Refused::Busy(path).into())
         }
     }
 }
@@ -819,7 +809,9 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let known = share::well_known_kind(asked.port);
             let claimed = claim(&root);
             let terms = match (&claimed, share::kind_of(&asked, known.clone())) {
-                (Err(Refusal::Busy(_)), Some(kind)) => Some(terms_of(here, &kind, &groups).await?),
+                (Err(Refusal::Refused(Refused::Busy(_))), Some(kind)) => {
+                    Some(terms_of(here, &kind, &groups).await?)
+                }
                 (claimed, kind) => {
                     tracing::debug!(target: "cli", busy = claimed.is_err(), ?kind, "cli: share — no group's terms asked: svrngs is not running here to read them, or no program is named");
                     None
@@ -857,35 +849,38 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 terms,
             };
             match claimed {
-                Err(Refusal::Busy(lock)) => {
+                Err(Refusal::Refused(Refused::Busy(lock))) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
-                    let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
+                    let api = svrngs_node::api::kept_address(&root)?.ok_or(Unjudged::NotRunning)?;
                     issued(sharing, api).to_string()
                 }
                 claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
             }
         }
         other => match (claim(&root), other) {
-            (Err(Refusal::Busy(_)), Verb::Run) => {
-                let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
+            (Err(Refusal::Refused(Refused::Busy(_))), Verb::Run) => {
+                let api = svrngs_node::api::kept_address(&root)?.ok_or(Unjudged::NotRunning)?;
                 let home = svrngs_node::home::address(api.port());
                 tracing::debug!(target: "cli", %home, "cli: run — local home reminder");
                 format!("svrngs is already running. Your home page is at {home}\nRun `svrngs open` to open it in your browser.\n")
             }
-            (Err(Refusal::Busy(lock)), Verb::Room(names)) => {
+            (Err(Refusal::Refused(Refused::Busy(lock))), Verb::Room(names)) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
                 room(here, names).await?.to_string()
             }
-            (Err(Refusal::Busy(lock)), Verb::Join { link, person, .. }) => {
+            (Err(Refusal::Refused(Refused::Busy(lock))), Verb::Join { link, person, .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: join — svrngs runs here already, so it is asked to join, as `room` is");
-                let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
+                let person = person.or_else(user_name).ok_or(Refused::NoNameToJoin)?;
                 join_running(here, &link, &person).await?
             }
-            (Err(Refusal::Busy(lock)), link @ Verb::Link { origin: None, .. }) => {
+            (
+                Err(Refusal::Refused(Refused::Busy(lock))),
+                link @ Verb::Link { origin: None, .. },
+            ) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: link — svrngs runs here already, so it is asked, as `join` is");
                 link_running(here, link).await?.to_string()
             }
-            (Err(Refusal::Busy(lock)), new @ Verb::New { .. }) => {
+            (Err(Refusal::Refused(Refused::Busy(lock))), new @ Verb::New { .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: new — svrngs runs here already, so it is asked to make the group, as `join` is");
                 new_running(here, new, &relay.relay_urls).await?
             }
@@ -902,14 +897,14 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
 fn checked(dir: &Path) -> Result<String, Refusal> {
     let shown = dir.display();
     let none = format!("{shown} holds no index.html: an app is a folder with an index.html in it");
-    let found = svrngs_node::folder::check::check(dir).ok_or(Refusal::Unfit(none))?;
+    let found = svrngs_node::folder::check::check(dir).ok_or(Refused::Unfit(none))?;
     let said: Vec<_> = (found.iter())
         .map(|(file, line, r)| format!("{file}:{line}: {}", r.words()))
         .collect();
     let fix = "this page asks for what apps can't load, so it won't work as it is";
     match said.is_empty() {
         true => Ok(format!("Nothing in {shown} that apps can't load.\n")),
-        false => Err(Refusal::Unfit(format!("{fix}:\n{}", said.join("\n")))),
+        false => Err(Refused::Unfit(format!("{fix}:\n{}", said.join("\n"))).into()),
     }
 }
 
@@ -922,7 +917,8 @@ async fn folder(here: &impl Here, dir: PathBuf, reference: &str) -> Result<Strin
     let asked = FolderAsk { dir, group };
     let (ok, text) = here.ask("/v1/folders", &asked).await?;
     tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
-    ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
+    ok.then_some(text.clone())
+        .ok_or(Refused::Folder(text).into())
 }
 
 /// `svrngs room`: the lends `names` names turned on for the room by
@@ -936,7 +932,7 @@ async fn room(here: &impl Here, names: Vec<LendName>) -> Result<Said, Refusal> {
     let refused = serde_json::from_str::<serde_json::Value>(&text).ok();
     let refused = refused.and_then(|r| Some(r["error"].as_str()?.to_string()));
     on.map(Said::Room)
-        .ok_or(Refusal::Room(refused.unwrap_or(text)))
+        .ok_or(Refused::Room(refused.unwrap_or(text)).into())
 }
 
 /// What svrngs running here answered a removal, hand-on or leave in the
@@ -950,15 +946,13 @@ fn said(
 ) -> Result<Said, Refusal> {
     let outcome: Outcome = serde_json::from_str(&text).map_err(|e| {
         tracing::debug!(target: "cli", error = %e, text = %text, "cli: refused — svrngs running here answered no outcome");
-        Refusal::Unchanged(seed.name().clone())
+        Unjudged::Unchanged(seed.name().clone())
     })?;
     tracing::debug!(target: "cli", group = %seed.id(), ?outcome, ok, "cli: a removal, hand-on or leave asked");
     match outcome {
         _ if ok => Ok(said(outcome)),
-        Outcome::Fault => Err(Refusal::Unchanged(seed.name().clone())),
-        _ => Err(Refusal::Removal(
-            said(outcome).to_string().trim_end().to_string(),
-        )),
+        Outcome::Fault => Err(Unjudged::Unchanged(seed.name().clone()).into()),
+        _ => Err(Refused::Removal(said(outcome).to_string().trim_end().to_string()).into()),
     }
 }
 
@@ -973,7 +967,7 @@ async fn open(here: &impl Here, at: Option<&str>, print: bool) -> Result<String,
     let (ok, text) = here.ask("/v1/open", &asked).await?;
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
     let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
-    let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
+    let at = at.ok_or_else(|| Unjudged::Unopened(text.trim().into()))?;
     let opened = !print && here.browse(at.as_ref());
     tracing::debug!(target: "cli", opened, print, "cli: open — the home page, with a code for its session, given to the browser, else shown");
     Ok(match opened {
@@ -997,7 +991,8 @@ fn restart(root: &Path) -> Result<String, Refusal> {
     tracing::debug!(target: "cli", manager, ?done, "cli: restart — asked what keeps svrngs running");
     let said = "svrngs is restarting. Your home page comes back in a moment.\n";
     let kept = done.is_ok_and(|out| out.status.success());
-    kept.then(|| said.to_string()).ok_or(Refusal::NotKept)
+    kept.then(|| said.to_string())
+        .ok_or(Refused::NotKept.into())
 }
 
 /// A data dir as a verb reaches it, and what answers an ask of svrngs
@@ -1058,7 +1053,7 @@ impl Here for PathBuf {
         eprintln!();
         read.map_err(|e| {
             tracing::debug!(target: "cli", error = %e, "cli: share — the password cannot be read");
-            Refusal::Prompt(e)
+            Unjudged::Prompt(e)
         })?;
         let secret = line.trim().to_string();
         tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
@@ -1071,13 +1066,13 @@ impl Here for PathBuf {
         let to = format!("{}{route}", api.trim());
         let client = svrngs_node::http::client().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
-            Refusal::NoClient(error)
+            Unjudged::NoClient(error)
         })?;
         let sent = client.post(to).header("content-type", "application/json");
         let sent = sent.bearer_auth(token.trim());
         let answer = sent.body(body).send().await.map_err(|e| {
         tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
-        Refusal::NotRunning
+        Unjudged::NotRunning
     })?;
         let ok = answer.status().is_success();
         let text = answer.text().await.unwrap_or_default();
@@ -1116,9 +1111,9 @@ async fn start(
     let node = node.await.map_err(|e: NodeError| {
         tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
         match e {
-            NodeError::Api(ApiError::Taken(at)) => Refusal::Taken(at, root.join(API_FILE)),
-            NodeError::Api(e) => Refusal::Api(e),
-            _ => Refusal::Start,
+            NodeError::Api(ApiError::Taken(at)) => Unjudged::Taken(at, root.join(API_FILE)),
+            NodeError::Api(e) => Unjudged::Api(e),
+            _ => Unjudged::Start,
         }
     })?;
     if let Some(sharing) = sharing {
@@ -1158,12 +1153,12 @@ pub async fn checked_page(page: Option<Origin>) -> Result<Option<Origin>, Refusa
         let host = a.split(':').next().unwrap_or_default();
         !a.starts_with('[') && !host.is_empty() && host.parse::<std::net::IpAddr>().is_err()
     });
-    let no = || Refusal::NoAppAddress(page.as_str().into());
+    let no = || Refusal::from(Refused::NoAppAddress(page.as_str().into()));
     let Some((scheme, authority)) = named else {
         tracing::debug!(target: "cli", page = page.as_str(), "cli: refused — the page is at an address no name falls under");
         return Err(no());
     };
-    let unjudged = || Refusal::CannotCheck(page.as_str().into());
+    let unjudged = || Unjudged::CannotCheck(page.as_str().into());
     let client = svrngs_node::http::client().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
             unjudged()
@@ -1640,7 +1635,7 @@ async fn share_readers(
     let (port, terms) = at;
     let name = &lend.name;
     let ask = |words: String, shown| here.prompt(name, &words, shown);
-    let refused = |why: String| Refusal::Readers(name.clone(), why);
+    let refused = |why: String| Refused::Readers(name.clone(), why);
     if let Some(how) = share::key_of(&lend.kind, terms) {
         let key = ask(format!("Paste the key you made in {name}: "), false)?;
         let key = key.ok_or_else(|| refused("nothing was given".into()))?;
@@ -1689,8 +1684,10 @@ async fn terms_of(here: &impl Here, kind: &Program, groups: &[String]) -> Result
     // An older svrngs answers what it can't read in words, not JSON.
     match (ok, serde_json::from_str::<(String, String)>(&text)) {
         (true, Ok((text, by))) => Ok((text.leak(), by)),
-        (false, _) => Err(serde_json::from_str(&text).map_or(Refusal::Older, Refusal::Terms)),
-        (true, Err(_)) => Err(Refusal::Older),
+        (false, _) => Err(serde_json::from_str(&text)
+            .map_or(Refused::Older, Refused::Terms)
+            .into()),
+        (true, Err(_)) => Err(Refused::Older.into()),
     }
 }
 
@@ -1703,7 +1700,7 @@ type Read = (Terms, String);
 pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
     lend::declare(root, lend, secret.map(|s| (lend::SECRET_HEADER, s))).map_err(|e| {
         tracing::debug!(target: "cli", lend = %lend.name, error = %e, "cli: share — the lend cannot be kept");
-        Refusal::Keep(lend.name.to_string())
+        Unjudged::Keep(lend.name.to_string()).into()
     })
 }
 
@@ -1711,7 +1708,7 @@ pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), 
 pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, Refusal> {
     let keep = |e: lend::LendError| {
         tracing::debug!(target: "cli", lend = %name, error = %e, "cli: unshare — the lend cannot be withdrawn");
-        Refusal::Keep(name.to_string())
+        Unjudged::Keep(name.to_string())
     };
     let ids = groups.iter().map(|g| group_named(root, g).map(|s| s.id()));
     let ids = ids.collect::<Result<Vec<_>, _>>()?;
@@ -1732,10 +1729,11 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     let lent = lend::all(root).map_err(keep)?.into_iter().flatten();
     let lent = lent.map(|l| l.name).collect();
     tracing::debug!(target: "cli", lend = %name, "cli: unshare — refused, nothing lent by that name");
-    Err(Refusal::NotLent {
+    Err(Refused::NotLent {
         name: name.clone(),
         lent,
-    })
+    }
+    .into())
 }
 
 /// What the bare command prints: the groups held, where apps reach them,
@@ -1769,7 +1767,7 @@ async fn serve(
         } => {
             let person = person
                 .or_else(user_name)
-                .ok_or_else(|| Refusal::NoName(name.clone()))?;
+                .ok_or_else(|| Refused::NoName(name.clone()))?;
             let page = checked_page(origin).await?;
             // The one rule for a name, asked before the group is kept (#138).
             let beside = group::namesakes(node.rail().root(), &name, &svrngs_node::actor_of(key));
@@ -1786,7 +1784,7 @@ async fn serve(
             folder_at_join(node, &seed)
         }
         Verb::Join { link, person, .. } => {
-            let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
+            let person = person.or_else(user_name).ok_or(Refused::NoNameToJoin)?;
             let joined = join_group(node, key, &link, &person).await?;
             print!("{joined}");
             let (Said::Joined { seed, .. } | Said::AlreadyIn(seed)) = joined else {
@@ -1841,12 +1839,14 @@ pub async fn join_group(
     match node.host().join(link, person).await {
         Ok(Entered::In { seed, person }) => Ok(Said::Joined { seed, person }),
         Ok(Entered::AlreadyIn(seed)) => Ok(Said::AlreadyIn(seed)),
-        Err(NotJoined::LinkRefused) => Err(Refusal::LinkRefused),
-        Err(NotJoined::NameTaken { holder, group }) => Err(Refusal::NameTaken { holder, group }),
-        Err(NotJoined::IssuerAway) => Err(Refusal::IssuerAway),
-        Err(NotJoined::Keep(group)) => Err(Refusal::Keep(group.to_string())),
-        Err(NotJoined::Left(group)) => Err(Refusal::Left(group)),
-        Err(NotJoined::Older(group)) => Err(Refusal::MadeOlder(group)),
+        Err(NotJoined::LinkRefused) => Err(Refused::LinkRefused.into()),
+        Err(NotJoined::NameTaken { holder, group }) => {
+            Err(Refused::NameTaken { holder, group }.into())
+        }
+        Err(NotJoined::IssuerAway) => Err(Unjudged::IssuerAway.into()),
+        Err(NotJoined::Keep(group)) => Err(Unjudged::Keep(group.to_string()).into()),
+        Err(NotJoined::Left(group)) => Err(Refused::Left(group).into()),
+        Err(NotJoined::Older(group)) => Err(Refused::MadeOlder(group).into()),
     }
 }
 
@@ -1865,7 +1865,7 @@ fn folder_at_join(node: &Node, seed: &Seed) -> Said {
 /// svrngs is the one writer of this computer's acts, so it joins, and the
 /// command says and leaves, running nothing. A link whose whole text
 /// `Link::parse` here already proved is sent as it was given; the running
-/// svrngs that answers none of it is an older build: [`Refusal::Older`],
+/// svrngs that answers none of it is an older build: [`Refused::Older`],
 /// never the lock's own refusal, which would send someone to stop it.
 async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<String, Refusal> {
     let whole = match &link.origin {
@@ -1879,7 +1879,7 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
     let (_, text) = here.ask(JOINS_ROUTE, &asked).await?;
     let older = |why: String| {
         tracing::debug!(target: "cli", %why, text, "cli: the svrngs running here answered no join, as one of an older build does not");
-        Refusal::Older
+        Refused::Older
     };
     let said: JoinOutcome = serde_json::from_str(&text).map_err(|e| older(e.to_string()))?;
     let held = |text: String| Seed::from_text(&text).map_err(&older);
@@ -1904,17 +1904,18 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
             let already = Said::AlreadyIn(seed.clone());
             format!("{already}{}", Said::told_folder(&seed, dir, placed))
         }
-        JoinOutcome::LinkRefused => return Err(Refusal::LinkRefused),
+        JoinOutcome::LinkRefused => return Err(Refused::LinkRefused.into()),
         JoinOutcome::NameTaken { holder, group } => {
-            return Err(Refusal::NameTaken {
+            return Err(Refused::NameTaken {
                 holder: named(holder)?,
                 group: named(group)?,
-            })
+            }
+            .into())
         }
-        JoinOutcome::IssuerAway => return Err(Refusal::IssuerAway),
-        JoinOutcome::Keep { group } => return Err(Refusal::Keep(named(group)?.to_string())),
-        JoinOutcome::Left { group } => return Err(Refusal::Left(named(group)?)),
-        JoinOutcome::Older { group } => return Err(Refusal::MadeOlder(named(group)?)),
+        JoinOutcome::IssuerAway => return Err(Unjudged::IssuerAway.into()),
+        JoinOutcome::Keep { group } => return Err(Unjudged::Keep(named(group)?.to_string()).into()),
+        JoinOutcome::Left { group } => return Err(Refused::Left(named(group)?).into()),
+        JoinOutcome::Older { group } => return Err(Refused::MadeOlder(named(group)?).into()),
     })
 }
 
@@ -1990,7 +1991,7 @@ pub async fn new_group(
 pub fn audience_of(root: &Path, port: NonZeroU16, named: &[String]) -> Result<Audience, Refusal> {
     if named.is_empty() {
         tracing::debug!(target: "cli", port, "cli: share — refused, no group named to lend it to");
-        return Err(Refusal::NoAudience(port));
+        return Err(Refused::NoAudience(port).into());
     }
     let ids = named.iter().map(|g| group_named(root, g).map(|s| s.id()));
     ids.collect::<Result<_, _>>().map(Audience::Selected)
@@ -2003,20 +2004,21 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
     match group::named(&held, reference).as_slice() {
         [] => {
             tracing::debug!(target: "cli", reference, held = held.len(), "cli: refused — no group by that name");
-            Err(Refusal::NoGroup(reference.to_string()))
+            Err(Refused::NoGroup(reference.to_string()).into())
         }
         [one] if one.older() => {
             tracing::debug!(target: "cli", reference, "cli: refused — an older svrngs made the group, so nothing in it changes");
-            Err(Refusal::MadeOlder(one.name().clone()))
+            Err(Refused::MadeOlder(one.name().clone()).into())
         }
         [one] => Ok((*one).clone()),
         many => {
             let ids = many.iter().map(|s| s.id()[..8].to_string()).collect();
             tracing::debug!(target: "cli", reference, n = many.len(), "cli: refused — the name is ambiguous");
-            Err(Refusal::Ambiguous {
+            Err(Refused::Ambiguous {
                 name: reference.to_string(),
                 ids,
-            })
+            }
+            .into())
         }
     }
 }
@@ -2039,7 +2041,7 @@ pub async fn link_to(
     let seed = group_named(node.rail().root(), reference)?;
     node.host()
         .meet(&seed.id(), relays)
-        .map_err(Refusal::Meet)?;
+        .map_err(Refused::Meet)?;
     wait_online(node, &relay.relay_urls).await;
     let made = node.host().link(&seed.id(), device, page, None);
     let made = made.map_err(|e| unminted(&seed, e))?;
@@ -2066,7 +2068,7 @@ async fn new_running(here: &impl Here, new: Verb, tried: &[String]) -> Result<St
     };
     let person = person
         .or_else(user_name)
-        .ok_or_else(|| Refusal::NoName(name.clone()))?;
+        .ok_or_else(|| Refused::NoName(name.clone()))?;
     let page = checked_page(origin).await?;
     let asked = group::NewAsk {
         name: name.as_str().into(),
@@ -2078,11 +2080,11 @@ async fn new_running(here: &impl Here, new: Verb, tried: &[String]) -> Result<St
     let made = serde_json::from_str::<group::NewMade>(&text).ok();
     let Some(made) = made.filter(|_| ok) else {
         let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
-        let why = told["error"].as_str().ok_or(Refusal::Older)?;
+        let why = told["error"].as_str().ok_or(Refused::Older)?;
         tracing::debug!(target: "cli", why, "cli: refused — the svrngs running here made no group");
-        return Err(Refusal::Keep(name.to_string()));
+        return Err(Unjudged::Keep(name.to_string()).into());
     };
-    let seed = Seed::from_text(&made.seed).map_err(|_| Refusal::Older)?;
+    let seed = Seed::from_text(&made.seed).map_err(|_| Refused::Older)?;
     tracing::debug!(target: "cli", online = made.online, ?tried, "cli: new — made by the svrngs running here, which had reached a relay or not");
     unreached(made.online, tried);
     let link = Printed::told(made.client, made.https);
@@ -2111,11 +2113,11 @@ async fn link_running(here: &impl Here, link: Verb) -> Result<Said, Refusal> {
     let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
     tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");
     let Some(client) = told["client"].as_str().filter(|_| ok).map(Into::into) else {
-        let why = told["error"].as_str().ok_or(Refusal::Older)?;
-        return Err(Refusal::Meet(why.to_string()));
+        let why = told["error"].as_str().ok_or(Refused::Older)?;
+        return Err(Refused::Meet(why.to_string()).into());
     };
     let https = told["https"].as_str().map(Into::into);
-    let device = serde_json::from_value(told["device"].clone()).map_err(|_| Refusal::Older)?;
+    let device = serde_json::from_value(told["device"].clone()).map_err(|_| Refused::Older)?;
     let link = Printed::told(client, https);
     Ok(Said::Linked { seed, link, device })
 }
@@ -2123,7 +2125,7 @@ async fn link_running(here: &impl Here, link: Verb) -> Result<Said, Refusal> {
 /// Why the node made no link, in the command's refusals.
 fn unminted(seed: &Seed, e: Unminted) -> Refusal {
     match e {
-        Unminted::NotIn => Refusal::NotIn(seed.name().clone()),
+        Unminted::NotIn => Refused::NotIn(seed.name().clone()).into(),
         Unminted::Unkept(why) => keep_refused(seed, &why),
     }
 }
@@ -2150,5 +2152,5 @@ fn unreached(online: bool, tried: &[String]) {
 
 fn keep_refused(seed: &Seed, why: &str) -> Refusal {
     tracing::debug!(target: "cli", group = %seed.id(), why, "cli: refused — the group cannot be kept here");
-    Refusal::Keep(seed.name().to_string())
+    Unjudged::Keep(seed.name().to_string()).into()
 }

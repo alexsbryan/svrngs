@@ -17,7 +17,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use svrngs::cli::{self, Refusal, Said, Verb};
+use svrngs::cli::{self, Refusal, Refused, Said, Verb};
 use svrngs::group::{self, Name};
 use svrngs::share::{self, Share};
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
@@ -278,8 +278,10 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     assert_eq!(refused.exit_code(), 1);
     said.push(refused.to_string());
     for r in [
-        Refusal::Share(share::ShareRefusal::NothingListens(asked.port)),
-        Refusal::Share(share::ShareRefusal::NoKind(asked.port)),
+        Refusal::Refused(Refused::Share(share::ShareRefusal::NothingListens(
+            asked.port,
+        ))),
+        Refusal::Refused(Refused::Share(share::ShareRefusal::NoKind(asked.port))),
     ] {
         said.push(r.to_string());
     }

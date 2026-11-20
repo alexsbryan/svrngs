@@ -14,7 +14,7 @@ mod common;
 
 use iroh::dns::DnsResolver;
 use iroh_relay::client::{ClientBuilder, ConnectError};
-use svrngs::cli::{self, Refusal};
+use svrngs::cli::{self, Refusal, Refused, Unjudged};
 use svrngs::group::Name;
 use svrngs::relay::{self, At, Relay, SHARE_BURST, SHARE_RATE};
 use svrngs_core::pass::{Label, Pass};
@@ -248,7 +248,7 @@ async fn a_computer_in_no_group_is_refused_a_relay_for_its_groups() {
     let empty = tempfile::tempdir().unwrap();
     let refused = relay_over(empty.path(), false).await.map(|_| ());
     assert!(
-        matches!(refused, Err(Refusal::RelayForNobody)),
+        matches!(refused, Err(Refusal::Refused(Refused::RelayForNobody))),
         "{refused:?}"
     );
     assert!(
@@ -316,7 +316,7 @@ async fn groups_that_cannot_be_read_are_said_so_never_taken_as_none() {
     }
     let refused = refused.expect_err("a relay over groups it cannot read is refused");
     assert!(
-        matches!(refused, Refusal::GroupsUnread(_)),
+        matches!(refused, Refusal::Unjudged(Unjudged::GroupsUnread(_))),
         "{refused:?}: {refused}"
     );
     assert!(

@@ -229,7 +229,10 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
     assert!(!said.contains(token) && !traced.contains(token));
     assert!(!marker.exists(), "the reminder launched a browser");
     assert!(
-        matches!(cli::claim(dir.path()), Err(cli::Refusal::Busy(_))),
+        matches!(
+            cli::claim(dir.path()),
+            Err(cli::Refusal::Refused(cli::Refused::Busy(_)))
+        ),
         "the running svrngs keeps its data dir"
     );
     assert_eq!(std::fs::read(&api).unwrap(), saved);
