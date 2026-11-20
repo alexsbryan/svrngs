@@ -142,7 +142,7 @@ pub const USAGE: &str = include_str!("help.txt");
 pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
 
 /// svrngs's own relay, where a computer meets each group it holds that
-/// keeps none of its own once the build ships [`MeetAt::Svrngs`], with no
+/// keeps none of its own while the build ships [`MeetAt::Svrngs`], with no
 /// address lookup (PLAN §3, the operator, 2026-10-12). It answers before
 /// any build meeting its groups there is published (DESIGN §7,
 /// `scripts/deploy-relay.sh`, `scripts/deploy-page.sh`).
@@ -159,11 +159,14 @@ pub enum MeetAt {
     Svrngs,
 }
 
-/// Where this build meets its groups: n0's, chosen, until the operator
-/// starts paying for svrngs's. Flipping it, then `scripts/deploy-relay.sh`,
-/// then `scripts/deploy-page.sh`, which reads this line, is theirs, in that
-/// order (DESIGN §7; PLAN §2).
-pub const SHIPPED: MeetAt = MeetAt::N0;
+/// Where this build meets its groups: svrngs's, the operator's switch
+/// (HUMAN-switch; PLAN §2), once its relay held svrn-docs
+/// `rings/current/relay-load` and a real phone through it
+/// (demo/runs/phone-home/2026-11-20), n0's public relays behind it only
+/// while it does not answer (`svrngs_node::tiers::behind`).
+/// `scripts/deploy-page.sh` reads this line, and publishes a build at
+/// svrngs's only while its relay answers (DESIGN §7).
+pub const SHIPPED: MeetAt = MeetAt::Svrngs;
 
 /// What was typed.
 #[derive(Debug, PartialEq, Eq)]
@@ -712,8 +715,8 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
 /// meets every group beside the group's own (relay fallbacks; svrn-docs
 /// `rings/current/GROUP_RELAYS.md` §7), which the node joins to them
 /// (svrngs-node group.rs `meeting`). At [`MeetAt::N0`], n0's relays with
-/// n0's lookup; at [`MeetAt::Svrngs`], [`DEFAULT_RELAY`] and no lookup, n0
-/// none of the path.
+/// n0's lookup; at [`MeetAt::Svrngs`], [`DEFAULT_RELAY`] and no lookup,
+/// n0's only the emergency the node holds while ours does not answer.
 pub fn reach(at: MeetAt) -> RelayConfig {
     let relay_urls = match at {
         MeetAt::N0 => (n0_relays().urls::<Vec<RelayUrl>>().iter())

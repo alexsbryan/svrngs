@@ -1,23 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The one test that meets n0 (docs/CHECKS.md, seam R): the shipped
-//! `svrngs`, whose main passes `cli::reach(cli::SHIPPED)` (src/main.rs),
-//! is met at n0's relays and lookup on the internet. Every other test's
-//! svrngs meets at a relay on 127.0.0.1 (common/as_main.rs), so n0 is
-//! judged here alone, in check.sh's `internet` step, and `tests/shipped.rs`
-//! pins what `reach(SHIPPED)` is with no socket.
+//! The one test that meets a relay on the internet (docs/CHECKS.md, seam
+//! R): the shipped `svrngs`, whose main passes `cli::reach(cli::SHIPPED)`
+//! (src/main.rs), is met at svrngs's relay, `relay.svrnme.sh`, by a second
+//! computer. Every other test's svrngs meets at a relay on 127.0.0.1
+//! (common/as_main.rs), so that relay is judged here alone, in check.sh's
+//! `internet` step; `tests/shipped.rs` pins what `reach(SHIPPED)` is, and
+//! n0's behind it, with no socket.
 //!
-//! n0 is a service the gate does not own, so before any svrngs runs n0 is
-//! asked by iroh alone ([`n0_answers`]): each of n0's relays, as iroh
-//! lists them, resolved and connected to, and an endpoint of iroh's own
-//! with n0's presets given a home relay. When it does not answer, the
-//! claim cannot be judged: why is written to
-//! `target/could-not-judge/internet.step`, which check.sh says as the step's
-//! verdict, never a pass and never a failure. When a svrngs fails and n0
-//! is then asked again and does not answer, the same. Otherwise a failure
-//! is ours, and fails.
+//! The gate judges this commit's code, and whether the relay is up is not
+//! a property of the code: before any svrngs runs it is asked by iroh alone
+//! ([`ours_answers`]), its name resolved and connected to, and an endpoint
+//! of iroh's own with it as its one relay given a home there. When it does
+//! not answer, the claim cannot be judged: why is written to
+//! `target/could-not-judge/internet.step`, which check.sh says as the
+//! step's verdict, never a pass and never a failure. When a svrngs fails
+//! and the relay is then asked again and does not answer, the same.
+//! Otherwise a failure is ours, and fails. The relay's silence is a failure
+//! where it is owed: `scripts/deploy-page.sh` refuses to publish a build
+//! at svrngs's while it does not answer (DESIGN §7).
 //!
 //! A test target of its own, `test = false` (crates/svrngs/Cargo.toml), so
-//! a plain `cargo test` never meets n0.
+//! a plain `cargo test` meets no relay off this host.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
@@ -28,20 +31,14 @@ use std::time::Duration;
 use tokio::io::AsyncBufReadExt;
 use tokio::process::{Child, Command};
 
-/// n0's relays as iroh itself lists them, the test's own reading of n0
-/// (`iroh-1.0.2/src/defaults.rs`), apart from svrngs's
-/// (svrngs-node relay.rs `n0_relays`), each host without its trailing dot.
-fn n0_hosts() -> Vec<String> {
-    let map = iroh::defaults::prod::default_relay_map();
-    let urls: Vec<iroh::RelayUrl> = map.urls();
-    let hosts = urls.iter().filter_map(|u| u.host_str().map(String::from));
-    hosts.map(|h| h.trim_end_matches('.').to_string()).collect()
-}
+/// svrngs's relay as the operator hosts it, the test's own spelling, apart
+/// from `cli::DEFAULT_RELAY`.
+const OURS: &str = "relay.svrnme.sh";
 
-/// How long each relay of n0's may take to resolve and to take a
-/// connection, all asked at once, and iroh's own endpoint to be met at one.
-/// With [`SAM`], [`BO`] and n0 asked twice, the test ends in under 200 s
-/// whatever n0 does, within check.sh's limit for the step.
+/// How long the relay may take to resolve, and then to take a connection,
+/// and iroh's own endpoint to be met there. With [`SAM`], [`BO`] and the
+/// relay asked twice, the test ends in under 200 s whatever the relay
+/// does, within check.sh's limit for the step.
 const ASKED: Duration = Duration::from_secs(5);
 const MET: Duration = Duration::from_secs(20);
 /// How long Sam's `svrngs new` may take to print its link (it waits
@@ -49,50 +46,33 @@ const MET: Duration = Duration::from_secs(20);
 const SAM: Duration = Duration::from_secs(45);
 const BO: Duration = Duration::from_secs(90);
 
-/// One relay of n0's, `host`, resolved and connected to on 443: what was
-/// heard, and whether it took the connection.
-async fn asked(host: String) -> (String, bool) {
-    let resolved = tokio::time::timeout(ASKED, tokio::net::lookup_host((host.as_str(), 443)));
+/// Whether svrngs's relay answers, asked by iroh and the host alone, no
+/// svrngs code in play: its name resolved and connected to on 443, and an
+/// endpoint with it as iroh's one relay online there within [`MET`]. `Err`
+/// says what did not answer.
+async fn ours_answers() -> Result<(), String> {
+    let resolved = tokio::time::timeout(ASKED, tokio::net::lookup_host((OURS, 443)));
     let addr = match resolved.await {
-        Err(_) => return (format!("{host}: no answer to its name in {ASKED:?}"), false),
-        Ok(Err(e)) => return (format!("{host}: its name did not resolve: {e}"), false),
-        Ok(Ok(mut addrs)) => match addrs.next() {
-            None => return (format!("{host}: resolved to nothing"), false),
-            Some(addr) => addr,
-        },
+        Err(_) => return Err(format!("{OURS}: no answer to its name in {ASKED:?}")),
+        Ok(Err(e)) => return Err(format!("{OURS}: its name did not resolve: {e}")),
+        Ok(Ok(mut addrs)) => addrs
+            .next()
+            .ok_or_else(|| format!("{OURS}: resolved to nothing"))?,
     };
     match tokio::time::timeout(ASKED, tokio::net::TcpStream::connect(addr)).await {
-        Err(_) => (
-            format!("{host} ({addr}): no connection in {ASKED:?}"),
-            false,
-        ),
-        Ok(Err(e)) => (format!("{host} ({addr}): connecting failed: {e}"), false),
-        Ok(Ok(_)) => (format!("{host} ({addr}): connected"), true),
+        Err(_) => return Err(format!("{OURS} ({addr}): no connection in {ASKED:?}")),
+        Ok(Err(e)) => return Err(format!("{OURS} ({addr}): connecting failed: {e}")),
+        Ok(Ok(_)) => eprintln!("internet: {OURS} ({addr}): connected"),
     }
-}
-
-/// Whether n0 answers, asked by iroh and the host alone, no svrngs code in
-/// play: some relay of n0's resolved and connected to on 443, and an
-/// endpoint with iroh's n0 presets online at a home relay within [`MET`].
-/// `Err` says what did not answer, each relay's resolve or connect.
-async fn n0_answers() -> Result<(), String> {
-    let mut each = tokio::task::JoinSet::new();
-    for host in n0_hosts() {
-        each.spawn(asked(host));
-    }
-    let (heard, took): (Vec<String>, Vec<bool>) = each.join_all().await.into_iter().unzip();
-    let heard = heard.join("; ");
-    eprintln!("n0: {heard}");
-    if !took.contains(&true) {
-        return Err(format!("no relay of n0's answered: {heard}"));
-    }
-    let endpoint = iroh::Endpoint::bind(iroh::endpoint::presets::N0).await;
+    let url: iroh::RelayUrl = format!("https://{OURS}/").parse().unwrap();
+    let endpoint = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
+        .relay_mode(iroh::RelayMode::custom([url]))
+        .bind()
+        .await;
     let endpoint = endpoint.map_err(|e| format!("iroh's own endpoint did not start: {e}"))?;
     let online = tokio::time::timeout(MET, endpoint.online()).await;
     endpoint.close().await;
-    online.map_err(|_| {
-        format!("iroh's own endpoint, with n0's presets, had no home relay of n0's in {MET:?} ({heard})")
-    })
+    online.map_err(|_| format!("iroh's own endpoint had no home at {OURS} in {MET:?}"))
 }
 
 /// The claim not judged, `why`: said on stderr, and written where check.sh
@@ -116,7 +96,10 @@ fn shipped(home: &Path, user: &str, args: &[&str]) -> Command {
         .env("HOME", home)
         .env("USER", user)
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())
-        .env("RUST_LOG", "info,cli=debug,relay=debug,iroh::_events=debug")
+        .env(
+            "RUST_LOG",
+            "info,cli=debug,relay=debug,tiers=debug,iroh::_events=debug",
+        )
         .env("NO_COLOR", "1")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -158,13 +141,13 @@ async fn link_of(sam: &mut Child, within: Duration) -> Result<Printed, String> {
     }
 }
 
-/// Sam makes a group with the shipped svrngs, met at n0 alone (no
-/// `--relay`), and Bo's computer, knowing nothing but Sam's link, joins by
-/// it: Bo's shipped svrngs reaches Sam's through n0, since nothing else
-/// tells it where Sam is (no relay of the group's, no address on this
-/// host, no local discovery in svrngs).
-async fn met_at_n0(dir: &Path) -> Result<(), String> {
-    let n0 = n0_hosts();
+/// Sam makes a group with the shipped svrngs, met at the build's relay
+/// alone (no `--relay`), and Bo's computer, knowing nothing but Sam's link,
+/// joins by it: Bo's shipped svrngs reaches Sam's through svrngs's relay,
+/// since nothing else tells it where Sam is (no relay of the group's, no
+/// address lookup, no local discovery in svrngs).
+async fn met_at_ours(dir: &Path) -> Result<(), String> {
+    let ours = format!("https://{OURS}/");
     let sam_home = dir.join("sam");
     let mut sam = shipped(&sam_home, "sam", &["new", "house", "--as", "Sam"]);
     let mut sam = sam
@@ -186,15 +169,15 @@ async fn met_at_n0(dir: &Path) -> Result<(), String> {
         ));
     }
     // The link carries Sam's home first (svrngs-core relay.rs `carried`):
-    // a relay of n0's, as iroh lists them.
+    // svrngs's relay, not n0's emergency behind it.
     let carried: Vec<String> = link.token.relays.iter().map(ToString::to_string).collect();
-    let home = carried.first().cloned().unwrap_or_default();
-    if !n0.iter().any(|h| home == format!("https://{h}/")) {
+    if carried.first() != Some(&ours) {
         return Err(format!(
-            "Sam's link carries {carried:?}, not first a relay of n0's {n0:?}"
+            "Sam's link carries {carried:?}, not first {ours}; its log is {}",
+            sam_log.display()
         ));
     }
-    eprintln!("n0: Sam's computer met at {home}");
+    eprintln!("internet: Sam's computer met at {ours}");
 
     let bo_home = dir.join("bo");
     let args = ["join", raw.as_str(), "--as", "Bo", "--no-run"];
@@ -221,34 +204,36 @@ async fn met_at_n0(dir: &Path) -> Result<(), String> {
             sam_log.display()
         ));
     }
-    eprintln!("n0: Bo's computer joined Sam's house by its link, through n0: {said}");
+    eprintln!("internet: Bo's computer joined Sam's house by its link, through {ours}: {said}");
     let _ = sam.kill().await;
     Ok(())
 }
 
-/// **The shipped svrngs is met at n0**: Sam's computer, with n0's relays
-/// and lookup as the shipped binary has them, is met at a home relay of
-/// n0's, and Bo's computer, knowing only Sam's link, joins by it. Judged
-/// only once n0 answers iroh alone ([`n0_answers`]); a failure with n0
-/// gone silent since is could-not-judge, said with both reasons.
-/// Planted (named in its commit): `cli::reach`'s n0 arm given a relay
-/// that is not n0's fails it here, n0 answering; and with every
-/// connection off this host denied (`sandbox-exec`), could-not-judge.
+/// **The shipped svrngs is met at svrngs's relay**: Sam's computer, with
+/// the build's relays as the shipped binary has them, is met at a home at
+/// `relay.svrnme.sh`, and Bo's computer, knowing only Sam's link, joins by
+/// it. Judged only once that relay answers iroh alone ([`ours_answers`]);
+/// a failure with the relay gone silent since is could-not-judge, said
+/// with both reasons. Planted (named in its commit): `cli::DEFAULT_RELAY`
+/// naming another relay fails it here, ours answering; and with no network
+/// but loopback (`unshare -rn`), could-not-judge.
 #[tokio::test(flavor = "multi_thread")]
-async fn the_shipped_svrngs_is_met_at_n0_by_a_second_computer() {
-    if let Err(why) = n0_answers().await {
-        return unjudged(&format!("n0 did not answer before any svrngs ran: {why}"));
+async fn the_shipped_svrngs_is_met_at_svrngs_s_relay_by_a_second_computer() {
+    if let Err(why) = ours_answers().await {
+        return unjudged(&format!(
+            "svrngs's relay did not answer before any svrngs ran: {why}"
+        ));
     }
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/n0");
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/internet");
     let _ = std::fs::remove_dir_all(&dir);
     let dir: PathBuf = dir;
-    let Err(why) = met_at_n0(&dir).await else {
+    let Err(why) = met_at_ours(&dir).await else {
         return;
     };
-    match n0_answers().await {
+    match ours_answers().await {
         Err(gone) => unjudged(&format!(
-            "{why}; and n0, asked again, did not answer: {gone}"
+            "{why}; and svrngs's relay, asked again, did not answer: {gone}"
         )),
-        Ok(()) => panic!("{why}; n0 answers iroh alone, so this is svrngs's"),
+        Ok(()) => panic!("{why}; svrngs's relay answers iroh alone, so this is svrngs's"),
     }
 }

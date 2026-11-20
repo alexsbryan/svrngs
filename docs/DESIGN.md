@@ -1937,9 +1937,9 @@ emergency is always n0's public relays, which the build names as it names
 its own (`tiers::behind`, `relay::n0_relays`), so a build that names no
 relay of its own has nothing behind it, and a relay of n0's is never a
 group's own, a link's or a file's, a link minted before the operator's
-switch included. The build ships one, `cli::SHIPPED`: n0's for now, until
-the operator's switch (PLAN §1), and it is every group's fallback, named in
-no record, so the switch moves every group at once. The three tiers are a
+switch included. The build ships one, `cli::SHIPPED`: svrngs's, since the
+operator's switch (PLAN §2), and it is every group's fallback, named in no
+record, so the switch moved every group at once. The three tiers are a
 type, svrngs-core's `relay::Meeting`, made only by `Meeting::of`, which
 always carries the build's; `Meeting::decide` is the one decision, and
 svrngs-node's `tiers` the one place it changes the endpoint's relays.
@@ -2873,29 +2873,25 @@ switch it cannot read it refuses.
    read. Through a lend, WebKit still reads each short part in serial 64 KiB
    reads, a round trip each, so its seeks back to back on a phone's link can
    miss 5 s where Chromium's do not.
-5. **Members find each other through n0, until the operator's switch.**
-   iroh's address lookup, n0's by default, maps a key to its relay, never to
-   a person, and a group is unreachable through it while it is down; every
-   byte a phone moves crosses a relay, n0's under n0's terms. What closes
-   both is built and parked: each computer's relay in its group's record,
-   svrngs's own relay with no lookup, and a group's own by `svrngs new
-   --relay`. Until the switch a computer meets a group that keeps no relay at
-   n0's relays and asks n0's lookup, while a phone's page asks it nothing.
-   After it, svrngs's relay is the one most groups share — the same centre,
-   ours rather than n0's — with `svrngs relay` the way out anyone can take,
-   and n0's public relays stay in every build as the emergency behind ours:
-   a computer meets at n0's only while neither svrngs's relay nor its
-    groups' own answers (§3), so an outage of ours is not an outage of the
-    groups. A group's own relay carries a phone's lends too: it admits a
-    pass's holder, the fresh key a lend's page dials from, by the pass its
-    person signed (§3, "A relay anyone runs"; self-host). And whoever
-    serves a group's page serves the code that holds the
-   person's key, its bytes unsealed while the page runs, so a group that does
-   not trust svrnme.sh serves the page from its own origin. Likewise a
-   lend's own pages can read the pass its page was handed and the pass's
-   key, good as the person toward that lend and the ones it reads until the
-   pass lapses: a lend is trusted as its pinned code (§3, "Lent apps", call
-   6).
+5. **Most groups meet at svrngs's relay.** A computer meets a group that
+   keeps no relay at `relay.svrnme.sh` and asks no address lookup, since
+   each computer's relay is in its group's record; a phone's page asks
+   none either. Every byte a phone moves crosses a relay unless it is on a
+   WiFi its lender turned direct connections on for (§3), so svrngs's is
+   the one most groups share — the same centre n0's was, ours now — with
+   `svrngs relay` and `svrngs new --relay` the way out anyone can take.
+   n0's public relays stay in every build as the emergency behind ours: a
+   computer meets at n0's only while neither svrngs's relay nor its
+   groups' own answers (§3), so an outage of ours is not an outage of the
+   groups. A group's own relay carries a phone's lends too: it admits a
+   pass's holder, the fresh key a lend's page dials from, by the pass its
+   person signed (§3, "A relay anyone runs"; self-host). And whoever
+   serves a group's page serves the code that holds the person's key, its
+   bytes unsealed while the page runs, so a group that does not trust
+   svrnme.sh serves the page from its own origin. Likewise a lend's own
+   pages can read the pass its page was handed and the pass's key, good as
+   the person toward that lend and the ones it reads until the pass
+   lapses: a lend is trusted as its pinned code (§3, "Lent apps", call 6).
 6. **Two copies of the record's code.** A signing or canonical-form bug fixed
    on one side can be missed on the other. `scripts/ports.py` is the guard,
    and it is a listing, not a gate.

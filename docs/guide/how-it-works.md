@@ -119,9 +119,9 @@ why"):
   address a phone opens, never what's in it.
 - **The download** the install line fetches, checked against the
   release's list before it installs.
-- **The servers that pass sealed bytes** between computers, run for now by
-  n0, the makers of iroh. They see which computers talk and how much,
-  never what.
+- **The server that passes sealed bytes** between computers, ours, with
+  n0's, the makers of iroh, standing in while it doesn't answer. They see
+  which computers talk and how much, never what.
 
 | What | Who sees it |
 |---|---|

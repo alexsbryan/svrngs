@@ -24,8 +24,8 @@
   inline style (its look is svrngs's one look.css, the home page's file,
   which scripts/build-web.sh puts beside it), no remote code. It is never framed: `frame-ancestors` cannot ride a
   `<meta>`, so the page host sends it (vercel.json). `wasm-unsafe-eval` is required to instantiate WebAssembly;
-  `connect-src` must allow the relay's WebSocket (wss://*.relay.n0.iroh.link
-  by default, plus any self-hosted relay a link carries), and iroh's latency
+  `connect-src` must allow the relay's WebSocket (wss://relay.svrnme.sh by
+  default, plus any self-hosted relay a link carries), and iroh's latency
   probe, an HTTP GET of the relay's `/ping`. `img-src 'self'` lets the tab
   show svrngs's mark, favicon.svg from this origin, and a Home Screen its
   apple-touch-icon.png; an image runs nothing.

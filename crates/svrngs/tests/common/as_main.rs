@@ -2,10 +2,10 @@
 //! `svrngs` as a person runs it, but meeting where the test says: the test
 //! binary run again as [`main`], which is src/main.rs's `main` but for the
 //! build's relays, one on 127.0.0.1 ([`build_relay`]) in place of
-//! `reach(SHIPPED)`'s n0 (docs/CHECKS.md, harness 8). The shipped binary
-//! meets n0's relays and lookup on the internet, so a test that spawned it
-//! leaned on a service the gate does not own; `tests/shipped.rs` pins what
-//! `reach(SHIPPED)` is. Each binary that includes this file names [`main`] in an
+//! `reach(SHIPPED)`'s (docs/CHECKS.md, harness 8). The shipped binary
+//! meets svrngs's relay on the internet, n0's behind it, so a test that
+//! spawned it leaned on a service off this host; `tests/shipped.rs` pins
+//! what `reach(SHIPPED)` is. Each binary that includes this file names [`main`] in an
 //! ignored test called [`NAME`]. (Allowed dead: each binary uses a part.)
 
 #![allow(dead_code)]

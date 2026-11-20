@@ -89,11 +89,11 @@ Nothing we run holds them. We run three things, and you can replace each:
 - **The download,** beside the page: `install.sh` and a build for each
   platform, checked against `SHA256SUMS`, so a link installs svrngs in one
   line.
-- **Relays, n0's for now** (the makers of iroh). When two computers can't
-  reach each other directly, and always for a phone, a relay carries the
-  bytes, encrypted end to end. It sees which computers talk and how much,
-  never what they say. n0's address lookup also knows how to reach each
-  computer. svrngs's own relay is built, and waits.
+- **The relay, `relay.svrnme.sh`.** When two computers can't reach each
+  other directly, and for a phone not on a WiFi its lender turned direct
+  connections on for, a relay carries the bytes, encrypted end to end. It
+  sees which computers talk and how much, never what they say. While it
+  doesn't answer, n0's public relays (the makers of iroh) stand in.
 
 ## Run it with nobody in the middle
 
@@ -116,10 +116,10 @@ Nothing we run holds them. We run three things, and you can replace each:
    https://<your host>/` to `new`, or run `svrngs link <group> --origin
    https://<your host>/`. Your founder's line is the one above, with your
    host in it.
-5. **Leave n0 out too.** Set `SHIPPED` to `MeetAt::Svrngs` in
-   [`crates/svrngs/src/cli.rs`](crates/svrngs/src/cli.rs) and build. A
-   computer whose groups all keep their own relay then reaches no server
-   but yours.
+5. **Leave ours out too.** Set `DEFAULT_RELAY` in
+   [`crates/svrngs/src/cli.rs`](crates/svrngs/src/cli.rs) to your relay
+   and build: it is then every group's fallback in place of ours, with
+   n0's behind it only while none of yours answers.
 
 [`docs/DESIGN.md`](docs/DESIGN.md) §7 says what each piece must do.
 

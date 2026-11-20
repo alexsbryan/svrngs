@@ -1,7 +1,7 @@
-//! svrngs's relay, where a computer meets its groups once the build ships
-//! `MeetAt::Svrngs`, n0 none of its path (relay-default (a); PLAN §3,
-//! the operator, 2026-10-12; parked at the gate by relay-park, 2026-10-13,
-//! the build shipping n0's until the switch, `tests/shipped.rs`). A
+//! svrngs's relay, where a computer meets its groups while the build ships
+//! `MeetAt::Svrngs`, as it does since the operator's switch
+//! (relay-default (a); PLAN §3, the operator, 2026-10-12;
+//! `tests/shipped.rs`). A
 //! computer built as the command builds it there (`cli::reach`, which
 //! `src/main.rs` calls) meets its groups at svrngs's relay, and at the ones
 //! a group keeps beside it (relay fallbacks), with no address lookup —
