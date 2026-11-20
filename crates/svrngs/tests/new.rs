@@ -1,10 +1,12 @@
 //! `svrngs new` and `svrngs link` (PLAN §4, U2): the verbs parsed, the
 //! help and the refusals in a person's words, the build's relays, and a
 //! page's host asked whether it serves the page at every name under it (a
-//! listener). A group made and its links, decided by `cli::new_group` and
-//! `cli::link_to`, are verbs/new.rs's, on the wire (docs/seams.tsv).
+//! listener). A group made and its links, decided by `made::new_group` and
+//! `made::link_to`, are verbs/new.rs's, on the wire (docs/seams.tsv).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/made.rs"]
+mod made;
 use svrngs::cli::{self, Refusal, Refused, Unjudged, Verb};
 use svrngs::group::{self, Name};
 use svrngs_core::relay::Meeting;
@@ -402,16 +404,9 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
 
     let dir = tempfile::tempdir().unwrap();
     let node = start(&dir).await;
-    let (_, own) = cli::new_group(
-        &node,
-        name("house"),
-        name("Sam"),
-        Some(&ours),
-        &[],
-        &no_relay(),
-    )
-    .await
-    .unwrap();
+    let (_, own) = made::new_group(&node, name("house"), name("Sam"), Some(&ours), &[])
+        .await
+        .unwrap();
     let https = own.https.clone().unwrap();
     assert!(
         https.starts_with(&format!("{}#", ours.as_str())) && !https.contains('~'),
@@ -423,7 +418,7 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
         )),
         "{own}"
     );
-    let (_, again, _) = cli::link_to(&node, "house", None, &no_relay(), false, &[])
+    let (_, again, _) = made::link_to(&node, "house", None, false, &[])
         .await
         .unwrap();
     assert!(

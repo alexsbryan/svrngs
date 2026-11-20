@@ -1,6 +1,6 @@
 //! Join by link, U2's bar (PLAN §4): a link's form parsed, and an
 //! issuer's seed believed only when it hashes to its group. Every claim
-//! decided by `cli::join_group`, `cli::link_to`, the issuer's routes or
+//! decided by `made::join_group`, `made::link_to`, the issuer's routes or
 //! the svrngs running here is verbs/join.rs's, on the wire
 //! (docs/seams.tsv).
 

@@ -25,11 +25,12 @@
 mod harness;
 mod common;
 
+#[path = "common/made.rs"]
+mod made;
 use std::path::{Path, PathBuf};
 use std::process::Output;
 use std::time::Duration;
 
-use svrngs::cli;
 use svrngs::group::Name;
 use svrngs_node::invite::ORIGIN_FILE;
 use svrngs_node::link::Origin;
@@ -433,15 +434,14 @@ async fn native_arrival_retries_one_identity_and_opens_the_exact_group() {
     // answered a relay their joiners shared, which handed one's ask to the
     // other, refused NoInvite (2 of 12 runs once both met at one relay on
     // 127.0.0.1, as_main.rs; the issuer's traces, redeem.rs `serve_ask`).
-    let (_relay, ours, _dir, sam) = common::sams_computer(3).await;
+    let (_relay, _, _dir, sam) = common::sams_computer(3).await;
     let page = Origin::parse(&format!("http://127.0.0.1:{port}/")).unwrap();
-    let (seed, printed) = cli::new_group(
+    let (seed, printed) = made::new_group(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&page),
         &[],
-        &ours,
     )
     .await
     .unwrap();
@@ -506,15 +506,14 @@ async fn native_arrival_retries_one_identity_and_opens_the_exact_group() {
 async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     let site = site(None);
     let port = host(site.path().to_path_buf()).await;
-    let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
+    let (_relay, _, _dir, sam) = common::sams_computer(1).await;
     let page = Origin::parse(&format!("http://127.0.0.1:{port}/")).unwrap();
-    let (seed, printed) = cli::new_group(
+    let (seed, printed) = made::new_group(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&page),
         &[],
-        &ours,
     )
     .await
     .expect("Sam makes house");
@@ -858,14 +857,13 @@ async fn new_places_the_groups_folder() {
 /// before it placed the folder.
 #[tokio::test(flavor = "multi_thread")]
 async fn joining_places_the_groups_folder() {
-    let (_relay, ours, _dir, sam) = common::sams_computer(2).await;
-    let (_, printed) = cli::new_group(
+    let (_relay, _, _dir, sam) = common::sams_computer(2).await;
+    let (_, printed) = made::new_group(
         &sam,
         Name::parse("trip").unwrap(),
         Name::parse("Sam").unwrap(),
         None,
         &[],
-        &ours,
     )
     .await
     .expect("Sam makes trip");

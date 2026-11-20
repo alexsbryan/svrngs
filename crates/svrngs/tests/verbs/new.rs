@@ -1,10 +1,11 @@
 //! `svrngs new` and `svrngs link` (PLAN §4, U2) on the wire: new.rs's
-//! claims whose decision is `cli::new_group`'s, `cli::link_to`'s or
+//! claims whose decision is `made::new_group`'s, `made::link_to`'s or
 //! `cli::running`'s (docs/seams.tsv). A group made, its seed written beside
 //! its record, an `Invite` appended through its door, and a short link
 //! printed whose key the `Invite` names (u2-8). What stays in new.rs: a
 //! page's host asked whether it serves the page at every name, a listener.
 
+use crate::made;
 use svrngs::cli::{self, Printed, Refusal, Refused};
 use svrngs::group;
 use svrngs_node::invite::LINK_LIFE_SECS;
@@ -64,10 +65,9 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
         .as_secs() as i64;
     let mut ids = Vec::new();
     for _ in 0..2 {
-        let (seed, printed) =
-            cli::new_group(node, name("house"), name("Sam"), None, &[], &no_relay())
-                .await
-                .expect("new makes a group");
+        let (seed, printed) = made::new_group(node, name("house"), name("Sam"), None, &[])
+            .await
+            .expect("new makes a group");
         let id = seed.id();
         eprintln!(
             "new: a client's link, {} characters: {}",
@@ -142,13 +142,12 @@ async fn a_link_made_as_soon_as_a_new_group_shows_is_the_open_one() {
                         break (id, actor_of(&linked.token.key()));
                     }
                 });
-                let made = tokio::runtime::Handle::current().block_on(cli::new_group(
+                let made = tokio::runtime::Handle::current().block_on(made::new_group(
                     node,
                     name("house"),
                     name("Sam"),
                     None,
                     &[],
-                    &no_relay(),
                 ));
                 (made.expect("new makes a group"), home.join().unwrap())
             });
@@ -176,10 +175,10 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
     let node = &sam.node;
-    let (house, first) = cli::new_group(node, name("House"), name("Sam"), None, &[], &no_relay())
+    let (house, first) = made::new_group(node, name("House"), name("Sam"), None, &[])
         .await
         .unwrap();
-    let (again, second, _) = cli::link_to(node, "house", None, &no_relay(), false, &[])
+    let (again, second, _) = made::link_to(node, "house", None, false, &[])
         .await
         .unwrap();
     assert_eq!(again, house);
@@ -191,17 +190,17 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     assert_eq!(keys, [key_of(&first), key_of(&second)]);
 
     assert!(matches!(
-        cli::link_to(node, "work", None, &no_relay(), false, &[]).await,
+        made::link_to(node, "work", None, false, &[]).await,
         Err(Refusal::Refused(Refused::NoGroup(_)))
     ));
-    let (other, _) = cli::new_group(node, name("house"), name("Sam"), None, &[], &no_relay())
+    let (other, _) = made::new_group(node, name("house"), name("Sam"), None, &[])
         .await
         .unwrap();
     assert!(matches!(
-        cli::link_to(node, "house", None, &no_relay(), false, &[]).await,
+        made::link_to(node, "house", None, false, &[]).await,
         Err(Refusal::Refused(Refused::Ambiguous { .. }))
     ));
-    let (picked, _, _) = cli::link_to(node, &other.id()[..8], None, &no_relay(), false, &[])
+    let (picked, _, _) = made::link_to(node, &other.id()[..8], None, false, &[])
         .await
         .unwrap();
     assert_eq!(picked, other);
@@ -222,25 +221,24 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         p.https.clone().unwrap_or_default()
     };
     let x = Origin::parse("https://x.example/").unwrap();
-    let (house, first) =
-        cli::new_group(node, name("house"), name("Sam"), Some(&x), &[], &no_relay())
-            .await
-            .unwrap();
+    let (house, first) = made::new_group(node, name("house"), name("Sam"), Some(&x), &[])
+        .await
+        .unwrap();
     assert!(https(&first).starts_with("https://x.example/#"), "{first}");
-    let (_, later, _) = cli::link_to(node, "house", None, &no_relay(), false, &[])
+    let (_, later, _) = made::link_to(node, "house", None, false, &[])
         .await
         .unwrap();
     assert!(https(&later).starts_with("https://x.example/#"), "{later}");
 
     let y = Origin::parse("https://y.example/ours/").unwrap();
-    let (_, moved, _) = cli::link_to(node, "house", Some(&y), &no_relay(), false, &[])
+    let (_, moved, _) = made::link_to(node, "house", Some(&y), false, &[])
         .await
         .unwrap();
     assert!(
         https(&moved).starts_with("https://y.example/ours/#"),
         "{moved}"
     );
-    let (_, after, _) = cli::link_to(node, "house", None, &no_relay(), false, &[])
+    let (_, after, _) = made::link_to(node, "house", None, false, &[])
         .await
         .unwrap();
     assert!(
@@ -248,19 +246,17 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         "{after}"
     );
 
-    let (work, plain) = cli::new_group(node, name("work"), name("Sam"), None, &[], &no_relay())
+    let (work, plain) = made::new_group(node, name("work"), name("Sam"), None, &[])
         .await
         .unwrap();
     assert_eq!(https(&plain), "", "no origin, no https link: {plain}");
-    let (_, again, _) = cli::link_to(node, "work", None, &no_relay(), false, &[])
-        .await
-        .unwrap();
+    let (_, again, _) = made::link_to(node, "work", None, false, &[]).await.unwrap();
     assert_eq!(https(&again), "", "{again}");
 
     // A group whose kept origin is gone prints the client's link alone.
     let kept = node.rail().group_dir(&house.id()).unwrap().join("origin");
     std::fs::remove_file(&kept).unwrap();
-    let (_, gone, _) = cli::link_to(node, "house", None, &no_relay(), false, &[])
+    let (_, gone, _) = made::link_to(node, "house", None, false, &[])
         .await
         .unwrap();
     assert_eq!(https(&gone), "", "{gone}");

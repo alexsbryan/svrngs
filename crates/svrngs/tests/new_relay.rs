@@ -9,10 +9,11 @@
 //! `svrngs new` keeping a relay only for `--relay`, as at 75fd900d.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/made.rs"]
+mod made;
 use std::time::Duration;
 
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
-use svrngs::cli;
 use svrngs::group::{self, Name};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
@@ -79,7 +80,7 @@ async fn svrngs_new_keeps_the_relay_a_group_made_on_the_home_page_keeps() {
     );
 
     let (name, person) = (Name::parse("Trip").unwrap(), Name::parse("Sam").unwrap());
-    cli::new_group(&sam, name, person, None, &[], &ours)
+    made::new_group(&sam, name, person, None, &[])
         .await
         .expect("Sam makes Trip");
     assert_eq!(kept(&sam, "Trip"), paged, "`svrngs new` keeps the page's");

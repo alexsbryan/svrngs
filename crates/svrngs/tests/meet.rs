@@ -5,6 +5,8 @@
 //! wire (docs/seams.tsv).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/made.rs"]
+mod made;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -99,7 +101,7 @@ async fn every_relay_down_a_join_ends_bounded_and_leaves_nothing_running() {
     let person = group::Name::parse("Pia").unwrap();
 
     let began = Instant::now();
-    let tried = tokio::time::timeout(BOUND, cli::join_group(&node, &key, &link, &person)).await;
+    let tried = tokio::time::timeout(BOUND, made::join_group(&node, &link, &person)).await;
     eprintln!("every relay down: {:?}", began.elapsed());
     let tried = tried.unwrap_or_else(|_| panic!("the join still waits after {BOUND:?}"));
     assert!(
@@ -156,7 +158,7 @@ async fn the_program_joins_at_home_with_the_public_relay_gone() {
     else {
         panic!("new parses as new");
     };
-    let (_seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &relays, &ours)
+    let (_seed, printed) = made::new_group(&sam, name, person.unwrap(), None, &relays)
         .await
         .expect("Sam makes house");
     let link = Link::parse(&printed.client).unwrap();
@@ -184,9 +186,8 @@ async fn the_program_joins_at_home_with_the_public_relay_gone() {
     let mut old = link.clone();
     old.token.relays.retain(|r| r.to_string() == at_public);
     let late = computer(dirs[1].path(), 82, &ours).await;
-    let key = SigningKey::from_bytes(&[82; 32]);
     let lee = group::Name::parse("Lee").unwrap();
-    let refused = cli::join_group(&late, &key, &old, &lee);
+    let refused = made::join_group(&late, &old, &lee);
     let refused = tokio::time::timeout(BOUND, refused).await.expect("bounded");
     assert!(
         matches!(
@@ -197,10 +198,9 @@ async fn the_program_joins_at_home_with_the_public_relay_gone() {
     );
 
     let pia = computer(dirs[2].path(), 83, &ours).await;
-    let key = SigningKey::from_bytes(&[83; 32]);
     let person = group::Name::parse("Pia").unwrap();
     let began = Instant::now();
-    let joined = tokio::time::timeout(BOUND, cli::join_group(&pia, &key, &link, &person))
+    let joined = tokio::time::timeout(BOUND, made::join_group(&pia, &link, &person))
         .await
         .expect("the join ends inside the refusal's bound");
     eprintln!("joined at home in {:?}", began.elapsed());

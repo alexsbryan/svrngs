@@ -14,12 +14,13 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
+#[path = "common/made.rs"]
+mod made;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::path::Path;
 use std::time::Duration;
 
 use serde_json::{json, Value};
-use svrngs::cli;
 use svrngs::group::{Name, Seed};
 use svrngs_core::pass::Label;
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
@@ -82,14 +83,13 @@ fn knows(node: &Node, other: &Node) {
 /// Sam (key 1) makes house and lets Alex (key 2) in by Sam's link.
 async fn house(sam: &Path, alex: &Path) -> (Node, Node, Seed) {
     let sam = start(1, sam).await;
-    let relay = no_relay();
-    let made = cli::new_group(&sam, name("house"), name("Sam"), None, &[], &relay);
+    let made = made::new_group(&sam, name("house"), name("Sam"), None, &[]);
     let (seed, printed) = made.await.expect("Sam makes house");
     let alex = start(2, alex).await;
     knows(&alex, &sam);
     knows(&sam, &alex);
     let link = Link::parse(&printed.client).unwrap();
-    let joined = cli::join_group(&alex, &signing(2), &link, &name("Alex")).await;
+    let joined = made::join_group(&alex, &link, &name("Alex")).await;
     joined.expect("Alex is let in");
     (sam, alex, seed)
 }

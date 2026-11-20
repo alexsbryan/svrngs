@@ -1,5 +1,5 @@
 //! Join by link, U2's bar (PLAN §4), on the wire: join_by_link.rs's
-//! claims whose decision is `cli::join_group`'s, `cli::link_to`'s or the
+//! claims whose decision is `made::join_group`'s, `made::link_to`'s or the
 //! issuer's routes, asked in this process (docs/seams.tsv). Sam makes a
 //! group and sends one link; Alex, Bo and Cy each open it and are let in
 //! once, and each copy syncs Sam's record. A closed link, a lapsed one, a
@@ -10,6 +10,7 @@
 //! svrngs running here through `cli::Here`, and an older build's 404 is
 //! said to be one.
 
+use crate::made;
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 
@@ -47,16 +48,9 @@ fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>
 
 /// Sam's computer makes the group house, as Sam: no page, no `--relay`.
 async fn sams_house(sam: &Computer) -> (Seed, Printed) {
-    cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        &[],
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house")
+    made::new_group(&sam.node, name("house"), name("Sam"), None, &[])
+        .await
+        .expect("Sam makes house")
 }
 
 /// A printed client's link, parsed, after checking it dials Sam.
@@ -198,7 +192,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             "{who}'s form carries the one token"
         );
         let started = Instant::now();
-        let joined = cli::join_group(&friend.node, &friend.key, &opened, &name(who))
+        let joined = made::join_group(&friend.node, &opened, &name(who))
             .await
             .unwrap_or_else(|e| panic!("{who} is let in: {e}"));
         let took = started.elapsed();
@@ -240,7 +234,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         present(alex, &link, &group, &invite, "Alex").await,
         Ok(Redeemed::AlreadyIn)
     );
-    let again = cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+    let again = made::join_group(&alex.node, &link, &name("Alex"))
         .await
         .unwrap();
     assert_eq!(again, Said::AlreadyIn(seed.clone()));
@@ -248,7 +242,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     assert_eq!(admitted(&sam.node, &group), three, "no second Admit");
 
     // ── Sam sends a new link: Dee, with the old one, is refused.
-    let (linked, printed2, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false, &[])
+    let (linked, printed2, _) = made::link_to(&sam.node, "house", None, false, &[])
         .await
         .unwrap();
     said.push(
@@ -261,7 +255,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     );
     let dee = computer(&wire, 5).await;
     let closed = present(&dee, &link, &group, &invite, "Dee").await;
-    let refused = cli::join_group(&dee.node, &dee.key, &link, &name("Dee")).await;
+    let refused = made::join_group(&dee.node, &link, &name("Dee")).await;
     assert!(
         matches!(refused, Err(Refusal::Refused(Refused::LinkRefused))),
         "Dee with the old link: {}",
@@ -290,7 +284,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let unasked = asks(&fay, &forged).await.map(|_| ());
     let never = present(&fay, &forged, &group, &open_invite, "Fay").await;
     assert!(matches!(
-        cli::join_group(&fay.node, &fay.key, &forged, &name("Fay")).await,
+        made::join_group(&fay.node, &forged, &name("Fay")).await,
         Err(Refusal::Refused(Refused::LinkRefused))
     ));
     assert!(!stands(&sam.node, &group, &fay.key));
@@ -338,7 +332,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let eve = computer(&wire, 6).await;
     let past = present(&eve, &lapsed_link, &group, &lapsed.id, "Eve").await;
     assert!(matches!(
-        cli::join_group(&eve.node, &eve.key, &lapsed_link, &name("Eve")).await,
+        made::join_group(&eve.node, &lapsed_link, &name("Eve")).await,
         Err(Refusal::Refused(Refused::LinkRefused))
     ));
     assert!(!stands(&sam.node, &group, &eve.key));
@@ -471,7 +465,7 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
     }
 
     let zoe = computer(&wire, 10).await;
-    cli::join_group(&zoe.node, &zoe.key, &link, &name("Zoë Ann"))
+    made::join_group(&zoe.node, &link, &name("Zoë Ann"))
         .await
         .expect("Zoë Ann is let in");
     assert!(stands(&sam.node, &group, &zoe.key));
@@ -501,7 +495,7 @@ async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
         .join("ring_oplog.jsonl");
     let before = std::fs::read_to_string(&file).unwrap();
     let hal = computer(&wire, 9).await;
-    let refused = cli::join_group(&hal.node, &hal.key, &link, &name("sam"))
+    let refused = made::join_group(&hal.node, &link, &name("sam"))
         .await
         .expect_err("a second sam is refused");
     let words = refused.to_string();
@@ -519,7 +513,7 @@ async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
     assert_eq!(refused.exit_code(), 1);
     assert_eq!(std::fs::read_to_string(&file).unwrap(), before);
     assert!(!stands(&sam.node, &group, &hal.key));
-    cli::join_group(&hal.node, &hal.key, &link, &name("Hal"))
+    made::join_group(&hal.node, &link, &name("Hal"))
         .await
         .expect("Hal is let in");
     assert!(stands(&sam.node, &group, &hal.key));
@@ -535,13 +529,13 @@ async fn another_computer_of_sams_joins_as_sam_by_a_link_for_sams_devices() {
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
     let (seed, _) = sams_house(&sam).await;
-    let (_, printed, device) = cli::link_to(&sam.node, "house", None, &no_relay(), true, &[])
+    let (_, printed, device) = made::link_to(&sam.node, "house", None, true, &[])
         .await
         .expect("Sam's computer makes a link for Sam's devices");
     assert_eq!(device.map(|p| p.to_string()), Some("Sam".to_string()));
     let link = parsed(&printed, &sam.node);
     let second = computer(&wire, 4).await;
-    let joined = cli::join_group(&second.node, &second.key, &link, &name("whoever"))
+    let joined = made::join_group(&second.node, &link, &name("whoever"))
         .await
         .expect("Sam's second computer is let in");
     assert_eq!(joined.to_string(), "You're in house, as Sam.\n");
@@ -571,7 +565,7 @@ async fn a_browser_redeeming_a_link_for_sams_devices_stands_as_sam() {
     let sam = computer(&wire, 1).await;
     let (seed, _) = sams_house(&sam).await;
     let group = seed.id();
-    let (_, printed, _) = cli::link_to(&sam.node, "house", None, &no_relay(), true, &[])
+    let (_, printed, _) = made::link_to(&sam.node, "house", None, true, &[])
         .await
         .expect("Sam's computer makes a link for Sam's devices");
     let link = parsed(&printed, &sam.node);
@@ -682,7 +676,7 @@ async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
     let (house, printed) = sams_house(&sam).await;
     let link = parsed(&printed, &sam.node);
     let ana = computer(&wire, 2).await;
-    cli::join_group(&ana.node, &ana.key, &link, &name("ana"))
+    made::join_group(&ana.node, &link, &name("ana"))
         .await
         .expect("Ana is let in");
     let lends = svrngs_node::lend::lends_dir(ana.dir.path());
@@ -690,7 +684,7 @@ async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
     let music = serde_json::json!({ "port": 4533, "kind": "navidrome", "limit": 3, "groups": [house.id()] });
     std::fs::write(lends.join("music.json"), music.to_string()).unwrap();
     let alex = computer(&wire, 3).await;
-    cli::join_group(&alex.node, &alex.key, &link, &name("alex"))
+    made::join_group(&alex.node, &link, &name("alex"))
         .await
         .expect("Alex is let in");
     let started = tokio::time::Instant::now();
@@ -722,30 +716,23 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
     let x = Origin::parse("https://x.example/").unwrap();
-    let (_, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        Some(&x),
-        &[],
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house on x.example");
+    let (_, printed) = made::new_group(&sam.node, name("house"), name("Sam"), Some(&x), &[])
+        .await
+        .expect("Sam makes house on x.example");
     let https = printed.https.clone().expect("an https link on x.example");
     let alex = computer(&wire, 2).await;
     let cy = computer(&wire, 4).await;
     for (who, n, raw) in [(&alex, "Alex", &https), (&cy, "Cy", &printed.client)] {
-        cli::join_group(&who.node, &who.key, &typed(raw), &name(n))
+        made::join_group(&who.node, &typed(raw), &name(n))
             .await
             .unwrap_or_else(|e| panic!("{n} is let in: {e}"));
     }
-    let (_, theirs, _) = cli::link_to(&alex.node, "house", None, &no_relay(), false, &[])
+    let (_, theirs, _) = made::link_to(&alex.node, "house", None, false, &[])
         .await
         .expect("Alex, in house, prints a link");
     let on = theirs.https.unwrap_or_default();
     assert!(on.starts_with("https://x.example/#"), "{on}");
-    let (_, cys, _) = cli::link_to(&cy.node, "house", None, &no_relay(), false, &[])
+    let (_, cys, _) = made::link_to(&cy.node, "house", None, false, &[])
         .await
         .expect("Cy, in house, prints a link");
     assert_eq!(cys.https, None, "{cys}");
@@ -763,16 +750,9 @@ async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
     // The relay its endpoint is given, as one configured with lookup off
     // is: no lookup on the wire, and nothing answers there.
     sam.node.host().meet_at(&[relay.clone().into()]).await;
-    let (seed, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        &[],
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, printed) = made::new_group(&sam.node, name("house"), name("Sam"), None, &[])
+        .await
+        .expect("Sam makes house");
     eprintln!(
         "a relayed client's link, {} characters: {}",
         printed.client.len(),
@@ -785,7 +765,7 @@ async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
         "the link carries the relay, dotless"
     );
     let alex = computer(&wire, 2).await;
-    let joined = cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+    let joined = made::join_group(&alex.node, &link, &name("Alex"))
         .await
         .expect("Alex is let in, with lookup off");
     assert_eq!(
@@ -815,7 +795,7 @@ async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
     let group = seed.id();
     let hal = computer(&wire, 9).await;
     let link = parsed(&printed, &sam.node);
-    cli::join_group(&hal.node, &hal.key, &link, &name("Hal"))
+    made::join_group(&hal.node, &link, &name("Hal"))
         .await
         .expect("Hal is let in");
     let cut = svrngs_node::Removal {
@@ -830,11 +810,11 @@ async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
     let dir = again.node.rail().group_dir(&group).unwrap();
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("roster.json"), "no roster").unwrap();
-    let (_, printed, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false, &[])
+    let (_, printed, _) = made::link_to(&sam.node, "house", None, false, &[])
         .await
         .expect("Sam's computer makes its next link");
     let link = parsed(&printed, &sam.node);
-    let refused = cli::join_group(&again.node, &again.key, &link, &name("Hal")).await;
+    let refused = made::join_group(&again.node, &link, &name("Hal")).await;
     assert!(
         matches!(&refused, Err(Refusal::Refused(Refused::Left(g))) if *g == name("house")),
         "{refused:?}"
@@ -924,12 +904,11 @@ async fn join_asks_the_svrngs_running_here_for_another_group() {
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
     let (house, printed) = sams_house(&sam).await;
-    let relay = no_relay();
-    let made = cli::new_group(&sam.node, name("party"), name("Sam"), None, &[], &relay);
+    let made = made::new_group(&sam.node, name("party"), name("Sam"), None, &[]);
     let (party, party_link) = made.await.expect("Sam makes party");
     let alex = computer(&wire, 2).await;
     let link = parsed(&printed, &sam.node);
-    cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+    made::join_group(&alex.node, &link, &name("Alex"))
         .await
         .expect("Alex's first join, as the svrngs running here made it");
     let _held = cli::claim(alex.dir.path()).expect("Alex's svrngs holds the data dir");

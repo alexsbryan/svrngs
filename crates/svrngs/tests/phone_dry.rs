@@ -20,11 +20,12 @@
 #[allow(dead_code, unused_macros)]
 mod harness;
 
+#[path = "common/made.rs"]
+mod made;
 use std::num::NonZeroU16;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use svrngs::cli;
 use svrngs::group::{self, Name};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend::{self, Lend, LendName, Program};
@@ -65,13 +66,12 @@ async fn sam_through_a_relay_on_this_computer() {
     tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
         .await
         .expect("Sam's computer reaches the relay on 127.0.0.1");
-    let (house, printed) = cli::new_group(
+    let (house, printed) = made::new_group(
         &sam,
         Name::parse("House").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&origin),
         &[],
-        &ours,
     )
     .await
     .expect("Sam makes House, its links on the page's origin");

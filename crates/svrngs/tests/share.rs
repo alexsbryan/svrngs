@@ -11,6 +11,8 @@
 //! the program, for the second.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/made.rs"]
+mod made;
 use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::path::Path;
@@ -63,7 +65,6 @@ fn name(s: &str) -> Name {
 
 struct Computer {
     node: Node,
-    key: SigningKey,
     dir: tempfile::TempDir,
 }
 
@@ -72,14 +73,14 @@ async fn computer(seed: u8) -> Computer {
     let key = SigningKey::from_bytes(&[seed; 32]);
     let node = Node::start(
         dir.path().to_path_buf(),
-        key.clone(),
+        key,
         &no_relay(),
         group::seed_text,
         "127.0.0.1:0".parse().unwrap(),
     )
     .await
     .expect("a node starts");
-    Computer { node, key, dir }
+    Computer { node, dir }
 }
 
 /// Tell `who` the loopback addresses Sam's key resolves to, as address
@@ -164,20 +165,13 @@ fn plain(said: &[String]) {
 #[tokio::test(flavor = "multi_thread")]
 async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(
-        &sam.node,
-        name("house"),
-        name("Sam"),
-        None,
-        &[],
-        &no_relay(),
-    )
-    .await
-    .expect("Sam makes house");
+    let (seed, printed) = made::new_group(&sam.node, name("house"), name("Sam"), None, &[])
+        .await
+        .expect("Sam makes house");
     let alex = computer(2).await;
     knows(&alex, &sam.node);
     let link = Link::parse(&printed.client).unwrap();
-    cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+    made::join_group(&alex.node, &link, &name("Alex"))
         .await
         .expect("Alex is let in");
 
@@ -303,14 +297,13 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 #[tokio::test(flavor = "multi_thread")]
 async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats() {
     let sam = computer(3).await;
-    let (lab, printed) =
-        cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &no_relay())
-            .await
-            .expect("Sam makes Lab");
+    let (lab, printed) = made::new_group(&sam.node, name("Lab"), name("Sam"), None, &[])
+        .await
+        .expect("Sam makes Lab");
     let alex = computer(4).await;
     knows(&alex, &sam.node);
     let link = Link::parse(&printed.client).unwrap();
-    cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+    made::join_group(&alex.node, &link, &name("Alex"))
         .await
         .expect("Alex is let in");
 

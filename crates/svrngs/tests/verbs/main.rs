@@ -1,6 +1,6 @@
 //! The command's verbs on the wire (docs/CHECKS.md, harness 3; the
 //! ledger's unit 7): each claim whose decision is a verb's, its function
-//! called in this process, as `cli::new_group` is, on computers met on one
+//! called in this process, as `made::new_group` asks the node, on computers met on one
 //! [`Wire`]: no endpoint, no relay, no socket. What stays on a real one is
 //! each source file's seam: a process asked while it runs, a relay, a
 //! listener (docs/seams.tsv names where each claim went).
@@ -27,6 +27,9 @@ use svrngs_node::node::{Node, Wire};
 use svrngs_node::uid::Owner;
 use svrngs_node::SigningKey;
 use tower::ServiceExt;
+
+#[path = "../common/made.rs"]
+mod made;
 
 /// svrngs-node's tests' shared helpers: `heard`, a test's own trace.
 #[path = "../../../svrngs-node/tests/common/mod.rs"]

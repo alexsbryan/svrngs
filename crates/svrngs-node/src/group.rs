@@ -377,8 +377,8 @@ impl crate::node::Asking {
         Ok((self.door.folders.place(&seed), seed, beside))
     }
 
-    /// A group made where svrngs runs, for the command's `new`, as the
-    /// command makes one where none runs (svrngs's cli.rs `new_group`):
+    /// A group made where svrngs runs, for the command's `new`, of svrngs
+    /// running already or of the one the command started:
     /// founded by this computer's key as the person asked, beside the
     /// groups called so already; met at the relays asked, else where this
     /// computer is met once it has reached one; kept with its first link

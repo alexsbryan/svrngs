@@ -4,6 +4,7 @@
 //! process (cli.rs `Here`, docs/seams.tsv). Nothing listens; what stays in
 //! remove.rs is the verbs' parse and their words.
 
+use crate::made;
 use svrngs::cli::{self, Refusal, Refused, RemoveKind, Unjudged, Verb};
 use svrngs::group::Seed;
 use svrngs_node::node::Wire;
@@ -14,8 +15,7 @@ use crate::{computer, name, no_relay, Computer, Running};
 /// Sam's computer on `wire`, and the group trip it made.
 async fn sams_trip(wire: &Wire) -> (Computer, Seed) {
     let sam = computer(wire, 5).await;
-    let relay = no_relay();
-    let made = cli::new_group(&sam.node, name("trip"), name("Sam"), None, &[], &relay);
+    let made = made::new_group(&sam.node, name("trip"), name("Sam"), None, &[]);
     let (seed, _) = made.await.unwrap();
     (sam, seed)
 }

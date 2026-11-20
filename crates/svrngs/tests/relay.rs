@@ -12,6 +12,8 @@
 mod harness;
 mod common;
 
+#[path = "common/made.rs"]
+mod made;
 use iroh::dns::DnsResolver;
 use iroh_relay::client::{ClientBuilder, ConnectError};
 use svrngs::cli::{self, Refusal, Refused, Unjudged};
@@ -91,9 +93,9 @@ async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn a_relay_lets_through_its_groups_alone_and_open_everyone() {
-    let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
+    let (_relay, _, dir, sam) = common::sams_computer(SAM).await;
     let house = Name::parse("house").unwrap();
-    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[], &ours)
+    made::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[])
         .await
         .expect("Sam makes house");
 
@@ -131,9 +133,9 @@ async fn a_relay_lets_through_its_groups_alone_and_open_everyone() {
 /// stranger.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_group_only_relay_admits_a_pass_s_holder_for_the_group_s_lends() {
-    let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
+    let (_relay, _, dir, sam) = common::sams_computer(SAM).await;
     let house = Name::parse("house").unwrap();
-    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[], &ours)
+    made::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[])
         .await
         .expect("Sam makes house");
     let groups = relay_over(dir.path(), false)
@@ -289,9 +291,9 @@ async fn groups_that_cannot_be_read_are_said_so_never_taken_as_none() {
         .with_ansi(false)
         .finish();
     let _kept = tracing::subscriber::set_default(kept);
-    let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
+    let (_relay, _, dir, sam) = common::sams_computer(SAM).await;
     let house = Name::parse("house").unwrap();
-    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[], &ours)
+    made::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[])
         .await
         .expect("Sam makes house");
     let rings = dir.path().join("rings");

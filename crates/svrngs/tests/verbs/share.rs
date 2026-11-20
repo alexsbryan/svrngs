@@ -1,9 +1,10 @@
 //! `svrngs share` and `unshare` on the wire: share.rs's claims whose
 //! decision is `cli::audience_of`'s, `cli::share_lend`'s or `cli::unshare`'s
-//! over groups `cli::new_group` made (docs/seams.tsv). The port a lend
+//! over groups `made::new_group` made (docs/seams.tsv). The port a lend
 //! names is said to listen by the probe `share::lend_of` is handed, so no
 //! service answers on it; that a port is probed is share.rs's.
 
+use crate::made;
 use std::num::NonZeroU16;
 
 use svrngs::cli::{self, Refusal, Refused, Said, Unjudged};
@@ -55,9 +56,9 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     use svrngs_node::lend::{self, Audience};
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
-    let (mut seeds, relay) = (Vec::new(), no_relay());
+    let mut seeds = Vec::new();
     for group in ["house", "trip"] {
-        let made = cli::new_group(&sam.node, name(group), name("Sam"), None, &[], &relay);
+        let made = made::new_group(&sam.node, name(group), name("Sam"), None, &[]);
         seeds.push(made.await.expect("Sam makes the group").0.id());
     }
     let (dir, port) = (sam.dir.path(), std::num::NonZeroU16::new(8096).unwrap());
@@ -100,9 +101,9 @@ async fn two_groups_of_one_name_are_chosen_by_id_never_by_name() {
     use svrngs_node::lend::Audience;
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
-    let (mut ids, relay) = (Vec::new(), no_relay());
+    let mut ids = Vec::new();
     for _ in 0..2 {
-        let made = cli::new_group(&sam.node, name("House"), name("Sam"), None, &[], &relay);
+        let made = made::new_group(&sam.node, name("House"), name("Sam"), None, &[]);
         ids.push(made.await.expect("Sam makes a House").0.id());
     }
     let (dir, port) = (sam.dir.path(), std::num::NonZeroU16::new(8096).unwrap());
@@ -124,8 +125,7 @@ async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     use svrngs_node::lend::{self, Audience};
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
-    let relay = no_relay();
-    let made = cli::new_group(&sam.node, name("house"), name("Sam"), None, &[], &relay);
+    let made = made::new_group(&sam.node, name("house"), name("Sam"), None, &[]);
     made.await.expect("Sam makes house");
     let pad = share::lend_of(&share_of(PAD, "pad"), listens, None, "").unwrap();
     cli::share_lend(sam.dir.path(), &pad, None).unwrap();
@@ -176,7 +176,7 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
         dir: films.path().to_path_buf(),
         group: group.into(),
     };
-    cli::new_group(&sam.node, name("house"), name("Sam"), None, &[], &relay)
+    made::new_group(&sam.node, name("house"), name("Sam"), None, &[])
         .await
         .unwrap();
     let running = crate::Running(&sam);
@@ -224,8 +224,7 @@ fn unshare_of_nothing_lent_says_what_is() {
 /// `svrngs` keeps them.
 async fn sams_lab(wire: &Wire) -> (crate::Computer, std::fs::File) {
     let sam = computer(wire, 5).await;
-    let relay = no_relay();
-    let made = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &relay);
+    let made = made::new_group(&sam.node, name("Lab"), name("Sam"), None, &[]);
     let (lab, _) = made.await.expect("Sam makes Lab");
     let (_, placed) = sam.node.folders().place(&lab);
     placed.expect("Lab's folder, placed as `svrngs new` places it");
@@ -524,8 +523,7 @@ async fn until_read(sam: &crate::Computer, group: &str, word: &str, text: &str) 
 async fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
     let wire = Wire::default();
     let (sam, _held) = sams_lab(&wire).await;
-    let relay = no_relay();
-    let made = cli::new_group(&sam.node, name("Trip"), name("Sam"), None, &[], &relay);
+    let made = made::new_group(&sam.node, name("Trip"), name("Sam"), None, &[]);
     let (trip, _) = made.await.expect("Sam makes Trip");
     sam.node.folders().place(&trip).1.expect("Trip's folder");
     let lender = Lender::of(&sam, "");

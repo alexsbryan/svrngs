@@ -14,6 +14,8 @@
 //! `RelayConfig::default()`'s n0 relays and lookup.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/made.rs"]
+mod made;
 use std::io::Write;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -131,7 +133,7 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_s_is_never_held() {
     else {
         unreachable!("new parses as new")
     };
-    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &kept, &ours)
+    let (seed, printed) = made::new_group(&sam, name, person.unwrap(), None, &kept)
         .await
         .expect("Sam makes house");
     let link = Link::parse(&printed.client).unwrap();
@@ -146,8 +148,7 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_s_is_never_held() {
         let Verb::Join { link, person, .. } = join else {
             unreachable!("join parses as join")
         };
-        let key = SigningKey::from_bytes(&[seed_byte; 32]);
-        cli::join_group(&node, &key, &link, &person.unwrap())
+        made::join_group(&node, &link, &person.unwrap())
             .await
             .unwrap_or_else(|e| panic!("{who} is let in: {e}"));
         people.push(node);
@@ -239,7 +240,7 @@ async fn a_computer_at_svrngs_s_with_a_memory_lookup_keeps_its_link_s_relay() {
     else {
         unreachable!("new parses as new")
     };
-    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &kept, &ours)
+    let (seed, printed) = made::new_group(&sam, name, person.unwrap(), None, &kept)
         .await
         .expect("Sam makes house");
     let alex = computer(dirs[1].path(), 52, &ours).await;
@@ -251,8 +252,7 @@ async fn a_computer_at_svrngs_s_with_a_memory_lookup_keeps_its_link_s_relay() {
     let Verb::Join { link, person, .. } = join else {
         unreachable!("join parses as join")
     };
-    let key = SigningKey::from_bytes(&[52; 32]);
-    cli::join_group(&alex, &key, &link, &person.unwrap())
+    made::join_group(&alex, &link, &person.unwrap())
         .await
         .expect("Alex is let in");
     let file = alex.rail().group_dir(&seed.id()).unwrap().join("relay");

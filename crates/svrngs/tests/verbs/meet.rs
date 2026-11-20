@@ -1,15 +1,15 @@
 //! A keeper changes where a group meets, and only a keeper may (relay
 //! change; relay fallbacks), on the wire: meet.rs's claims whose decision
-//! is `cli::link_to`'s, `Host::meet`'s and the record's fold, its relays
+//! is `made::link_to`'s, `Host::meet`'s and the record's fold, its relays
 //! named and never dialled, and `link --relay` asked of the svrngs running
 //! here through `cli::Here` (docs/seams.tsv). What stays in meet.rs: a
 //! join with every relay down, and a relay lost.
 
+use crate::made;
 use svrngs::cli::{self, MeetAt, Verb};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::link::Link;
 use svrngs_node::node::{Node, Wire};
-use svrngs_node::SigningKey;
 
 use crate::computer;
 
@@ -51,11 +51,7 @@ fn acts(node: &Node, group: &str) -> usize {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
     let wire = Wire::default();
-    let (old, new, build) = relays();
-    let ours = RelayConfig {
-        relay_urls: vec![build.clone()],
-        ..cli::reach(MeetAt::Svrngs)
-    };
+    let (old, new, _) = relays();
 
     let made = cli::parse(argv(&format!("new house --as Sam --relay {old}"))).unwrap();
     let sam = computer(&wire, 71).await.node;
@@ -68,7 +64,7 @@ async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
     else {
         panic!("new parses as new");
     };
-    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &relays, &ours)
+    let (seed, printed) = made::new_group(&sam, name, person.unwrap(), None, &relays)
         .await
         .expect("Sam makes house");
     let old_link = Link::parse(&printed.client).unwrap();
@@ -78,7 +74,7 @@ async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
     );
 
     let new: RelayUrl = new.parse().unwrap();
-    let (_, printed_new, _) = cli::link_to(&sam, "house", None, &ours, false, &[new.clone()])
+    let (_, printed_new, _) = made::link_to(&sam, "house", None, false, &[new.clone()])
         .await
         .expect("Sam changes the relay and mints a link");
     let new_link = Link::parse(&printed_new.client).unwrap();
@@ -120,15 +116,14 @@ async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
     let Verb::Join { link, person, .. } = join else {
         panic!("join parses as join");
     };
-    let key = SigningKey::from_bytes(&[72; 32]);
-    cli::join_group(&alex, &key, &link, &person.unwrap())
+    made::join_group(&alex, &link, &person.unwrap())
         .await
         .expect("Alex joins by the old link");
 
     let before = acts(&alex, &seed.id());
     let refused = alex.host().meet(&seed.id(), &[old.clone()]);
     assert!(refused.is_err(), "a member who is not keeper is refused");
-    let refused = cli::link_to(&alex, "house", None, &ours, false, &[old.clone()]).await;
+    let refused = made::link_to(&alex, "house", None, false, &[old.clone()]).await;
     assert!(
         matches!(
             refused,
@@ -150,10 +145,6 @@ async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
 async fn a_member_folds_the_new_relay_from_the_old_one() {
     let wire = Wire::default();
     let (old, new, build) = relays();
-    let ours = RelayConfig {
-        relay_urls: vec![build.clone()],
-        ..cli::reach(MeetAt::Svrngs)
-    };
     let made = cli::parse(argv(&format!("new house --as Sam --relay {old}"))).unwrap();
     let sam = computer(&wire, 73).await.node;
     let Verb::New {
@@ -165,7 +156,7 @@ async fn a_member_folds_the_new_relay_from_the_old_one() {
     else {
         panic!("new parses as new");
     };
-    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &relays, &ours)
+    let (seed, printed) = made::new_group(&sam, name, person.unwrap(), None, &relays)
         .await
         .expect("Sam makes house");
     let join = cli::parse(argv(&format!("join {} --as Alex", printed.client))).unwrap();
@@ -173,8 +164,7 @@ async fn a_member_folds_the_new_relay_from_the_old_one() {
     let Verb::Join { link, person, .. } = join else {
         panic!("join parses as join");
     };
-    let key = SigningKey::from_bytes(&[74; 32]);
-    cli::join_group(&alex, &key, &link, &person.unwrap())
+    made::join_group(&alex, &link, &person.unwrap())
         .await
         .expect("Alex joins");
 
@@ -213,7 +203,7 @@ async fn link_relay_asks_the_svrngs_running_here() {
         svrngs::group::Name::parse("Sam"),
     );
     let relays = [old.parse().unwrap()];
-    let (seed, printed) = cli::new_group(&sam.node, name, person.unwrap(), None, &relays, &ours)
+    let (seed, printed) = made::new_group(&sam.node, name, person.unwrap(), None, &relays)
         .await
         .expect("Sam makes house");
     let Verb::Join { link, person, .. } =
@@ -222,7 +212,7 @@ async fn link_relay_asks_the_svrngs_running_here() {
         panic!("join parses as join");
     };
     let alex = computer(&wire, 79).await;
-    cli::join_group(&alex.node, &alex.key, &link, &person.unwrap())
+    made::join_group(&alex.node, &link, &person.unwrap())
         .await
         .expect("Alex joins");
     let _held = [&sam, &alex].map(|c| cli::claim(c.dir.path()).expect("the lock is free"));

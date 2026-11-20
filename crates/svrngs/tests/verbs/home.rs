@@ -5,9 +5,10 @@
 //! computer on one [`Wire`]: no browser, endpoint, relay or socket. What
 //! the page says of each answer is web/tests/pages/home.test.mjs's.
 
+use crate::made;
 use axum::http::StatusCode;
 use serde_json::{json, Value};
-use svrngs::cli::{self, Said};
+use svrngs::cli::Said;
 use svrngs::group;
 use svrngs_node::actor_of;
 use svrngs_node::link::{client_link, Link};
@@ -15,7 +16,7 @@ use svrngs_node::node::{Node, Wire};
 use tower::ServiceExt;
 
 use crate::node_common::heard;
-use crate::{computer, name, no_relay, Computer};
+use crate::{computer, name, Computer};
 
 /// `method` of `path` asked of `node`'s home page as its own page asks it:
 /// at `svrngs.localhost:<port>`, from itself, the token shown. The status
@@ -69,7 +70,7 @@ fn ruled(traced: &str, name: &str, held: usize) -> bool {
 async fn new(dee: &Computer, called: &str) -> (group::Seed, String) {
     let me = actor_of(&dee.key);
     let beside = group::namesakes(dee.node.rail().root(), &name(called), &me);
-    let (seed, link) = cli::new_group(&dee.node, name(called), name("Dee"), None, &[], &no_relay())
+    let (seed, link) = made::new_group(&dee.node, name(called), name("Dee"), None, &[])
         .await
         .expect("Dee makes a group");
     let (dir, placed) = dee.node.folders().place(&seed);
@@ -135,7 +136,7 @@ async fn a_group_made_on_the_home_page_is_joined_by_its_link_with_no_restart() {
     let https = linked["https"].as_str().expect("an https link");
     assert!(https.starts_with(&format!("{came_from}#")), "{linked}");
     let link = Link::parse(https).expect("the link shown is a link");
-    let joined = cli::join_group(&bo.node, &bo.key, &link, &name("Bo")).await;
+    let joined = made::join_group(&bo.node, &link, &name("Bo")).await;
     let Ok(Said::Joined { seed, .. }) = joined else {
         panic!("Bo is let in: {joined:?}");
     };
@@ -167,7 +168,7 @@ async fn a_group_joined_on_the_home_page_is_joined_as_the_command_joins() {
     let wire = Wire::default();
     let sam = computer(&wire, 6).await;
     let dee = computer(&wire, 5).await;
-    let (trip, _) = cli::new_group(&sam.node, name("Trip"), name("Sam"), None, &[], &no_relay())
+    let (trip, _) = made::new_group(&sam.node, name("Trip"), name("Sam"), None, &[])
         .await
         .expect("Sam makes Trip");
     let made = sam.node.host().link(&trip.id(), false, None, None);

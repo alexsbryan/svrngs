@@ -25,6 +25,8 @@
 mod harness;
 mod common;
 
+#[path = "common/made.rs"]
+mod made;
 use std::num::NonZeroU16;
 use std::process::Stdio;
 
@@ -232,13 +234,12 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let page = cli::checked_page(Some(origin.clone()))
         .await
         .expect("the page's server serves it at every name under localhost, so no other step");
-    let (seed, printed) = cli::new_group(
+    let (seed, printed) = made::new_group(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         page.as_ref(),
         &[],
-        &ours,
     )
     .await
     .expect("Sam makes house, its links on the page's origin");

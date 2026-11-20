@@ -62,17 +62,16 @@
 //! here, else of the svrngs it starts, so the room has one decider. It says
 //! who can open them, and where each is served or why not.
 //!
-//! `join`, where svrngs runs here already, asks it to join
-//! ([`svrngs_node::join`'s route](svrngs_node::join::JOINS_ROUTE)), as
-//! `room` asks: the running svrngs is the one writer of this computer's
-//! acts, so it joins, and the command says and leaves, running nothing.
-//! One that answers no join — a build from before the route — is told as
-//! the lock's own refusal is, for stopping it is the way on from there.
-//! `link`, with no `--origin`, asks it too, so a keeper changes where a
-//! group meets with one command ([`svrngs_node::home::LINKS_ROUTE`]); and
-//! `new` asks it to make the group ([`svrngs_node::group::NEW_ROUTE`]),
-//! since the installer keeps svrngs running from login, its `--origin`
-//! checked here first, as when `new` starts svrngs.
+//! `new`, `join` and `link` are asked of svrngs running here, the one
+//! writer of this computer's acts ([`asked`]), as `room` is: of the one
+//! running already, and then the command says and leaves, running
+//! nothing; else of the one it starts. Each is its route's
+//! ([`svrngs_node::group::NEW_ROUTE`], [`svrngs_node::join::JOINS_ROUTE`],
+//! [`svrngs_node::home::LINKS_ROUTE`]), so a verb is built once, there.
+//! A `--origin` is checked here first ([`checked_page`]). One that answers
+//! no join — a build from before the route — is told as too old, for
+//! updating and restarting it is the way on from there. `link --origin`
+//! while svrngs runs is refused as the lock's own refusal.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -105,16 +104,14 @@ use std::net::{Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use ed25519_dalek::VerifyingKey;
 use std::num::NonZeroU16;
 
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::{FolderAsk, PROGRAMS_ROUTE};
 use svrngs_node::home::WHEN;
 use svrngs_node::home::{Linking, LINKS_ROUTE};
-use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
-use svrngs_node::join::{Entered, JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
+use svrngs_node::join::{JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
 use svrngs_node::lend::{
     self, Audience, Lend, LendName, Program, Raw, RefusedPath, SignInWithSvrngs, Source, Upload,
 };
@@ -126,7 +123,7 @@ use svrngs_node::removal::{
 use svrngs_node::room;
 use svrngs_node::uid::Owner;
 use svrngs_node::update;
-use svrngs_node::{Joined, Person, SigningKey};
+use svrngs_node::{Joined, Person};
 
 use crate::group::{self, Name, Seed};
 use crate::identity::{self, KeyError};
@@ -1109,7 +1106,7 @@ async fn start(
     if let Some(sharing) = sharing {
         println!("{}", issued(sharing, node.api_addr()));
     }
-    let ran = serve(command, &root, &node, &key, relay).await;
+    let ran = serve(command, &root, &node, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
     // first, on a refusal as on Ctrl-C.
     node.net().close().await;
@@ -1188,14 +1185,6 @@ pub struct Printed {
 }
 
 impl Printed {
-    fn of(made: &Linked) -> Self {
-        Self {
-            client: client_link(&made.token),
-            https: made.page.as_ref().map(|p| https_link(p, &made.token)),
-            page: made.page.clone(),
-        }
-    }
-
     /// As svrngs running here told it ([`new_running`], [`link_running`]):
     /// the page is the https link's origin.
     fn told(client: String, https: Option<String>) -> Self {
@@ -1739,64 +1728,35 @@ pub async fn running(root: &Path, node: &Node) -> Said {
     }
 }
 
-/// A verb on a started node, then the wait for Ctrl-C.
+/// A verb on a started node, asked of it as of svrngs running here
+/// ([`asked`]), then the wait for Ctrl-C.
 async fn serve(
-    command: Verb,
+    mut command: Verb,
     root: &Path,
     node: &Node,
-    key: &SigningKey,
     relay: &RelayConfig,
 ) -> Result<(), Refusal> {
     let stays = !matches!(command, Verb::Join { run: false, .. });
-    let said = match command {
-        Verb::New {
-            name,
-            person,
-            origin,
-            relays: kept,
-        } => {
-            let person = person
+    if let Verb::Join { link, person, .. } = &mut command {
+        *person = Some(
+            person
+                .take()
                 .or_else(user_name)
-                .ok_or_else(|| Refused::NoName(name.clone()))?;
-            let page = checked_page(origin).await?;
-            // The one rule for a name, asked before the group is kept (#138).
-            let beside = group::namesakes(node.rail().root(), &name, &svrngs_node::actor_of(key));
-            let (seed, link) = new_group(node, name, person, page.as_ref(), &kept, relay).await?;
-            let made = Said::Made {
-                seed: seed.clone(),
-                link,
-                beside,
-            };
-            println!("{made}");
-            // The founder's folder, where every joiner's is, so what the
-            // founder puts in it is shared with no `share --folder` (Demo
-            // C's dry run, finding 7).
-            folder_at_join(node, &seed)
-        }
-        Verb::Join { link, person, .. } => {
-            let person = person.or_else(user_name).ok_or(Refused::NoNameToJoin)?;
-            let joined = join_group(node, key, &link, &person).await?;
-            print!("{joined}");
-            let (Said::Joined { seed, .. } | Said::AlreadyIn(seed)) = joined else {
-                unreachable!("join_group says joined or in already")
-            };
-            folder_at_join(node, &seed)
-        }
-        Verb::Link {
-            group,
-            origin,
-            device,
-            relays,
-        } => {
-            let page = checked_page(origin).await?;
-            let (seed, link, device) =
-                link_to(node, &group, page.as_ref(), relay, device, &relays).await?;
-            Said::Linked { seed, link, device }
-        }
-        Verb::Run => running(root, node).await,
-        Verb::Room(names) => room(&root.to_path_buf(), names).await?,
-        // Every other verb is answered in `run` before a node starts.
-        _ => unreachable!("answered in `run`"),
+                .ok_or(Refused::NoNameToJoin)?,
+        );
+        // Its home relay reached before the exchange, so the joiner says it
+        // there and the issuer can dial it back; else not before its first
+        // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
+        // so a relay that does not answer is named before the issuer is dialled.
+        let carried: Vec<String> = link.token.relays.iter().map(ToString::to_string).collect();
+        node.host().meet_at(&link.token.relays).await;
+        let online = node.host().online().await;
+        tracing::debug!(target: "cli", online, tried = ?carried, "cli: join — waited for a relay");
+        unreached(online, &carried);
+    }
+    let said = match command {
+        Verb::Run => running(root, node).await.to_string(),
+        verb => asked(&root.to_path_buf(), verb, relay).await?,
     };
     println!("{said}");
     if !stays {
@@ -1807,30 +1767,6 @@ async fn serve(
     svrngs_node::node::asked_to_stop().await;
     tracing::debug!(target: "cli", "cli: stopping");
     Ok(())
-}
-
-/// `svrngs join`: `link` redeemed as `person` by the node, which signs
-/// with its own key, `key` ([`svrngs_node::join`]), once a relay the link
-/// carries is waited for, in the command's words.
-pub async fn join_group(
-    node: &Node,
-    key: &SigningKey,
-    link: &Link,
-    person: &Name,
-) -> Result<Said, Refusal> {
-    debug_assert_eq!(node.net().id().as_bytes(), key.verifying_key().as_bytes());
-    // Its home relay reached before the exchange, so the joiner says it
-    // there and the issuer can dial it back; else not before its first
-    // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
-    // so a relay that does not answer is named before the issuer is dialled.
-    let carried: Vec<String> = link.token.relays.iter().map(ToString::to_string).collect();
-    node.host().meet_at(&link.token.relays).await;
-    wait_online(node, &carried).await;
-    match node.host().join(link, person).await {
-        Ok(Entered::In { seed, person }) => Ok(Said::Joined { seed, person }),
-        Ok(Entered::AlreadyIn(seed)) => Ok(Said::AlreadyIn(seed)),
-        Err(why) => Err(why.into()),
-    }
 }
 
 /// A join the node did not let this computer in by, in the command's
@@ -1848,19 +1784,11 @@ impl From<NotJoined> for Refusal {
     }
 }
 
-/// The group's folder placed as everyone's, by the node
-/// ([`svrngs_node::folder::Folders::place`]); or why not, said beside the
-/// join or the `new`, which stands either way.
-fn folder_at_join(node: &Node, seed: &Seed) -> Said {
-    let (dir, placed) = node.folders().place(seed);
-    let group = seed.name().clone();
-    Said::Folder { group, dir, placed }
-}
-
 /// `verb` asked of svrngs running over the data dir `here` names, the
 /// one writer of this computer's acts: it makes the group, the link or the
 /// join, or turns the room on, and the command words what it answered.
 pub async fn asked(here: &impl Here, verb: Verb, relay: &RelayConfig) -> Result<String, Refusal> {
+    let tried = &relay.relay_urls;
     Ok(match verb {
         Verb::Room(names) => room(here, names).await?.to_string(),
         Verb::Join { link, person, .. } => {
@@ -1872,27 +1800,22 @@ pub async fn asked(here: &impl Here, verb: Verb, relay: &RelayConfig) -> Result<
             origin,
             device,
             relays,
-        } => {
-            let tried = &relay.relay_urls;
-            link_running(here, &group, origin, device, relays, tried)
-                .await?
-                .to_string()
-        }
+        } => link_running(here, &group, origin, device, relays, tried).await?,
         Verb::New {
             name,
             person,
             origin,
             relays,
-        } => new_running(here, name, person, origin, relays, &relay.relay_urls).await?,
+        } => new_running(here, name, person, origin, relays, tried).await?,
         _ => unreachable!("asked only of what svrngs running here does"),
     })
 }
 
-/// `svrngs join`, of the svrngs running here (join-while-running): the
-/// link asked at the record's join route, worded as a join this command
-/// made itself is ([`join_group`], [`folder_at_join`]) — the running
-/// svrngs is the one writer of this computer's acts, so it joins, and the
-/// command says and leaves, running nothing. A link whose whole text
+/// `svrngs join`, of the svrngs running here (join-while-running), or
+/// of the one this command started ([`serve`]): the link asked at the
+/// record's join route — svrngs running is the one writer of this
+/// computer's acts, so it joins and places the group's folder, and the
+/// command says what it answered. A link whose whole text
 /// `Link::parse` here already proved is sent as it was given; the running
 /// svrngs that answers none of it is an older build: [`Refused::Older`],
 /// never the lock's own refusal, which would send someone to stop it.
@@ -1980,40 +1903,6 @@ fn full_name(user: &str) -> Option<String> {
     (!name.is_empty()).then(|| name.to_string())
 }
 
-/// `svrngs new`: a seed drawn for `name`, founded by this computer's key
-/// as `person`, written beside the group's record with `page`, when
-/// given, kept as its https links' page, and `kept`, when any, as the
-/// relays it meets at (`new --relay`), else the relay this computer is met
-/// at once it has reached one, as a group made on the home page keeps it
-/// ([`svrngs_node::node::Host::keep_group`]); and its first link.
-pub async fn new_group(
-    node: &Node,
-    name: Name,
-    person: Name,
-    page: Option<&Origin>,
-    kept: &[RelayUrl],
-    relay: &RelayConfig,
-) -> Result<(Seed, Printed), Refusal> {
-    // The founder is the key this computer signs and dials with (PLAN
-    // §4, U1's "One key signs and dials").
-    let founder = VerifyingKey::from_bytes(node.net().id().as_bytes())
-        .expect("an iroh endpoint id is an Ed25519 key");
-    let seed = group::draw(name, person, founder);
-    let id = seed.id();
-    let mut kept: Vec<_> = kept.iter().cloned().map(Into::into).collect();
-    node.host().meet_at(&kept).await;
-    wait_online(node, &relay.relay_urls).await;
-    let asked = !kept.is_empty();
-    if !asked {
-        kept = node.host().made_at();
-    }
-    let keep = node.host().keep_linked(&seed, page, &kept);
-    let made = keep.map_err(|why| keep_refused(&seed, &why))?;
-    tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
-    let made = made.map_err(|e| unminted(&seed, e))?;
-    Ok((seed, Printed::of(&made)))
-}
-
 /// The groups `share` lends to, each `--group` the one [`group_named`]
 /// finds: refused with the next command when none is named, never all
 /// groups (LENDING_SCOPE §"User interface and commands").
@@ -2028,7 +1917,7 @@ pub fn audience_of(root: &Path, port: NonZeroU16, named: &[String]) -> Result<Au
 
 /// The one group held under `root` that `reference` names, by its name or
 /// the start of its id ([`group::named`]): `link`'s and `share --folder`'s.
-fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
+pub fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
     let held = group::groups(root);
     match group::named(&held, reference).as_slice() {
         [] => {
@@ -2052,37 +1941,10 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
     }
 }
 
-/// `svrngs link`: a new link to the group `reference` names, made by the
-/// node ([`svrngs_node::node::Host::link`]) once this computer has reached
-/// a relay: the client's link, and the https one on `page`, kept from now
-/// on, when given, else on the group's kept origin, if it keeps one. With
-/// `device` a device link (`svrngs link --device`; bash-devices): one this
-/// computer's person's other computer or phone joins as them by, and that
-/// person.
-pub async fn link_to(
-    node: &Node,
-    reference: &str,
-    page: Option<&Origin>,
-    relay: &RelayConfig,
-    device: bool,
-    relays: &[RelayUrl],
-) -> Result<(Seed, Printed, Option<Person>), Refusal> {
-    let seed = group_named(node.rail().root(), reference)?;
-    node.host()
-        .meet(&seed.id(), relays)
-        .map_err(Refused::Meet)?;
-    wait_online(node, &relay.relay_urls).await;
-    let made = node.host().link(&seed.id(), device, page, None);
-    let made = made.map_err(|e| unminted(&seed, e))?;
-    Ok((seed, Printed::of(&made), made.device))
-}
-
-/// `svrngs new`, of the svrngs running here, the one writer of this
-/// computer's acts ([`group::NEW_ROUTE`]): its page checked here first,
-/// as a `new` that starts svrngs checks it ([`checked_page`]), and said as
-/// that one says it, less "Leave this running", for nothing runs; that it
-/// reached no relay as that one says it, where it `tried` any
-/// ([`unreached`]). One that answers no group is an older build, said as
+/// `svrngs new`, of the svrngs running here or started by this command,
+/// the one writer of this computer's acts ([`group::NEW_ROUTE`]): its page
+/// checked here first ([`checked_page`]); that it reached no relay said
+/// where it `tried` any ([`unreached`]). One that answers no group is an older build, said as
 /// [`link_running`] says it; its refusal, why traced, is that the group
 /// can't be kept.
 async fn new_running(
@@ -2120,12 +1982,13 @@ async fn new_running(
     Ok(format!("{}\n{folder}", Said::Made { seed, link, beside }))
 }
 
-/// `svrngs link`, of the svrngs running here, the one writer of this
-/// computer's acts ([`svrngs_node::home::LINKS_ROUTE`]), said as [`link_to`]'s
-/// is, its refusals too: not in the group, or unkept, as that one words
-/// them; any other, a non-keeper's among them, in its words; and that it
-/// reached no relay as [`new_running`] says it. One that
-/// answers no link is an older build, said as [`join_running`] says it.
+/// `svrngs link`, of the svrngs running here or started by this command,
+/// the one writer of this computer's acts
+/// ([`svrngs_node::home::LINKS_ROUTE`]), its page checked here first:
+/// not in the group, or unkept, in the command's words; any other
+/// refusal, a non-keeper's among them, in its own; and that it reached no
+/// relay as [`new_running`] says it. One that answers no link is an older
+/// build, said as [`join_running`] says it.
 async fn link_running(
     here: &impl Here,
     group: &str,
@@ -2133,7 +1996,7 @@ async fn link_running(
     device: bool,
     relays: Vec<RelayUrl>,
     tried: &[String],
-) -> Result<Said, Refusal> {
+) -> Result<String, Refusal> {
     let page = checked_page(origin).await?;
     let seed = group_named(here.root(), group)?;
     let asked = Linking {
@@ -2163,28 +2026,12 @@ async fn link_running(
     tracing::debug!(target: "cli", ?online, ?tried, "cli: link — made by the svrngs running here, which had reached a relay or not, or did not say");
     unreached(online.unwrap_or(true), tried);
     let link = Printed::told(client, https);
-    Ok(Said::Linked { seed, link, device })
-}
-
-/// Why the node made no link, in the command's refusals.
-fn unminted(seed: &Seed, e: Unminted) -> Refusal {
-    match e {
-        Unminted::NotIn => Refused::NotIn(seed.name().clone()).into(),
-        Unminted::Unkept(why) => keep_refused(seed, &why),
-    }
-}
-
-/// Wait for a home relay ([`svrngs_node::node::Host::online`]), saying
-/// which relays it `tried` when it reached none.
-async fn wait_online(node: &Node, tried: &[String]) {
-    let online = node.host().online().await;
-    tracing::debug!(target: "cli", online, ?tried, "cli: waited for a relay");
-    unreached(online, tried);
+    Ok(Said::Linked { seed, link, device }.to_string())
 }
 
 /// That this computer has reached no relay, said where it `tried` any,
-/// once [`svrngs_node::node::Host::online`] came to none: here, by a verb
-/// that started svrngs ([`wait_online`]), or by the svrngs running here
+/// once [`svrngs_node::node::Host::online`] came to none: here, by a
+/// `join` that started svrngs ([`serve`]), or by the svrngs running here
 /// ([`new_running`], [`link_running`]).
 fn unreached(online: bool, tried: &[String]) {
     if !online && !tried.is_empty() {
@@ -2192,9 +2039,4 @@ fn unreached(online: bool, tried: &[String]) {
         let secs = svrngs_node::node::ONLINE_WAIT.as_secs();
         eprintln!("svrngs: after {secs} s, this computer has not yet reached the server your groups find it through. It goes on, and keeps trying; until it does, they may not reach you (RUST_LOG=debug names the server).");
     }
-}
-
-fn keep_refused(seed: &Seed, why: &str) -> Refusal {
-    tracing::debug!(target: "cli", group = %seed.id(), why, "cli: refused — the group cannot be kept here");
-    Unjudged::Keep(seed.name().to_string()).into()
 }

@@ -9,6 +9,8 @@
 //! `MeetAt::Svrngs`.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/made.rs"]
+mod made;
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
 use svrngs::cli::{self, Verb};
 use svrngs::group;
@@ -83,7 +85,7 @@ async fn a_group_that_keeps_its_own_relay_is_met_there_with_n0_s_beside_it() {
     else {
         unreachable!("new parses as new")
     };
-    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &kept, &ours)
+    let (seed, printed) = made::new_group(&sam, name, person.unwrap(), None, &kept)
         .await
         .expect("Sam makes house");
     let home = sam.endpoint().addr().relay_urls().next().cloned();

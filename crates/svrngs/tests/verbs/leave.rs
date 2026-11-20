@@ -7,6 +7,7 @@
 //! browser, are here and in web/tests/pages/home.test.mjs; the home page
 //! in a real browser is the browser step's contained test.
 
+use crate::made;
 use std::time::Duration;
 
 use svrngs::cli;
@@ -83,7 +84,7 @@ fn held_again(from: &std::path::Path, to: &std::path::Path) {
 async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     let wire = Wire::default();
     let sam = computer(&wire, 6).await.node;
-    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &no_relay())
+    let (seed, _) = made::new_group(&sam, name("Trip"), name("Sam"), None, &[])
         .await
         .expect("Sam makes Trip");
     let trip = seed.id();
@@ -204,7 +205,7 @@ async fn a_leave_reaches_a_computer_off_as_it_landed() {
     let wire = Wire::default();
     let sam_dir = tempfile::tempdir().unwrap();
     let sam = on(&wire, sam_dir.path(), &SigningKey::from_bytes(&[6; 32])).await;
-    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &no_relay())
+    let (seed, _) = made::new_group(&sam, name("Trip"), name("Sam"), None, &[])
         .await
         .expect("Sam makes a group");
     let trip = seed.id();
@@ -301,7 +302,7 @@ async fn a_leave_on_the_home_page_is_held_as_a_leave_everywhere() {
         dir: _sam_dir,
         ..
     } = computer(&wire, 6).await;
-    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &no_relay())
+    let (seed, _) = made::new_group(&sam, name("Trip"), name("Sam"), None, &[])
         .await
         .expect("Sam makes Trip");
     let trip = seed.id();
@@ -387,7 +388,7 @@ async fn a_leave_reaches_the_leavers_other_computer_on_or_off() {
     } = computer(&wire, 6).await;
     let mut groups = Vec::new();
     for g in ["Films", "Trip", "Walk"] {
-        let (seed, _) = cli::new_group(&sam, name(g), name("Sam"), None, &[], &no_relay())
+        let (seed, _) = made::new_group(&sam, name(g), name("Sam"), None, &[])
             .await
             .expect("Sam makes a group");
         groups.push(seed.id());
@@ -492,7 +493,7 @@ async fn a_leave_reaches_the_leavers_other_computer_on_or_off() {
 async fn a_link_asked_by_a_computer_not_in_the_group_is_refused_in_the_commands_words() {
     let wire = Wire::default();
     let sam = computer(&wire, 6).await;
-    let (seed, _) = cli::new_group(&sam.node, name("Trip"), name("Sam"), None, &[], &no_relay())
+    let (seed, _) = made::new_group(&sam.node, name("Trip"), name("Sam"), None, &[])
         .await
         .expect("Sam makes a group");
     let trip = seed.id();

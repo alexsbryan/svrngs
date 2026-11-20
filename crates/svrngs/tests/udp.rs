@@ -12,6 +12,8 @@
 //! computer within seconds, since the member's own computer may not cut
 //! itself (give-cut).
 
+#[path = "common/made.rs"]
+mod made;
 use std::net::SocketAddr;
 use std::time::Duration;
 
@@ -79,8 +81,7 @@ fn at(node: &Node) -> EndpointAddr {
 /// Sam makes house, and each of `joiners` is let in by Sam's link.
 async fn house(joiners: &[(u8, &str)]) -> (Computer, Vec<Computer>) {
     let sam = computer(1).await;
-    let relay = no_relay();
-    let made = cli::new_group(&sam.node, name("house"), name("Sam"), None, &[], &relay);
+    let made = made::new_group(&sam.node, name("house"), name("Sam"), None, &[]);
     let (_, printed) = made.await.expect("Sam makes house");
     let mut them = Vec::new();
     for (seed, who) in joiners {
@@ -89,7 +90,7 @@ async fn house(joiners: &[(u8, &str)]) -> (Computer, Vec<Computer>) {
         book.add_endpoint_info(at(&sam.node));
         c.node.endpoint().address_lookup().unwrap().add(book);
         let link = Link::parse(&printed.client).unwrap();
-        let joined = cli::join_group(&c.node, &c.key, &link, &name(who)).await;
+        let joined = made::join_group(&c.node, &link, &name(who)).await;
         joined.unwrap_or_else(|e| panic!("{who} is let in: {e:?}"));
         them.push(c);
     }

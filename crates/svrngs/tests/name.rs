@@ -5,9 +5,11 @@
 //! and no other test here reads it.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/made.rs"]
+mod made;
 use svrngs::cli::{self, Said, Verb};
 use svrngs::group;
-use svrngs_node::iroh::RelayConfig;
+
 use svrngs_node::node::{Node, Wire};
 use svrngs_node::SigningKey;
 
@@ -59,12 +61,7 @@ async fn founded_as(user: &str) -> String {
     let wire = Wire::default();
     let node = Node::on_wire(&wire, dir.path().into(), key, group::seed_text);
     let node = node.await.unwrap();
-    let relay = RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: false,
-    };
-    let (seed, link) = cli::new_group(&node, name, person, None, &[], &relay)
+    let (seed, link) = made::new_group(&node, name, person, None, &[])
         .await
         .unwrap();
     let made = Said::Made {
