@@ -19,8 +19,9 @@ use std::time::Duration;
 
 use tokio::net::UdpSocket;
 
-use crate::door::Open;
+use crate::door::Using;
 use crate::iroh::{Duplex, Net};
+use crate::lend::LendName;
 use crate::lend::{Hold, Lend, Raw};
 use crate::uid::{Conn, Unread};
 use eudoxia_community::binding::{self, Held, Read, Took};
@@ -254,18 +255,24 @@ impl Flow {
 
     /// The share's port read and checked against `lend`'s approval now.
     pub(crate) async fn check(&self, (net, dir, lend): Judged<'_>) -> Result<(), Unsent> {
-        let open = self.open.all().await;
-        decided(dir, lend, udp_port(net, self.port, open).await)
+        decided(dir, lend, udp_port(net, self.port, self.open.of()).await)
     }
 }
 
 /// A UDP share's `port` read as each of its checks judges it, a flow's and
-/// its lender's list's alike: with the flows `open` on it, each by its own
-/// socket's address, so a server's socket answering one is known
-/// ([`Took::Flow`]).
-pub(crate) async fn udp_port(net: &dyn Net, port: u16, open: Open) -> Result<(Read, Took), Unread> {
+/// its lender's list's alike: with the flows `using` names for `lend` by
+/// this read, each by its own socket's address, so a server's socket
+/// answering one is known ([`Took::Flow`]).
+pub(crate) async fn udp_port(
+    net: &dyn Net,
+    port: u16,
+    of: (&Using, &LendName),
+) -> Result<(Read, Took), Unread> {
     let read = net.read_port(Raw::Udp, port, None).await;
-    read.map(|(now, _)| (now, Took::Flow(open)))
+    let now = read.as_ref().ok().map(|(now, _)| &now.sockets);
+    let peers = now.map(|sockets| sockets.iter().filter_map(|s| s.peer).collect());
+    let named = of.0.flows(of.1, peers).await;
+    read.map(|(now, _)| (now, Took::Flow(named)))
 }
 
 /// A TCP connection to this computer's `at`, unchecked: the product's

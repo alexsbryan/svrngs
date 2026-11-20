@@ -81,6 +81,7 @@
 //! ([`LendRefusal`]); the service's own answers never are.
 //! A browser's tab asking for a page is shown svrngs's own answer as one ([`paged`]).
 
+use std::collections::BTreeMap;
 use std::num::NonZeroU16;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -486,10 +487,12 @@ enum Use {
     People(LendName, oneshot::Sender<u32>),
     /// A flow's own socket, by its address, opened on a UDP lend, or closed.
     Flow(LendName, std::net::SocketAddr, bool),
-    Flows(LendName, oneshot::Sender<Open>),
+    /// The flows a check of a lend names, with the peers of the sockets its
+    /// read found connected, where it read them.
+    Flows(LendName, Option<Open>, oneshot::Sender<Open>),
 }
 
-/// The flows open on a lend, each by its own socket's address.
+/// The flows on a lend a check names, each by its own socket's address.
 pub(crate) type Open = std::collections::BTreeSet<std::net::SocketAddr>;
 
 /// The door's clock, when a use of a lend begins and ends and a read is
@@ -506,7 +509,8 @@ impl Using {
         let hold = tx.downgrade();
         tokio::spawn(async move {
             let (mut counts, mut reads) = (Counts::default(), Reads::default());
-            let mut flows = std::collections::BTreeMap::<LendName, Open>::new();
+            // Each lend's flows, open (true) or closed and still named.
+            let mut flows = BTreeMap::<LendName, BTreeMap<_, bool>>::new();
             while let Some(u) = rx.recv().await {
                 let now = now();
                 match u {
@@ -533,10 +537,22 @@ impl Using {
                     Use::People(lend, answer) => {
                         let _ = answer.send(counts.people(&lend, now));
                     }
-                    Use::Flow(lend, at, true) => drop(flows.entry(lend).or_default().insert(at)),
-                    Use::Flow(lend, at, false) => drop(flows.entry(lend).or_default().remove(&at)),
-                    Use::Flows(lend, answer) => {
-                        drop(answer.send(flows.get(&lend).cloned().unwrap_or_default()))
+                    Use::Flow(lend, at, open) => {
+                        flows.entry(lend).or_default().insert(at, open);
+                    }
+                    // A closed flow is named while a read finds a socket
+                    // still connected to it, as a server's for it may outlive
+                    // it (rootless Podman's pasta by a minute, measured
+                    // 2026-11-20): a connected UDP socket takes datagrams from
+                    // its peer alone, so one tied to an address svrngs no
+                    // longer sends from is passed no friend's bytes, and it is
+                    // this account's, in an approved cgroup (uid.rs `peer`).
+                    Use::Flows(lend, peers, answer) => {
+                        let named = flows.entry(lend).or_default();
+                        named.retain(|at, open| {
+                            *open || peers.as_ref().is_none_or(|p| p.contains(at))
+                        });
+                        drop(answer.send(named.keys().copied().collect()))
                     }
                 }
             }
@@ -575,11 +591,13 @@ impl Using {
         Flowing(self.clone(), lend.clone(), at)
     }
 
-    /// The flows open on `lend` now ([`Took::Flow`]); none when the count's
-    /// task is gone, where a server's socket for one is then not admitted.
-    pub(crate) async fn flows(&self, lend: &LendName) -> Open {
+    /// The flows a check of `lend` names now ([`Took::Flow`]): those open,
+    /// and those closed that a socket among `peers`, read connected on its
+    /// port, is still connected to, the rest no longer named; none when the
+    /// count's task is gone, where a server's socket for one isn't admitted.
+    pub(crate) async fn flows(&self, lend: &LendName, peers: Option<Open>) -> Open {
         let (answer, told) = oneshot::channel();
-        let _ = self.0.send(Use::Flows(lend.clone(), answer));
+        let _ = self.0.send(Use::Flows(lend.clone(), peers, answer));
         told.await.unwrap_or_default()
     }
 }
@@ -588,9 +606,9 @@ impl Using {
 pub(crate) struct Flowing(Using, LendName, std::net::SocketAddr);
 
 impl Flowing {
-    /// The flows open on its lend now, its own among them.
-    pub(crate) async fn all(&self) -> Open {
-        self.0.flows(&self.1).await
+    /// What keeps its lend's flows, and that lend.
+    pub(crate) fn of(&self) -> (&Using, &LendName) {
+        (&self.0, &self.1)
     }
 }
 
@@ -768,7 +786,7 @@ async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
     };
     let net = door.folders.host.transport.as_ref();
     let read = match lend.raw() {
-        Raw::Udp => bound::udp_port(net, port.get(), door.using.flows(&lend.name).await).await,
+        Raw::Udp => bound::udp_port(net, port.get(), (&door.using, &lend.name)).await,
         Raw::Tcp => net.read_port(Raw::Tcp, port.get(), None).await,
     };
     let held = match bound::decided(&door.data_dir, lend, read) {

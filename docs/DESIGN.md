@@ -284,7 +284,9 @@ that is cut short. Each UDP check, a flow's and the lender's list's, names
 the flows open on the lend by their own sockets' addresses (`Took::Flow`),
 so a socket a server makes on the port for one of them, connected to that
 flow's socket alone, is admitted where it was made in an approved cgroup,
-as rootless Podman's pasta makes one for each flow. Linux's reader gives a
+as rootless Podman's pasta makes one for each flow. A flow that closed is
+still named while a read of the port finds a socket connected to it, as
+pasta's outlives the flow, and no longer once none is. Linux's reader gives a
 socket that peer only where it is this account's and svrngs runs in a
 cgroup v2 of its own, not the root one (uid.rs `peer`), the same reading
 the TCP cgroup check asks for; elsewhere it is judged as not connected.

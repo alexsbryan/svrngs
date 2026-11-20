@@ -1362,6 +1362,74 @@ async fn a_server_s_socket_for_a_flow_in_the_approved_cgroup_is_carried() {
     );
 }
 
+/// **A server's socket for a flow svrngs closed is carried until it closes
+/// too, then no longer named** (rootless Podman's pasta keeps its socket for
+/// a flow about a minute past it, measured 2026-11-20): the flow closed and
+/// that socket still connected to its address, the lender's list's check
+/// carries; once a read finds no socket connected to it, the address is no
+/// longer named, and a socket connected to it after is held. Planted, each
+/// watched failing: a closed flow's address dropped at once (the list's
+/// check held with no flow open, as the probe saw); never dropped (the
+/// address still named, the set never shrinking).
+#[tokio::test]
+async fn a_server_s_socket_for_a_closed_flow_is_carried_until_it_closes() {
+    let service = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let at = service.local_addr().unwrap();
+    let wire = crate::node::Wire::default();
+    let key = crate::iroh::SecretKey::from_bytes(&[9; 32]).public();
+    let net = wire.net(key);
+    let mut shelf = Lend::carried("game", "house").unwrap();
+    shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(at.port()).unwrap());
+    shelf.terms.approved = binding::approve(&alone(1), None).ok();
+    let dir = tempfile::tempdir().unwrap();
+    let (using, judged) = (
+        Using::spawn(),
+        (&net as &dyn crate::iroh::Net, dir.path(), &shelf),
+    );
+    let pasta = |answering: Option<std::net::SocketAddr>| {
+        let mut read = alone(1);
+        let socket = |peer| binding::Socket {
+            peer: Some(peer),
+            ..alone(2).sockets[0].clone()
+        };
+        read.sockets.extend(answering.map(socket));
+        wire.reads(key, at.port(), Ok((read, binding::Took::Datagram)));
+    };
+    let listed = || async {
+        let read = bound::udp_port(judged.0, at.port(), (&using, &shelf.name)).await;
+        bound::decided(dir.path(), &shelf, read)
+    };
+    pasta(None);
+    let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let flow = bound::Flow::open(socket, (at, &using, &shelf.name))
+        .await
+        .unwrap();
+    let (_queue, mut more) = tokio::sync::mpsc::channel(1);
+    flow.send(judged, b"hi".to_vec(), &mut more).await.unwrap();
+    let from = service.recv_from(&mut [0u8; 16]).await.unwrap().1;
+    pasta(Some(from));
+    assert_eq!(flow.check(judged).await, Ok(()), "its flow open");
+    drop(flow);
+    assert_eq!(
+        listed().await,
+        Ok(()),
+        "its flow closed, its socket still there"
+    );
+    pasta(None);
+    assert_eq!(listed().await, Ok(()), "its socket gone");
+    assert_eq!(
+        using.flows(&shelf.name, None).await,
+        Open::new(),
+        "no longer named"
+    );
+    pasta(Some(from));
+    assert_eq!(
+        listed().await,
+        Err(bound::Unsent::Held(Hold::Another)),
+        "a socket connected to it after"
+    );
+}
+
 /// **A UDP share's answers are carried back only through its check**
 /// (SHARE_BINDING §5.2): a datagram the share's port answers a flow is
 /// given once the port's sockets are checked as for one sent; what was
