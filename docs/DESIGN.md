@@ -260,25 +260,29 @@ there is read. Only the sockets that take what is sent there are approved and
 judged: one on another address gets none of the door's traffic. `svrngs
 share --pid <pid>@<start>`, and the home page's lend of a program it
 showed, approve only when each of those sockets is held by that process or
-a child of it, and refuse one that started since. What the person is shown,
-each holder's program and folder, comes from the same read and is never
-compared. The door writes to a share's port only through a
-`door::bound::Bound`, made by the check (`binding::check`): every socket
-that takes what is sent to the address it dials approved, at least one
-there, and what took the connection the approved cgroup (Linux, cgroup v2
+a child of it, and refuse one that started since. What the person is
+shown, each holder's program and folder or another account's, comes from
+the same read and is never compared, and it is exactly what is approved:
+the entries of the sockets the approval covers, each of which must have
+one, so a socket of this account whose program's files can't be read, or a
+Mac's whose holder exited, is refused (`share::approve`). The door writes
+to a share's port only through a `door::bound::Bound`, made by the check
+(`binding::check`): every socket that takes what is sent to the address it
+dials approved, at least one there, and what took the connection the approved cgroup (Linux, cgroup v2
 alone), an approved process or one it started (a Mac), or, for a server
 that waits on the first bytes (`TCP_DEFER_ACCEPT`), the listener its
 handshake reached, among those read. That covers each HTTP request, a
 WebSocket, each raw TCP connection, and the key or account its lender sends
 to it. A UDP share's datagrams go through a `door::bound::Flow`, which
-checks the port's sockets before and after every datagram sent, and before
-each answer is carried back, keeping an answer read across a check that is
-cut short. Each UDP check, a flow's and the lender's list's, names the
-flows open on the lend by their own sockets' addresses (`Took::Flow`), so a
-socket a server makes on the port for one of them, connected to that
+checks the port's sockets before each batch of datagrams it sends and
+after it (a batch is what queued while the one before went out), and
+before each answer is carried back, keeping an answer read across a check
+that is cut short. Each UDP check, a flow's and the lender's list's, names
+the flows open on the lend by their own sockets' addresses (`Took::Flow`),
+so a socket a server makes on the port for one of them, connected to that
 flow's socket alone, is admitted where it was made in an approved cgroup,
-as rootless Podman's pasta makes one for each flow. Clippy refuses every other way to dial or send to an address,
-and to build an HTTP client, where `door/tests.rs` doesn't name it. For a
+as rootless Podman's pasta makes one for each flow. Clippy refuses every
+other way to dial or send to an address, and to build an HTTP client, where `door/tests.rs` doesn't name it. For a
 UDP share, a program not approved seen there, by any check or by the
 lender's list, holds the share in its file until its lender approves again,
 through the program going and svrngs starting again, and each flow open on
@@ -294,14 +298,16 @@ approves it on a y, by that read's token, so what took the port while its
 person read is refused; without a terminal it approves only with
 `--token`, and is refused otherwise. The list gives that token only
 where approving it would be taken, decided by `share::approve`, the one
-decider, and a page or panel offers the button by the token alone: nothing
-answering, no reader, a read that failed, and a socket whose program can't
-be read are each refused, and so given none. A port that couldn't be read is
-said so, its reason a closed set (`unread`, `uid::Unread`), never as nothing
-answering (`answers: []`). A restart of the
-program, a share made before this, and a share of a name already shared
-from another port or protocol without `--replace`, all wait on that
-approval; a lend file from V1.12.2 written again keeps what V1.12.2 wrote.
+decider. The home page offers the button by the token alone; the panel
+offers it by the token too, but not for a port or program on its own deny
+list. Nothing answering, no reader, a read that failed, and a socket whose
+program can't be read are each refused, and so given none. A port that
+couldn't be read is said so, its reason a closed set (`unread`,
+`uid::Unread`), never as nothing answering (`answers: []`). A program that
+listens anew after it starts again, and a share made before this, wait on
+that approval; a share of a name already shared from another port or
+protocol is refused unless it is given `--replace`; a lend file from
+V1.12.2 written again keeps what V1.12.2 wrote.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.
 

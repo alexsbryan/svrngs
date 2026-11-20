@@ -43,19 +43,27 @@ looks again only when something in it changes.
 V1.13.0 keeps each lend to exactly what you chose on its port, moves your
 computers to svrngs's own relay, and lets a phone at home skip it.
 
-**A lend reaches only what you chose.** When you lend a port, svrngs shows
-you what answers there, and you approve that: the sockets that program
-holds, or for UDP on a Mac, its process. On a Mac, a UDP program that listens
-on every address and lets other programs listen on its port too isn't
-lent: svrngs says to have it listen on 127.0.0.1 for svrngs. svrngs checks the port before each
-connection it carries, and before and after each datagram, and carries
-nothing to anything else. If the program starts again, a container is made
-afresh, or something else is on the port, the lend closes, and its line on
-your home page says what answers there now. **Keep sharing it** keeps the
-same link for the same groups, kept to what that line showed. In a
-terminal, `svrngs approve <name>` says what answers now and asks you
-first: type `y` to keep sharing it with that. Tools that show you a program before you lend it, like the Omarchy bar
-plugin from svrngs-fam 0.5.0, approve only what they showed you.
+**A lend reaches only what you chose.** A lend is kept to what answered
+on its port when you chose it: the sockets that program listens on, or,
+for UDP on a Mac, the program itself. Your home page shows you what
+answers before you lend it, and `svrngs share` says what it lent, as in
+*"Lent garden: python3 in ~/dev/garden."* On a Mac, a UDP program that
+listens on every address and lets other programs listen on its port too
+isn't lent: svrngs says to have it listen on 127.0.0.1 for svrngs. svrngs
+checks the port before each connection it carries, and before and after
+each batch of datagrams it sends, and holds the lend closed when something
+you didn't choose is there. On Linux, a socket the program makes to answer
+one of your friends, as rootless Podman does for each flow to a container's
+UDP port, is carried as the program's. When the program listens anew, after
+it starts again, or something else listens on the port, the lend closes,
+and its line on your home page says what answers there now.
+**Keep sharing it** keeps the same link for the same groups, kept to
+exactly what that line showed. Where svrngs can't read the program there,
+the line says so instead, *"svrngs couldn’t read what answers on its
+port."*, and offers no **Keep sharing it**. In a terminal,
+`svrngs approve <name>` says what answers now and asks you first: type `y`
+to keep sharing it with that. The Omarchy bar plugin from svrngs-fam 0.5.0
+keeps sharing by what svrngs read for it, so a change since is refused.
 
 **After you update, choose what each lend shares.** A lend made before
 V1.13.0 is closed until you do. Its line on your home page says: *"shelf
