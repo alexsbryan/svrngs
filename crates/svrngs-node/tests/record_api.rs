@@ -293,7 +293,7 @@ fn api_alone(dir: &tempfile::TempDir) -> axum::Router {
         },
         axum::Router::new(),
         axum::Router::new(),
-        axum::Router::new(),
+        (axum::Router::new(), axum::Router::new()),
         token,
     )
 }

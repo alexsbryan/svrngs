@@ -148,10 +148,11 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
 /// asks beside the record ([`crate::surface::router`]) — each asked for
 /// `token` ([`holds_the_token`]); `signin`, which keeps its own client
 /// secret ([`crate::oidc::provider`]); all refused to a page in a browser
-/// ([`not_from_a_page`]); and, for a request whose `Host` names a lend,
-/// `lends`, the lend's origin ([`crate::origin`], u5-2), which answers no
-/// route of the record's. All behind the one loopback check.
-pub fn router(api: RailApi, apps: Router, signin: Router, lends: Router, token: Bearer) -> Router {
+/// ([`not_from_a_page`]); and, for a request whose `Host` names the home
+/// page or a lend, `pages`: the home page's routes and the lends' origins
+/// ([`crate::origin`], u5-2), which answer no route of the record's. All
+/// behind the one loopback check.
+pub fn router(api: RailApi, apps: Router, signin: Router, pages: Pages, token: Bearer) -> Router {
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
@@ -170,23 +171,30 @@ pub fn router(api: RailApi, apps: Router, signin: Router, lends: Router, token: 
         .layer(axum::middleware::from_fn_with_state(token, holds_the_token))
         .merge(signin)
         .layer(axum::middleware::from_fn(not_from_a_page))
-        .layer(axum::middleware::from_fn_with_state(lends, to_a_lend))
+        .layer(axum::middleware::from_fn_with_state(pages, to_a_lend))
         // svrngs: every request's caller is asked too, so a listener that
         // ever served beyond loopback would still answer no one else.
         .layer(axum::middleware::from_fn(from_this_computer))
 }
 
-/// A request whose `Host` is a lend's, `<label>.localhost`, goes to the
-/// lend's origin and never to the record (u5-2); one whose `Host` is the
-/// home page's, `svrngs.localhost`, to the home page (sup-2,
-/// [`crate::home`]), which `lends` serves beside the origins.
-async fn to_a_lend(State(lends): State<Router>, request: Request, next: Next) -> Response {
+/// The home page's routes and the lends' origins ([`crate::home::router`]).
+pub type Pages = (Router, Router);
+
+/// A request whose `Host` is the home page's, `svrngs.localhost`, goes to
+/// the home page (sup-2, [`crate::home`]); one whose `Host` is a lend's,
+/// `<label>.localhost`, to the lend's origin (u5-2); neither, to the
+/// record. The one dispatch by host.
+async fn to_a_lend(State((home, lends)): State<Pages>, request: Request, next: Next) -> Response {
     use tower::ServiceExt;
     let host = request.headers().get(axum::http::header::HOST);
-    if crate::origin::label_of(host).is_none() && !crate::home::named(host) {
-        return next.run(request).await;
-    }
-    (lends.oneshot(request).await).unwrap_or_else(|never| match never {})
+    let to = match () {
+        _ if crate::home::named(host) => home,
+        _ if crate::origin::label_of(host).is_some() => lends,
+        _ => return next.run(request).await,
+    };
+    to.oneshot(request)
+        .await
+        .unwrap_or_else(|never| match never {})
 }
 
 /// The record is served to this computer's apps, never to a page in a

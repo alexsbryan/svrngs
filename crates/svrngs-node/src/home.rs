@@ -142,9 +142,10 @@ pub fn address(port: u16) -> String {
     format!("http://{HOST}:{port}/")
 }
 
-/// The home page's routes, beside the lends' origins: a request naming it
-/// is answered here, any other at its lend's origin.
-pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) -> Router {
+/// The home page's routes, and the lends' origins beside them
+/// ([`crate::origin::router`]): which a request names, the API's one
+/// dispatch by host picks ([`crate::api::router`]).
+pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) -> (Router, Router) {
     let page = || async { axum::response::Html(include_str!("home/index.html")) };
     let home = served! {
         "/home.js" "text/javascript" "home/home.js"
@@ -190,16 +191,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) ->
         at.clone(),
         only_itself,
     ));
-    let lends = crate::origin::router(at);
-    Router::new().fallback(|req: Request| async move {
-        use tower::ServiceExt;
-        let to = if named(req.headers().get(header::HOST)) {
-            home
-        } else {
-            lends
-        };
-        to.oneshot(req).await.unwrap_or_else(|never| match never {})
-    })
+    (home, crate::origin::router(at))
 }
 
 /// The home page's one rule (the module doc), and its [`HEADS`] on every
