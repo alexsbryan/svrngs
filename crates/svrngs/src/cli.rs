@@ -1469,7 +1469,7 @@ impl std::fmt::Display for Said {
                 let (each, beside, or) = if raw.is_empty() || raw.starts_with("TCP") {
                     ("before each connection it carries there", "While another program is on the port, it is closed. ", "")
                 } else {
-                    ("before and after each datagram it sends there", "", ", or another one is on the port")
+                    ("before and after each batch of datagrams it sends there", "", ", or another one is on the port")
                 };
                 writeln!(f, "Lent {name}: {}. svrngs checks port {port} {each}. {beside}If the program starts again{or}, {name} closes until you approve what runs there: `svrngs approve {name}`.", what_answers(answers))?;
                 let ((theirs, by), kind) = (terms.clone().unwrap_or_default(), &lend.kind);

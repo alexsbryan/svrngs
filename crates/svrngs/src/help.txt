@@ -82,8 +82,8 @@ an app's page svrngs won't load, and what to change.
       does.
       A lend is kept to what answers on its port when you share it, and
       says what that is. svrngs checks the port before each connection it
-      carries there, and before and after each datagram it sends to a UDP
-      port. If the program starts again, the lend closes until you approve
+      carries there, and before and after each batch of datagrams it sends
+      to a UDP port. If the program starts again, the lend closes until you approve
       what runs there: `svrngs approve <name>`, or Keep sharing it on your
       home page. While another program is on the port, the lend is closed;
       a UDP lend stays closed after it goes, and when svrngs starts again,

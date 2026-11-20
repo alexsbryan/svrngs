@@ -47,14 +47,16 @@ computers to svrngs's own relay, and lets a phone at home skip it.
 on its port when you chose it: the sockets that program listens on, or,
 for UDP on a Mac, the program itself. Your home page shows you what
 answers before you lend it, and `svrngs share` says what it lent, as in
-*"Lent garden: python3 in ~/dev/garden."* On a Mac, a UDP program that
-listens on every address and lets other programs listen on its port too
-isn't lent: svrngs says to have it listen on 127.0.0.1 for svrngs. svrngs
-checks the port before each connection it carries, and before and after
-each batch of datagrams it sends, and holds the lend closed when something
-you didn't choose is there. On Linux, a socket the program makes to answer
-one of your friends, as rootless Podman does for each flow to a container's
-UDP port, is carried as the program's. When the program listens anew, after
+*"Lent garden: python3 in ~/dev/garden."* On a Mac, svrngs doesn't lend a
+UDP program that, when you lend it, listens on every address and lets other
+programs listen on its port too: it says to have it listen on 127.0.0.1 for
+svrngs. svrngs checks the port before each connection it carries, and
+before and after each batch of datagrams it sends, and holds the lend
+closed when something you didn't choose is there. On a Linux computer that
+keeps each program in a cgroup of its own, as systemd does, a socket that
+the program makes under your account to answer one of your friends, as
+rootless Podman does for each flow to a container's UDP port, is carried
+as the program's. When the program listens anew, after
 it starts again, or something else listens on the port, the lend closes,
 and its line on your home page says what answers there now.
 **Keep sharing it** keeps the same link for the same groups, kept to
@@ -68,8 +70,9 @@ keeps sharing by what svrngs read for it, so a change since is refused.
 **After you update, choose what each lend shares.** A lend made before
 V1.13.0 is closed until you do. Its line on your home page says: *"shelf
 is closed until you choose what it shares. svrngs checks what answers on
-its port before each connection, and before and after each datagram, and
-closes it when something you didn’t choose is there."*, then what answers
+its port before each connection, and before and after each batch of
+datagrams, and closes it when something you didn’t choose is there."*, then
+what answers
 now. Press **Keep sharing it**, or run `svrngs approve shelf`. Your
 friends' links stay the same.
 

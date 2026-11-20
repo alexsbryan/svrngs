@@ -251,21 +251,24 @@ socket on the port takes what is sent there, bound to it, to every IPv4
 address, or to every IPv6 address without `IPV6_V6ONLY` (sock_diag says
 which on Linux, libproc on a Mac), else ::1 (a UDP share only at
 127.0.0.1); a program listening only on another address is refused, with
-the fix. On a Mac, XNU's `in_pcbbind` refuses another account a bind
-beside a socket there unless both are on every address and that socket
-lets others bind beside it (`SO_REUSEPORT`), and this account's read lists
-only its own sockets, so a UDP approval of such a socket is refused, with
-the fix: listen on 127.0.0.1 for svrngs. On Linux every account's socket
-there is read. Only the sockets that take what is sent there are approved and
-judged: one on another address gets none of the door's traffic. `svrngs
+the fix. On a Mac, approving a UDP socket on every address that lets
+others bind beside it (`SO_REUSEPORT`), beside which XNU's `in_pcbbind`
+lets another account bind (in_pcb.c:1016-1031), is refused, with the fix:
+listen on 127.0.0.1 for svrngs. A Mac's read lists this account's sockets
+alone, and this is asked at approval. On Linux every account's socket
+there is read. Only the sockets that take what is sent there are approved
+and judged: one on another address gets none of the door's traffic. `svrngs
 share --pid <pid>@<start>`, and the home page's lend of a program it
 showed, approve only when each of those sockets is held by that process or
 a child of it, and refuse one that started since. What the person is
 shown, each holder's program and folder or another account's, comes from
-the same read and is never compared, and it is exactly what is approved:
-the entries of the sockets the approval covers, each of which must have
-one, so a socket of this account whose program's files can't be read, or a
-Mac's whose holder exited, is refused (`share::approve`). The door writes
+the same read and is never compared. On a held lend's line, through the
+approve route and in `svrngs approve`, it is exactly what is approved: the
+entries of the sockets the approval covers, each of which must have one,
+so a socket of this account whose program's files can't be read, or a
+Mac's whose holder exited, is refused (`share::approve`). The home page's
+first lend of a program shows that program and approves the sockets it and
+its children hold, and `svrngs share` says what it approved once it has. The door writes
 to a share's port only through a `door::bound::Bound`, made by the check
 (`binding::check`): every socket that takes what is sent to the address it
 dials approved, at least one there, and what took the connection the approved cgroup (Linux, cgroup v2
@@ -281,8 +284,12 @@ that is cut short. Each UDP check, a flow's and the lender's list's, names
 the flows open on the lend by their own sockets' addresses (`Took::Flow`),
 so a socket a server makes on the port for one of them, connected to that
 flow's socket alone, is admitted where it was made in an approved cgroup,
-as rootless Podman's pasta makes one for each flow. Clippy refuses every
-other way to dial or send to an address, and to build an HTTP client, where `door/tests.rs` doesn't name it. For a
+as rootless Podman's pasta makes one for each flow. Linux's reader gives a
+socket that peer only where it is this account's and svrngs runs in a
+cgroup v2 of its own, not the root one (uid.rs `peer`), the same reading
+the TCP cgroup check asks for; elsewhere it is judged as not connected.
+Clippy refuses every other way to dial or send to an address, and to
+build an HTTP client, where `door/tests.rs` doesn't name it. For a
 UDP share, a program not approved seen there, by any check or by the
 lender's list, holds the share in its file until its lender approves again,
 through the program going and svrngs starting again, and each flow open on

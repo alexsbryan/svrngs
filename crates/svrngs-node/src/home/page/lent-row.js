@@ -148,7 +148,7 @@ function Headers({ name, kept, state, doing, send }) {
 // what answers on its port now, which Keep sharing it approves.
 const HELD = {
   unapproved: (/** @type {string} */ name) =>
-    ` ${name} is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each datagram, and closes it when something you didn’t choose is there.`,
+    ` ${name} is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each batch of datagrams, and closes it when something you didn’t choose is there.`,
   another: (/** @type {string} */ name) =>
     ` Something you didn’t approve was on ${name}’s port, so ${name} is closed for now.`,
   unjudged: (/** @type {string} */ name) =>

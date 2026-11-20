@@ -904,7 +904,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
     unapproved
       .text('#lent li details summary')[0]
       .includes(
-        'shelf is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each datagram, and closes it when something you didn’t choose is there. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
+        'shelf is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each batch of datagrams, and closes it when something you didn’t choose is there. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
       ),
   );
   await unapproved.press('#lent li button', 'Keep sharing it');

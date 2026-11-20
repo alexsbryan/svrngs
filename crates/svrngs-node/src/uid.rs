@@ -744,13 +744,10 @@ fn last_user(stat: &record::Stat, now: Option<(u32, u64, u64)>) -> Option<Proces
 /// account's ([`Read::unlisted`]). A UDP socket on every IPv6 address is
 /// dual only where libproc reads a dual one on the port held by a process
 /// holding it, so 127.0.0.1 is chosen only where an approved socket takes
-/// IPv4's. Another uid's bind there is refused when `in_pcbbind`'s lookup
-/// finds a socket on the address (in_pcb.c:1016-1044), and that lookup
-/// finds one that takes IPv4's (:2391); likewise ::1 beside any IPv6 socket
-/// on it or every address (in6_pcb.c:398-415, :1289). It is let through
-/// when both are on every address and the one found has `SO_REUSEPORT`
-/// (in_pcb.c:1016-1031, xnu main), so such a UDP socket is said
-/// ([`Answering::beside`]).
+/// IPv4's. `in_pcbbind` lets another uid bind beside a socket its lookup
+/// finds where both are on every address and the one found has
+/// `SO_REUSEPORT` (in_pcb.c:1016-1031, xnu main), so such a UDP socket is
+/// said at approval ([`Answering::beside`]).
 #[cfg(target_os = "macos")]
 #[expect(clippy::disallowed_methods, reason = "dial: unwritten probe")]
 fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
