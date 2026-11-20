@@ -316,12 +316,10 @@ pub fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
     let parsed = || {
         let key: [u8; 32] = hex::decode(signer).ok()?.try_into().ok()?;
         let sig: [u8; 64] = hex::decode(sig_hex).ok()?.try_into().ok()?;
-        Some((
-            VerifyingKey::from_bytes(&key).ok()?,
-            Signature::from_bytes(&sig),
-        ))
+        let key = VerifyingKey::from_bytes(&key).ok()?;
+        Some(key.verify(msg, &Signature::from_bytes(&sig)).is_ok())
     };
-    parsed().is_some_and(|(key, sig)| key.verify(msg, &sig).is_ok())
+    parsed().unwrap_or(false)
 }
 
 #[cfg(test)]
