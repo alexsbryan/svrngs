@@ -851,7 +851,7 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # architectural one (C3, C1, C2, L1, N2, N3; 7cf71342..f24b2937) leave all
 # code but JavaScript at 23,311 (8d61f819's -3 with them) and JavaScript at
 # 8,666. The caps are lowered to there. All code but JavaScript stays 210
-# over 23,101: that is a raise, the operator's.
+# over 23,101: a raise, the operator's, and granted (2026-11-19: "Approved").
 BUDGET = {
     "crates/svrngs-core": 3540,
 
