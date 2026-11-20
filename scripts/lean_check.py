@@ -886,10 +886,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # door/bound.rs 13, uid.rs 4, udp.rs 1. 24,274; the operator: "Land it".
 # Then 8 for a socket's peer to be read only where cgroups keep accounts
 # apart and the socket is this account's (uid.rs): 24,282. Its pass cut 2.
+# Then 1 for a Mac's port that only another account answers to be said as
+# unread, not as nothing (door.rs): 24,283. Its pass cut 1.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24283,
+    ".": 24284,
 
     "js": 8694,
 
