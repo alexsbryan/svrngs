@@ -31,6 +31,7 @@ use std::time::{Duration, Instant, SystemTime};
 use iroh_blobs::api::TempTag;
 use iroh_blobs::Hash;
 use n0_future::{BufferedStreamExt as _, StreamExt as _};
+use notify::event::{AccessKind::Close, AccessMode, EventKind::Access};
 use notify::{RecursiveMode, Watcher as _};
 use serde::{Deserialize, Serialize};
 use svrngs_core::{Change, ContentHash, Person, Placed, SyncFolder, SyncPath};
@@ -244,7 +245,15 @@ impl Folders {
             // leaves the channel open and the sweep its only waker.
             let (tx, mut events) = mpsc::unbounded_channel();
             let told = tx.clone();
-            let watching = notify::recommended_watcher(move |e| drop(told.send(e)))
+            // An open changes no file, and a step opens its directory, which
+            // notify 8.2.0 says (inotify's `OPEN`, src/inotify.rs:427): each
+            // woke the next, an idle directory stepped each 51 ms
+            // (demo/runs/phone-home/2026-11-20/README.md, "What it found" 3).
+            let opened = |e: &notify::Event| e.kind.is_access() && e.kind != Access(Close(AccessMode::Write));
+            let watching = notify::recommended_watcher(move |e: notify::Result<notify::Event>| match e {
+                Ok(e) if opened(&e) => tracing::trace!(target: "folder", paths = ?e.paths, "synced: not woken by an open"),
+                e => drop(told.send(e)),
+            })
                 .and_then(|mut w| w.watch(&dir, RecursiveMode::Recursive).map(|()| w));
             let every = match &watching {
                 Ok(_) => {

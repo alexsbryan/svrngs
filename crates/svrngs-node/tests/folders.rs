@@ -242,6 +242,36 @@ async fn a_link_in_a_synced_directory_is_not_followed() {
     group.close().await;
 }
 
+/// **An idle directory wakes no step of its own**: Ana syncs an empty
+/// directory and nothing changes in it for 3 s; her loop takes the walk at
+/// its start and few more, never one per gather. Red with every OS event
+/// waking a step: the step's own open of the directory is an event
+/// (notify 8.2.0 watches inotify's `OPEN`, src/inotify.rs:427), and the
+/// phone-home run's lender stepped each 51 ms, nothing in its folder
+/// (demo/runs/phone-home/2026-11-20/README.md, "What it found" 3).
+#[tokio::test]
+async fn an_idle_directory_wakes_no_step_of_its_own() {
+    let (said, _heard) = heard("folder=debug");
+    let group = Group::new().await;
+    let ra = tempfile::tempdir().unwrap();
+    both_ways(&group.ana, ra.path()).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let steps = log
+        .lines()
+        .filter(|l| l.contains("synced: a step "))
+        .count();
+    let woken = log
+        .lines()
+        .filter(|l| l.contains("the OS saying files changed"))
+        .count();
+    assert!(
+        steps <= 3,
+        "{steps} steps in 3 s idle, {woken} woken by the OS"
+    );
+    group.close().await;
+}
+
 /// **A hash no synced folder places is refused**: Ana writes a file and
 /// deletes it, the delete reaching Ben, and Cy, a member, asks her
 /// provider for it and is refused. Red with the provider serving any hash
