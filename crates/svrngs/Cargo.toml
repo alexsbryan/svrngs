@@ -79,11 +79,11 @@ useless_vec = "allow"
 name = "join_page"
 test = false
 
-# The one test that meets n0's relays and lookup on the internet (tests/n0.rs;
-# docs/CHECKS.md, seam R): run once, by name, in scripts/check.sh's "n0"
-# step, so a plain `cargo test` never meets n0.
+# The one test that meets n0's relays and lookup on the internet
+# (tests/internet.rs; docs/CHECKS.md, seam R): run once, by name, in
+# scripts/check.sh's "internet" step, so a plain `cargo test` never meets n0.
 [[test]]
-name = "n0"
+name = "internet"
 test = false
 
 # The demo scenes, played (capability-scenes): run once, by name, in

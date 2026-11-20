@@ -54,7 +54,7 @@ class Plans(unittest.TestCase):
         steps, tests = plan("crates/svrngs/src/main.rs")
         self.assertEqual(binaries(tests) & {"browser", "canaries", "conformance", "carried"}, set())
         self.assertTrue(tests.startswith("-p svrngs --lib --bins --test"))
-        self.assertLessEqual({"scenes", "verbs", "n0"}, binaries(tests))
+        self.assertLessEqual({"scenes", "verbs", "internet"}, binaries(tests))
 
     def test_a_test_file_reaches_its_binary_alone(self):
         self.assertEqual(plan("crates/svrngs-node/tests/browser/keep_going.rs"), ({"tests", "clippy"}, "-p svrngs-node --test browser"))
@@ -90,7 +90,7 @@ class Plans(unittest.TestCase):
                 steps, tests = plan(path)
                 self.assertEqual(steps, EVERY)
                 self.assertTrue(tests.startswith("-p give -p give-fold -p svrngs -p svrngs-core -p svrngs-node -p svrngs-runtime --lib --bins"))
-                self.assertLessEqual(SITE | {"canaries", "scale", "n0", "cases"}, binaries(tests))
+                self.assertLessEqual(SITE | {"canaries", "scale", "internet", "cases"}, binaries(tests))
                 self.assertNotIn("xenia", binaries(tests))  # no step of the gate runs it
         self.assertLessEqual(SITE, binaries(plan("web/tests/nothing-names-this.mjs")[1]))
 

@@ -7,7 +7,7 @@
 //! through the real door, relay and record. Each svrngs is src/main.rs's
 //! but for the build's relays ([`program`]): it meets at the scene's relay
 //! and at one more on 127.0.0.1, never n0's, whose reach is check.sh's
-//! `n0` step alone (docs/CHECKS.md, seam R). What each person sees is read
+//! `internet` step alone (docs/CHECKS.md, seam R). What each person sees is read
 //! in a browser, through `drive` (tests/browser/drive.rs).
 
 use std::net::SocketAddr;

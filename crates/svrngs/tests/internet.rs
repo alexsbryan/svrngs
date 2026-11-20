@@ -3,7 +3,7 @@
 //! `svrngs`, whose main passes `cli::reach(cli::SHIPPED)` (src/main.rs),
 //! is met at n0's relays and lookup on the internet. Every other test's
 //! svrngs meets at a relay on 127.0.0.1 (common/as_main.rs), so n0 is
-//! judged here alone, in check.sh's `n0` step, and `tests/shipped.rs`
+//! judged here alone, in check.sh's `internet` step, and `tests/shipped.rs`
 //! pins what `reach(SHIPPED)` is with no socket.
 //!
 //! n0 is a service the gate does not own, so before any svrngs runs n0 is
@@ -11,7 +11,7 @@
 //! lists them, resolved and connected to, and an endpoint of iroh's own
 //! with n0's presets given a home relay. When it does not answer, the
 //! claim cannot be judged: why is written to
-//! `target/could-not-judge/n0.step`, which check.sh says as the step's
+//! `target/could-not-judge/internet.step`, which check.sh says as the step's
 //! verdict, never a pass and never a failure. When a svrngs fails and n0
 //! is then asked again and does not answer, the same. Otherwise a failure
 //! is ours, and fails.
@@ -96,12 +96,12 @@ async fn n0_answers() -> Result<(), String> {
 }
 
 /// The claim not judged, `why`: said on stderr, and written where check.sh
-/// says it as the `n0` step's verdict (scripts/check.sh `step`).
+/// says it as the `internet` step's verdict (scripts/check.sh `step`).
 fn unjudged(why: &str) {
     eprintln!("could-not-judge: {why}");
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/could-not-judge");
     std::fs::create_dir_all(&dir).unwrap();
-    std::fs::write(dir.join("n0.step"), format!("{why}\n")).unwrap();
+    std::fs::write(dir.join("internet.step"), format!("{why}\n")).unwrap();
 }
 
 /// The shipped `svrngs <args>` in `home`, as a person's terminal runs it:

@@ -33,7 +33,7 @@ unset SVRNGS_STEPS SVRNGS_TESTS SVRNGS_RUN  # set only by --touched, below
 # (demo/runs/flakes/2026-11-12/mac/night-playback-step.log), so 225.
 slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; playback) echo 225 ;; *) echo 60 ;; esac; }
 # A step whose test could judge nothing of its claim, its seam silent
-# before any of our code ran (the `n0` step: n0 itself not answering),
+# before any of our code ran (the `internet` step: n0 itself not answering),
 # writes why to target/could-not-judge/<step>.step, a directory emptied
 # before the slow steps (below): the step is said could-not-judge with it,
 # never passed, and the gate does not fail on it, as the playback step's
@@ -142,7 +142,7 @@ step "pages" cargo test --quiet --workspace --test pages
 # The demo scenes, played (capability-scenes; crates/svrngs/tests/
 # scenes): each scene end to end, every person this build's svrngs with
 # a HOME of their own, met at relays on 127.0.0.1 and never n0's (the
-# scenes' binary as `main`, people.rs `program`; n0 is the `n0` step's),
+# scenes' binary as `main`, people.rs `program`; n0 is the `internet` step's),
 # played once, each person's browser the engine
 # their device is (scenes/main.rs `scene!`); each
 # scene's verdict on its own line, in the order they ended (libtest's
@@ -199,7 +199,7 @@ if reached playback && [ -s target/seeks-webkit.log ] && ls target/playback/seek
   cut -f1,2,4,5,7,8 target/playback/seeks-*.tsv | sed 's/^/           /'
   awk -F'\t' -v cores="$(getconf _NPROCESSORS_ONLN)" '{n++; l+=$5=="failed"; s+=$8=="failed"; split($10, a, "averages?: "); hot+=a[2]+0>cores} END {printf "           of %d here since %s: %d missed 5 s through a lend, %d straight; %d ended at a load above %d cores\n", n, f, l, s, hot, cores} NR==1 {f=substr($9,1,20)}' target/seeks-webkit.log
 elif reached playback; then echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
-# The shipped svrngs met at n0 (tests/n0.rs; docs/CHECKS.md, seam R), the
+# The shipped svrngs met at n0 (tests/internet.rs; docs/CHECKS.md, seam R), the
 # one test that meets n0's relays and lookup on the internet: every other
 # svrngs a test runs meets at a relay on 127.0.0.1 (tests/common/as_main.rs),
 # the scenes' too. Sam's computer, the shipped binary, makes a group met at
@@ -207,7 +207,7 @@ elif reached playback; then echo "never-ran  WebKit's seeks back to back, a rate
 # iroh alone first: silent then, or silent again after a svrngs failed, the
 # step is could-not-judge, with why (`step`, above); a failure with n0
 # answering is ours.
-step "n0" cargo test -p svrngs --test n0
+step "internet" cargo test -p svrngs --test internet
 step "app laws" ${SVRNGS_RUN:-} node web/tests/run.mjs apps
 rm -f /tmp/svrngs-check.$$; echo "note       took $SECONDS s in all"
 exit $failed
