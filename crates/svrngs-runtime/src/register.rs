@@ -138,8 +138,29 @@ impl Standing {
 /// and [`RingRail::register`] answer with it, through the journal's kept
 /// fold (`RingJournal::folded`).
 pub(crate) fn register_of(m: &Membership, removes: &[Op<SignedOp>], namespace: &str) -> Register {
-    let members = m
-        .standing
+    let removed = m
+        .cut
+        .keys()
+        .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
+        .collect();
+    Register {
+        members: members_of(m),
+        removed,
+        removals: removals_in(removes, m, namespace),
+        meets: m.meets_at(),
+        slots: m.slots.as_ref().map(|(_, n)| *n),
+        keeper: m.keeper.clone(),
+        office: m.office.clone(),
+        visits: m.visits.clone(),
+        cut: m.cut.clone(),
+    }
+}
+
+/// Who stands in the group `m` says, each key with the person it is bound
+/// to and what holds it: [`register_of`]'s, and the people an app's log is
+/// shown beside.
+pub fn members_of(m: &Membership) -> BTreeMap<String, Member> {
+    m.standing
         .iter()
         .filter_map(|key| {
             let (first, person) = m.person_of(key)?;
@@ -155,23 +176,7 @@ pub(crate) fn register_of(m: &Membership, removes: &[Op<SignedOp>], namespace: &
                 },
             ))
         })
-        .collect();
-    let removed = m
-        .cut
-        .keys()
-        .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
-        .collect();
-    Register {
-        members,
-        removed,
-        removals: removals_in(removes, m, namespace),
-        meets: m.meets_at(),
-        slots: m.slots.as_ref().map(|(_, n)| *n),
-        keeper: m.keeper.clone(),
-        office: m.office.clone(),
-        visits: m.visits.clone(),
-        cut: m.cut.clone(),
-    }
+        .collect()
 }
 
 /// Every `Remove` among `ops` that counts in `m`, by time: the cut when it
@@ -227,21 +232,57 @@ impl RingRail {
         // One read of the kept fold for both who stands and whether this
         // computer was cut (scale.rs `the_account_matches_a_hand_count`).
         let (register, kept) = journal.folded(&seed)?;
-        let members = register.members;
-        let seeded = seed.members.values().flatten().count();
+        let (seeded, standing) = (seed.members.values().flatten().count(), register.members.len());
         if kept {
-            tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
+            tracing::debug!(target: "register", namespace, seeded, standing,
                 "register: standing answered from the kept fold, no act that moves it since");
         } else {
-            tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
+            tracing::debug!(target: "register", namespace, seeded, standing,
                 "register: standing read from the seed and the group's acts");
         }
+        Ok(self.stood(namespace, register))
+    }
+
+    /// Who stands in `namespace`, as its `register` says: nobody here,
+    /// when this computer's own key was cut there.
+    fn stood(&self, namespace: &str, register: Register) -> Standing {
         if register.removed.contains_key(&actor_of(&self.signer)) {
             tracing::debug!(target: "register", namespace,
                 "register: this computer's key was cut here, its person left or removed, so the group is held and read, and nobody stands in it here");
-            return Ok(Standing::Left(members));
+            return Standing::Left(register.members);
         }
-        Ok(Standing::Members(members))
+        Standing::Members(register.members)
+    }
+
+    /// Each group held here, in [`Self::namespaces`]' order, with its
+    /// register: one an older svrngs made, or with no seed, left out, as
+    /// nobody stands in it; one whose register is unreadable left out too,
+    /// said at warn, since it vouches for nobody. `None`, said at warn,
+    /// when the groups held cannot be listed: then none vouches for anyone.
+    pub fn registers(&self) -> Option<impl Iterator<Item = (String, Register)> + '_> {
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", error = %e, "register: cannot list the groups held, so none vouches for anyone"));
+        Some(held.ok()?.into_iter().filter_map(|ns| {
+            let seeded = self.seeded(&ns).map(Result::ok);
+            let read = seeded.and_then(|s| s.map(|(j, seed)| j.folded(&seed)).transpose());
+            match read {
+                Ok(read) => Some((ns, read?.0)),
+                Err(e) => {
+                    tracing::warn!(target: "register", namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
+                    None
+                }
+            }
+        }))
+    }
+
+    /// Every group held here in which somebody stands, with who stands in
+    /// it ([`Self::registers`], [`Standing::Members`]); `None` when the
+    /// groups held cannot be listed.
+    pub fn standings(&self) -> Option<Vec<(String, BTreeMap<String, Member>)>> {
+        let stood = |(ns, r): (String, Register)| match self.stood(&ns, r) {
+            Standing::Members(m) => Some((ns, m)),
+            _ => None,
+        };
+        Some(self.registers()?.filter_map(stood).collect())
     }
 
     /// The register of `namespace` (U7; DESIGN §6): who stands, each key
@@ -298,21 +339,16 @@ impl RingRail {
     /// group whose register is unreadable vouches for nobody, and groups
     /// that cannot be listed vouch for nobody at all.
     pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Member)> {
-        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
-        let held = held.ok()?;
-        let found = held
-            .iter()
-            .find_map(|ns| Some((ns.clone(), self.member_in(ns, actor)?)));
-        tracing::debug!(target: "register", actor, groups = held.len(), found = ?found, "register: the group held here the key stands in, and as whom, or none");
+        let found = self.registers()?.find_map(|(ns, r)| self.member_in(ns, r, actor));
+        tracing::debug!(target: "register", actor, found = ?found, "register: the group held here the key stands in, and as whom, or none");
         found
     }
 
-    /// The [`Member`] `actor` stands as in the group `ns`; `None` when they
-    /// stand there not, and when its register is unreadable, which vouches
-    /// for nobody.
-    fn member_in(&self, ns: &str, actor: &str) -> Option<Member> {
-        let standing = self.standing(ns).inspect_err(|e| tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody"));
-        standing.ok()?.member(actor).cloned()
+    /// The [`Member`] `actor` stands as in the group `ns`, as its register
+    /// `r` says; `None` when they stand there not.
+    fn member_in(&self, ns: String, r: Register, actor: &str) -> Option<(String, Member)> {
+        let member = self.stood(&ns, r).member(actor).cloned()?;
+        Some((ns, member))
     }
 
     /// The first group held here that both `eligible` accepts and `actor`
@@ -325,10 +361,10 @@ impl RingRail {
     /// refuses, vouches for nobody; eligible groups naming the key as two
     /// people are refused, never one picked by order.
     pub fn standing_in(&self, actor: &str, eligible: impl Fn(&str) -> bool) -> Option<(String, Member)> {
-        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
-        let mut found = (held.ok()?.into_iter())
-            .filter(|ns| eligible(ns))
-            .filter_map(|ns| Some((ns.clone(), self.member_in(&ns, actor)?)));
+        let mut found = self
+            .registers()?
+            .filter(|(ns, _)| eligible(ns))
+            .filter_map(|(ns, r)| self.member_in(ns, r, actor));
         let first = found.next();
         let two = first
             .as_ref()
@@ -347,9 +383,7 @@ impl RingRail {
     /// when no group held here has one; groups that cannot be listed, and a
     /// group whose register is unreadable, have none, said at warn.
     pub fn visit_anywhere(&self, key: &str) -> Option<Visiting> {
-        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", key, error = %e, "register: cannot list the groups held, so no visit can be shown"));
-        let found = held.ok()?.into_iter().find_map(|ns| {
-            let register = self.register(&ns).inspect_err(|e| tracing::warn!(target: "register", key, namespace = ns, error = %e, "register: a group's register is unreadable, so it shows no visit")).ok()?;
+        let found = self.registers()?.find_map(|(ns, register)| {
             let guest = register.visits.values().find(|g| g.visit.key == key)?.clone();
             Some((ns, register, guest))
         });
@@ -364,14 +398,8 @@ impl RingRail {
     /// unreadable, show nobody removed: said at warn, as
     /// [`Self::standing_anywhere`] says them.
     pub fn removed_anywhere(&self, actor: &str) -> Option<String> {
-        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to have been removed from one"));
-        let found = held.ok()?.into_iter().find(|ns| {
-            let register = self.register(ns).inspect_err(|e| {
-                tracing::warn!(target: "register", actor, namespace = ns, error = %e,
-                "register: a group's register is unreadable, so it shows nobody removed")
-            });
-            register.is_ok_and(|r| r.removed.contains_key(actor))
-        });
+        let mut held = self.registers()?;
+        let found = held.find_map(|(ns, r)| r.removed.contains_key(actor).then_some(ns));
         tracing::debug!(target: "register", actor, group = ?found, "register: whether a group held here removed the key");
         found
     }
