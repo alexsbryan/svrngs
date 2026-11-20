@@ -225,10 +225,16 @@ impl RingRail {
     /// traces at debug; a held group with no seed at warn, since it refuses
     /// everyone.
     pub fn standing(&self, namespace: &str) -> Result<Standing, RailError> {
-        let (journal, seed) = match self.seeded(namespace)? {
-            Ok(held) => held,
-            Err(nobody) => return Ok(nobody),
-        };
+        Ok(match self.seeded(namespace)? {
+            Ok(held) => self.stood(namespace, self.folded(namespace, held)?),
+            Err(nobody) => nobody,
+        })
+    }
+
+    /// The register of `namespace`, held with its `seed`, from the
+    /// journal's kept fold or rebuilt, said which: the one fold
+    /// [`Self::standing`] and [`Self::registers`] read who stands from.
+    fn folded(&self, namespace: &str, (journal, seed): (Arc<RingJournal>, Roster)) -> Result<Register, RailError> {
         // One read of the kept fold for both who stands and whether this
         // computer was cut (scale.rs `the_account_matches_a_hand_count`).
         let (register, kept) = journal.folded(&seed)?;
@@ -240,7 +246,7 @@ impl RingRail {
             tracing::debug!(target: "register", namespace, seeded, standing,
                 "register: standing read from the seed and the group's acts");
         }
-        Ok(self.stood(namespace, register))
+        Ok(register)
     }
 
     /// Who stands in `namespace`, as its `register` says: nobody here,
@@ -263,14 +269,9 @@ impl RingRail {
         let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", error = %e, "register: cannot list the groups held, so none vouches for anyone"));
         Some(held.ok()?.into_iter().filter_map(|ns| {
             let seeded = self.seeded(&ns).map(Result::ok);
-            let read = seeded.and_then(|s| s.map(|(j, seed)| j.folded(&seed)).transpose());
-            match read {
-                Ok(read) => Some((ns, read?.0)),
-                Err(e) => {
-                    tracing::warn!(target: "register", namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
-                    None
-                }
-            }
+            let read = seeded.and_then(|s| s.map(|held| self.folded(&ns, held)).transpose());
+            let read = read.inspect_err(|e| tracing::warn!(target: "register", namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody"));
+            Some((ns, read.ok()??))
         }))
     }
 
