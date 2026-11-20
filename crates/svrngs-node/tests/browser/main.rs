@@ -2146,7 +2146,7 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         .unwrap()
         .unwrap();
     let house = svrngs_node::lend::Audience::Selected(vec![NS.to_string()]);
-    assert_eq!(lent_to.audience, house, "lent to the group ticked");
+    assert_eq!(lent_to.terms.audience, house, "lent to the group ticked");
 
     let opened = home_page(engine, &bo, json!({ "open": "ada’s jellyfin" })).await;
     eprintln!("bo's home page: {opened:#}");

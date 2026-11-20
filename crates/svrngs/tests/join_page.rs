@@ -201,7 +201,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     engine: harness::Engine,
 ) {
     let site = harness::site();
-    let (_relay, ours, dir, sam) = common::sams_computer(1).await;
+    let (_relay, _, dir, sam) = common::sams_computer(1).await;
     let shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
