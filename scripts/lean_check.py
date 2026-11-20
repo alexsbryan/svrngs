@@ -866,11 +866,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # raise caps -- I don't need breakages from line golfing … Cutting before
 # raising is the norm. In this case you said cutting was leading to mangling
 # and I have some urgency here." Its cuts follow as their own reviewed work,
-# and lower the caps where they land.
+# and lower the caps where they land. Its rules moved to Eudoxia (4e58132d),
+# so all code but JavaScript is lowered to one past where that landed.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24276,
+    ".": 24151,
 
     "js": 8694,
 
