@@ -2872,8 +2872,10 @@ switch it cannot read it refuses.
    with Safari's storage, is not observed yet. WebKit, every
    iOS browser's engine, asks a closed range to a film's end where Chromium
    asks an open one, so the worker asks the door for either in parts of
-   2 MiB (`web/lend.js`, `PART`), and a seek waits at most for the part being
-   read. Through a lend, WebKit still reads each short part in serial 64 KiB
+   2 MiB (`web/lend.js`, `PART`). A seek waits for what the lender has sent
+   ahead of the page's reading, which over a relay queues below QUIC where
+   no abort reaches it: the page's dials let a lender queue 256 KiB in all
+   (`dial.rs` `QUEUED`), about 2 s at the share. Through a lend, WebKit still reads each short part in serial 64 KiB
    reads, a round trip each, so its seeks back to back on a phone's link can
    miss 5 s where Chromium's do not.
 5. **Most groups meet at svrngs's relay.** A computer meets a group that

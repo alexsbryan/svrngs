@@ -16,11 +16,15 @@ pub const PATH_IDLE: std::time::Duration = std::time::Duration::from_secs(3);
 /// `ms / 3`), so a live path is never idle that long.
 pub const KEEP_ALIVE: std::time::Duration = std::time::Duration::from_secs(1);
 
-/// The path timing an endpoint of a WebRTC path is built with.
-pub fn quick_paths() -> iroh::endpoint::QuicTransportConfig {
+/// The path timing an endpoint of a WebRTC path is built with, and the
+/// most its sender may queue on a connection when `queued` names it (the
+/// page's data endpoint, `dial::QUEUED`); none is iroh's.
+pub fn quick_paths(queued: Option<u32>) -> iroh::endpoint::QuicTransportConfig {
     iroh::endpoint::QuicTransportConfig::builder()
         .default_path_max_idle_timeout(PATH_IDLE)
         .default_path_keep_alive_interval(KEEP_ALIVE)
+        // Unbounded, noq's own `receive_window`, when none is named.
+        .receive_window(queued.map_or(iroh::endpoint::VarInt::MAX, Into::into))
         .build()
 }
 

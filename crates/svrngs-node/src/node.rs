@@ -395,7 +395,7 @@ impl Node {
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
             &at,
             Some(wire),
-            Some(crate::webrtc::quick_paths()),
+            Some(crate::webrtc::quick_paths(None)),
         )
         .await
         .map_err(NodeError::Endpoint)?;

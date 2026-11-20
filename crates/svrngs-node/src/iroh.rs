@@ -553,10 +553,11 @@ pub(crate) async fn dialled(
     let (peer, cap) = (to.id.fmt_short(), within.unwrap_or(Duration::MAX));
     // Held only when capped: held, iroh gives up a handshake silent for the
     // cap too, and a joiner's dial is not capped (`crate::dial`).
-    // Only a fetcher's Blobs dial shrinks what the sender may queue, so the
-    // household's uplink keeps room for everything else; lends keep theirs.
+    // Of a computer's dials, only a fetcher's Blobs dial shrinks what the
+    // sender may queue, so the household's uplink keeps room for everything
+    // else; its lends keep theirs (a page's are held to `dial::QUEUED`).
     let window = (alpn == Alpn::Blobs.bytes()).then_some(BLOBS_RECEIVE_WINDOW);
-    let held = within.map_or_else(Default::default, |_| crate::dial::held(window));
+    let held = within.map_or_else(Default::default, |_| crate::dial::held(window, None));
     let held = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
     let connect = async move {
         let connecting = e.connect_with_opts(to, alpn, held).await;

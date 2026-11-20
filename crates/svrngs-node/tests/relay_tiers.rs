@@ -511,38 +511,10 @@ async fn sam_reaches_ada_at(
 ) {
     let (dir, node) = ada(url, url).await;
     homed(&node, url).await;
-    let group = node.rail().namespaces().unwrap().remove(0);
-    let (sam, rail) = (SigningKey::from_bytes(&[9; 32]), node.rail());
-    // Sam let in by a link Ada's computer mints: the group is sources-v1.
-    let ada = svrngs_node::actor_of(rail.signer());
-    svrngs_core::tests_support::let_in(
-        (&group, &ada),
-        (&sam, "sam", svrngs_node::Device::Computer),
-        |mint| {
-            rail.commit(&group, mint).unwrap().unwrap().lines()[0]
-                .id
-                .clone()
-        },
-        |redeem| drop(rail.commit(&group, redeem).unwrap().unwrap()),
-    );
-    let port = serving(big).await;
-    let lends = svrngs_node::lend::lends_dir(node.rail().root());
-    std::fs::create_dir_all(&lends).unwrap();
-    let lent = serde_json::json!({ "port": port, "kind": "app", "limit": 3, "groups": [group] });
-    std::fs::write(lends.join("telly.json"), lent.to_string()).unwrap();
-
-    let map = iroh::RelayMap::from(url.parse::<RelayUrl>().unwrap());
-    let dialer = iroh::endpoint::Builder::new(iroh::endpoint::presets::Minimal)
-        .crypto_provider(svrngs_node::guest::ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&sam.to_bytes()))
-        .relay_mode(iroh::RelayMode::Custom(map))
-        .clear_ip_transports()
-        .bind()
-        .await
-        .unwrap();
+    let label = lent_to_sam(&node, serving(big).await);
+    let dialer = sam_dialer(url, Default::default()).await;
     let at = EndpointAddr::new(node.endpoint().id()).with_relay_url(url.parse().unwrap());
     let conn = dialer.connect(at, svrngs_node::alpn::ALPN).await.unwrap();
-    let label = Label::of(node.endpoint().id().as_bytes(), "telly");
     (dir, node, dialer, conn, label)
 }
 
@@ -806,4 +778,166 @@ async fn pressed_on(node: &Node) -> String {
             .map(str::to_string)
     });
     to.unwrap_or_else(|| panic!("no page to go to: {reply}"))
+}
+
+/// **A seek over the relay's share waits behind no more than the page lets
+/// a lender queue** (demo/runs/phone-home/2026-11-20, "What it found" 2):
+/// a relay holding Ada's computer to the share, 125,000 bytes a second
+/// (`crates/svrngs/src/relay.rs` `SHARE_RATE`; a 64 KiB burst in place of
+/// its 8 MiB, so the share holds from the first second), and Sam's dial
+/// through it, its connections built as the page builds `paths`, reading
+/// two answers on, a part of 2 MiB after another, as a player's lookahead
+/// asks them (`web/lend.js` `PART`); 12 s in, a seek asks a range, whose
+/// first bytes must come within 6 s: the 2.1 s a page's [`QUEUED`] takes
+/// at the share, and slack for the asks' round trips and a loaded host
+/// (2.2-4.1 s here, the whole file's tests at once among them).
+/// Ada's group meets at its own plain-HTTP relay, her build's answering
+/// nowhere, so the share watch, which reads only the build's relay,
+/// refuses nothing. Planted, watched red: `QUEUED` ignored (iroh's
+/// 1.25 MB a stream), and the first bytes came after 12.4 s, the queue
+/// growing for as long as the lookahead reads (4.5 s at 4 s in, 8.5 s at 8).
+///
+/// [`QUEUED`]: svrngs_node::dial::QUEUED
+async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportConfig) {
+    const PART: usize = 2 * 1024 * 1024;
+    let mut held = RelayServer::new("127.0.0.1:0".parse::<SocketAddr>().unwrap());
+    let mut share = ClientRateLimit::new(NonZeroU32::new(125_000).unwrap());
+    share.max_burst_bytes = NonZeroU32::new(64 * 1024);
+    held.limits.client_rx = Some(share);
+    let (_relay, url) = relay(held).await;
+    let (_dir, node) = ada("http://127.0.0.1:9/", &url).await;
+    homed(&node, &url).await;
+    let label = lent_to_sam(&node, serving_each(PART).await);
+    let dialer = sam_dialer(&url, paths).await;
+    let at = EndpointAddr::new(node.endpoint().id()).with_relay_url(url.parse().unwrap());
+    let conn = dialer.connect(at, svrngs_node::alpn::ALPN).await.unwrap();
+    let head = |range: &str| {
+        format!(
+            "GET /lend/{label}/ HTTP/1.1\r\nHost: x\r\nRange: {range}\r\nConnection: close\r\n\r\n"
+        )
+    };
+    for i in 0..2 {
+        tokio::spawn(read_on(conn.clone(), head(&format!("bytes={}-", i * PART))));
+    }
+    tokio::time::sleep(Duration::from_secs(12)).await;
+    let asked = Instant::now();
+    let (mut send, mut recv) = conn.open_bi().await.unwrap();
+    send.write_all(head("bytes=0-1").as_bytes()).await.unwrap();
+    let first = recv.read_chunk(64 * 1024).await.unwrap().unwrap();
+    let ms = asked.elapsed().as_millis();
+    eprintln!(
+        "the seek over {way}: its first bytes in {ms} ms ({} B)",
+        first.len()
+    );
+    assert!(
+        String::from_utf8_lossy(&first).starts_with("HTTP/1.1 206"),
+        "{first:?}"
+    );
+    assert!(
+        ms <= 6_000,
+        "the seek over {way} waited {ms} ms behind the lookahead"
+    );
+    dialer.close().await;
+    node.endpoint().close().await;
+}
+
+/// [`a_seek_over_the_share`] over a page's endpoint's dial to a lender
+/// (`dial::held`, web/src/lib.rs `reach`).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_seek_over_the_share_on_a_pages_dial_waits_behind_what_it_lets_be_queued() {
+    let queued = Some(svrngs_node::dial::QUEUED);
+    a_seek_over_the_share("a page's dial", svrngs_node::dial::held(None, queued)).await;
+}
+
+/// [`a_seek_over_the_share`] over a page's data endpoint, whose relay is
+/// its direct path's backup (`quick_paths`, web/src/lib.rs `direct_start`).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_seek_over_the_share_on_a_data_endpoint_waits_behind_what_it_lets_be_queued() {
+    let queued = Some(svrngs_node::dial::QUEUED);
+    a_seek_over_the_share("a data endpoint", svrngs_node::webrtc::quick_paths(queued)).await;
+}
+
+/// Sam let in to Ada's group, and the lend `telly`, the service at `port`,
+/// lent to it: its label.
+fn lent_to_sam(node: &Node, port: u16) -> Label {
+    let group = node.rail().namespaces().unwrap().remove(0);
+    let (sam, rail) = (SigningKey::from_bytes(&[9; 32]), node.rail());
+    let ada = svrngs_node::actor_of(rail.signer());
+    svrngs_core::tests_support::let_in(
+        (&group, &ada),
+        (&sam, "sam", svrngs_node::Device::Computer),
+        |mint| {
+            rail.commit(&group, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        },
+        |redeem| drop(rail.commit(&group, redeem).unwrap().unwrap()),
+    );
+    let lends = svrngs_node::lend::lends_dir(node.rail().root());
+    std::fs::create_dir_all(&lends).unwrap();
+    let lent = serde_json::json!({ "port": port, "kind": "app", "limit": 3, "groups": [group] });
+    std::fs::write(lends.join("telly.json"), lent.to_string()).unwrap();
+    Label::of(node.endpoint().id().as_bytes(), "telly")
+}
+
+/// Sam's endpoint, its only way `url`, its connections built with `paths`.
+async fn sam_dialer(url: &str, paths: iroh::endpoint::QuicTransportConfig) -> iroh::Endpoint {
+    let map = iroh::RelayMap::from(url.parse::<RelayUrl>().unwrap());
+    iroh::endpoint::Builder::new(iroh::endpoint::presets::Minimal)
+        .crypto_provider(svrngs_node::guest::ring_crypto_provider())
+        .secret_key(SecretKey::from_bytes(&[9; 32]))
+        .relay_mode(iroh::RelayMode::Custom(map))
+        .clear_ip_transports()
+        .transport_config(paths)
+        .bind()
+        .await
+        .unwrap()
+}
+
+/// A player reading on over `conn`: `ask` sent, its answer read whole,
+/// and asked again, as a lookahead asks its parts one after another.
+async fn read_on(conn: iroh::endpoint::Connection, ask: String) {
+    while let Ok((mut send, mut recv)) = conn.open_bi().await {
+        if send.write_all(ask.as_bytes()).await.is_err() {
+            return;
+        }
+        while let Ok(Some(_)) = recv.read_chunk(64 * 1024).await {}
+    }
+}
+
+/// [`serving`], each connection answered on a task of its own, as a
+/// threaded server answers (the phone's run's `film-server.py`): an answer
+/// waiting on a slow reader holds up no other.
+async fn serving_each(big: usize) -> u16 {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    tokio::spawn(async move {
+        while let Ok((mut asked, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let mut buf = vec![0u8; 4096];
+                let n = asked.read(&mut buf).await.unwrap_or(0);
+                let ranged = String::from_utf8_lossy(&buf[..n])
+                    .to_ascii_lowercase()
+                    .contains("range:");
+                let body = if ranged {
+                    vec![b'r'; big]
+                } else {
+                    b"ok".to_vec()
+                };
+                let status = if ranged {
+                    "206 Partial Content"
+                } else {
+                    "200 OK"
+                };
+                let head = format!(
+                    "HTTP/1.1 {status}\r\ncontent-length: {}\r\nconnection: close\r\n\r\n",
+                    body.len()
+                );
+                let _ = asked.write_all(head.as_bytes()).await;
+                let _ = asked.write_all(&body).await;
+            });
+        }
+    });
+    port
 }

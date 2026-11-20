@@ -307,7 +307,10 @@ async fn reach(
     // The issuer's dial is held as iroh holds one, a lender's as
     // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
     // would end the issuer's before its cap did (v1ui-race (a)).
-    let held = to.as_ref().map_or_else(Default::default, |_| dial::held(None));
+    // A lender's sending held to `dial::QUEUED` ahead of the page's reading.
+    let held = to
+        .as_ref()
+        .map_or_else(Default::default, |_| dial::held(None, Some(dial::QUEUED)));
     let node_id = match to {
         None => match bound.issuer {
             Some(issuer) => issuer,
@@ -903,7 +906,7 @@ pub async fn direct_start(
         .secret_key(secret)
         .relay_mode(iroh::RelayMode::custom(parsed.clone()))
         .add_custom_transport(wire::Wire::new(&me, arrivals, send))
-        .transport_config(paths::quick_paths())
+        .transport_config(paths::quick_paths(Some(dial::QUEUED)))
         .bind()
         .await
         .map_err(|e| {

@@ -55,13 +55,33 @@ pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
 /// dial to a computer that froze, as a lid closing, was told only after 30 s
 /// (`demo/runs/wait/2026-10-14/`, the plant take). A computer's connection
 /// to a member is held so too, since it is kept across requests
-/// (arch-peer, `iroh.rs` `dialled`).
-pub fn held(window: Option<u32>) -> iroh::endpoint::QuicTransportConfig {
+/// (arch-peer, `iroh.rs` `dialled`). `window` bounds what its sender may
+/// queue on one stream (a fetcher's Blobs dial, `iroh.rs`), `queued` on
+/// the whole connection (a page's dial to a lender, [`QUEUED`]); none is
+/// iroh's, 1.25 MB a stream (noq-proto 1.4.0 `TransportConfig::default`).
+pub fn held(window: Option<u32>, queued: Option<u32>) -> iroh::endpoint::QuicTransportConfig {
     let idle = iroh::endpoint::VarInt::from_u32(DIAL_WITHIN.as_millis() as u32);
     let held = iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));
     let held = match window {
         Some(window) => held.stream_receive_window(window.into()),
         None => held,
     };
+    // Unbounded, noq's own `receive_window`, when none is named.
+    let held = held.receive_window(queued.map_or(iroh::endpoint::VarInt::MAX, Into::into));
     held.keep_alive_interval(DIAL_WITHIN / 4).build()
 }
+
+/// The most a lender may send a page's dial ahead of the page's reading,
+/// across every answer on the connection: what a seek's first bytes wait
+/// behind (demo/runs/phone-home/2026-11-20, "What it found" 2). The bytes
+/// a lender sends over a relay queue below QUIC, in the relay's own
+/// connection, where no abort reaches them: at the relay's share,
+/// 125,000 bytes a second (`crates/svrngs/src/relay.rs` `SHARE_RATE`),
+/// with iroh's 1.25 MB a stream and two answers read on, the queue grows
+/// as long as the reading goes on, a seek 12 s in waiting 12.4 s for its
+/// first bytes; with this, 2.2-4.1 s (`tests/relay_tiers.rs`, the seek's
+/// scenes).
+/// Sized for the direct path too, which a data endpoint carries on the
+/// same connection: 256 KiB keeps the 3.8 MB/s the phone's direct path
+/// carried (that run's trace, 05:36:48-05:37:00) up to a 69 ms round trip.
+pub const QUEUED: u32 = 256 * 1024;
