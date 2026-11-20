@@ -172,6 +172,12 @@ fn hold(dir: &Path, lend: &Lend) {
 /// at the address its approval names: written to only by [`Flow::send`],
 /// checked before and after, and its answers given only by [`Flow::recv`].
 pub(crate) struct Flow {
+    /// Its own socket among its lend's open flows, which each check names
+    /// ([`Took::Flow`]): a server's socket for one is answering it. First,
+    /// as a struct's fields drop in the order they are declared: so it
+    /// leaves the flows before `socket` closes, and a flow that takes the
+    /// socket's port after it is never taken out with it.
+    open: crate::door::Flowing,
     socket: UdpSocket,
     port: u16,
     /// An answer read and not yet given, its length in `buf`: kept while it
@@ -179,9 +185,6 @@ pub(crate) struct Flow {
     /// (SHARE_BINDING_REVIEWS §6 #4).
     answer: Option<usize>,
     buf: Vec<u8>,
-    /// Its own socket among its lend's open flows, which each check names
-    /// ([`Took::Flow`]): a server's socket for one is answering it.
-    open: crate::door::Flowing,
 }
 
 impl Flow {
