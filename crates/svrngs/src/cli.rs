@@ -1872,9 +1872,12 @@ pub async fn asked(here: &impl Here, verb: Verb, relay: &RelayConfig) -> Result<
             origin,
             device,
             relays,
-        } => link_running(here, &group, origin, device, relays)
-            .await?
-            .to_string(),
+        } => {
+            let tried = &relay.relay_urls;
+            link_running(here, &group, origin, device, relays, tried)
+                .await?
+                .to_string()
+        }
         Verb::New {
             name,
             person,
@@ -2120,7 +2123,8 @@ async fn new_running(
 /// `svrngs link`, of the svrngs running here, the one writer of this
 /// computer's acts ([`svrngs_node::home::LINKS_ROUTE`]), said as [`link_to`]'s
 /// is, its refusals too: not in the group, or unkept, as that one words
-/// them; any other, a non-keeper's among them, in its words. One that
+/// them; any other, a non-keeper's among them, in its words; and that it
+/// reached no relay as [`new_running`] says it. One that
 /// answers no link is an older build, said as [`join_running`] says it.
 async fn link_running(
     here: &impl Here,
@@ -2128,6 +2132,7 @@ async fn link_running(
     origin: Option<Origin>,
     device: bool,
     relays: Vec<RelayUrl>,
+    tried: &[String],
 ) -> Result<Said, Refusal> {
     let page = checked_page(origin).await?;
     let seed = group_named(here.root(), group)?;
@@ -2153,6 +2158,10 @@ async fn link_running(
     };
     let https = told["https"].as_str().map(Into::into);
     let device = serde_json::from_value(told["device"].clone()).map_err(|_| Refused::Older)?;
+    // An older svrngs says nothing of a relay: nor does the command, then.
+    let online = told["online"].as_bool();
+    tracing::debug!(target: "cli", ?online, ?tried, "cli: link — made by the svrngs running here, which had reached a relay or not, or did not say");
+    unreached(online.unwrap_or(true), tried);
     let link = Printed::told(client, https);
     Ok(Said::Linked { seed, link, device })
 }
@@ -2176,7 +2185,7 @@ async fn wait_online(node: &Node, tried: &[String]) {
 /// That this computer has reached no relay, said where it `tried` any,
 /// once [`svrngs_node::node::Host::online`] came to none: here, by a verb
 /// that started svrngs ([`wait_online`]), or by the svrngs running here
-/// ([`new_running`]).
+/// ([`new_running`], [`link_running`]).
 fn unreached(online: bool, tried: &[String]) {
     if !online && !tried.is_empty() {
         tracing::debug!(target: "cli", ?tried, "cli: this computer has reached no relay, and is told so");
