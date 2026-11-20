@@ -898,13 +898,16 @@ pub struct Linking {
 }
 
 /// A link made ([`Asking::linked`]): the client's, the https one when the
-/// group has a page, and whose device it adds, if it is a device link.
-/// Its fields in the order the answer has always spelt its keys.
+/// group has a page, whose device it adds, if it is a device link, and
+/// whether this computer had reached a relay as it made it
+/// ([`crate::node::Host::online`]), so the command says so when it had
+/// not. Its fields in the order the answer has always spelt its keys.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LinkMade {
     pub client: String,
     pub device: Option<crate::Person>,
     pub https: Option<String>,
+    pub online: bool,
 }
 
 /// Why no link was made: where the group meets refused, or the origin
@@ -973,6 +976,7 @@ impl Asking {
             client,
             device,
             https,
+            online,
         })
     }
 }
