@@ -202,7 +202,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
 ) {
     let site = harness::site();
     let (_relay, _, dir, sam) = common::sams_computer(1).await;
-    let shelf = Lend {
+    let mut shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
         kind: Program::parse("shelf").unwrap(),
@@ -219,6 +219,9 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
             approved: None,
         },
     };
+    // What answers on its port approved, as `svrngs share` does: the door
+    // holds a lend with no approval, and the shelf would open closed.
+    svrngs_node::node::approve(&mut shelf);
     lend::declare(dir.path(), &shelf, None).unwrap();
 
     let (phone, out, origin) = phone(json!({ "engine": engine.as_str(), "site": site })).await;
@@ -520,7 +523,7 @@ async fn phone_joins_through(
     relays: Vec<svrngs_core::relay::Url>,
 ) -> (Value, String, Option<String>) {
     let (dir, sam, token) = sam_meeting_at(1, own, build, relays).await;
-    let shelf = Lend {
+    let mut shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
         kind: Program::parse("shelf").unwrap(),
@@ -537,6 +540,8 @@ async fn phone_joins_through(
             approved: None,
         },
     };
+    // Approved as the shelf above is.
+    svrngs_node::node::approve(&mut shelf);
     lend::declare(dir.path(), &shelf, None).unwrap();
     let args =
         json!({ "engine": engine.as_str(), "site": harness::site(), "policy": "production" });
