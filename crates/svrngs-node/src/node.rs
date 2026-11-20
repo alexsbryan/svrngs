@@ -640,7 +640,7 @@ impl Node {
     /// lends, each computer asked now and all at once, and where this computer reaches
     /// each lend. Nothing is kept between asks.
     pub async fn lends(&self) -> Lends {
-        let groups = self.host.standings().unwrap_or_default();
+        let groups = self.host.rail.standings().unwrap_or_default();
         self.host.lends_in(&groups, None).await
     }
 }
@@ -802,7 +802,7 @@ impl Host {
     /// key is no iroh key.
     pub(crate) fn contact(&self, actor: &str) -> Option<Contact> {
         self.rail.standing_anywhere(actor)?;
-        let groups = self.standings()?;
+        let groups = self.rail.standings()?;
         let theirs = groups.iter().filter(|(_, m)| m.contains_key(actor));
         let meeting = theirs
             .map(|(ns, _)| self.meeting(ns))
@@ -824,7 +824,7 @@ impl Host {
     /// this node's. A group whose register is unreadable adds nobody, as the
     /// round offers it to nobody.
     pub(crate) async fn members(&self) -> Option<Vec<OnlinePeer>> {
-        let peers = self.standing_peers(&self.standings()?);
+        let peers = self.standing_peers(&self.rail.standings()?);
         let peers = peers.into_iter().map(|(actor, n, contact)| OnlinePeer {
             name: format!("{}/{}", n.person, &actor[..8]),
             contact,
@@ -832,33 +832,13 @@ impl Host {
         Some(peers.collect())
     }
 
-    /// Every group this node holds, with who stands in it; or `None` when
-    /// the groups held cannot be listed. A group whose register is
-    /// unreadable is left out.
-    pub(crate) fn standings(&self) -> Option<Groups> {
-        let namespaces = self.rail.namespaces().inspect_err(|e| {
-            tracing::warn!(target: "node", error = %e, "node: cannot list the groups held, so the round has no members");
-        });
-        let mut out = Vec::new();
-        for namespace in namespaces.ok()? {
-            match self.rail.standing(&namespace) {
-                Ok(Standing::Members(m)) => out.push((namespace, m)),
-                Ok(_) => continue,
-                Err(e) => {
-                    tracing::warn!(target: "node", namespace, error = %e, "node: a group's register is unreadable, so it adds no member");
-                }
-            }
-        }
-        Some(out)
-    }
-
-    /// The groups held here that `actor` stands in, as [`Self::standings`]
+    /// The groups held here that `actor` stands in, as [`RingRail::standings`]
     /// gives them, and this computer's person in the first of them it
     /// stands in too: whom a group's lends are answered to, and as whom.
     /// Groups that cannot be listed are svrngs's refusal, never no group
     /// (ralph/REVIEW_FINDINGS.md #103).
     pub(crate) fn shared_with(&self, actor: &str) -> Result<(Groups, Option<Person>), Response> {
-        let mut groups = self.standings().ok_or_else(|| {
+        let mut groups = self.rail.standings().ok_or_else(|| {
             crate::door::LendRefusal::fault("the groups this computer is in cannot be read on it")
         })?;
         groups.retain(|(_, standing)| standing.contains_key(actor));

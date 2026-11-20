@@ -56,7 +56,7 @@ use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
-use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
+use crate::{actor_of, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Admission, Append};
 
 /// What the doors read: the journals and the live lane's buffer, which the
@@ -166,21 +166,13 @@ pub(crate) fn standing_of(
 /// when the person joined, which tells two of one name apart
 /// (bash-same-name), and what holds the key — `computer` or `browser`, so a
 /// page draws a phone as one (v1ui-door (a)). The one shape every door that
-/// names the people answers.
-pub(crate) fn people_json<'a>(
-    standing: impl IntoIterator<Item = (&'a String, &'a Person, &'a str, Joined, Device)>,
-) -> serde_json::Value {
-    (standing.into_iter())
-        .map(|(key, person, first, joined, device)| serde_json::json!({ "person": person, "key": key, "person_key": first, "joined": joined, "device": device }))
-        .collect()
-}
-
-/// The people standing, the register's rows, in [`people_json`]'s shape:
-/// the people door's, and the members' `/people/lends` beside what they
-/// lend, so a phone's page draws the door (v1ui-door (d)).
+/// names the people answers: the people door's, an app's log's, and the
+/// members' `/people/lends` beside what they lend, so a phone's page draws
+/// the door (v1ui-door (d)).
 pub(crate) fn standing_json(s: &BTreeMap<String, Member>) -> serde_json::Value {
-    let rows = s.iter();
-    people_json(rows.map(|(k, m)| (k, &m.person, m.person_key.as_str(), m.joined, m.device)))
+    s.iter()
+        .map(|(key, m)| serde_json::json!({ "person": m.person, "key": key, "person_key": m.person_key, "joined": m.joined, "device": m.device }))
+        .collect()
 }
 
 /// Who is visiting `r`'s group now, by this computer's clock, from the
@@ -423,20 +415,14 @@ pub async fn log(
             v
         })
         .collect();
-    let register = admission.membership();
-    let people: Vec<(&String, &Person, &str, Joined, Device)> = (register.standing.iter())
-        .filter_map(|key| {
-            let ((first, person), device) = register.person_of(key).zip(register.device(key))?;
-            Some((key, person, first, register.joined(first), device))
-        })
-        .collect();
+    let people = crate::register::members_of(admission.membership());
     Ok(Json(serde_json::json!({
         "namespace": namespace,
         "ops": ops,
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),
-        "people": people_json(people),
+        "people": standing_json(&people),
     })))
 }
 

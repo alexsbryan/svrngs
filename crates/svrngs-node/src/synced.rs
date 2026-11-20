@@ -348,10 +348,10 @@ impl Folders {
         )
     }
 
-    /// Who stands in `group`, as [`crate::node::Host::standings`] reads it;
+    /// Who stands in `group`, as [`crate::RingRail::standings`] reads it;
     /// a group it leaves out is one whose register cannot be read here.
     pub(super) fn holders(&self, group: &str) -> Result<Holders, FolderError> {
-        let groups = self.host.standings().unwrap_or_default();
+        let groups = self.host.rail.standings().unwrap_or_default();
         let found = groups.into_iter().find(|(ns, _)| ns == group);
         let unread = || FolderError::Unread(group.into(), "who stands in it cannot be read".into());
         Ok(found.ok_or_else(unread)?.1.into_keys().collect())

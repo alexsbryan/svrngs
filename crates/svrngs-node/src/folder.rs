@@ -468,7 +468,7 @@ impl Folders {
     /// bytes. Who stands where is [`Host::standings`]'s, and a group whose
     /// record cannot be read places nothing it serves, said by its name.
     fn serves(&self, hash: Hash, dialer: &str, now: Instant) -> bool {
-        let groups = self.host.standings().unwrap_or_default();
+        let groups = self.host.rail.standings().unwrap_or_default();
         for (ns, _) in groups.iter().filter(|(_, m)| m.contains_key(dialer)) {
             if matches!(self.held(hash, ns, now), blob::Holds::For { .. }) {
                 tracing::debug!(target: "folder", namespace = ns, dialer, "folder: the dialer stands in a group an app placed the hash in, not lapsed");

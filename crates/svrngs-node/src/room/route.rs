@@ -73,7 +73,7 @@ async fn turned(at: &Asking, turn: Turn) -> Response {
 /// groups, each asked now, or on already, so one whose lender is away
 /// stays on; or the words of a name none is.
 async fn named(at: &Asking, names: &[LendName]) -> Result<Vec<(String, LendName)>, String> {
-    let groups = at.host.standings().unwrap_or_default();
+    let groups = at.host.rail.standings().unwrap_or_default();
     let own = crate::door::offered(&at.door).await.unwrap_or_default();
     let own = own.into_iter().map(|o| (at.host.actor.clone(), o.name));
     let others = at.host.lends_in(&groups, None).await.lent;

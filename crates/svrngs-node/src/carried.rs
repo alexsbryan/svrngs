@@ -296,7 +296,10 @@ impl Folders {
     /// ([`Lend::carried`]). A group whose record cannot be read carries
     /// nothing here, said at warn.
     pub(crate) fn carried(&self) -> Vec<Lend> {
-        let (me, groups) = (&self.host.actor, self.host.standings().unwrap_or_default());
+        let (me, groups) = (
+            &self.host.actor,
+            self.host.rail.standings().unwrap_or_default(),
+        );
         let mut found = BTreeMap::new();
         let syncing = self.syncing.borrow().clone().unwrap_or_default();
         let holds = |group: &String| syncing.keys().any(|(g, _)| g == group);

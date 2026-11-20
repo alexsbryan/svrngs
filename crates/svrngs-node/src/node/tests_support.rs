@@ -120,7 +120,7 @@ impl Node {
     /// folder's fetch and a lend's origin ([`Host::contact`]), then the
     /// round and the lend asks ([`Host::standing_peers`]) (#127).
     pub fn relays_dialled(&self, actor: &str) -> [Vec<String>; 2] {
-        let groups = self.host.standings().unwrap_or_default();
+        let groups = self.host.rail.standings().unwrap_or_default();
         let said = |c: crate::iroh::Contact| c.relays.iter().map(ToString::to_string).collect();
         let round = (self.host.standing_peers(&groups).into_iter())
             .find_map(|(a, _, contact)| (a == actor).then_some(contact));
