@@ -906,10 +906,28 @@ impl Direct {
         self.data.id().to_string()
     }
 
-    /// The offer `offer` (the window's SDP, JSON) POSTed to the lender
-    /// through `dial`, on the WebRTC protocol, with `headers` (the pass
-    /// and the link this run's dials present): the lender's answer, JSON.
-    pub async fn signal(&self, dial: &Dialled, headers: js_sys::Array, offer: String) -> Result<String, JsError> {
+    /// The direct attempt, driven here so the worker's JavaScript stays
+    /// thin (webrtc-page): the window is asked over `port` — the worker's
+    /// end of the channel it announced itself on (`{webrtc: 'here'}`,
+    /// shim.js) — for the offer, which is POSTed to the lender through
+    /// `dial` with `headers` (the pass and the link the run's own dials
+    /// present); the answer is handed back; and once the window says the
+    /// channel is open, the data endpoint dials, its channel's datagrams
+    /// from then on going in through [`data_push`]. Answers the data
+    /// connection as a dial the worker's fetches go through, or none when
+    /// the channel never opened.
+    pub async fn go(
+        &mut self,
+        dial: &Dialled,
+        headers: js_sys::Array,
+        port: web_sys::MessagePort,
+    ) -> Result<Option<Dialled>, JsError> {
+        let ask = js_sys::Object::new();
+        js_sys::Reflect::set(&ask, &"webrtc".into(), &"ask".into()).map_err(page)?;
+        port.post_message(ask.as_ref()).map_err(page)?;
+        // The offer (the window's SDP, JSON) POSTed to the lender through
+        // `dial`, on the WebRTC protocol, with `headers`: its answer, JSON.
+        let offer = told(&port, "offer").await?.as_string().unwrap_or_default();
         let body = format!("{{\"key\":\"{}\",\"offer\":{}}}", self.data.id(), offer);
         let pair = |name: &str, value: &str| js_sys::Array::of2(&name.into(), &value.into());
         headers.push(&pair("content-type", "application/json"));
@@ -925,23 +943,30 @@ impl Direct {
         )
         .await
         .map_err(|e| JsError::new(&format!("the offer was not answered: {e}")))?;
-        let said = wasm_bindgen_futures::JsFuture::from(answer.text().map_err(page)?).await;
+        let text = wasm_bindgen_futures::JsFuture::from(answer.text().map_err(page)?).await;
         if !answer.ok() {
-            let words = said.ok().and_then(|t| t.as_string()).unwrap_or_default();
+            let words = text.ok().and_then(|t| t.as_string()).unwrap_or_default();
             refuse!("the offer was refused: {} {words}", answer.status())
         }
-        Ok(said.map_err(page)?.as_string().unwrap_or_default())
-    }
-
-    /// The two dials of the spike's Q1: WebRTC alone, then again with the
-    /// relay beside it, so the relay is backup on a connection whose first
-    /// path is not the relay. iroh may establish the second on the relay
-    /// alone, the custom address untried (the spike's Q1: dialled with the
-    /// relay beside it, iroh picks the relay) — so the first is kept too,
-    /// its path the window's channel, and whichever holds the channel
-    /// carries the dial: the second when it has it, its relay backup with
-    /// it, else the first, whose relay the remote's addresses add.
-    pub async fn dial(&mut self) -> Result<(), JsError> {
+        let answer = text.map_err(page)?.as_string().unwrap_or_default();
+        let said = js_sys::Object::new();
+        js_sys::Reflect::set(&said, &"answer".into(), &answer.into()).map_err(page)?;
+        port.post_message(&said).map_err(page)?;
+        told(&port, "open").await?;
+        // The channel is open: what it brings goes to the free `data_push`,
+        // and the data endpoint dials (WebRTC alone, then with the relay).
+        let (arrived, peer) = (self.arrived.clone(), *self.peer.as_bytes());
+        each_told(&port, "datagram", move |bytes| {
+            data_push(&arrived, peer, js_sys::Uint8Array::new(&bytes))
+        });
+        // The two dials of the spike's Q1: WebRTC alone, then again with the
+        // relay beside it, so the relay is backup on a connection whose first
+        // path is not the relay. iroh may establish the second on the relay
+        // alone, the custom address untried (the spike's Q1: dialled with the
+        // relay beside it, iroh picks the relay) — so the first is kept too,
+        // its path the window's channel, and whichever holds the channel
+        // carries the dial: the second when it has it, its relay backup with
+        // it, else the first, whose relay the remote's addresses add.
         let custom = iroh::TransportAddr::Custom(wire::addr_of(self.peer.as_bytes()));
         let first = self
             .data
@@ -961,49 +986,6 @@ impl Direct {
             .await
             .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
         self.conn = Some(if on_the_channel(&second, false) { second } else { first });
-        Ok(())
-    }
-
-    /// The data connection, as a dial the worker's fetches go through
-    /// (`web/lend.js` `dials`), or none before [`Self::dial`] returned.
-    pub fn dialled(&self) -> Option<Dialled> {
-        self.conn.clone().map(|conn| Dialled { ep: None, conn })
-    }
-
-    /// The direct attempt, driven here so the worker's JavaScript stays
-    /// thin (webrtc-page): the window is asked over `port` — the worker's
-    /// end of the channel it announced itself on (`{webrtc: 'here'}`,
-    /// shim.js) — for the offer, which is signalled to the lender through
-    /// `dial` with `headers` (the pass and the link the run's own dials
-    /// present); the answer is handed back; and once the window says the
-    /// channel is open, the data endpoint dials, its channel's datagrams
-    /// from then on going in through [`data_push`]. Answers the data
-    /// connection as a dial the worker's fetches go through, or none when
-    /// the channel never opened.
-    pub async fn go(
-        &mut self,
-        dial: &Dialled,
-        headers: js_sys::Array,
-        port: web_sys::MessagePort,
-    ) -> Result<Option<Dialled>, JsError> {
-        let ask = js_sys::Object::new();
-        js_sys::Reflect::set(&ask, &"webrtc".into(), &"ask".into()).map_err(page)?;
-        port.post_message(ask.as_ref()).map_err(page)?;
-        let offer = told(&port, "offer").await?;
-        let answer = self
-            .signal(dial, headers, offer.as_string().unwrap_or_default())
-            .await?;
-        let said = js_sys::Object::new();
-        js_sys::Reflect::set(&said, &"answer".into(), &answer.into()).map_err(page)?;
-        port.post_message(&said).map_err(page)?;
-        told(&port, "open").await?;
-        // The channel is open: what it brings goes to the free `data_push`,
-        // and the data endpoint dials (WebRTC alone, then with the relay).
-        let (arrived, peer) = (self.arrived.clone(), *self.peer.as_bytes());
-        each_told(&port, "datagram", move |bytes| {
-            data_push(&arrived, peer, js_sys::Uint8Array::new(&bytes))
-        });
-        self.dial().await?;
         // The direct path is the attempt's point, and iroh may settle the
         // connection on the relay first (the channel is still opening),
         // leaving the film there: wait, bounded, for `webrtc` to be the
@@ -1018,7 +1000,9 @@ impl Direct {
         if !self.webrtc_selected() {
             t!("RUNTIME: the direct path settled without webrtc: {}", self.paths());
         }
-        Ok(self.dialled())
+        // The data connection, as a dial the worker's fetches go through
+        // (`web/lend.js` `dials`).
+        Ok(self.conn.clone().map(|conn| Dialled { ep: None, conn }))
     }
 
     /// Whether the data connection's selected path is the custom one (the
