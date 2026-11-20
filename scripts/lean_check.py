@@ -875,10 +875,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then 26 for an approval to cover only what was shown (share.rs 14, door.rs
 # 9, uid.rs 3): 24,186, the operator's yes to raising by what the release's
 # review fixes need, each reported. Its pass cut 10 lines in those files.
+# Then 18 for `svrngs approve` to show what answers and ask before it
+# approves (cli.rs): 24,204. Its pass cut 5 there.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24187,
+    ".": 24205,
 
     "js": 8694,
 
