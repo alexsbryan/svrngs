@@ -54,10 +54,9 @@ use wasm_bindgen::JsCast;
 /// Push one layer line to the page's `__trace` collector, if the page defined
 /// one. Best-effort: a missing collector must not break the dial.
 fn emit(line: &str) {
-    if let Some(f) = get(&js_sys::global(), "__trace") {
-        if let Ok(f) = f.dyn_into::<js_sys::Function>() {
-            let _ = f.call1(&JsValue::UNDEFINED, &JsValue::from_str(line));
-        }
+    let collector = get(&js_sys::global(), "__trace").and_then(|f| f.dyn_into::<js_sys::Function>().ok());
+    if let Some(f) = collector {
+        let _ = f.call1(&JsValue::UNDEFINED, &JsValue::from_str(line));
     }
 }
 
