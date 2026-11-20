@@ -40,8 +40,28 @@ looks again only when something in it changes.
 
 ## V1.13.0, 20 November 2026
 
-V1.13.0 moves your computers to svrngs's own relay, and lets a phone at
-home skip it.
+V1.13.0 keeps each lend to exactly what you chose on its port, moves your
+computers to svrngs's own relay, and lets a phone at home skip it.
+
+**A lend reaches only what you chose.** When you lend a port, svrngs shows
+you what answers there, and you approve that: on Linux, the sockets that
+program holds; on a Mac, its process. svrngs checks the port before each
+connection it carries, and before and after each datagram, and carries
+nothing to anything else. If the program starts again, a container is made
+afresh, or something else is on the port, the lend closes, and its line on
+your home page says what answers there now. **Keep sharing it** keeps the
+same link for the same groups, kept to what that line showed. In a
+terminal, `svrngs approve <name>` does the same and says what it kept it
+to. Tools that show you a program before you lend it, like the Omarchy bar
+plugin from svrngs-fam 0.5.0, approve only what they showed you.
+
+**After you update, choose what each lend shares.** A lend made before
+V1.13.0 is closed until you do. Its line on your home page says: *"shelf
+is closed until you choose what it shares. svrngs checks what answers on
+its port before each connection, and before and after each datagram, and
+closes it when something you didn’t choose is there."*, then what answers
+now. Press **Keep sharing it**, or run `svrngs approve shelf`. Your
+friends' links stay the same.
 
 **Your groups meet at svrngs's relay.** When two computers can't reach
 each other directly, or a phone opens something you lend, the bytes now
