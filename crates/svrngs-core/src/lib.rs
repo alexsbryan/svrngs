@@ -187,7 +187,8 @@ crate::text_newtype!(Name, Person);
 /// seed and, as a [`Person`], signed into every copy of the record (svrngs,
 /// u2-9; REVIEW_FINDINGS #23). [`Self::parse`] is the one rule, for the
 /// command and the node alike.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
 pub struct Name(String);
 
 /// Why some text is not a [`Name`]. Its words are a person's (DESIGN §1).
@@ -203,6 +204,20 @@ pub enum NotAName {
     /// change bytes a signature covers.
     #[error("a name kept on this computer cannot start or end with a space")]
     Untrimmed,
+}
+
+/// Read as [`Name::kept`], wherever one is deserialised.
+impl TryFrom<String> for Name {
+    type Error = NotAName;
+    fn try_from(raw: String) -> Result<Self, NotAName> {
+        Self::kept(raw)
+    }
+}
+
+impl From<Name> for String {
+    fn from(name: Name) -> Self {
+        name.0
+    }
 }
 
 impl Name {
@@ -241,7 +256,8 @@ impl Name {
 /// Made only from a [`Name`] (svrngs, u2-9): deserialising one runs
 /// [`Name::kept`], so a line naming an empty person, 10 KB or a terminal's
 /// escape codes is a [`RailGap::MalformedLine`], never an act.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct Person(Name);
 
 impl Person {
@@ -258,19 +274,6 @@ impl Person {
 impl From<Name> for Person {
     fn from(name: Name) -> Self {
         Self(name)
-    }
-}
-
-impl Serialize for Person {
-    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        s.serialize_str(self.as_str())
-    }
-}
-
-impl<'de> Deserialize<'de> for Person {
-    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let raw = String::deserialize(d)?;
-        Name::kept(raw).map(Self).map_err(serde::de::Error::custom)
     }
 }
 

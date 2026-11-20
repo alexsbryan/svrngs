@@ -5,19 +5,21 @@
 //! read back as itself. Red on the plant of any field renamed, reordered
 //! or dropped, or a variant's tag respelt.
 
+use svrngs_node::group::Name;
 use svrngs_node::home::LinkMade;
-use svrngs_node::join::Outcome;
+use svrngs_node::join::{NotJoined, Outcome};
 
 #[test]
 fn each_join_outcome_keeps_its_bytes() {
     let seed = || "{\"seed\":1}".to_string();
     let dir = || "/home/ana/svrngs/house".to_string();
-    let group = || "house".to_string();
+    let name = |n: &str| Name::parse(n).unwrap();
+    let group = || name("house");
     let cases = [
         (
             Outcome::In {
                 seed: seed(),
-                person: "Ana".into(),
+                person: name("Ana"),
                 dir: dir(),
                 placed: None,
             },
@@ -26,7 +28,7 @@ fn each_join_outcome_keeps_its_bytes() {
         (
             Outcome::In {
                 seed: seed(),
-                person: "Ana".into(),
+                person: name("Ana"),
                 dir: dir(),
                 placed: Some("taken".into()),
             },
@@ -40,25 +42,31 @@ fn each_join_outcome_keeps_its_bytes() {
             },
             r#"{"outcome":"already_in","seed":"{\"seed\":1}","dir":"/home/ana/svrngs/house"}"#,
         ),
-        (Outcome::LinkRefused, r#"{"outcome":"link_refused"}"#),
         (
-            Outcome::NameTaken {
-                holder: "Sam".into(),
+            Outcome::Not(NotJoined::LinkRefused),
+            r#"{"outcome":"link_refused"}"#,
+        ),
+        (
+            Outcome::Not(NotJoined::NameTaken {
+                holder: name("Sam"),
                 group: group(),
-            },
+            }),
             r#"{"outcome":"name_taken","holder":"Sam","group":"house"}"#,
         ),
-        (Outcome::IssuerAway, r#"{"outcome":"issuer_away"}"#),
         (
-            Outcome::Keep { group: group() },
+            Outcome::Not(NotJoined::IssuerAway),
+            r#"{"outcome":"issuer_away"}"#,
+        ),
+        (
+            Outcome::Not(NotJoined::Keep { group: group() }),
             r#"{"outcome":"keep","group":"house"}"#,
         ),
         (
-            Outcome::Left { group: group() },
+            Outcome::Not(NotJoined::Left { group: group() }),
             r#"{"outcome":"left","group":"house"}"#,
         ),
         (
-            Outcome::Older { group: group() },
+            Outcome::Not(NotJoined::Older { group: group() }),
             r#"{"outcome":"older","group":"house"}"#,
         ),
     ];
@@ -74,7 +82,7 @@ fn a_link_made_keeps_its_bytes() {
         client: "svrngs://join/abc".into(),
         device: Some(svrngs_node::Person::parse("Sam").unwrap()),
         https: Some("https://group.svrnme.sh/#abc".into()),
-        online: false,
+        online: Some(false),
     };
     let bytes = r#"{"client":"svrngs://join/abc","device":"Sam","https":"https://group.svrnme.sh/#abc","online":false}"#;
     assert_eq!(serde_json::to_string(&made).unwrap(), bytes);
@@ -83,7 +91,7 @@ fn a_link_made_keeps_its_bytes() {
     let made = LinkMade {
         device: None,
         https: None,
-        online: true,
+        online: Some(true),
         ..made
     };
     assert_eq!(serde_json::to_string(&made).unwrap(), plain);

@@ -108,7 +108,7 @@ use std::num::NonZeroU16;
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::{FolderAsk, PROGRAMS_ROUTE};
 use svrngs_node::home::WHEN;
-use svrngs_node::home::{Linking, LINKS_ROUTE};
+use svrngs_node::home::{LinkMade, Linking, LINKS_ROUTE};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
 use svrngs_node::lend::{
@@ -909,13 +909,30 @@ async fn folder(here: &impl Here, dir: PathBuf, reference: &str) -> Result<Strin
 /// ([`room::ROUTE`]), and the room as it stands then; else its refusal,
 /// in its words.
 async fn room(here: &impl Here, names: Vec<LendName>) -> Result<Said, Refusal> {
-    let (ok, text) = here.ask(room::ROUTE, &room::RoomAsk::Names(names)).await?;
-    let on = serde_json::from_str(&text).ok().filter(|_| ok);
-    tracing::debug!(target: "cli", ok, text, "cli: room — svrngs running here answered");
-    let refused = serde_json::from_str::<serde_json::Value>(&text).ok();
-    let refused = refused.and_then(|r| Some(r["error"].as_str()?.to_string()));
-    on.map(Said::Room)
-        .ok_or(Refused::Room(refused.unwrap_or(text)).into())
+    let answer = here.ask(room::ROUTE, &room::RoomAsk::Names(names)).await?;
+    tracing::debug!(target: "cli", ok = answer.0, text = answer.1, "cli: room — svrngs running here answered");
+    let refused = |told: Option<Told>| Refused::Room(told.map_or(answer.1.clone(), |t| t.error));
+    answered(&answer)
+        .map(Said::Room)
+        .map_err(|told| refused(told).into())
+}
+
+/// What svrngs running here refuses with ([`answered`]): its words, and
+/// their kind, where its route says one.
+#[derive(serde::Deserialize)]
+struct Told {
+    error: String,
+    #[serde(default)]
+    kind: String,
+}
+
+/// An answer of svrngs running here, read as what it answers; else its
+/// refusal, `None` where it answered neither, as an older build does.
+fn answered<T: serde::de::DeserializeOwned>(
+    (ok, text): &(bool, String),
+) -> Result<T, Option<Told>> {
+    let read = serde_json::from_str(text).ok().filter(|_| *ok);
+    read.ok_or_else(|| serde_json::from_str(text).ok())
 }
 
 /// What svrngs running here answered a removal, hand-on or leave in the
@@ -1773,9 +1790,9 @@ impl From<NotJoined> for Refusal {
             NotJoined::LinkRefused => Refused::LinkRefused.into(),
             NotJoined::NameTaken { holder, group } => Refused::NameTaken { holder, group }.into(),
             NotJoined::IssuerAway => Unjudged::IssuerAway.into(),
-            NotJoined::Keep(group) => Unjudged::Keep(group.to_string()).into(),
-            NotJoined::Left(group) => Refused::Left(group).into(),
-            NotJoined::Older(group) => Refused::MadeOlder(group).into(),
+            NotJoined::Keep { group } => Unjudged::Keep(group.to_string()).into(),
+            NotJoined::Left { group } => Refused::Left(group).into(),
+            NotJoined::Older { group } => Refused::MadeOlder(group).into(),
         }
     }
 }
@@ -1831,7 +1848,6 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
     };
     let said: JoinOutcome = serde_json::from_str(&text).map_err(|e| older(e.to_string()))?;
     let held = |text: String| Seed::from_text(&text).map_err(&older);
-    let named = |raw: String| Name::kept(raw).map_err(|why| older(why.to_string()));
     Ok(match said {
         JoinOutcome::In {
             seed,
@@ -1840,7 +1856,6 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
             placed,
         } => {
             let seed = held(seed)?;
-            let person = named(person)?;
             let joined = Said::Joined {
                 seed: seed.clone(),
                 person,
@@ -1852,18 +1867,7 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
             let already = Said::AlreadyIn(seed.clone());
             format!("{already}{}", Said::told_folder(&seed, dir, placed))
         }
-        JoinOutcome::LinkRefused => return Err(Refused::LinkRefused.into()),
-        JoinOutcome::NameTaken { holder, group } => {
-            return Err(Refused::NameTaken {
-                holder: named(holder)?,
-                group: named(group)?,
-            }
-            .into())
-        }
-        JoinOutcome::IssuerAway => return Err(Unjudged::IssuerAway.into()),
-        JoinOutcome::Keep { group } => return Err(Unjudged::Keep(named(group)?.to_string()).into()),
-        JoinOutcome::Left { group } => return Err(Refused::Left(named(group)?).into()),
-        JoinOutcome::Older { group } => return Err(Refused::MadeOlder(named(group)?).into()),
+        JoinOutcome::Not(why) => return Err(why.into()),
     })
 }
 
@@ -1961,14 +1965,12 @@ async fn new_running(
         origin: page.map(|p| p.as_str().into()),
         relays,
     };
-    let (ok, text) = here.ask(group::NEW_ROUTE, &asked).await?;
-    let made = serde_json::from_str::<group::NewMade>(&text).ok();
-    let Some(made) = made.filter(|_| ok) else {
-        let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
-        let why = told["error"].as_str().ok_or(Refused::Older)?;
-        tracing::debug!(target: "cli", why, "cli: refused — the svrngs running here made no group");
-        return Err(Unjudged::Keep(name.to_string()).into());
-    };
+    let answer = here.ask(group::NEW_ROUTE, &asked).await?;
+    let made: group::NewMade = answered(&answer).map_err(|told| -> Refusal {
+        let Some(told) = told else { return Refused::Older.into() };
+        tracing::debug!(target: "cli", why = told.error, "cli: refused — the svrngs running here made no group");
+        Unjudged::Keep(name.to_string()).into()
+    })?;
     let seed = Seed::from_text(&made.seed).map_err(|_| Refused::Older)?;
     tracing::debug!(target: "cli", online = made.online, ?tried, "cli: new — made by the svrngs running here, which had reached a relay or not");
     unreached(made.online, tried);
@@ -2002,26 +2004,22 @@ async fn link_running(
         origin: page.map(|p| p.as_str().into()),
         ..Linking::default()
     };
-    let (ok, text) = here.ask(LINKS_ROUTE, &asked).await?;
-    let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
-    tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");
-    let Some(client) = told["client"].as_str().filter(|_| ok).map(Into::into) else {
-        let why = told["error"].as_str().ok_or(Refused::Older)?;
-        let kind = told["kind"].as_str();
-        tracing::debug!(target: "cli", why, kind, "cli: refused — svrngs running here made no link");
-        return Err(match kind {
-            Some("not_in") => Refused::NotIn(seed.name().clone()).into(),
-            Some("unkept") => Unjudged::Keep(seed.name().to_string()).into(),
-            _ => Refused::Meet(why.to_string()).into(),
-        });
-    };
-    let https = told["https"].as_str().map(Into::into);
-    let device = serde_json::from_value(told["device"].clone()).map_err(|_| Refused::Older)?;
+    let answer = here.ask(LINKS_ROUTE, &asked).await?;
+    tracing::debug!(target: "cli", ok = answer.0, text = answer.1, "cli: link — svrngs running here answered");
+    let made: LinkMade = answered(&answer).map_err(|told| -> Refusal {
+        let Some(Told { error, kind }) = told else { return Refused::Older.into() };
+        tracing::debug!(target: "cli", error, kind, "cli: refused — svrngs running here made no link");
+        match kind.as_str() {
+            "not_in" => Refused::NotIn(seed.name().clone()).into(),
+            "unkept" => Unjudged::Keep(seed.name().to_string()).into(),
+            _ => Refused::Meet(error).into(),
+        }
+    })?;
     // An older svrngs says nothing of a relay: nor does the command, then.
-    let online = told["online"].as_bool();
-    tracing::debug!(target: "cli", ?online, ?tried, "cli: link — made by the svrngs running here, which had reached a relay or not, or did not say");
-    unreached(online.unwrap_or(true), tried);
-    let link = Printed::told(client, https);
+    tracing::debug!(target: "cli", online = ?made.online, ?tried, "cli: link — made by the svrngs running here, which had reached a relay or not, or did not say");
+    unreached(made.online.unwrap_or(true), tried);
+    let link = Printed::told(made.client, made.https);
+    let device = made.device;
     Ok(Said::Linked { seed, link, device }.to_string())
 }
 

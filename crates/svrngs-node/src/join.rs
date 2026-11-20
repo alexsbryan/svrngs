@@ -51,8 +51,10 @@ pub enum Entered {
 }
 
 /// Why a join did not let this computer in, in the home page's words
-/// (arch-command (c)); the command says each in its own (cli.rs `Refusal`).
-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+/// (arch-command (c)); the command says each in its own (cli.rs `Refusal`),
+/// told it as [`Outcome::Not`].
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
+#[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum NotJoined {
     #[error("This link lets nobody new in: ask whoever sent it for a new one.")]
     LinkRefused,
@@ -60,16 +62,16 @@ pub enum NotJoined {
     NameTaken { holder: Name, group: Name },
     #[error("The computer that sent this link cannot be reached. It may be off: try again later.")]
     IssuerAway,
-    #[error("This computer cannot keep {0} on its disk.")]
-    Keep(Name),
+    #[error("This computer cannot keep {group} on its disk.")]
+    Keep { group: Name },
     /// This computer left the group, or was removed, and its one key never
     /// stands again (groups-leave; DESIGN §6, "Leaving a group").
-    #[error("You’re no longer in {0} on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead.")]
-    Left(Name),
+    #[error("You’re no longer in {group} on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead.")]
+    Left { group: Name },
     /// An older svrngs made the group, so nobody joins it now (svrn-docs
     /// EUDOXIA_JUDGE §2a).
-    #[error("{}", svrngs_core::made_older(.0.as_str()))]
-    Older(Name),
+    #[error("{}", svrngs_core::made_older(group.as_str()))]
+    Older { group: Name },
 }
 
 impl Host {
@@ -88,12 +90,16 @@ impl Host {
         };
         if seed.older() {
             tracing::debug!(target: "join", group = %seed.id(), "join: refused — an older svrngs made the group, so nothing is redeemed");
-            return Err(NotJoined::Older(seed.name().clone()));
+            return Err(NotJoined::Older {
+                group: seed.name().clone(),
+            });
         }
         match self.rail.standing(&seed.id()) {
             Ok(Standing::Left(_)) => {
                 tracing::debug!(target: "join", group = %seed.id(), "join: refused — this computer's key was cut in the group, so nothing is redeemed");
-                return Err(NotJoined::Left(seed.name().clone()));
+                return Err(NotJoined::Left {
+                    group: seed.name().clone(),
+                });
             }
             Err(e) => {
                 tracing::debug!(target: "join", group = %seed.id(), error = %e, "join: whether this computer was cut in the group cannot be read here, so the issuer judges it (#181)")
@@ -139,7 +145,7 @@ impl Host {
         let kept = self.keep_group(&seed, link.origin.as_ref(), &link.token.relays);
         kept.map_err(|why| {
             tracing::debug!(target: "join", group = %id, why, "join: refused — the group cannot be kept here");
-            NotJoined::Keep(seed.name().clone())
+            NotJoined::Keep { group: seed.name().clone() }
         })?;
         if link.origin.is_none() {
             tracing::debug!(target: "join", group = %id, "join: a client's link, so no origin is kept");
@@ -182,7 +188,9 @@ fn not_let_in(e: RedeemError, group: Option<&Name>) -> NotJoined {
             None => NotJoined::IssuerAway,
         },
         // Only a redemption answers that the key was cut (#181).
-        RedeemError::Cut => group.map_or(NotJoined::IssuerAway, |g| NotJoined::Left(g.clone())),
+        RedeemError::Cut => group.map_or(NotJoined::IssuerAway, |g| NotJoined::Left {
+            group: g.clone(),
+        }),
         RedeemError::Unjudged | RedeemError::NoAnswer(_) => NotJoined::IssuerAway,
     }
 }
@@ -203,14 +211,13 @@ pub struct JoinAsk {
 /// to say in its own words (cli.rs `Said`, `Refusal`): let in, or the
 /// group held already, with the seed as `seed.json` holds it, whom this
 /// computer joined as, and where its folder was placed or why not — or
-/// why nobody was let in ([`NotJoined`], each named as the command's own
-/// refusal is).
+/// why nobody was let in, tagged as each of those is.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum Outcome {
     In {
         seed: String,
-        person: String,
+        person: Name,
         dir: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         placed: Option<String>,
@@ -221,44 +228,8 @@ pub enum Outcome {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         placed: Option<String>,
     },
-    LinkRefused,
-    NameTaken {
-        holder: String,
-        group: String,
-    },
-    IssuerAway,
-    Keep {
-        group: String,
-    },
-    Left {
-        group: String,
-    },
-    Older {
-        group: String,
-    },
-}
-
-impl Outcome {
-    /// [`NotJoined`], as the wire says it.
-    fn of(why: NotJoined) -> Self {
-        match why {
-            NotJoined::LinkRefused => Outcome::LinkRefused,
-            NotJoined::NameTaken { holder, group } => Outcome::NameTaken {
-                holder: holder.to_string(),
-                group: group.to_string(),
-            },
-            NotJoined::IssuerAway => Outcome::IssuerAway,
-            NotJoined::Keep(group) => Outcome::Keep {
-                group: group.to_string(),
-            },
-            NotJoined::Left(group) => Outcome::Left {
-                group: group.to_string(),
-            },
-            NotJoined::Older(group) => Outcome::Older {
-                group: group.to_string(),
-            },
-        }
-    }
+    #[serde(untagged)]
+    Not(NotJoined),
 }
 
 impl IntoResponse for Outcome {
@@ -309,10 +280,10 @@ async fn joined_here(State(at): State<Asking>, Json(asked): Json<JoinAsk>) -> Ha
     let person = person.map_err(|why| not_taken(StatusCode::BAD_REQUEST, "no_name", why))?;
     let entered = at.host.join(&link, &person).await.map_err(|why| {
         tracing::debug!(target: "join", why = %why, "join: not let in, for the command");
-        Outcome::of(why).into_response()
+        Outcome::Not(why).into_response()
     })?;
     let (seed, person) = match entered {
-        Entered::In { seed, person } => (seed, Some(person.to_string())),
+        Entered::In { seed, person } => (seed, Some(person)),
         Entered::AlreadyIn(seed) => (seed, None),
     };
     tracing::debug!(target: "join", group = %seed.id(), ?person, "join: answered the command's join, by the svrngs running here");
