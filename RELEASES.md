@@ -20,6 +20,62 @@ exactly the file you checked, and the link's page only joins:
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/sign-release.sh`).
 
+## V1.13.0, 20 November 2026
+
+V1.13.0 moves your computers to svrngs's own relay, and lets a phone at
+home skip it.
+
+**Your groups meet at svrngs's relay.** When two computers can't reach
+each other directly, or a phone opens something you lend, the bytes now
+pass through `relay.svrnme.sh`, which svrngs runs, rather than n0's public
+relays. They're encrypted end to end, as before. Your computers no longer
+ask n0's address lookup where anyone is: your group's record says where
+each computer is reached. If our relay doesn't answer, your computers move
+to n0's relays, and come back by themselves once it does. While they're
+there, the group's **Connection details** on your home page say: *"This
+computer can’t reach the public way or anywhere else house usually meets,
+so it’s reachable through its backup for now. There’s nothing to do: it
+switches back by itself once one of them answers."*
+
+**A group's own relay comes first.** A group made with
+`svrngs new --relay <name>` meets at its own relay while it answers, and
+at svrngs's only when it doesn't. A relay you run for your group without
+`--open` now lets a phone open the group's lends too.
+[`docs/guide/relays.md`](docs/guide/relays.md) says how to run one.
+
+**At home, a phone goes direct.** On your home page, **Turn direct
+connections on** lets a phone on the same WiFi as this computer get what
+you lend straight from it, faster, with no relay between. It's for that
+WiFi alone: svrngs knows it by its router, so another network that hands
+out the same addresses isn't it. If the phone loses the WiFi mid-film, the
+film carries on through the relay. Direct connections stay off until you
+turn them on.
+
+**Each computer has its share of the relay.** svrngs's relay is for
+connecting, not for carrying films: it passes each computer about
+1 Mbit/s, after a burst of 8 MiB. That's plenty for apps, pages and
+messages. When a lender's share is used up, a phone asking for something
+large of theirs, like a film, gets *"Sam’s computer has used its share of
+the public way for now. Play it at full speed on the same Wi-Fi as Sam’s
+computer, or in the svrngs app, soon."* Small things still pass. The
+lender's home page says *"This computer's share of the public way was used
+up on <day>; large things you lend wait until it connects afresh."*
+Nothing over a direct connection or a group's own relay is held back.
+`svrngs relay --open` holds each computer to the same share.
+
+**`svrngs link --origin` works while svrngs runs.** Before, it refused,
+saying svrngs was already running. And `svrngs link` now says so when this
+computer hasn't reached the server your groups find it through, as
+`svrngs new` does.
+
+Groups and the record work as in V1.12.2. Press **Update and restart** on
+your home page, or run `svrngs update` and then `svrngs restart`. Your
+phone's page updates itself.
+
+V1.13.0 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.13.0`. Its publication and readback are recorded in
+`demo/runs/v1.13.0/2026-11-20/README.md`.
+
 ## V1.12.2, 19 November 2026
 
 V1.12.2 keeps each lend to the program you lent.
