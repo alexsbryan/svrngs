@@ -1,0 +1,6 @@
+merge-gate3.log:merge gate: clone at b20f253697cfbf7493e8ebed8c2de1a943e690d5, started 2026-11-19T18:39:16-08:00
+merge-gate3.log:failed     browser (207 s)
+merge-gate3.log:merge gate: exit 1 at 2026-11-19T19:01:02-08:00, clone b20f253697cfbf7493e8ebed8c2de1a943e690d5
+merge-gate2.log:merge gate: clone at b20f253697cfbf7493e8ebed8c2de1a943e690d5, started 2026-11-19T18:12:49-08:00
+merge-gate2.log:failed     browser (211 s)
+merge-gate2.log:merge gate: exit 1 at 2026-11-19T18:36:54-08:00, clone b20f253697cfbf7493e8ebed8c2de1a943e690d5

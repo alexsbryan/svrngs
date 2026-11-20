@@ -1,0 +1,45 @@
+== a6f091c0 releases: V1.12.2 published, signed by the operator, deployed and read back; its Arch package
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 27.47s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 27.02s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 27.10s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 27.24s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 27.13s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 27.09s
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 37 filtered out; finished in 17.61s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 27.06s
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 37 filtered out; finished in 17.40s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out; finished in 26.76s
+== c2c16692 lean: a TCP connection's ends and a posted JSON ask, each built once, -7
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.20s
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 43 filtered out; finished in 17.53s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.19s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.18s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 26.98s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.15s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.06s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.21s
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 43 filtered out; finished in 17.49s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 43 filtered out; finished in 17.59s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+== b20f2536 lean: the cap lowered to where the gate's fixes land
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.55s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.17s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.82s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.13s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.02s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.14s
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 43 filtered out; finished in 17.57s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.16s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.14s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.09s

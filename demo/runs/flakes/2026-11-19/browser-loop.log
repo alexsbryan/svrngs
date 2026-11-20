@@ -1,0 +1,19 @@
+== full browser step 1
+test result: ok. 42 passed; 0 failed; 3 ignored; 0 measured; 2 filtered out; finished in 89.91s
+== full browser step 2
+test result: ok. 42 passed; 0 failed; 3 ignored; 0 measured; 2 filtered out; finished in 69.63s
+== full browser step 3
+test result: ok. 42 passed; 0 failed; 3 ignored; 0 measured; 2 filtered out; finished in 70.20s
+== navigations 1
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.20s
+== navigations 2
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::chromium --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 43 filtered out; finished in 17.81s
+== navigations 3
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.24s
+== navigations 4
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.06s
+== navigations 5
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 28.00s

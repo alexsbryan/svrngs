@@ -1,0 +1,13 @@
+failed     browser (207 s)
+
+running 45 tests
+iii......./work/web/node_modules/playwright-core/lib/utils/isomorphic/assert.js:26
+    throw new Error(message || "Assertion error");
+          ^
+
+Error: Assertion error
+    at assert (/work/web/node_modules/playwright-core/lib/utils/isomorphic/assert.js:26:11)
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+    at WKSession.emit (node:events:514:28)
+    at /work/web/node_modules/playwright-core/lib/server/webkit/wkConnection.js:134:41
+
