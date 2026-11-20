@@ -174,9 +174,11 @@ async fn met_at_n0(dir: &Path) -> Result<(), String> {
     let link = link_of(&mut sam, SAM).await;
     let traced = std::fs::read_to_string(&sam_log).unwrap_or_default();
     let (raw, link) = link.map_err(|why| format!("{why}; its log is {}", sam_log.display()))?;
-    // Sam's computer waited for a home relay (cli.rs `wait_online`), and
-    // was met at one, as its own trace says.
-    let waited = traced.lines().find(|l| l.contains("waited for a relay"));
+    // Sam's computer waited for a home relay as it made the group (group.rs
+    // `Asking::made`, `Host::online`), and was met at one, as the command's
+    // trace of the answer says (cli.rs `new_running`).
+    let made = "new — made by the svrngs running here, which had reached a relay or not";
+    let waited = traced.lines().find(|l| l.contains(made));
     if !waited.is_some_and(|l| l.contains("online=true")) {
         return Err(format!(
             "Sam's computer was met at no home relay before its link: {waited:?}; its log is {}",
