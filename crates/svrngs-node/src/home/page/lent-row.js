@@ -154,20 +154,28 @@ const HELD = {
   unjudged: (/** @type {string} */ name) =>
     ` svrngs can’t tell what answers on ${name}’s port, so nobody can open ${name}. Start it again.`,
 };
+// What svrngs read answering on a held lend's port now: nothing answering
+// said apart from a read that failed, which the row names in `unread`
+// (door.rs `offered`), with no `answers`.
 /** @param {Lend} lend */
-const heldWords = (lend) => {
-  const now = (lend.answers ?? []).map(answered).join(' and ');
-  return lend.held ? `${HELD[lend.held](lend.name)}${now && ` Now answering: ${now}.`}` : '';
+const answering = ({ answers = [], unread }) => {
+  if (unread) return 'svrngs couldn’t read what answers on its port. Reload to look again.';
+  const now = answers.map(answered).join(' and ');
+  return now ? `Now answering: ${now}.` : 'Nothing answers on its port now.';
 };
+/** @param {Lend} lend */
+const heldWords = (lend) => (lend.held ? `${HELD[lend.held](lend.name)} ${answering(lend)}` : '');
 
-// Keep sharing it, on a lend held for what answers on its port: everything
-// it says answers now approved, by the token it was listed with, and the
-// first process shown (lend-change.js `approve`).
+// Keep sharing it, offered by the token alone: svrngs lists one only where
+// approving it would be taken (share.rs `approve`), so the page doesn't
+// judge the hold itself. It approves everything the line says answers now,
+// by that token, with the first process shown, if one (lend-change.js
+// `approve`).
 /** @param {{ lend: Lend, doing: { state: string }, send: (message: Message) => void }} props */
 function Keep({ lend, doing, send }) {
+  if (!lend.token) return null;
   const first = lend.answers?.[0];
-  if (!lend.held || lend.held === 'unjudged' || !first || !lend.token) return null;
-  const shown = { token: lend.token, pid: first.pid, start: first.start };
+  const shown = { token: lend.token, pid: first?.pid, start: first?.start };
   return html`<${Act} words="Keep sharing it" doing=${doing} on=${{ type: 'approve', shown }} send=${send} />`;
 }
 

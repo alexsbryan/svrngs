@@ -126,14 +126,13 @@ export const CHANGE = (lend, home) => ({
       }),
     // Keep sharing it: what answers now approved only as it was listed, by
     // its token, with the process shown and its start (SHARE_BINDING §5.4),
-    // and nothing else of it changed.
-    approve: ({ shown: { token, pid, start } }) =>
-      post(`/v1/lends/${lend}/approve`, pid === undefined ? { token } : { token, pid, start }).then(
-        () => {
-          home({ type: 'again' });
-          return { type: 'changed', why: 'what answers approved' };
-        },
-      ),
+    // and nothing else of it changed. A pid and start left undefined are
+    // left out of the JSON, so with no process shown the token goes alone.
+    approve: ({ shown }) =>
+      post(`/v1/lends/${lend}/approve`, shown).then(() => {
+        home({ type: 'again' });
+        return { type: 'changed', why: 'what answers approved' };
+      }),
     sign: () =>
       post('/lent', { lend, to: 'sign-in' }).then((signIn) => ({
         type: 'signed',

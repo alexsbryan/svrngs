@@ -63,6 +63,7 @@ use crate::node::{Asking, Groups, Lending, Unlisted};
 use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
 use crate::seed::Seed;
+use crate::share::Pid;
 use crate::{origin::origin, session::AS_PATH};
 use crate::{register::RemovalSaid, Office, Person};
 
@@ -84,7 +85,8 @@ pub const SIGN_ROUTE: &str = "/v1/sign";
 /// Where its lender approves what answers on a lend's port now
 /// (SHARE_BINDING §5.4): `POST /v1/lends/<name>/approve` with `{"token"}`,
 /// what its list showed answering, and `"pid"` and `"start"` when it showed
-/// a process. Only its approval changes ([`approve`]).
+/// a process, both or neither (422 for one). Only its approval changes
+/// ([`approve`]).
 pub const APPROVE_ROUTE: &str = "/v1/lends/{name}/approve";
 
 /// Where a lent page asks, at its own origin, the lends it reads: the one
@@ -170,6 +172,22 @@ struct Approving {
     start: Option<u64>,
 }
 
+/// What a process named by half is answered, its pid without its start or
+/// its start without its pid ([`process`]).
+const HALF: &str = "send a process's pid with its start, or neither";
+
+/// The process a page or a panel names by its pid and its start together,
+/// or none for neither; half of one refused 422 in the API's shape
+/// ([`HALF`]), never taken as none. The one decider of it for the approve
+/// route ([`approve`]) and the home page's lend (home.rs `lend_one`).
+pub(crate) fn process(pid: Option<u32>, start: Option<u64>) -> Result<Option<Pid>, Response> {
+    match (pid, start) {
+        (Some(pid), Some(start)) => Ok(Some(Pid { pid, start })),
+        (None, None) => Ok(None),
+        _ => Err(err(StatusCode::UNPROCESSABLE_ENTITY, HALF)),
+    }
+}
+
 /// [`APPROVE_ROUTE`]: the lend `name`'s port read as a share reads it, and
 /// what answers there approved ([`crate::share::approve`]), only as its
 /// lender was shown it, with the process shown; nothing else of it changed.
@@ -196,10 +214,8 @@ async fn approve(
     let name = named
         .map_err(|_| LendRefusal::closed(format!("Nothing is shared here by the name {name}.")))?;
     let (lend, port) = crate::share::shared(dir, &name).map_err(refused)?;
-    let pid = asked
-        .pid
-        .zip(asked.start)
-        .map(|(pid, start)| crate::share::Pid { pid, start });
+    // Half a process is refused, never approved as the token alone.
+    let pid = process(asked.pid, asked.start)?;
     let read = (at.host.transport).answering(lend.raw(), port.get(), pid.map(|p| p.pid));
     let approving = crate::share::approve((port, lend.raw()), read.await, pid, Some(&asked.token));
     let (approved, answers) = approving.map_err(refused)?;

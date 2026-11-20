@@ -629,12 +629,22 @@ pub struct Offered {
     pub held: Option<Hold>,
     /// What answers on its port now, as its lender approves it
     /// (SHARE_BINDING §5.4): in its lender's own list alone, never a
-    /// member's; absent where it isn't read.
+    /// member's; absent where it isn't read, and where it couldn't be
+    /// ([`Offered::unread`]), so `[]` is nothing answering.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub answers: Option<Vec<Answer>>,
+    /// Why what answers on its port couldn't be read, when it couldn't, on
+    /// a held lend in its lender's own list: a closed set
+    /// ([`crate::uid::Unread`]), so a couldn't-read is said as one, with its
+    /// reason, never as nothing answering. Its lender's own computer alone
+    /// writes it, so it is never read from another's answer.
+    #[serde(default, skip_deserializing, skip_serializing_if = "Option::is_none")]
+    pub unread: Option<crate::uid::Unread>,
     /// An opaque name for what `answers` shows, which approving it sends
     /// back, so what changed since is refused, not approved unseen
-    /// ([`crate::share::token`]).
+    /// ([`crate::share::token`]); given only where approving it would be
+    /// taken ([`crate::share::approve`]), so a page offers Keep sharing it
+    /// by this alone.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub token: Option<String>,
 }

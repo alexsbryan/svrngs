@@ -44,7 +44,7 @@ use crate::lend::{
     Upload,
 };
 use crate::uid::{Answering, Unread};
-use eudoxia_community::binding::{Chosen, Refused};
+use eudoxia_community::binding::{self, Chosen, Held, Refused, Took};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
 /// `<word>.txt`, so adding a program is adding a file; each holds that word's
@@ -323,7 +323,9 @@ pub fn reapproved(
 /// [`eudoxia_community::binding::approve`]), and only what they were `shown`, when a
 /// page showed it ([`token`]): the approval, and what answers
 /// there as its lender is shown it, from the same read; or why not, in
-/// their words.
+/// their words. The one decider of whether an approval is taken: a lend's
+/// list gives a token only where this takes it with none (door.rs
+/// `offered`).
 pub fn approve(
     (port, raw): (NonZeroU16, Raw),
     read: Result<Answering, Unread>,
@@ -340,20 +342,23 @@ pub fn approve(
         now: read.start,
         parents: read.parents.clone(),
     });
-    let approved = eudoxia_community::binding::approve(&read.read, chosen.as_ref());
+    // What this approves, judged by the check it is for against the read it
+    // came from: a socket there whose holder can't be read would hold it
+    // unjudged at once, so it is refused here.
+    let unjudged = |a| binding::check(Some(a), &read.read, &Took::Datagram) == Err(Held::Unjudged);
+    let approved = match binding::approve(&read.read, chosen.as_ref()) {
+        Err(Refused::Nothing) => Err(ShareRefusal::NothingListens(port)),
+        Err(Refused::NotYours) => Err(ShareRefusal::NotYours(port)),
+        Err(Refused::Stopped) => Err(ShareRefusal::Stopped(port)),
+        Err(Refused::Another) => Err(ShareRefusal::AlsoListens(port)),
+        Err(Refused::Elsewhere(at)) => Err(ShareRefusal::Elsewhere(port, at)),
+        Ok(a) if raw == Raw::Udp && a.at.is_ipv6() => Err(ShareRefusal::UdpOnIpv6(port)),
+        Ok(a) if unjudged(&a) => Err(ShareRefusal::Unread(port, "its program can't be read")),
+        Ok(a) if shown.is_some_and(|t| t != token(&a)) => Err(ShareRefusal::Changed(port)),
+        Ok(a) => Ok(a),
+    };
     tracing::debug!(target: "share", port, ?raw, ?pid, ?shown, read = ?read.read, ?approved, "share: what answers on the port, approved or why not");
-    let approved = approved.map_err(|why| match why {
-        Refused::Nothing => ShareRefusal::NothingListens(port),
-        Refused::NotYours => ShareRefusal::NotYours(port),
-        Refused::Stopped => ShareRefusal::Stopped(port),
-        Refused::Another => ShareRefusal::AlsoListens(port),
-        Refused::Elsewhere(at) => ShareRefusal::Elsewhere(port, at),
-    })?;
-    match approved {
-        a if raw == Raw::Udp && a.at.is_ipv6() => Err(ShareRefusal::UdpOnIpv6(port)),
-        a if shown.is_some_and(|t| t != token(&a)) => Err(ShareRefusal::Changed(port)),
-        a => Ok((a, read.shown)),
-    }
+    approved.map(|a| (a, read.shown))
 }
 
 /// An opaque name for what `approved` approves, the same for the same

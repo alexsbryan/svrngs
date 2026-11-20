@@ -275,7 +275,14 @@ only that connection or datagram. A held share is refused 502, its asker
 told it is closed for now, and its lender's line says what answers now with
 one button, Keep sharing it (`svrngs approve <name>`, `POST
 /v1/lends/<name>/approve` with the token its list gave for what it showed,
-refused once that changed), which changes only `approved`. A restart of the
+refused once that changed, and a `pid` without its `start` or the reverse
+refused 422), which changes only `approved`. The list gives that token only
+where approving it would be taken, decided by `share::approve`, the one
+decider, and a page or panel offers the button by the token alone: nothing
+answering, no reader, a read that failed, and a socket whose program can't
+be read are each refused, and so given none. A port that couldn't be read is
+said so, its reason a closed set (`unread`, `uid::Unread`), never as nothing
+answering (`answers: []`). A restart of the
 program, a share made before this, and a share of a name already shared
 from another port or protocol without `--replace`, all wait on that
 approval; a lend file from V1.12.2 written again keeps what V1.12.2 wrote.

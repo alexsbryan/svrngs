@@ -80,7 +80,7 @@ use crate::join::{Entered, NotJoined};
 use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
-use crate::share::{self, Pid, Share, ShareRefusal};
+use crate::share::{self, Share, ShareRefusal};
 
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
@@ -839,7 +839,7 @@ async fn lend_one(
     // What answers, read through the transport, so a test says it; approved
     // only as the page showed it, never as it answers at the press, so a
     // page that read no program on the port lends nothing.
-    let pid = pid.zip(start).map(|(pid, start)| Pid { pid, start });
+    let pid = crate::surface::process(pid, start)?;
     let read = (at.host.transport).answering(Raw::Tcp, port.get(), pid.map(|p| p.pid));
     let approved = share::approve((port, Raw::Tcp), read.await, pid, None)
         .map_err(said)?

@@ -68,8 +68,11 @@ pub enum Owner {
     NoReader,
 }
 
-/// Why a share's port wasn't read.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Why a share's port wasn't read: a closed set, as a lender's own list of
+/// lends names it (`Offered::unread`), `{"why": "no_reader"}` or
+/// `{"why": "failed", "detail": <why>}`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "why", content = "detail", rename_all = "snake_case")]
 pub enum Unread {
     /// This system has no reader.
     NoReader,

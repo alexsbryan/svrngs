@@ -882,8 +882,8 @@ test('each lend is one line with its form folded under it, and the wide button i
 // lent-row.js `HELD`; SHARE_BINDING §5.5), and Keep sharing it approves
 // what its line showed, by the token it was listed with, with the first
 // process's pid and start, at /v1/lends/<name>/approve and nothing else
-// (lend-change.js `approve`; SHARE_BINDING_REVIEWS §6 #6); one svrngs can't
-// read, or listed with no token, offers no approval. Planted, each watched
+// (lend-change.js `approve`; SHARE_BINDING_REVIEWS §6 #6); one listed with
+// no token, whatever holds it, offers no approval. Planted, each watched
 // failing: lent-row.js not reading `answers` (no "Now answering"); the
 // approval posted with no token (`{ pid, start }`).
 test('a held lend says what answers now, and Keep sharing it approves that', async () => {
@@ -921,7 +921,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
     untokened.text('#lent li button').filter((b) => b === 'Keep sharing it'),
     [],
   );
-  const unjudged = await page('unjudged');
+  const unjudged = await page('unjudged', '');
   assert.ok(
     unjudged
       .text('#lent li details summary')[0]
@@ -933,6 +933,46 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
     unjudged.text('#lent li button').filter((b) => b === 'Keep sharing it'),
     [],
   );
+});
+
+// Keep sharing it is offered by the token alone, which svrngs lists only
+// where approving it would be taken (share.rs `approve`): a lend held
+// unjudged, listed with one, offers it; another account's program first,
+// as Linux shows it, is approved by the token alone. Nothing answering and
+// a read svrngs couldn't make (`unread`) are said apart, neither with a
+// token. Planted, each watched failing: Keep judging the hold itself (no
+// button on the unjudged lend); the line reading no `unread` (a read that
+// failed said as nothing answering).
+test('Keep sharing it follows the token, and a read that failed is said apart', async () => {
+  const approved = [];
+  const page = async (/** @type {object} */ more) =>
+    home(
+      ada({
+        lent: [lend('shelf', { answering: true, held: 'unjudged', ...more })],
+        'POST /v1/lends/shelf/approve': (body) => (approved.push(body), { name: 'shelf' }),
+      }),
+    );
+  const keep = (/** @type {any} */ drawn) =>
+    drawn.text('#lent li button').filter((/** @type {string} */ b) => b === 'Keep sharing it');
+  const theirs = await page({ answers: [{ account: '_resolve' }], token: '00c0ffee' });
+  await theirs.press('#lent li button', 'Keep sharing it');
+  assert.deepEqual(approved, [{ token: '00c0ffee' }]);
+  const nothing = await page({ answers: [] });
+  assert.ok(
+    nothing
+      .text('#lent li details summary')[0]
+      .includes('Start it again. Nothing answers on its port now.'),
+  );
+  assert.deepEqual(keep(nothing), []);
+  const unread = await page({ unread: { why: 'failed', detail: 'the read stopped' } });
+  const said = unread.text('#lent li details summary')[0];
+  assert.ok(
+    said.includes(
+      'Start it again. svrngs couldn’t read what answers on its port. Reload to look again.',
+    ),
+    said,
+  );
+  assert.deepEqual(keep(unread), []);
 });
 
 // The overview's card says a line of what the group's hidden section read:

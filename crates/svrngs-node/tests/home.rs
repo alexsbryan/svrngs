@@ -1590,10 +1590,13 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
 /// on the port, and nothing else; with none shown, it is refused 400 with
 /// `svrngs share` as the fix; a pid that holds none of the port's sockets,
 /// or one that started since, is refused 400 in `svrngs share --pid`'s
-/// words; a port only another account's program answers, as a Mac reads
-/// it, refused with the fix to run it as you. Nothing is lent but the one.
-/// Planted, each watched failing: the pid not sent to the approval (lent
-/// with no pid); the holder check skipped (lent with pid 999).
+/// words; a pid without its start, or a start without its pid, refused 422
+/// in the API's shape, as the approve route refuses it; a port only another
+/// account's program answers, as a Mac reads it, refused with the fix to
+/// run it as you. Nothing is lent but the one. Planted, each watched
+/// failing: the pid not sent to the approval (lent with no pid); the holder
+/// check skipped (lent with pid 999); the pid and start zipped, half a
+/// process dropped (refused 400 as nothing shown).
 #[tokio::test]
 async fn what_the_page_lends_is_what_it_showed() {
     let dir = tempfile::tempdir().unwrap();
@@ -1636,6 +1639,14 @@ async fn what_the_page_lends_is_what_it_showed() {
         lends(lent("pad", r#","pid":1,"start":2"#)).await,
         refused(stopped)
     );
+    let half = Some("send a process's pid with its start, or neither".to_string());
+    for shown in [r#","pid":1"#, r#","start":1"#] {
+        assert_eq!(
+            lends(lent("pad", shown)).await,
+            (422, half.clone()),
+            "{shown}"
+        );
+    }
     let mut theirs = svrngs_node::uid::Answering::default();
     theirs.read.unlisted = true;
     on_wire::answers(&alex, port, Ok(theirs));
@@ -1728,6 +1739,164 @@ async fn keep_sharing_it_approves_only_what_the_page_showed() {
     let approved = shelf.unwrap().unwrap().terms.approved.unwrap();
     assert_eq!(approved, svrngs_node::node::approval(), "held no more");
     assert_eq!(row().await["held"], serde_json::Value::Null);
+    alex.net().close().await;
+}
+
+/// **Keep sharing it is offered only where approving it would be taken**
+/// (SHARE_BINDING §5.1, share.rs `approve` the one decider): shelf, held,
+/// is listed with a token only for a read the approve route takes. Nothing
+/// answering, a Mac's port only another account answers, a socket whose
+/// program can't be read, no reader and a read that failed each get none;
+/// a read that couldn't be made says why in `unread`, apart from nothing
+/// answering (`answers: []`). Linux's socket of another account, shown as
+/// its account, gets one, and its token alone approves it. The route refuses
+/// the unjudged socket's token in words, and a pid without its start, or a
+/// start without its pid, 422 in the API's shape, the lend still held.
+/// Planted, each watched failing: the route's pid and start zipped, half a
+/// process dropped (approved, 200); the list's answers `[]` for a read that
+/// failed, no `unread`; its token from `binding::approve` alone (the
+/// unjudged socket given one); a token for every held lend.
+#[tokio::test]
+async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
+    use serde_json::{json, Value};
+    use svrngs_node::binding::{Read, Socket};
+    use svrngs_node::uid::{Answering, Unread};
+    use svrngs_node::{lend::Answer, share};
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let dir = tempfile::tempdir().unwrap();
+    let lends = lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let held = r#"{"sockets":[1],"at":"127.0.0.1","held":true}"#;
+    let body = format!(r#"{{"port":{port},"kind":"pad","groups":["{NS}"],"approved":{held}}}"#);
+    std::fs::write(lends.join("shelf.json"), body).unwrap();
+    let alex = on_wire::start(1, dir.path()).await;
+    let seed = Roster::new(
+        [(
+            svrngs_node::Person::parse("alex").unwrap(),
+            vec![svrngs_node::actor_of(&signing(1))],
+        )]
+        .into_iter()
+        .collect(),
+    );
+    alex.rail().set_seed(NS, &seed).unwrap();
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let (home, own) = (home.as_str(), own.as_str());
+    let browser = &Browser::of(&alex);
+    let row = || async {
+        let path = format!("/v1/lends?namespace={NS}");
+        let listed = ask(browser, "GET", home, &path, own, "").await.json();
+        let rows = listed["lent"].as_array().cloned().unwrap_or_default();
+        let row = rows.into_iter().find(|l| l["name"] == "shelf");
+        row.unwrap_or_else(|| panic!("shelf listed: {listed:#}"))
+    };
+    let approve = |body: Value| async move {
+        let path = "/v1/lends/shelf/approve";
+        let got = ask(browser, "POST", home, path, own, &body.to_string()).await;
+        (got.status, got.json()["error"].as_str().map(str::to_owned))
+    };
+    let shelf = lend::LendName::parse("shelf").unwrap();
+    let approved = || {
+        lend::read(dir.path(), &shelf)
+            .unwrap()
+            .unwrap()
+            .terms
+            .approved
+    };
+    let socket = |id, holders: &[(u32, u64)]| Socket {
+        id,
+        cgroup: None,
+        holders: holders.iter().copied().collect(),
+        at: std::net::Ipv4Addr::LOCALHOST.into(),
+        dual: false,
+    };
+    let read = |lasting, sockets| Read {
+        boot: None,
+        lasting,
+        sockets,
+        unlisted: false,
+    };
+    let answering = |read, shown| Answering {
+        read,
+        parents: Default::default(),
+        start: None,
+        shown,
+    };
+    let mut theirs = Answering::default();
+    theirs.read.unlisted = true;
+    let unjudged = answering(read(false, vec![socket(3, &[])]), Vec::new());
+    let account = Answer::Account {
+        account: "_resolve".into(),
+    };
+    let linux = answering(read(true, vec![socket(7, &[])]), vec![account]);
+    let listed = [
+        (
+            "nothing answers",
+            Ok(Answering::default()),
+            json!([]),
+            Value::Null,
+        ),
+        ("a Mac's other account", Ok(theirs), json!([]), Value::Null),
+        (
+            "its program unread",
+            Ok(unjudged.clone()),
+            json!([]),
+            Value::Null,
+        ),
+        (
+            "no reader",
+            Err(Unread::NoReader),
+            Value::Null,
+            json!({ "why": "no_reader" }),
+        ),
+        (
+            "a failed read",
+            Err(Unread::Failed("the read stopped")),
+            Value::Null,
+            json!({ "why": "failed", "detail": "the read stopped" }),
+        ),
+    ];
+    let mut wrong = Vec::new();
+    for (case, read, answers, unread) in listed {
+        on_wire::answers(&alex, port, read);
+        let shown = row().await;
+        let said = ["held", "answers", "unread", "token"].map(|f| shown[f].clone());
+        if said != [json!("another"), answers, unread, Value::Null] {
+            wrong.push(format!("{case}: {said:?}"));
+        }
+    }
+    assert!(wrong.is_empty(), "each listed as it should be: {wrong:#?}");
+    let token = share::token(&svrngs_node::binding::approve(&unjudged.read, None).unwrap());
+    on_wire::answers(&alex, port, Ok(unjudged));
+    let words = format!("svrngs can't share port {port}: it can't read what answers there (its program can't be read). Try again.");
+    assert_eq!(approve(json!({ "token": token })).await, (403, Some(words)));
+    on_wire::answers(&alex, port, Ok(svrngs_node::node::answering()));
+    let token = row().await["token"].clone();
+    assert!(token.is_string(), "a token for what answers");
+    let half = Some("send a process's pid with its start, or neither".to_string());
+    for asked in [
+        json!({ "token": token, "pid": 1 }),
+        json!({ "token": token, "start": 1 }),
+    ] {
+        assert_eq!(approve(asked.clone()).await, (422, half.clone()), "{asked}");
+    }
+    assert!(approved().unwrap().held, "still held");
+    on_wire::answers(&alex, port, Ok(linux.clone()));
+    let shown = row().await;
+    assert_eq!(
+        shown["answers"],
+        json!([{ "account": "_resolve" }]),
+        "{shown:#}"
+    );
+    let token = shown["token"]
+        .as_str()
+        .expect("a token for another account's socket");
+    assert_eq!(approve(json!({ "token": token })).await, (200, None));
+    let theirs = svrngs_node::binding::approve(&linux.read, None).ok();
+    assert_eq!(approved(), theirs, "its socket approved by its token alone");
     alex.net().close().await;
 }
 

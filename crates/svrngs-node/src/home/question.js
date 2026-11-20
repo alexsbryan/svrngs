@@ -32,9 +32,13 @@
  * @property {'another' | 'unjudged' | 'unapproved'} [held] why nobody can
  *   open it, in its lender's own `/lent` (door.rs `answering`)
  * @property {import('./page/running-look.js').Answer[]} [answers] what
- *   answers on its port now, there too, when it is held (door.rs `offered`)
+ *   answers on its port now, there too, when it is held (door.rs `offered`):
+ *   `[]` nothing, absent where svrngs couldn't read it (`unread`)
+ * @property {{ why: 'no_reader' | 'failed', detail?: string }} [unread] why
+ *   svrngs couldn't read what answers on a held lend's port (uid.rs `Unread`)
  * @property {string} [token] what `answers` shows, which approving it sends
- *   back so what changed since is refused (door.rs `offered`)
+ *   back so what changed since is refused (door.rs `offered`); listed only
+ *   where approving it would be taken, so it alone offers Keep sharing it
  * @property {string[] | null} [groups] the stable ids of the groups that may
  *   open it, in the owner's own `/lent` answer: `[]` paused, `null` legacy
  *   and needing selection (SCOPE_PARALLEL.md, owner `GET /lent`)

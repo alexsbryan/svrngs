@@ -638,15 +638,19 @@ pub(crate) async fn offered(door: &Door, lender: bool) -> Result<Vec<Offered>, R
         let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
         let Ok(reads) = reads else { return None };
         let (answering, held) = answering(door, &lend).await;
-        let (answers, token) = match (lender, held, lend.port()) {
+        let (answers, token, unread) = match (lender, held, lend.port()) {
+            // What answers, or why it couldn't be read, never said as nothing
+            // answering; a token only where approving it would be taken.
             (true, Some(_), Some(port)) => {
                 let raw = lend.raw();
                 let read = door.folders.host.transport.answering(raw, port.get(), None).await;
-                let token = (read.as_ref().ok()).and_then(|a| eudoxia_community::binding::approve(&a.read, None).ok());
-                let token = token.as_ref().map(crate::share::token);
-                (Some(read.map(|a| a.shown).unwrap_or_default()), token)
+                let shown = read.as_ref().ok().map(|a| a.shown.clone());
+                let unread = read.as_ref().err().copied();
+                let token = crate::share::approve((port, raw), read, None, None).map(|(a, _)| crate::share::token(&a));
+                tracing::debug!(target: "door", lend = %lend.name, ?unread, ?token, "door: lends — what answers on a held lend's port, or why it couldn't be read, and a token only where approving it would be taken");
+                (shown, token.ok(), unread)
             }
-            _ => (None, None),
+            _ => (None, None, None),
         };
         let (group, groups, raw) = match lend.source {
             Source::Carried(_, group) => (Some(group.clone()), Some(vec![group]), None),
@@ -668,6 +672,7 @@ pub(crate) async fn offered(door: &Door, lender: bool) -> Result<Vec<Offered>, R
             answering,
             held: held.filter(|_| lender),
             answers,
+            unread,
             token,
         })
     });
