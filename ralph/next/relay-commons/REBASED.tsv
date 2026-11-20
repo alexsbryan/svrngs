@@ -1,0 +1,99 @@
+old	new	subject
+dfaef4b1	3ef1c9be	relay-commons: the queue for our own relay, for connecting, not for carrying
+e81b88c3	4f83c652	relay-commons: Flash at max does the units, Opus 5.5 at high reviews and directs
+d4b50072	f5d2495d	relay-commons: no check.sh before the very end
+21ebd9b0	a7442d74	relay-commons: crate sources by cargo vendor, since ~/.cargo is refused
+09324f34	97343baa	relay-commons: the refused read was cargo's user config, not crate sources
+9f63e211	61b17f3e	relay-survey: the owners counted, the 1.4 set resolved, the spikes mapped
+c26a5184	f63ca77f	relay-survey: the workspace copy resolves the 1.4 set, not just its probe
+ccacfc72	2345bc6a	ralph: relay-survey done
+793e4827	937355dc	relay-commons: iroh 1.4.2 and its set, web included; no call site changed
+c91b70d3	ef2b1f3a	relay-commons: the addendum names the shared target/ build-script trap
+25ddfcb7	9ea96724	ralph: iroh-1-4 done
+4161af7f	6b986601	relay-share: the relay's test client, one helper
+8ea1b050	95b90811	relay-share: the share, the counters, and the relay's warn logging
+449107f7	c651fab8	ralph: relay-share done
+d28d0b63	73f11703	ralph: n0-emergency's read names the node's keep_group, not cli's kept_relay
+effc46bc	28b2bbd1	n0-emergency: the third tier, n0's behind ours (core)
+592c93d7	0ee04e71	n0-emergency: n0's in the endpoint only while ours does not answer
+001db3c6	71c030a8	n0-emergency: the home page says when a group is met at n0's
+37d05c53	462b672d	n0-emergency: the seams ledger and CHECKS name the renamed test
+d386b0b8	15d92dc8	n0-emergency: #134 rescoped and #135 fixed, their rows say so
+401ef4dd	4c963cb1	n0-emergency: a press with no group's own says "backup", not "nowhere"
+59c1b5b5	0d63e36a	ralph: n0-emergency done
+1b08385c	de0e16f8	share-refusal: the signal, the refusal and the reconnect (node)
+0089b3b1	5da1f7ae	share-refusal: the words to a tab and to a subresource (page)
+5a0d2066	a838d04b	ralph: share-refusal director — the strikes were billing, not the unit
+2dc7ebe4	a6f7296e	relay-commons: the operator's decisions; a spent share stays spent
+f80942db	a96ead8e	share-refusal: a spent share stays spent for the life of the connection
+1038879a	d02e3b89	share-refusal: the row's JavaScript back under its +40
+b77b6233	59d9597b	share-refusal: the lender's home page says the day its share was used up
+be0a6c1c	864436c2	relay-commons: words a person reads never say "relay"
+8fe3c5b5	91a21dae	share-refusal: a relay with a tiny rate throttles a lender for real
+a5850dae	50220448	share-refusal: a person's words never say "relay"
+e0419874	c725f7b1	share-refusal: the row's checks are green; its test allowance is the operator's
+a17b5aa2	9b3f2940	share-refusal: its scenes on the harnesses they repeated, checks kept
+93ab471e	dc9eff26	ralph: share-refusal director: tests +325 after the pass; the raise is the operator's
+3eed3886	b2508ef4	relay-commons: share-refusal's test allowance raised to 325
+0ef57b10	c66d8c73	webrtc-node: the wire, ported from the spike
+95f58944	e743b9eb	webrtc-node: the node's WebRTC half, str0m answering a page's offer
+1eacc58e	de744d2e	webrtc-node: the protocol and the wiring, and DESIGN §3's path
+7b0b36cd	67220b1e	relay-commons: webrtc-node's product allowance and its trust floor line, approved
+01507e33	dd10cb88	webrtc-node: an economizing pass on the node's half, behaviour kept
+69dd09e0	cbd30b0d	webrtc-node: the row's check, a native peer over the wire
+85cbdf2f	f00d6543	webrtc-node: the check's own economizing pass, behaviour kept
+19d1fc53	3d41a222	ralph: webrtc-node's test allowance, the row's last open decision
+e72dc180	7b930afd	relay-commons: the UDP decision; WebRTC binds only on a network the lender enabled
+551ae68e	a769c6b2	relay-commons: webrtc-node's tests to 310; the queue's test envelope to 1,400
+83501d4e	36ef6df2	ralph: share-refusal done
+fb4c1c08	9a8304ea	webrtc-node: the check within its 310, behaviour kept
+d455611c	0e484e01	ralph: webrtc-node director — 310 answered; the tests brought within it
+0dbdbc48	a0626e31	ralph: webrtc-node done
+d74cb314	b842202a	relay-commons: the watcher's done-mark commits are not a worker's concern
+675b0cc1	(dropped: origin/main has it, bf2159bc)	deny: except RustSec's heapless batch, unreachable here
+6807cb53	d68a9911	webrtc-network: the setting, the offer's gate, the cap, and the closes
+c8399de5	b4b76828	deploy-relay: the script is host-neutral; the box is ordered by hand
+230cc277	a61422c5	relay-commons: estimates bow to the caps; advisories by reachability
+49c172c0	adc80164	ralph: webrtc-network done
+efefd592	7f64787e	ralph: deploy-relay done
+8f33f803	31ca26c1	relay-commons: tests are not budgeted; self-host resumes from its patch
+536cd2fc	0c150bbc	webrtc-page: the offer is a pass's, checked as a lend's request is
+2664de4b	e9207f13	webrtc-page: the path timing moves to its own file, behaviour kept
+07b52fcd	24b170b5	webrtc-page: the offer's route moves beside the path timing, behaviour kept
+e46447fe	8150b61b	lean: +16 JavaScript for webrtc-page's direct path, the operator's raise
+d8bbd8ea	318e0cfb	relay-commons: webrtc-page resumes from its patch, the shim timeout fixed first
+b3ae73f2	86de2fda	self-host: a group's own HTTPS relay comes before the build's
+80d270f2	51ee79b5	lean: +7 more JavaScript, so webrtc-page still fits after self-host
+35624bf5	672b9248	relay-commons: webrtc-page's cap is 8,674
+744a41e2	5ae976c7	self-host: a group-only relay admits a pass's holder for its lends
+13ffd41e	c5bebf2e	trust floor: a group's relay admits a pass's holder, as self-host built
+d17a0bfa	e050adc4	relay-commons: two more checks for the audit
+340064a3	a43ecafe	self-host: the guide for running a relay, and the help says what it admits
+213e0e35	5e544a30	self-host: the package's record, answered and landed
+1d554252	a466645f	ralph: self-host done
+36ebb09a	8e7d295b	webrtc-page: the page side — the window's channel, the worker's two dials
+36f825f5	2a4d8327	deploy-relay: builds the box's platform alone; no AAAA a box cannot reach out from
+bf7fc59b	b1679ba2	webrtc-page: the page side's first run — the repairs the browser tier found
+7da7fdd5	9bf5a12d	webrtc-page: the browser tiers
+3d40e17c	b3fd810c	relay-commons: webrtc-page's stall, three findings for its next session
+5477b76c	2ecf187f	webrtc-page: the data endpoint is held, not left to the collector
+36a118cf	30bd07c1	webrtc-page: the dial's connection is the one on the window's channel
+47462fb6	4a3059ba	webrtc-page: the channel closed mid-film, and the row's checks close
+8d39bc71	5dd2f804	relay-commons: 36a118cf answers the stall's first finding
+0571c036	d79750ea	relay-commons: the stall's cause recorded; the audit's gate from a plain clone
+2568ca32	28c838f9	relay-commons: webrtc-page closed; the audit's gate runs from a clone
+571ed0b1	af890662	ralph: webrtc-page done
+a0e6afc1	2b05ebe7	webrtc-page: each direct attempt owns its wire; no per-worker state
+ce784518	aa861cdc	relay-commons: n0's comes in while none of ours answers, a group's own included
+ef50e3bf	dea1083d	seams: a row for each test the relay queue added
+4ed6db32	5d97d1fd	trust floor: three listeners' descriptions follow the code they pin
+cc6fed0a	24683f54	webrtc-page: the wait for the direct path is PATH_IDLE, named
+f3fe30b0	270b1ec0	design: the queue's §3 text within its 60 lines, and no firewall claim
+b170fc6e	1c8c28e2	relay-commons: the audit's ledger, the gate still to run
+be4be108	e0e5fe5a	relay-commons: Opus 5.5 at high finishes the program
+af24c051	3e23fcf5	tiers: an answer about a meeting since changed decides nothing
+66c37715	93d165d3	surface: /v1/groups's expected answer carries `share`, as 1b08385c made it
+a2661814	b26d5d36	web: the direct path's and the share refusal's code typed, as `types` and `typed lint` read it
+ab15a9ea	ad298e31	relay-commons: the ledger records the gate's first run and its repairs
+10c98e4b	d079b769	relay-commons: the ledger records the gate passing at ab15a9ea
+535189ed	862f4947	ralph: REVIEW-audit-relay-commons done
