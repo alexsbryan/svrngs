@@ -44,8 +44,8 @@ V1.13.0 keeps each lend to exactly what you chose on its port, moves your
 computers to svrngs's own relay, and lets a phone at home skip it.
 
 **A lend reaches only what you chose.** When you lend a port, svrngs shows
-you what answers there, and you approve that: on Linux, the sockets that
-program holds; on a Mac, its process. On a Mac, a UDP program that listens
+you what answers there, and you approve that: the sockets that program
+holds, or for UDP on a Mac, its process. On a Mac, a UDP program that listens
 on every address and lets other programs listen on its port too isn't
 lent: svrngs says to have it listen on 127.0.0.1 for svrngs. svrngs checks the port before each
 connection it carries, and before and after each datagram, and carries

@@ -125,8 +125,9 @@ fn record(protocol: &str) -> Vec<u8> {
 /// uid 502, its parent and its start in 2026, and a record of another
 /// length, none; a `proc_vnodepathinfo`'s folder. Planted, each watched
 /// failing: the local and foreign addresses' offsets swapped (the ends read
-/// backwards); the uid read at 24, `pbi_gid` (20); the handle read at 136,
-/// the `socket_info`'s own start, not `socket_fdinfo`'s (another handle);
+/// backwards); the uid read at 24, `pbi_gid` (20); the generation count
+/// read at 160, `soi_so`, the handle libproc names a socket by in one read
+/// (another number);
 /// both flags read as IPv4 (the dual socket read as 0.0.0.0, not dual).
 #[test]
 fn libproc_s_records_are_read_where_they_hold_it() {
@@ -136,21 +137,25 @@ fn libproc_s_records_are_read_where_they_hold_it() {
         "the capture's length"
     );
     let mut tcp = record("tcp");
-    tcp[160..168].copy_from_slice(&0x602d_d91e_a0a6_f331u64.to_ne_bytes());
+    tcp[272..280].copy_from_slice(&0x602d_d91e_a0a6_f331u64.to_ne_bytes());
     let dialled = (at("127.0.0.1:61126"), at("127.0.0.1:61125"));
     assert_eq!(
         record::socket(&tcp),
         Some((Raw::Tcp, 0x602d_d91e_a0a6_f331, dialled, false))
     );
+    // Its generation count as captured.
     let udp = record::socket(&record("udp"));
     let bound = (at("127.0.0.1:63655"), at("0.0.0.0:0"));
-    assert_eq!(udp, Some((Raw::Udp, 0, bound, false)));
+    assert_eq!(udp, Some((Raw::Udp, 71_345_560, bound, false)));
     // The same socket on every IPv6 address, taking IPv4's too: both flags.
     let mut dual = record("udp");
     dual[288] = 3;
     dual[312..328].fill(0);
     let every = (at("[::]:63655"), at("[::]:0"));
-    assert_eq!(record::socket(&dual), Some((Raw::Udp, 0, every, true)));
+    assert_eq!(
+        record::socket(&dual),
+        Some((Raw::Udp, 71_345_560, every, true))
+    );
     let mut unix = record("tcp");
     unix[256..260].copy_from_slice(&0u32.to_ne_bytes());
     assert_eq!(record::socket(&unix), None);
@@ -236,7 +241,10 @@ fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
 /// `dual` a UDP socket on every IPv6 address taking IPv4's too, `v6only`
 /// one taking IPv6's alone; `reuseport` a TCP listener with `SO_REUSEPORT`,
 /// and `joins` one that, the first connection it accepts, closes its
-/// listener and prints `took`; on the port its second argument names, else
+/// listener and prints `took`; `relisten` a listener that, sent `!` on a
+/// connection it accepts, closes its listener and listens again on the
+/// same port; `prefork` a listener a child accepts on, as a prefork server's
+/// workers do; on the port its second argument names, else
 /// any. It prints its port and its child's pid (0 for none), and keeps each
 /// connection it accepts.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -248,7 +256,7 @@ six = how in ("dual", "v6only")
 s = socket.socket(socket.AF_INET6 if six else socket.AF_INET, socket.SOCK_DGRAM if udp else socket.SOCK_STREAM)
 if six:
     s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, how == "v6only")
-if how in ("tcp", "two", "beside", "reused", "inflight"):
+if how in ("tcp", "two", "beside", "reused", "inflight", "relisten"):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 if how in ("beside", "reuseport", "joins", "inflight", "shared"):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
@@ -283,12 +291,28 @@ if how == "handoff":
             _, fds, _, _ = socket.recv_fds(far, 1, 1)
             far.recv(1)
             os.write(fds[0], b"!")
+if how == "prefork":
+    child = os.fork()
+    while child == 0:
+        taken = s.accept()
 print(bound, child, flush=True)
 kept = []
 while True:
-    if udp:
+    if udp or how == "prefork":
         time.sleep(60)
     kept.append(s.accept())
+    if how == "relisten":
+        kept[-1][0].settimeout(1)
+        try:
+            again = kept[-1][0].recv(1) == b"!"
+        except OSError:
+            again = False
+    if how == "relisten" and again:
+        s.close()
+        s = socket.socket()
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(("127.0.0.1", bound))
+        s.listen(8)
     if how == "handoff":
         taken = kept.pop()[0]
         socket.send_fds(near, [b"x"], [taken.fileno()])
@@ -362,12 +386,18 @@ fn approved(
 /// against `approved`.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 fn carried(approved: &binding::Approved, at: &Serving) -> Result<(), binding::Held> {
-    let dialled = std::net::TcpStream::connect(("127.0.0.1", at.1)).unwrap();
+    carried_at(approved, at.1)
+}
+
+/// [`carried`], to `port`.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn carried_at(approved: &binding::Approved, port: u16) -> Result<(), binding::Held> {
+    let dialled = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
     let conn = Conn {
         local: dialled.local_addr().unwrap(),
         peer: dialled.peer_addr().unwrap(),
     };
-    let (read, took) = port(Raw::Tcp, at.1, Some(conn)).expect("the port reads");
+    let (read, took) = super::port(Raw::Tcp, port, Some(conn)).expect("the port reads");
     binding::check(Some(approved), &read, &took)
 }
 
@@ -467,6 +497,130 @@ fn a_connection_handed_to_a_process_its_program_started_is_carried() {
     let (read, took) = port(Raw::Tcp, handoff.1, Some(conn)).expect("the port reads");
     let checked = binding::check(Some(&approved), &read, &took);
     assert_eq!(checked, Ok(()), "{took:?}");
+}
+
+/// **A listener the approved process makes again on the port is held, and
+/// a prefork worker's accept is carried** (SHARE_BINDING_REVIEWS §9 #1): a
+/// TCP socket is approved by an id that lasts its life, Linux's cookie and
+/// a Mac's generation count, so a program that closes its listener and
+/// listens again on the same port, as Podman's gvproxy does for each new
+/// container, is held once it does; the listener a prefork server's child
+/// accepts on, approved by its parent's pid, carries what the child
+/// accepts. Planted, watched failing on this Mac: a Mac's TCP read not
+/// lasting (the new listener carried, as the same process's).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn a_listener_the_approved_process_makes_again_is_held() {
+    let one = Serving::new("relisten", None);
+    let approved = approved(Raw::Tcp, &one, Some(one.pid())).unwrap();
+    let mut asked = std::net::TcpStream::connect(("127.0.0.1", one.1)).unwrap();
+    std::io::Write::write_all(&mut asked, b"!").unwrap();
+    let made = |r: &binding::Read| r.sockets.iter().any(|s| !approved.sockets.contains(&s.id));
+    let again = (0..200).find(|_| {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        port(Raw::Tcp, one.1, None).is_ok_and(|(read, _)| made(&read))
+    });
+    assert!(again.is_some(), "it listens again");
+    assert_eq!(
+        carried(&approved, &one),
+        Err(binding::Held::Another),
+        "the same process's new listener"
+    );
+    let prefork = Serving::new("prefork", None);
+    assert_ne!(prefork.2, 0, "a worker");
+    let parent = super::tests::approved(Raw::Tcp, &prefork, Some(prefork.pid())).unwrap();
+    assert_eq!(carried(&parent, &prefork), Ok(()), "a worker's accept");
+}
+
+/// **A Mac's TCP sockets are read in this boot** (SHARE_BINDING_REVIEWS §9
+/// #1): its generation counts start again when the Mac does, so an approval
+/// names its boot, `kern.bootsessionuuid`'s first 64 bits, as Linux's names
+/// its boot id's; one made in a boot read as another is held. Planted,
+/// watched failing: a boot reader answering one value for every boot (an
+/// approval from another boot carried).
+#[cfg(target_os = "macos")]
+#[test]
+fn a_mac_s_tcp_sockets_are_read_in_this_boot() {
+    let one = Serving::new("tcp", None);
+    let mut approved = approved(Raw::Tcp, &one, Some(one.pid())).unwrap();
+    assert_eq!(carried(&approved, &one), Ok(()), "this boot's");
+    let this = approved.boot;
+    approved.boot = Some(0);
+    assert_eq!(
+        carried(&approved, &one),
+        Err(binding::Held::Another),
+        "another boot's"
+    );
+    let said = std::process::Command::new("sysctl")
+        .args(["-n", "kern.bootsessionuuid"])
+        .output()
+        .unwrap();
+    assert_eq!(this, boot(&String::from_utf8_lossy(&said.stdout)));
+}
+
+/// **A new container behind Podman's forwarder is held** (SHARE_BINDING_REVIEWS
+/// §9 #1): on a Mac what answers on a container's published port is Podman's
+/// gvproxy, one process for every container; a container lent on
+/// `127.0.0.1:P:80` is approved by the listener gvproxy holds for it, so
+/// another container run on P after it is held. Needs Podman's machine and
+/// busybox; the containers it runs are removed.
+#[cfg(target_os = "macos")]
+#[test]
+#[ignore = "runs Podman containers: run on a Mac by hand"]
+fn a_new_container_behind_podman_s_forwarder_is_held() {
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let published = format!("127.0.0.1:{port}:80");
+    let run = |name: &str, does: &[&str]| {
+        let _ = std::process::Command::new("podman")
+            .args(["rm", "-f", name])
+            .output();
+        let ran = std::process::Command::new("podman")
+            .args([
+                "run",
+                "-d",
+                "--name",
+                name,
+                "-p",
+                &published,
+                "docker.io/library/busybox",
+            ])
+            .args(does)
+            .output()
+            .unwrap();
+        assert!(ran.status.success(), "{ran:?}");
+        let up = (0..100).find(|_| {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            answering(Raw::Tcp, port, None).is_ok_and(|a| !a.read.sockets.is_empty())
+        });
+        assert!(up.is_some(), "{name} answers on {port}");
+    };
+    let gone = |name: &str| {
+        let _ = std::process::Command::new("podman")
+            .args(["rm", "-f", name])
+            .output();
+    };
+    run("svrngs-uid-test-a", &["httpd", "-f", "-p", "80"]);
+    let read = answering(Raw::Tcp, port, None).unwrap();
+    eprintln!("first: {:?} shown {:?}", read.read, read.shown);
+    let first = binding::approve(&read.read, None).unwrap();
+    let carried_first = carried_at(&first, port);
+    gone("svrngs-uid-test-a");
+    run(
+        "svrngs-uid-test-b",
+        &["sh", "-c", "while true; do echo other | nc -l -p 80; done"],
+    );
+    let read = answering(Raw::Tcp, port, None).unwrap();
+    eprintln!("second: {:?} shown {:?}", read.read, read.shown);
+    let carried_second = carried_at(&first, port);
+    gone("svrngs-uid-test-b");
+    assert_eq!(carried_first, Ok(()), "the container approved");
+    assert_eq!(
+        carried_second,
+        Err(binding::Held::Another),
+        "the container after it"
+    );
 }
 
 /// **A UDP socket on every IPv6 address is reached at 127.0.0.1 when it

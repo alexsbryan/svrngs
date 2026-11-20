@@ -234,12 +234,18 @@ nothing else ever adds to it. On Linux that is each socket on the port, by
 its cookie, which no later socket gets while the computer runs, and the
 cgroup it was made in, both read by sock_diag, with the boot they belong
 to; a TCP port's sockets are those listening and those bound to it and not
-listening, which may listen again. On a Mac it is the processes holding
-them, each by its pid and start: for UDP, the process that last used each
-socket, as ntstat (`com.apple.network.statistics`) lists this account's
-sockets from the kernel's record of each, while its pid still names that
-process by its unique id, a read that holds the share when its canary or
-its form is not as expected; for TCP, every holder, read by libproc. The
+listening, which may listen again. On a Mac, for TCP, it is each socket on
+the port by its generation count (`insi_gencnt`, read by libproc), which no
+later socket gets in the boot, with that boot (`kern.bootsessionuuid`;
+`kern.boottime` moves when the clock is stepped) and every holder beside
+it, by its pid and start, which judge what accepts a connection: so a
+listener the same program makes again, as Podman's gvproxy does for each
+new container, is not the one approved. For UDP it is the process that
+last used each socket, by its pid and start, as ntstat
+(`com.apple.network.statistics`) lists this account's sockets from the
+kernel's record of each, while its pid still names that process by its
+unique id, a read that holds the share when its canary or its form is not
+as expected. The
 approval also names where the door reaches the share: 127.0.0.1 when a
 socket on the port takes what is sent there, bound to it, to every IPv4
 address, or to every IPv6 address without `IPV6_V6ONLY` (sock_diag says

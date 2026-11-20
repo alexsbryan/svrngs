@@ -22,8 +22,9 @@
 //!   record of it, made with the socket, and the process that last used it,
 //!   by pid and unique id. A new client each read: about 8 µs.
 //! - macOS TCP: one scan of this account's processes' files by libproc, each
-//!   socket on the port by its handle (`soi_so`) with the processes holding
-//!   it. Its socket tables (`net.inet.*.pcblist_n`) list a process only its
+//!   socket on the port by its generation count (`insi_gencnt`), which lasts
+//!   for the socket's life, with the processes holding it, in this boot
+//!   (`kern.bootsessionuuid`). Its socket tables (`net.inet.*.pcblist_n`) list a process only its
 //!   own sockets unless Apple entitles it (`netstat` holds
 //!   `com.apple.private.network.statistics`; seen 2026-11-19, macOS 27.2.1).
 //!
@@ -326,13 +327,8 @@ mod linux {
         held: bool,
     ) -> Result<(Read, Procs, Vec<diag::Diag>), Unread> {
         let boot = std::fs::read_to_string("/proc/sys/kernel/random/boot_id").unwrap_or_default();
-        let boot: String = boot
-            .chars()
-            .filter(char::is_ascii_hexdigit)
-            .take(16)
-            .collect();
-        let boot = u64::from_str_radix(&boot, 16)
-            .map_err(|_| Unread::Failed("this computer's boot can't be read"))?;
+        let boot =
+            super::boot(&boot).ok_or(Unread::Failed("this computer's boot can't be read"))?;
         let on = if raw == Raw::Tcp {
             diag::LISTEN | diag::BOUND
         } else {
@@ -427,6 +423,16 @@ mod linux {
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 fn holding(read: &Read) -> impl Iterator<Item = (u64, Process)> + Clone + '_ {
     (read.sockets.iter()).flat_map(|s| s.holders.iter().map(|h| (s.id, *h)))
+}
+
+/// A boot by its id, a UUID as text, read as its first 64 bits: Linux's
+/// `/proc/sys/kernel/random/boot_id`, a Mac's `kern.bootsessionuuid`, each
+/// made once for a boot. Not a Mac's `kern.boottime`, which moves when the
+/// wall clock is stepped (osfmk/kern/clock.c `clock_set_calendar_microtime`).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn boot(id: &str) -> Option<u64> {
+    let hex = id.trim().replace('-', "");
+    u64::from_str_radix(hex.get(..16)?, 16).ok()
 }
 
 /// A folder as a person reads it: under their home, from `~`.
@@ -618,15 +624,16 @@ pub fn mine() -> Result<u32, &'static str> {
 }
 
 /// A Mac's share port: this account's `raw` sockets on it by their
-/// handles, each with the processes holding it, and for a TCP connection
-/// the process holding its server end and its parents ([`mac::scan`],
-/// [`mac::up`]).
+/// generation counts in this boot, each with the processes holding it, and
+/// for a TCP connection the process holding its server end and its parents
+/// ([`mac::scan`], [`mac::up`]); a UDP port as [`datagrams`] reads it.
 #[cfg(target_os = "macos")]
 fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unread> {
     let me = mine().map_err(Unread::Failed)?;
     if raw == Raw::Udp {
         return Ok((datagrams(me, port)?, Took::Datagram));
     }
+    let boot = mac::boot().ok_or(Unread::Failed("this Mac's boot can't be read"))?;
     let scan = scanned(me, raw, port, conn.map(|c| (c.peer, c.local)))?;
     let named = |pid: &i32| Some((pid.unsigned_abs(), mac::bsd(*pid)?.1));
     let socket = |(&id, (at, dual, _, pids)): (&u64, &mac::On)| binding::Socket {
@@ -637,8 +644,8 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
         dual: *dual,
     };
     let read = Read {
-        boot: None,
-        lasting: false,
+        boot: Some(boot),
+        lasting: true,
         sockets: scan.on.iter().map(socket).collect(),
         unlisted: false,
     };
@@ -789,12 +796,19 @@ pub fn mine() -> Result<u32, &'static str> {
 mod record {
     use super::*;
 
-    /// A `socket_fdinfo`'s length; its `soi_so`, the handle libproc names
-    /// it by while it lives; its `soi_protocol`; its `soi_kind`; its
-    /// `in_sockinfo`'s foreign and local ports, IPv4/IPv6 flag, and foreign
-    /// and local addresses, an IPv4 one in the last 4 bytes of its 16.
+    /// A `socket_fdinfo`'s length; its `soi_protocol`; its `soi_kind`; its
+    /// `in_sockinfo`'s foreign and local ports, its `insi_gencnt`, IPv4/IPv6
+    /// flag, and foreign and local addresses, an IPv4 one in the last 4 bytes
+    /// of its 16. `insi_gencnt` is the generation count XNU's `in_pcballoc`
+    /// gives the socket's protocol control block as it is made, from its
+    /// protocol's count (`ipi_gencnt`): one socket's for its life, every
+    /// process holding it reading the same, and another for a socket made
+    /// after it, even by the same process on the same port. On this Mac
+    /// (2026-11-20), a listener read the same bound, listening, after an
+    /// accept and in a forked child, and Podman's gvproxy, one process, held
+    /// a new one on its port for each new container.
     pub(super) const SOCKET_LEN: usize = 792;
-    const HANDLE: usize = 160;
+    const GENCNT: usize = 272;
     const PROTOCOL: usize = 180;
     const KIND: usize = 256;
     const FPORT: usize = 264;
@@ -814,7 +828,7 @@ mod record {
     pub(super) const VNODE_LEN: usize = 2352;
     const CWD: usize = 152;
 
-    /// An internet socket's protocol, its handle, its local and foreign
+    /// An internet socket's protocol, its generation count, its local and foreign
     /// address, and whether it is dual: TCP's (`SOCKINFO_TCP`) or UDP's
     /// (`SOCKINFO_IN`, protocol 17); `None` for another socket, or one of
     /// neither family. Its `insi_vflag` (socket_info.c:140) is `INP_IPV4`,
@@ -840,10 +854,10 @@ mod record {
             3 => (false, true),
             _ => return None,
         };
-        let handle = u64::from_ne_bytes(socket.get(HANDLE..HANDLE + 8)?.try_into().ok()?);
+        let gencnt = u64::from_ne_bytes(socket.get(GENCNT..GENCNT + 8)?.try_into().ok()?);
         let local = SocketAddr::new(ip(LADDR, v4)?, port(LPORT)?);
         let foreign = SocketAddr::new(ip(FADDR, v4)?, port(FPORT)?);
-        Some((raw, handle, (local, foreign), dual))
+        Some((raw, gencnt, (local, foreign), dual))
     }
 
     /// Whether a `socket_fdinfo`'s socket lets others bind beside it: its
@@ -1069,7 +1083,7 @@ mod mac {
 
     /// One scan of this account's processes ([`scan`]).
     pub(super) struct Scan {
-        /// Each socket on the port, by its handle.
+        /// Each socket on the port, by its generation count.
         pub on: BTreeMap<u64, On>,
         /// The process holding the end asked for, if found.
         pub took: Option<i32>,
@@ -1131,14 +1145,14 @@ mod mac {
                         "a socket's record of {len} bytes"
                     )));
                 }
-                let Some((_, handle, (local, foreign), dual)) =
+                let Some((_, gencnt, (local, foreign), dual)) =
                     record::socket(&socket).filter(|s| s.0 == raw)
                 else {
                     continue;
                 };
                 holds |= end.is_some_and(|(at, to)| same(local, at) && same(foreign, to));
                 if Some(local.port()) == port && (raw == Raw::Udp || foreign.port() == 0) {
-                    let at = on.entry(handle);
+                    let at = on.entry(gencnt);
                     let made = || (local.ip(), dual, record::reuses(&socket), BTreeSet::new());
                     at.or_insert_with(made).3.insert(pid);
                 }
@@ -1155,6 +1169,12 @@ mod mac {
         let read = |pid: u32| bsd(pid as i32).map(|(parent, start, _)| (pid, start, parent));
         let next = |&(pid, _, parent): &(u32, u64, u32)| read(parent).filter(|_| parent != pid);
         std::iter::successors(read(pid), next).take(64).collect()
+    }
+
+    /// This boot's id ([`super::boot`]): `kern.bootsessionuuid`, none when it
+    /// can't be read.
+    pub(super) fn boot() -> Option<u64> {
+        super::boot(&String::from_utf8_lossy(&kernel(Ask::Boot).ok()?))
     }
 
     /// Process `pid`'s parent, start and unique id, which no other process
@@ -1198,6 +1218,8 @@ mod mac {
         Bsd(i32),
         /// A process's executable's path: `proc_pidpath`.
         Path(i32),
+        /// This boot's id, a UUID as text: the `kern.bootsessionuuid` sysctl.
+        Boot,
         /// A process's `proc_vnodepathinfo`, its folder's path:
         /// `PROC_PIDVNODEPATHINFO`.
         Cwd(i32),
@@ -1387,6 +1409,17 @@ mod mac {
                     libc::close(canary);
                 }
                 return read;
+            }
+            Ask::Boot => {
+                buf = vec![0u8; 64];
+                let mut len = buf.len();
+                let (into, none) = (buf.as_mut_ptr().cast(), std::ptr::null_mut());
+                // SAFETY: the name ends in a NUL, and `len` is `buf`'s, past
+                // which the kernel writes nothing.
+                let read = unsafe {
+                    libc::sysctlbyname(c"kern.bootsessionuuid".as_ptr(), into, &mut len, none, 0)
+                };
+                c_int::try_from(len).ok().filter(|_| read == 0).unwrap_or(0)
             }
             Ask::Path(pid) => {
                 buf = vec![0u8; PATH_LEN];

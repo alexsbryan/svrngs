@@ -1040,9 +1040,10 @@ pub fn approval() -> binding::Approved {
     binding::approve(&read(), None).expect("a socket is approved")
 }
 
-/// [`approval`] as a lend's file keeps it, for a test that writes one.
+/// [`approval`] as a lend's file keeps it, for a test that writes one: its
+/// socket by its id, and, as it carries no cgroup, its holder beside it.
 pub fn approved() -> serde_json::Value {
-    serde_json::json!({ "sockets": [1], "at": "127.0.0.1" })
+    serde_json::json!({ "sockets": [1], "processes": [[1, 1]], "at": "127.0.0.1" })
 }
 
 /// `lend`, a lend's file as a test writes it, with what answers on its port
