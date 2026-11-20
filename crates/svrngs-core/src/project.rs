@@ -44,12 +44,8 @@ impl Admission {
     /// Every `Invite` held, in the record's order.
     pub fn invites(&self) -> Invites {
         let held = &self.membership().invites;
-        Invites(
-            self.ops()
-                .iter()
-                .filter_map(|op| Some((op.id.clone(), held.get(&op.id)?.clone())))
-                .collect(),
-        )
+        let invited = |op: &AdmittedOp| Some((op.id.clone(), held.get(&op.id)?.clone()));
+        Invites(self.ops().iter().filter_map(invited).collect())
     }
 
     pub fn wire(&self) -> Wire<'_> {
