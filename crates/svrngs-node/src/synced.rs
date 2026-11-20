@@ -151,15 +151,6 @@ struct Held {
     mtime: SystemTime,
 }
 
-/// Whether the file at `path` is as `held` says: absent when nothing is.
-fn unchanged(held: Option<&Held>, path: &Path) -> bool {
-    match (held, std::fs::symlink_metadata(path)) {
-        (None, meta) => meta.is_err(),
-        (Some(h), Ok(m)) => m.len() == h.p.size && m.modified().ok() == Some(h.mtime),
-        (Some(_), Err(_)) => false,
-    }
-}
-
 fn io(path: &Path) -> impl Fn(std::io::Error) -> FolderError + '_ {
     move |e| FolderError::Read(path.to_path_buf(), e)
 }
@@ -450,7 +441,10 @@ impl Folders {
                     continue;
                 }
             };
-            if !seen.insert(rel.clone()) || unchanged(held.get(&rel), &path) {
+            // Judged by the walk's stat of the file, as `take` judges what it
+            // took against (folder.rs, its `was`).
+            let same = |h: &Held| meta.len() == h.p.size && meta.modified().ok() == Some(h.mtime);
+            if !seen.insert(rel.clone()) || held.get(&rel).is_some_and(same) {
                 continue;
             }
             let was = held.get(&rel).map(|h| (h.p.size, h.mtime));
