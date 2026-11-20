@@ -1749,8 +1749,8 @@ async fn keep_sharing_it_approves_only_what_the_page_showed() {
 /// program can't be read (a Mac's whose holder exited, or on Linux one of
 /// this account's whose files can't be read), no reader and a read that
 /// failed each get none; a read that couldn't be made, or a program that
-/// couldn't, says why in `unread`, apart from nothing answering (`answers:
-/// []`). Linux's socket of another account, shown as its account, gets one,
+/// couldn't, a Mac's of another account's among them, says why in `unread`,
+/// apart from nothing answering (`answers: []`). Linux's socket of another account, shown as its account, gets one,
 /// and its token alone approves it; beside it a socket on a LAN address,
 /// which the door never dials, is neither shown nor approved. The route
 /// refuses the unjudged socket's token in words, and a pid without its
@@ -1761,7 +1761,8 @@ async fn keep_sharing_it_approves_only_what_the_page_showed() {
 /// (the unjudged socket given one); a token for every held lend; a socket
 /// shown nothing let through (Linux's unread program given a token, said as
 /// nothing answering); every socket's entry shown (the LAN one's program
-/// listed beside the account).
+/// listed beside the account); a Mac's port another account answers given
+/// no `unread` (said as nothing answering).
 #[tokio::test]
 async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
     use serde_json::{json, Value};
@@ -1860,7 +1861,12 @@ async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
             json!([]),
             Value::Null,
         ),
-        ("a Mac's other account", Ok(theirs), json!([]), Value::Null),
+        (
+            "a Mac's other account",
+            Ok(theirs),
+            Value::Null,
+            json!({ "why": "failed", "detail": "a program of another account answers there" }),
+        ),
         (
             "its program unread",
             Ok(unjudged.clone()),

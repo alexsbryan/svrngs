@@ -696,6 +696,8 @@ pub(crate) async fn offered(door: &Door, lender: bool) -> Result<Vec<Offered>, R
                 let unread = match &approving {
                     Err(ShareRefusal::NoReader(_)) => Some(Unread::NoReader),
                     Err(ShareRefusal::Unread(_, why)) => Some(Unread::Failed(why)),
+                    // A Mac shows svrngs only this account's programs.
+                    Err(ShareRefusal::NotYours(_)) => Some(Unread::Failed("a program of another account answers there")),
                     _ => None,
                 };
                 tracing::debug!(target: "door", lend = %lend.name, ?unread, ?approving, "door: lends — what answers on a held lend's port, or why it couldn't be read, and a token only where approving it would be taken");
