@@ -129,7 +129,7 @@ impl AppName {
 /// A path the door refuses for one lend, and every path under it at a
 /// segment boundary. Kept as the lender wrote it, compared as
 /// [`Self::covers`] says.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RefusedPath(String);
 svrngs_core::text_newtype!(RefusedPath);
 
@@ -289,7 +289,8 @@ impl Raw {
 /// representation"): the explicit stable group IDs its lender chose, or the
 /// legacy declaration that named none. A closed type (AGENTS 9) so a
 /// selection is never confused with its absence.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(from = "Option<Vec<String>>", into = "Option<Vec<String>>")]
 pub enum Audience {
     /// A declaration that predates selection, or one never stamped: no
     /// group is reached, and the person must choose. Never all groups
@@ -300,6 +301,18 @@ pub enum Audience {
     /// is paused to groups; a carried app's own group is separate and never
     /// stored here ([`Source::Carried`]).
     Selected(Vec<String>),
+}
+
+impl From<Option<Vec<String>>> for Audience {
+    fn from(ids: Option<Vec<String>>) -> Self {
+        ids.map_or(Audience::Legacy, Audience::Selected)
+    }
+}
+
+impl From<Audience> for Option<Vec<String>> {
+    fn from(audience: Audience) -> Self {
+        audience.ids().map(<[String]>::to_vec)
+    }
 }
 
 impl Audience {
@@ -332,56 +345,111 @@ pub struct Lend {
 /// The terms a lend is lent on, as its lender declared them: which groups
 /// it is lent to, how many people may use it at once, what the door
 /// refuses of it, the upload its lender declares, if any, and the rest.
-/// None of them, for a carried app's own ([`Lend::carried`]).
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+/// None of them, for a carried app's own ([`Lend::carried`]). As its
+/// declaration keeps them, beside its [`Head`]: a field it does not know is
+/// refused, not ignored, since a misspelt `refused` read as no refusals
+/// would open what the lender closed (ARCH 6). A limit absent is none —
+/// everyone at once, never a number nobody chose — and an upload absent is
+/// none declared.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Terms {
-    /// The groups its lender explicitly chose (LENDING_SCOPE). A carried
-    /// app's audience is its own group ([`Source::Carried`]), never this.
+    /// The groups its lender explicitly chose (LENDING_SCOPE), by their
+    /// stable IDs. A carried app's audience is its own group
+    /// ([`Source::Carried`]), never this. Absent is a legacy declaration
+    /// that named none: paused, needing selection, never all groups (ARCH
+    /// 6). `deny_unknown_fields` makes an old binary refuse a scoped file
+    /// rather than share it globally on downgrade: written always, `null`
+    /// for legacy, so every file this build writes is refused by an old one.
+    #[serde(default, rename = "groups")]
     pub audience: Audience,
     /// How many people may use it at once (DESIGN §3, "Too many at once"):
     /// none when its lender names no number, and then everyone in its
     /// selected groups (bash-limit; the operator, 2026-10-12).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<NonZeroU16>,
+    /// Each read as [`RefusedPath::parse`] reads it ([`read`]).
+    #[serde(default)]
     pub refused: Vec<RefusedPath>,
     /// None when its lender declares none: then no request through the
     /// door is told a share, rather than one of a figure nobody stated.
+    #[serde(
+        default,
+        rename = "upload_bps",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub upload: Option<Upload>,
     /// The kinds of lend its pages read (u5-2, `svrngs share --reads`):
     /// a phone's page passes whoever opens it to the group's lends of each
     /// kind too, as that person (DESIGN §3, "Lent apps", call 6). A carried
     /// app's are its reads.txt's, read as each person runs it
     /// ([`crate::folder::Folders::reads`]), and none here.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub reads: Vec<Program>,
     /// Its sign-in with svrngs when it says so (SIGN_IN_WITH_SVRNGS §5,
     /// "Turning it on"): the client id and secret its lender copies into
     /// the app's own settings form. This is the one place the provider
-    /// reads them.
+    /// reads them. Read as [`SignInWithSvrngs::checked`] reads it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sign_in_with_svrngs: Option<SignInWithSvrngs>,
     /// What an app receives of it, in its lender's words (sup-2, `svrngs
     /// share --ask`): a lend that asks lets an app in only on its person's
     /// yes ([`crate::door::choices`]). svrngs carries the words to every
     /// list and never reads them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub asks: Option<String>,
     /// Its `sends:` rows, its lender's yes to its terms' (CONTRACTS §2, "The
     /// lend is the yes"): where a carried app may send to it, as its person
-    /// says ([`crate::door::admit`]). None for a carried app's own.
+    /// says ([`crate::door::admit`]). None for a carried app's own. Each
+    /// parsed as it is read ([`SendRow`]); an svrngs from before sends
+    /// refuses a file that holds one, never reading it as a lend that
+    /// sends nothing.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sends: Vec<SendRow>,
     /// The uid of the account whose program answered on its port when it
     /// was lent (svrn-docs LEND_OWNER §4): the door carries a connection
     /// only to that account's ([`crate::door::bound`]). None for a carried
     /// app, which svrngs serves itself, for one lent before this, which its
     /// first connection records, and where this computer has no reader.
+    /// An svrngs from before owners refuses a file that holds one, so a
+    /// downgrade lends nothing unbound.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub owner: Option<u32>,
     /// The sandbox its program ran in when it was lent, read with `owner`
     /// for a program of the account svrngs runs as: the door carries a
     /// connection only to that one's, or to a program in none
     /// ([`crate::door::bound`]). None where `owner` is, and for another
     /// account's program, whose sandbox is that account's to read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sandbox: Option<Sandbox>,
     /// The program it was lent from, read with `sandbox` (svrn-docs
     /// LEND_PROGRAM): the door carries a connection only to the same one
     /// ([`crate::door::bound`]). None where `sandbox` is.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub command: Option<Command>,
+}
+
+/// What a declaration says beside a lend's [`Terms`]: the port it is
+/// answered on, `raw` absent for a page's, as every declaration before
+/// give-udp is; and what it is, refused when absent, never taken as a
+/// default nobody declared. First in the file, as it always was.
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Head {
+    port: NonZeroU16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    raw: Option<Raw>,
+    kind: Program,
+}
+
+/// A declaration as it is written: its [`Head`], then its [`Terms`], each
+/// key where it always was.
+#[derive(Serialize)]
+struct Declared<'a> {
+    #[serde(flatten)]
+    head: Head,
+    #[serde(flatten)]
+    terms: &'a Terms,
 }
 
 /// The sandbox a program runs in (svrn-docs LEND_SANDBOX): none, so it can
@@ -461,58 +529,6 @@ impl Lend {
     pub fn refusing(&self, path: &str) -> Option<&RefusedPath> {
         self.terms.refused.iter().find(|r| r.covers(path))
     }
-}
-
-/// The declaration's form on disk. A field it does not know is refused, not
-/// ignored: a misspelt `refused` read as no refusals would open what the
-/// lender closed (ARCH 6). A kind absent is refused too, never taken as a
-/// default nobody declared. A limit absent is none — everyone at once,
-/// never a number nobody chose — and an upload absent is none declared.
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct LendFile {
-    port: NonZeroU16,
-    /// Absent for a page's port, as every declaration before give-udp is.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    raw: Option<Raw>,
-    kind: Program,
-    /// The groups this lend is lent to (LENDING_SCOPE), by their stable
-    /// IDs. Absent is a legacy declaration that named none: paused, needing
-    /// selection, never all groups (ARCH 6). Present and empty is paused;
-    /// `deny_unknown_fields` makes an old binary refuse a scoped file rather
-    /// than share it globally on downgrade. Written always, `null` for
-    /// legacy, so every file this build writes is refused by an old one.
-    #[serde(default)]
-    groups: Option<Vec<String>>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    limit: Option<NonZeroU16>,
-    #[serde(default)]
-    refused: Vec<String>,
-    #[serde(
-        default,
-        rename = "upload_bps",
-        skip_serializing_if = "Option::is_none"
-    )]
-    upload: Option<Upload>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    reads: Vec<Program>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sign_in_with_svrngs: Option<SignInWithSvrngs>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    asks: Option<String>,
-    /// Each parsed as it is read ([`SendRow`]); an svrngs from before sends
-    /// refuses a file that holds one (`deny_unknown_fields`), never reading
-    /// it as a lend that sends nothing.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    sends: Vec<SendRow>,
-    /// An svrngs from before owners refuses a file that holds one
-    /// (`deny_unknown_fields`), so a downgrade lends nothing unbound.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    owner: Option<u32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sandbox: Option<Sandbox>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    command: Option<Command>,
 }
 
 /// The characters a sign-in client's id and secret may be made of
@@ -772,34 +788,26 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         }
         Err(source) => return Err(LendError::Unreadable { path, source }),
     };
-    let file: LendFile =
-        serde_json::from_str(&text).map_err(|source| LendError::Malformed { path, source })?;
-    let refused = file
-        .refused
-        .iter()
-        .map(|r| RefusedPath::parse(r))
-        .collect::<Result<_, _>>()?;
-    let sign_in_with_svrngs = file
-        .sign_in_with_svrngs
-        .map(SignInWithSvrngs::checked)
-        .transpose()?;
+    let malformed = |source| LendError::Malformed {
+        path: path.clone(),
+        source,
+    };
+    let mut file: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(&text).map_err(malformed)?;
+    let head = ["port", "raw", "kind"].map(|k| Some((k.to_string(), file.remove(k)?)));
+    let head = serde_json::Map::from_iter(head.into_iter().flatten());
+    let Head { port, raw, kind } = serde_json::from_value(head.into()).map_err(malformed)?;
+    let mut terms: Terms = serde_json::from_value(file.into()).map_err(malformed)?;
+    for refused in &terms.refused {
+        RefusedPath::parse(refused.as_str())?;
+    }
+    let client = terms.sign_in_with_svrngs.map(SignInWithSvrngs::checked);
+    terms.sign_in_with_svrngs = client.transpose()?;
     Ok(Some(Lend {
         name: name.clone(),
-        source: (file.raw).map_or(Source::Port(file.port), |r| Source::Raw(r, file.port)),
-        kind: file.kind,
-        terms: Terms {
-            audience: file.groups.map_or(Audience::Legacy, Audience::Selected),
-            limit: file.limit,
-            refused,
-            upload: file.upload,
-            reads: file.reads,
-            sign_in_with_svrngs,
-            asks: file.asks,
-            sends: file.sends,
-            owner: file.owner,
-            sandbox: file.sandbox,
-            command: file.command,
-        },
+        source: raw.map_or(Source::Port(port), |r| Source::Raw(r, port)),
+        kind,
+        terms,
     }))
 }
 
@@ -992,21 +1000,14 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
     };
     let dir = lends_dir(data_dir);
     std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
-    let file = LendFile {
+    let head = Head {
         port,
         raw,
         kind: lend.kind.clone(),
-        groups: lend.terms.audience.ids().map(<[String]>::to_vec),
-        limit: lend.terms.limit,
-        refused: lend.terms.refused.iter().map(|r| r.0.clone()).collect(),
-        upload: lend.terms.upload,
-        reads: lend.terms.reads.clone(),
-        sign_in_with_svrngs: lend.terms.sign_in_with_svrngs.clone(),
-        asks: lend.terms.asks.clone(),
-        sends: lend.terms.sends.clone(),
-        owner: lend.terms.owner,
-        sandbox: lend.terms.sandbox.clone(),
-        command: lend.terms.command.clone(),
+    };
+    let file = Declared {
+        head,
+        terms: &lend.terms,
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));
