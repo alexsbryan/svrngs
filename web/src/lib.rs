@@ -193,7 +193,7 @@ fn handed(relays: &[String]) -> Result<Vec<RelayUrl>, JsError> {
 /// carries none: from a computer that reached no relay, with n0's lookup
 /// or without it (`cli::link_relay`, relay-park (c)), or one naming only
 /// routes the published policy refuses.
-async fn bind_for(key: Vec<u8>, token: &str, meets: &[String], held: bool) -> Result<Bound, JsError> {
+async fn bind_for(key: Vec<u8>, token: &str, meets: &[String]) -> Result<Bound, JsError> {
     let Some(link) = Token::decode(token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
     };
@@ -203,15 +203,18 @@ async fn bind_for(key: Vec<u8>, token: &str, meets: &[String], held: bool) -> Re
     if relays.is_empty() {
         refuse!("LAYER parse: REFUSED — the link names no relay this page's policy takes")
     }
-    bind(key, Some(issuer), relays, held, None).await
+    bind(key, Some(issuer), relays, None).await
 }
 
 /// Bind an endpoint as the person whose key is `key` — or a pass's holder —
 /// reaching the network through `relays` alone, and wait until it is online,
 /// or [`dial::LINK_WITHIN`] passes with no relay answering, when the endpoint
 /// is closed and the bind refused. `issuer` is whom it dials when no other
-/// computer is named. One that dials lenders is `held` as [`dial::held`]
-/// says; the one a link's dial binds for itself waits as iroh does.
+/// computer is named. It holds no transport config of its own: every dial
+/// from it is [`reach`]'s, which names one per connection, a lender's
+/// held as [`dial::held`] says and the issuer's as iroh holds one, and
+/// iroh takes that in place of the endpoint's (iroh-1.4.2 endpoint.rs:
+/// 1146-1149); a browser is never dialled, so no server config reads it.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
@@ -228,7 +231,6 @@ async fn bind(
     key: Vec<u8>,
     issuer: Option<iroh::PublicKey>,
     relays: Vec<RelayUrl>,
-    held: bool,
     token: Option<String>,
 ) -> Result<Bound, JsError> {
     t!("LAYER page: wasm module loaded and dial entered (iroh =1.4.2)");
@@ -257,11 +259,10 @@ async fn bind(
     });
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
-        .relay_mode(mode)
-        .transport_config(if held { dial::held(None) } else { Default::default() });
+        .relay_mode(mode);
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
-    t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: {held})…");
+    t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)…");
     // It offers no protocol: a browser is never dialled (DESIGN §3, call 2).
     let ep = match builder.bind().await {
         Ok(e) => e,
@@ -462,7 +463,7 @@ impl Dialled {
 /// link's computer by [`Endpoint::dial_link`]; #172 took the second way.)
 #[wasm_bindgen]
 pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    let bound = bind_for(key, &token, &[], false).await?;
+    let bound = bind_for(key, &token, &[]).await?;
     let conn = reach(&bound, None, None, Alpn::Redeem, None).await?.conn;
     let ep = Some(bound.ep);
     Ok(Dialled { ep, conn })
@@ -477,7 +478,7 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 #[wasm_bindgen]
 pub async fn endpoint(key: Vec<u8>, token: String, meets: Option<Vec<String>>) -> Result<Endpoint, JsError> {
     Ok(Endpoint {
-        bound: bind_for(key, &token, &meets.unwrap_or_default(), true).await?,
+        bound: bind_for(key, &token, &meets.unwrap_or_default()).await?,
     })
 }
 
@@ -496,7 +497,7 @@ pub async fn holder_endpoint(key: Vec<u8>, relays: Vec<String>, pass: String) ->
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
     Ok(Endpoint {
-        bound: bind(key, None, parsed, true, Some(pass)).await?,
+        bound: bind(key, None, parsed, Some(pass)).await?,
     })
 }
 
