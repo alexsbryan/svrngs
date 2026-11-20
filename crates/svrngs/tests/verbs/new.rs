@@ -380,7 +380,7 @@ async fn new_asks_the_svrngs_running_here_to_make_the_group() {
 
     let heard = String::from_utf8(heard.0.lock().unwrap().clone()).unwrap();
     for trace in [
-        "cli: new — svrngs runs here already, so it is asked to make the group",
+        "cli: svrngs runs here already, so it is asked",
         "group: made for the command's `new` by the svrngs running here",
     ] {
         assert!(heard.contains(trace), "{trace}: {heard}");
