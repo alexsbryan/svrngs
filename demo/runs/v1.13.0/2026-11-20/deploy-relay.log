@@ -1,0 +1,18 @@
+deploy-relay: checking root@<box> answers over ssh
+deploy-relay: building 198b8964 for linux-x86_64
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 1m 02s
+
+built: /tmp/tmp.JgFT8HKYtE/site/get
+7f3765019e4ee32585c4235097a988872094a1f9c5c2a8ada187fbf7a47efa0e  svrngs-linux-x86_64.tar.gz
+086b68bca9f823aa1c397d23f9b8edf27debb468db37697bd312ffc0780eb54c  give-linux-x86_64.tar.gz
+Synchronizing state of unattended-upgrades.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable unattended-upgrades
+ADDRESS4=<ip>
+deploy-relay: root@<box> cannot reach out over IPv6, so the name gets no AAAA; run this again once it can
+deploy-relay: relay.svrnme.sh already has its A record (<ip>)
+deploy-relay: waiting for https://relay.svrnme.sh/ to answer — the name, then its certificate
+deploy-relay: https://relay.svrnme.sh/ answers; a build whose default it is may be published now (scripts/deploy-page.sh)
