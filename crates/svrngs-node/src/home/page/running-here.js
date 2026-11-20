@@ -7,7 +7,7 @@ import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LEND } from './lend-found.js?v=__VERSION__';
 import { GroupChoice } from './group-choice.js?v=__VERSION__';
-import { needs, RUNNING } from './running-look.js?v=__VERSION__';
+import { answered, needs, RUNNING } from './running-look.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import { Shown, State } from './running-look.js?v=__VERSION__' */
@@ -54,6 +54,14 @@ const FIELDS = [
 const chosen = (groups, ticked) =>
   groups.filter((group) => ticked.includes(group.id)).map((group) => group.name ?? 'this group');
 
+// The process the look showed on a port and its start, which the lend
+// sends, so a program that changed since is refused (SHARE_BINDING §5.1).
+/** @param {Shown} shown */
+const shownProcess = ({ answer }) => ({ pid: answer?.pid ?? null, start: answer?.start ?? null });
+// What the look read answering on a port, said.
+/** @param {Shown} shown */
+const runs = ({ answer }) => (answer ? ` It is ${answered(answer)}.` : '');
+
 /** @param {FoundProps} props */
 function Found({ r: shown, named, groups, home }) {
   const [state, send] = useMachine(() =>
@@ -64,6 +72,7 @@ function Found({ r: shown, named, groups, home }) {
       kind: '',
       said: '',
       groups: [],
+      ...shownProcess(shown),
     }),
   );
   const at = `http://localhost:${shown.port}`;
@@ -74,8 +83,8 @@ function Found({ r: shown, named, groups, home }) {
   }
   const known = named.length ? `; if it is ${named.join(' or ')}, say that` : '';
   const said = shown.kind
-    ? `${shown.kind}, at ${at}. ${needs(shown)} `
-    : `Something at ${at}. To lend it, give it a name and say which program it is, each one word${known}. `;
+    ? `${shown.kind}, at ${at}.${runs(shown)} ${needs(shown)} `
+    : `Something at ${at}.${runs(shown)} To lend it, give it a name and say which program it is, each one word${known}. `;
   const fields =
     !shown.kind &&
     FIELDS.map(

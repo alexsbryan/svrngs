@@ -877,25 +877,61 @@ test('each lend is one line with its form folded under it, and the wide button i
   assert.ok(phone.includes('<tbody id="lent">'));
 });
 
-// A lend whose port another program answers, or whose program svrngs
-// can't tell, says so on its lender's line (door.rs `answering`,
-// lent-row.js `HELD`), what to do beside it, and the program it is kept to
-// by name (door.rs `offered`). Planted, watched failing: lent-row.js not
-// reading `held`; not reading `command`.
-test('a lend held from another account’s program says why on its lender’s line', async () => {
-  const summary = async (/** @type {string} */ held) =>
-    (
-      await home(ada({ lent: [lend('shelf', { answering: true, held, command: 'python3' })] }))
-    ).text('#lent li details summary')[0];
+// A lend held for what answers on its port says why on its lender's line
+// and every program that answers now (door.rs `answering` and `offered`,
+// lent-row.js `HELD`; SHARE_BINDING §5.5), and Keep sharing it approves
+// what its line showed, by the token it was listed with, with the first
+// process's pid and start, at /v1/lends/<name>/approve and nothing else
+// (lend-change.js `approve`; SHARE_BINDING_REVIEWS §6 #6); one svrngs can't
+// read, or listed with no token, offers no approval. Planted, each watched
+// failing: lent-row.js not reading `answers` (no "Now answering"); the
+// approval posted with no token (`{ pid, start }`).
+test('a held lend says what answers now, and Keep sharing it approves that', async () => {
+  const answers = [
+    { pid: 812, start: 1_763_600_000, program: 'python3', folder: '~/dev/garden' },
+    { account: '_resolve' },
+  ];
+  const approved = [];
+  const page = async (/** @type {string} */ held, token = '00c0ffee00c0ffee') =>
+    home(
+      ada({
+        lent: [lend('shelf', { answering: true, held, answers, token })],
+        'POST /v1/lends/shelf/approve': (body) => (approved.push(body), { name: 'shelf' }),
+      }),
+    );
+  const unapproved = await page('unapproved');
   assert.ok(
-    (await summary('another')).includes(
-      'Kept to python3 as it runs now. Another program is answering on shelf’s port, so nobody can open shelf. Start shelf again as you started it, or lend it again to keep it to what runs there now.',
-    ),
+    unapproved
+      .text('#lent li details summary')[0]
+      .includes(
+        'shelf is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each datagram, and closes it when something you didn’t choose is there. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
+      ),
   );
+  await unapproved.press('#lent li button', 'Keep sharing it');
+  assert.deepEqual(approved, [{ token: '00c0ffee00c0ffee', pid: 812, start: 1_763_600_000 }]);
+  const another = (await page('another')).text('#lent li details summary')[0];
   assert.ok(
-    (await summary('unjudged')).includes(
-      'svrngs can’t tell whose program is on shelf’s port, so nobody can open shelf. Start it again, or lend it again.',
+    another.includes(
+      'Something you didn’t approve was on shelf’s port, so shelf is closed for now. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
     ),
+    another,
+  );
+  const untokened = await page('another', '');
+  assert.deepEqual(
+    untokened.text('#lent li button').filter((b) => b === 'Keep sharing it'),
+    [],
+  );
+  const unjudged = await page('unjudged');
+  assert.ok(
+    unjudged
+      .text('#lent li details summary')[0]
+      .includes(
+        'svrngs can’t tell what answers on shelf’s port, so nobody can open shelf. Start it again.',
+      ),
+  );
+  assert.deepEqual(
+    unjudged.text('#lent li button').filter((b) => b === 'Keep sharing it'),
+    [],
   );
 });
 

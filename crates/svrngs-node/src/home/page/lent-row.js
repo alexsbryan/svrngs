@@ -13,6 +13,7 @@ import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
 import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
 import { notRunning } from '../question.js?v=__VERSION__';
+import { answered } from './running-look.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 /** @import { AppsAccount } from './lent-read.js?v=__VERSION__' */
 /** @import { State, Message } from './lend-change.js?v=__VERSION__' */
@@ -143,24 +144,37 @@ function Headers({ name, kept, state, doing, send }) {
   `;
 }
 
-// Why nobody can open a lend while its program runs (door.rs `answering`):
-// what answers on its port isn't the account, sandbox or program it was
-// lent from.
+// Why nobody can open a lend (door.rs `answering`, SHARE_BINDING §5.5), and
+// what answers on its port now, which Keep sharing it approves.
 const HELD = {
+  unapproved: (/** @type {string} */ name) =>
+    ` ${name} is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each datagram, and closes it when something you didn’t choose is there.`,
   another: (/** @type {string} */ name) =>
-    ` Another program is answering on ${name}’s port, so nobody can open ${name}. Start ${name} again as you started it, or lend it again to keep it to what runs there now.`,
+    ` Something you didn’t approve was on ${name}’s port, so ${name} is closed for now.`,
   unjudged: (/** @type {string} */ name) =>
-    ` svrngs can’t tell whose program is on ${name}’s port, so nobody can open ${name}. Start it again, or lend it again.`,
+    ` svrngs can’t tell what answers on ${name}’s port, so nobody can open ${name}. Start it again.`,
 };
-/** @param {{ name: string, held?: 'another' | 'unjudged' }} lend */
-const heldWords = (lend) => (lend.held ? HELD[lend.held](lend.name) : '');
-// The program it is kept to, by its name (door.rs `offered`).
-const keptTo = (/** @type {Lend} */ lend) =>
-  lend.command ? ` Kept to ${lend.command} as it runs now.` : '';
+/** @param {Lend} lend */
+const heldWords = (lend) => {
+  const now = (lend.answers ?? []).map(answered).join(' and ');
+  return lend.held ? `${HELD[lend.held](lend.name)}${now && ` Now answering: ${now}.`}` : '';
+};
 
-// Whether apps wait on the lender: an account or key to make, or why not.
-const undone = (/** @type {AppsAccount | undefined} */ account) =>
-  account !== undefined && !account.kept;
+// Keep sharing it, on a lend held for what answers on its port: everything
+// it says answers now approved, by the token it was listed with, and the
+// first process shown (lend-change.js `approve`).
+/** @param {{ lend: Lend, doing: { state: string }, send: (message: Message) => void }} props */
+function Keep({ lend, doing, send }) {
+  const first = lend.answers?.[0];
+  if (!lend.held || lend.held === 'unjudged' || !first || !lend.token) return null;
+  const shown = { token: lend.token, pid: first.pid, start: first.start };
+  return html`<${Act} words="Keep sharing it" doing=${doing} on=${{ type: 'approve', shown }} send=${send} />`;
+}
+
+// Whether the lend waits on its lender: an account or key for apps to make,
+// or what answers on its port to approve.
+const undone = (/** @type {AppsAccount | undefined} */ account, /** @type {Lend} */ lend) =>
+  (account !== undefined && !account.kept) || Boolean(lend.held);
 
 /** @param {LentProps} props */
 export function Lent({ l: lend, signs, account, headers, groups, home }) {
@@ -175,7 +189,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const limited = (limit ?? 0) > 0;
   const people = limit === 1 ? 'person' : 'people';
   const howMany = limited ? `up to ${limit} ${people}` : 'everyone in the groups you chose';
-  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${keptTo(lend)}${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
+  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
   const letEveryone =
@@ -208,8 +222,9 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   `;
   return html`
     <li>
-      <details open=${undone(account)} aria-label=${lend.name}>
+      <details open=${undone(account, lend)} aria-label=${lend.name}>
       <summary>${words}</summary>
+      <${Keep} lend=${lend} doing=${doing} send=${send} />
       <${Field}
         words="How many people at once: "
         value=${value}

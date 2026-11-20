@@ -64,9 +64,25 @@ test('a new lend chooses its groups and sends exactly those stable ids', () => {
       kind: null,
       groups: ['house'],
       terms: null,
+      pid: null,
+      start: null,
       failed: 'refused',
     },
   ]);
+});
+
+// The program the look showed on the port is sent with its start, so the
+// lend approves what was shown and a program that changed since is refused
+// (home.rs `lend_one`; SHARE_BINDING §5.1). Planted, watched failing: the
+// effect's `pid` always null.
+test('a lend sends the process its look showed, and its start', () => {
+  const [, out] = run(
+    LEND,
+    { ...NEW, pid: 812, start: 1_763_600_000 },
+    { type: 'choose', id: 'house', on: true },
+    { type: 'lend' },
+  );
+  assert.deepEqual([out[1][0].pid, out[1][0].start], [812, 1_763_600_000]);
 });
 
 // The terms a group's own programs file adds, drawn by the first press

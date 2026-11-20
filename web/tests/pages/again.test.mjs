@@ -286,7 +286,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
   await at.tick(`${row} input[type=checkbox]`);
   await at.press(`${row} button`, 'Lend it to house');
   assert.deepEqual(posted, [
-    { port, name: 'notes', kind: 'notes', groups: ['house'], terms: null },
+    { port, name: 'notes', kind: 'notes', groups: ['house'], terms: null, pid: null, start: null },
   ]);
   assert.ok(at.text(row)[0].startsWith('You lent notes'), at.text(row)[0]);
   assert.ok(at.text('#home .index').join().includes('ada’s notes'), at.text('#home .index').join());

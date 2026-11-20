@@ -22,6 +22,12 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  */
 
 /**
+ * What Keep sharing it approves: what its line showed answering, by the
+ * token it was listed with, and the first process shown, if one.
+ * @typedef {{ token: string, pid?: number, start?: number }} Shown
+ */
+
+/**
  * A change of a lend: how many it lets in at once, a number or everyone
  * (`null`); its audience, the group ids that can open it; or its lending
  * stopped; or the account apps read it through, its name and password
@@ -62,6 +68,7 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  *   | { type: 'audience' }
  *   | { type: 'sign' }
  *   | { type: 'many', value: string }
+ *   | { type: 'approve', shown: Shown }
  *   | { type: 'changed', why: string }
  *   | { type: 'signed', c: Signed, why: string }
  *   | { type: 'refused', why: string }} Message
@@ -70,7 +77,8 @@ import { chosen } from './group-choice.js?v=__VERSION__';
 /**
  * The effects a row's step answers: the change posted, and signing on.
  * @typedef {{ run: 'change', to: To, failed: 'refused' }
- *   | { run: 'sign', failed: 'refused' }} Effect
+ *   | { run: 'sign', failed: 'refused' }
+ *   | { run: 'approve', shown: Shown, failed: 'refused' }} Effect
  */
 
 // What a change made clears: the typed fields, the password among them, and
@@ -116,6 +124,16 @@ export const CHANGE = (lend, home) => ({
         home({ type: 'again' });
         return { type: 'changed', why: 'the groups read again' };
       }),
+    // Keep sharing it: what answers now approved only as it was listed, by
+    // its token, with the process shown and its start (SHARE_BINDING §5.4),
+    // and nothing else of it changed.
+    approve: ({ shown: { token, pid, start } }) =>
+      post(`/v1/lends/${lend}/approve`, pid === undefined ? { token } : { token, pid, start }).then(
+        () => {
+          home({ type: 'again' });
+          return { type: 'changed', why: 'what answers approved' };
+        },
+      ),
     sign: () =>
       post('/lent', { lend, to: 'sign-in' }).then((signIn) => ({
         type: 'signed',
@@ -135,6 +153,8 @@ export const CHANGE = (lend, home) => ({
         return change(state, message.to);
       case 'sign':
         return changing(state, { run: 'sign', failed: 'refused' });
+      case 'approve':
+        return changing(state, { run: 'approve', shown: message.shown, failed: 'refused' });
       case 'many':
         if (!/^[1-9][0-9]*$/.test(message.value))
           return go(state, { change: 'refused' }, { said: ' Say how many: 1 or more.' });

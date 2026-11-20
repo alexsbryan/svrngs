@@ -27,7 +27,20 @@ import { get } from './routes.js?v=__VERSION__';
  * @property {Signs | null} signs
  * @property {string[] | null} keeps
  * @property {string | null} [unknown]
+ * @property {Answer | null} [answer] what answers on it, as svrngs read it
+ *   (SHARE_BINDING §5.1): a program of this account's, or another account
  */
+
+/**
+ * What holds a port, as svrngs read it to show its lender (lend.rs
+ * `Answer`): a program, by its process and start, or another account.
+ * @typedef {{ pid?: number, start?: number, program?: string, folder?: string, account?: string }} Answer
+ */
+
+// What answers, as its lender reads it: "python3 in ~/dev/garden".
+/** @param {Answer} answer */
+export const answered = ({ account, program, folder }) =>
+  account ? `a program of the account ${account}` : `${program}${folder ? ` in ${folder}` : ''}`;
 
 /**
  * RUNNING's state: where its look is, what it found and the kinds the

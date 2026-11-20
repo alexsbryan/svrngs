@@ -31,6 +31,8 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * @property {string} kind
  * @property {string} said
  * @property {string[]} groups
+ * @property {number | null} [pid] the process the look showed on the port
+ * @property {number | null} [start] its start, so one that changed since is refused
  * @property {string} [terms] the text of its groups' own terms, drawn
  * @property {Shown} [l]
  */
@@ -52,7 +54,7 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * The effects its step answers: the port lent, by the name and kind
  * typed, `null` where none is, to the groups chosen, by their stable ids;
  * and HOME told to read the groups again.
- * @typedef {{ run: 'lend', port: number, name: string | null, kind: string | null, groups: string[], terms: string | null, failed: 'refused' }
+ * @typedef {{ run: 'lend', port: number, name: string | null, kind: string | null, groups: string[], terms: string | null, pid: number | null, start: number | null, failed: 'refused' }
  *   | { run: 'again', failed: 'told' }} Effect
  */
 
@@ -63,8 +65,8 @@ import { chosen } from './group-choice.js?v=__VERSION__';
 export const LEND = (home) => ({
   states: { lend: ['unlent', 'lending', 'lent'] },
   io: {
-    lend: ({ port, name, kind, groups, terms }) =>
-      post('/running', { port, name, kind, groups, terms }).then((lend) =>
+    lend: ({ port, name, kind, groups, terms, pid, start }) =>
+      post('/running', { port, name, kind, groups, terms, pid, start }).then((lend) =>
         lend.terms === undefined
           ? { type: 'lent', l: lend, why: lend.name }
           : { type: 'drawn', terms: lend.terms, why: lend.said },
@@ -93,6 +95,8 @@ export const LEND = (home) => ({
             kind: state.kind.trim() || null,
             groups: state.groups,
             terms: state.terms ?? null,
+            pid: state.pid ?? null,
+            start: state.start ?? null,
             failed: 'refused',
           },
         );
