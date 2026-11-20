@@ -884,10 +884,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then 45 for a server's socket for each of svrngs's flows (pasta's, for
 # rootless Podman) to be carried in its approved cgroup: door.rs 27,
 # door/bound.rs 13, uid.rs 4, udp.rs 1. 24,274; the operator: "Land it".
+# Then 8 for a socket's peer to be read only where cgroups keep accounts
+# apart and the socket is this account's (uid.rs): 24,282. Its pass cut 2.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24275,
+    ".": 24283,
 
     "js": 8694,
 
