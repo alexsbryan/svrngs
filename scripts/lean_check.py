@@ -852,10 +852,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # code but JavaScript at 23,311 (8d61f819's -3 with them) and JavaScript at
 # 8,666. The caps are lowered to there. All code but JavaScript stays 210
 # over 23,101: a raise, the operator's, and granted (2026-11-19: "Approved").
+# (2026-11-20) Raised by the operator for V1.13.1's fixes from the phone test
+# (demo/runs/phone-home/2026-11-20): back to direct +23, the seek window +5,
+# an idle folder at rest +5, after a pass that cut -12 (the direct attempt's
+# steps in go), -2 (a transport config no dial reads), -1 (the trace
+# collector) and -6 (the folder walk's second stat). All code but JavaScript
+# 23,311 -> 23,323 (2026-11-20: "Approved").
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 23312,
+    ".": 23324,
 
     "js": 8667,
 
