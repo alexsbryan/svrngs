@@ -70,8 +70,7 @@
 //! [`svrngs_node::home::LINKS_ROUTE`]), so a verb is built once, there.
 //! A `--origin` is checked here first ([`checked_page`]). One that answers
 //! no join — a build from before the route — is told as too old, for
-//! updating and restarting it is the way on from there. `link --origin`
-//! while svrngs runs is refused as the lock's own refusal.
+//! updating and restarting it is the way on from there.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -863,10 +862,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             }
             (
                 Err(Refusal::Refused(Refused::Busy(lock))),
-                verb @ (Verb::Room(_)
-                | Verb::Join { .. }
-                | Verb::New { .. }
-                | Verb::Link { origin: None, .. }),
+                verb @ (Verb::Room(_) | Verb::Join { .. } | Verb::New { .. } | Verb::Link { .. }),
             ) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: svrngs runs here already, so it is asked");
                 asked(here, verb, relay).await?

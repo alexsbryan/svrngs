@@ -437,6 +437,49 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
     node.endpoint().close().await;
 }
 
+/// **`link --origin` is asked of svrngs running here** (the operator's C1
+/// (c); it was refused as the lock's own refusal): the page checked here,
+/// the link asked of the node's route by the product's `Here`, the data
+/// dir's API and token; its https link on the page and where the apps open
+/// said, as `new --origin` says them, and the page kept for the next link.
+/// Red on the plant: home.rs `Asking::linked` passing `Host::link` no page,
+/// so the https link is on none.
+#[tokio::test]
+async fn link_origin_is_asked_of_svrngs_running_here() {
+    let page = page_host(Elsewhere::Page).await;
+    let at = page.as_str().trim_start_matches("http://");
+    let at = at.trim_end_matches('/').to_string();
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(&dir).await;
+    made::new_group(&node, name("house"), name("Sam"), None, &[])
+        .await
+        .expect("Sam makes house, with no page");
+    let asked = Verb::Link {
+        group: "house".into(),
+        origin: Some(page.clone()),
+        device: false,
+        relays: Vec::new(),
+    };
+    let said = cli::asked(&dir.path().to_path_buf(), asked, &no_relay()).await;
+    let said = said.expect("svrngs running here makes the link");
+    let on_page = format!("\n  {}#", page.as_str());
+    assert!(
+        said.contains(&on_page),
+        "its https link on the page: {said}"
+    );
+    let apps = format!("each app opens at an address of its own under {at}");
+    assert!(said.contains(&apps), "{said}");
+    let (_, again, _) = made::link_to(&node, "house", None, false, &[])
+        .await
+        .unwrap();
+    let https = again.https.unwrap_or_default();
+    assert!(
+        https.starts_with(&format!("{}#", page.as_str())),
+        "kept: {https}"
+    );
+    node.endpoint().close().await;
+}
+
 /// **`room` names lends, and says who can open them in a person's words**
 /// (u6-1): one name or more, each a lend's; with none, or one that is not
 /// a name, an error. Each lend on is said with where the room serves it,
