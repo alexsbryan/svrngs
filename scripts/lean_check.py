@@ -868,10 +868,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # and I have some urgency here." Its cuts follow as their own reviewed work,
 # and lower the caps where they land. Its rules moved to Eudoxia (4e58132d),
 # so all code but JavaScript is lowered to one past where that landed.
+# Then 10 lines back for the approve route (surface.rs `process`, 6; the
+# unread port, door.rs 3 and lend.rs 1): all code but JavaScript 24,160, the
+# operator's word ("Raise it"), after a pass over the files it touches found
+# no unused item and no repeat that wasn't layout or different words.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24151,
+    ".": 24161,
 
     "js": 8694,
 
