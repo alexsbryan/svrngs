@@ -1,0 +1,121 @@
+diff --git a/crates/svrngs-node/tests/browser/harness.rs b/crates/svrngs-node/tests/browser/harness.rs
+index e40bc136..d62fd2d6 100644
+--- a/crates/svrngs-node/tests/browser/harness.rs
++++ b/crates/svrngs-node/tests/browser/harness.rs
+@@ -4,7 +4,7 @@
+ 
+ use std::net::SocketAddr;
+ use std::path::{Path, PathBuf};
+-use std::sync::OnceLock;
++use std::sync::{Mutex, OnceLock};
+ 
+ use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
+ 
+@@ -88,25 +88,43 @@ impl Engine {
+ /// it quits (`-[_CFPasteboardStore dealloc]`, ~/Library/Logs/
+ /// DiagnosticReports/pboard-*.ips, 27 from 2026-10-21 to 25), and with it
+ /// every program on the Mac that touched the clipboard.
+-pub fn browsers() -> &'static str {
+-    static SHARED: OnceLock<(std::process::Child, String)> = OnceLock::new();
+-    let (_, said) = SHARED.get_or_init(|| {
+-        let mut run = std::process::Command::new("node")
+-            .arg(repo().join("web/tests/browsers.mjs"))
+-            .stdin(std::process::Stdio::piped())
+-            .stdout(std::process::Stdio::piped())
+-            .spawn()
+-            .expect("node runs web/tests/browsers.mjs");
+-        let mut line = String::new();
+-        let out = std::io::BufReader::new(run.stdout.take().unwrap());
+-        std::io::BufRead::read_line(&mut { out }, &mut line).expect("browsers.mjs answers");
+-        assert!(
+-            line.starts_with('{'),
+-            "web/tests/browsers.mjs did not start Chromium and WebKit, so no page can be tested: {line:?}; install them with: npm ci --prefix web && npx --prefix web playwright install chromium webkit"
+-        );
+-        (run, line.trim().to_string())
+-    });
+-    said
++///
++/// Found ended at an ask, the server is said so and started again, so its
++/// crash costs the tests that were driving it then, which fail on their
++/// lost connection, and never every test after them: Playwright 1.59.1's
++/// server died on its own assertion and 33 of a step's 45 rows failed with
++/// it (demo/runs/flakes/2026-11-19/).
++pub fn browsers() -> String {
++    static SHARED: Mutex<Option<(std::process::Child, String)>> = Mutex::new(None);
++    let mut shared = SHARED.lock().unwrap_or_else(|p| p.into_inner());
++    if let Some((run, _)) = shared.as_mut() {
++        match run.try_wait() {
++            Ok(None) => {}
++            ended => {
++                eprintln!("harness: web/tests/browsers.mjs ended ({ended:?}): the tests driving its browsers then fail, and it is started again for the tests after them");
++                *shared = None;
++            }
++        }
++    }
++    shared.get_or_insert_with(started).1.clone()
++}
++
++/// web/tests/browsers.mjs started, and the addresses it printed.
++fn started() -> (std::process::Child, String) {
++    let mut run = std::process::Command::new("node")
++        .arg(repo().join("web/tests/browsers.mjs"))
++        .stdin(std::process::Stdio::piped())
++        .stdout(std::process::Stdio::piped())
++        .spawn()
++        .expect("node runs web/tests/browsers.mjs");
++    let mut line = String::new();
++    let out = std::io::BufReader::new(run.stdout.take().unwrap());
++    std::io::BufRead::read_line(&mut { out }, &mut line).expect("browsers.mjs answers");
++    assert!(
++        line.starts_with('{'),
++        "web/tests/browsers.mjs did not start Chromium and WebKit, so no page can be tested: {line:?}; install them with: npm ci --prefix web && npx --prefix web playwright install chromium webkit"
++    );
++    (run, line.trim().to_string())
+ }
+ 
+ pub fn repo() -> PathBuf {
+diff --git a/web/tests/navigate.mjs b/web/tests/navigate.mjs
+index 7c7a0494..715bdb77 100644
+--- a/web/tests/navigate.mjs
++++ b/web/tests/navigate.mjs
+@@ -18,7 +18,14 @@
+ import { arrived, launch } from './page.mjs';
+ 
+ const args = JSON.parse(process.argv[2]);
+-const { context, close } = await launch(args.engine);
++// A browser of its own: WebKit on Linux swaps a tab's process twice in one
++// cross-site redirect chain, as the hops into a lend's origin are, once
++// the tab has been to the sites before, and Playwright's server dies on
++// its own assertion (wkPage.js `_onTargetCreated`, 1.59.1 through 1.65.1;
++// microsoft/playwright#43067), about one run of this test in five. Here
++// that ends this driver, never the run's shared server and every test on
++// it (demo/runs/flakes/2026-11-19/).
++const { context, close } = await launch(args.engine, { own: true });
+ const answered = [];
+ context.on(
+   'response',
+diff --git a/web/tests/page.mjs b/web/tests/page.mjs
+index 7508922c..ee09c2ad 100644
+--- a/web/tests/page.mjs
++++ b/web/tests/page.mjs
+@@ -334,7 +334,10 @@ function longPage() {
+ // `unopened`: a context svrngs opened no host in, as a browser no open
+ // reached (give-session). With `b`, the home page as a person now has it; without
+ // it, a driver that reads one long page: `longPage`, the sunset's worklist.
+-export async function launch(engine, { profile, device: as, args, unopened, b } = {}) {
++// With `own`, a browser of its own, never the run's shared one: for a
++// driver whose run can crash Playwright's server, so the crash ends this
++// driver alone (harness.rs `browsers`; navigate.mjs).
++export async function launch(engine, { profile, device: as, args, unopened, b, own } = {}) {
+   if (!(engine in ENGINES)) {
+     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
+     process.exit(1);
+@@ -364,7 +367,7 @@ export async function launch(engine, { profile, device: as, args, unopened, b }
+       // (browsers.mjs), and a context of its own in it: a browser a test
+       // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
+       // it then closes this context and lets the shared browser be.
+-      const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
++      const shared = !args && !own && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
+       const browser = await (shared
+         ? pw[engine].connect(shared)
+         : pw[engine].launch({ ...starting(pw[engine]), args: flags }));

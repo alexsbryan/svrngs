@@ -334,7 +334,10 @@ function longPage() {
 // `unopened`: a context svrngs opened no host in, as a browser no open
 // reached (give-session). With `b`, the home page as a person now has it; without
 // it, a driver that reads one long page: `longPage`, the sunset's worklist.
-export async function launch(engine, { profile, device: as, args, unopened, b } = {}) {
+// With `own`, a browser of its own, never the run's shared one: for a
+// driver whose run can crash Playwright's server, so the crash ends this
+// driver alone (harness.rs `browsers`; navigate.mjs).
+export async function launch(engine, { profile, device: as, args, unopened, b, own } = {}) {
   if (!(engine in ENGINES)) {
     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
     process.exit(1);
@@ -364,7 +367,7 @@ export async function launch(engine, { profile, device: as, args, unopened, b } 
       // (browsers.mjs), and a context of its own in it: a browser a test
       // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
       // it then closes this context and lets the shared browser be.
-      const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
+      const shared = !args && !own && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
       const browser = await (shared
         ? pw[engine].connect(shared)
         : pw[engine].launch({ ...starting(pw[engine]), args: flags }));

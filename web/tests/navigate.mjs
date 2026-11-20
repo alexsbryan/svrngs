@@ -18,7 +18,14 @@
 import { arrived, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const { context, close } = await launch(args.engine);
+// A browser of its own: WebKit on Linux swaps a tab's process twice in one
+// cross-site redirect chain, as the hops into a lend's origin are, once
+// the tab has been to the sites before, and Playwright's server dies on
+// its own assertion (wkPage.js `_onTargetCreated`, 1.59.1 through 1.65.1;
+// microsoft/playwright#43067), about one run of this test in five. Here
+// that ends this driver, never the run's shared server and every test on
+// it (demo/runs/flakes/2026-11-19/).
+const { context, close } = await launch(args.engine, { own: true });
 const answered = [];
 context.on(
   'response',

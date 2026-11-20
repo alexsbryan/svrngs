@@ -1,0 +1,271 @@
+# contain.sh's runs, 2026-11-19, in svrngs-gate from a plain clone at d4b0a70b.
+# contain.diff: navigate.mjs's own browser and the harness starting a dead server again (not landed); own.diff: the first alone, as it landed.
+# 1. the plant at 60 s, navigations:: and the step, with contain.diff
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=- planted x1
+-- run 1
+grouped::grouped_home_keeps_capabilities_and_group_identity::chromium --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::chromium --- FAILED
+webrtc_page::the_window_withholding_datagrams_keeps_it_relayed::chromium --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+a_lends_address_opens_cold_in_a_browser_that_joined::chromium --- FAILED
+planted: killed node browsers.mjs (1539) at 60 s
+a_lends_alias_opens_it_from_the_groups_page::chromium --- FAILED
+a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+a_lends_alias_opens_it_from_the_groups_page::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+webrtc_page::a_lends_film_rides_the_windows_channel::chromium --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::chromium --- FAILED
+a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::chromium --- FAILED
+a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit --- FAILED
+keep_going::a_phone_learns_the_group_s_relay_with_no_new_invitation::webkit --- FAILED
+webrtc_page::the_window_withholding_datagrams_keeps_it_relayed::webkit --- FAILED
+webrtc_page::a_lends_film_rides_the_windows_channel::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::webkit --- FAILED
+a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit --- FAILED
+carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit --- FAILED
+error: Failed to load resource: the server responded with a status of 403 ()
+error: Failed to load resource: the server responded with a status of 403 ()
+error: Failed to load resource: the server responded with a status of 503 ()
+test result: FAILED. 20 passed; 22 failed; 3 ignored; 0 measured; 2 filtered out; finished in 145.69s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=contain.diff planted x2
+-- run 1
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+test result: FAILED. 41 passed; 1 failed; 3 ignored; 0 measured; 2 filtered out; finished in 59.91s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+-- run 2
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+test result: FAILED. 41 passed; 1 failed; 3 ignored; 0 measured; 2 filtered out; finished in 59.62s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=contain.diff navs x20
+-- run 1
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.88s
+-- run 2
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.17s
+-- run 3
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.37s
+-- run 4
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.33s
+-- run 5
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.40s
+-- run 6
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.35s
+-- run 7
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.37s
+-- run 8
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.30s
+-- run 9
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.54s
+-- run 10
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.27s
+-- run 11
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.49s
+-- run 12
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.33s
+-- run 13
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.59s
+-- run 14
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.54s
+-- run 15
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.36s
+-- run 16
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.42s
+-- run 17
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.48s
+-- run 18
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.40s
+-- run 19
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.46s
+-- run 20
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.38s
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=contain.diff step x2
+-- run 1
+test result: ok. 42 passed; 0 failed; 3 ignored; 0 measured; 2 filtered out; finished in 69.19s
+-- run 2
+test result: ok. 42 passed; 0 failed; 3 ignored; 0 measured; 2 filtered out; finished in 69.52s
+# 2. the plant at 20 s, at d4b0a70b as it is and with contain.diff; svrngs-node's tests
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=- planted x2
+-- run 1
+iii.........................planted: killed node browsers.mjs (1531) at 20 s
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::chromium --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+a_lends_alias_opens_it_from_the_groups_page::chromium --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::chromium --- FAILED
+a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit --- FAILED
+a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit --- FAILED
+a_lends_alias_opens_it_from_the_groups_page::webkit --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::chromium --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit --- FAILED
+keep_going::a_phone_learns_the_group_s_relay_with_no_new_invitation::webkit --- FAILED
+carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit --- FAILED
+error: Failed to load resource: the server responded with a status of 403 ()
+error: Failed to load resource: the server responded with a status of 403 ()
+test result: FAILED. 28 passed; 14 failed; 3 ignored; 0 measured; 2 filtered out; finished in 143.27s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+-- run 2
+iii......................planted: killed node browsers.mjs (15070) at 20 s
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::chromium --- FAILED
+a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit --- FAILED
+a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit --- FAILED
+grouped::grouped_home_keeps_capabilities_and_group_identity::chromium --- FAILED
+a_lends_alias_opens_it_from_the_groups_page::chromium --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::chromium --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+a_lends_alias_opens_it_from_the_groups_page::webkit --- FAILED
+a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::chromium --- FAILED
+keep_going::a_phone_learns_the_group_s_relay_with_no_new_invitation::webkit --- FAILED
+carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit --- FAILED
+error: Failed to load resource: the server responded with a status of 403 ()
+error: Failed to load resource: the server responded with a status of 403 ()
+test result: FAILED. 26 passed; 16 failed; 3 ignored; 0 measured; 2 filtered out; finished in 143.28s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=contain.diff planted x2
+-- run 1
+iii...........................planted: killed node browsers.mjs (1761) at 20 s
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::chromium --- FAILED
+a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::webkit --- FAILED
+keep_going::a_phone_learns_the_group_s_relay_with_no_new_invitation::webkit --- FAILED
+error: Failed to load resource: the server responded with a status of 403 ()
+error: Failed to load resource: the server responded with a status of 403 ()
+error: Failed to load resource: the server responded with a status of 403 ()
+test result: FAILED. 35 passed; 7 failed; 3 ignored; 0 measured; 2 filtered out; finished in 59.33s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+-- run 2
+keep_going::a_new_release_replaces_a_lend_s_saved_pages::chromium --- FAILED
+planted: killed node browsers.mjs (16756) at 20 s
+a_lends_address_opens_cold_in_a_browser_that_joined::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+grouped::grouped_home_keeps_capabilities_and_group_identity::chromium --- FAILED
+a_lends_address_opens_cold_in_a_browser_that_joined::chromium --- FAILED
+webrtc_page::a_lends_film_rides_the_windows_channel::chromium --- FAILED
+a_lends_alias_opens_it_from_the_groups_page::chromium --- FAILED
+guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit --- FAILED
+a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit --- FAILED
+a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit --- FAILED
+a_lends_alias_opens_it_from_the_groups_page::webkit --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::chromium --- FAILED
+webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::webkit --- FAILED
+webrtc_page::a_lends_film_rides_the_windows_channel::webkit --- FAILED
+keep_going::a_phone_learns_the_group_s_relay_with_no_new_invitation::webkit --- FAILED
+a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit --- FAILED
+carried::the_phone_goes_on_to_a_computer_that_answers::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+error: Failed to load resource: the server responded with a status of 404 (Not Found)
+error: Failed to load resource: Service Worker context closed
+error: Failed to load resource: Service Worker context closed
+error: Failed to load resource: the server responded with a status of 503 ()
+error: Failed to load resource: the server responded with a status of 503 ()
+error: Failed to load resource: the server responded with a status of 503 ()
+test result: FAILED. 23 passed; 19 failed; 3 ignored; 0 measured; 2 filtered out; finished in 132.16s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=contain.diff node x1
+-- run 1
+test result: ok. 199 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.19s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 30 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 19.38s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.07s
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.34s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.02s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.02s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.08s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.02s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.01s
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.53s
+test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.02s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.32s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.10s
+test result: ok. 0 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 25.16s
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.35s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.08s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+test result: ok. 1 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 4.09s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.94s
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.15s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+svrngs-node: 33 binaries, 420 passed, 0 failed
+# 3. own.diff: navigate.mjs's WebKit driver killed, navigations:: x20, the step
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=own.diff plantnav x2
+-- run 1
+iii......planted: killed node navigate.mjs for webkit (2220)
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+test result: FAILED. 41 passed; 1 failed; 3 ignored; 0 measured; 2 filtered out; finished in 69.66s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+-- run 2
+iii.....planted: killed node navigate.mjs for webkit (17031)
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+test result: FAILED. 41 passed; 1 failed; 3 ignored; 0 measured; 2 filtered out; finished in 70.14s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=own.diff navs x20
+-- run 1
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.95s
+-- run 2
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.31s
+-- run 3
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.30s
+-- run 4
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.25s
+-- run 5
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.15s
+-- run 6
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 28.08s
+-- run 7
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 29.78s
+-- run 8
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.11s
+-- run 9
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.34s
+-- run 10
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.41s
+-- run 11
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+    at WKPage._onTargetCreated (/work/web/node_modules/playwright-core/lib/server/webkit/wkPage.js:331:31)
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 43 filtered out; finished in 25.23s
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+-- run 12
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.33s
+-- run 13
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.33s
+-- run 14
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.34s
+-- run 15
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.40s
+-- run 16
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.36s
+-- run 17
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.27s
+-- run 18
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.34s
+-- run 19
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.35s
+-- run 20
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 27.33s
+== d4b0a70b fix: a lends ask whose task ended without its answer is named unanswered diff=own.diff step x1
+-- run 1
+test result: ok. 42 passed; 0 failed; 3 ignored; 0 measured; 2 filtered out; finished in 69.85s

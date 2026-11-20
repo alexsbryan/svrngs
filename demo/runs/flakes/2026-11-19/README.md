@@ -25,5 +25,33 @@ The audit saw it once at a2661814 (../../relay-commons/AUDIT.md, run 1).
 About one run of the test in five; more in the full gate, on a host loaded
 by other work.
 
-Not fixed here. What would: a Playwright with the race fixed, or WebKit's
-browser per test so a crash costs its own row and not the step's.
+## Contained: its own browser
+
+No Playwright fixes it yet: the race is
+[microsoft/playwright#43067](https://github.com/microsoft/playwright/issues/43067),
+open, WebKit on Linux swapping a tab's process twice in one cross-site
+redirect chain once the tab's browser has been to those sites; its fix,
+#43233, was closed unmerged, blocked on playwright-browsers#2644. 1.65.1,
+the latest (2026-11-13), still asserts (`lib/coreBundle.js`,
+`assert(!this._provisionalPage)`). The chain is one navigation, a hop into
+a lend's origin, which the test exists to judge, so the test cannot step
+around it and keep its claim.
+
+So `navigate.mjs` drives a browser of its own (page.mjs `launch`, `own`):
+the crash ends its driver, and its row fails alone. In svrngs-gate,
+[contain.sh](contain.sh), [contain.log](contain.log):
+
+| run | result |
+|---|---|
+| `navigations::` ×40, its own browser | 1 crashed, 39 passed; that run, its `webkit` row alone failed |
+| the step ×2, `navigate.mjs`'s WebKit driver killed (the plant) | 41 passed, 1 failed, each: that row |
+| the step ×3 | 42 passed, each |
+
+Before, on the shared server: 7 crashes in 35 runs of `navigations::`, each
+failing both engines' rows, and 33 of 45 rows in the full gate.
+
+Not landed: the harness starting the shared server again when it finds it
+dead ([contain.diff](contain.diff)). It saves no row: the step starts
+nearly every row's driver within its first 20 s, so the shared server's
+death fails every row then driving it. Killed at 20 s, 14 and 16 of 42
+failed without it, 7 and 19 with it.
