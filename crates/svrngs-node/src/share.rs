@@ -37,7 +37,6 @@ use std::num::NonZeroU16;
 use std::path::Path;
 use std::time::Duration;
 
-use crate::binding::{Chosen, Refused};
 use crate::door::bound::{Bound, Unsent};
 use crate::lend::SendRow;
 use crate::lend::{
@@ -45,6 +44,7 @@ use crate::lend::{
     Upload,
 };
 use crate::uid::{Answering, Unread};
+use eudoxia_community::binding::{Chosen, Refused};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
 /// `<word>.txt`, so adding a program is adding a file; each holds that word's
@@ -320,7 +320,7 @@ pub fn reapproved(
 
 /// What `read`, the `raw` share's port read ([`crate::uid::answering`]),
 /// approves with `pid` when its lender chose a process (SHARE_BINDING §5.1,
-/// [`crate::binding::approve`]), and only what they were `shown`, when a
+/// [`eudoxia_community::binding::approve`]), and only what they were `shown`, when a
 /// page showed it ([`token`]): the approval, and what answers
 /// there as its lender is shown it, from the same read; or why not, in
 /// their words.
@@ -340,7 +340,7 @@ pub fn approve(
         now: read.start,
         parents: read.parents.clone(),
     });
-    let approved = crate::binding::approve(&read.read, chosen.as_ref());
+    let approved = eudoxia_community::binding::approve(&read.read, chosen.as_ref());
     tracing::debug!(target: "share", port, ?raw, ?pid, ?shown, read = ?read.read, ?approved, "share: what answers on the port, approved or why not");
     let approved = approved.map_err(|why| match why {
         Refused::Nothing => ShareRefusal::NothingListens(port),

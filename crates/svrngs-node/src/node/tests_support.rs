@@ -7,6 +7,7 @@ use super::*;
 use crate::door::bound::Unchecked;
 use crate::iroh::Endpoint;
 use crate::uid::{Conn, Owner, Side};
+use eudoxia_community::binding;
 
 impl Node {
     /// A group made as `svrngs new` asks the svrngs running here for one,
@@ -638,8 +639,8 @@ impl Net for OnWire {
         let met = self.wire.0.lock().unwrap();
         let said = met.reads.get(&(*self.key.as_bytes(), port)).cloned();
         let took = match conn {
-            Some(_) => crate::binding::Took::Waiting,
-            None => crate::binding::Took::Datagram,
+            Some(_) => binding::Took::Waiting,
+            None => binding::Took::Datagram,
         };
         let read = said.unwrap_or_else(|| Ok(real(raw, port).unwrap_or((read(), took))));
         let slow = met.slow.get(&(*self.key.as_bytes(), port)).copied();
@@ -1001,15 +1002,15 @@ impl Node {
 /// The socket a test's share's port holds unless a test says otherwise
 /// ([`Wire::reads`]): socket 1, held by process 1 started at 1, the
 /// program `test` in `~/test`.
-fn read() -> crate::binding::Read {
-    let socket = crate::binding::Socket {
+fn read() -> binding::Read {
+    let socket = binding::Socket {
         id: 1,
         cgroup: None,
         holders: [(1, 1)].into(),
         at: std::net::Ipv4Addr::LOCALHOST.into(),
         dual: false,
     };
-    crate::binding::Read {
+    binding::Read {
         boot: None,
         lasting: true,
         sockets: vec![socket],
@@ -1034,8 +1035,8 @@ pub fn answering() -> crate::uid::Answering {
 }
 
 /// What a test's share approves: [`read`]'s socket.
-pub fn approval() -> crate::binding::Approved {
-    crate::binding::approve(&read(), None).expect("a socket is approved")
+pub fn approval() -> binding::Approved {
+    binding::approve(&read(), None).expect("a socket is approved")
 }
 
 /// [`approval`] as a lend's file keeps it, for a test that writes one.
@@ -1059,7 +1060,7 @@ pub fn approving(lend: &serde_json::Value) -> String {
             ..answering()
         });
         let read = read.unwrap_or_else(answering);
-        let approved = crate::binding::approve(&read.read, None).expect("a socket is approved");
+        let approved = binding::approve(&read.read, None).expect("a socket is approved");
         lend["approved"] = serde_json::to_value(approved).expect("an approval serializes");
     }
     lend.to_string()
@@ -1070,14 +1071,14 @@ pub fn approving(lend: &serde_json::Value) -> String {
 pub fn approve(lend: &mut crate::lend::Lend) {
     let port = lend.port().expect("a port's lend");
     let read = real(lend.raw(), port.get()).map_or_else(read, |(read, _)| read);
-    lend.terms.approved = crate::binding::approve(&read, None).ok();
+    lend.terms.approved = binding::approve(&read, None).ok();
 }
 
 /// What this computer's own reader reads on `port`, when a real socket a
 /// test runs is on it: then the wire reads it too, so a test's stand-in on
 /// a real listener is approved and checked as it is; none for a port only
 /// the wire answers, which reads [`read`]'s socket.
-fn real(raw: crate::lend::Raw, port: u16) -> Option<(crate::binding::Read, crate::binding::Took)> {
+fn real(raw: crate::lend::Raw, port: u16) -> Option<(binding::Read, binding::Took)> {
     let read = crate::uid::port(raw, port, None).ok()?;
     (!read.0.sockets.is_empty()).then_some(read)
 }

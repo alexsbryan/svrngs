@@ -41,6 +41,7 @@ use std::collections::{BTreeSet, HashMap};
 use std::future::Future;
 use std::net::{IpAddr, SocketAddr};
 
+use eudoxia_community::binding;
 use iroh::endpoint::Connection;
 use iroh_blobs::api::{remote::GetProgress, Store};
 use iroh_blobs::protocol::GetRequest;
@@ -303,7 +304,7 @@ pub trait Net: Fetch + std::any::Any {
 pub type PortAnswer = Result<crate::uid::Answering, crate::uid::Unread>;
 
 /// A share's port as [`Net::read_port`] reads it.
-pub type PortRead = Result<(crate::binding::Read, crate::binding::Took), crate::uid::Unread>;
+pub type PortRead = Result<(binding::Read, binding::Took), crate::uid::Unread>;
 
 /// A connection's two halves as one, as a lend's service is spoken to.
 pub trait Duplex: tokio::io::AsyncRead + tokio::io::AsyncWrite + Send + Unpin {}

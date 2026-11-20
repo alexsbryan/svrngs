@@ -279,7 +279,8 @@ refused once that changed), which changes only `approved`. A restart of the
 program, a share made before this, and a share of a name already shared
 from another port or protocol without `--replace`, all wait on that
 approval; a lend file from V1.12.2 written again keeps what V1.12.2 wrote.
-The pure decisions are `binding.rs`; the readers are `uid.rs`.
+The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
+readers are `uid.rs`.
 
 **A port, not a page.** A program that speaks UDP or TCP is lent with
 `svrngs share <port> --udp --program <name>`, or `--tcp`: its declaration says

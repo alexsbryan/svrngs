@@ -3,7 +3,7 @@
 //! SHARE_BINDING §5.2, §5.7). The transport opens an [`Unchecked`]
 //! connection, which nothing but [`bound`] opens, at the address its
 //! approval names: it reads the port's sockets and what took the
-//! connection, and [`crate::binding::check`] decides, before any byte is
+//! connection, and [`eudoxia_community::binding::check`] decides, before any byte is
 //! sent. A [`Bound`] is what the door's HTTP, its WebSocket upgrade, its raw
 //! TCP and the lender's credentials (share.rs `tried`, `sign_in_readers`) are
 //! written on; a UDP share's datagrams go only through a [`Flow`], checked
@@ -19,10 +19,10 @@ use std::time::Duration;
 
 use tokio::net::UdpSocket;
 
-use crate::binding::{self, Held, Read, Took};
 use crate::iroh::{Duplex, Net};
 use crate::lend::{Hold, Lend, Raw};
 use crate::uid::{Conn, Unread};
+use eudoxia_community::binding::{self, Held, Read, Took};
 
 /// How long a share's port has to take a connection; once connected, a
 /// body takes as long as it takes, as upstream's `forward_stream` bounded

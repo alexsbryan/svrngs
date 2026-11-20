@@ -642,7 +642,7 @@ pub(crate) async fn offered(door: &Door, lender: bool) -> Result<Vec<Offered>, R
             (true, Some(_), Some(port)) => {
                 let raw = lend.raw();
                 let read = door.folders.host.transport.answering(raw, port.get(), None).await;
-                let token = (read.as_ref().ok()).and_then(|a| crate::binding::approve(&a.read, None).ok());
+                let token = (read.as_ref().ok()).and_then(|a| eudoxia_community::binding::approve(&a.read, None).ok());
                 let token = token.as_ref().map(crate::share::token);
                 (Some(read.map(|a| a.shown).unwrap_or_default()), token)
             }

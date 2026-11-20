@@ -28,7 +28,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use svrngs_core::pass::Label;
 
-pub use crate::binding::Approved;
+pub use eudoxia_community::binding::Approved;
 
 /// A lend's name: the file its declaration is kept in, and the path segment
 /// a member's request names it by (`/lend/<name>/…`). ASCII letters, digits,

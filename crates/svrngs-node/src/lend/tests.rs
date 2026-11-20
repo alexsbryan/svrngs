@@ -158,7 +158,7 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     ];
     // What its lender approved (SHARE_BINDING §5.1), every field; planted,
     // watched failing: `write` leaving it out (read back as none).
-    shelf.terms.approved = Some(crate::binding::Approved {
+    shelf.terms.approved = Some(eudoxia_community::binding::Approved {
         boot: Some(u64::MAX - 7),
         sockets: [0x700e, 0x100e].into(),
         cgroups: [4242].into(),

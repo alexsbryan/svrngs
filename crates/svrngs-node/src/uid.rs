@@ -12,7 +12,7 @@
 //! - Elsewhere no reader: [`Owner::NoReader`].
 //!
 //! **A share's port** ([`port`], [`answering`]; svrn-docs SHARE_BINDING
-//! §5.1, §5.2): the sockets on it, as [`crate::binding`] decides over them.
+//! §5.1, §5.2): the sockets on it, as [`eudoxia_community::binding`] decides over them.
 //! - Linux: sock_diag's dump of the port, each socket's cookie and cgroup,
 //!   a TCP one's listening or bound and not listening, and the server end of
 //!   the door's connection by its two ports; for an approval, the processes
@@ -35,8 +35,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::net::{IpAddr, SocketAddr};
 
-use crate::binding::{self, Process, Read, Took};
 use crate::lend::{Answer, Raw};
+use eudoxia_community::binding::{self, Process, Read, Took};
 
 /// A connection on this computer, by its two ends as one of its sockets
 /// sees them: its own address, and the address it is connected to.

@@ -4,6 +4,7 @@
 //! door between two nodes.
 
 use super::*;
+use eudoxia_community::binding;
 
 fn map(pairs: &[(&str, &str)]) -> HeaderMap {
     let mut h = HeaderMap::new();
@@ -956,11 +957,11 @@ async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again()
 }
 
 /// The socket `id` alone on a share's port, on 127.0.0.1, in cgroup 4.
-fn alone(id: u64) -> crate::binding::Read {
-    crate::binding::Read {
+fn alone(id: u64) -> binding::Read {
+    binding::Read {
         boot: None,
         lasting: true,
-        sockets: vec![crate::binding::Socket {
+        sockets: vec![binding::Socket {
             id,
             cgroup: Some(4),
             holders: Default::default(),
@@ -980,9 +981,9 @@ fn alone(id: u64) -> crate::binding::Read {
 /// watched failing: a failed read carried as approved (`Err(_) => Ok(())`).
 #[test]
 fn what_the_door_writes_to_a_share_s_port_is_what_its_lender_approved() {
-    use crate::binding::{Read, Took};
     use crate::uid::Unread;
     use bound::Unsent;
+    use eudoxia_community::binding::{Read, Took};
     let dir = tempfile::tempdir().unwrap();
     let decided = |lend: &Lend, read| bound::decided(dir.path(), lend, read);
     let mut shelf = Lend::carried("books", "house").unwrap();
@@ -992,7 +993,7 @@ fn what_the_door_writes_to_a_share_s_port_is_what_its_lender_approved() {
         decided(&shelf, Ok((alone(1), Took::Cgroup(4)))),
         held(Hold::Unapproved)
     );
-    shelf.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    shelf.terms.approved = binding::approve(&alone(1), None).ok();
     assert_eq!(decided(&shelf, Ok((alone(1), Took::Cgroup(4)))), Ok(()));
     assert_eq!(decided(&shelf, Ok((alone(1), Took::Datagram))), Ok(()));
     assert_eq!(
@@ -1032,17 +1033,17 @@ fn what_the_door_writes_to_a_share_s_port_is_what_its_lender_approved() {
 /// socket with no holder read taken as another's (the Mac share held).
 #[test]
 fn a_hold_is_kept_in_the_lend_s_file_until_its_lender_approves_again() {
-    use crate::binding::Took;
     use bound::Unsent;
+    use eudoxia_community::binding::Took;
     let dir = tempfile::tempdir().unwrap();
     let mut shelf = Lend::carried("books", "house").unwrap();
     shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(9001).unwrap());
-    shelf.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    shelf.terms.approved = binding::approve(&alone(1), None).ok();
     crate::lend::declare(dir.path(), &shelf, None).unwrap();
     let now = || crate::lend::read(dir.path(), &shelf.name).unwrap().unwrap();
     let decided =
         |lend: &Lend, id| bound::decided(dir.path(), lend, Ok((alone(id), Took::Datagram)));
-    let empty = crate::binding::Read {
+    let empty = binding::Read {
         sockets: Vec::new(),
         ..alone(1)
     };
@@ -1059,7 +1060,7 @@ fn a_hold_is_kept_in_the_lend_s_file_until_its_lender_approves_again() {
         Err(Unsent::Held(Hold::Another)),
         "the approved socket back alone"
     );
-    let since = crate::binding::approve(&alone(3), None).unwrap();
+    let since = binding::approve(&alone(3), None).unwrap();
     crate::share::reapproved(dir.path(), &shelf.name, since).unwrap();
     let stale = decided(&shelf, 2);
     assert!(
@@ -1073,7 +1074,7 @@ fn a_hold_is_kept_in_the_lend_s_file_until_its_lender_approves_again() {
     );
     let mut page = Lend::carried("page", "house").unwrap();
     page.source = Source::Port(std::num::NonZeroU16::new(9002).unwrap());
-    page.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    page.terms.approved = binding::approve(&alone(1), None).ok();
     crate::lend::declare(dir.path(), &page, None).unwrap();
     let page = || crate::lend::read(dir.path(), &page.name).unwrap().unwrap();
     assert_eq!(decided(&page(), 2), Err(Unsent::Held(Hold::Another)));
@@ -1085,10 +1086,10 @@ fn a_hold_is_kept_in_the_lend_s_file_until_its_lender_approves_again() {
     let mut mac = alone(1);
     mac.lasting = false;
     mac.sockets[0].holders = [(5, 5)].into();
-    let approved = crate::binding::approve(&mac, None).unwrap();
+    let approved = binding::approve(&mac, None).unwrap();
     crate::share::reapproved(dir.path(), &shelf.name, approved).unwrap();
     let mut exited = mac.clone();
-    exited.sockets.push(crate::binding::Socket {
+    exited.sockets.push(binding::Socket {
         holders: Default::default(),
         ..alone(2).sockets[0].clone()
     });
@@ -1114,7 +1115,7 @@ fn a_hold_waits_a_moment_for_another_change_holding_the_lend_s_lock() {
     let dir = tempfile::tempdir().unwrap();
     let mut shelf = Lend::carried("books", "house").unwrap();
     shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(9001).unwrap());
-    shelf.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    shelf.terms.approved = binding::approve(&alone(1), None).ok();
     crate::lend::declare(dir.path(), &shelf, None).unwrap();
     std::fs::create_dir_all(dir.path().join("locks")).unwrap();
     let lock = dir.path().join(format!("locks/{}.lock", shelf.name));
@@ -1124,7 +1125,7 @@ fn a_hold_waits_a_moment_for_another_change_holding_the_lend_s_lock() {
         std::thread::sleep(std::time::Duration::from_millis(5));
         lock.unlock().unwrap();
     });
-    let seen = Ok((alone(2), crate::binding::Took::Datagram));
+    let seen = Ok((alone(2), binding::Took::Datagram));
     let checked = bound::decided(dir.path(), &shelf, seen);
     other.join().unwrap();
     assert_eq!(checked, Err(bound::Unsent::Held(Hold::Another)));
@@ -1282,7 +1283,7 @@ async fn a_flow() -> (
     let mut shelf = Lend::carried("books", "house").unwrap();
     shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(at.port()).unwrap());
     let read = crate::iroh::Net::read_port(&net, Raw::Udp, at.port(), None).await;
-    shelf.terms.approved = crate::binding::approve(&read.unwrap().0, None).ok();
+    shelf.terms.approved = binding::approve(&read.unwrap().0, None).ok();
     let dir = tempfile::tempdir().unwrap();
     let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
     let flow = bound::Flow::open(socket, at).await.unwrap();
@@ -1312,7 +1313,7 @@ async fn a_udp_share_s_answers_come_back_only_through_its_check() {
     wire.reads(
         key,
         shelf.port().unwrap().get(),
-        Ok((other, crate::binding::Took::Datagram)),
+        Ok((other, binding::Took::Datagram)),
     );
     service.send_to(b"two", from).await.unwrap();
     let got = flow.recv(judged).await.map(<[u8]>::to_vec);
@@ -1487,7 +1488,7 @@ fn a_large_answer_over_the_build_s_relay_is_refused_while_its_share_is_spent() {
 /// alone (another socket, the same token).
 #[test]
 fn what_a_person_is_shown_is_named_by_a_token_that_changes_with_it() {
-    use crate::binding::{approve, Read};
+    use eudoxia_community::binding::{approve, Read};
     let token = |read: &Read| crate::share::token(&approve(read, None).unwrap());
     let read = Read {
         boot: Some(7),
@@ -1518,7 +1519,7 @@ fn what_a_person_is_shown_is_named_by_a_token_that_changes_with_it() {
     let on_mac = |start| Read {
         boot: None,
         lasting: false,
-        sockets: vec![crate::binding::Socket {
+        sockets: vec![binding::Socket {
             holders: [(100, start)].into(),
             ..alone(9).sockets[0].clone()
         }],

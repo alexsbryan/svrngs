@@ -88,9 +88,10 @@ pub mod network;
 // rings/current/LEND_OWNER.md §2); and a share's port as read for its
 // binding (svrn-docs SHARE_BINDING).
 pub mod uid;
-// Which program may receive a share's traffic, decided over what `uid` read.
-extern crate alloc;
-pub mod binding;
+// Which program may receive a share's traffic: the lender's decisions,
+// Eudoxia's, over what `uid` read. Named here because `iroh::PortRead` and
+// `lend::Approved` carry its types to the crates that use this one.
+pub use eudoxia_community::binding;
 // The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
 // turns on, served by the running node on the network each was turned on at.
 pub mod room;
