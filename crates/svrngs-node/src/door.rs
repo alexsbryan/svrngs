@@ -460,11 +460,13 @@ pub fn holders_router(door: Door) -> axum::Router {
         .with_state(door)
 }
 
-/// Who is using each lend now, as [`limit::Counts`] decides it: the
+/// Who is using each lend now, as [`limit::Counts`] decides it, and the
+/// flows open on each UDP lend, by their own sockets' addresses: the
 /// door's own state, owned by one task and told by messages (RUST_ARCH 3,
 /// 4), which reads the clock as each message arrives. A request let in
 /// begins a use, and its answer, dropped once streamed or abandoned, ends
-/// it ([`InFlight`]). Never in the record.
+/// it ([`InFlight`]); a flow is open while its [`Flowing`] is. Never in the
+/// record.
 #[derive(Clone)]
 pub struct Using(mpsc::UnboundedSender<Use>);
 
@@ -482,7 +484,13 @@ enum Use {
     ),
     Ended(LendName, String),
     People(LendName, oneshot::Sender<u32>),
+    /// A flow's own socket, by its address, opened on a UDP lend, or closed.
+    Flow(LendName, std::net::SocketAddr, bool),
+    Flows(LendName, oneshot::Sender<Open>),
 }
+
+/// The flows open on a lend, each by its own socket's address.
+pub(crate) type Open = std::collections::BTreeSet<std::net::SocketAddr>;
 
 /// The door's clock, when a use of a lend begins and ends and a read is
 /// counted: the runtime's, which is the system's monotonic clock in the
@@ -498,6 +506,7 @@ impl Using {
         let hold = tx.downgrade();
         tokio::spawn(async move {
             let (mut counts, mut reads) = (Counts::default(), Reads::default());
+            let mut flows = std::collections::BTreeMap::<LendName, Open>::new();
             while let Some(u) = rx.recv().await {
                 let now = now();
                 match u {
@@ -523,6 +532,11 @@ impl Using {
                     Use::Ended(lend, actor) => counts.end(&lend, &actor, now),
                     Use::People(lend, answer) => {
                         let _ = answer.send(counts.people(&lend, now));
+                    }
+                    Use::Flow(lend, at, true) => drop(flows.entry(lend).or_default().insert(at)),
+                    Use::Flow(lend, at, false) => drop(flows.entry(lend).or_default().remove(&at)),
+                    Use::Flows(lend, answer) => {
+                        drop(answer.send(flows.get(&lend).cloned().unwrap_or_default()))
                     }
                 }
             }
@@ -553,6 +567,36 @@ impl Using {
         let (answer, counted) = oneshot::channel();
         self.0.send(Use::People(lend.clone(), answer)).ok()?;
         counted.await.ok()
+    }
+
+    /// `at`, a flow's own socket on `lend`, open until what this answers drops.
+    pub(crate) fn flow(&self, lend: &LendName, at: std::net::SocketAddr) -> Flowing {
+        let _ = self.0.send(Use::Flow(lend.clone(), at, true));
+        Flowing(self.clone(), lend.clone(), at)
+    }
+
+    /// The flows open on `lend` now ([`Took::Flow`]); none when the count's
+    /// task is gone, where a server's socket for one is then not admitted.
+    pub(crate) async fn flows(&self, lend: &LendName) -> Open {
+        let (answer, told) = oneshot::channel();
+        let _ = self.0.send(Use::Flows(lend.clone(), answer));
+        told.await.unwrap_or_default()
+    }
+}
+
+/// A flow's own socket open on a lend, closed when dropped ([`Using::flow`]).
+pub(crate) struct Flowing(Using, LendName, std::net::SocketAddr);
+
+impl Flowing {
+    /// The flows open on its lend now, its own among them.
+    pub(crate) async fn all(&self) -> Open {
+        self.0.flows(&self.1).await
+    }
+}
+
+impl Drop for Flowing {
+    fn drop(&mut self) {
+        let _ = (self.0).0.send(Use::Flow(self.1.clone(), self.2, false));
     }
 }
 
@@ -720,12 +764,11 @@ async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
         ),
         Raw::Udp => None,
     };
-    let read = door
-        .folders
-        .host
-        .transport
-        .read_port(lend.raw(), port.get(), None)
-        .await;
+    let net = door.folders.host.transport.as_ref();
+    let read = match lend.raw() {
+        Raw::Udp => bound::udp_port(net, port.get(), door.using.flows(&lend.name).await).await,
+        Raw::Tcp => net.read_port(Raw::Tcp, port.get(), None).await,
+    };
     let held = match bound::decided(&door.data_dir, lend, read) {
         Err(Unsent::Held(held)) => Some(held),
         _ => lend.terms.approved.is_none().then_some(Hold::Unapproved),

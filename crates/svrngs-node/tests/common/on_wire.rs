@@ -356,6 +356,7 @@ pub fn socket(id: u64) -> svrngs_node::iroh::PortRead {
         holders: Default::default(),
         at: std::net::Ipv4Addr::LOCALHOST.into(),
         dual: false,
+        peer: None,
     };
     let read = svrngs_node::binding::Read {
         boot: None,

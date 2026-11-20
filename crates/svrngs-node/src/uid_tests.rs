@@ -623,6 +623,28 @@ fn a_new_container_behind_podman_s_forwarder_is_held() {
     );
 }
 
+/// **A connected UDP socket is read with the one address it is connected
+/// to** (eudoxia 4560910, `Socket::peer`), on Linux by sock_diag's
+/// `idiag_dst` and `idiag_dport`, so a server's socket for one of svrngs's
+/// flows is known by it; an unconnected one with none; a Mac's read names
+/// none. Planted, watched failing on the Fedora box: `peer` left none on
+/// Linux.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn a_connected_udp_socket_is_read_with_its_peer() {
+    let far = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+    let near = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+    near.connect(far.local_addr().unwrap()).unwrap();
+    let peer = |s: &std::net::UdpSocket| {
+        let (read, _) = port(Raw::Udp, s.local_addr().unwrap().port(), None).unwrap();
+        read.sockets.first().map(|s| s.peer)
+    };
+    let linux = cfg!(target_os = "linux");
+    let connected = linux.then(|| far.local_addr().unwrap());
+    assert_eq!(peer(&near), Some(connected), "connected");
+    assert_eq!(peer(&far), Some(None), "not connected");
+}
+
 /// **A UDP socket on every IPv6 address is reached at 127.0.0.1 when it
 /// takes IPv4's too, and at ::1 when it doesn't** (SHARE_BINDING_REVIEWS §7
 /// #2), as this computer reads it: sock_diag's `INET_DIAG_SKV6ONLY` on

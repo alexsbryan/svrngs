@@ -350,6 +350,8 @@ mod linux {
             holders: holders(d),
             at: d.local.ip(),
             dual: d.local.is_ipv6() && !d.v6only,
+            peer: (raw == Raw::Udp && d.peer.port() != 0)
+                .then(|| SocketAddr::new(d.peer.ip().to_canonical(), d.peer.port())),
         };
         let sockets = listed.iter().map(socket).collect();
         let read = Read {
@@ -642,6 +644,7 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
         holders: pids.iter().filter_map(named).collect(),
         at: *at,
         dual: *dual,
+        peer: None,
     };
     let read = Read {
         boot: Some(boot),
@@ -694,6 +697,7 @@ fn datagrams(me: u32, port: u16) -> Result<Read, Unread> {
         holders: last_user(s, mac::bsd(s.pid as i32)).into_iter().collect(),
         at: s.local.ip(),
         dual: true,
+        peer: None,
     };
     let sockets = listed
         .iter()

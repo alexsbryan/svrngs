@@ -273,7 +273,11 @@ WebSocket, each raw TCP connection, and the key or account its lender sends
 to it. A UDP share's datagrams go through a `door::bound::Flow`, which
 checks the port's sockets before and after every datagram sent, and before
 each answer is carried back, keeping an answer read across a check that is
-cut short. Clippy refuses every other way to dial or send to an address,
+cut short. Each UDP check, a flow's and the lender's list's, names the
+flows open on the lend by their own sockets' addresses (`Took::Flow`), so a
+socket a server makes on the port for one of them, connected to that
+flow's socket alone, is admitted where it was made in an approved cgroup,
+as rootless Podman's pasta makes one for each flow. Clippy refuses every other way to dial or send to an address,
 and to build an HTTP client, where `door/tests.rs` doesn't name it. For a
 UDP share, a program not approved seen there, by any check or by the
 lender's list, holds the share in its file until its lender approves again,

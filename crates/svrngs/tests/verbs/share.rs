@@ -680,6 +680,7 @@ fn answering(
         holders: [(pid, start)].into(),
         at: std::net::Ipv4Addr::LOCALHOST.into(),
         dual: false,
+        peer: None,
     };
     let read = svrngs_node::binding::Read {
         boot: None,

@@ -967,6 +967,7 @@ fn alone(id: u64) -> binding::Read {
             holders: Default::default(),
             at: std::net::Ipv4Addr::LOCALHOST.into(),
             dual: false,
+            peer: None,
         }],
         unlisted: false,
     }
@@ -1286,13 +1287,79 @@ async fn a_flow() -> (
     shelf.terms.approved = binding::approve(&read.unwrap().0, None).ok();
     let dir = tempfile::tempdir().unwrap();
     let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
-    let flow = bound::Flow::open(socket, at).await.unwrap();
+    let using = Using::spawn();
+    let flow = bound::Flow::open(socket, (at, &using, &shelf.name))
+        .await
+        .unwrap();
     let (_queue, mut more) = tokio::sync::mpsc::channel(1);
     let judged = (&net as &dyn crate::iroh::Net, dir.path(), &shelf);
     flow.send(judged, b"hi".to_vec(), &mut more).await.unwrap();
     let mut buf = [0u8; 16];
     let (_, from) = service.recv_from(&mut buf).await.unwrap();
     (service, from, (wire, key), shelf, dir, flow)
+}
+
+/// **A server's datagram socket for a flow, made in the approved cgroup, is
+/// carried** (eudoxia 4560910, `Took::Flow`): rootless Podman's pasta answers
+/// each flow on a published UDP port from a socket of its own on that port,
+/// connected to the flow's socket alone. Two flows open on a lend, each such
+/// socket in the approved socket's cgroup, a check of either carries; one in
+/// another cgroup holds it. Planted, each watched failing: `Took::Datagram`
+/// passed for a flow (the server's socket held); only the flow's own address
+/// named (the other flow's socket held).
+#[tokio::test]
+async fn a_server_s_socket_for_a_flow_in_the_approved_cgroup_is_carried() {
+    let service = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let at = service.local_addr().unwrap();
+    let wire = crate::node::Wire::default();
+    let key = crate::iroh::SecretKey::from_bytes(&[8; 32]).public();
+    let net = wire.net(key);
+    let mut shelf = Lend::carried("game", "house").unwrap();
+    shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(at.port()).unwrap());
+    shelf.terms.approved = binding::approve(&alone(1), None).ok();
+    let dir = tempfile::tempdir().unwrap();
+    let (using, judged) = (
+        Using::spawn(),
+        (&net as &dyn crate::iroh::Net, dir.path(), &shelf),
+    );
+    let pasta = |answering: Vec<(std::net::SocketAddr, u64)>| {
+        let mut read = alone(1);
+        for (n, (peer, cgroup)) in (2..).zip(answering) {
+            let socket = binding::Socket {
+                cgroup: Some(cgroup),
+                peer: Some(peer),
+                ..alone(n).sockets[0].clone()
+            };
+            read.sockets.push(socket);
+        }
+        wire.reads(key, at.port(), Ok((read, binding::Took::Datagram)));
+    };
+    pasta(Vec::new());
+    let (mut flows, mut from) = (Vec::new(), Vec::new());
+    for _ in 0..2 {
+        let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let flow = bound::Flow::open(socket, (at, &using, &shelf.name))
+            .await
+            .unwrap();
+        let (_queue, mut more) = tokio::sync::mpsc::channel(1);
+        flow.send(judged, b"hi".to_vec(), &mut more).await.unwrap();
+        from.push(service.recv_from(&mut [0u8; 16]).await.unwrap().1);
+        flows.push(flow);
+    }
+    pasta(vec![(from[0], 4)]);
+    assert_eq!(flows[0].check(judged).await, Ok(()), "its server's socket");
+    pasta(vec![(from[0], 4), (from[1], 4)]);
+    assert_eq!(
+        flows[0].check(judged).await,
+        Ok(()),
+        "beside the other flow's"
+    );
+    pasta(vec![(from[0], 5)]);
+    assert_eq!(
+        flows[0].check(judged).await,
+        Err(bound::Unsent::Held(Hold::Another)),
+        "one in another cgroup"
+    );
 }
 
 /// **A UDP share's answers are carried back only through its check**

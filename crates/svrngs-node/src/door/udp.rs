@@ -228,7 +228,8 @@ async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, 
         .as_ref()
         .map_or(Ipv4Addr::LOCALHOST.into(), |a| a.at);
     let socket = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).await;
-    let socket = Flow::open(socket.map_err(unreached)?, SocketAddr::new(at, port.get())).await;
+    let to = (SocketAddr::new(at, port.get()), &door.using, &lend.name);
+    let socket = Flow::open(socket.map_err(unreached)?, to).await;
     let socket = socket.map_err(unreached)?;
     let judged = (door.folders.host.transport.as_ref(), &*door.data_dir, &live);
     let checked = socket.check(judged).await;

@@ -1818,6 +1818,7 @@ async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
         holders: holders.iter().copied().collect(),
         at: std::net::Ipv4Addr::LOCALHOST.into(),
         dual: false,
+        peer: None,
     };
     let read = |lasting, sockets| Read {
         boot: None,

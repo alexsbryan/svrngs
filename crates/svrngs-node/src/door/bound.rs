@@ -19,6 +19,7 @@ use std::time::Duration;
 
 use tokio::net::UdpSocket;
 
+use crate::door::Open;
 use crate::iroh::{Duplex, Net};
 use crate::lend::{Hold, Lend, Raw};
 use crate::uid::{Conn, Unread};
@@ -178,19 +179,28 @@ pub(crate) struct Flow {
     /// (SHARE_BINDING_REVIEWS §6 #4).
     answer: Option<usize>,
     buf: Vec<u8>,
+    /// Its own socket among its lend's open flows, which each check names
+    /// ([`Took::Flow`]): a server's socket for one is answering it.
+    open: crate::door::Flowing,
 }
 
 impl Flow {
-    /// `socket`, on 127.0.0.1:0, connected to `at` alone.
+    /// `socket`, on 127.0.0.1:0, connected to `at` alone, open among the
+    /// flows `using` keeps of the lend `name` while it is.
     #[expect(clippy::disallowed_methods, reason = "dial: a checked flow")]
-    pub(crate) async fn open(socket: UdpSocket, at: SocketAddr) -> std::io::Result<Self> {
+    pub(crate) async fn open(
+        socket: UdpSocket,
+        (at, using, name): (SocketAddr, &crate::door::Using, &crate::lend::LendName),
+    ) -> std::io::Result<Self> {
         socket.connect(at).await?;
+        let open = using.flow(name, socket.local_addr()?);
         let (port, buf) = (at.port(), vec![0; 65_535]);
         Ok(Self {
             socket,
             port,
             answer: None,
             buf,
+            open,
         })
     }
 
@@ -241,8 +251,18 @@ impl Flow {
 
     /// The share's port read and checked against `lend`'s approval now.
     pub(crate) async fn check(&self, (net, dir, lend): Judged<'_>) -> Result<(), Unsent> {
-        decided(dir, lend, net.read_port(Raw::Udp, self.port, None).await)
+        let open = self.open.all().await;
+        decided(dir, lend, udp_port(net, self.port, open).await)
     }
+}
+
+/// A UDP share's `port` read as each of its checks judges it, a flow's and
+/// its lender's list's alike: with the flows `open` on it, each by its own
+/// socket's address, so a server's socket answering one is known
+/// ([`Took::Flow`]).
+pub(crate) async fn udp_port(net: &dyn Net, port: u16, open: Open) -> Result<(Read, Took), Unread> {
+    let read = net.read_port(Raw::Udp, port, None).await;
+    read.map(|(now, _)| (now, Took::Flow(open)))
 }
 
 /// A TCP connection to this computer's `at`, unchecked: the product's
