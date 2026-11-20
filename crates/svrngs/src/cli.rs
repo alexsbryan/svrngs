@@ -110,8 +110,8 @@ use std::num::NonZeroU16;
 
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::{FolderAsk, PROGRAMS_ROUTE};
-use svrngs_node::home::LINKS_ROUTE;
 use svrngs_node::home::WHEN;
+use svrngs_node::home::{Linking, LINKS_ROUTE};
 use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{Entered, JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
@@ -864,25 +864,15 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 tracing::debug!(target: "cli", %home, "cli: run — local home reminder");
                 format!("svrngs is already running. Your home page is at {home}\nRun `svrngs open` to open it in your browser.\n")
             }
-            (Err(Refusal::Refused(Refused::Busy(lock))), Verb::Room(names)) => {
-                tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
-                room(here, names).await?.to_string()
-            }
-            (Err(Refusal::Refused(Refused::Busy(lock))), Verb::Join { link, person, .. }) => {
-                tracing::debug!(target: "cli", lock = %lock.display(), "cli: join — svrngs runs here already, so it is asked to join, as `room` is");
-                let person = person.or_else(user_name).ok_or(Refused::NoNameToJoin)?;
-                join_running(here, &link, &person).await?
-            }
             (
                 Err(Refusal::Refused(Refused::Busy(lock))),
-                link @ Verb::Link { origin: None, .. },
+                verb @ (Verb::Room(_)
+                | Verb::Join { .. }
+                | Verb::New { .. }
+                | Verb::Link { origin: None, .. }),
             ) => {
-                tracing::debug!(target: "cli", lock = %lock.display(), "cli: link — svrngs runs here already, so it is asked, as `join` is");
-                link_running(here, link).await?.to_string()
-            }
-            (Err(Refusal::Refused(Refused::Busy(lock))), new @ Verb::New { .. }) => {
-                tracing::debug!(target: "cli", lock = %lock.display(), "cli: new — svrngs runs here already, so it is asked to make the group, as `join` is");
-                new_running(here, new, &relay.relay_urls).await?
+                tracing::debug!(target: "cli", lock = %lock.display(), "cli: svrngs runs here already, so it is asked");
+                asked(here, verb, relay).await?
             }
             (claimed, other) => return start(other, root, relay, claimed?, None).await,
         },
@@ -1839,14 +1829,22 @@ pub async fn join_group(
     match node.host().join(link, person).await {
         Ok(Entered::In { seed, person }) => Ok(Said::Joined { seed, person }),
         Ok(Entered::AlreadyIn(seed)) => Ok(Said::AlreadyIn(seed)),
-        Err(NotJoined::LinkRefused) => Err(Refused::LinkRefused.into()),
-        Err(NotJoined::NameTaken { holder, group }) => {
-            Err(Refused::NameTaken { holder, group }.into())
+        Err(why) => Err(why.into()),
+    }
+}
+
+/// A join the node did not let this computer in by, in the command's
+/// refusals.
+impl From<NotJoined> for Refusal {
+    fn from(why: NotJoined) -> Self {
+        match why {
+            NotJoined::LinkRefused => Refused::LinkRefused.into(),
+            NotJoined::NameTaken { holder, group } => Refused::NameTaken { holder, group }.into(),
+            NotJoined::IssuerAway => Unjudged::IssuerAway.into(),
+            NotJoined::Keep(group) => Unjudged::Keep(group.to_string()).into(),
+            NotJoined::Left(group) => Refused::Left(group).into(),
+            NotJoined::Older(group) => Refused::MadeOlder(group).into(),
         }
-        Err(NotJoined::IssuerAway) => Err(Unjudged::IssuerAway.into()),
-        Err(NotJoined::Keep(group)) => Err(Unjudged::Keep(group.to_string()).into()),
-        Err(NotJoined::Left(group)) => Err(Refused::Left(group).into()),
-        Err(NotJoined::Older(group)) => Err(Refused::MadeOlder(group).into()),
     }
 }
 
@@ -1857,6 +1855,34 @@ fn folder_at_join(node: &Node, seed: &Seed) -> Said {
     let (dir, placed) = node.folders().place(seed);
     let group = seed.name().clone();
     Said::Folder { group, dir, placed }
+}
+
+/// `verb` asked of svrngs running over the data dir `here` names, the
+/// one writer of this computer's acts: it makes the group, the link or the
+/// join, or turns the room on, and the command words what it answered.
+pub async fn asked(here: &impl Here, verb: Verb, relay: &RelayConfig) -> Result<String, Refusal> {
+    Ok(match verb {
+        Verb::Room(names) => room(here, names).await?.to_string(),
+        Verb::Join { link, person, .. } => {
+            let person = person.or_else(user_name).ok_or(Refused::NoNameToJoin)?;
+            join_running(here, &link, &person).await?
+        }
+        Verb::Link {
+            group,
+            origin,
+            device,
+            relays,
+        } => link_running(here, &group, origin, device, relays)
+            .await?
+            .to_string(),
+        Verb::New {
+            name,
+            person,
+            origin,
+            relays,
+        } => new_running(here, name, person, origin, relays, &relay.relay_urls).await?,
+        _ => unreachable!("asked only of what svrngs running here does"),
+    })
 }
 
 /// `svrngs join`, of the svrngs running here (join-while-running): the
@@ -2056,16 +2082,14 @@ pub async fn link_to(
 /// ([`unreached`]). One that answers no group is an older build, said as
 /// [`link_running`] says it; its refusal, why traced, is that the group
 /// can't be kept.
-async fn new_running(here: &impl Here, new: Verb, tried: &[String]) -> Result<String, Refusal> {
-    let Verb::New {
-        name,
-        person,
-        origin,
-        relays,
-    } = new
-    else {
-        unreachable!("asked only of a new")
-    };
+async fn new_running(
+    here: &impl Here,
+    name: Name,
+    person: Option<Name>,
+    origin: Option<Origin>,
+    relays: Vec<RelayUrl>,
+    tried: &[String],
+) -> Result<String, Refusal> {
     let person = person
         .or_else(user_name)
         .ok_or_else(|| Refused::NoName(name.clone()))?;
@@ -2097,18 +2121,22 @@ async fn new_running(here: &impl Here, new: Verb, tried: &[String]) -> Result<St
 /// computer's acts ([`svrngs_node::home::LINKS_ROUTE`]), said as [`link_to`]'s
 /// is; its refusal, a non-keeper's among them, in its words. One that
 /// answers no link is an older build, said as [`join_running`] says it.
-async fn link_running(here: &impl Here, link: Verb) -> Result<Said, Refusal> {
-    let Verb::Link {
-        group,
-        relays,
+async fn link_running(
+    here: &impl Here,
+    group: &str,
+    origin: Option<Origin>,
+    device: bool,
+    relays: Vec<RelayUrl>,
+) -> Result<Said, Refusal> {
+    let page = checked_page(origin).await?;
+    let seed = group_named(here.root(), group)?;
+    let asked = Linking {
+        group: seed.id(),
         device,
-        ..
-    } = link
-    else {
-        unreachable!("asked only of a link")
+        relays,
+        origin: page.map(|p| p.as_str().into()),
+        ..Linking::default()
     };
-    let seed = group_named(here.root(), &group)?;
-    let asked = serde_json::json!({ "group": seed.id(), "device": device, "relays": relays });
     let (ok, text) = here.ask(LINKS_ROUTE, &asked).await?;
     let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
     tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");

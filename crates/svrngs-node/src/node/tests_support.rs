@@ -8,6 +8,21 @@ use crate::iroh::Endpoint;
 use crate::uid::{Conn, Owner, Side};
 
 impl Node {
+    /// A group made as `svrngs new` asks the svrngs running here for one,
+    /// at [`crate::group::NEW_ROUTE`] ([`Asking::made`]).
+    pub async fn made(&self, asked: crate::group::NewAsk) -> Result<crate::group::NewMade, String> {
+        self.asking.made(asked).await
+    }
+
+    /// A link made as `svrngs link` asks the svrngs running here for one,
+    /// at [`crate::home::LINKS_ROUTE`] ([`Asking::linked`]).
+    pub async fn linked(
+        &self,
+        asked: crate::home::Linking,
+    ) -> Result<crate::home::LinkMade, crate::home::Unlinked> {
+        self.asking.linked(asked).await
+    }
+
     /// Hold a deliberately historical or synthetic journal fixture still
     /// while exercising its live routes. Normal startup and writes wake sync.
     pub fn stop_sync(&self) {

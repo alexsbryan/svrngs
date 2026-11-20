@@ -63,14 +63,14 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::get;
 use axum::{Form, Json, Router};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::ffi::OsStr;
 use std::num::NonZeroU16;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::Duration;
-use svrngs_core::link::{client_link, https_link, Link};
+use svrngs_core::link::{client_link, https_link, Link, Origin};
 use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
@@ -878,56 +878,105 @@ async fn terms_of(at: &Asking, lend: &lend::Lend) -> crate::folder::carried::Sai
 
 /// What the person asks a link for: to invite someone to `group`, or,
 /// with `device`, to add a computer or phone of their own, or, with
-/// `visit`, to have a guest for that many seconds (guests-link).
-#[derive(Deserialize)]
+/// `visit`, to have a guest for that many seconds (guests-link); and what
+/// `svrngs link` asks with it.
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct Linking {
-    group: String,
-    device: bool,
-    #[serde(default)]
-    visit: Option<i64>,
+pub struct Linking {
+    pub group: String,
+    pub device: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visit: Option<i64>,
     /// What `link --relay` asks ([`crate::node::Host::meet`]): none on the
     /// page, which keeps where a group meets as it is.
     #[serde(default)]
-    relays: Vec<crate::iroh::RelayUrl>,
+    pub relays: Vec<crate::iroh::RelayUrl>,
+    /// What `link --origin` asks, checked by the command: the page the
+    /// group's https links print on from now on. None on the page.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+}
+
+/// A link made ([`Asking::linked`]): the client's, the https one when the
+/// group has a page, and whose device it adds, if it is a device link.
+/// Its fields in the order the answer has always spelt its keys.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LinkMade {
+    pub client: String,
+    pub device: Option<crate::Person>,
+    pub https: Option<String>,
+}
+
+/// Why no link was made: where the group meets refused, or the origin
+/// asked is none, in their words; or the node's own refusal.
+#[derive(Debug)]
+pub enum Unlinked {
+    Closed(String),
+    Unminted(crate::invite::Unminted),
+}
+
+impl IntoResponse for Unlinked {
+    fn into_response(self) -> Response {
+        match self {
+            Unlinked::Closed(why) => LendRefusal::closed(why),
+            Unlinked::Unminted(crate::invite::Unminted::NotIn) => {
+                LendRefusal::closed("you are not in that group on this computer")
+            }
+            Unlinked::Unminted(e) => {
+                LendRefusal::fault(format!("this computer cannot make a link: {e}"))
+            }
+        }
+    }
 }
 
 /// Where the command asks a link of the svrngs running here, as it asks a
 /// join ([`crate::join::JOINS_ROUTE`]): [`link`], behind the record's checks.
 pub const LINKS_ROUTE: &str = "/v1/links";
 
-/// `POST /link`: a link to the group, as `svrngs link` makes it
-/// ([`crate::node::Host::link`]), its home relay waited for as there
-/// ([`crate::node::Host::online`]); a guest's, `<page>#visit=<token>`, so
-/// the page tells it from a join link before it asks anything.
+impl Asking {
+    /// A link to the group, as `svrngs link` makes it
+    /// ([`crate::node::Host::link`]), on the origin asked, kept from now on,
+    /// once where it meets is changed as asked and its home relay waited for
+    /// ([`crate::node::Host::online`]); a guest's, `<page>#visit=<token>`,
+    /// so the page tells it from a join link before it asks anything.
+    pub(crate) async fn linked(&self, l: Linking) -> Result<LinkMade, Unlinked> {
+        let page = l.origin.as_deref().map(|o| Origin::parse(o).ok_or(o));
+        let page = page.transpose().map_err(|o| {
+            tracing::debug!(target: "home", group = l.group, origin = o, "home: refused — the origin asked is no http(s) address");
+            Unlinked::Closed("not an http(s) address without a '#'".into())
+        })?;
+        if let Err(why) = self.host.meet(&l.group, &l.relays) {
+            tracing::debug!(target: "home", group = l.group, why, "home: refused — where the group meets stays");
+            return Err(Unlinked::Closed(why));
+        }
+        // Its home first: with none yet, a link names a relay this
+        // computer may never register at.
+        let online = self.host.online().await;
+        tracing::debug!(target: "home", group = l.group, online, "home: a link, once this computer's home relay is reached or waited for");
+        let made = self.host.link(&l.group, l.device, page.as_ref(), l.visit);
+        let made = made.map_err(|e| {
+            match &e {
+                crate::invite::Unminted::NotIn => tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group"),
+                e => tracing::warn!(target: "home", group = l.group, error = %e, "home: refused — no link made"),
+            }
+            Unlinked::Unminted(e)
+        })?;
+        // A visit's link carries `visit=` past its `#`; any other, the `#` it has.
+        let mark = if l.visit.is_some() { "#visit=" } else { "#" };
+        let https = made.page.map(|p| https_link(&p, &made.token));
+        let https = https.map(|h| h.replacen('#', mark, 1));
+        let (client, device) = (client_link(&made.token), made.device);
+        Ok(LinkMade {
+            client,
+            device,
+            https,
+        })
+    }
+}
+
+/// `POST /link`: [`Asking::linked`], answered.
 pub(crate) async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
-    if let Err(why) = at.host.meet(&l.group, &l.relays) {
-        tracing::debug!(target: "home", group = l.group, why, "home: refused — where the group meets stays");
-        return LendRefusal::closed(why);
-    }
-    // Its home first, as `svrngs link` waits (cli.rs `link_to`): with none
-    // yet, a link names a relay this computer may never register at.
-    let online = at.host.online().await;
-    tracing::debug!(target: "home", group = l.group, online, "home: a link, once this computer's home relay is reached or waited for");
-    match at.host.link(&l.group, l.device, None, l.visit) {
-        Ok(made) => {
-            // A visit's link carries `visit=` past its `#`; any other, the `#` it has.
-            let mark = if l.visit.is_some() { "#visit=" } else { "#" };
-            let https = made.page.map(|p| https_link(&p, &made.token));
-            let https = https.map(|h| h.replacen('#', mark, 1));
-            let (client, device) = (client_link(&made.token), made.device);
-            let made = serde_json::json!({ "client": client, "https": https, "device": device });
-            Json(made).into_response()
-        }
-        Err(crate::invite::Unminted::NotIn) => {
-            tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group");
-            LendRefusal::closed("you are not in that group on this computer")
-        }
-        Err(e) => {
-            tracing::warn!(target: "home", group = l.group, error = %e, "home: refused — no link made");
-            LendRefusal::fault(format!("this computer cannot make a link: {e}"))
-        }
-    }
+    at.linked(l).await.map(Json).into_response()
 }
 
 /// `POST /visits`, `[group, visit]`: the host's Stop (guests-pages; GUESTS
