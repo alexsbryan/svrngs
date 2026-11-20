@@ -888,10 +888,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # apart and the socket is this account's (uid.rs): 24,282. Its pass cut 2.
 # Then 1 for a Mac's port that only another account answers to be said as
 # unread, not as nothing (door.rs): 24,283. Its pass cut 1.
+# Then 12 for a closed flow to stay named while a socket is connected to it
+# (door.rs, door/bound.rs): 24,295. Its pass cut 1.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24284,
+    ".": 24296,
 
     "js": 8694,
 
