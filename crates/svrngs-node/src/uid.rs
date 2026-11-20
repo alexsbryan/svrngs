@@ -277,6 +277,21 @@ fn cgroups_v2(cgroups: &str) -> bool {
     cgroups.lines().any(|l| l.starts_with("0::"))
 }
 
+/// The one address the socket `d` is connected to, as a check may take it
+/// to name a server's socket for one of svrngs's flows (`Socket::peer`): a
+/// UDP socket's, connected, of this account (`me`), where svrngs runs in a
+/// cgroup v2 of its own, not the root one (`/proc/self/cgroup` reading
+/// `cgroups`), so its cgroup names its program. Else none, so the socket is
+/// judged as one not connected.
+#[cfg(any(target_os = "linux", test))]
+fn peer(d: &diag::Diag, raw: Raw, cgroups: &str, me: Option<u32>) -> Option<SocketAddr> {
+    let apart = cgroups
+        .lines()
+        .any(|l| l.starts_with("0::") && l.trim() != "0::/");
+    let trusted = raw == Raw::Udp && apart && me == Some(d.uid) && d.peer.port() != 0;
+    trusted.then(|| SocketAddr::new(d.peer.ip().to_canonical(), d.peer.port()))
+}
+
 /// Whether a kernel whose `/proc/sys/kernel/osrelease` reads `release`
 /// lists a TCP socket bound to a port and not listening: 6.8 and later.
 #[cfg(any(target_os = "linux", test))]
@@ -344,14 +359,15 @@ mod linux {
             let holding = procs.iter().filter(|(_, p)| p.2.contains(&d.inode));
             holding.map(|(pid, p)| (*pid, p.1)).collect()
         };
+        let (cgroups, me) = (std::fs::read_to_string("/proc/self/cgroup"), mine().ok());
+        let cgroups = cgroups.unwrap_or_default();
         let socket = |d: &diag::Diag| binding::Socket {
             id: d.cookie,
             cgroup: d.cgroup,
             holders: holders(d),
             at: d.local.ip(),
             dual: d.local.is_ipv6() && !d.v6only,
-            peer: (raw == Raw::Udp && d.peer.port() != 0)
-                .then(|| SocketAddr::new(d.peer.ip().to_canonical(), d.peer.port())),
+            peer: peer(d, raw, &cgroups, me),
         };
         let sockets = listed.iter().map(socket).collect();
         let read = Read {

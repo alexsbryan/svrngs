@@ -645,6 +645,74 @@ fn a_connected_udp_socket_is_read_with_its_peer() {
     assert_eq!(peer(&far), Some(None), "not connected");
 }
 
+/// **A connected socket names a flow only where its cgroup names its
+/// program, and only of this account** (SHARE_BINDING_REVIEWS §10 A): its
+/// peer is read where svrngs runs in a cgroup v2 of its own and the socket
+/// is this account's, else none, so a check of a flow holds it. Planted,
+/// each watched failing: the cgroup asked of nothing (one of this account's
+/// on a cgroup v1 computer carried); the account asked of nothing (another
+/// account's in the approved cgroup carried).
+#[test]
+fn a_connected_socket_names_a_flow_only_as_this_account_s_in_its_own_cgroup() {
+    let connected = |uid| diag::Diag {
+        state: 7,
+        local: at("127.0.0.1:3000"),
+        peer: at("127.0.0.1:40000"),
+        uid,
+        inode: 9,
+        cookie: 2,
+        cgroup: Some(4),
+        v6only: false,
+    };
+    let v2 = "0::/user.slice/user-1000.slice/session-2.scope\n";
+    let flow = binding::Took::Flow([at("127.0.0.1:40000")].into());
+    let socket = |id, peer| binding::Socket {
+        id,
+        cgroup: Some(4),
+        holders: Default::default(),
+        at: "127.0.0.1".parse().unwrap(),
+        dual: false,
+        peer,
+    };
+    let read = |peer| binding::Read {
+        boot: None,
+        lasting: true,
+        sockets: vec![socket(1, None), socket(2, peer)],
+        unlisted: false,
+    };
+    let approved = binding::approve(&read(None), None).unwrap();
+    let approved = binding::Approved {
+        sockets: [1].into(),
+        ..approved
+    };
+    let carried = |d: &diag::Diag, cgroups| {
+        let peer = peer(d, Raw::Udp, cgroups, Some(1000));
+        binding::check(Some(&approved), &read(peer), &flow)
+    };
+    assert_eq!(
+        carried(&connected(1000), v2),
+        Ok(()),
+        "this account's, in its cgroup"
+    );
+    let v1 = "12:pids:/user.slice\n1:name=systemd:/user.slice/session-2.scope\n";
+    for (case, d, cgroups) in [
+        ("cgroup v1 alone", connected(1000), v1),
+        (
+            "every program in the root cgroup",
+            connected(1000),
+            "0::/\n",
+        ),
+        ("another account's", connected(1001), v2),
+    ] {
+        assert_eq!(carried(&d, cgroups), Err(binding::Held::Another), "{case}");
+    }
+    assert_eq!(
+        peer(&connected(1000), Raw::Tcp, v2, Some(1000)),
+        None,
+        "TCP"
+    );
+}
+
 /// **A UDP socket on every IPv6 address is reached at 127.0.0.1 when it
 /// takes IPv4's too, and at ::1 when it doesn't** (SHARE_BINDING_REVIEWS §7
 /// #2), as this computer reads it: sock_diag's `INET_DIAG_SKV6ONLY` on
