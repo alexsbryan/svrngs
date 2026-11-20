@@ -192,6 +192,83 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **The page announcing itself after the channel closed goes direct
+    /// again** (webrtc-page; demo/runs/phone-home/2026-11-20, "What it
+    /// found" 1): the film's part rides `webrtc*` and the window closes the
+    /// channel mid-film, as the test before this one does; once the part
+    /// has arrived over the relay, the page is reloaded, so the shim
+    /// announces itself again, and a second attempt must go direct, its
+    /// selected path `webrtc`, and the film's part arrive whole. Planted:
+    /// the worker answering every announce with the attempt it holds
+    /// (`directs.has`), the phone's finding, and no second attempt came.
+    the_page_announcing_itself_after_the_channel_closed_goes_direct_again
+);
+async fn the_page_announcing_itself_after_the_channel_closed_goes_direct_again(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    direct_on(dir.path());
+
+    let seen = drive(
+        engine,
+        "runtime.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            // As the closed channel's test: 6 MiB, closed after 2000 datagrams.
+            "close": {
+                "path": "title.mp4",
+                "range": format!("bytes=0-{}", 6 * MIB - 1),
+                "after": 2000,
+            },
+            "direct": true,
+            "again": true,
+            "film": film_args(),
+        }),
+        None,
+    )
+    .await;
+    let mut shown = seen.clone();
+    shown["trace"] = json!(format!(
+        "{} lines",
+        seen["trace"].as_str().map_or(0, |t| t.lines().count())
+    ));
+    eprintln!("the announce again's run: {shown}");
+    eprintln!(
+        "the announce again's trace:\n{}",
+        seen["trace"].as_str().unwrap_or_default()
+    );
+    film_part_answered(
+        &seen["first"],
+        &mp4,
+        (0, 6 * MIB - 1),
+        "closed mid-film, over the relay",
+        &seen,
+    );
+    let trace = seen["trace"].as_str().unwrap_or_default();
+    let lines = goes_direct_lines(trace);
+    assert!(
+        lines.first().is_some_and(webrtc_selected),
+        "the film must ride the window's channel before it is closed:\n{shown:#}"
+    );
+    assert_eq!(
+        lines.len(),
+        2,
+        "the page announcing itself again must go direct afresh:\n{shown:#}"
+    );
+    assert!(
+        webrtc_selected(&lines[1]),
+        "the second attempt's selected path must be webrtc:\n{shown:#}"
+    );
+    film_answered(&seen["again"], &mp4, "after it went direct again", &seen);
+    drop(ada);
+}
+
+in_both_engines!(
     /// **The window withholding datagrams keeps it relayed** (webrtc-page;
     /// the spike's Q4 plant): the same lend with `__svrngsNoWebrtc` set,
     /// so the shim passes no datagram between the channel and the worker —
@@ -243,16 +320,25 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
     drop(ada);
 }
 
-/// The paths the trace's `goes direct` line holds, as JSON (`Direct::paths`):
-/// serde_json orders an object's keys, so `kind` and `selected` are not
-/// adjacent, and a path is read rather than matched as text (the first
-/// runs of these tests failed on that).
+/// The paths the trace's first `goes direct` line holds, as JSON
+/// (`Direct::paths`): serde_json orders an object's keys, so `kind` and
+/// `selected` are not adjacent, and a path is read rather than matched as
+/// text (the first runs of these tests failed on that).
 fn goes_direct_paths(trace: &str) -> Value {
+    goes_direct_lines(trace)
+        .into_iter()
+        .next()
+        .expect("the direct path's line holds its paths as JSON")
+}
+
+/// The paths of every `goes direct` line in the trace, in order: one per
+/// attempt that went direct.
+fn goes_direct_lines(trace: &str) -> Vec<Value> {
     trace
         .lines()
-        .find_map(|l| l.split_once("goes direct: ").map(|(_, paths)| paths))
-        .and_then(|paths| serde_json::from_str(paths).ok())
-        .expect("the direct path's line holds its paths as JSON")
+        .filter_map(|l| l.split_once("goes direct: ").map(|(_, paths)| paths))
+        .filter_map(|paths| serde_json::from_str(paths).ok())
+        .collect()
 }
 
 /// Whether `paths` names `webrtc` as the selected one.

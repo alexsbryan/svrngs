@@ -210,16 +210,15 @@ let linked = null;
 // run's own.
 /** @type {Map<string, string>} */
 const dataLinks = new Map();
-// The direct attempt each lender is running: the attempt itself while it
-// runs, so a page that announces itself twice (a reload) is answered by
-// the one attempt, and the data endpoint it made once it has one — held
-// here because wasm-bindgen frees an exported object when its JS wrapper
-// is collected, and an iroh endpoint dropped that way aborts without
-// `close`, killing the connection mid-fetch (watched 2026-11-19:
-// "Endpoint dropped without calling `Endpoint::close`" in the trace, the
-// film's fetch then never ending; the wrapper was the `direct` local
-// alone).
-/** @type {Map<string, Direct | null>} */
+// The last direct attempt each lender went through, kept once it returns:
+// a page that announces itself while its path stands rides it, and one
+// that announces itself after it ended (`Direct::on`: the channel closed,
+// ICE disconnected) starts another (demo/runs/phone-home/2026-11-20,
+// "What it found" 1). An attempt is held by its own frame while it runs,
+// and its data endpoint by whatever rides it after it is let go: the
+// attempt, its dial in `dials`, and each answer still read off it, the
+// last of them closing it (web/src/lib.rs `Owned`).
+/** @type {Map<string, Direct>} */
 const directs = new Map();
 /** @type {Map<string, Promise<Dialled>>} */
 const dials = new Map();
@@ -371,17 +370,20 @@ async function linkTo(to) {
 
 // The pass a request carries, and the link naming the endpoint it goes
 // through: this run's, or a direct path's data endpoint for its lender
-// (`direct`), each when the holder signed one (`opened`).
+// (`direct`), each when the holder signed one (`opened`). An offer rides
+// this run's own dial (`own`), so it names this run's, a data endpoint
+// before it held for its lender or not (demo/runs/phone-home/2026-11-20).
 /**
  * @param {Held} handoff
  * @param {Passed} lend
+ * @param {boolean} [own]
  * @returns {Promise<Header[]>}
  */
-async function passed(handoff, lend) {
+async function passed(handoff, lend, own = false) {
   await bound();
   /** @type {Header[]} */
   const headers = [['x-svrngs-pass', handoff.pass]];
-  const named = dataLinks.get(lenderOf(lend)) ?? linked;
+  const named = (own ? null : dataLinks.get(lenderOf(lend))) ?? linked;
   if (named) headers.push(['x-svrngs-link', named]);
   return headers;
 }
@@ -399,25 +401,23 @@ async function passed(handoff, lend) {
 async function direct(label, port) {
   const held = await holding();
   const lend = held?.lends.find((one) => one.label === label);
-  if (!held || !lend || directs.has(lend.key)) return;
-  directs.set(lend.key, null);
+  if (!held || !lend || directs.get(lend.key)?.on()) return;
   await (loaded ??= init({ module_or_path: store.runtime() }));
   // The pass's relays, as this run's own endpoint is opened with; the data
   // endpoint falls back to the relay named for the lend when it names none.
   /** @param {Uint8Array<ArrayBuffer>} bytes */
   const forward = (bytes) => port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]);
-  const data = await direct_start(lend.key, lend.relay ?? null, handed.relays ?? [], forward);
-  // Held in `directs` from here on: the fetch rides the endpoint this
-  // object owns, and letting the wrapper be collected would drop it.
-  directs.set(lend.key, data);
+  const relay = lend.relay ?? null;
+  const data = await direct_start(lend.key, relay, handed.relays ?? [], forward);
   // The data endpoint's own key, named by a link the holder signs.
   const named = await linkTo(data.key());
-  const dial = await (await bound()).dial_webrtc(lend.key, lend.relay ?? null);
+  const dial = await (await bound()).dial_webrtc(lend.key, relay);
   // The offer crosses this run's own dial, so it presents this run's link
-  // (`passed`, before the data endpoint's is set): the door checks the
+  // (`passed`'s `own`), never an earlier attempt's: the door checks the
   // dialer, which is this run's endpoint. The data endpoint's link is set
   // after, for the fetches that ride its connection.
-  const via = await data.go(dial, await passed(held, lend), port);
+  const via = await data.go(dial, await passed(held, lend, true), port);
+  directs.set(lend.key, data);
   dataLinks.set(lend.key, named);
   if (via) dials.set(lend.key, Promise.resolve(via));
   trace(`RUNTIME: ${lend.name} goes direct: ${data.paths()}`);

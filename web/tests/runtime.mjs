@@ -21,6 +21,7 @@
 //     "key": ..., "token": ...,
 //     "open": "<the lend's name>", "seeks": [s, s, s] | "film": {"path", "range"},
 //     "close": {"path", "range", "after"} | "withhold": true | "direct": true,
+//     "again": true,
 //     "other": {"lend": "<label>", "path": "<file>", "range": "bytes=a-b"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
@@ -161,6 +162,19 @@ try {
     return page.evaluate(fetched, args.film);
   };
   const first = await look(page);
+  // `args.again`: the page reloaded once its first look is done, so the
+  // shim announces itself again, as the phone's page did back on the WiFi
+  // (demo/runs/phone-home/2026-11-20, "What it found" 1); the direct
+  // path's second line waited for, and the film's range fetched again.
+  let again = null;
+  if (args.again) {
+    await page.reload();
+    await page.waitForSelector('video', { timeout: 60_000 });
+    const by = Date.now() + 20_000;
+    const twice = async () => (await traced()).split('goes direct').length > 2;
+    while (Date.now() < by && !(await twice())) await new Promise((r) => setTimeout(r, 250));
+    again = await page.evaluate(fetched, args.film);
+  }
   const trace = args.direct || args.withhold ? await traced() : null;
   const seeks = [];
   for (const at of args.seeks?.slice(0, -1) ?? [])
@@ -202,6 +216,7 @@ try {
       reopened,
       replayed,
       first,
+      again,
       seeks,
       runsAtStop,
       runs,

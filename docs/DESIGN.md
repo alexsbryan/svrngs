@@ -2012,6 +2012,9 @@ datagram, or a change of network. iroh takes the path with the relay as
 backup, and nothing above iroh changes. A path is given up after 3 s of
 silence with a 1 s keep-alive (`webrtc/paths.rs` `PATH_IDLE`), so a
 phone that leaves the Wi-Fi falls back to the relay and a film finishes.
+A page that loads once its path is given up offers another
+(`web/src/lib.rs` `Direct::on`), so back on the Wi-Fi it goes direct again;
+the old endpoint closes once nothing rides it.
 Cellular is never direct, and meets the share.
 
 ## 4. Domains, and the fork

@@ -27,6 +27,8 @@ use futures_util::StreamExt;
 use http_body_util::{BodyExt, Either, Empty, StreamBody};
 use hyper::body::Frame;
 use iroh::endpoint::{Connection, RecvStream, SendStream};
+// `Option<Rc<Owned>>`, the endpoint's share an answer's body holds (lib.rs).
+type Held = Option<std::rc::Rc<crate::Owned>>;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use wasm_bindgen::prelude::*;
 
@@ -192,9 +194,9 @@ fn request(
 
 /// Send one request on a new bi-stream of `conn` and answer the page's
 /// `Response`, its body a `ReadableStream` read off the stream as the page
-/// reads it.
+/// reads it, holding `ep`'s share of the endpoint until it ends.
 pub async fn fetch(
-    conn: Connection,
+    (conn, ep): (Connection, Held),
     method: String,
     path: String,
     headers: js_sys::Array,
@@ -253,9 +255,11 @@ pub async fn fetch(
     // Statuses whose response has no body, which a page's `Response` refuses
     // one for (Fetch's "null body status").
     let body = (!matches!(status, 101 | 103 | 204 | 205 | 304)).then(|| {
-        let chunks = incoming.into_data_stream().map(move |chunk| match chunk {
-            Ok(bytes) => Ok(JsValue::from(js_sys::Uint8Array::from(&bytes[..]))),
-            Err(e) => {
+        // `ep` moved in beside each chunk: the body holds the endpoint's
+        // share for as long as the page reads it.
+        let chunks = incoming.into_data_stream().map(move |chunk| match (chunk, &ep) {
+            (Ok(bytes), _) => Ok(JsValue::from(js_sys::Uint8Array::from(&bytes[..]))),
+            (Err(e), _) => {
                 emit(&format!("HTTP: {method} {path} — the body stopped short: {e}"));
                 Err(JsValue::from(js_sys::Error::new(&e.to_string())))
             }
@@ -276,7 +280,7 @@ fn no_stream(e: impl ToString) -> Refused {
 /// ways (u5-2). Written by hand, as the head is all there is to HTTP here;
 /// the door's hyper reads it, and splices the stream once its service
 /// switches.
-pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Result<JsValue, Refused> {
+pub async fn socket((conn, ep): (Connection, Held), path: &str, headers: &js_sys::Array) -> Result<JsValue, Refused> {
     let mut head = format!("GET {path} HTTP/1.1\r\n");
     let host = headers_of(headers, |name, value, _, _| {
         head.push_str(&format!("{name}: {value}\r\n"))
@@ -323,6 +327,8 @@ pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Re
             Err(e) => Some((Err(JsValue::from(js_sys::Error::new(&e.to_string()))), (None, recv))),
         }
     });
+    // The socket's reading holds `ep`'s share of the endpoint while it lasts.
+    let read = read.inspect(move |_| _ = &ep);
     let write = futures_util::sink::unfold(send, |mut send, chunk: JsValue| async move {
         let bytes = chunk
             .dyn_into::<js_sys::Uint8Array>()

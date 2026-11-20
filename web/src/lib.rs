@@ -385,13 +385,34 @@ async fn reach(
     }
 }
 
+/// An endpoint a dial owns, closed once the last of what rides it lets
+/// go: the dial, the attempt that made it ([`Direct`]), and each answer
+/// still read off it, which holds its own ([`Dialled::fetch`]).
+/// wasm-bindgen frees an object whose wrapper is collected, and an
+/// endpoint dropped without `close` aborts its connections mid-fetch
+/// (watched 2026-11-19: "Endpoint dropped without calling
+/// `Endpoint::close`" in the trace, the film's fetch then never ending).
+struct Owned(iroh::Endpoint);
+
+impl Drop for Owned {
+    fn drop(&mut self) {
+        let ep = self.0.clone();
+        t!(
+            "RUNTIME: the endpoint {} rides nothing now, closed",
+            ep.id().fmt_short()
+        );
+        wasm_bindgen_futures::spawn_local(async move { ep.close().await });
+    }
+}
+
 /// A computer the page has dialled: each request to it is one bi-stream of
 /// the connection, spoken by hyper's HTTP/1 client ([`http`]).
 #[wasm_bindgen]
 pub struct Dialled {
-    /// The endpoint the dial bound for itself, closed with it; none when
-    /// it was dialled from an [`Endpoint`], which outlives it.
-    ep: Option<iroh::Endpoint>,
+    /// The endpoint the dial owns, a share of it: one it bound for itself,
+    /// or the data endpoint of a direct path; none when it was dialled
+    /// from an [`Endpoint`], which outlives it.
+    ep: Option<std::rc::Rc<Owned>>,
     conn: iroh::endpoint::Connection,
 }
 
@@ -407,10 +428,10 @@ impl Dialled {
         headers: js_sys::Array,
         body: Option<web_sys::ReadableStream>,
     ) -> js_sys::Promise {
-        let conn = self.conn.clone();
+        let (conn, ep) = (self.conn.clone(), self.ep.clone());
         let open = conn.close_reason().is_none();
         wasm_bindgen_futures::future_to_promise(async move {
-            match http::fetch(conn.clone(), method.clone(), path.clone(), headers, body).await {
+            match http::fetch((conn.clone(), ep), method.clone(), path.clone(), headers, body).await {
                 Ok(response) => Ok(response.into()),
                 Err(e) => {
                     // Given up while asked, its computer silent for the whole
@@ -433,9 +454,9 @@ impl Dialled {
     /// worker sees no WebSocket, so the lend's worker speaks its frames over
     /// these.
     pub fn socket(&self, path: String, headers: js_sys::Array) -> js_sys::Promise {
-        let conn = self.conn.clone();
+        let (conn, ep) = (self.conn.clone(), self.ep.clone());
         wasm_bindgen_futures::future_to_promise(async move {
-            http::socket(conn, &path, &headers).await.map_err(|e| {
+            http::socket((conn, ep), &path, &headers).await.map_err(|e| {
                 emit(&format!("HTTP: a socket at {path} — REFUSED — {e}"));
                 js_sys::Error::new(&e.to_string()).into()
             })
@@ -448,7 +469,7 @@ impl Dialled {
         let (ep, conn) = (self.ep.clone(), self.conn.clone());
         wasm_bindgen_futures::future_to_promise(async move {
             match ep {
-                Some(ep) => ep.close().await,
+                Some(ep) => ep.0.close().await,
                 None => conn.close(0u32.into(), b"done"),
             }
             Ok(JsValue::UNDEFINED)
@@ -465,7 +486,7 @@ impl Dialled {
 pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
     let bound = bind_for(key, &token, &[]).await?;
     let conn = reach(&bound, None, None, Alpn::Redeem, None).await?.conn;
-    let ep = Some(bound.ep);
+    let ep = Some(std::rc::Rc::new(Owned(bound.ep)));
     Ok(Dialled { ep, conn })
 }
 
@@ -828,7 +849,7 @@ fn data_push(arrived: &Arrived, peer: wire::PeerKey, datagram: js_sys::Uint8Arra
 /// dials: the spike's `Data` (page/src/lib.rs:231-337).
 #[wasm_bindgen]
 pub struct Direct {
-    data: iroh::Endpoint,
+    data: std::rc::Rc<Owned>,
     conn: Option<iroh::endpoint::Connection>,
     peer: iroh::EndpointId,
     relay: Option<RelayUrl>,
@@ -892,7 +913,7 @@ pub async fn direct_start(
             ))
         })?;
     Ok(Direct {
-        data,
+        data: std::rc::Rc::new(Owned(data)),
         conn: None,
         peer: lender,
         relay: named.or_else(|| parsed.first().cloned()),
@@ -904,7 +925,7 @@ pub async fn direct_start(
 impl Direct {
     /// The data endpoint's key, which the offer names.
     pub fn key(&self) -> String {
-        self.data.id().to_string()
+        self.data.0.id().to_string()
     }
 
     /// The direct attempt, driven here so the worker's JavaScript stays
@@ -929,14 +950,14 @@ impl Direct {
         // The offer (the window's SDP, JSON) POSTed to the lender through
         // `dial`, on the WebRTC protocol, with `headers`: its answer, JSON.
         let offer = told(&port, "offer").await?.as_string().unwrap_or_default();
-        let body = format!("{{\"key\":\"{}\",\"offer\":{}}}", self.data.id(), offer);
+        let body = format!("{{\"key\":\"{}\",\"offer\":{}}}", self.data.0.id(), offer);
         let pair = |name: &str, value: &str| js_sys::Array::of2(&name.into(), &value.into());
         headers.push(&pair("content-type", "application/json"));
         headers.push(&pair("content-length", &body.len().to_string()));
         let blob = web_sys::Blob::new_with_str_sequence(&js_sys::Array::of1(&body.into()))
             .map_err(|e| JsError::new(&format!("the offer is not a body: {e:?}")))?;
         let answer = http::fetch(
-            dial.conn.clone(),
+            (dial.conn.clone(), None),
             "POST".into(),
             paths::OFFER_ROUTE.into(),
             headers,
@@ -971,6 +992,7 @@ impl Direct {
         let custom = iroh::TransportAddr::Custom(wire::addr_of(self.peer.as_bytes()));
         let first = self
             .data
+            .0
             .connect(
                 iroh::EndpointAddr::from_parts(self.peer, [custom.clone()]),
                 Alpn::Lend.bytes(),
@@ -983,6 +1005,7 @@ impl Direct {
         }
         let second = self
             .data
+            .0
             .connect(iroh::EndpointAddr::from_parts(self.peer, at), Alpn::Lend.bytes())
             .await
             .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
@@ -1002,14 +1025,28 @@ impl Direct {
             t!("RUNTIME: the direct path settled without webrtc: {}", self.paths());
         }
         // The data connection, as a dial the worker's fetches go through
-        // (`web/lend.js` `dials`).
-        Ok(self.conn.clone().map(|conn| Dialled { ep: None, conn }))
+        // (`web/lend.js` `dials`), owning its share of the data endpoint.
+        Ok(self.conn.clone().map(|conn| Dialled {
+            ep: Some(self.data.clone()),
+            conn,
+        }))
     }
 
     /// Whether the data connection's selected path is the custom one (the
     /// window's channel), as [`Self::paths`] spells it.
     fn webrtc_selected(&self) -> bool {
         self.conn.as_ref().is_some_and(|conn| on_the_channel(conn, true))
+    }
+
+    /// Whether the direct path stands: the data connection open, and the
+    /// window's channel among its paths. iroh gives up a path silent for
+    /// `paths::PATH_IDLE`, so a channel closed or an ICE disconnected ends
+    /// it, as an attempt that never dialled has none (webrtc-page;
+    /// demo/runs/phone-home/2026-11-20, "What it found" 1).
+    pub fn on(&self) -> bool {
+        let on = (self.conn.as_ref()).is_some_and(|conn| conn.close_reason().is_none() && on_the_channel(conn, false));
+        t!("RUNTIME: the direct path to {} stands: {on}", self.peer.fmt_short());
+        on
     }
 
     /// The data connection's paths now: each one's kind, whether it is the
