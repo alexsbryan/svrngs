@@ -97,12 +97,10 @@ export const takes = {
   },
   // Picked, the offer goes in the click's own draw, before `hold` is
   // answered, so a second click finds nothing offered.
-  pick: (state, { group, wants }) => {
-    if (state.at.among !== 'offered') {
-      return no(state, `nothing is offered: among is ${state.at.among}`);
-    }
-    return go(state, { among: 'picked' }, {}, sending('hold', { group, wants }));
-  },
+  pick: (state, { group, wants }) =>
+    state.at.among === 'offered'
+      ? go(state, { among: 'picked' }, {}, sending('hold', { group, wants }))
+      : no(state, `nothing is offered: among is ${state.at.among}`),
   cold: (state) => go(state, { among: 'sent' }, {}, { run: 'cold', failed: 'failed' }),
   sent: (state) => go(state, {}),
 };

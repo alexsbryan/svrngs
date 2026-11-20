@@ -202,12 +202,10 @@ const AGAIN = /** @type {Effect} */ ({ run: 'again', failed: 'failed' });
  * @param {State} state
  * @returns {Stepped}
  */
-const readAgain = (state) => {
-  if (state.at.tab === 'holding' && ['read', 'unread'].includes(state.at.list)) {
-    return reading(state, {});
-  }
-  return no(state, `the list is ${state.at.list}, in a tab ${state.at.tab}`);
-};
+const readAgain = (state) =>
+  state.at.tab === 'holding' && ['read', 'unread'].includes(state.at.list)
+    ? reading(state, {})
+    : no(state, `the list is ${state.at.list}, in a tab ${state.at.tab}`);
 const HOW = {
   unanswered: 'did not answer, so what they lend is not listed',
   unheard: 'has not heard of the computer you reached yet, so what they lend is not listed yet',

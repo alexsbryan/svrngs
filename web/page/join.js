@@ -121,12 +121,10 @@ export const takes = {
     if (group.person) return redeem(state, joining, group.person);
     return go(state, { join: 'naming' }, { joining });
   },
-  'typed name': (state, { value }) => {
-    if (!guest(state) && !asks(state)) {
-      return no(state, `no name is asked: the link is ${state.at.join}`);
-    }
-    return go(state, {}, { typed: value });
-  },
+  'typed name': (state, { value }) =>
+    guest(state) || asks(state)
+      ? go(state, {}, { typed: value })
+      : no(state, `no name is asked: the link is ${state.at.join}`),
   named: (state) => {
     if (guest(state))
       return go(state, {}, {}, sending('guest named', { guest: state.typed ?? '' }));
