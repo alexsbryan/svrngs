@@ -908,7 +908,8 @@ pub struct LinkMade {
 }
 
 /// Why no link was made: where the group meets refused, or the origin
-/// asked is none, in their words; or the node's own refusal.
+/// asked is none, in their words; or the node's own refusal, whose kind,
+/// `not_in` or `unkept`, the command says in its own words.
 #[derive(Debug)]
 pub enum Unlinked {
     Closed(String),
@@ -920,10 +921,12 @@ impl IntoResponse for Unlinked {
         match self {
             Unlinked::Closed(why) => LendRefusal::closed(why),
             Unlinked::Unminted(crate::invite::Unminted::NotIn) => {
-                LendRefusal::closed("you are not in that group on this computer")
+                let why = "you are not in that group on this computer";
+                crate::api::refuse(StatusCode::FORBIDDEN, "not_in", why)
             }
             Unlinked::Unminted(e) => {
-                LendRefusal::fault(format!("this computer cannot make a link: {e}"))
+                let why = format!("this computer cannot make a link: {e}");
+                crate::api::refuse(StatusCode::INTERNAL_SERVER_ERROR, "unkept", why)
             }
         }
     }

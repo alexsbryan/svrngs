@@ -1372,7 +1372,8 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
 
 /// **The page's link for a group this computer does not hold is refused,
 /// and traced on both sides** (#140): Alex's home page asks a link to
-/// `elsewhere`, which Alex's computer does not hold, and is told 403; the
+/// `elsewhere`, which Alex's computer does not hold, and is told 403, of
+/// the kind `not_in` that `svrngs link` words as its own refusal; the
 /// trace says the link refused it (invite.rs `Host::link`) and the page
 /// said so (home.rs `link`), as `svrngs link` traces its own refusal. Red
 /// on the plant the finding names, both branches untraced: neither line.
@@ -1386,12 +1387,8 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
     let body = r#"{"group":"elsewhere","device":false}"#;
     let got = ask(&Browser::of(&alex), "POST", &home, "/link", &own, body).await;
-    assert_eq!(
-        (got.status, got.header("x-svrngs-refused")),
-        (403, Some("closed")),
-        "{}",
-        got.body
-    );
+    let kind = serde_json::from_str::<serde_json::Value>(&got.body).unwrap()["kind"].clone();
+    assert_eq!((got.status, kind), (403, "not_in".into()), "{}", got.body);
     let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
     let traced = |target: &str| {
         log.lines()

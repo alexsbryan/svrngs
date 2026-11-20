@@ -2119,7 +2119,8 @@ async fn new_running(
 
 /// `svrngs link`, of the svrngs running here, the one writer of this
 /// computer's acts ([`svrngs_node::home::LINKS_ROUTE`]), said as [`link_to`]'s
-/// is; its refusal, a non-keeper's among them, in its words. One that
+/// is, its refusals too: not in the group, or unkept, as that one words
+/// them; any other, a non-keeper's among them, in its words. One that
 /// answers no link is an older build, said as [`join_running`] says it.
 async fn link_running(
     here: &impl Here,
@@ -2142,7 +2143,13 @@ async fn link_running(
     tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");
     let Some(client) = told["client"].as_str().filter(|_| ok).map(Into::into) else {
         let why = told["error"].as_str().ok_or(Refused::Older)?;
-        return Err(Refused::Meet(why.to_string()).into());
+        let kind = told["kind"].as_str();
+        tracing::debug!(target: "cli", why, kind, "cli: refused — svrngs running here made no link");
+        return Err(match kind {
+            Some("not_in") => Refused::NotIn(seed.name().clone()).into(),
+            Some("unkept") => Unjudged::Keep(seed.name().to_string()).into(),
+            _ => Refused::Meet(why.to_string()).into(),
+        });
     };
     let https = told["https"].as_str().map(Into::into);
     let device = serde_json::from_value(told["device"].clone()).map_err(|_| Refused::Older)?;

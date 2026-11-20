@@ -16,7 +16,7 @@ use svrngs_node::node::{Node, Wire};
 use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
 use svrngs_node::{actor_of, Person, SigningKey};
 
-use crate::{ask, computer, name, no_relay};
+use crate::{ask, computer, name, no_relay, Running};
 
 /// A computer of `key`'s over `dir` on `wire`.
 async fn on(wire: &Wire, dir: &std::path::Path, key: &SigningKey) -> Node {
@@ -479,4 +479,43 @@ async fn a_leave_reaches_the_leavers_other_computer_on_or_off() {
             "{held}"
         );
     }
+}
+
+/// **A link asked by a computer no longer in the group is refused in the
+/// command's words** (the operator's C1 (a): the link route says which
+/// refusal it is, by its kind). Ana joins Trip and leaves it; `svrngs link
+/// Trip`, asked of svrngs running on her computer, is told she is not in
+/// it, exit 1, as when the command made the link itself. Red on the plant:
+/// the `not_in` arm dropped from cli.rs `link_running`, so the route's own
+/// words are said, as where the group meets refused.
+#[tokio::test]
+async fn a_link_asked_by_a_computer_not_in_the_group_is_refused_in_the_commands_words() {
+    let wire = Wire::default();
+    let sam = computer(&wire, 6).await;
+    let (seed, _) = cli::new_group(&sam.node, name("Trip"), name("Sam"), None, &[], &no_relay())
+        .await
+        .expect("Sam makes a group");
+    let trip = seed.id();
+    let ana = computer(&wire, 7).await;
+    let made = sam.node.host().link(&trip, false, None, None);
+    let made = made.expect("Sam makes a link");
+    let sent = Link::parse(&client_link(&made.token)).unwrap();
+    ana.node
+        .host()
+        .join(&sent, &name("Ana"))
+        .await
+        .expect("Ana joins");
+    assert_eq!(leave_from(&ana.node, &trip).await, Outcome::Left);
+    let asked = cli::Verb::Link {
+        group: "Trip".into(),
+        origin: None,
+        device: false,
+        relays: Vec::new(),
+    };
+    let refused = cli::asked(&Running(&ana), asked, &no_relay())
+        .await
+        .unwrap_err();
+    let said = (refused.to_string(), refused.exit_code());
+    let words = "you are not in Trip on this computer, so you cannot send its link";
+    assert_eq!(said, (words.to_string(), 1));
 }
