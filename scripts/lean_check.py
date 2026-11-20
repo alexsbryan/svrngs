@@ -881,10 +881,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # another bind beside it (uid.rs 10, share.rs 2): 24,216. Its pass cut 1.
 # Then 13 for a Mac's TCP socket to be approved by its id in this boot
 # (uid.rs): 24,229. Its pass cut 9 there.
+# Then 45 for a server's socket for each of svrngs's flows (pasta's, for
+# rootless Podman) to be carried in its approved cgroup: door.rs 27,
+# door/bound.rs 13, uid.rs 4, udp.rs 1. 24,274; the operator: "Land it".
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24230,
+    ".": 24275,
 
     "js": 8694,
 
