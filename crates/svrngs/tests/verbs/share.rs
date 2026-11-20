@@ -682,7 +682,7 @@ fn answering(
         read,
         parents: Default::default(),
         start: now,
-        shown: vec![shown],
+        shown: vec![(id, shown)],
     })
 }
 
@@ -760,8 +760,11 @@ async fn a_share_is_kept_to_what_answers_on_its_port_and_says_what_that_is() {
 /// child, is refused, exit 1, in the doc's words, and nothing is lent;
 /// `--pid 4321@76`, its start since another's, is refused as stopped;
 /// `--pid 4321@77` is lent. `svrngs approve` approves what answers now,
-/// with `--pid` as `share` takes it, its other fields kept. Planted,
-/// watched failing: the holder check skipped (999 lent).
+/// with `--pid` as `share` takes it, its other fields kept, and says only
+/// what it approved: a program on a LAN address of the port, which the door
+/// never dials, is neither approved nor said. Planted, each watched failing:
+/// the holder check skipped (999 lent); every socket's entry said (kept to
+/// navidrome and other).
 #[tokio::test]
 async fn a_share_is_kept_to_the_program_its_lender_chose() {
     use svrngs_node::lend::{self, LendName};
@@ -794,7 +797,13 @@ async fn a_share_is_kept_to_the_program_its_lender_chose() {
         lent.terms.approved.map(|a| a.sockets),
         Some([0x700e].into())
     );
-    lender.answers = Some(answering(0x800e, (5000, 90), "navidrome", Some(90)));
+    let mut beside = answering(0x800e, (5000, 90), "navidrome", Some(90)).unwrap();
+    let lan = answering(0x900e, (6000, 1), "other", None).unwrap();
+    let mut elsewhere = lan.read.sockets[0].clone();
+    elsewhere.at = "192.168.1.5".parse().unwrap();
+    beside.read.sockets.push(elsewhere);
+    beside.shown.extend(lan.shown);
+    lender.answers = Some(Ok(beside));
     let approve =
         cli::parse(["svrngs", "approve", "navidrome", "--pid", "5000@90"].map(String::from));
     let said = cli::answer(approve.unwrap(), &lender, &no_relay())

@@ -102,7 +102,9 @@ use crate::lend::{self, Hold, Lend, LendName, Offered, Raw, Source};
 use crate::network::Whereabouts;
 use crate::register::Member;
 use crate::ring_routes::err;
+use crate::share::ShareRefusal;
 use crate::surface::AppRoute;
+use crate::uid::Unread;
 use crate::{register::Visiting, Person, RingRail};
 use bound::Unsent;
 use eudoxia_community::app;
@@ -640,15 +642,23 @@ pub(crate) async fn offered(door: &Door, lender: bool) -> Result<Vec<Offered>, R
         let (answering, held) = answering(door, &lend).await;
         let (answers, token, unread) = match (lender, held, lend.port()) {
             // What answers, or why it couldn't be read, never said as nothing
-            // answering; a token only where approving it would be taken.
+            // answering; a token only where approving it would be taken, and
+            // then what it covers, each socket shown.
             (true, Some(_), Some(port)) => {
                 let raw = lend.raw();
                 let read = door.folders.host.transport.answering(raw, port.get(), None).await;
-                let shown = read.as_ref().ok().map(|a| a.shown.clone());
-                let unread = read.as_ref().err().copied();
-                let token = crate::share::approve((port, raw), read, None, None).map(|(a, _)| crate::share::token(&a));
-                tracing::debug!(target: "door", lend = %lend.name, ?unread, ?token, "door: lends — what answers on a held lend's port, or why it couldn't be read, and a token only where approving it would be taken");
-                (shown, token.ok(), unread)
+                let all = read.as_ref().ok().map(|a| a.shown.iter().map(|(_, s)| s.clone()).collect());
+                let approving = crate::share::approve((port, raw), read, None, None);
+                let unread = match &approving {
+                    Err(ShareRefusal::NoReader(_)) => Some(Unread::NoReader),
+                    Err(ShareRefusal::Unread(_, why)) => Some(Unread::Failed(why)),
+                    _ => None,
+                };
+                tracing::debug!(target: "door", lend = %lend.name, ?unread, ?approving, "door: lends — what answers on a held lend's port, or why it couldn't be read, and a token only where approving it would be taken");
+                match approving {
+                    Ok((a, covered)) => (Some(covered), Some(crate::share::token(&a)), None),
+                    Err(_) => (all.filter(|_| unread.is_none()), None, unread),
+                }
             }
             _ => (None, None, None),
         };

@@ -1746,16 +1746,22 @@ async fn keep_sharing_it_approves_only_what_the_page_showed() {
 /// (SHARE_BINDING §5.1, share.rs `approve` the one decider): shelf, held,
 /// is listed with a token only for a read the approve route takes. Nothing
 /// answering, a Mac's port only another account answers, a socket whose
-/// program can't be read, no reader and a read that failed each get none;
-/// a read that couldn't be made says why in `unread`, apart from nothing
-/// answering (`answers: []`). Linux's socket of another account, shown as
-/// its account, gets one, and its token alone approves it. The route refuses
-/// the unjudged socket's token in words, and a pid without its start, or a
-/// start without its pid, 422 in the API's shape, the lend still held.
-/// Planted, each watched failing: the route's pid and start zipped, half a
-/// process dropped (approved, 200); the list's answers `[]` for a read that
-/// failed, no `unread`; its token from `binding::approve` alone (the
-/// unjudged socket given one); a token for every held lend.
+/// program can't be read (a Mac's whose holder exited, or on Linux one of
+/// this account's whose files can't be read), no reader and a read that
+/// failed each get none; a read that couldn't be made, or a program that
+/// couldn't, says why in `unread`, apart from nothing answering (`answers:
+/// []`). Linux's socket of another account, shown as its account, gets one,
+/// and its token alone approves it; beside it a socket on a LAN address,
+/// which the door never dials, is neither shown nor approved. The route
+/// refuses the unjudged socket's token in words, and a pid without its
+/// start, or a start without its pid, 422 in the API's shape, the lend still
+/// held. Planted, each watched failing: the route's pid and start zipped,
+/// half a process dropped (approved, 200); the list's answers `[]` for a
+/// read that failed, no `unread`; its token from `binding::approve` alone
+/// (the unjudged socket given one); a token for every held lend; a socket
+/// shown nothing let through (Linux's unread program given a token, said as
+/// nothing answering); every socket's entry shown (the LAN one's program
+/// listed beside the account).
 #[tokio::test]
 async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
     use serde_json::{json, Value};
@@ -1831,7 +1837,20 @@ async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
     let account = Answer::Account {
         account: "_resolve".into(),
     };
-    let linux = answering(read(true, vec![socket(7, &[])]), vec![account]);
+    let elsewhere = Socket {
+        at: "192.168.1.5".parse().unwrap(),
+        ..socket(8, &[(2, 2)])
+    };
+    let lan = Answer::Program {
+        pid: 2,
+        start: 2,
+        program: "other".into(),
+        folder: None,
+    };
+    let sockets = vec![socket(7, &[]), elsewhere];
+    let linux = answering(read(true, sockets), vec![(7, account), (8, lan)]);
+    let unshown = answering(read(true, vec![socket(9, &[])]), Vec::new());
+    let program = json!({ "why": "failed", "detail": "its program can't be read" });
     let listed = [
         (
             "nothing answers",
@@ -1843,9 +1862,10 @@ async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
         (
             "its program unread",
             Ok(unjudged.clone()),
-            json!([]),
             Value::Null,
+            program.clone(),
         ),
+        ("Linux's program unread", Ok(unshown), Value::Null, program),
         (
             "no reader",
             Err(Unread::NoReader),
@@ -1897,6 +1917,11 @@ async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
     assert_eq!(approve(json!({ "token": token })).await, (200, None));
     let theirs = svrngs_node::binding::approve(&linux.read, None).ok();
     assert_eq!(approved(), theirs, "its socket approved by its token alone");
+    assert_eq!(
+        theirs.map(|a| a.sockets),
+        Some([7].into()),
+        "the LAN one not"
+    );
     alex.net().close().await;
 }
 

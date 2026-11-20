@@ -719,7 +719,7 @@ async fn running(State(at): State<Asking>) -> Response {
             let mut row = shown(*p, share::well_known_kind(*p).as_ref(), None, "");
             // Of the programs holding it, the first by its id, which a
             // prefork's master's is; else whose it is; none for none read.
-            let first = read.ok().and_then(|a| a.shown.into_iter().next());
+            let first = read.ok().and_then(|a| Some(a.shown.into_iter().next()?.1));
             row["answer"] = serde_json::to_value(first).unwrap_or_default();
             row
         })

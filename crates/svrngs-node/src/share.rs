@@ -321,11 +321,10 @@ pub fn reapproved(
 /// What `read`, the `raw` share's port read ([`crate::uid::answering`]),
 /// approves with `pid` when its lender chose a process (SHARE_BINDING §5.1,
 /// [`eudoxia_community::binding::approve`]), and only what they were `shown`, when a
-/// page showed it ([`token`]): the approval, and what answers
-/// there as its lender is shown it, from the same read; or why not, in
-/// their words. The one decider of whether an approval is taken: a lend's
-/// list gives a token only where this takes it with none (door.rs
-/// `offered`).
+/// page showed it ([`token`]): the approval, and what its lender is shown
+/// of each socket it covers, from the same read; or why not, in their
+/// words. The one decider of whether an approval is taken: a lend's list
+/// gives a token only where this takes it with none (door.rs `offered`).
 pub fn approve(
     (port, raw): (NonZeroU16, Raw),
     read: Result<Answering, Unread>,
@@ -342,10 +341,25 @@ pub fn approve(
         now: read.start,
         parents: read.parents.clone(),
     });
-    // What this approves, judged by the check it is for against the read it
-    // came from: a socket there whose holder can't be read would hold it
-    // unjudged at once, so it is refused here.
-    let unjudged = |a| binding::check(Some(a), &read.read, &Took::Datagram) == Err(Held::Unjudged);
+    // What the lender is shown of each socket an approval covers, those the
+    // check judges at the address it dials (each judged alone), or none when
+    // one is shown nothing, which would be approved unseen: a Mac's whose
+    // holder exited, or on Linux one of this account's whose program's files
+    // can't be read.
+    let covered = |a: &Approved| {
+        let judged = |s: &binding::Socket| {
+            let mut alone = read.read.clone();
+            alone.sockets = vec![s.clone()];
+            let on = binding::check(Some(a), &alone, &Took::Datagram) != Err(Held::Empty);
+            on.then_some(s.id)
+        };
+        let ids: Vec<u64> = read.read.sockets.iter().filter_map(judged).collect();
+        let of = read.shown.iter().filter(|(id, _)| ids.contains(id));
+        let mut said: Vec<Answer> = of.clone().map(|(_, a)| a.clone()).collect();
+        said.dedup();
+        let seen = ids.iter().all(|id| of.clone().any(|(i, _)| i == id));
+        seen.then_some(said)
+    };
     let approved = match binding::approve(&read.read, chosen.as_ref()) {
         Err(Refused::Nothing) => Err(ShareRefusal::NothingListens(port)),
         Err(Refused::NotYours) => Err(ShareRefusal::NotYours(port)),
@@ -353,12 +367,13 @@ pub fn approve(
         Err(Refused::Another) => Err(ShareRefusal::AlsoListens(port)),
         Err(Refused::Elsewhere(at)) => Err(ShareRefusal::Elsewhere(port, at)),
         Ok(a) if raw == Raw::Udp && a.at.is_ipv6() => Err(ShareRefusal::UdpOnIpv6(port)),
-        Ok(a) if unjudged(&a) => Err(ShareRefusal::Unread(port, "its program can't be read")),
         Ok(a) if shown.is_some_and(|t| t != token(&a)) => Err(ShareRefusal::Changed(port)),
-        Ok(a) => Ok(a),
+        Ok(a) => covered(&a)
+            .map(|said| (a, said))
+            .ok_or(ShareRefusal::Unread(port, "its program can't be read")),
     };
-    tracing::debug!(target: "share", port, ?raw, ?pid, ?shown, read = ?read.read, ?approved, "share: what answers on the port, approved or why not");
-    approved.map(|a| (a, read.shown))
+    tracing::debug!(target: "share", port, ?raw, ?pid, ?shown, read = ?read.read, answers = ?read.shown, ?approved, "share: what answers on the port, approved with what each socket it covers is shown as, or why not");
+    approved
 }
 
 /// An opaque name for what `approved` approves, the same for the same

@@ -90,12 +90,14 @@ pub struct Answering {
     pub read: Read,
     pub parents: BTreeMap<u32, u32>,
     pub start: Option<u64>,
-    pub shown: Vec<Answer>,
+    /// What each socket is shown as, by its id: a socket shown nothing has
+    /// no entry, and an approval of it is refused (`share::approve`).
+    pub shown: Vec<(u64, Answer)>,
 }
 
 /// A share's port read to approve, as each system's reader gives it: the
 /// sockets, each process's parent among those read, what to show.
-type Held = (Read, BTreeMap<u32, u32>, Vec<Answer>);
+type Held = (Read, BTreeMap<u32, u32>, Vec<(u64, Answer)>);
 
 /// How long a reader looks again for a TCP end it doesn't list yet,
 /// waiting longer each time: a Mac's connection is in no process's files
@@ -278,18 +280,21 @@ fn lists_bound(release: &str) -> bool {
 
 /// Linux's share port to approve: [`linux::read`] with each socket's
 /// holders and their parents; shown, each holder, or for another account's
-/// socket none of whose holders can be read, that account's uid.
+/// socket none of whose holders can be read, that account's uid. One of this
+/// account's whose holders can't be read (a program made undumpable, so its
+/// `/proc/<pid>/fd` is root's) is shown nothing.
 #[cfg(target_os = "linux")]
 fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
     let (read, procs, listed) = linux::read(raw, port, true)?;
-    let holders = read.sockets.iter().flat_map(|s| &s.holders);
-    let mut shown: Vec<Answer> = holders.map(linux::shown).collect();
+    let mut shown: Vec<_> = holding(&read)
+        .map(|(id, h)| (id, linux::shown(&h)))
+        .collect();
     let others = (listed.iter().zip(&read.sockets))
         .filter(|(d, s)| s.holders.is_empty() && mine() != Ok(d.uid));
-    shown.extend(others.map(|(d, _)| Answer::Account {
-        account: d.uid.to_string(),
+    shown.extend(others.map(|(d, s)| {
+        let account = d.uid.to_string();
+        (s.id, Answer::Account { account })
     }));
-    shown.dedup();
     let parents = procs.iter().map(|(pid, p)| (*pid, p.0)).collect();
     Ok((read, parents, shown))
 }
@@ -408,6 +413,12 @@ mod linux {
             folder: at("cwd").map(|c| folder(&c)),
         }
     }
+}
+
+/// Each socket of `read`, by its id, with each process holding it.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn holding(read: &Read) -> impl Iterator<Item = (u64, Process)> + Clone + '_ {
+    (read.sockets.iter()).flat_map(|s| s.holders.iter().map(|h| (s.id, *h)))
 }
 
 /// A folder as a person reads it: under their home, from `~`.
@@ -724,11 +735,10 @@ fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
         unlisted: read.sockets.is_empty() && answers,
         ..read
     };
-    let holders = read.sockets.iter().flat_map(|s| s.holders.iter());
-    let up = holders.clone().flat_map(|&(pid, _)| mac::up(pid));
+    let holders = holding(&read);
+    let up = holders.clone().flat_map(|(_, (pid, _))| mac::up(pid));
     let parents = up.map(|(pid, _, parent)| (pid, parent)).collect();
-    let mut shown: Vec<Answer> = holders.map(|&p| mac::shown(p)).collect();
-    shown.dedup();
+    let shown = holders.map(|(id, p)| (id, mac::shown(p))).collect();
     Ok((read, parents, shown))
 }
 
