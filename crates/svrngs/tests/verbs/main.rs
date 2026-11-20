@@ -19,12 +19,19 @@ mod share;
 use std::net::SocketAddr;
 
 use axum::http::StatusCode;
+use std::num::NonZeroU16;
 use svrngs::cli;
 use svrngs::group::{self, Name};
+use svrngs_node::door::bound::{Bound, Unsent};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend::Raw;
 use svrngs_node::node::{Node, Wire};
-use svrngs_node::uid::Owner;
+use svrngs_node::uid::{Answering, Unread};
+
+/// What a test's `Here` reads of a port to approve.
+pub type Answered = Result<Answering, Unread>;
+/// What a test's `Here` checks of a lend's port.
+pub type Checked = Result<Bound, Unsent>;
 use svrngs_node::SigningKey;
 use tower::ServiceExt;
 
@@ -112,14 +119,15 @@ impl cli::Here for Running<'_> {
         let (status, text) = ask(&self.0.node, "POST", route, &body).await;
         Ok((status.is_success(), text))
     }
-    /// Every port listens: a test of a lend says what its service is.
-    fn listens(&self, _: std::num::NonZeroU16) -> bool {
-        true
+    /// What answers on every port is the wire's test socket, as svrngs-node's
+    /// on-wire computers read it (`node::answering`): a test of a lend says
+    /// what its service is.
+    fn answering(&self, _: Raw, _: NonZeroU16, _: Option<u32>) -> Answered {
+        Ok(svrngs_node::node::answering())
     }
-    /// Every port's program is this account's, as the wire says of each
-    /// socket nobody says otherwise of (svrngs-node `Wire::owns`).
-    fn owner(&self, _: Option<Raw>, _: std::num::NonZeroU16) -> Owner {
-        svrngs_node::uid::mine().map_or_else(Owner::Unjudged, |uid| Owner::Uid(uid, None))
+    /// This computer's own check of a lend's port, as the command's.
+    async fn bound(&self, lend: &svrngs_node::lend::Lend) -> Checked {
+        svrngs_node::door::bound::here(self.root(), lend).await
     }
     /// Nobody types.
     fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {

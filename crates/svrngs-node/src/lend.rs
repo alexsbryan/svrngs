@@ -28,6 +28,8 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use svrngs_core::pass::Label;
 
+pub use crate::binding::Approved;
+
 /// A lend's name: the file its declaration is kept in, and the path segment
 /// a member's request names it by (`/lend/<name>/…`). ASCII letters, digits,
 /// `-` and `_`, 1..=64 bytes — upstream's rule for an app's name
@@ -406,27 +408,14 @@ pub struct Terms {
     /// sends nothing.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sends: Vec<SendRow>,
-    /// The uid of the account whose program answered on its port when it
-    /// was lent (svrn-docs LEND_OWNER §4): the door carries a connection
-    /// only to that account's ([`crate::door::bound`]). None for a carried
-    /// app, which svrngs serves itself, for one lent before this, which its
-    /// first connection records, and where this computer has no reader.
-    /// An svrngs from before owners refuses a file that holds one, so a
+    /// What its lender approved on its port (svrn-docs SHARE_BINDING §5.1):
+    /// the door carries a connection only to that ([`crate::door::bound`]).
+    /// None for a carried app, which svrngs serves itself, and for one lent
+    /// before this, which is held until its lender approves what runs. An
+    /// svrngs from before approvals refuses a file that holds one, so a
     /// downgrade lends nothing unbound.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub owner: Option<u32>,
-    /// The sandbox its program ran in when it was lent, read with `owner`
-    /// for a program of the account svrngs runs as: the door carries a
-    /// connection only to that one's, or to a program in none
-    /// ([`crate::door::bound`]). None where `owner` is, and for another
-    /// account's program, whose sandbox is that account's to read.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub sandbox: Option<Sandbox>,
-    /// The program it was lent from, read with `sandbox` (svrn-docs
-    /// LEND_PROGRAM): the door carries a connection only to the same one
-    /// ([`crate::door::bound`]). None where `sandbox` is.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub command: Option<Command>,
+    pub approved: Option<Approved>,
 }
 
 /// What a declaration says beside a lend's [`Terms`]: the port it is
@@ -442,38 +431,25 @@ struct Head {
     kind: Program,
 }
 
-/// A declaration as it is written: its [`Head`], then its [`Terms`], each
-/// key where it always was.
+/// What V1.12.0 to V1.12.2 kept of the program a lend was lent from, by
+/// these keys of its declaration: never read, so a lend from then reads as
+/// one with nothing approved, held until its lender approves (SHARE_BINDING
+/// §5.5); and kept as it was when the file is written again, so V1.12.2,
+/// started again, finds its own and records nothing (SHARE_BINDING_REVIEWS
+/// §6 #9).
+const BEFORE: [&str; 3] = ["owner", "sandbox", "command"];
+
+/// A declaration as it is written: its [`Head`], then its [`Terms`], then
+/// the keys it kept from before approvals ([`BEFORE`]), each key where it
+/// always was.
 #[derive(Serialize)]
 struct Declared<'a> {
     #[serde(flatten)]
     head: Head,
     #[serde(flatten)]
     terms: &'a Terms,
-}
-
-/// The sandbox a program runs in (svrn-docs LEND_SANDBOX): none, so it can
-/// read what svrngs keeps, as its account can; or an app's, which can't.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Sandbox {
-    No,
-    /// By the name its system gives it: a Flatpak's app id, a Mac App
-    /// Sandbox app's path.
-    App(String),
-}
-
-/// A program by the commands its processes run (svrn-docs LEND_PROGRAM
-/// §2, [`crate::uid`]): one program is one `digest`, a restart with the
-/// same command keeping it. Its arguments are only hashed, never kept.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Command {
-    /// Its executables' file names, for the person.
-    pub name: String,
-    /// SHA-256, hex, of its commands, each its executable's path and
-    /// arguments past the first, sorted and each once.
-    pub digest: String,
+    #[serde(flatten)]
+    before: serde_json::Map<String, serde_json::Value>,
 }
 
 impl Lend {
@@ -523,6 +499,23 @@ impl Lend {
                 ..Terms::default()
             },
         })
+    }
+
+    /// Its port on this computer; none for a carried app.
+    pub fn port(&self) -> Option<NonZeroU16> {
+        match self.source {
+            Source::Port(port) | Source::Raw(_, port) => Some(port),
+            Source::Carried(..) => None,
+        }
+    }
+
+    /// How its port's bytes travel: a UDP share's as datagrams, any other's
+    /// on TCP.
+    pub fn raw(&self) -> Raw {
+        match self.source {
+            Source::Raw(Raw::Udp, _) => Raw::Udp,
+            _ => Raw::Tcp,
+        }
     }
 
     /// The refused path covering `path`, if one does.
@@ -630,26 +623,67 @@ pub struct Offered {
     /// from an svrngs from before this, which said nothing.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub answering: Option<bool>,
-    /// Why nobody can open it while its program runs (LEND_OWNER §4), its
-    /// lender's row says: absent when nothing holds it, and passed over by
-    /// an svrngs from before this.
+    /// Why nobody can open it (SHARE_BINDING §5.2, §5.5), its lender's own
+    /// list says: absent when nothing holds it. A member is told none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub held: Option<Hold>,
-    /// The name of the program it is kept to ([`Lend::command`]): absent
-    /// for none recorded, and passed over by an svrngs from before this.
+    /// What answers on its port now, as its lender approves it
+    /// (SHARE_BINDING §5.4): in its lender's own list alone, never a
+    /// member's; absent where it isn't read.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub command: Option<String>,
+    pub answers: Option<Vec<Answer>>,
+    /// An opaque name for what `answers` shows, which approving it sends
+    /// back, so what changed since is refused, not approved unseen
+    /// ([`crate::share::token`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub token: Option<String>,
 }
 
-/// Why a lend's port answers and nobody can open it (LEND_OWNER §4).
+/// Why nobody can open a lend (SHARE_BINDING §5.2, §5.5).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Hold {
-    /// Another program answers there, not the one it recorded: another
-    /// account's, one in another sandbox, or another command.
+    /// Something its lender didn't approve answers on its port.
     Another,
-    /// Whose program answers there can't be told.
+    /// What answers on its port can't be read.
     Unjudged,
+    /// Its lender approved nothing on its port yet.
+    Unapproved,
+}
+
+/// What holds a lend's port, as read to show its lender, never compared
+/// (SHARE_BINDING §5.1, I5): a process of svrngs's account, or another
+/// account, whose programs are that account's to read.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Answer {
+    Program {
+        pid: u32,
+        /// Its start, as `--pid <pid>@<start>` takes it.
+        start: u64,
+        /// Its executable's file name.
+        program: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        folder: Option<String>,
+    },
+    Account {
+        account: String,
+    },
+}
+
+impl std::fmt::Display for Answer {
+    /// "python3 in ~/dev/garden", or "a program of the account _resolve".
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Answer::Program {
+                program,
+                folder: Some(folder),
+                ..
+            } => write!(f, "{program} in {folder}"),
+            Answer::Program { program, .. } => f.write_str(program),
+            Answer::Account { account } => write!(f, "a program of the account {account}"),
+        }
+    }
 }
 
 impl Offered {
@@ -788,16 +822,8 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         }
         Err(source) => return Err(LendError::Unreadable { path, source }),
     };
-    let malformed = |source| LendError::Malformed {
-        path: path.clone(),
-        source,
-    };
-    let mut file: serde_json::Map<String, serde_json::Value> =
-        serde_json::from_str(&text).map_err(malformed)?;
-    let head = ["port", "raw", "kind"].map(|k| Some((k.to_string(), file.remove(k)?)));
-    let head = serde_json::Map::from_iter(head.into_iter().flatten());
-    let Head { port, raw, kind } = serde_json::from_value(head.into()).map_err(malformed)?;
-    let mut terms: Terms = serde_json::from_value(file.into()).map_err(malformed)?;
+    let parsed = parse(&text).map_err(|source| LendError::Malformed { path, source });
+    let (Head { port, raw, kind }, mut terms, _) = parsed?;
     for refused in &terms.refused {
         RefusedPath::parse(refused.as_str())?;
     }
@@ -809,6 +835,24 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         kind,
         terms,
     }))
+}
+
+/// A declaration's text as its [`Head`], its [`Terms`], and the keys it
+/// kept from before approvals ([`BEFORE`]), each refused as its type says.
+fn parse(
+    text: &str,
+) -> Result<(Head, Terms, serde_json::Map<String, serde_json::Value>), serde_json::Error> {
+    let mut file: serde_json::Map<String, serde_json::Value> = serde_json::from_str(text)?;
+    let mut take = |keys: &[&str]| {
+        let taken = keys
+            .iter()
+            .filter_map(|k| Some((k.to_string(), file.remove(*k)?)));
+        serde_json::Map::from_iter(taken)
+    };
+    let head = take(&["port", "raw", "kind"]);
+    let before = take(&BEFORE);
+    let head = serde_json::from_value(head.into())?;
+    Ok((head, serde_json::from_value(file.into())?, before))
 }
 
 /// Lend each declaration from before groups, one with no `groups` key or
@@ -1000,6 +1044,11 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
     };
     let dir = lends_dir(data_dir);
     std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
+    let path = dir.join(format!("{}.json", lend.name));
+    let had = std::fs::read_to_string(&path).ok();
+    let before = had
+        .and_then(|had| parse(&had).ok())
+        .map(|(.., before)| before);
     let head = Head {
         port,
         raw,
@@ -1008,9 +1057,9 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
     let file = Declared {
         head,
         terms: &lend.terms,
+        before: before.unwrap_or_default(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
-    let path = dir.join(format!("{}.json", lend.name));
     // A declaration holding the client secret is written the way this node
     // writes a secret: 0600, and whole (SIGN_IN_WITH_SVRNGS §5, "Turning it
     // on"). One with none keeps the ordinary whole write.

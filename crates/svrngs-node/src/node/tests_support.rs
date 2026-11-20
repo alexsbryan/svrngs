@@ -4,6 +4,7 @@
 //! path of the product reaches them.
 
 use super::*;
+use crate::door::bound::Unchecked;
 use crate::iroh::Endpoint;
 use crate::uid::{Conn, Owner, Side};
 
@@ -269,6 +270,13 @@ struct Met {
     /// Whose each computer's socket at a port is, where a test says
     /// ([`Wire::owns`]); else this account's.
     owners: std::collections::BTreeMap<([u8; 32], u16), crate::uid::Owner>,
+    /// What each computer reads on a share's port, where a test says
+    /// ([`Wire::reads`], [`Wire::answers`]); else [`approval`]'s socket.
+    reads: std::collections::BTreeMap<([u8; 32], u16), crate::iroh::PortRead>,
+    /// How long each computer's read of a port takes, where a test says
+    /// ([`Wire::slow`]); else none.
+    slow: std::collections::BTreeMap<([u8; 32], u16), std::time::Duration>,
+    answers: std::collections::BTreeMap<([u8; 32], u16), crate::iroh::PortAnswer>,
     holders: std::collections::BTreeMap<[u8; 32], Holding>,
     relays: std::collections::BTreeMap<crate::iroh::RelayUrl, Relaying>,
     /// Each computer's relays held, as its endpoint was given them
@@ -373,12 +381,44 @@ impl Wire {
     }
 
     /// The socket at `port` on `key`'s computer is `owner`'s from here on, as
-    /// that computer reads it ([`Net::owner`]): another account's program
-    /// answering a lend, or a browser of another account opening svrngs.
-    /// Unsaid, every socket is this account's, as this test's process is.
+    /// that computer reads it ([`Net::owner`]): a browser of another account
+    /// opening svrngs. Unsaid, every socket is this account's, as this
+    /// test's process is.
     pub fn owns(&self, key: PublicKey, port: u16, owner: crate::uid::Owner) {
         let mut met = self.0.lock().unwrap();
         met.owners.insert((*key.as_bytes(), port), owner);
+    }
+
+    /// `key`'s computer's transport on this wire, for a test that asks it
+    /// alone, as the door's flows do.
+    pub fn net(&self, key: PublicKey) -> OnWire {
+        OnWire {
+            key,
+            wire: self.clone(),
+        }
+    }
+
+    /// `key`'s computer reads `read` on the share's `port` from here on, as
+    /// the door checks it ([`Net::read_port`]): another socket beside the
+    /// approved one, a restart, an accept elsewhere, or a read that failed.
+    /// Unsaid, [`approval`]'s socket, which took the connection.
+    pub fn reads(&self, key: PublicKey, port: u16, read: crate::iroh::PortRead) {
+        let mut met = self.0.lock().unwrap();
+        met.reads.insert((*key.as_bytes(), port), read);
+    }
+
+    /// `key`'s computer's reads of the share's `port` take `long` from here
+    /// on, as a Mac's slowest do: a check a test drops while it reads.
+    pub fn slow(&self, key: PublicKey, port: u16, long: std::time::Duration) {
+        let mut met = self.0.lock().unwrap();
+        met.slow.insert((*key.as_bytes(), port), long);
+    }
+
+    /// `key`'s computer reads `read` on the share's `port` from here on, as
+    /// an approval reads it ([`Net::answering`]). Unsaid, [`answering`]'s.
+    pub fn answers(&self, key: PublicKey, port: u16, read: crate::iroh::PortAnswer) {
+        let mut met = self.0.lock().unwrap();
+        met.answers.insert((*key.as_bytes(), port), read);
     }
 
     /// A Blobs holder at `key` that is a test's script, past any store and
@@ -553,12 +593,10 @@ impl iroh_blobs::util::AsyncWriteSendStreamExtra for Half<tokio::io::DuplexStrea
 }
 
 impl Net for OnWire {
-    /// [`Wire::listen`]'s service at `port` on this computer, a pipe's end.
-    /// Its two ends as a loopback connection's, this side's port none.
-    fn service(
-        &self,
-        port: u16,
-    ) -> crate::iroh::Later<'_, std::io::Result<(Box<dyn crate::iroh::Duplex>, Conn)>> {
+    /// [`Wire::listen`]'s service at `at`'s port on this computer, a pipe's
+    /// end. Its two ends as a loopback connection's, this side's port none.
+    fn service(&self, at: SocketAddr) -> crate::iroh::Later<'_, std::io::Result<Unchecked>> {
+        let port = at.port();
         let (ours, theirs) = tokio::io::duplex(64 * 1024);
         let met = self.wire.0.lock().unwrap();
         let to = met.services.get(&(*self.key.as_bytes(), port));
@@ -571,34 +609,56 @@ impl Net for OnWire {
         };
         Box::pin(async move {
             match taken {
-                true => Ok((Box::new(ours) as Box<dyn crate::iroh::Duplex>, conn)),
+                true => Ok(Unchecked::new(Box::new(ours), conn)),
                 false => Err(std::io::ErrorKind::ConnectionRefused.into()),
             }
         })
     }
     /// What [`Wire::owns`] says of the asked end's port, else this account's.
-    fn owner(&self, _: crate::lend::Raw, conn: Conn, side: Side) -> crate::iroh::Later<'_, Owner> {
+    fn owner(&self, conn: Conn, side: Side) -> crate::iroh::Later<'_, Owner> {
         let port = match side {
             Side::Local => conn.local.port(),
             Side::Peer => conn.peer.port(),
         };
         let met = self.wire.0.lock().unwrap();
         let said = met.owners.get(&(*self.key.as_bytes(), port)).cloned();
-        let mine = |uid| Owner::Uid(uid, None);
-        let owner = said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, mine));
+        let owner =
+            said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, Owner::Uid));
         Box::pin(async move { owner })
     }
-    /// What [`Wire::owns`] says of the peer's port, else this account's,
-    /// in no sandbox, the program [`holder`] calls `test`.
-    fn program(&self, _: crate::lend::Raw, conn: Conn) -> crate::iroh::Later<'_, Owner> {
+    /// What [`Wire::reads`] says of the port, else a real socket there as
+    /// this computer reads it ([`real`]), else [`approval`]'s socket alone
+    /// on it, and for a connection the one that took it.
+    fn read_port(
+        &self,
+        raw: crate::lend::Raw,
+        port: u16,
+        conn: Option<Conn>,
+    ) -> crate::iroh::Later<'_, crate::iroh::PortRead> {
         let met = self.wire.0.lock().unwrap();
-        let said = met
-            .owners
-            .get(&(*self.key.as_bytes(), conn.peer.port()))
-            .cloned();
-        let none = |uid| Owner::Uid(uid, Some(holder(crate::lend::Sandbox::No, "test")));
-        let owner = said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, none));
-        Box::pin(async move { owner })
+        let said = met.reads.get(&(*self.key.as_bytes(), port)).cloned();
+        let took = match conn {
+            Some(_) => crate::binding::Took::Waiting,
+            None => crate::binding::Took::Datagram,
+        };
+        let read = said.unwrap_or_else(|| Ok(real(raw, port).unwrap_or((read(), took))));
+        let slow = met.slow.get(&(*self.key.as_bytes(), port)).copied();
+        Box::pin(async move {
+            tokio::time::sleep(slow.unwrap_or_default()).await;
+            read
+        })
+    }
+    /// What [`Wire::answers`] says of the port, else [`answering`].
+    fn answering(
+        &self,
+        _: crate::lend::Raw,
+        port: u16,
+        _: Option<u32>,
+    ) -> crate::iroh::Later<'_, crate::iroh::PortAnswer> {
+        let met = self.wire.0.lock().unwrap();
+        let said = met.answers.get(&(*self.key.as_bytes(), port)).cloned();
+        let read = said.unwrap_or_else(|| Ok(answering()));
+        Box::pin(async move { read })
     }
     fn id(&self) -> PublicKey {
         self.key
@@ -938,16 +998,86 @@ impl Node {
     }
 }
 
-/// A program as the reader gives one, its digest its name, for a test to
-/// say what answers a port ([`Wire::owns`]).
-pub fn holder(sandbox: crate::lend::Sandbox, name: &str) -> crate::uid::Holder {
-    let command = crate::lend::Command {
-        name: name.into(),
-        digest: name.into(),
+/// The socket a test's share's port holds unless a test says otherwise
+/// ([`Wire::reads`]): socket 1, held by process 1 started at 1, the
+/// program `test` in `~/test`.
+fn read() -> crate::binding::Read {
+    let socket = crate::binding::Socket {
+        id: 1,
+        cgroup: None,
+        holders: [(1, 1)].into(),
+        at: std::net::Ipv4Addr::LOCALHOST.into(),
+        dual: false,
     };
-    crate::uid::Holder {
-        sandbox,
-        command,
-        pids: Vec::new(),
+    crate::binding::Read {
+        boot: None,
+        lasting: true,
+        sockets: vec![socket],
+        unlisted: false,
     }
+}
+
+/// [`read`] as an approval reads it, process 1 shown, and asked for, at 1.
+pub fn answering() -> crate::uid::Answering {
+    let shown = crate::lend::Answer::Program {
+        pid: 1,
+        start: 1,
+        program: "test".into(),
+        folder: Some("~/test".into()),
+    };
+    crate::uid::Answering {
+        read: read(),
+        parents: Default::default(),
+        start: Some(1),
+        shown: vec![shown],
+    }
+}
+
+/// What a test's share approves: [`read`]'s socket.
+pub fn approval() -> crate::binding::Approved {
+    crate::binding::approve(&read(), None).expect("a socket is approved")
+}
+
+/// [`approval`] as a lend's file keeps it, for a test that writes one.
+pub fn approved() -> serde_json::Value {
+    serde_json::json!({ "sockets": [1], "at": "127.0.0.1" })
+}
+
+/// `lend`, a lend's file as a test writes it, with what answers on its port
+/// approved when it names a port and no approval, as [`real`] reads it:
+/// what a test's lender approved.
+pub fn approving(lend: &serde_json::Value) -> String {
+    let mut lend = lend.clone();
+    let port = lend["port"].as_u64().and_then(|p| u16::try_from(p).ok());
+    let raw = match lend["raw"].as_str() {
+        Some("udp") => crate::lend::Raw::Udp,
+        _ => crate::lend::Raw::Tcp,
+    };
+    if let Some(port) = port.filter(|_| lend.get("approved").is_none()) {
+        let read = real(raw, port).map(|(read, _)| crate::uid::Answering {
+            read,
+            ..answering()
+        });
+        let read = read.unwrap_or_else(answering);
+        let approved = crate::binding::approve(&read.read, None).expect("a socket is approved");
+        lend["approved"] = serde_json::to_value(approved).expect("an approval serializes");
+    }
+    lend.to_string()
+}
+
+/// `lend` approved as `svrngs share` approves it here: what this computer's
+/// own reader reads on its port now ([`real`]), else [`read`]'s socket.
+pub fn approve(lend: &mut crate::lend::Lend) {
+    let port = lend.port().expect("a port's lend");
+    let read = real(lend.raw(), port.get()).map_or_else(read, |(read, _)| read);
+    lend.terms.approved = crate::binding::approve(&read, None).ok();
+}
+
+/// What this computer's own reader reads on `port`, when a real socket a
+/// test runs is on it: then the wire reads it too, so a test's stand-in on
+/// a real listener is approved and checked as it is; none for a port only
+/// the wire answers, which reads [`read`]'s socket.
+fn real(raw: crate::lend::Raw, port: u16) -> Option<(crate::binding::Read, crate::binding::Took)> {
+    let read = crate::uid::port(raw, port, None).ok()?;
+    (!read.0.sockets.is_empty()).then_some(read)
 }

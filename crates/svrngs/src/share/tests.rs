@@ -54,6 +54,7 @@ fn share(p: u16) -> Share {
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
         pid: None,
+        replace: false,
     }
 }
 
@@ -174,7 +175,7 @@ fn the_programs_are_read_in_file_name_order() {
 #[test]
 fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     let jf = Program::parse("jellyfin").unwrap();
-    let lend = lend_of(&share(8096), |_| true, Some(jf.clone()), "").unwrap();
+    let lend = lend_of(&share(8096), Some(jf.clone()), "").unwrap();
     assert_eq!(
         (lend.name.as_str(), lend.kind.as_str(), lend.terms.limit),
         ("jellyfin", "jellyfin", None)
@@ -183,17 +184,24 @@ fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     typed.kind = Some(Program::parse("notes").unwrap());
     typed.name = Some(LendName::parse("pad").unwrap());
     typed.limit = Some(port(7));
-    let lend = lend_of(&typed, |_| true, None, "").unwrap();
+    let lend = lend_of(&typed, None, "").unwrap();
     assert_eq!(
         (lend.name.as_str(), lend.kind.as_str(), lend.terms.limit),
         ("pad", "notes", Some(port(7)))
     );
     assert_eq!(
-        lend_of(&share(5000), |_| true, None, ""),
+        lend_of(&share(5000), None, ""),
         Err(ShareRefusal::NoKind(port(5000)))
     );
+    let nothing = svrngs_node::uid::Answering::default();
     assert_eq!(
-        lend_of(&share(8096), |_| false, Some(jf), ""),
+        crate::share::approve(
+            (port(8096), svrngs_node::lend::Raw::Tcp),
+            Ok(nothing),
+            None,
+            None
+        )
+        .map(|_| ()),
         Err(ShareRefusal::NothingListens(port(8096)))
     );
 }
@@ -258,7 +266,7 @@ fn a_lend_shared_with_no_limit_lets_a_fourth_in_at_once() {
     use svrngs_node::door::limit::{Counts, Verdict};
     use svrngs_node::network::Whereabouts;
     let jf = Program::parse("jellyfin").unwrap();
-    let lend = lend_of(&share(8096), |_| true, Some(jf), "").unwrap();
+    let lend = lend_of(&share(8096), Some(jf), "").unwrap();
     let (mut counts, now) = (Counts::default(), Instant::now());
     for who in ["ana", "bo", "cy", "dee"] {
         let verdict = counts.ask(&lend, who, Whereabouts::Away, now);
@@ -285,7 +293,7 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
     typed.refused = ["/slots", "/admin"]
         .map(|p| RefusedPath::parse(p).unwrap())
         .to_vec();
-    let lend = lend_of(&typed, |_| true, None, "").unwrap();
+    let lend = lend_of(&typed, None, "").unwrap();
     let refused: Vec<&str> = lend.terms.refused.iter().map(RefusedPath::as_str).collect();
     assert_eq!(
         refused,
@@ -480,7 +488,7 @@ fn a_group_s_file_only_adds_to_what_svrngs_ships() {
     let mut asked = share(8080);
     asked.kind = Some(program("llama-server"));
     let refused_of = |terms| {
-        let lend = lend_of(&asked, |_| true, None, terms).unwrap();
+        let lend = lend_of(&asked, None, terms).unwrap();
         lend.terms
             .refused
             .iter()
@@ -499,7 +507,7 @@ fn a_group_s_file_only_adds_to_what_svrngs_ships() {
     assert!(refused_of("- llama-server keeps: /props").contains(&"/props".to_string()));
     let mut notes = share(5000);
     notes.kind = Some(program("notes"));
-    let lend = lend_of(&notes, |_| true, None, "- notes keeps: /admin").unwrap();
+    let lend = lend_of(&notes, None, "- notes keeps: /admin").unwrap();
     assert_eq!(lend.terms.refused, [RefusedPath::parse("/admin").unwrap()]);
 }
 
@@ -515,9 +523,9 @@ fn a_lend_keeps_the_terms_it_was_lent_under() {
     let root = tempfile::tempdir().unwrap();
     let mut asked = share(5000);
     asked.kind = Some(program("notes"));
-    let lend = lend_of(&asked, |_| true, None, "- notes keeps: /admin").unwrap();
+    let lend = lend_of(&asked, None, "- notes keeps: /admin").unwrap();
     svrngs_node::lend::declare(root.path(), &lend, None).unwrap();
-    let _changed = lend_of(&asked, |_| true, None, "- notes keeps: /other").unwrap();
+    let _changed = lend_of(&asked, None, "- notes keeps: /other").unwrap();
     let read = svrngs_node::lend::read(root.path(), &lend.name)
         .unwrap()
         .unwrap();
@@ -534,7 +542,7 @@ fn a_program_carried_as_bytes_is_lent_only_so() {
     let terms = "- minecraft carries: tcp";
     let mut asked = share(25565);
     asked.kind = Some(program("minecraft"));
-    let page = lend_of(&asked, |_| true, None, terms);
+    let page = lend_of(&asked, None, terms);
     assert_eq!(
         page,
         Err(ShareRefusal::Carries(program("minecraft"), "tcp"))
@@ -544,9 +552,9 @@ fn a_program_carried_as_bytes_is_lent_only_so() {
         .to_string()
         .contains("--tcp --program minecraft"));
     asked.raw = Some(svrngs_node::lend::Raw::Udp);
-    assert!(lend_of(&asked, |_| true, None, terms).is_err());
+    assert!(lend_of(&asked, None, terms).is_err());
     asked.raw = Some(svrngs_node::lend::Raw::Tcp);
-    assert!(lend_of(&asked, |_| true, None, terms).is_ok());
+    assert!(lend_of(&asked, None, terms).is_ok());
 }
 
 /// **A `sends:` the door can't hold can't be written** (CONTRACTS §6.2): a
@@ -616,13 +624,7 @@ fn a_lend_keeps_the_sends_its_terms_say() {
     let root = tempfile::tempdir().unwrap();
     let mut asked = share(8080);
     asked.kind = Some(program("llama-server"));
-    let lend = lend_of(
-        &asked,
-        |_| true,
-        None,
-        "- llama-server sends: POST /v1/rerank",
-    )
-    .unwrap();
+    let lend = lend_of(&asked, None, "- llama-server sends: POST /v1/rerank").unwrap();
     svrngs_node::lend::declare(root.path(), &lend, None).unwrap();
     let read = svrngs_node::lend::read(root.path(), &lend.name)
         .unwrap()
@@ -630,9 +632,5 @@ fn a_lend_keeps_the_sends_its_terms_say() {
     let rows: Vec<&str> = read.terms.sends.iter().map(|s| s.as_str()).collect();
     assert_eq!(rows, ["POST /v1/embeddings", "POST /v1/rerank"]);
     asked.raw = Some(svrngs_node::lend::Raw::Tcp);
-    assert!(lend_of(&asked, |_| true, None, "")
-        .unwrap()
-        .terms
-        .sends
-        .is_empty());
+    assert!(lend_of(&asked, None, "").unwrap().terms.sends.is_empty());
 }

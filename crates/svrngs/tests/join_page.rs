@@ -216,9 +216,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
             sign_in_with_svrngs: None,
             asks: None,
             sends: Vec::new(),
-            owner: None,
-            sandbox: None,
-            command: None,
+            approved: None,
         },
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
@@ -536,9 +534,7 @@ async fn phone_joins_through(
             sign_in_with_svrngs: None,
             asks: None,
             sends: Vec::new(),
-            owner: None,
-            sandbox: None,
-            command: None,
+            approved: None,
         },
     };
     lend::declare(dir.path(), &shelf, None).unwrap();

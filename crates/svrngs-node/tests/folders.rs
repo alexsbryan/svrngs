@@ -1797,7 +1797,9 @@ async fn a_programs_file_not_here_yet_is_refused_as_still_being_fetched() {
 
 /// `body` posted to `node`'s home page at `/running`, as its own page asks,
 /// with the token: the status and the answer.
-async fn lend_from_the_page(node: &Node, body: serde_json::Value) -> (u16, serde_json::Value) {
+async fn lend_from_the_page(node: &Node, mut body: serde_json::Value) -> (u16, serde_json::Value) {
+    // The program the page showed on the port, as the wire reads it.
+    (body["pid"], body["start"]) = (1.into(), 1.into());
     on_the_page(node, axum::http::Method::POST, "/running", body).await
 }
 

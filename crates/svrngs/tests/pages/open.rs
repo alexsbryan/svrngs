@@ -139,7 +139,11 @@ async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
     let lends = svrngs_node::lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "port": shelf.local_addr().unwrap().port(), "kind": "k", "refused": [], "groups": ["house"] });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     go.send(()).unwrap();
     let seen = phone.await.unwrap();
     let lines: Vec<&str> = seen["lines"]

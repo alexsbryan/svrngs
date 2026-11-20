@@ -48,7 +48,7 @@ an app's page svrngs won't load, and what to change.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
-  svrngs share <port> --group <group>... [--name <name>] [--program <name>] [--pid <id>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+  svrngs share <port> --group <group>... [--name <name>] [--program <name>] [--pid <id>@<start>] [--replace] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in each
       --group, by its name or the start of its id; say it again for more.
       Each reaches it through this computer, as themselves. It asks for the
@@ -80,10 +80,22 @@ an app's page svrngs won't load, and what to change.
       --udp or --tcp lends a port that speaks UDP or TCP as it is, not
       as a page: it takes a --program, and --name and --limit as any lend
       does.
-      A lend is kept to the program answering on its port when you share
-      it, run as it runs then: started the same way again, it keeps the
-      lend; another program there is held until you share it again. --pid
-      lends it only if that process is the one answering there.
+      A lend is kept to what answers on its port when you share it, and
+      says what that is. svrngs checks the port before each connection it
+      carries there, and before and after each datagram it sends to a UDP
+      port. If the program starts again, the lend closes until you approve
+      what runs there: `svrngs approve <name>`, or Keep sharing it on your
+      home page. While another program is on the port, the lend is closed;
+      a UDP lend stays closed after it goes, and when svrngs starts again,
+      until you approve. --pid lends it only if that process, or a child of
+      it, holds every socket that takes what svrngs sends to the port;
+      <start> is its start, as /proc/<id>/stat's 22nd field says on Linux.
+      A name you share from another port, or as another protocol, is
+      refused unless you add --replace.
+
+  svrngs approve <name> [--pid <id>@<start>]
+      Keep sharing <name> with what answers on its port now, and say what
+      that is. Nothing else about it changes. --pid is as for `share`.
 
   svrngs unshare <name> [--group <group>]...
       Stop lending <name>; with --group, stop lending it to that group

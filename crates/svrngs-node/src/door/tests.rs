@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The door's rules, one at a time; `tests/door/` runs them through the
 //! door between two nodes.
@@ -290,9 +291,7 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
             sign_in_with_svrngs: None,
             asks: None,
             sends: Vec::new(),
-            owner: None,
-            sandbox: None,
-            command: None,
+            approved: None,
         },
     }
 }
@@ -956,145 +955,475 @@ async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again()
             .contains("because the lender’s computer serves it. It can read again in 3 seconds.")));
 }
 
-/// **A connection is carried only to the account its lend recorded**
-/// (LEND_OWNER §3; `bound`): the same uid carries, a restart under it
-/// included; another uid is held as another's; a lend from before owners
-/// records the first uid read; a Mac's "none of this account's", and any
-/// read that can't be judged, hold it as unjudged, recorded or not; where
-/// no reader is, it carries as before. Then the sandbox (LEND_SANDBOX): a
-/// program in an app's sandbox is held where none or another app was
-/// recorded, carried where the same app was or where it runs in none; a
-/// lend from before sandboxes records the first read. Then the program
-/// (LEND_PROGRAM §3): the same digest carries, whatever its name; another
-/// is held, in an app's sandbox or in none; a lend from before programs
-/// records the first read. Every row of the one decider. Planted, each
-/// watched failing: another uid carried anyway; a lend from before carried
-/// without its record; a sandboxed program carried anyway; one in none held
-/// on an app's lend; `bound` ignoring the program (another carried).
+/// The socket `id` alone on a share's port, on 127.0.0.1, in cgroup 4.
+fn alone(id: u64) -> crate::binding::Read {
+    crate::binding::Read {
+        boot: None,
+        lasting: true,
+        sockets: vec![crate::binding::Socket {
+            id,
+            cgroup: Some(4),
+            holders: Default::default(),
+            at: std::net::Ipv4Addr::LOCALHOST.into(),
+            dual: false,
+        }],
+        unlisted: false,
+    }
+}
+
+/// **What the door writes to a share's port is what its lender approved**
+/// (SHARE_BINDING §5.2): `decided` takes `binding::check`'s answer and holds
+/// the rest. A lend with no approval is held unapproved; one whose port
+/// reads another socket, or whose connection another took, is held as
+/// another's; a port that reads nothing is away; a read that failed, and a
+/// system with no reader, are unjudged; what was approved carries. Planted,
+/// watched failing: a failed read carried as approved (`Err(_) => Ok(())`).
 #[test]
-fn a_connection_is_carried_only_to_the_account_its_lend_recorded() {
-    use crate::lend::{Command, Hold, Sandbox};
-    use crate::node::holder;
-    use crate::uid::Owner;
-    let why = "no socket at that end on this computer";
-    let (no, app) = (Sandbox::No, |id: &str| Sandbox::App(id.into()));
-    let (sab, jelly) = (
-        app("org.sabnzbd.sabnzbd"),
-        app("org.jellyfin.JellyfinServer"),
+fn what_the_door_writes_to_a_share_s_port_is_what_its_lender_approved() {
+    use crate::binding::{Read, Took};
+    use crate::uid::Unread;
+    use bound::Unsent;
+    let dir = tempfile::tempdir().unwrap();
+    let decided = |lend: &Lend, read| bound::decided(dir.path(), lend, read);
+    let mut shelf = Lend::carried("books", "house").unwrap();
+    shelf.source = Source::Port(std::num::NonZeroU16::new(9001).unwrap());
+    let held = |h| Err(Unsent::Held(h));
+    assert_eq!(
+        decided(&shelf, Ok((alone(1), Took::Cgroup(4)))),
+        held(Hold::Unapproved)
     );
-    let read = |uid, sandbox: Option<&Sandbox>| {
-        Owner::Uid(uid, sandbox.map(|s| holder(s.clone(), "serve")))
+    shelf.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    assert_eq!(decided(&shelf, Ok((alone(1), Took::Cgroup(4)))), Ok(()));
+    assert_eq!(decided(&shelf, Ok((alone(1), Took::Datagram))), Ok(()));
+    assert_eq!(
+        decided(&shelf, Ok((alone(2), Took::Cgroup(4)))),
+        held(Hold::Another)
+    );
+    assert_eq!(
+        decided(&shelf, Ok((alone(1), Took::Cgroup(5)))),
+        held(Hold::Another)
+    );
+    let empty = Read {
+        sockets: Vec::new(),
+        ..alone(1)
     };
-    let ran = |name: &str| holder(Sandbox::No, name).command;
-    let (serve, other) = (ran("serve"), ran("other"));
-    let renamed = Command {
-        name: "renamed".into(),
-        digest: serve.digest.clone(),
+    assert_eq!(
+        decided(&shelf, Ok((empty, Took::Datagram))),
+        Err(Unsent::Away)
+    );
+    let failed = Err(Unread::Failed("this computer's sockets can't be listed"));
+    assert_eq!(decided(&shelf, failed), held(Hold::Unjudged));
+    assert_eq!(decided(&shelf, Err(Unread::NoReader)), held(Hold::Unjudged));
+}
+
+/// **A program not approved, once seen, holds a UDP share in its file until
+/// its lender approves again** (SHARE_BINDING_REVIEWS §6 #3, §7 #1): nothing
+/// there, a failed read, and a socket whose holder can't be read hold
+/// nothing past themselves; another socket seen holds the share, read from
+/// its file again, with the approved socket back alone and for the lender's
+/// own list; an approval made since is never held for what was seen before
+/// it, and carries. A TCP share's connection is judged alone: another
+/// socket seen holds that one, and the approved one back alone carries. On
+/// a Mac, a socket beside the approved one whose last user has exited is
+/// unjudged, and holds nothing past itself. Planted, each watched failing:
+/// `decided` not keeping the hold (the approved socket back alone carried);
+/// `hold` not comparing the approval judged (the approval made since held);
+/// the share's protocol not asked (the TCP share held in its file); a
+/// socket with no holder read taken as another's (the Mac share held).
+#[test]
+fn a_hold_is_kept_in_the_lend_s_file_until_its_lender_approves_again() {
+    use crate::binding::Took;
+    use bound::Unsent;
+    let dir = tempfile::tempdir().unwrap();
+    let mut shelf = Lend::carried("books", "house").unwrap();
+    shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(9001).unwrap());
+    shelf.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    crate::lend::declare(dir.path(), &shelf, None).unwrap();
+    let now = || crate::lend::read(dir.path(), &shelf.name).unwrap().unwrap();
+    let decided =
+        |lend: &Lend, id| bound::decided(dir.path(), lend, Ok((alone(id), Took::Datagram)));
+    let empty = crate::binding::Read {
+        sockets: Vec::new(),
+        ..alone(1)
     };
-    let another = Bound::Held(Hold::Another);
-    let kept = |sandbox: &Sandbox| Bound::Record(1000, Some(holder(sandbox.clone(), "serve")));
-    for ((owner, sandbox, command), read, decided) in [
-        (
-            (Some(1000), Some(&no), Some(&serve)),
-            read(1000, Some(&no)),
-            Bound::Carry,
-        ),
-        ((Some(1000), None, None), read(1000, None), Bound::Carry),
-        (
-            (Some(1000), Some(&no), Some(&serve)),
-            read(1001, Some(&no)),
-            another.clone(),
-        ),
-        ((Some(0), None, None), read(1000, None), another.clone()),
-        // The same account, then the same sandbox or none (LEND_SANDBOX).
-        (
-            (Some(1000), Some(&no), Some(&serve)),
-            read(1000, Some(&sab)),
-            another.clone(),
-        ),
-        (
-            (Some(1000), Some(&jelly), Some(&serve)),
-            read(1000, Some(&sab)),
-            another.clone(),
-        ),
-        (
-            (Some(1000), Some(&jelly), Some(&serve)),
-            read(1000, Some(&jelly)),
-            Bound::Carry,
-        ),
-        (
-            (Some(1000), Some(&jelly), Some(&serve)),
-            read(1000, Some(&no)),
-            Bound::Carry,
-        ),
-        // Then the same program, by its digest alone (LEND_PROGRAM §3).
-        (
-            (Some(1000), Some(&no), Some(&other)),
-            read(1000, Some(&no)),
-            another.clone(),
-        ),
-        (
-            (Some(1000), Some(&jelly), Some(&other)),
-            read(1000, Some(&no)),
-            another.clone(),
-        ),
-        (
-            (Some(1000), Some(&jelly), Some(&other)),
-            read(1000, Some(&jelly)),
-            another.clone(),
-        ),
-        (
-            (Some(1000), Some(&no), Some(&renamed)),
-            read(1000, Some(&no)),
-            Bound::Carry,
-        ),
-        // Another account's: not read, its account alone decides.
-        ((Some(973), None, None), read(973, None), Bound::Carry),
-        // From before owners, sandboxes or programs: recorded as read.
-        ((None, None, None), read(1000, Some(&sab)), kept(&sab)),
-        (
-            (None, None, None),
-            read(973, None),
-            Bound::Record(973, None),
-        ),
-        ((Some(1000), None, None), read(1000, Some(&no)), kept(&no)),
-        (
-            (Some(1000), Some(&no), None),
-            read(1000, Some(&no)),
-            kept(&no),
-        ),
-        (
-            (Some(1000), Some(&jelly), None),
-            read(1000, Some(&jelly)),
-            kept(&jelly),
-        ),
-        (
-            (Some(502), Some(&no), Some(&serve)),
-            Owner::NotMine,
-            Bound::Held(Hold::Unjudged),
-        ),
-        (
-            (None, None, None),
-            Owner::NotMine,
-            Bound::Held(Hold::Unjudged),
-        ),
-        (
-            (Some(1000), Some(&no), Some(&serve)),
-            Owner::Unjudged(why),
-            Bound::Held(Hold::Unjudged),
-        ),
-        (
-            (None, None, None),
-            Owner::Unjudged(why),
-            Bound::Held(Hold::Unjudged),
-        ),
-        ((Some(1000), None, None), Owner::NoReader, Bound::Carry),
-        ((None, None, None), Owner::NoReader, Bound::Carry),
-    ] {
-        let decision = bound((owner, sandbox, command), &read);
-        assert_eq!(
-            decision, decided,
-            "{owner:?} {sandbox:?} {command:?} {read:?}"
+    let away = bound::decided(dir.path(), &now(), Ok((empty, Took::Datagram)));
+    assert_eq!(away, Err(Unsent::Away));
+    let failed = Err(crate::uid::Unread::Failed("unread"));
+    let unjudged = bound::decided(dir.path(), &now(), failed);
+    assert_eq!(unjudged, Err(Unsent::Held(Hold::Unjudged)));
+    assert_eq!(decided(&now(), 1), Ok(()), "neither kept");
+    assert_eq!(decided(&now(), 2), Err(Unsent::Held(Hold::Another)));
+    let back = decided(&now(), 1);
+    assert_eq!(
+        back,
+        Err(Unsent::Held(Hold::Another)),
+        "the approved socket back alone"
+    );
+    let since = crate::binding::approve(&alone(3), None).unwrap();
+    crate::share::reapproved(dir.path(), &shelf.name, since).unwrap();
+    let stale = decided(&shelf, 2);
+    assert!(
+        stale.is_err(),
+        "a check judged against the approval before it"
+    );
+    assert_eq!(
+        decided(&now(), 3),
+        Ok(()),
+        "the approval made since carries"
+    );
+    let mut page = Lend::carried("page", "house").unwrap();
+    page.source = Source::Port(std::num::NonZeroU16::new(9002).unwrap());
+    page.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    crate::lend::declare(dir.path(), &page, None).unwrap();
+    let page = || crate::lend::read(dir.path(), &page.name).unwrap().unwrap();
+    assert_eq!(decided(&page(), 2), Err(Unsent::Held(Hold::Another)));
+    assert_eq!(
+        decided(&page(), 1),
+        Ok(()),
+        "a TCP share's connection alone"
+    );
+    let mut mac = alone(1);
+    mac.lasting = false;
+    mac.sockets[0].holders = [(5, 5)].into();
+    let approved = crate::binding::approve(&mac, None).unwrap();
+    crate::share::reapproved(dir.path(), &shelf.name, approved).unwrap();
+    let mut exited = mac.clone();
+    exited.sockets.push(crate::binding::Socket {
+        holders: Default::default(),
+        ..alone(2).sockets[0].clone()
+    });
+    let unjudged = bound::decided(dir.path(), &now(), Ok((exited, Took::Datagram)));
+    assert_eq!(
+        unjudged,
+        Err(Unsent::Held(Hold::Unjudged)),
+        "its last user exited"
+    );
+    assert_eq!(
+        bound::decided(dir.path(), &now(), Ok((mac, Took::Datagram))),
+        Ok(())
+    );
+}
+
+/// **A hold waits a moment for another change holding the lend's lock**
+/// (SHARE_BINDING_REVIEWS §7 #5): the lend's lock held by another change
+/// for 5 ms, a program not approved seen meanwhile, and the hold is kept in
+/// its file once that change lets go. Planted, watched failing: `hold`
+/// asking once (the hold lost while the lock was held).
+#[test]
+fn a_hold_waits_a_moment_for_another_change_holding_the_lend_s_lock() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut shelf = Lend::carried("books", "house").unwrap();
+    shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(9001).unwrap());
+    shelf.terms.approved = crate::binding::approve(&alone(1), None).ok();
+    crate::lend::declare(dir.path(), &shelf, None).unwrap();
+    std::fs::create_dir_all(dir.path().join("locks")).unwrap();
+    let lock = dir.path().join(format!("locks/{}.lock", shelf.name));
+    let lock = std::fs::File::create(lock).unwrap();
+    lock.lock().unwrap();
+    let other = std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(5));
+        lock.unlock().unwrap();
+    });
+    let seen = Ok((alone(2), crate::binding::Took::Datagram));
+    let checked = bound::decided(dir.path(), &shelf, seen);
+    other.join().unwrap();
+    assert_eq!(checked, Err(bound::Unsent::Held(Hold::Another)));
+    let kept = crate::lend::read(dir.path(), &shelf.name).unwrap().unwrap();
+    assert!(
+        kept.terms.approved.unwrap().held,
+        "the hold kept once the lock let go"
+    );
+}
+
+/// **Every dial of a share's port goes through its check** (SHARE_BINDING
+/// §5.7, SHARE_BINDING_REVIEWS §6 #12): clippy refuses each way to dial, to
+/// send a datagram to an address, or to build an HTTP client (clippy.toml),
+/// but where an `expect` allows it; each allowance of a disallowed method in
+/// svrngs's product code is named here, by file and reason, the clock's and
+/// randomness's among them. One added fails here until it is named, which
+/// is when it is reviewed; an `allow`, an inner `#![expect]` or `#![allow]`,
+/// and one of the lint's group (`clippy::style`, `clippy::all`) fail here
+/// always. Planted, each watched failing: an unlisted `TcpStream::connect`
+/// in share.rs `tried` (clippy, `-D warnings`); the same under an `expect`
+/// of its own (here); a `#![expect(clippy::disallowed_methods)]` atop
+/// share.rs, and an `#[allow(clippy::style)]` on `tried` (here).
+#[test]
+fn every_dial_of_a_share_s_port_goes_through_its_check() {
+    let named: &[(&str, &str)] = &[
+        // Dials, each writing nothing to a share's port unchecked.
+        ("crates/svrngs-node/src/door/bound.rs", "dial: checked by bound"),
+        ("crates/svrngs-node/src/door/bound.rs", "dial: a checked flow"),
+        ("crates/svrngs-node/src/door.rs", "dial: unwritten probe"),
+        ("crates/svrngs-node/src/door/udp.rs", "dial: member's programs"),
+        ("crates/svrngs-node/src/share.rs", "dial: unwritten probe"),
+        ("crates/svrngs-node/src/uid.rs", "dial: unwritten probe"),
+        ("crates/svrngs-node/src/tiers.rs", "dial: a relay"),
+        ("crates/svrngs-node/src/network.rs", "dial: the route out"),
+        ("crates/svrngs-node/src/update.rs", "dial: the update page"),
+        ("crates/svrngs-node/src/publication.rs", "dial: a group's page"),
+        ("crates/svrngs-node/src/http.rs", "dial: the one client"),
+        ("crates/svrngs-node/src/http.rs", "dial: the one client"),
+        ("crates/svrngs/src/cli.rs", "dial: svrngs's own API"),
+        ("crates/svrngs/src/cli.rs", "dial: a group's page"),
+        // The clock and randomness, at their adapters (clippy.toml).
+        ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),
+        ("apps/give/src/runtime.rs", "a snapshot is named for when it was taken"),
+        ("apps/give/src/runtime.rs", "a snapshot times its pause"),
+        ("apps/give/src/runtime.rs", "the runtime is podman's adapter: it waits on the clock"),
+        ("crates/svrngs-node/src/api.rs", "draws the record's token"),
+        ("crates/svrngs-node/src/blob.rs", "a get's lapse is read from the clock at the route, its adapter"),
+        ("crates/svrngs-node/src/blob.rs", "a put's lapse is read from the clock at the route, its adapter"),
+        ("crates/svrngs-node/src/blob.rs", "what is left of a lapse is read from the clock at the route, its adapter"),
+        ("crates/svrngs-node/src/confined.rs", "the filesystem adapter draws an unguessable partial file name"),
+        ("crates/svrngs-node/src/declared.rs", "the secret-file adapter draws a fresh partial name, never reusing a readable inode"),
+        ("crates/svrngs-node/src/door.rs", "the door's and the relay's clock: whether a pass has lapsed, and until when a computer's own lasts"),
+        ("crates/svrngs-node/src/folder.rs", "the fetch is an adapter: it times what a holder takes, and when one did not answer"),
+        ("crates/svrngs-node/src/folder.rs", "the sweep's adapter reads when it asks, so a lapse is read against it"),
+        ("crates/svrngs-node/src/folder.rs", "times each get's read of the record for its trace (perf-1); no decision reads it"),
+        ("crates/svrngs-node/src/folder.rs", "times the fetch's dial, first byte and last byte for their trace (perf-1); no decision reads it"),
+        ("crates/svrngs-node/src/group.rs", "draws a group's salt"),
+        ("crates/svrngs-node/src/invite.rs", "a link's life starts now"),
+        ("crates/svrngs-node/src/invite.rs", "draws a link's secret"),
+        ("crates/svrngs-node/src/oidc/provider.rs", "the provider is the adapter that reads the clock for a code and a token"),
+        ("crates/svrngs-node/src/ring_sync.rs", "times a round for its trace; no decision reads it"),
+        ("crates/svrngs-node/src/session.rs", "the session adapter draws a boot challenge to prevent cross-restart replay"),
+        ("crates/svrngs-node/src/synced.rs", "the loop is an adapter: it reads the clock for when the next sweep is due"),
+        ("crates/svrngs-node/src/synced.rs", "times each fetch and each export for their traces (perf-1); no decision reads it"),
+        ("crates/svrngs-node/src/synced.rs", "times each phase of a step for its trace (perf-1); no decision reads it"),
+        ("crates/svrngs-node/src/uid.rs", "the reader's wait for an accept, at the edge"),
+        ("crates/svrngs-node/src/webrtc.rs", "str0m's own clock: the peer's loop times itself, as the spike's"),
+        ("crates/svrngs-node/src/webrtc.rs", "str0m's own clock: the peer's loop times itself, as the spike's"),
+        ("crates/svrngs-runtime/src/journal.rs", "the write side's clock adapter"),
+        ("crates/svrngs/src/cli.rs", "draws a name nobody made, to ask the page's host for the page there"),
+        ("crates/svrngs/src/identity.rs", "draws a device key"),
+    ];
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let (mut found, mut allowed) = (Vec::new(), Vec::new());
+    let crates = ["svrngs-core", "svrngs-runtime", "svrngs-node", "svrngs"];
+    let mut dirs: Vec<_> = crates
+        .iter()
+        .map(|c| root.join("crates").join(c).join("src"))
+        .collect();
+    dirs.push(root.join("apps/give/src"));
+    while let Some(dir) = dirs.pop() {
+        for entry in std::fs::read_dir(&dir).unwrap().flatten() {
+            let (path, name) = (
+                entry.path(),
+                entry.file_name().to_string_lossy().into_owned(),
+            );
+            if name.contains("test") {
+                continue;
+            } else if path.is_dir() {
+                dirs.push(path);
+                continue;
+            } else if !name.ends_with(".rs") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).unwrap();
+            let at = path.strip_prefix(&root).unwrap().display().to_string();
+            // Each attribute, inner or outer, naming the lint or a group
+            // holding it: an outer `expect` of the lint alone is named,
+            // and any other is refused.
+            let lints = ["clippy::disallowed_methods", "clippy::style", "clippy::all"];
+            for (start, _) in text.match_indices("#[").chain(text.match_indices("#![")) {
+                let end = text[start..].find(")]").map_or(text.len(), |e| start + e);
+                let attr = text[start..end]
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                if !lints.iter().any(|lint| attr.contains(lint)) {
+                    continue;
+                }
+                let reason = attr
+                    .split("reason = \"")
+                    .nth(1)
+                    .and_then(|r| r.split('"').next());
+                let bare = attr.replace(' ', "");
+                if bare.starts_with("#[expect(clippy::disallowed_methods,reason=") {
+                    found.push((at.clone(), reason.unwrap_or_default().to_string()));
+                } else {
+                    allowed.push(format!("{at}: {attr}"));
+                }
+            }
+        }
+    }
+    found.sort();
+    let mut want: Vec<(String, String)> = named
+        .iter()
+        .map(|(f, r)| (f.to_string(), r.to_string()))
+        .collect();
+    want.sort();
+    assert_eq!(
+        allowed,
+        Vec::<String>::new(),
+        "an `allow`, an inner `expect`, or one of the lint's group, where only a named `expect` of the lint may be"
+    );
+    assert_eq!(found, want, "an allowance of a disallowed method named or gone: name each dial with why it writes nothing to a share's port unchecked");
+}
+
+/// A real UDP service on 127.0.0.1, its share approved as the wire reads
+/// it, and a flow to it that has sent one datagram: the service, where the
+/// flow's answers go, the wire, its computer's key and transport, the share,
+/// the folder its lend is kept in, and the flow.
+#[allow(clippy::type_complexity)]
+async fn a_flow() -> (
+    tokio::net::UdpSocket,
+    std::net::SocketAddr,
+    (crate::node::Wire, crate::iroh::PublicKey),
+    Lend,
+    tempfile::TempDir,
+    bound::Flow,
+) {
+    let service = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let at = service.local_addr().unwrap();
+    let wire = crate::node::Wire::default();
+    let key = crate::iroh::SecretKey::from_bytes(&[7; 32]).public();
+    let net = wire.net(key);
+    let mut shelf = Lend::carried("books", "house").unwrap();
+    shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(at.port()).unwrap());
+    let read = crate::iroh::Net::read_port(&net, Raw::Udp, at.port(), None).await;
+    shelf.terms.approved = crate::binding::approve(&read.unwrap().0, None).ok();
+    let dir = tempfile::tempdir().unwrap();
+    let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let flow = bound::Flow::open(socket, at).await.unwrap();
+    let (_queue, mut more) = tokio::sync::mpsc::channel(1);
+    let judged = (&net as &dyn crate::iroh::Net, dir.path(), &shelf);
+    flow.send(judged, b"hi".to_vec(), &mut more).await.unwrap();
+    let mut buf = [0u8; 16];
+    let (_, from) = service.recv_from(&mut buf).await.unwrap();
+    (service, from, (wire, key), shelf, dir, flow)
+}
+
+/// **A UDP share's answers are carried back only through its check**
+/// (SHARE_BINDING §5.2): a datagram the share's port answers a flow is
+/// given once the port's sockets are checked as for one sent; what was
+/// approved, it is given; another socket on the port, the answer is dropped
+/// and the flow told it is held. Planted, watched failing: the check
+/// skipped in `Flow::recv` (the answer given while another is on the port).
+#[tokio::test]
+async fn a_udp_share_s_answers_come_back_only_through_its_check() {
+    let (service, from, (wire, key), shelf, dir, mut flow) = a_flow().await;
+    let net = wire.net(key);
+    let judged = (&net as &dyn crate::iroh::Net, dir.path(), &shelf);
+    service.send_to(b"one", from).await.unwrap();
+    assert_eq!(flow.recv(judged).await, Ok(&b"one"[..]));
+    let port = from.port();
+    let other = alone(u64::MAX);
+    wire.reads(
+        key,
+        shelf.port().unwrap().get(),
+        Ok((other, crate::binding::Took::Datagram)),
+    );
+    service.send_to(b"two", from).await.unwrap();
+    let got = flow.recv(judged).await.map(<[u8]>::to_vec);
+    assert_eq!(
+        got,
+        Err(bound::Unsent::Held(Hold::Another)),
+        "dropped, and held ({port})"
+    );
+}
+
+/// **A UDP answer read while its check is cut short is carried at the next
+/// read** (SHARE_BINDING_REVIEWS §6 #4): a flow's `select!` drops what it
+/// polls when another branch wins, here mid-check, and the answer read off
+/// the socket before it is still given, once checked. Planted, watched
+/// failing: `Flow::recv` keeping the answer in its own future, not the flow
+/// (the second read waits for an answer never sent again).
+#[tokio::test]
+async fn a_udp_answer_read_while_its_check_is_cut_short_is_carried_at_the_next() {
+    let (service, from, (wire, key), shelf, dir, mut flow) = a_flow().await;
+    let net = wire.net(key);
+    let judged = (&net as &dyn crate::iroh::Net, dir.path(), &shelf);
+    let port = shelf.port().unwrap().get();
+    wire.slow(key, port, std::time::Duration::from_millis(300));
+    service.send_to(b"one", from).await.unwrap();
+    let within = std::time::Duration::from_millis(100);
+    let cut = tokio::time::timeout(within, flow.recv(judged)).await;
+    assert!(cut.is_err(), "the check is cut short");
+    wire.slow(key, port, std::time::Duration::ZERO);
+    let again = tokio::time::timeout(std::time::Duration::from_secs(2), flow.recv(judged));
+    assert_eq!(
+        again.await.map(|got| got.map(<[u8]>::to_vec)),
+        Ok(Ok(b"one".to_vec()))
+    );
+}
+
+/// **What a UDP flow's checks cost, each way** (SHARE_BINDING §10;
+/// SHARE_BINDING_REVIEWS §6 #4, #12): a flow to a real service on this
+/// computer, read by its own reader, the service answering each datagram,
+/// a member's datagrams asked at 60 and then 120 a second for five seconds
+/// each, through the loop `flowing` runs: how many reached the service and
+/// came back, and this process's processor time. Printed, not asserted: run
+/// in release with `--ignored --nocapture`.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[ignore = "measures for ten seconds: run by hand, in release, with --nocapture"]
+async fn what_a_udp_flow_s_checks_cost_each_way() {
+    let cpu = || {
+        let pid = std::process::id().to_string();
+        let ps = std::process::Command::new("ps")
+            .args(["-o", "time=", "-p", &pid])
+            .output();
+        let said = String::from_utf8_lossy(&ps.unwrap().stdout)
+            .trim()
+            .to_string();
+        said.split(':').fold(0.0, |at, part| {
+            at * 60.0 + part.parse::<f64>().unwrap_or(0.0)
+        })
+    };
+    for rate in [60u32, 120] {
+        let (service, from, (wire, key), shelf, dir, mut flow) = a_flow().await;
+        let net = wire.net(key);
+        let judged = (&net as &dyn crate::iroh::Net, dir.path(), &shelf);
+        let service = std::sync::Arc::new(service);
+        let heard = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
+        let (echo, counted) = (service.clone(), heard.clone());
+        let echoing = tokio::spawn(async move {
+            let mut buf = [0u8; 64];
+            while let Ok((n, at)) = echo.recv_from(&mut buf).await {
+                counted.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                let _ = echo.send_to(&buf[..n], at).await;
+            }
+        });
+        let _ = from;
+        let (queue, mut packets) = tokio::sync::mpsc::channel::<Vec<u8>>(256);
+        let asking = tokio::spawn(async move {
+            let mut every = tokio::time::interval(std::time::Duration::from_secs(1) / rate);
+            let (mut asked, mut dropped) = (0u32, 0u32);
+            for _ in 0..rate * 5 {
+                every.tick().await;
+                asked += 1;
+                dropped += u32::from(queue.try_send(b"ping".to_vec()).is_err());
+            }
+            (asked, dropped)
+        });
+        let (began, used) = (std::time::Instant::now(), cpu());
+        let mut back = 0u32;
+        let end = tokio::time::sleep(std::time::Duration::from_millis(5_500));
+        tokio::pin!(end);
+        loop {
+            tokio::select! {
+                got = packets.recv() => {
+                    let Some(packet) = got else { break };
+                    flow.send(judged, packet, &mut packets).await.unwrap();
+                }
+                got = flow.recv(judged) => back += u32::from(got.is_ok()),
+                () = &mut end => break,
+            }
+        }
+        let (asked, dropped) = asking.await.unwrap();
+        let (spent, wall) = (cpu() - used, began.elapsed().as_secs_f64());
+        let mut late = 0u32;
+        let within = std::time::Duration::from_secs(1);
+        while let Ok(got) = tokio::time::timeout(within, flow.recv(judged)).await {
+            late += u32::from(got.is_ok());
+        }
+        let heard = heard.load(std::sync::atomic::Ordering::Relaxed);
+        echoing.abort();
+        println!(
+            "{rate}/s each way: {asked} asked, {dropped} dropped, {heard} reached the service ({:.0}/s), {back} came back ({:.0}/s), {late} more after; {:.0}% of a processor",
+            f64::from(heard) / wall,
+            f64::from(back) / wall,
+            spent / wall * 100.0
         );
     }
 }
@@ -1148,4 +1477,57 @@ fn a_large_answer_over_the_build_s_relay_is_refused_while_its_share_is_spent() {
         Some("Sam’s computer has used its share of the public way for now. Play it at full speed on the same Wi-Fi as Sam’s computer, or in the svrngs app, soon.")
     );
     assert!(spent_words(None).starts_with("This computer has used its share"));
+}
+
+/// **What a person is shown is named by a token that changes with it**
+/// (SHARE_BINDING_REVIEWS §6 #6, share.rs `token`): the same sockets read
+/// twice, the same token; another socket, another cgroup, another address,
+/// another boot, or on a Mac the same pid started again, another; a hold
+/// kept since, the same. Planted, watched failing: the token over `at`
+/// alone (another socket, the same token).
+#[test]
+fn what_a_person_is_shown_is_named_by_a_token_that_changes_with_it() {
+    use crate::binding::{approve, Read};
+    let token = |read: &Read| crate::share::token(&approve(read, None).unwrap());
+    let read = Read {
+        boot: Some(7),
+        ..alone(10)
+    };
+    assert_eq!(token(&read), token(&read.clone()));
+    let mut held = approve(&read, None).unwrap();
+    held.held = true;
+    assert_eq!(
+        crate::share::token(&held),
+        token(&read),
+        "a hold isn't what was shown"
+    );
+    let with = |change: fn(&mut Read)| {
+        let mut other = read.clone();
+        change(&mut other);
+        other
+    };
+    let differ = [
+        with(|r| r.sockets[0].id = 11),
+        with(|r| r.sockets[0].cgroup = Some(5)),
+        with(|r| r.sockets[0].at = "::1".parse().unwrap()),
+        with(|r| r.boot = Some(8)),
+    ];
+    for other in &differ {
+        assert_ne!(token(other), token(&read), "{other:?}");
+    }
+    let on_mac = |start| Read {
+        boot: None,
+        lasting: false,
+        sockets: vec![crate::binding::Socket {
+            holders: [(100, start)].into(),
+            ..alone(9).sockets[0].clone()
+        }],
+        unlisted: false,
+    };
+    assert_eq!(token(&on_mac(1)), token(&on_mac(1)));
+    assert_ne!(
+        token(&on_mac(1)),
+        token(&on_mac(2)),
+        "the same pid started again"
+    );
 }

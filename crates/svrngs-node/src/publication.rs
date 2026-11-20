@@ -236,6 +236,7 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
     receipt.shown(host, &q.group)
 }
 
+#[expect(clippy::disallowed_methods, reason = "dial: a group's page")]
 async fn send(
     host: &Host,
     group: &str,

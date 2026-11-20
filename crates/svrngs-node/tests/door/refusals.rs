@@ -172,7 +172,9 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
             ("paused", r#","groups":[]"#),
             ("chosen", r#","groups":["trip"]"#),
         ] {
-            let body = format!(r#"{{"port":{port},"kind":"k","refused":[]{tail}}}"#);
+            let approved = svrngs_node::node::approved();
+            let body =
+                format!(r#"{{"port":{port},"kind":"k","refused":[],"approved":{approved}{tail}}}"#);
             std::fs::write(lends.join(format!("{name}.json")), body).unwrap();
         }
     })
@@ -880,146 +882,99 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
     world.a.net().close().await;
 }
 
-/// **A lend's port answered by another account's program is held**
-/// (LEND_OWNER §5, 3 and 5): ada lent shelf from her own account. With
-/// another account's program on its port, bo's request is answered 502,
-/// `away`, in words that say so and what to wait for, and the service never
-/// hears a byte; with one a Mac can't place, the same with that said;
-/// with her own again, it is carried. A lend from before owners is carried
-/// and records the account read. Her listing says `held` beside a port
-/// another account's program answers. Planted, each watched failing: the
-/// held connection carried anyway (200, the service asked); the lend from
-/// before carried without its record (its `owner` none).
-///
-/// Then a sandboxed app of ada's own account (LEND_SANDBOX): on a port
-/// lent from a program in none, held in the same words, the service hearing
-/// nothing; on a port lent from that app, carried. The lend from before
-/// records the sandbox it next reads. Planted, each watched failing:
-/// `bound` not asked about the sandbox (the app carried); the record from
-/// before skipped (its `sandbox` none).
-///
-/// Then another program of ada's own account, in no sandbox (LEND_PROGRAM
-/// §6): on a port lent from `serve`, held in the same words, the service
-/// hearing nothing; `serve` started again, carried. The lend from before
-/// records the program it next reads, and the listing names each lend's.
-/// Planted, watched failing: `bound` ignoring the program (the other
-/// carried).
+/// **A lend's port is carried only to what its lender approved**
+/// (SHARE_BINDING §5.2, §5.5; SHARE_BINDING_REVIEWS §7 #1): ada approved
+/// shelf's socket. A read that fails, bo's request is answered 502, `away`,
+/// in words that say so, and the next read carries; another socket read on
+/// its port, answered 502 in words that say so and what to wait for, and
+/// the service never hears a byte; her approved socket back alone, carried,
+/// since each TCP connection is judged alone, and carried again once she
+/// approves again. A lend from V1.12.2, its program kept as then, is held
+/// until she approves, in words that say so, and nothing is recorded from
+/// its traffic. A member's listing says neither why a lend is held nor what
+/// answers. Planted, each watched failing: the held connection carried
+/// anyway (200, the service asked); the old `Record` arm put back (the
+/// V1.12.2 lend carried, and its approval recorded); a TCP share held in its
+/// file (the approved socket back alone refused).
 #[tokio::test]
-async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
-    use svrngs_node::lend::Sandbox;
-    use svrngs_node::node::holder;
-    use svrngs_node::uid::Owner;
+async fn a_lend_s_port_is_carried_only_to_what_its_lender_approved() {
     answer_at_a();
     let (origin, heads) = origins::head_origin().await;
-    let real = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let mine = svrngs_node::uid::mine().unwrap();
-    let declare = |dir: &std::path::Path, name: &str, port: u16, owner: &str| {
+    let declare = |dir: &std::path::Path, name: &str, more: &str| {
         let lends = lend::lends_dir(dir);
         std::fs::create_dir_all(&lends).unwrap();
-        let body = format!(r#"{{"port":{port},"kind":"k","groups":["{NS}"]{owner}}}"#);
+        let port = origin.port();
+        let body = format!(r#"{{"port":{port},"kind":"k","groups":["{NS}"]{more}}}"#);
         std::fs::write(lends.join(format!("{name}.json")), body).unwrap();
     };
-    let owned = format!(r#","owner":{mine}"#);
-    let listed_port = real.local_addr().unwrap().port();
     let world = World::on_wire(|dir| {
-        declare(dir, "shelf", origin.port(), &owned);
-        declare(dir, "old", origin.port(), "");
-        declare(dir, "listed", listed_port, &owned);
         declare(
             dir,
-            "boxed",
-            origin.port(),
-            &format!(r#"{owned},"sandbox":"no""#),
+            "shelf",
+            &format!(r#","approved":{}"#, svrngs_node::node::approved()),
         );
-        let app = r#","sandbox":{"app":"org.sabnzbd.sabnzbd"}"#;
-        declare(dir, "flat", origin.port(), &format!("{owned}{app}"));
-        let serve = r#","sandbox":"no","command":{"name":"serve","digest":"serve"}"#;
-        declare(dir, "served", origin.port(), &format!("{owned}{serve}"));
+        let then = r#","owner":501,"sandbox":"no","command":{"name":"serve","digest":"5f1c"}"#;
+        declare(dir, "old", then);
     })
     .await;
     let bo = world.as_key(2, Alpn::Member).await;
-    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine + 1, None));
-    let reply = ask(bo, "GET", "/lend/shelf/whoami", "").await;
-    let words = "ada’s shelf is closed for now: another program is answering in its place on ada’s computer. Try again once ada starts shelf again.";
-    refused(&reply, 502, "away", words);
-    on_wire::owns(&world.a, origin.port(), Owner::NotMine);
-    let reply = ask(bo, "GET", "/lend/shelf/whoami", "").await;
-    refused(
-        &reply,
-        502,
-        "away",
-        "ada’s computer can’t tell whose program is answering for it",
-    );
-    assert!(
-        heads.lock().unwrap().is_empty(),
-        "the service heard nothing"
-    );
-    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, None));
     assert_eq!(ask(bo, "GET", "/lend/shelf/whoami", "").await.status, 200);
-    assert_eq!(ask(bo, "GET", "/lend/old/whoami", "").await.status, 200);
-    let old = lend::read(world.dir.path(), &LendName::parse("old").unwrap());
-    assert_eq!(
-        old.unwrap().unwrap().terms.owner,
-        Some(mine),
-        "recorded at its first connection"
-    );
-    let sabnzbd = Sandbox::App("org.sabnzbd.sabnzbd".into());
-    let sabnzbd = Some(holder(sabnzbd, "sabnzbd"));
-    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, sabnzbd));
     let heard = heads.lock().unwrap().len();
-    let words = "ada’s boxed is closed for now: another program is answering in its place on ada’s computer. Try again once ada starts boxed again.";
-    refused(
-        &ask(bo, "GET", "/lend/boxed/whoami", "").await,
-        502,
-        "away",
-        words,
-    );
+    let failed = svrngs_node::uid::Unread::Failed("this computer's sockets can't be listed");
+    on_wire::reads(&world.a, origin.port(), Err(failed));
+    let reply = ask(bo, "GET", "/lend/shelf/whoami", "").await;
+    let words = "ada’s computer can’t tell which program is answering for it";
+    refused(&reply, 502, "away", words);
     assert_eq!(
         heads.lock().unwrap().len(),
         heard,
         "the service heard nothing"
     );
-    assert_eq!(ask(bo, "GET", "/lend/flat/whoami", "").await.status, 200);
-    let other = Some(holder(Sandbox::No, "other"));
-    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, other));
-    let heard = heads.lock().unwrap().len();
-    let words = "ada’s served is closed for now: another program is answering in its place on ada’s computer. Try again once ada starts served again.";
-    refused(
-        &ask(bo, "GET", "/lend/served/whoami", "").await,
-        502,
-        "away",
-        words,
+    on_wire::reads(&world.a, origin.port(), on_wire::socket(1));
+    assert_eq!(
+        ask(bo, "GET", "/lend/shelf/whoami", "").await.status,
+        200,
+        "not kept"
     );
+    let heard = heads.lock().unwrap().len();
+    on_wire::reads(&world.a, origin.port(), on_wire::socket(2));
+    let reply = ask(bo, "GET", "/lend/shelf/whoami", "").await;
+    let words = "ada’s shelf is closed for now: a program ada didn’t choose was on its port on ada’s computer. Try again once ada chooses what it shares.";
+    refused(&reply, 502, "away", words);
     assert_eq!(
         heads.lock().unwrap().len(),
         heard,
         "the service heard nothing"
     );
-    let serve = holder(Sandbox::No, "serve");
-    on_wire::owns(
-        &world.a,
-        origin.port(),
-        Owner::Uid(mine, Some(serve.clone())),
-    );
-    assert_eq!(ask(bo, "GET", "/lend/served/whoami", "").await.status, 200);
-    assert_eq!(ask(bo, "GET", "/lend/old/whoami", "").await.status, 200);
+    on_wire::reads(&world.a, origin.port(), on_wire::socket(1));
+    let back = ask(bo, "GET", "/lend/shelf/whoami", "").await;
+    assert_eq!(back.status, 200, "the approved socket back alone");
+    let shelf = LendName::parse("shelf").unwrap();
+    let approval = svrngs_node::node::approval();
+    svrngs_node::share::reapproved(world.dir.path(), &shelf, approval).unwrap();
+    assert_eq!(ask(bo, "GET", "/lend/shelf/whoami", "").await.status, 200);
+    let reply = ask(bo, "GET", "/lend/old/whoami", "").await;
+    let words = "ada’s old is closed for now: ada hasn’t chosen which program it shares. Try again once ada chooses what it shares.";
+    refused(&reply, 502, "away", words);
     let old = lend::read(world.dir.path(), &LendName::parse("old").unwrap());
-    let old = old.unwrap().unwrap();
-    let recorded = (old.terms.owner, old.terms.sandbox, old.terms.command);
     assert_eq!(
-        recorded,
-        (Some(mine), Some(Sandbox::No), Some(serve.command))
+        old.unwrap().unwrap().terms.approved,
+        None,
+        "nothing recorded from traffic"
     );
-    on_wire::owns(&world.a, listed_port, Owner::Uid(mine + 1, None));
     let (_, lends) = listed(bo, "x-svrngs-version: 5\r\n").await;
-    let held: Vec<_> = (lends["lends"].as_array().unwrap().iter())
-        .map(|l| (l["name"].as_str().unwrap(), l["held"].as_str()))
+    let told: Vec<_> = (lends["lends"].as_array().unwrap().iter())
+        .map(|l| {
+            (
+                l["name"].as_str().unwrap(),
+                l["held"].clone(),
+                l["answers"].clone(),
+            )
+        })
         .collect();
-    assert!(held.contains(&("listed", Some("another"))), "{lends:#}");
-    assert!(held.contains(&("shelf", None)), "{lends:#}");
-    let named = (lends["lends"].as_array().unwrap().iter())
-        .find(|l| l["name"] == "served")
-        .map(|l| l["command"].clone());
-    // Which program it is kept to is its lender's alone to see.
-    assert_eq!(named, Some(serde_json::Value::Null), "{lends:#}");
+    let none = serde_json::Value::Null;
+    assert!(
+        told.contains(&("old", none.clone(), none.clone())),
+        "{lends:#}"
+    );
 }

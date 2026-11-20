@@ -47,12 +47,10 @@ pub(super) async fn serve((door, actor, lend, port, conn): Lending<'_>) {
 async fn connection(lent: Lending<'_>, mut send: SendStream, mut recv: RecvStream) {
     let (door, actor, lend, port, _) = lent;
     let _ = recv.read_exact(&mut [0; 1]).await;
-    let unreached = |e| format!("{} cannot be reached here: {e}", lend.name);
     let opened = match admitted(&lent, "tcp: a connection").await {
-        Ok(held) => match door.folders.host.transport.service(port.get()).await {
-            Ok((to, ends)) => (super::udp::kept_live(door, lend, ends).await).map(|()| (to, held)),
-            Err(e) => Err(unreached(e)),
-        },
+        Ok(held) => super::udp::bound_live(door, lend)
+            .await
+            .map(|to| (to.stream(), held)),
         Err(words) => Err(words),
     };
     let (mut to, held) = match opened {

@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A UDP port is lent (give-udp; svrn-docs rings/current/GIVE.md §6): Sam
 //! runs `svrngs share <port> --udp --kind echo`, and a program on Alex's
@@ -133,9 +134,10 @@ fn share_udp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
     asked.audience = cli::audience_of(sam.dir.path(), asked.port, &named).unwrap();
     assert_eq!(asked.raw, Some(Raw::Udp));
     // A UDP port answers no connection, so it is lent unprobed.
-    let lend = share::lend_of(&asked, |_| false, share::well_known_kind(asked.port), "")
+    let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
         .expect("a UDP port and its kind");
     assert_eq!(lend.source, Source::Raw(Raw::Udp, asked.port));
+    svrngs_node::node::approve(&mut lend);
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
     lend
 }
@@ -177,7 +179,8 @@ async fn share_udp_lends_a_port_and_a_member_s_datagrams_come_back() {
     let port = echo().await.port();
     let lend = share_udp(&sam, port, &[]);
     let said = Said::Shared {
-        lend: lend.clone(),
+        lend: Box::new(lend.clone()),
+        answers: Vec::new(),
         secret: false,
         accounts: None,
         client: None,
@@ -423,5 +426,39 @@ async fn a_port_its_group_is_taken_from_is_cut_and_no_other() {
     assert!(
         drained(&mut others).iter().any(|p| p == b"other"),
         "other stopped"
+    );
+}
+
+/// **A flow open on a share that is held stops** (SHARE_BINDING_REVIEWS §7
+/// #3). Alex keeps sending to Sam's echo. Sam's share of it is held in its
+/// file, as another flow's check or Sam's own list holds it: within two
+/// seconds none of Alex's packets reaches echo, and none of the flows opened
+/// again carries. Planted, watched failing: the flow's tick not reading its
+/// lend again (Alex's open flow still reaches echo).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_flow_open_on_a_share_that_is_held_stops() {
+    let (sam, them) = house(&[(2, "Alex")]).await;
+    let (echo, mut lent) = told_echo().await;
+    let echoes = share_udp(&sam, echo.port(), &[]);
+    let (carried, at_echo) = open(&them[0], &sam, &echoes).await;
+    let _echo = carried.expect("Alex's computer opens Sam's echo");
+    let _hears = keeps_sending(program().await, at_echo, b"echo");
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    assert!(
+        drained(&mut lent).iter().any(|p| p == b"echo"),
+        "control: echo is reached"
+    );
+    let held = svrngs_node::lend::mutate(sam.dir.path(), &echoes.name, |lend| {
+        lend.terms.approved.as_mut().expect("approved").held = true;
+    });
+    assert!(held.unwrap());
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    drained(&mut lent);
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    let reached = drained(&mut lent);
+    assert!(
+        reached.is_empty(),
+        "echo still reached {} times",
+        reached.len()
     );
 }

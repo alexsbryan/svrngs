@@ -876,7 +876,11 @@ fn lent_to_sam(node: &Node, port: u16) -> Label {
     let lends = svrngs_node::lend::lends_dir(node.rail().root());
     std::fs::create_dir_all(&lends).unwrap();
     let lent = serde_json::json!({ "port": port, "kind": "app", "limit": 3, "groups": [group] });
-    std::fs::write(lends.join("telly.json"), lent.to_string()).unwrap();
+    std::fs::write(
+        lends.join("telly.json"),
+        svrngs_node::node::approving(&lent),
+    )
+    .unwrap();
     Label::of(node.endpoint().id().as_bytes(), "telly")
 }
 

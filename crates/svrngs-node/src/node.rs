@@ -1140,7 +1140,7 @@ async fn people_lends(
         tracing::debug!(target: "node", asker, "node: people's lends refused — the dialer stands in no group this computer stands in");
         return Err(err(StatusCode::FORBIDDEN, crate::door::LENDS_NOTHING));
     };
-    let (lent, unlisted) = at.lent(&groups, &own, Some(&asker)).await?;
+    let (lent, unlisted) = at.lent(&groups, &own, Some(&asker), false).await?;
     let registers = groups
         .iter()
         .map(|(namespace, _)| {
@@ -1176,7 +1176,9 @@ impl Asking {
     /// What the people of `groups` lend: this computer's own lends under
     /// `own`, its person, and each other computer's but `asker`'s, asked now
     /// as [`Node::lends`] asks, each with its lender's key, sorted by
-    /// person then name; and whose computer did not say. The refusal is
+    /// person then name; and whose computer did not say. Its `lender`'s
+    /// own list says why one of its own is held and what answers there
+    /// ([`crate::door::offered`]). The refusal is
     /// [`crate::door::offered`]'s, when this computer's declarations cannot
     /// be read.
     ///
@@ -1191,9 +1193,11 @@ impl Asking {
         groups: &[Group],
         own: &Person,
         asker: Option<&str>,
+        lender: bool,
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let others = async { Ok(self.host.lends_in(groups, asker).await) };
-        let (offered, others) = tokio::try_join!(biased; crate::door::offered(&self.door), others)?;
+        let (offered, others) =
+            tokio::try_join!(biased; crate::door::offered(&self.door, lender), others)?;
         let me = &self.host.actor;
         let mine = (offered.into_iter()).map(|o| (own.clone(), me.clone(), o, VERSION));
         let theirs = (others.lent.into_iter()).map(|l| (l.person, l.key, l.offered, l.version));
@@ -1258,7 +1262,9 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
 #[cfg(any(test, feature = "test-support"))]
 mod tests_support;
 #[cfg(any(test, feature = "test-support"))]
-pub use tests_support::{holder, splice, Relaying, Wire};
+pub use tests_support::{
+    answering, approval, approve, approved, approving, splice, Relaying, Wire,
+};
 
 #[cfg(test)]
 mod tests;

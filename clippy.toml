@@ -6,6 +6,25 @@ disallowed-methods = [
     { path = "std::time::Instant::now", reason = "read the clock at an adapter and pass the time in" },
     { path = "rand::random", reason = "draw randomness at an adapter and pass it in" },
     { path = "getrandom::fill", reason = "draw randomness at an adapter and pass it in" },
+    # A share's port is written to only through its check (svrngs-node
+    # door/bound.rs): each dial, and each HTTP client, allowed only where
+    # door/tests.rs `every_dial_of_a_share_s_port_goes_through_its_check` lists it.
+    { path = "std::net::TcpStream::connect", reason = "dial a share's port through door::bound" },
+    { path = "std::net::TcpStream::connect_timeout", reason = "dial a share's port through door::bound" },
+    { path = "tokio::net::TcpStream::connect", reason = "dial a share's port through door::bound" },
+    { path = "tokio::net::TcpSocket::connect", reason = "dial a share's port through door::bound" },
+    { path = "std::net::UdpSocket::connect", reason = "send to a share's port through door::bound::Flow" },
+    { path = "tokio::net::UdpSocket::connect", reason = "send to a share's port through door::bound::Flow" },
+    { path = "std::net::UdpSocket::send_to", reason = "send to a share's port through door::bound::Flow" },
+    { path = "tokio::net::UdpSocket::send_to", reason = "send to a share's port through door::bound::Flow" },
+    { path = "tokio::net::UdpSocket::try_send_to", reason = "send to a share's port through door::bound::Flow" },
+    { path = "tokio::net::UdpSocket::poll_send_to", reason = "send to a share's port through door::bound::Flow" },
+    { path = "socket2::Socket::connect", reason = "dial a share's port through door::bound", allow-invalid = true },
+    { path = "socket2::Socket::connect_timeout", reason = "dial a share's port through door::bound", allow-invalid = true },
+    { path = "reqwest::Client::new", reason = "the one HTTP client is svrngs_node::http's", allow-invalid = true },
+    { path = "reqwest::Client::builder", reason = "the one HTTP client is svrngs_node::http's", allow-invalid = true },
+    { path = "svrngs_node::http::client", reason = "an HTTP client reaches a share's port unchecked", allow-invalid = true },
+    { path = "svrngs_node::http::builder", reason = "an HTTP client reaches a share's port unchecked", allow-invalid = true },
 ]
 disallowed-types = [
     { path = "std::sync::Mutex", reason = "one owner and messages (RUST_ARCH §3)" },

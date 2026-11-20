@@ -81,6 +81,12 @@ pub const LENDS_ROUTE: &str = "/v1/lends";
 /// Where an app has this computer's key sign bytes for it.
 pub const SIGN_ROUTE: &str = "/v1/sign";
 
+/// Where its lender approves what answers on a lend's port now
+/// (SHARE_BINDING §5.4): `POST /v1/lends/<name>/approve` with `{"token"}`,
+/// what its list showed answering, and `"pid"` and `"start"` when it showed
+/// a process. Only its approval changes ([`approve`]).
+pub const APPROVE_ROUTE: &str = "/v1/lends/{name}/approve";
+
 /// Where a lent page asks, at its own origin, the lends it reads: the one
 /// path svrngs answers there in the lend's place (DESIGN §3, "Lent apps",
 /// call 6; `web/lend.js` spells it for a phone).
@@ -150,7 +156,55 @@ pub(crate) fn router(asking: Asking) -> Router {
         .route(GROUPS_ROUTE, get(groups))
         .route(LENDS_ROUTE, get(lends))
         .route(SIGN_ROUTE, post(sign))
+        .route(APPROVE_ROUTE, post(approve))
         .with_state(asking)
+}
+
+/// What a page sends to approve what answers on a lend's port: what its
+/// list showed (`Offered::token`), and the process it showed, if one.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Approving {
+    token: String,
+    pid: Option<u32>,
+    start: Option<u64>,
+}
+
+/// [`APPROVE_ROUTE`]: the lend `name`'s port read as a share reads it, and
+/// what answers there approved ([`crate::share::approve`]), only as its
+/// lender was shown it, with the process shown; nothing else of it changed.
+/// What answers, as its lender is shown it; or why not, in their words.
+async fn approve(
+    State(at): State<Asking>,
+    axum::extract::Path(named): axum::extract::Path<Vec<(String, String)>>,
+    Json(asked): Json<Approving>,
+) -> Result<Response, Response> {
+    // The home page's host is matched by the API's routes, then by the
+    // home page's (api.rs `to_a_lend`), each naming `name`: a
+    // `Path<String>` refused every approval asked there.
+    let name = named
+        .into_iter()
+        .next_back()
+        .map(|(_, name)| name)
+        .unwrap_or_default();
+    let dir = &at.door.data_dir;
+    let refused = |e: crate::share::ShareRefusal| {
+        tracing::debug!(target: "share", lend = name, error = %e, "share: refused — nothing approved");
+        LendRefusal::closed(e.to_string())
+    };
+    let named = crate::lend::LendName::parse(&name);
+    let name = named
+        .map_err(|_| LendRefusal::closed(format!("Nothing is shared here by the name {name}.")))?;
+    let (lend, port) = crate::share::shared(dir, &name).map_err(refused)?;
+    let pid = asked
+        .pid
+        .zip(asked.start)
+        .map(|(pid, start)| crate::share::Pid { pid, start });
+    let read = (at.host.transport).answering(lend.raw(), port.get(), pid.map(|p| p.pid));
+    let approving = crate::share::approve((port, lend.raw()), read.await, pid, Some(&asked.token));
+    let (approved, answers) = approving.map_err(refused)?;
+    crate::share::reapproved(dir, &name, approved).map_err(refused)?;
+    Ok(Json(serde_json::json!({ "name": name, "answers": answers })).into_response())
 }
 
 /// A group as `GET /v1/groups` answers it. Its default is what a group
@@ -373,7 +427,7 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
         return Err(refused);
     };
     let groups: Groups = vec![(namespace.clone(), standing)];
-    let (lent, unlisted) = at.lent(&groups, &own, None).await?;
+    let (lent, unlisted) = at.lent(&groups, &own, None, true).await?;
     let host = &at.host;
     // What each open says it reads needs the person's yeses: unreadable,
     // it says only the kinds, and its open then names no lend.
@@ -435,7 +489,7 @@ async fn read_by(
         tracing::debug!(target: "surface", %app, "surface: reads refused — its lender and this computer share no group");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let (lent, unlisted) = at.lent(&groups, &own, None).await?;
+    let (lent, unlisted) = at.lent(&groups, &own, None, false).await?;
     let silent: Vec<String> = (groups.iter().flat_map(|(_, s)| s.iter()))
         .filter(|(_, m)| unlisted.names(&m.person_key))
         .map(|(actor, _)| actor.clone())
@@ -673,7 +727,7 @@ pub(crate) async fn to(at: &Asking, app: &Label, uri: Uri) -> Handled {
     let own = own.ok_or_else(unlent)?;
     standing.retain(|key, _| *key == to.lender);
     let groups = [(group.clone(), standing)];
-    let (lent, unlisted) = at.lent(&groups, &own, None).await?;
+    let (lent, unlisted) = at.lent(&groups, &own, None, false).await?;
     let found = (lent.iter())
         .filter(|l| l.offered.group.is_none() && l.offered.raw.is_none())
         .find(|l| l.key == to.lender && l.offered.name.as_str() == to.lend);

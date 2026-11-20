@@ -85,8 +85,12 @@ mod session;
 // address, this computer's address there, a caller's (the room; the door).
 pub mod network;
 // Whose a socket on this computer is: the account holding it (svrn-docs
-// rings/current/LEND_OWNER.md §2).
+// rings/current/LEND_OWNER.md §2); and a share's port as read for its
+// binding (svrn-docs SHARE_BINDING).
 pub mod uid;
+// Which program may receive a share's traffic, decided over what `uid` read.
+extern crate alloc;
+pub mod binding;
 // The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
 // turns on, served by the running node on the network each was turned on at.
 pub mod room;

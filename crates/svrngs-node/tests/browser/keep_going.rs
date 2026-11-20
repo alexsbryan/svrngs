@@ -126,7 +126,11 @@ async fn a_phone_reopens_the_group_and_its_app_with_the_public_site_gone(engine:
     let lends = svrngs_node::lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "groups": [id], "port": shelf.port(), "kind": "k", "refused": [] });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 
     let args = json!({
         "site": site(),
@@ -192,7 +196,11 @@ async fn a_new_release_replaces_a_lend_s_saved_pages(engine: Engine) {
     let lends = svrngs_node::lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "groups": [id], "port": shelf.port(), "kind": "k", "refused": [] });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     let args = json!({
         "site": site(),
         "key": hex::encode(bo.to_bytes()),

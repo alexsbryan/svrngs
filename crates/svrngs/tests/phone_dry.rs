@@ -89,9 +89,7 @@ async fn sam_through_a_relay_on_this_computer() {
             sign_in_with_svrngs: None,
             asks: None,
             sends: Vec::new(),
-            owner: None,
-            sandbox: None,
-            command: None,
+            approved: None,
         },
     };
     lend::declare(&sam_dir, &film, None).unwrap();

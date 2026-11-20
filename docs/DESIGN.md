@@ -225,35 +225,61 @@ never stale. The lender's own lend, opened on their own computer, goes
 through their own door's rules too, its secret injected and its limit
 counted (`door::Who::Own`).
 
-**A lend is kept to the account its program runs as** (svrn-docs
-`rings/current/LEND_OWNER.md`). Whatever answers on a lend's port receives
-who asks, the lender's credential and what people send, and answers as the
-program, its acts written into the group's record as each person who opened
-it. So a lend records, when it is lent, the account whose program answered on
-its port (`Lend::owner`), and the door carries each connection, each HTTP
-request, each raw TCP connection and each UDP flow's first packet, only to a
-program of that account, read from this computer's sockets at the connection
-(`crates/svrngs-node/src/uid.rs`, `door::bound`). For a program of the account
-svrngs runs as it records the app sandbox it ran in too, none or an app's (a
-Flatpak's app id on Linux, a Mac App Sandbox app's path; `Lend::sandbox`), and
-the program itself (`Lend::command`, svrn-docs `LEND_PROGRAM.md`): a hash of
-the executable's path and arguments past the first of each process holding
-its socket, sorted and each once, and the executable's name. It carries only
-to that program, in that sandbox or in none. The sandbox and the program are
-read once for each listening socket on Linux and each process on a Mac,
-neither of which changes them while it lives; the account, at each
-connection. A restart under the same account, of the same app, with the same
-command, keeps the lend. Another program in its place, another account's,
-another sandbox's or another command's, is refused 502, its asker told it is
-closed for now and why, and its lender's line says so with what to do:
-sharing it again keeps it to what runs there then. What can't be read is
-refused the same way. `svrngs share --pid <pid>`, and the home page's lend
-with `pid`, lends only if that process is the program read on the port. On
-Linux a program of any account can be lent, kept to its uid. On a Mac svrngs
-sees only this account's sockets, so lending another account's program is
-refused with the fix, to run it as you. A lend from before this records the
-account, sandbox and program read at its first connection. Where no reader
-is, a lend carries as it did.
+**A share is kept to what its lender approved on its port** (svrn-docs
+`rings/current/SHARE_BINDING.md`). Whatever answers on a share's port
+receives who asks, the lender's credential and what people send, and
+answers as the program. So sharing a port approves what answers there then:
+the share's declaration keeps it as `approved` (`binding::Approved`), and
+nothing else ever adds to it. On Linux that is each socket on the port, by
+its cookie, which no later socket gets while the computer runs, and the
+cgroup it was made in, both read by sock_diag, with the boot they belong
+to; a TCP port's sockets are those listening and those bound to it and not
+listening, which may listen again. On a Mac it is the processes holding
+them, each by its pid and start: for UDP, the process that last used each
+socket, as ntstat (`com.apple.network.statistics`) lists this account's
+sockets from the kernel's record of each, while its pid still names that
+process by its unique id, a read that holds the share when its canary or
+its form is not as expected; for TCP, every holder, read by libproc. The
+approval also names where the door reaches the share: 127.0.0.1 when a
+socket on the port takes what is sent there, bound to it, to every IPv4
+address, or to every IPv6 address without `IPV6_V6ONLY` (sock_diag says
+which on Linux, libproc on a Mac), else ::1 (a UDP share only at
+127.0.0.1); a program listening only on another address is refused, with
+the fix. On a Mac no other account can bind that address beside an approved
+socket there (XNU `in_pcbbind`), and on Linux every account's socket there
+is read. Only the sockets that take what is sent there are approved and
+judged: one on another address gets none of the door's traffic. `svrngs
+share --pid <pid>@<start>`, and the home page's lend of a program it
+showed, approve only when each of those sockets is held by that process or
+a child of it, and refuse one that started since. What the person is shown,
+each holder's program and folder, comes from the same read and is never
+compared. The door writes to a share's port only through a
+`door::bound::Bound`, made by the check (`binding::check`): every socket
+that takes what is sent to the address it dials approved, at least one
+there, and what took the connection the approved cgroup (Linux, cgroup v2
+alone), an approved process or one it started (a Mac), or, for a server
+that waits on the first bytes (`TCP_DEFER_ACCEPT`), the listener its
+handshake reached, among those read. That covers each HTTP request, a
+WebSocket, each raw TCP connection, and the key or account its lender sends
+to it. A UDP share's datagrams go through a `door::bound::Flow`, which
+checks the port's sockets before and after every datagram sent, and before
+each answer is carried back, keeping an answer read across a check that is
+cut short. Clippy refuses every other way to dial or send to an address,
+and to build an HTTP client, where `door/tests.rs` doesn't name it. For a
+UDP share, a program not approved seen there, by any check or by the
+lender's list, holds the share in its file until its lender approves again,
+through the program going and svrngs starting again, and each flow open on
+it stops within a second. A TCP connection is judged alone; a read that
+fails, a socket there whose holder can't be read, or nothing there, holds
+only that connection or datagram. A held share is refused 502, its asker
+told it is closed for now, and its lender's line says what answers now with
+one button, Keep sharing it (`svrngs approve <name>`, `POST
+/v1/lends/<name>/approve` with the token its list gave for what it showed,
+refused once that changed), which changes only `approved`. A restart of the
+program, a share made before this, and a share of a name already shared
+from another port or protocol without `--replace`, all wait on that
+approval; a lend file from V1.12.2 written again keeps what V1.12.2 wrote.
+The pure decisions are `binding.rs`; the readers are `uid.rs`.
 
 **A port, not a page.** A program that speaks UDP or TCP is lent with
 `svrngs share <port> --udp --program <name>`, or `--tcp`: its declaration says

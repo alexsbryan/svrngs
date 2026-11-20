@@ -56,6 +56,7 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
         pid: None,
+        replace: false,
     }
 }
 
@@ -181,18 +182,16 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let asked = Share {
         audience: lent_to,
         pid: None,
+        replace: false,
         ..share_of(origin, "pad")
     };
-    let lend = share::lend_of(
-        &asked,
-        share::listens,
-        share::well_known_kind(asked.port),
-        "",
-    )
-    .expect("something listens there, and its kind is given");
+    let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
+        .expect("something listens there, and its kind is given");
+    svrngs_node::node::approve(&mut lend);
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
     let mut said = vec![Said::Shared {
-        lend: lend.clone(),
+        lend: Box::new(lend.clone()),
+        answers: Vec::new(),
         secret: true,
         accounts: None,
         client: None,
@@ -312,18 +311,16 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
     let asked = Share {
         audience: lent_to,
         pid: None,
+        replace: false,
         ..share_of(origin, "llama-server")
     };
-    let lend = share::lend_of(
-        &asked,
-        share::listens,
-        share::well_known_kind(asked.port),
-        "",
-    )
-    .expect("something listens there, and its kind is given");
+    let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
+        .expect("something listens there, and its kind is given");
+    svrngs_node::node::approve(&mut lend);
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
     let shared = Said::Shared {
-        lend: lend.clone(),
+        lend: Box::new(lend.clone()),
+        answers: Vec::new(),
         secret: false,
         accounts: None,
         client: None,
@@ -532,13 +529,8 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
     }
     assert!(cli::parse(argv(&["link", "x", "--ask", words])).is_err());
     let dir = tempfile::tempdir().unwrap();
-    let lend = share::lend_of(
-        &asked,
-        |_| true,
-        Some(LentProgram::parse("taste").unwrap()),
-        "",
-    )
-    .unwrap();
+    let mut lend = share::lend_of(&asked, Some(LentProgram::parse("taste").unwrap()), "").unwrap();
+    svrngs_node::node::approve(&mut lend);
     cli::share_lend(dir.path(), &lend, None).unwrap();
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
@@ -548,7 +540,8 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         "the words come back whole"
     );
     let said = Said::Shared {
-        lend: read,
+        lend: Box::new(read),
+        answers: Vec::new(),
         secret: false,
         accounts: None,
         client: None,

@@ -670,7 +670,10 @@ async fn appended(
 async fn declared(at: &Asking, label: &Label, serving: &Serving) -> Option<Offered> {
     let (contact, lender) = serving.dialled(&at.host.actor);
     let (lends, version) = match contact {
-        None => (door::offered(&at.door).await.ok()?, crate::version::VERSION),
+        None => (
+            door::offered(&at.door, false).await.ok()?,
+            crate::version::VERSION,
+        ),
         Some(c) => {
             match crate::node::ask_lends(&*at.host.transport, label.as_str(), c.clone()).await {
                 crate::node::Answered::Lends(lends, version) => (lends, version),
@@ -714,7 +717,7 @@ pub(crate) async fn serving(at: &Asking, label: &Label) -> Result<Serving, Respo
             None => {
                 let (groups, own) = at.host.shared_with(&at.host.actor)?;
                 if let Some(own) = own {
-                    at.lent(&groups, &own, None).await?;
+                    at.lent(&groups, &own, None, false).await?;
                 }
                 lender_of(at, label, at.lenders.of(label).unwrap_or_default())?
             }

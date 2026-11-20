@@ -371,6 +371,7 @@ fn wanted(sums: &str, tarball: &str) -> Result<String, UpdateError> {
 
 /// `url`’s bytes, refused past `max` and on any answer but success, asked
 /// with the one HTTP client, from [`crate::http`].
+#[expect(clippy::disallowed_methods, reason = "dial: the update page")]
 pub async fn fetch(url: &str, max: usize) -> Result<Vec<u8>, UpdateError> {
     let client = crate::http::client().map_err(|e| {
         tracing::debug!(target: "update", error = %e, "update: no HTTP client can be made");

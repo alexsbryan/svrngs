@@ -61,7 +61,11 @@ fn declare(
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
     let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "asks": asks, "groups": [NS] });
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        at.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// A lent service at `port` on `node`, answered in this process as
@@ -534,9 +538,14 @@ async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
     key_stand_in(listener);
+    on_wire::forward(&sam, port);
     for (name, kind) in [("photos", "immich"), ("notes", "notes")] {
         let body = serde_json::json!({ "port": port, "kind": kind, "groups": [NS] });
-        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+        std::fs::write(
+            at.join(format!("{name}.json")),
+            svrngs_node::node::approving(&body),
+        )
+        .unwrap();
     }
     let (browser, home) = (
         &Browser::of(&sam),
@@ -672,7 +681,11 @@ async fn a_header_the_door_adds_is_given_on_the_home_page() {
     std::fs::create_dir_all(&at).unwrap();
     for (name, kind) in [("coder", "llama-server"), ("photos", "immich")] {
         let body = serde_json::json!({ "port": 9002, "kind": kind, "groups": [NS] });
-        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+        std::fs::write(
+            at.join(format!("{name}.json")),
+            svrngs_node::node::approving(&body),
+        )
+        .unwrap();
     }
     let (browser, home) = (
         &Browser::of(&sam),
@@ -843,11 +856,16 @@ async fn the_apps_account_is_given_on_the_home_page() {
     let jellyfin = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = jellyfin.local_addr().unwrap().port();
     sign_in_stand_in(jellyfin);
+    on_wire::forward(&sam, port);
     let at = lend::lends_dir(sam_dir.path());
     std::fs::create_dir_all(&at).unwrap();
     for (name, kind) in [("films", "jellyfin"), ("notes", "notes")] {
         let body = serde_json::json!({ "port": port, "kind": kind, "groups": [NS] });
-        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+        std::fs::write(
+            at.join(format!("{name}.json")),
+            svrngs_node::node::approving(&body),
+        )
+        .unwrap();
     }
     let (browser, home) = (
         &Browser::of(&sam),
@@ -974,7 +992,7 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     let at = lend::lends_dir(sam_dir.path());
     std::fs::create_dir_all(&at).unwrap();
     let body = serde_json::json!({ "port": 9001, "kind": "books", "limit": 1, "groups": [NS] });
-    std::fs::write(at.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(at.join("shelf.json"), svrngs_node::node::approving(&body)).unwrap();
     let shelf = Label::of(&signing(2).verifying_key().to_bytes(), "shelf");
     let name = lend::LendName::parse("shelf").unwrap();
     let limit = || {
@@ -1100,7 +1118,11 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
     let lends = lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = serde_json::json!({ "port": 9, "kind": "books", "groups": [NS] });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     let name = lend::LendName::parse("shelf").unwrap();
     let api = alex.api_addr();
     let browser = &Browser::of(&alex);
@@ -1251,7 +1273,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
         std::fs::create_dir_all(lend::lends_dir(dir)).unwrap();
         std::fs::write(
             lend::lends_dir(dir).join(format!("{name}.json")),
-            body.to_string(),
+            svrngs_node::node::approving(&body),
         )
         .unwrap();
     }
@@ -1514,6 +1536,8 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
     let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = free.local_addr().unwrap().port();
     drop(free);
+    let nothing = svrngs_node::uid::Answering::default();
+    on_wire::answers(&alex, port, Ok(nothing));
     let asked = [
         (
             r#"{"port":0,"name":"pad","kind":"pad"}"#.to_string(),
@@ -1561,20 +1585,17 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
     alex.net().close().await;
 }
 
-/// **A program of another account is refused where it is lent, with the
-/// fix** (LEND_OWNER §4): lending from the page a port whose program no
-/// process of this account holds, as a Mac reads another account's, is
-/// refused 400 in the words `svrngs share` says, and nothing is lent; read
-/// as uid 4242's, it is lent, keeping that account. Planted, watched
-/// failing: `share::bound` not asked (lent, its owner none). A Flatpak
-/// server of this account's is lent, its app recorded beside its account;
-/// planted, watched failing: the sandbox not recorded (none). Its program
-/// is recorded too; a `pid` not among the processes read on the port is
-/// refused 400 in `svrngs share --pid`'s words, and one among them lent
-/// (LEND_PROGRAM §4). Planted, watched failing: the check skipped (lent).
+/// **What the page lends is what it showed** (SHARE_BINDING §5.1): lending
+/// from the page with the pid and start it showed approves the socket read
+/// on the port, and nothing else; with none shown, it is refused 400 with
+/// `svrngs share` as the fix; a pid that holds none of the port's sockets,
+/// or one that started since, is refused 400 in `svrngs share --pid`'s
+/// words; a port only another account's program answers, as a Mac reads
+/// it, refused with the fix to run it as you. Nothing is lent but the one.
+/// Planted, each watched failing: the pid not sent to the approval (lent
+/// with no pid); the holder check skipped (lent with pid 999).
 #[tokio::test]
-async fn a_program_of_another_account_is_refused_where_it_is_lent() {
-    use svrngs_node::uid::Owner;
+async fn what_the_page_lends_is_what_it_showed() {
     let dir = tempfile::tempdir().unwrap();
     let alex = on_wire::start(1, dir.path()).await;
     let seed = Roster::new(
@@ -1591,68 +1612,122 @@ async fn a_program_of_another_account_is_refused_where_it_is_lent() {
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
     let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = running.local_addr().unwrap().port();
-    let body = format!(r#"{{"port":{port},"name":"pad","kind":"pad","groups":["{NS}"]}}"#);
-    on_wire::owns(&alex, port, Owner::NotMine);
-    let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &body).await;
-    let words = format!("svrngs can't lend port {port}: the program there doesn't run as you, and on a Mac svrngs can keep a lend only to programs that run as you. Run it as you, then lend it again.");
+    let lent = |name: &str, shown: &str| {
+        format!(r#"{{"port":{port},"name":"{name}","kind":"pad","groups":["{NS}"]{shown}}}"#)
+    };
+    let refused = |words: String| (400, Some(words));
+    let lends = |body: String| {
+        let alex = &alex;
+        let (home, own) = (home.clone(), own.clone());
+        async move {
+            let got = ask(&Browser::of(alex), "POST", &home, "/running", &own, &body).await;
+            (got.status, got.json()["error"].as_str().map(str::to_owned))
+        }
+    };
+    let unshown = format!("svrngs can’t tell which program answers on port {port}, so it can’t be lent from here: `svrngs share {port} --group <group>` lends it.");
+    assert_eq!(lends(lent("pad", "")).await, refused(unshown));
+    let also = format!("svrngs can't share port {port}: another program also listens on port {port}. Stop it, or choose that one, then share it again.");
     assert_eq!(
-        (got.status, got.json()["error"].as_str()),
-        (400, Some(words.as_str()))
+        lends(lent("pad", r#","pid":999,"start":1"#)).await,
+        refused(also)
+    );
+    let stopped = format!("svrngs can't share port {port}: that program stopped; choose it again.");
+    assert_eq!(
+        lends(lent("pad", r#","pid":1,"start":2"#)).await,
+        refused(stopped)
+    );
+    let mut theirs = svrngs_node::uid::Answering::default();
+    theirs.read.unlisted = true;
+    on_wire::answers(&alex, port, Ok(theirs));
+    let words = format!("svrngs can't share port {port}: the program there doesn't run as you, and on a Mac svrngs can keep a share only to programs that run as you. Run it as you, then share it again.");
+    assert_eq!(
+        lends(lent("pad", r#","pid":1,"start":1"#)).await,
+        refused(words)
     );
     let pad = lend::LendName::parse("pad").unwrap();
     assert_eq!(lend::read(dir.path(), &pad).unwrap(), None, "nothing lent");
-    on_wire::owns(&alex, port, Owner::Uid(4242, None));
-    let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &body).await;
-    assert_eq!(got.status, 200, "{}", got.body);
+    on_wire::answers(&alex, port, Ok(svrngs_node::node::answering()));
     assert_eq!(
-        lend::read(dir.path(), &pad).unwrap().unwrap().terms.owner,
-        Some(4242)
+        lends(lent("pad", r#","pid":1,"start":1"#)).await,
+        (200, None)
     );
-    // A Flatpak server of this account's is lent, bound to its own app and
-    // its program.
-    let jellyfin = svrngs_node::lend::Sandbox::App("org.jellyfin.JellyfinServer".into());
-    let jellyfin = svrngs_node::node::holder(jellyfin, "jellyfin");
-    let mine = svrngs_node::uid::mine().unwrap();
-    on_wire::owns(&alex, port, Owner::Uid(mine, Some(jellyfin.clone())));
-    let flat = body.replace(r#""name":"pad""#, r#""name":"flat""#);
-    let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &flat).await;
-    assert_eq!(got.status, 200, "{}", got.body);
-    let flat = lend::LendName::parse("flat").unwrap();
-    let lent = lend::read(dir.path(), &flat).unwrap().unwrap();
-    let recorded = (lent.terms.owner, lent.terms.sandbox, lent.terms.command);
-    let jellyfin = (Some(mine), Some(jellyfin.sandbox), Some(jellyfin.command));
-    assert_eq!(recorded, jellyfin);
-    let mut serve = svrngs_node::node::holder(svrngs_node::lend::Sandbox::No, "serve");
-    serve.pids = vec![4321];
-    on_wire::owns(&alex, port, Owner::Uid(mine, Some(serve)));
-    let chose = |pid: u32| {
-        let named = format!(r#""name":"chose{pid}","pid":{pid}"#);
-        body.replace(r#""name":"pad""#, &named)
+    let approved = lend::read(dir.path(), &pad)
+        .unwrap()
+        .unwrap()
+        .terms
+        .approved;
+    assert_eq!(approved, Some(svrngs_node::node::approval()));
+    alex.net().close().await;
+}
+
+/// **Keep sharing it approves only what the page showed** (SHARE_BINDING
+/// §5.4; SHARE_BINDING_REVIEWS §6 #6, #7): shelf, held since something not
+/// approved was seen on its port and kept so in its file, is listed held
+/// with what answers now and a token for it, though only its approved
+/// socket answers now. Approving with that token after what answers changed
+/// is refused in words that say so; with none, refused; with the token of
+/// what answers, approved, and listed held no more. Planted, each watched
+/// failing: `share::approve` not comparing the token (the changed set
+/// approved); the list reading no hold from the file (shelf listed open).
+#[tokio::test]
+async fn keep_sharing_it_approves_only_what_the_page_showed() {
+    // A port nothing listens on, so the wire's socket 1 is what answers.
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let dir = tempfile::tempdir().unwrap();
+    let lends = lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let held = r#"{"sockets":[1],"at":"127.0.0.1","held":true}"#;
+    let body = format!(r#"{{"port":{port},"kind":"pad","groups":["{NS}"],"approved":{held}}}"#);
+    std::fs::write(lends.join("shelf.json"), body).unwrap();
+    let alex = on_wire::start(1, dir.path()).await;
+    let seed = Roster::new(
+        [(
+            svrngs_node::Person::parse("alex").unwrap(),
+            vec![svrngs_node::actor_of(&signing(1))],
+        )]
+        .into_iter()
+        .collect(),
+    );
+    alex.rail().set_seed(NS, &seed).unwrap();
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let (home, own) = (home.as_str(), own.as_str());
+    let browser = &Browser::of(&alex);
+    let row = || async {
+        let path = format!("/v1/lends?namespace={NS}");
+        let listed = ask(browser, "GET", home, &path, own, "").await.json();
+        let rows = listed["lent"].as_array().cloned().unwrap_or_default();
+        let row = rows.into_iter().find(|l| l["name"] == "shelf");
+        row.unwrap_or_else(|| panic!("shelf listed: {listed:#}"))
     };
-    let got = ask(
-        &Browser::of(&alex),
-        "POST",
-        &home,
-        "/running",
-        &own,
-        &chose(999),
-    )
-    .await;
-    let words = format!("svrngs can't lend port {port}: process 999 isn't the program answering there now. Look at what runs on port {port} again, then lend it.");
-    assert_eq!(
-        (got.status, got.json()["error"].as_str()),
-        (400, Some(words.as_str()))
+    let shown = row().await;
+    assert_eq!(shown["held"], "another", "{shown:#}");
+    assert_eq!(shown["answers"][0]["program"], "test", "{shown:#}");
+    let token = shown["token"].as_str().unwrap().to_string();
+    let approve = |body: String| async move {
+        let got = ask(browser, "POST", home, "/v1/lends/shelf/approve", own, &body).await;
+        (got.status, got.json()["error"].as_str().map(str::to_owned))
+    };
+    let mut changed = svrngs_node::node::answering();
+    changed.read.sockets[0].id = 2;
+    on_wire::answers(&alex, port, Ok(changed));
+    let words = format!(
+        "svrngs can't share port {port}: what answers on port {port} changed; choose it again."
     );
-    let got = ask(
-        &Browser::of(&alex),
-        "POST",
-        &home,
-        "/running",
-        &own,
-        &chose(4321),
-    )
-    .await;
-    assert_eq!(got.status, 200, "{}", got.body);
+    let with = format!(r#"{{"token":"{token}","pid":1,"start":1}}"#);
+    assert_eq!(approve(with.clone()).await, (403, Some(words)));
+    let path = "/v1/lends/shelf/approve";
+    let unshown = ask(browser, "POST", home, path, own, "null").await;
+    assert_eq!(unshown.status, 422, "no token: {}", unshown.body);
+    on_wire::answers(&alex, port, Ok(svrngs_node::node::answering()));
+    assert_eq!(approve(with).await.0, 200);
+    let shelf = lend::read(dir.path(), &lend::LendName::parse("shelf").unwrap());
+    let approved = shelf.unwrap().unwrap().terms.approved.unwrap();
+    assert_eq!(approved, svrngs_node::node::approval(), "held no more");
+    assert_eq!(row().await["held"], serde_json::Value::Null);
     alex.net().close().await;
 }
 
@@ -1762,7 +1837,11 @@ async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
     let lends = lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = serde_json::json!({ "port": 9, "kind": "books", "groups": [NS] });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     let browser = &Browser::of(&alex);
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
     let own =
@@ -1826,7 +1905,11 @@ async fn an_audience_names_only_groups_the_lender_stands_in() {
     let lends = lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = serde_json::json!({ "port": 9, "kind": "books", "groups": [NS] });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     let browser = &Browser::of(&alex);
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
     let own =

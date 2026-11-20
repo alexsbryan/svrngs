@@ -37,11 +37,14 @@ use std::num::NonZeroU16;
 use std::path::Path;
 use std::time::Duration;
 
+use crate::binding::{Chosen, Refused};
+use crate::door::bound::{Bound, Unsent};
 use crate::lend::SendRow;
 use crate::lend::{
-    self, Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source, Upload,
+    self, Answer, Approved, Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source,
+    Upload,
 };
-use crate::uid::{self, Conn, Owner, Side};
+use crate::uid::{Answering, Unread};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
 /// `<word>.txt`, so adding a program is adding a file; each holds that word's
@@ -226,9 +229,33 @@ pub struct Share {
     /// lender chose, or [`Audience::Legacy`] when none was given, which is
     /// paused until selection, never all groups.
     pub audience: Audience,
-    /// `--pid`: the process its lender chose on the port, which must be
-    /// the program [`bound`] reads there (svrn-docs LEND_PROGRAM §4).
-    pub pid: Option<u32>,
+    /// `--pid <pid>@<start>`: the process its lender chose on the port,
+    /// which must hold every socket there, itself or a child ([`approve`]).
+    pub pid: Option<Pid>,
+    /// `--replace`: its name moves here from another port (SHARE_BINDING
+    /// §5.8); without it a name shared from another port is refused.
+    pub replace: bool,
+}
+
+/// A process its lender chose, by its id and its start, as `--pid
+/// <pid>@<start>` names it: Linux's `/proc/<pid>/stat` field 22, a Mac's
+/// start in microseconds ([`crate::uid::start`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Pid {
+    pub pid: u32,
+    pub start: u64,
+}
+
+impl Pid {
+    /// `<pid>@<start>`, both numbers, or none.
+    pub fn parse(raw: &str) -> Option<Self> {
+        let (pid, start) = raw.split_once('@')?;
+        Some(Self {
+            pid: pid.parse().ok()?,
+            start: start.parse().ok()?,
+        })
+    }
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -240,12 +267,139 @@ pub enum ShareRefusal {
     NoKind(NonZeroU16),
     #[error("your group's programs/{0}.txt says {0} is lent as {1}, not as a page: `svrngs share <port> --{1} --program {0} --group <group>`")]
     Carries(Program, &'static str),
-    #[error("svrngs can't lend port {0}: the program there doesn't run as you, and on a Mac svrngs can keep a lend only to programs that run as you. Run it as you, then lend it again.")]
+    #[error("svrngs can't share port {0}: the program there doesn't run as you, and on a Mac svrngs can keep a share only to programs that run as you. Run it as you, then share it again.")]
     NotYours(NonZeroU16),
-    #[error("svrngs can't lend port {0}: it can't tell which account runs the program there ({1}). Start it again, then lend it again.")]
-    Unowned(NonZeroU16, &'static str),
-    #[error("svrngs can't lend port {0}: process {1} isn't the program answering there now. Look at what runs on port {0} again, then lend it.")]
-    NotThere(NonZeroU16, u32),
+    #[error("svrngs can't share port {0} on this system: it can't read which program answers there, so it can't keep the share to it.")]
+    NoReader(NonZeroU16),
+    #[error("svrngs can't share port {0}: it can't read what answers there ({1}). Try again.")]
+    Unread(NonZeroU16, &'static str),
+    #[error("svrngs can't share port {0}: that program stopped; choose it again.")]
+    Stopped(NonZeroU16),
+    #[error("svrngs can't share port {0}: another program also listens on port {0}. Stop it, or choose that one, then share it again.")]
+    AlsoListens(NonZeroU16),
+    #[error("svrngs can't share port {0}: the program there listens only on {1}, and svrngs reaches a share at this computer's own address. Have it listen on 127.0.0.1, ::1 or every address, then share it again.")]
+    Elsewhere(NonZeroU16, std::net::IpAddr),
+    #[error("svrngs can't share UDP port {0}: svrngs sends a UDP share's datagrams to 127.0.0.1, and the program there doesn't listen on it. Have it listen on 127.0.0.1, or on every address, then share it again.")]
+    UdpOnIpv6(NonZeroU16),
+    #[error("svrngs can't share port {0}: what answers on port {0} changed; choose it again.")]
+    Changed(NonZeroU16),
+    #[error("{0} is already shared from {1}: give this one another name, or add --replace to share {0} from here instead.")]
+    Taken(LendName, String),
+    #[error("nothing is shared from a port here by the name {0}")]
+    NotShared(LendName),
+    #[error("{0} can't be changed on this computer: {1}")]
+    Unkept(LendName, String),
+}
+
+/// The lend `name` declared in `data_dir`, and its port, as an approval
+/// asks them (SHARE_BINDING §5.4); none for a carried app's.
+pub fn shared(data_dir: &Path, name: &LendName) -> Result<(Lend, NonZeroU16), ShareRefusal> {
+    let read = crate::lend::read(data_dir, name);
+    let read = read.map_err(|e| ShareRefusal::Unkept(name.clone(), e.to_string()))?;
+    let shared = read.and_then(|lend| Some((lend.port()?, lend)));
+    shared
+        .map(|(port, lend)| (lend, port))
+        .ok_or_else(|| ShareRefusal::NotShared(name.clone()))
+}
+
+/// `approved` kept as the lend `name`'s, nothing else of it changed
+/// (SHARE_BINDING §5.4).
+pub fn reapproved(
+    data_dir: &Path,
+    name: &LendName,
+    approved: Approved,
+) -> Result<(), ShareRefusal> {
+    let kept = crate::lend::mutate(data_dir, name, |l| l.terms.approved = Some(approved));
+    tracing::debug!(target: "share", lend = %name, ?kept, "share: what answers on its port approved, only its approval changed");
+    match kept {
+        Ok(true) => Ok(()),
+        Ok(false) => Err(ShareRefusal::NotShared(name.clone())),
+        Err(e) => Err(ShareRefusal::Unkept(name.clone(), e.to_string())),
+    }
+}
+
+/// What `read`, the `raw` share's port read ([`crate::uid::answering`]),
+/// approves with `pid` when its lender chose a process (SHARE_BINDING §5.1,
+/// [`crate::binding::approve`]), and only what they were `shown`, when a
+/// page showed it ([`token`]): the approval, and what answers
+/// there as its lender is shown it, from the same read; or why not, in
+/// their words.
+pub fn approve(
+    (port, raw): (NonZeroU16, Raw),
+    read: Result<Answering, Unread>,
+    pid: Option<Pid>,
+    shown: Option<&str>,
+) -> Result<(Approved, Vec<Answer>), ShareRefusal> {
+    let read = read.map_err(|why| match why {
+        Unread::NoReader => ShareRefusal::NoReader(port),
+        Unread::Failed(why) => ShareRefusal::Unread(port, why),
+    })?;
+    let chosen = pid.map(|p| Chosen {
+        pid: p.pid,
+        start: p.start,
+        now: read.start,
+        parents: read.parents.clone(),
+    });
+    let approved = crate::binding::approve(&read.read, chosen.as_ref());
+    tracing::debug!(target: "share", port, ?raw, ?pid, ?shown, read = ?read.read, ?approved, "share: what answers on the port, approved or why not");
+    let approved = approved.map_err(|why| match why {
+        Refused::Nothing => ShareRefusal::NothingListens(port),
+        Refused::NotYours => ShareRefusal::NotYours(port),
+        Refused::Stopped => ShareRefusal::Stopped(port),
+        Refused::Another => ShareRefusal::AlsoListens(port),
+        Refused::Elsewhere(at) => ShareRefusal::Elsewhere(port, at),
+    })?;
+    match approved {
+        a if raw == Raw::Udp && a.at.is_ipv6() => Err(ShareRefusal::UdpOnIpv6(port)),
+        a if shown.is_some_and(|t| t != token(&a)) => Err(ShareRefusal::Changed(port)),
+        a => Ok((a, read.shown)),
+    }
+}
+
+/// An opaque name for what `approved` approves, the same for the same
+/// sockets read and another once they differ, a hold kept since aside: what
+/// a page shows answering, which approving it sends back, so what changed
+/// since is refused (SHARE_BINDING_REVIEWS §6 #6).
+pub fn token(approved: &Approved) -> String {
+    let shown = Approved {
+        held: false,
+        ..approved.clone()
+    };
+    let bytes = serde_json::to_vec(&shown).expect("an approval serializes");
+    hex::encode(ring::digest::digest(&ring::digest::SHA256, &bytes))
+}
+
+/// Whether `lend` may be declared over what `data_dir` holds by its name
+/// (SHARE_BINDING §5.8): none, one of its port and protocol, or with
+/// `replace`; a share of that name from another, or one that can't be read,
+/// is refused, so a friend's state for the name never moves to another
+/// service unasked.
+pub fn renamed(data_dir: &Path, lend: &Lend, replace: bool) -> Result<(), ShareRefusal> {
+    let had = crate::lend::read(data_dir, &lend.name);
+    let had = had.map_err(|e| ShareRefusal::Unkept(lend.name.clone(), e.to_string()))?;
+    let at = |l: &Lend| match l.source {
+        Source::Port(port) => Some(format!("port {port}")),
+        Source::Raw(raw, port) => Some(format!("{} port {port}", raw.said())),
+        Source::Carried(..) => None,
+    };
+    let elsewhere = (had.as_ref().and_then(at)).filter(|had| Some(had) != at(lend).as_ref());
+    tracing::debug!(target: "share", lend = %lend.name, ?elsewhere, replace, "share: a name already shared from another port, moved only when asked");
+    match elsewhere {
+        Some(at) if !replace => Err(ShareRefusal::Taken(lend.name.clone(), at)),
+        _ => Ok(()),
+    }
+}
+
+/// What a lender is told when svrngs sends `name` nothing of theirs, a key
+/// or an account, because of `unsent` ([`crate::door::bound`]).
+pub fn unsent_words(name: &LendName, unsent: Unsent) -> String {
+    let why = match unsent {
+        Unsent::Away => "nothing answers on its port",
+        Unsent::Held(_) => {
+            "what answers on its port isn’t what you approved: Keep sharing it first"
+        }
+    };
+    format!("svrngs sent nothing to {name}: {why}.")
 }
 
 /// The kind [`PROGRAMS`] names for `port`, if any.
@@ -432,18 +586,40 @@ pub fn keep_key(dir: &Path, name: &LendName, how: Key<'_>, key: &str) -> Result<
     crate::lend::keep_readers(dir, name, (header, &sent.replace("{}", key))).map(|()| true)
 }
 
-/// What the service at this computer's `port` answers `key`, sent as `how`
-/// says, at its path, followed nowhere else: its status; none when `how`
-/// names no path or nothing answers. Asked once, as the key is pasted.
-pub async fn tried(port: NonZeroU16, how: Key<'_>, key: &str) -> Option<u16> {
+/// What the share's service answers `key` on `to`, its checked
+/// connection, sent as `how` says, at its path, followed nowhere else: its
+/// status; none when nothing answers. Asked once, as the key is pasted.
+pub async fn tried(to: Bound, port: NonZeroU16, how: Key<'_>, key: &str) -> Option<u16> {
     let (header, sent, path) = how.filter(|(.., path)| !path.is_empty())?;
-    let none = reqwest13::redirect::Policy::none();
-    let client = crate::http::builder().ok()?.redirect(none).build().ok()?;
-    let asked = client.get(format!("http://127.0.0.1:{port}{path}"));
-    let answered = asked.header(header, sent.replace("{}", key)).send().await;
-    let status = answered.ok().map(|a| a.status().as_u16());
+    let asked = axum::http::Request::get(path).header(header, sent.replace("{}", key));
+    let status = asked_on(to, port, asked, String::new())
+        .await
+        .map(|(s, _)| s);
     tracing::debug!(target: "share", port, path, ?status, "share: a pasted key tried once on its own service, or none answered");
     status
+}
+
+/// `asked`, with `body`, sent on `to` as HTTP/1 to the service at `port`:
+/// its answer's status and body; none when it doesn't answer.
+async fn asked_on(
+    to: Bound,
+    port: NonZeroU16,
+    asked: axum::http::request::Builder,
+    body: String,
+) -> Option<(u16, Vec<u8>)> {
+    let asked = asked
+        .header("host", format!("127.0.0.1:{port}"))
+        .body(body)
+        .ok()?;
+    let io = hyper_util::rt::TokioIo::new(to.stream());
+    let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await.ok()?;
+    tokio::spawn(conn);
+    let answer = sender.send_request(asked).await.ok()?;
+    let status = answer.status().as_u16();
+    let body = http_body_util::BodyExt::collect(answer.into_body())
+        .await
+        .ok()?;
+    Some((status, body.to_bytes().to_vec()))
 }
 
 /// What a lender is told of the key their `name`, its program's word,
@@ -459,31 +635,29 @@ pub fn key_said(name: &Program, status: Option<u16>) -> Result<String, String> {
     }
 }
 
-/// Sign in to the service at this computer's `port` as `name`, as `how`
-/// says, and say what an app reading it is let in with; or why not, the
-/// password never in it.
+/// Sign in to the share's service as `name` on `to`, its checked
+/// connection, as `how` says, and say what an app reading it is let in
+/// with; or why not, the password never in it.
 pub async fn sign_in_readers(
+    to: Bound,
     port: NonZeroU16,
     how: ReadersSignIn<'_>,
     name: &str,
     password: &str,
 ) -> Result<String, String> {
     let body = serde_json::json!({ how.name: name, how.password: password });
-    let url = format!("http://127.0.0.1:{port}{}", how.path);
-    let mut ask = crate::http::client()?.post(url).body(body.to_string());
-    ask = ask.header("content-type", "application/json");
+    let mut ask = axum::http::Request::post(how.path).header("content-type", "application/json");
     if let Some(asked) = how.asked {
         ask = ask.header("authorization", asked);
     }
-    let answer = ask.send().await.map_err(|_| "it did not answer")?;
-    let status = answer.status();
-    tracing::debug!(target: "share", port, path = how.path, %status, "share: the readers' account asked to sign in");
-    if !status.is_success() {
+    let answered = asked_on(to, port, ask, body.to_string()).await;
+    let (status, answer) = answered.ok_or_else(|| "it did not answer".to_string())?;
+    tracing::debug!(target: "share", port, path = how.path, status, "share: the readers' account asked to sign in");
+    if !(200..300).contains(&status) {
         return Err(format!(
             "it did not take that name and password (it answered {status})"
         ));
     }
-    let answer = answer.bytes().await.map_err(|e| e.to_string())?;
     let answer: serde_json::Value = serde_json::from_slice(&answer).unwrap_or_default();
     let token = answer[how.token].as_str();
     tracing::debug!(target: "share", port, path = how.path, given = token.is_some(),
@@ -492,73 +666,16 @@ pub async fn sign_in_readers(
     Ok(how.sent.replace("{}", token))
 }
 
-/// Whether something on this computer accepts a TCP connection on `port`.
-/// (svrngs: upstream's `probe_origin` over the one port given.)
-pub fn listens(port: NonZeroU16) -> bool {
-    let up = answers(&port);
-    tracing::debug!(target: "share", port, up, "share: probed the port");
-    up
-}
-
-/// [`listens`], untraced, for [`listening`]'s thousands.
+/// Whether something on this computer accepts a TCP connection on `port`:
+/// upstream's `probe_origin`, over each port [`listening`] asks.
+#[expect(clippy::disallowed_methods, reason = "dial: unwritten probe")]
 fn answers(port: &NonZeroU16) -> bool {
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_ok()
 }
 
-/// Whose program answers on `port` now, and what program
-/// ([`crate::uid::owner`]): by a TCP connection to it, held while it is
-/// read; for UDP, the socket a datagram from this computer's 127.0.0.1
-/// would reach, asked of no socket of ours, since one a program serves
-/// from is connected to no one.
-pub fn owner_at(raw: Option<Raw>, port: NonZeroU16) -> Owner {
-    let to = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
-    let from = |local| Conn { local, peer: to };
-    let seen = crate::uid::Seen::default();
-    if raw == Some(Raw::Udp) {
-        let nowhere = std::net::SocketAddr::from(([127, 0, 0, 1], 0));
-        return crate::uid::owner(Raw::Udp, from(nowhere), Side::Peer, Some(&seen));
-    }
-    match std::net::TcpStream::connect_timeout(&to, Duration::from_millis(500)) {
-        Ok(asked) => match asked.local_addr() {
-            Ok(local) => crate::uid::owner(Raw::Tcp, from(local), Side::Peer, Some(&seen)),
-            Err(_) => Owner::Unjudged("nothing could be asked on the port"),
-        },
-        Err(_) => Owner::Unjudged("nothing answers on the port"),
-    }
-}
-
-/// `lend` bound to the account, sandbox and program `read` names as its
-/// program's (LEND_OWNER §4, LEND_SANDBOX, LEND_PROGRAM §4): recorded, the
-/// door carries only to them; none where no reader is; refused on a Mac
-/// when no program of this account's answers, wherever whose it is can't be
-/// told, and when `pid` is asked for and isn't that program
-/// ([`crate::uid::among`]).
-pub fn bound(lend: &mut Lend, read: Owner, pid: Option<u32>) -> Result<(), ShareRefusal> {
-    let (raw, port) = match lend.source {
-        Source::Port(port) => (Raw::Tcp, port),
-        Source::Raw(raw, port) => (raw, port),
-        Source::Carried(..) => return Ok(()),
-    };
-    tracing::debug!(target: "share", lend = %lend.name, port, ?read, ?pid, "share: the program answering, recorded with the lend or why it isn't lent");
-    let (owner, holder) = match read {
-        Owner::Uid(uid, holder) => (Some(uid), holder),
-        Owner::NoReader => (None, None),
-        Owner::NotMine => return Err(ShareRefusal::NotYours(port)),
-        Owner::Unjudged(why) => return Err(ShareRefusal::Unowned(port, why)),
-    };
-    let among = |pid: &u32| (holder.as_ref()).is_some_and(|h| uid::among(h, *pid, raw, port.get()));
-    if let Some(pid) = pid.filter(|pid| !among(pid)) {
-        tracing::debug!(target: "share", lend = %lend.name, port, pid, "share: refused — the process asked for isn't the program answering");
-        return Err(ShareRefusal::NotThere(port, pid));
-    }
-    lend.terms.owner = owner;
-    (lend.terms.sandbox, lend.terms.command) = holder.map(|h| (h.sandbox, h.command)).unzip();
-    Ok(())
-}
-
 /// The ports something on this computer listens on, each probed as
-/// [`listens`] probes one, a thread to each thousand (v1ui-lend (b): the
+/// [`answers`] probes one, a thread to each thousand (v1ui-lend (b): the
 /// home page's "Already running here"). From 1024, below which only the
 /// system's own services listen unless it is told otherwise, to 49151,
 /// past which it hands ports to its own connections (IANA's dynamic
@@ -585,8 +702,9 @@ pub fn kind_of(share: &Share, well_known: Option<Program>) -> Option<Program> {
     share.kind.clone().or(page)
 }
 
-/// The lend `share` declares, given what `listens` says of its port, and
-/// the kind the port is well known for: the kind given, else the port's; the
+/// The lend `share` declares, given the kind its port is well known for,
+/// before what answers there is approved ([`approve`]), which refuses a
+/// port nothing answers on: the kind given, else the port's; the
 /// name given, else the kind ([`kind_of`]); refused when `terms`, the
 /// groups' own (CONTRACTS §2), carry it as other than it is lent; the
 /// limit given, else none, which lets in
@@ -599,20 +717,11 @@ pub fn kind_of(share: &Share, well_known: Option<Program>) -> Option<Program> {
 /// on its lender's yes (CONTRACTS §2).
 pub fn lend_of(
     share: &Share,
-    listens: impl Fn(NonZeroU16) -> bool,
     well_known: Option<Program>,
     terms: &str,
 ) -> Result<Lend, ShareRefusal> {
-    // A UDP port answers no connection, so nothing tells whether a program
-    // listens on it; a TCP port is probed as a page's is. The table's ports
-    // are a page's.
+    // The table's ports are a page's.
     let raw = share.raw;
-    if raw == Some(Raw::Udp) {
-        tracing::debug!(target: "share", port = share.port, "share: a UDP port, lent unprobed");
-    } else if !listens(share.port) {
-        tracing::debug!(target: "share", port = share.port, "share: refused — nothing listens on the port");
-        return Err(ShareRefusal::NothingListens(share.port));
-    }
     let Some(kind) = kind_of(share, well_known) else {
         tracing::debug!(target: "share", port = share.port, "share: refused — no kind given, and the port is not a well-known one");
         return Err(ShareRefusal::NoKind(share.port));

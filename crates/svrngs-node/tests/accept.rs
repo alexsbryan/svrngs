@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 //! The accept loop admits on the dialer's verified key and serves the caller's
 //! router on the stream (PLAN §4, U1's inventory, the iroh row): two
 //! hermetic endpoints in one process, no relay, B dialling A through the

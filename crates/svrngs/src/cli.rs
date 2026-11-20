@@ -12,9 +12,10 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> --group G... [--name N] [--program P] [--pid I] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+//! svrngs share <port> --group G... [--name N] [--program P] [--pid I@S] [--replace] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
 //!                                          lend a service on this computer
 //! svrngs unshare <name> [--group G]...     stop lending it, or to G only
+//! svrngs approve <name> [--pid I@S]        keep lending it to what answers now
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
 //! svrngs room <name>...                    open lends to this computer's WiFi,
@@ -106,11 +107,13 @@ use std::time::Duration;
 use std::num::NonZeroU16;
 
 use svrngs_node::api::{ApiError, API_FILE};
+use svrngs_node::door::bound::{Bound, Unsent};
 use svrngs_node::folder::{FolderAsk, PROGRAMS_ROUTE};
 use svrngs_node::home::WHEN;
 use svrngs_node::home::{LinkMade, Linking, LINKS_ROUTE};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
+use svrngs_node::lend::Answer;
 use svrngs_node::lend::{
     self, Audience, Lend, LendName, Program, Raw, RefusedPath, SignInWithSvrngs, Source, Upload,
 };
@@ -120,7 +123,7 @@ use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
 };
 use svrngs_node::room;
-use svrngs_node::uid::Owner;
+use svrngs_node::uid::{Answering, Unread};
 use svrngs_node::update;
 use svrngs_node::{Joined, Person};
 
@@ -205,6 +208,9 @@ pub enum Verb {
     /// Each `--group` as typed: only those taken from its audience; none
     /// withdraws it.
     Unshare(LendName, Vec<String>),
+    /// `approve`: what answers on the lend's port approved, with `--pid`
+    /// the process its lender chose (svrn-docs SHARE_BINDING §5.4).
+    Approve(LendName, Option<share::Pid>),
     /// `share --folder --group`, asked of svrngs running here: the
     /// directory, absolute, and the group as typed.
     Folder {
@@ -275,6 +281,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut folder, mut groups) = (None, Vec::new());
     let mut asks = None;
     let mut pid = None;
+    let mut replace = false;
     let mut sign_in = false;
     let mut readers = false;
     let mut carries = None;
@@ -318,7 +325,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--name" => name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?),
             "--program" | "--kind" => kind = Some(Program::parse(&raw).map_err(|_| not(A_PROGRAM))?),
-            "--pid" => pid = Some(raw.parse::<u32>().map_err(|_| not("a process id"))?),
+            "--pid" => {
+                let what = "a process and its start: <pid>@<start>";
+                pid = Some(share::Pid::parse(&raw).ok_or_else(|| not(what))?);
+            }
             "--limit" => {
                 let what = "a number of people: 1 or more";
                 limit = Some(raw.parse::<NonZeroU16>().map_err(|_| not(what))?);
@@ -348,6 +358,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--print" if verb == "open" => print = true,
             "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
             "--readers" if verb == "share" => readers = true,
+            "--replace" if verb == "share" => replace = true,
             "--udp" | "--tcp" if verb == "share" => {
                 let said = if arg == "--udp" { lend::Raw::Udp } else { lend::Raw::Tcp };
                 if carries.replace(said).is_some() {
@@ -384,7 +395,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         || kind.is_some()
         || limit.is_some()
         || asks.is_some()
-        || pid.is_some()
+        || (pid.is_some() && verb != "approve")
         || sign_in)
         && verb != "share"
     {
@@ -471,6 +482,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     raw: carries,
                     audience: Audience::Legacy,
                     pid,
+                    replace,
                 },
                 groups,
             ))
@@ -484,6 +496,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "unshare" => {
             let raw = positional.ok_or("unshare wants a name: `svrngs unshare <name>`")?;
             Ok(Verb::Unshare(lend_name(&raw)?, groups))
+        }
+        "approve" => {
+            let raw = positional.ok_or("approve wants a name: `svrngs approve <name>`")?;
+            Ok(Verb::Approve(lend_name(&raw)?, pid))
         }
         "room" => {
             let first = positional.ok_or("room wants what to serve: `svrngs room <name>...`")?;
@@ -758,6 +774,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         Verb::Check(dir) => checked(&dir)?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
+        Verb::Approve(name, pid) => approve(here, &name, pid)?,
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
         Verb::Update => match update::apply(&root).await? {
             update::Outcome::Current => "This computer has the latest svrngs.\n".into(),
@@ -817,8 +834,12 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 }
             };
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
-            let mut lend = share::lend_of(&asked, |p| here.listens(p), known, theirs)?;
-            share::bound(&mut lend, here.owner(asked.raw, asked.port), asked.pid)?;
+            let mut lend = share::lend_of(&asked, known, theirs)?;
+            share::renamed(&root, &lend, asked.replace)?;
+            let read = here.answering(lend.raw(), asked.port, asked.pid.map(|p| p.pid));
+            let (approved, answers) =
+                share::approve((asked.port, lend.raw()), read, asked.pid, None)?;
+            lend.terms.approved = Some(approved);
             if !lend.terms.sends.is_empty() && !sends_said(here, &lend)? {
                 lend.terms.sends.clear();
             }
@@ -840,7 +861,8 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 share_readers(here, &lend, (asked.port, theirs)).await?;
             }
             let sharing = Said::Shared {
-                lend,
+                lend: Box::new(lend),
+                answers,
                 secret: secret.is_some(),
                 accounts,
                 client,
@@ -1004,9 +1026,12 @@ fn restart(root: &Path) -> Result<String, Refusal> {
 pub trait Here {
     fn root(&self) -> &Path;
     fn ask(&self, route: &str, body: &impl serde::Serialize) -> impl Future<Output = Asked>;
-    fn listens(&self, port: NonZeroU16) -> bool;
-    /// Whose program answers on `port`, lent as `raw` ([`share::owner_at`]).
-    fn owner(&self, raw: Option<Raw>, port: NonZeroU16) -> Owner;
+    /// What answers on `port`, as `raw`, to approve, and the start now of
+    /// `pid` ([`svrngs_node::uid::answering`]).
+    fn answering(&self, raw: Raw, port: NonZeroU16, pid: Option<u32>) -> Result<Answering, Unread>;
+    /// `lend`'s port, connected and checked, for what its lender sends it
+    /// ([`svrngs_node::door::bound`]).
+    fn bound(&self, lend: &Lend) -> impl Future<Output = Result<Bound, Unsent>>;
     fn prompt(&self, name: &LendName, asked: &str, shown: bool) -> Prompted;
     /// Whether the program that opens addresses on this computer took `what`:
     /// the one way the command reaches a browser, so a test stands in for it.
@@ -1022,11 +1047,11 @@ impl Here for PathBuf {
     fn root(&self) -> &Path {
         self
     }
-    fn listens(&self, port: NonZeroU16) -> bool {
-        share::listens(port)
+    fn answering(&self, raw: Raw, port: NonZeroU16, pid: Option<u32>) -> Result<Answering, Unread> {
+        svrngs_node::uid::answering(raw, port.get(), pid)
     }
-    fn owner(&self, raw: Option<Raw>, port: NonZeroU16) -> Owner {
-        share::owner_at(raw, port)
+    async fn bound(&self, lend: &Lend) -> Result<Bound, Unsent> {
+        svrngs_node::door::bound::here(self, lend).await
     }
     /// macOS's `open`, `xdg-open` anywhere else (svrngs-node home.rs `opened`).
     fn browse(&self, what: &std::ffi::OsStr) -> bool {
@@ -1062,6 +1087,7 @@ impl Here for PathBuf {
         tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
         Ok((!secret.is_empty()).then_some(secret))
     }
+    #[expect(clippy::disallowed_methods, reason = "dial: svrngs's own API")]
     async fn ask(&self, route: &str, body: &impl serde::Serialize) -> Asked {
         let read = |file| std::fs::read_to_string(self.join(file)).unwrap_or_default();
         let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
@@ -1162,6 +1188,7 @@ pub async fn checked_page(page: Option<Origin>) -> Result<Option<Origin>, Refusa
         return Err(no());
     };
     let unjudged = || Unjudged::CannotCheck(page.as_str().into());
+    #[expect(clippy::disallowed_methods, reason = "dial: a group's page")]
     let client = svrngs_node::http::client().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
             unjudged()
@@ -1290,7 +1317,9 @@ pub enum Said {
     /// signs each person in and what its lender does for that, when the
     /// table of well-known ports says.
     Shared {
-        lend: Lend,
+        lend: Box<Lend>,
+        /// What answers on its port, approved, as its lender is shown it.
+        answers: Vec<Answer>,
         secret: bool,
         accounts: Option<share::Signs<'static>>,
         /// The client its lender copies into the app's form, when it signs
@@ -1406,6 +1435,7 @@ impl std::fmt::Display for Said {
             }
             Said::Shared {
                 lend,
+                answers,
                 secret,
                 accounts,
                 client,
@@ -1424,10 +1454,12 @@ impl std::fmt::Display for Said {
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
                 }
-                if let Some(program) = &lend.terms.command {
-                    let p = &program.name;
-                    writeln!(f, "Kept to {p} as it runs now: started the same way again, {p} keeps it; anything else on port {port} is held until you share {name} again.")?;
-                }
+                let (each, beside, or) = if raw.is_empty() || raw.starts_with("TCP") {
+                    ("before each connection it carries there", "While another program is on the port, it is closed. ", "")
+                } else {
+                    ("before and after each datagram it sends there", "", ", or another one is on the port")
+                };
+                writeln!(f, "Lent {name}: {}. svrngs checks port {port} {each}. {beside}If the program starts again{or}, {name} closes until you approve what runs there: `svrngs approve {name}`.", what_answers(answers))?;
                 let ((theirs, by), kind) = (terms.clone().unwrap_or_default(), &lend.kind);
                 // How its people sign in, in the words of who wrote the group's file.
                 let shipped = share::accounts_of(kind, "");
@@ -1631,10 +1663,18 @@ async fn share_readers(
     let name = &lend.name;
     let ask = |words: String, shown| here.prompt(name, &words, shown);
     let refused = |why: String| Refused::Readers(name.clone(), why);
+    let checked = || async {
+        let to = here.bound(lend).await;
+        to.map_err(|unsent| Refused::Readers(name.clone(), share::unsent_words(name, unsent)))
+    };
     if let Some(how) = share::key_of(&lend.kind, terms) {
         let key = ask(format!("Paste the key you made in {name}: "), false)?;
         let key = key.ok_or_else(|| refused("nothing was given".into()))?;
-        let said = share::key_said(&lend.kind, share::tried(port, Some(how), &key).await);
+        let tried = match how.2.is_empty() {
+            true => None,
+            false => share::tried(checked().await?, port, Some(how), &key).await,
+        };
+        let said = share::key_said(&lend.kind, tried);
         let said = said.map_err(&refused)?;
         share::keep_key(here.root(), name, Some(how), &key).map_err(|e| refused(e.to_string()))?;
         eprintln!("{said} Apps that read {name} are let in with that key, to look only; a person opening it still signs in as themselves.");
@@ -1646,7 +1686,7 @@ async fn share_readers(
                 format!("The name of the account in {name} that apps reading it are let in as: ");
             let account = ask(words, true)?.unwrap_or_default();
             let password = ask("Its password: ".into(), false)?.unwrap_or_default();
-            share::sign_in_readers(port, how, &account, &password)
+            share::sign_in_readers(checked().await?, port, how, &account, &password)
                 .await
                 .map_err(refused)?
         }
@@ -1689,6 +1729,34 @@ async fn terms_of(here: &impl Here, kind: &Program, groups: &[String]) -> Result
 /// A group's own terms ([`terms_of`]), and who wrote them where, as its
 /// lender is told it after their `accounts:` or `header:` words.
 type Read = (Terms, String);
+
+/// `svrngs approve`: what answers on the port of the lend `name` approved,
+/// with `pid` the process its lender chose, and nothing else of it changed
+/// (svrn-docs SHARE_BINDING §5.4); what answers, said.
+pub fn approve(
+    here: &impl Here,
+    name: &LendName,
+    pid: Option<share::Pid>,
+) -> Result<String, Refusal> {
+    let (lend, port) = share::shared(here.root(), name)?;
+    let read = here.answering(lend.raw(), port, pid.map(|p| p.pid));
+    let (approved, answers) = share::approve((port, lend.raw()), read, pid, None)?;
+    share::reapproved(here.root(), name, approved)?;
+    Ok(format!(
+        "{name} is kept to {} now.\n",
+        what_answers(&answers)
+    ))
+}
+
+/// What answers on a port, as its lender is told it: each program in its
+/// folder, or the account another's runs as, "and" between them.
+fn what_answers(answers: &[Answer]) -> String {
+    let said: Vec<String> = answers.iter().map(ToString::to_string).collect();
+    match said.is_empty() {
+        true => "what answers on its port".into(),
+        false => said.join(" and "),
+    }
+}
 
 /// `svrngs share`'s write: `lend` declared in the data dir at `root`, with
 /// `secret` sent as [`lend::SECRET_HEADER`], or none.

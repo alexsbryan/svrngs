@@ -97,20 +97,21 @@ use http_body_util::BodyExt;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
-use crate::iroh::{Dialer, Duplex, Via};
-use crate::lend::{self, Command, Hold, Lend, LendName, Offered, Raw, Sandbox, Source};
+use crate::iroh::{Dialer, Via};
+use crate::lend::{self, Hold, Lend, LendName, Offered, Raw, Source};
 use crate::network::Whereabouts;
 use crate::register::Member;
 use crate::ring_routes::err;
 use crate::surface::AppRoute;
-use crate::uid::{Conn, Holder, Owner};
 use crate::{register::Visiting, Person, RingRail};
+use bound::Unsent;
 use eudoxia_community::app;
 use eudoxia_community::lend::{self as rules, Admit, Asked};
 use limit::{Counts, Reads, Verdict, READS_A_MINUTE};
 use svrngs_core::pass::{Label, Pass, Whose};
 use svrngs_core::token::Group;
 
+pub mod bound;
 pub mod choices;
 pub mod limit;
 pub mod tcp;
@@ -376,11 +377,6 @@ pub(crate) fn scope_aware(headers: &HeaderMap) -> bool {
 /// Where a lend's choices are said and asked ([`choices`]).
 const CHOICES: &str = "/choices/{lend}";
 
-/// How long the door waits for a lend's service to take a connection; once
-/// connected, a body takes as long as it takes, as upstream's
-/// `forward_stream` bounded only its connect.
-const CONNECT_WITHIN: Duration = Duration::from_secs(10);
-
 /// Hop-by-hop headers (RFC 9110 §7.6.1), never carried across the door in
 /// either direction, beside any a message's `Connection` names: the strip
 /// lists of `sovereign-pods/src/worker_inference_proxy.rs:74-93`, less
@@ -598,14 +594,11 @@ async fn lends(
         tracing::debug!(target: "door", actor, "door: lends refused — the dialer stands in no group held here");
         return Err(err(StatusCode::FORBIDDEN, LENDS_NOTHING));
     }
-    let mut offered = offered(&door).await?;
+    let mut offered = offered(&door, false).await?;
     // A group both stand in, as a lend's use asks ([`reached`]): one this
     // computer has left lists nothing it would refuse to open.
     let stands = |g: &str| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
     offered.retain_mut(|o| o.listed(|g| stands(g) && stands_here(&door.rail, g)));
-    // Which program a lend is kept to is its lender's to see, on their home
-    // page; a member is told only whether it opens.
-    offered.iter_mut().for_each(|o| o.command = None);
     tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends, each carried app only to its own group and each declared lend only through a group it is lent to");
     let version = crate::version::VERSION;
     Ok(Json(serde_json::json!({ "lends": offered, "version": version })).into_response())
@@ -621,8 +614,11 @@ async fn lends(
 /// Each lend is listed at the same time as every other, in declared order,
 /// so a port that drops [`answering`]'s dial holds the list one
 /// [`ANSWER_WAIT`], not one per lend (surface.rs
-/// `a_lent_page_is_not_held_by_a_computer_that_never_answers`).
-pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
+/// `a_lent_page_is_not_held_by_a_computer_that_never_answers`). Its
+/// `lender`'s own list says why one is held and what answers on its port,
+/// to approve; any other asker's, a member's or a page's, says neither: it
+/// is told whether it answers, and refused at the door while it is held.
+pub(crate) async fn offered(door: &Door, lender: bool) -> Result<Vec<Offered>, Response> {
     let declared = lend::all(&door.data_dir).map_err(|e| {
         tracing::warn!(target: "door", error = %e, "door: lends — the declarations cannot be read");
         err(
@@ -642,6 +638,16 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
         let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
         let Ok(reads) = reads else { return None };
         let (answering, held) = answering(door, &lend).await;
+        let (answers, token) = match (lender, held, lend.port()) {
+            (true, Some(_), Some(port)) => {
+                let raw = lend.raw();
+                let read = door.folders.host.transport.answering(raw, port.get(), None).await;
+                let token = (read.as_ref().ok()).and_then(|a| crate::binding::approve(&a.read, None).ok());
+                let token = token.as_ref().map(crate::share::token);
+                (Some(read.map(|a| a.shown).unwrap_or_default()), token)
+            }
+            _ => (None, None),
+        };
         let (group, groups, raw) = match lend.source {
             Source::Carried(_, group) => (Some(group.clone()), Some(vec![group]), None),
             Source::Port(_) => (None, lend.terms.audience.ids().map(<[String]>::to_vec), None),
@@ -660,8 +666,9 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             raw,
             sends: lend.terms.sends,
             answering,
-            held,
-            command: lend.terms.command.map(|c| c.name),
+            held: held.filter(|_| lender),
+            answers,
+            token,
         })
     });
     let offered = n0_future::join_all(each).await;
@@ -672,34 +679,44 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
 /// A refused one says so at once; this bounds a port that drops it.
 const ANSWER_WAIT: Duration = Duration::from_millis(300);
 
-/// Whether a lend's service takes a TCP connection on 127.0.0.1, asked as
-/// its lender lists it ([`Offered::answering`]), and whether what takes it
-/// is held ([`bound`], [`Offered::held`]), never recorded here; none for
-/// what is not a port this can ask so: a carried app, or a UDP one.
+/// Whether a lend's TCP service takes a connection where its approval
+/// names, else on 127.0.0.1, asked as its lender lists it
+/// ([`Offered::answering`]), the connection dropped unwritten; and why it is
+/// held, if it is: its lender approved nothing, or what is on its port isn't
+/// what they approved, now or since they did ([`bound::decided`],
+/// [`Offered::held`]). A UDP port is asked the second alone; a carried app,
+/// neither.
+#[expect(clippy::disallowed_methods, reason = "dial: unwritten probe")]
 async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
-    let port = match lend.source {
-        Source::Port(port) | Source::Raw(Raw::Tcp, port) => port,
-        _ => return (None, None),
+    let Some(port) = lend.port() else {
+        return (None, None);
     };
-    let dialed = tokio::net::TcpStream::connect((std::net::Ipv4Addr::LOCALHOST, port.get()));
-    let took = tokio::time::timeout(ANSWER_WAIT, dialed).await;
-    let took = took.ok().and_then(Result::ok);
-    let ends = |s: &tokio::net::TcpStream| {
-        Some(Conn {
-            local: s.local_addr().ok()?,
-            peer: s.peer_addr().ok()?,
-        })
+    let at = lend
+        .terms
+        .approved
+        .as_ref()
+        .map_or(std::net::Ipv4Addr::LOCALHOST.into(), |a| a.at);
+    let dialed = tokio::net::TcpStream::connect((at, port.get()));
+    let took = match lend.raw() {
+        Raw::Tcp => Some(
+            tokio::time::timeout(ANSWER_WAIT, dialed)
+                .await
+                .is_ok_and(|d| d.is_ok()),
+        ),
+        Raw::Udp => None,
     };
-    let net = &door.folders.host.transport;
-    let held = match took.as_ref().and_then(ends) {
-        Some(conn) => match bound(recorded(lend), &net.program(Raw::Tcp, conn).await) {
-            Bound::Held(held) => Some(held),
-            Bound::Carry | Bound::Record(..) => None,
-        },
-        None => None,
+    let read = door
+        .folders
+        .host
+        .transport
+        .read_port(lend.raw(), port.get(), None)
+        .await;
+    let held = match bound::decided(&door.data_dir, lend, read) {
+        Err(Unsent::Held(held)) => Some(held),
+        _ => lend.terms.approved.is_none().then_some(Hold::Unapproved),
     };
-    tracing::debug!(target: "door", port = port.get(), took = took.is_some(), ?held, "door: lends — whether a lend's port takes a connection, and from whose program");
-    (Some(took.is_some()), held)
+    tracing::debug!(target: "door", lend = %lend.name, ?took, ?held, "door: lends — whether a lend's port takes a connection, and whether what is there is what its lender approved");
+    (took, held)
 }
 
 /// A name as upstream's `rewrite_head` compared it (`compare_name`,
@@ -1767,131 +1784,30 @@ fn busy_words(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> String {
     )
 }
 
-/// What a connection to a lend's program may do, by the account, sandbox
-/// and program its lend recorded and those read at the connection's far
-/// end (LEND_OWNER §3, LEND_SANDBOX, LEND_PROGRAM §3).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Bound {
-    /// Carry it: the account read is the one recorded, its program the
-    /// one recorded, in the sandbox recorded or in none; or no reader here.
-    Carry,
-    /// Carry it, and record what was read: a lend from before owners,
-    /// sandboxes or programs.
-    Record(u32, Option<Holder>),
-    /// Refuse it, held as its lender is told.
-    Held(Hold),
-}
-
-/// What a lend recorded of its program: its account, sandbox and command.
-pub(crate) type Recorded<'a> = (Option<u32>, Option<&'a Sandbox>, Option<&'a Command>);
-
-/// `lend`'s [`Recorded`].
-fn recorded(lend: &Lend) -> Recorded<'_> {
-    (
-        lend.terms.owner,
-        lend.terms.sandbox.as_ref(),
-        lend.terms.command.as_ref(),
-    )
-}
-
-/// The one decider of [`Bound`]: the same account, then the same sandbox
-/// or none, since a program in none can read what svrngs keeps anyway,
-/// then the same program, by its command's digest alone. A Mac's "none of
-/// this account's" holds it as unjudged: there whose it is can't be read.
-pub(crate) fn bound(recorded: Recorded<'_>, read: &Owner) -> Bound {
-    let app = |h: &Holder| matches!(h.sandbox, Sandbox::App(_));
-    match (recorded, read) {
-        (_, Owner::NoReader) => Bound::Carry,
-        (_, Owner::NotMine | Owner::Unjudged(_)) => Bound::Held(Hold::Unjudged),
-        ((Some(was), ..), Owner::Uid(uid, _)) if was != *uid => Bound::Held(Hold::Another),
-        ((_, Some(was), _), Owner::Uid(_, Some(now))) if app(now) && *was != now.sandbox => {
-            Bound::Held(Hold::Another)
-        }
-        ((.., Some(was)), Owner::Uid(_, Some(now))) if was.digest != now.command.digest => {
-            Bound::Held(Hold::Another)
-        }
-        ((None, ..), Owner::Uid(uid, now))
-        | ((_, None, _) | (.., None), Owner::Uid(uid, now @ Some(_))) => {
-            Bound::Record(*uid, now.clone())
-        }
-        (_, Owner::Uid(..)) => Bound::Carry,
-    }
-}
-
-/// Whether the program at the far end of `conn` may have `lend`'s
-/// connection ([`bound`]), read at each one, never kept; a lend from before
-/// owners records the account read; or how it is held.
-pub(crate) async fn kept(door: &Door, lend: &Lend, conn: Conn) -> Result<(), Hold> {
-    let raw = match lend.source {
-        Source::Raw(Raw::Udp, _) => Raw::Udp,
-        _ => Raw::Tcp,
-    };
-    let read = door.folders.host.transport.program(raw, conn).await;
-    let recorded = recorded(lend);
-    let bound = bound(recorded, &read);
-    tracing::debug!(target: "door", lend = %lend.name, ?recorded, ?read, ?bound, "door: whose program answers the lend, by the account, sandbox and program it recorded");
-    match bound {
-        Bound::Carry => Ok(()),
-        Bound::Record(uid, holder) => {
-            tracing::info!(target: "door", lend = %lend.name, uid, ?holder, "door: a lend from before this records the account, sandbox and program answering it");
-            let kept = lend::mutate(&door.data_dir, &lend.name, |l| {
-                l.terms.owner = Some(uid);
-                (l.terms.sandbox, l.terms.command) = holder.map(|h| (h.sandbox, h.command)).unzip();
-            });
-            tracing::debug!(target: "door", lend = %lend.name, ?kept, "door: recorded");
-            Ok(())
-        }
-        Bound::Held(held) => {
-            tracing::warn!(target: "door", lend = %lend.name, ?recorded, ?read, ?held, "door: refused — not the account, sandbox or program the lend recorded answers it, or whose can't be told");
-            Err(held)
-        }
-    }
-}
-
 /// What someone opening `name`, lent by `lender` (none known: "its
-/// lender"), is told while it is held (LEND_OWNER §4).
+/// lender"), is told while it is held (SHARE_BINDING §5.2, §5.5).
 pub(crate) fn held_words(lender: Option<&str>, name: &LendName, held: Hold) -> String {
     let who = lender.unwrap_or("its lender");
     let whose = |at: &str| lender.map_or(format!("{at} lender’s"), |p| format!("{p}’s"));
     let (opens, lends) = (whose("Its"), whose("its"));
-    let fix = format!("Try again once {who} starts {name} again.");
+    let fix = format!("Try again once {who} chooses what it shares.");
     match held {
-        Hold::Another => format!("{opens} {name} is closed for now: another program is answering in its place on {lends} computer. {fix}"),
-        Hold::Unjudged => format!("{opens} {name} is closed for now: {lends} computer can’t tell whose program is answering for it. {fix}"),
+        Hold::Another => format!("{opens} {name} is closed for now: a program {who} didn’t choose was on its port on {lends} computer. {fix}"),
+        Hold::Unjudged => format!("{opens} {name} is closed for now: {lends} computer can’t tell which program is answering for it. Try again later."),
+        Hold::Unapproved => format!("{opens} {name} is closed for now: {who} hasn’t chosen which program it shares. {fix}"),
     }
 }
 
-/// Why a request through the door has no answer from the lend's program.
-enum Unsent {
-    /// Nothing took the connection, or answered on it.
-    Away,
-    /// Something answered that the lend doesn't carry to ([`kept`]).
-    Held(Hold),
-}
-
-/// A connection to `lend`'s service at `port`, when it takes one within
-/// [`CONNECT_WITHIN`] and [`kept`] carries to it; why not, named at warn —
-/// what [`send_to`] carries a request on.
-async fn connected(door: &Door, (lend, port): (&Lend, u16)) -> Result<Box<dyn Duplex>, Unsent> {
-    let net = &door.folders.host.transport;
-    let taken = tokio::time::timeout(CONNECT_WITHIN, net.service(port)).await;
-    let taken = taken.unwrap_or_else(|_| Err(std::io::ErrorKind::TimedOut.into()));
-    let name = lend.name.as_str();
-    let why = |e: &std::io::Error| tracing::warn!(target: "door", lend = name, port, error = %e, within = ?CONNECT_WITHIN, "door: the lend's service took no connection, refused or not in time");
-    let (tcp, conn) = taken.inspect_err(why).map_err(|_| Unsent::Away)?;
-    kept(door, lend, conn).await.map_err(Unsent::Held)?;
-    Ok(tcp)
-}
-
-/// Send `request` on a new HTTP/1 connection to `lend`'s service at
-/// `port`, driven with upgrades, and answer the response; why not, named at
-/// warn by `lend`, when nothing there takes the connection ([`connected`])
-/// or answers.
+/// Send `request` on a new HTTP/1 connection to `lend`'s service, checked
+/// ([`bound::bound`]), driven with upgrades, and answer the response; why
+/// not, named at warn by `lend`, when nothing there takes the connection,
+/// what took it isn't what its lender approved, or nothing answers.
 async fn send_to(
-    (door, lend, port): (&Door, &Lend, u16),
+    (door, lend): (&Door, &Lend),
     request: axum::http::Request<Body>,
 ) -> Result<axum::http::Response<hyper::body::Incoming>, Unsent> {
-    let tcp = connected(door, (lend, port)).await?;
+    let judged = (door.folders.host.transport.as_ref(), &*door.data_dir, lend);
+    let tcp = bound::bound(judged).await?.stream();
     let lend = lend.name.as_str();
     let handshake = hyper::client::conn::http1::handshake(hyper_util::rt::TokioIo::new(tcp));
     let shaken = handshake.await.inspect_err(|e| {
@@ -2074,7 +1990,7 @@ async fn forward(
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
 
-    let mut answer = match send_to((door, lend, port.get()), request).await {
+    let mut answer = match send_to((door, lend), request).await {
         Ok(answer) => answer,
         Err(unsent) => {
             let words = match unsent {

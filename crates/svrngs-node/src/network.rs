@@ -282,6 +282,7 @@ pub fn pick(listed: &[IpAddr], route: Option<IpAddr>) -> Option<Ipv4Addr> {
 /// The address this computer's outward route leaves from: a UDP socket
 /// connected to a public address, which sends nothing (upstream's
 /// fallback, `commonwealth-discovery/src/mesh_discovery.rs:290-298`).
+#[expect(clippy::disallowed_methods, reason = "dial: the route out")]
 pub fn route() -> Option<IpAddr> {
     let probe = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
     probe.connect("1.1.1.1:80").ok()?;

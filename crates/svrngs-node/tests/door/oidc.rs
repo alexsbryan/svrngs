@@ -50,7 +50,11 @@ fn signs_in_with(pair: &Pair, name: &str, port: u16, client: &str, secret: &str,
     });
     let fields = body.as_object_mut().unwrap();
     fields.extend(extra.as_object().unwrap().clone());
-    std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        dir.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// `u` percent-encoded enough for a query's value.

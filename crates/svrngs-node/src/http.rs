@@ -7,10 +7,12 @@
 //! TLS is given ring and this computer's verifier here.
 
 /// The client both callers use, or why this computer cannot make one.
+#[expect(clippy::disallowed_methods, reason = "dial: the one client")]
 pub fn client() -> Result<reqwest13::Client, String> {
     builder()?.build().map_err(|e| e.to_string())
 }
 
+#[expect(clippy::disallowed_methods, reason = "dial: the one client")]
 pub(crate) fn builder() -> Result<reqwest13::ClientBuilder, String> {
     // reqwest's `rustls-no-provider` asks the process for one when it
     // builds; a command that only checks a page may not have installed one.

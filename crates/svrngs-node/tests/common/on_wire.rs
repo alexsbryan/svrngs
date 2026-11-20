@@ -221,6 +221,18 @@ where
     });
 }
 
+/// `node`'s service at `port` on this test's wire a real socket there, each
+/// connection its door opens piped to one to 127.0.0.1:`port`: a stand-in a
+/// test runs on a real listener.
+pub fn forward(node: &Node, port: u16) {
+    serve(node, port, move |mut conn| async move {
+        let to = tokio::net::TcpStream::connect(("127.0.0.1", port)).await;
+        if let Ok(mut to) = to {
+            let _ = tokio::io::copy_bidirectional(&mut conn, &mut to).await;
+        }
+    });
+}
+
 /// The raw HTTP/1 request `text` asked of the routes at `api`, as a
 /// program's socket sends it: the answer's head, its status line and a
 /// line per header up to the blank line, and its body whole.
@@ -321,6 +333,37 @@ pub fn panics(key: PublicKey) {
 )]
 pub fn owns(node: &Node, port: u16, owner: svrngs_node::uid::Owner) {
     WIRE.with(|w| w.owns(node.net().id(), port, owner));
+}
+
+/// `node`'s computer reads `read` on the share's `port` from here on, as
+/// its door checks it ([`Wire::reads`]): another socket, or a failed read.
+pub fn reads(node: &Node, port: u16, read: svrngs_node::iroh::PortRead) {
+    WIRE.with(|w| w.reads(node.net().id(), port, read));
+}
+
+/// `node`'s computer reads `read` on a port it approves from here on
+/// ([`Wire::answers`]).
+pub fn answers(node: &Node, port: u16, read: svrngs_node::iroh::PortAnswer) {
+    WIRE.with(|w| w.answers(node.net().id(), port, read));
+}
+
+/// The socket `id` alone on a share's port, which took the door's
+/// connection, as a test says another program answers there.
+pub fn socket(id: u64) -> svrngs_node::iroh::PortRead {
+    let socket = svrngs_node::binding::Socket {
+        id,
+        cgroup: None,
+        holders: Default::default(),
+        at: std::net::Ipv4Addr::LOCALHOST.into(),
+        dual: false,
+    };
+    let read = svrngs_node::binding::Read {
+        boot: None,
+        lasting: true,
+        sockets: vec![socket],
+        unlisted: false,
+    };
+    Ok((read, svrngs_node::binding::Took::Waiting))
 }
 
 /// A Blobs holder at `key` on this test's wire that is the test's script

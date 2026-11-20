@@ -144,7 +144,11 @@ fn lends(dir: &Path, name: &str, port: u16) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
     let body = serde_json::json!({ "port": port, "kind": "app", "limit": 3, "groups": [NS] });
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        at.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     let secrets = lend::secret_dir(dir, &LendName::parse(name).unwrap());
     declared::write_declared_in(&secrets, "authorization", SAMS).unwrap();
 }

@@ -28,7 +28,7 @@
 //! once as long has passed.
 
 use std::collections::BTreeMap;
-use std::net::Ipv4Addr;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::num::NonZeroU16;
 use std::time::{Duration, Instant};
 
@@ -39,6 +39,7 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader, Lines};
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
+use super::bound::{Bound, Flow, Unsent};
 use super::{busy_words, find, member_for, now, Door, InFlight, Verdict, LENDS_NOTHING};
 use crate::iroh::{closed_unadmitted, key_actor, Alpn, EndpointAddr, Via, NOT_ADMITTED};
 use crate::lend::{Lend, LendName, Raw, Source};
@@ -212,25 +213,30 @@ async fn carrying(lent: Lending<'_>, raw: Option<Raw>, mut send: SendStream) {
 /// and the member's connection.
 pub(super) type Lending<'a> = (&'a Door, &'a str, &'a Lend, NonZeroU16, &'a Connection);
 
-/// A flow's first packet, let in by [`admitted`]: a socket on 127.0.0.1:0
-/// connected to the lent port alone, in a task of its own; or why not, in
-/// a person's words.
+/// A flow's first packet, let in by [`admitted`] and its port checked
+/// ([`Flow`]): a socket on 127.0.0.1:0 connected to the lent port alone, in
+/// a task of its own, checked before and after each packet it sends; or
+/// why not, in a person's words.
 async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, String> {
-    let (_, actor, lend, port, conn) = *lent;
+    let (door, actor, lend, port, conn) = *lent;
     let held = admitted(lent, &format!("udp: flow {flow}")).await?;
+    let live = live(door, lend)?;
     let unreached = |e: std::io::Error| format!("{} cannot be reached here: {e}", lend.name);
+    let at = live
+        .terms
+        .approved
+        .as_ref()
+        .map_or(Ipv4Addr::LOCALHOST.into(), |a| a.at);
     let socket = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).await;
+    let socket = Flow::open(socket.map_err(unreached)?, SocketAddr::new(at, port.get())).await;
     let socket = socket.map_err(unreached)?;
-    let to = std::net::SocketAddr::from((Ipv4Addr::LOCALHOST, port.get()));
-    socket.connect(to).await.map_err(unreached)?;
-    let ends = crate::uid::Conn {
-        local: socket.local_addr().map_err(unreached)?,
-        peer: to,
-    };
-    kept_live(lent.0, lend, ends).await?;
+    let judged = (door.folders.host.transport.as_ref(), &*door.data_dir, &live);
+    let checked = socket.check(judged).await;
+    checked.map_err(|unsent| said(door, lend, unsent))?;
     tracing::debug!(target: "door", actor, lend = %lend.name, flow, port, counted = held.is_some(), "udp: a flow opened, its socket connected to the lent port");
     let (packets, sent) = mpsc::channel(256);
-    tokio::spawn(flowing(socket, (conn.clone(), flow), sent, held));
+    let lent = (door.clone(), live);
+    tokio::spawn(flowing(lent, socket, (conn.clone(), flow), sent, held));
     Ok(packets)
 }
 
@@ -280,46 +286,74 @@ pub(super) fn live(door: &Door, lend: &Lend) -> Result<Lend, String> {
     }
 }
 
-/// Whether the program at the far end of `ends` may have a use of `lend`,
-/// as its declaration says now ([`live`], [`super::kept`]); or what its
-/// user is told while it is held ([`super::held_words`]).
-pub(super) async fn kept_live(
-    door: &Door,
-    lend: &Lend,
-    ends: crate::uid::Conn,
-) -> Result<(), String> {
+/// `lend`'s TCP port, as its declaration says now ([`live`]), connected and
+/// checked ([`super::bound::bound`]); or what its user is told while it
+/// isn't there or is held ([`said`]).
+pub(super) async fn bound_live(door: &Door, lend: &Lend) -> Result<Bound, String> {
     let live = live(door, lend)?;
-    let lender = super::lender_of(door);
-    let said = |held| super::held_words(lender.as_ref().map(|p| p.as_str()), &lend.name, held);
-    super::kept(door, &live, ends).await.map_err(said)
+    let judged = (door.folders.host.transport.as_ref(), &*door.data_dir, &live);
+    let bound = super::bound::bound(judged).await;
+    bound.map_err(|unsent| said(door, lend, unsent))
 }
 
-/// One flow: its packets to the lent port, and the port's answers to the
-/// member, until idle past [`IDLE`] or its connection closes; `held`, its
-/// person's use of the lend, ends with it.
+/// What a raw lend's user is told when nothing was sent to its port:
+/// nothing there, or why it is held ([`super::held_words`]).
+fn said(door: &Door, lend: &Lend, unsent: Unsent) -> String {
+    let lender = super::lender_of(door);
+    let lender = lender.as_ref().map(|p| p.as_str());
+    match unsent {
+        Unsent::Away => format!(
+            "{} cannot be reached here: nothing answers on its port",
+            lend.name
+        ),
+        Unsent::Held(held) => super::held_words(lender, &lend.name, held),
+    }
+}
+
+/// One flow: its packets to the lent port, each checked just before and
+/// just after it is sent ([`Flow::send`]), and the port's answers, each
+/// checked before it is carried ([`Flow::recv`]), to the member, until idle
+/// past [`IDLE`], its connection closes, or a check fails, which ends it:
+/// its next packet opens it again, refused while its lend is held, and
+/// something not approved seen holds it until its lender approves again
+/// ([`super::bound::decided`]). Its lend is read again each [`SWEEP`], so a
+/// hold another flow or the lender's list kept stops it too, as does a lend
+/// gone or unreadable. `held`, its person's use of the lend, ends with it.
 async fn flowing(
-    socket: UdpSocket,
+    (door, lend): (Door, Lend),
+    mut socket: Flow,
     (conn, flow): (Connection, u32),
     mut packets: mpsc::Receiver<Vec<u8>>,
     held: Option<InFlight>,
 ) {
-    let (mut buf, mut number, mut last) = (vec![0; LARGEST], 0, now());
+    let (mut number, mut last) = (0, now());
     let mut every = tokio::time::interval(SWEEP);
+    let judged = (door.folders.host.transport.as_ref(), &*door.data_dir, &lend);
     loop {
-        let sent = tokio::select! {
-            got = packets.recv() => match got {
-                Some(packet) => socket.send(&packet).await.map(drop),
-                None => break,
+        tokio::select! {
+            got = packets.recv() => {
+                let Some(packet) = got else { break };
+                if let Err(unsent) = socket.send(judged, packet, &mut packets).await {
+                    tracing::warn!(target: "door", flow, lend = %lend.name, ?unsent, "udp: a flow stopped — what is on the lent port isn't what its lender approved");
+                    break;
+                }
+            }
+            got = socket.recv(judged) => match got {
+                Ok(answer) => carry(&conn, flow, &mut number, answer),
+                Err(Unsent::Away) => {}
+                Err(held) => {
+                    tracing::warn!(target: "door", flow, lend = %lend.name, ?held, "udp: an answer dropped and the flow stopped — what is on the lent port isn't what its lender approved");
+                    break;
+                }
             },
-            got = socket.recv(&mut buf) => got.map(|n| carry(&conn, flow, &mut number, &buf[..n])),
-            _ = every.tick() => if past(last, IDLE, now()) { break } else { continue },
+            _ = every.tick() => {
+                let kept = live(&door, &lend).map(|l| l.terms.approved.is_some_and(|a| !a.held));
+                if past(last, IDLE, now()) || kept != Ok(true) { break } else { continue }
+            }
         };
         last = now();
-        if let Err(e) = sent {
-            tracing::debug!(target: "door", flow, error = %e, "udp: a packet not carried — the lent port refused it");
-        }
     }
-    tracing::debug!(target: "door", flow, idle = past(last, IDLE, now()), counted = held.is_some(), "udp: a flow closed, idle past its expiry or its connection gone");
+    tracing::debug!(target: "door", flow, idle = past(last, IDLE, now()), counted = held.is_some(), "udp: a flow closed, idle past its expiry, its connection gone, or held");
 }
 
 /// Why a member's computer could not open a raw lend.
@@ -388,6 +422,7 @@ pub(super) async fn opening(
 
 /// The member's loop: `local`'s packets to the lender, each flow's answers
 /// to its port on 127.0.0.1, and the lender's words of a flow refused.
+#[expect(clippy::disallowed_methods, reason = "dial: member's programs")]
 async fn member(conn: Connection, local: UdpSocket, (_send, mut lines): Opened, tell: Tell) {
     let (mut whole, mut number, mut buf) = (Fragments::new(), 0, vec![0; LARGEST]);
     loop {

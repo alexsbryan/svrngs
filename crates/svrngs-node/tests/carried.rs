@@ -261,7 +261,11 @@ async fn a_carried_app_opens_one_lend_of_its_group_and_no_more() {
         let at = svrngs_node::lend::lends_dir(dir);
         std::fs::create_dir_all(&at).unwrap();
         let body = json!({ "groups": groups, "port": 8600, "kind": "notes", "limit": 3, "refused": [], "reads": ["films"] });
-        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+        std::fs::write(
+            at.join(format!("{name}.json")),
+            svrngs_node::node::approving(&body),
+        )
+        .unwrap();
     }
     let removed: Value = http()
         .post(format!(
@@ -2002,7 +2006,11 @@ async fn reading(
     let declared = svrngs_node::lend::lends_dir(dirs[1].path());
     std::fs::create_dir_all(&declared).unwrap();
     let films = json!({ "groups": [group], "port": port, "kind": "films", "refused": [] });
-    std::fs::write(declared.join("films.json"), films.to_string()).unwrap();
+    std::fs::write(
+        declared.join("films.json"),
+        svrngs_node::node::approving(&films),
+    )
+    .unwrap();
     let root = tempfile::tempdir().unwrap();
     let at_ana = synced_in(ana, root.path(), &group).await;
     carry(&at_ana, "Reader");
@@ -2210,7 +2218,11 @@ async fn sending(
     std::fs::create_dir_all(&declared).unwrap();
     let embed = json!({ "groups": [group], "port": port, "kind": "embed", "refused": ["/admin"],
         "sends": ["POST /v1/embeddings"] });
-    std::fs::write(declared.join("embed.json"), embed.to_string()).unwrap();
+    std::fs::write(
+        declared.join("embed.json"),
+        svrngs_node::node::approving(&embed),
+    )
+    .unwrap();
     let root = tempfile::tempdir().unwrap();
     let at_ana = synced_in(ana, root.path(), &group).await;
     carry(&at_ana, "Sender");
@@ -2489,8 +2501,9 @@ async fn a_carried_taste_sends() {
         raw: None,
         audience: svrngs_node::lend::Audience::Selected(vec![group.clone()]),
         pid: None,
+        replace: false,
     };
-    let lend = svrngs_node::share::lend_of(&asked, |_| true, None, "").unwrap();
+    let lend = svrngs_node::share::lend_of(&asked, None, "").unwrap();
     assert_eq!(
         lend.terms
             .sends

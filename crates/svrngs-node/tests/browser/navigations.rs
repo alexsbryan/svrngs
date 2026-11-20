@@ -16,7 +16,11 @@ fn declare(dir: &Path, name: &str, port: u16, with: Value) {
     body.as_object_mut()
         .unwrap()
         .extend(with.as_object().unwrap().clone());
-    std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// The first line of each request `heads` kept, its method and path.

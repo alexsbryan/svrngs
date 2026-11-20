@@ -80,8 +80,7 @@ use crate::join::{Entered, NotJoined};
 use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
-use crate::share::{self, Share, ShareRefusal};
-use crate::uid::Owner;
+use crate::share::{self, Pid, Share, ShareRefusal};
 
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
@@ -436,7 +435,7 @@ enum LendChange {
 /// answer (SIGN_IN_WITH_SVRNGS §5, "Turning it on").
 async fn lent(State(at): State<Asking>) -> Response {
     let (lent, all) = match (
-        crate::door::offered(&at.door).await,
+        crate::door::offered(&at.door, true).await,
         lend::all(&at.door.data_dir),
     ) {
         (Ok(lent), Ok(all)) => (lent, all),
@@ -510,9 +509,11 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Res
         LendChange::Key(key) => {
             let (lent, terms) = lent_with_terms(&at, &c.lend).await?;
             let how = share::key_of(&lent.kind, &terms);
-            // Tried once on the lender's own service; refused, not kept.
-            if let Port(port) = lent.source {
-                let tried = share::tried(port, how, key.trim()).await;
+            // Tried once on the lender's own service, checked; refused, not kept.
+            if let (Port(port), Some((.., path))) = (lent.source.clone(), how) {
+                let to = checked(&at, &lent).await?;
+                let tried = share::tried(to, port, how, key.trim()).await;
+                tracing::debug!(target: "home", lend = %c.lend, path, ?tried, "home: a pasted key tried on the lend's service");
                 share::key_said(&lent.kind, tried).map_err(LendRefusal::closed)?;
             }
             share::keep_key(dir, &c.lend, how, key.trim())
@@ -539,6 +540,16 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Res
     Ok(match done {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         unchanged => unchanged_said(&c.lend, unchanged),
+    })
+}
+
+/// `lent`'s port, connected and checked ([`crate::door::bound`]), for
+/// what its lender sends it; or the refusal that says why nothing was.
+async fn checked(at: &Asking, lent: &lend::Lend) -> Result<crate::door::bound::Bound, Response> {
+    let judged = (at.host.transport.as_ref(), &*at.door.data_dir, lent);
+    crate::door::bound::bound(judged).await.map_err(|unsent| {
+        tracing::debug!(target: "home", lend = %lent.name, ?unsent, "home: refused — the lender's credential not sent, the lend's port not what they approved");
+        LendRefusal::closed(share::unsent_words(&lent.name, unsent))
     })
 }
 
@@ -650,12 +661,14 @@ async fn sign_in(at: &Asking, name: &LendName) -> Handled {
 /// what it gives kept ([`lend::keep_readers`]); the password nowhere.
 async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) -> Handled {
     let (lent, terms) = lent_with_terms(at, name).await?;
-    let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind, &terms)) else {
+    let (Port(port), Some(how)) = (lent.source.clone(), share::readers_of(&lent.kind, &terms))
+    else {
         tracing::debug!(target: "home", lend = %name, "home: refused — no account can be given for this program");
         let why = format!("svrngs doesn’t know how to sign in to {name}.");
         return Err(LendRefusal::closed(why));
     };
-    let line = share::sign_in_readers(port, how, account, password).await;
+    let to = checked(at, &lent).await?;
+    let line = share::sign_in_readers(to, port, how, account, password).await;
     let line = line.map_err(|why| {
         tracing::debug!(target: "home", lend = %name, why, "home: refused — the account was not let in");
         LendRefusal::closed(format!("{name} didn’t let that account in: {why}."))
@@ -698,9 +711,18 @@ async fn running(State(at): State<Asking>) -> Response {
     let lent: Vec<_> = all.into_iter().flatten().collect();
     let taken =
         |p: &NonZeroU16| p.get() == at.host.api_port || lent.iter().any(|l| l.source == Port(*p));
-    let rows: Vec<_> = (found.into_iter())
-        .filter(|p| !taken(p))
-        .map(|p| shown(p, share::well_known_kind(p).as_ref(), None, ""))
+    let ports: Vec<NonZeroU16> = found.into_iter().filter(|p| !taken(p)).collect();
+    let read = |p: NonZeroU16| at.host.transport.answering(Raw::Tcp, p.get(), None);
+    let answers = n0_future::join_all(ports.iter().map(|p| read(*p))).await;
+    let rows: Vec<_> = (ports.iter().zip(answers))
+        .map(|(p, read)| {
+            let mut row = shown(*p, share::well_known_kind(*p).as_ref(), None, "");
+            // Of the programs holding it, the first by its id, which a
+            // prefork's master's is; else whose it is; none for none read.
+            let first = read.ok().and_then(|a| a.shown.into_iter().next());
+            row["answer"] = serde_json::to_value(first).unwrap_or_default();
+            row
+        })
         .collect();
     let named: Vec<Program> = (share::rows().filter(|(at, ..)| *at == share::At::Named))
         .map(|(_, kind, _)| kind)
@@ -727,8 +749,10 @@ struct ToLend {
     /// ([`drawn`]), posted back so the lend keeps what its lender saw, not
     /// the file as it is when they press (CONTRACTS §6.8); none before.
     terms: Option<String>,
-    /// The process chosen on the port, as `svrngs share --pid` takes it.
+    /// The process the page showed on the port, and its start, as `svrngs
+    /// share --pid <pid>@<start>` takes them (SHARE_BINDING §5.1).
     pid: Option<u32>,
+    start: Option<u64>,
 }
 
 /// `POST /running`: the lend decided as `svrngs share` decides one
@@ -747,7 +771,7 @@ async fn lend_one(
     };
     // What the page sent: a port that is none, 0 or past 65535, else a
     // body the page never sends.
-    let Json(ToLend { port, name, kind, groups, terms, pid }) = asked.map_err(|e| match e {
+    let Json(ToLend { port, name, kind, groups, terms, pid, start }) = asked.map_err(|e| match e {
         JsonRejection::JsonDataError(_) => refused("That is not something running on this computer: look again, then lend it from the list.", &e),
         _ => refused("This computer could not read what the page sent: reload the page, then try again.", &e),
     })?;
@@ -784,7 +808,8 @@ async fn lend_one(
         readers: false,
         raw: None,
         audience: Audience::Selected(groups.clone()),
-        pid,
+        pid: None,
+        replace: false,
     };
     // The terms it keeps: those the page drew, posted back, so a file
     // changed since changes nothing (CONTRACTS §6.8); else its groups' own,
@@ -805,19 +830,25 @@ async fn lend_one(
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
-    let lent = share::lend_of(&asked, share::listens, known, &terms);
-    let mut lend = lent.map_err(|e| match e {
+    let said = |e: ShareRefusal| match e {
         ShareRefusal::NothingListens(_) => refused(&silent, &e),
         ShareRefusal::NoKind(_) => refused(unknown, &e),
         _ => refused(&e.to_string(), &e),
-    })?;
-    // Whose program answers, read through the transport, so a test says it.
-    let asked = tokio::net::TcpStream::connect(("127.0.0.1", port.get())).await;
-    let read = match asked.as_ref().ok().and_then(|s| crate::iroh::ends(s).ok()) {
-        Some(conn) => at.host.transport.program(Raw::Tcp, conn).await,
-        None => Owner::Unjudged("nothing answers on the port"),
     };
-    share::bound(&mut lend, read, pid).map_err(|e| refused(&e.to_string(), &e))?;
+    let mut lend = share::lend_of(&asked, known, &terms).map_err(said)?;
+    // What answers, read through the transport, so a test says it; approved
+    // only as the page showed it, never as it answers at the press, so a
+    // page that read no program on the port lends nothing.
+    let pid = pid.zip(start).map(|(pid, start)| Pid { pid, start });
+    let read = (at.host.transport).answering(Raw::Tcp, port.get(), pid.map(|p| p.pid));
+    let approved = share::approve((port, Raw::Tcp), read.await, pid, None)
+        .map_err(said)?
+        .0;
+    let unshown = format!("svrngs can’t tell which program answers on port {port}, so it can’t be lent from here: `svrngs share {port} --group <group>` lends it.");
+    lend.terms.approved = Some(approved).filter(|_| pid.is_some());
+    if lend.terms.approved.is_none() {
+        return Err(refused(&unshown, &port));
+    }
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
     let declared = stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None)));

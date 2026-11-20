@@ -45,7 +45,11 @@ fn lends(dir: &Path, name: &str, port: u16, asks: Option<&str>) {
     std::fs::create_dir_all(&at).unwrap();
     let body =
         json!({ "port": port, "kind": "app", "limit": 3, "asks": asks, "groups": [pair::NS] });
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        at.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// The app nobody named, which a probe says yes to.

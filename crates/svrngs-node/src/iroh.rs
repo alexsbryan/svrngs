@@ -47,6 +47,7 @@ use iroh_blobs::protocol::GetRequest;
 use n0_future::boxed::BoxStream;
 use tokio::time::timeout;
 
+use crate::door::bound::Unchecked;
 use crate::lend::Raw;
 use crate::uid::{Conn, Owner, Side};
 
@@ -125,8 +126,6 @@ pub struct IrohTransport {
     /// The connections this computer's acceptor took, which [`Self::fetch`]
     /// closes with those it dialled.
     pub(crate) accepted: Accepted,
-    /// The lends' programs read so far ([`crate::uid::Seen`]).
-    seen: std::sync::Arc<crate::uid::Seen>,
 }
 
 /// The connections an acceptor took, each by the key its handshake verified
@@ -144,7 +143,6 @@ impl IrohTransport {
             known_addrs: std::sync::Mutex::new(HashMap::new()),
             conns: tokio::sync::watch::Sender::new(Connections::new()),
             accepted: Accepted::default(),
-            seen: Default::default(),
         }
     }
 
@@ -286,18 +284,26 @@ pub trait Net: Fetch + std::any::Any {
     /// Each connection served as `admit` says ([`IrohAcceptor`]).
     fn accept(&self, admit: Admitting) -> IrohAcceptor;
     fn close(&self) -> Later<'_, ()>;
-    /// A connection to the lend's service at this computer's `port`
-    /// ([`crate::door`]'s upstream), and its two ends: TCP on loopback in
-    /// the product.
-    fn service(&self, port: u16) -> Later<'_, std::io::Result<(Box<dyn Duplex>, Conn)>>;
+    /// A connection to the share at this computer's `at`, unchecked, which
+    /// only [`crate::door::bound`] opens: TCP on loopback in the product.
+    fn service(&self, at: SocketAddr) -> Later<'_, std::io::Result<Unchecked>>;
     /// Whose the socket at `side` of `conn` on this computer is
     /// ([`crate::uid::owner`]): read off the async runtime in the product.
-    fn owner(&self, raw: Raw, conn: Conn, side: Side) -> Later<'_, Owner>;
-    /// Whose program answers at `conn`'s peer, and what program
-    /// ([`crate::uid::owner`] asked with what it has read): read off the
-    /// async runtime in the product.
-    fn program(&self, raw: Raw, conn: Conn) -> Later<'_, Owner>;
+    fn owner(&self, conn: Conn, side: Side) -> Later<'_, Owner>;
+    /// The `raw` sockets on a share's `port`, and what took `conn`, the
+    /// door's connection to it ([`crate::uid::port`]): read off the async
+    /// runtime in the product.
+    fn read_port(&self, raw: Raw, port: u16, conn: Option<Conn>) -> Later<'_, PortRead>;
+    /// What answers on a share's `port`, to approve, and the start now of
+    /// `pid` ([`crate::uid::answering`]): read off the async runtime.
+    fn answering(&self, raw: Raw, port: u16, pid: Option<u32>) -> Later<'_, PortAnswer>;
 }
+
+/// A share's port as [`Net::answering`] reads it.
+pub type PortAnswer = Result<crate::uid::Answering, crate::uid::Unread>;
+
+/// A share's port as [`Net::read_port`] reads it.
+pub type PortRead = Result<(crate::binding::Read, crate::binding::Took), crate::uid::Unread>;
 
 /// A connection's two halves as one, as a lend's service is spoken to.
 pub trait Duplex: tokio::io::AsyncRead + tokio::io::AsyncWrite + Send + Unpin {}
@@ -450,23 +456,22 @@ impl Net for IrohTransport {
     fn close(&self) -> Later<'_, ()> {
         Box::pin(self.endpoint.close())
     }
-    fn service(&self, port: u16) -> Later<'_, std::io::Result<(Box<dyn Duplex>, Conn)>> {
-        let to = (std::net::Ipv4Addr::LOCALHOST, port);
-        Box::pin(async move {
-            let stream = tokio::net::TcpStream::connect(to).await?;
-            let conn = ends(&stream)?;
-            Ok((Box::new(stream) as _, conn))
-        })
+    fn service(&self, at: SocketAddr) -> Later<'_, std::io::Result<Unchecked>> {
+        Box::pin(crate::door::bound::dial(at))
     }
-    fn owner(&self, raw: Raw, conn: Conn, side: Side) -> Later<'_, Owner> {
-        let read = tokio::task::spawn_blocking(move || crate::uid::owner(raw, conn, side, None));
+    fn owner(&self, conn: Conn, side: Side) -> Later<'_, Owner> {
+        let read = tokio::task::spawn_blocking(move || crate::uid::owner(conn, side));
         Box::pin(async move { read.await.unwrap_or(Owner::Unjudged("the read stopped")) })
     }
-    fn program(&self, raw: Raw, conn: Conn) -> Later<'_, Owner> {
-        let seen = self.seen.clone();
-        let read = move || crate::uid::owner(raw, conn, Side::Peer, Some(&seen));
-        let read = tokio::task::spawn_blocking(read);
-        Box::pin(async move { read.await.unwrap_or(Owner::Unjudged("the read stopped")) })
+    fn read_port(&self, raw: Raw, port: u16, conn: Option<Conn>) -> Later<'_, PortRead> {
+        let read = tokio::task::spawn_blocking(move || crate::uid::port(raw, port, conn));
+        let stopped = crate::uid::Unread::Failed("the read stopped");
+        Box::pin(async move { read.await.unwrap_or(Err(stopped)) })
+    }
+    fn answering(&self, raw: Raw, port: u16, pid: Option<u32>) -> Later<'_, PortAnswer> {
+        let read = tokio::task::spawn_blocking(move || crate::uid::answering(raw, port, pid));
+        let stopped = crate::uid::Unread::Failed("the read stopped");
+        Box::pin(async move { read.await.unwrap_or(Err(stopped)) })
     }
 }
 

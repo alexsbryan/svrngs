@@ -65,7 +65,11 @@ fn signs_in(dir: &Path, name: &str, port: u16, client: &str, secret: Option<&str
     }
     let body =
         json!({ "port": port, "kind": "media", "groups": [NS], "sign_in_with_svrngs": client });
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        at.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 async fn get(node: &Node, path: &str) -> (u16, Value) {

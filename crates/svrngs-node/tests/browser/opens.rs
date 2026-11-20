@@ -52,7 +52,11 @@ async fn app_reads_with_a_key(engine: Engine, port: u16, key: &str, path: &str) 
     let lends = svrngs_node::lend::lends_dir(dirs[1].path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "groups": [NS], "port": port, "kind": "immich", "limit": 3, "refused": [] });
-    std::fs::write(lends.join("photos.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("photos.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     let name = svrngs_node::lend::LendName::parse("photos").unwrap();
     let program = svrngs_node::lend::Program::parse("immich").unwrap();
     assert!(svrngs_node::share::keep_key(

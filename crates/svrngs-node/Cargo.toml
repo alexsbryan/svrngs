@@ -102,12 +102,15 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 qrcodegen = "=1.8.0"
 
 # libproc's read of this account's sockets (uid.rs `kernel`), svrngs's one
-# `unsafe` function, through the libc the lock already holds; and whether a
-# socket's holder is an App Sandbox app (uid.rs `mac::sandbox`), through the
-# Security.framework binding the lock already holds (rustls-platform-verifier's).
+# `unsafe` function, through the libc the lock already holds.
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "0.2"
-security-framework = "3.7"
+
+# sock_diag's dump of a share's port (uid.rs `diag`), its answer parsed in
+# safe Rust: the netlink socket the lock already holds through the room's
+# netdev 0.45.0 (iroh 1.4.2's netwatch holds 0.9.0 beside it).
+[target.'cfg(target_os = "linux")'.dependencies]
+netlink-sys = "=0.8.8"
 
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a

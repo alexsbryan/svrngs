@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 //! A card runs: the stand-in pulled by digest, started rootless, healthy by
 //! its own healthcheck, snapshotted, stopped, restored and healthy again,
 //! its state the same across the restore, and an app left paused stopped

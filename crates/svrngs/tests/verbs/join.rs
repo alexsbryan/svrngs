@@ -682,7 +682,11 @@ async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
     let lends = svrngs_node::lend::lends_dir(ana.dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let music = serde_json::json!({ "port": 4533, "kind": "navidrome", "limit": 3, "groups": [house.id()] });
-    std::fs::write(lends.join("music.json"), music.to_string()).unwrap();
+    std::fs::write(
+        lends.join("music.json"),
+        svrngs_node::node::approving(&music),
+    )
+    .unwrap();
     let alex = computer(&wire, 3).await;
     made::join_group(&alex.node, &link, &name("alex"))
         .await
@@ -958,15 +962,16 @@ impl cli::Here for Older {
             .unwrap();
         Ok((answer.status().is_success(), String::new()))
     }
-    fn listens(&self, _: std::num::NonZeroU16) -> bool {
-        unreachable!("a join probes no port")
-    }
-    fn owner(
+    fn answering(
         &self,
-        _: Option<svrngs_node::lend::Raw>,
+        _: svrngs_node::lend::Raw,
         _: std::num::NonZeroU16,
-    ) -> svrngs_node::uid::Owner {
-        unreachable!("a join probes no port")
+        _: Option<u32>,
+    ) -> crate::Answered {
+        unreachable!("a join reads no port")
+    }
+    async fn bound(&self, _: &svrngs_node::lend::Lend) -> crate::Checked {
+        unreachable!("a join dials no port")
     }
     fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {
         unreachable!("a join asks nothing at the terminal")

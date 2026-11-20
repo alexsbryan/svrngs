@@ -1,123 +1,109 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 use super::*;
-
-/// The command `ran` makes, as [`held`] reads it.
-fn command(ran: impl IntoIterator<Item = Vec<Vec<u8>>>) -> Command {
-    held(Sandbox::No, ran, Vec::new()).command
-}
 
 fn at(addr: &str) -> SocketAddr {
     addr.parse().unwrap()
 }
 
-fn conn(local: &str, peer: &str) -> Conn {
-    Conn {
-        local: at(local),
-        peer: at(peer),
+/// One `inet_diag_msg` as sock_diag answers it, `family` 2 or 10, its
+/// local and remote ports and addresses, cookie, uid and inode, then a
+/// `INET_DIAG_CGROUP_ID` attribute when `cgroup` is given, behind an
+/// attribute svrngs passes over, as the kernel's padding is.
+fn message(
+    family: u8,
+    (local, peer): (SocketAddr, SocketAddr),
+    (cookie, uid, inode): (u64, u32, u32),
+    cgroup: Option<u64>,
+) -> Vec<u8> {
+    let ip = |a: SocketAddr| match a.ip() {
+        IpAddr::V4(v4) => [&v4.octets()[..], &[0; 12]].concat(),
+        IpAddr::V6(v6) => v6.octets().to_vec(),
+    };
+    let mut m = vec![family, 10, 0, 0];
+    m.extend(local.port().to_be_bytes());
+    m.extend(peer.port().to_be_bytes());
+    m.extend(ip(local));
+    m.extend(ip(peer));
+    m.extend([0; 4]);
+    m.extend((cookie as u32).to_ne_bytes());
+    m.extend(((cookie >> 32) as u32).to_ne_bytes());
+    m.extend([0; 12]);
+    m.extend(uid.to_ne_bytes());
+    m.extend(inode.to_ne_bytes());
+    m.extend([8, 0, 15, 0, 0, 0, 0, 0]);
+    if let Some(cgroup) = cgroup {
+        m.extend([12, 0, 21, 0]);
+        m.extend(cgroup.to_ne_bytes());
     }
+    m
 }
 
-/// The one uid among `rows` holding the socket at `side` of `c`, as the
-/// Linux reader answers it.
-fn answer(rows: &[proc_net::Row], raw: Raw, c: Conn, side: Side) -> Owner {
-    let (at, to) = ends(c, side);
-    one(rows.iter().filter(|r| holds(raw, r.0, at, to)).map(|r| r.1))
+/// `body` as one netlink message of `kind`, padded to 4 bytes.
+fn netlink(kind: u16, body: &[u8]) -> Vec<u8> {
+    let mut m = u32::try_from(16 + body.len())
+        .unwrap()
+        .to_ne_bytes()
+        .to_vec();
+    m.extend(kind.to_ne_bytes());
+    m.extend([0; 10]);
+    m.extend(body);
+    m.resize((m.len() + 3) & !3, 0);
+    m
 }
 
-/// `/proc/net/tcp` on a computer where uid 1000 dialled root's
-/// 127.0.0.1:631 from 127.0.0.1:53696, its rows for that connection as read
-/// (`python3`, 2026-11-18): the accepted socket's row is root's, the
-/// dialler's 1000's.
-const TCP: &str = "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
-  30: 0100007F:0277 0100007F:D1C0 01 00000000:00000000 00:00000000 00000000     0        0 2556494 1 00000000ff346488 20 0 0 10 -1
-  32: 0100007F:D1C0 0100007F:0277 01 00000000:00000000 00:00000000 00000000  1000        0 2550773 2 00000000cbbd1318 20 0 0 10 -1
-";
-
-/// The same computer: a listener of uid 1000's on every IPv6 address and IPv4's
-/// too, dialled on 127.0.0.1:60559 from 127.0.0.1:60810. The socket it
-/// accepted is listed in `tcp6`, its addresses IPv4 written as IPv6.
-const TCP6: &str = "  sl  local_address                         remote_address                        st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
-   5: 0000000000000000FFFF00000100007F:EC8F 0000000000000000FFFF00000100007F:ED8A 01 00000000:00000000 00:00000000 00000000  1000        0 2550777 1 000000009cb9fc24 20 0 0 10 -1
-";
-
-/// The same computer's `/proc/net/udp`: uid 193's sockets on
-/// 127.0.0.53:53 and 127.0.0.54:53, and uid 1000's connected to the first
-/// from 127.0.0.1:34077.
-const UDP: &str = "   sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode ref pointer drops
-21944: 3600007F:0035 00000000:0000 07 00000000:00000000 00:00000000 00000000   193        0 10158 2 00000000b1eafe38 0
-21944: 3500007F:0035 00000000:0000 07 00000000:00000000 00:00000000 00000000   193        0 10156 2 000000007a36108f 0
-55968: 0100007F:851D 3500007F:0035 01 00000000:00000000 00:00000000 00000000  1000        0 2550778 2 00000000400f7600 0
-";
-
-/// **The uid column answers whose each end of a connection is**
-/// (LEND_OWNER §5, 1): asked of the dialler's connection to root's 631, the
-/// far end is root's and its own end 1000's; the accepted socket of a
-/// dual-stack listener, listed in `tcp6` as an IPv4 address written as IPv6,
-/// is found; a datagram to 127.0.0.53:53 reaches resolved's socket alone.
-/// Planted, each watched failing: the two ends swapped in `ends` (the far
-/// end read 1000); the IPv6 form of an IPv4 address compared as written
-/// (the `tcp6` row missed, could not judge).
+/// **sock_diag's answer is read where it holds it** (SHARE_BINDING §5.1):
+/// the dump asked is 84 bytes, its filter the local port, going past its
+/// end when the port differs; a listener's cookie (both its words), uid,
+/// inode and cgroup are read, an IPv6 one's address and `IPV6_V6ONLY` too;
+/// a socket with no cgroup attribute reads none; `NLMSG_DONE` ends the
+/// dump, and an error, or a message cut short, refuses it. Planted, each
+/// watched failing: the cookie's high word dropped (`0x100e` for
+/// `0x1_0000_100e`); the attributes read from 68, the inode's offset (no
+/// cgroup read); `INET_DIAG_SKV6ONLY` not read (the IPv6-only one dual).
 #[test]
-fn the_uid_column_answers_whose_each_end_of_a_connection_is() {
-    let dialled = conn("127.0.0.1:53696", "127.0.0.1:631");
-    let rows = proc_net::rows(TCP).unwrap();
+fn sock_diag_s_answer_is_read_where_it_holds_it() {
+    let asked = diag::request(10, Raw::Udp, u32::MAX, 34197);
+    assert_eq!(asked.len(), 84);
+    assert_eq!((asked[16], asked[17]), (10, 17), "IPv6, UDP");
+    let filter = [12, 0, 1, 0, 11, 8, 12, 0, 0, 0, 0x95, 0x85];
     assert_eq!(
-        answer(&rows, Raw::Tcp, dialled, Side::Peer),
-        Owner::Uid(0, None)
+        &asked[72..],
+        &filter[..],
+        "S_EQ 34197, on 8 or past the end"
     );
+    let listener = (at("0.0.0.0:8000"), at("0.0.0.0:0"));
+    let v6 = (at("[::]:8000"), at("[::]:0"));
+    let mut answer = netlink(
+        20,
+        &message(2, listener, (0x1_0000_100e, 1000, 5501), Some(4242)),
+    );
+    let mut only = message(10, v6, (0x700e, 193, 5502), None);
+    only.extend([5, 0, 11, 0, 1, 0, 0, 0]);
+    answer.extend(netlink(20, &only));
+    let (mut found, done) = (Vec::new(), diag::read(&answer, &mut Vec::new()));
+    assert_eq!(done, Ok(false), "no NLMSG_DONE yet");
+    answer.extend(netlink(3, &0u32.to_ne_bytes()));
+    assert_eq!(diag::read(&answer, &mut found), Ok(true));
+    let read: Vec<_> = found
+        .iter()
+        .map(|d| (d.local, d.cookie, d.uid, d.inode, d.cgroup, d.v6only))
+        .collect();
     assert_eq!(
-        answer(&rows, Raw::Tcp, dialled, Side::Local),
-        Owner::Uid(1000, None)
+        read,
+        [
+            (listener.0, 0x1_0000_100e, 1000, 5501, Some(4242), false),
+            (v6.0, 0x700e, 193, 5502, None, true)
+        ]
     );
-    let dual = conn("127.0.0.1:60810", "127.0.0.1:60559");
-    let rows = proc_net::rows(TCP6).unwrap();
-    assert_eq!(
-        answer(&rows, Raw::Tcp, dual, Side::Peer),
-        Owner::Uid(1000, None)
+    assert!(
+        diag::read(&netlink(2, &(-22i32).to_ne_bytes()), &mut found).is_err(),
+        "NLMSG_ERROR"
     );
-    let flow = conn("127.0.0.1:34077", "127.0.0.53:53");
-    let rows = proc_net::rows(UDP).unwrap();
-    assert_eq!(
-        answer(&rows, Raw::Udp, flow, Side::Peer),
-        Owner::Uid(193, None)
+    assert!(
+        diag::read(&netlink(3, &(-22i32).to_ne_bytes()), &mut found).is_err(),
+        "DONE with an error"
     );
-}
-
-/// **What the uid column can't settle is never an answer**: a socket in
-/// TIME_WAIT, which lists uid 0 whoever held it, is passed over beside the
-/// connection that took its four numbers; a port nobody holds, and one two
-/// accounts hold, could not be judged; a line that is not a row refuses
-/// the table. Planted: TIME_WAIT kept (two accounts, could not judge).
-#[test]
-fn what_the_uid_column_can_t_settle_is_never_an_answer() {
-    let waiting = TCP.replace(
-        "  30: 0100007F:0277 0100007F:D1C0 01",
-        "  29: 0100007F:0277 0100007F:D1C0 06 00000000:00000000 00:00000000 00000000     0        0 0 1 0\n  30: 0100007F:0277 0100007F:D1C0 01",
-    );
-    let rows = proc_net::rows(&waiting.replace(
-        "00000000     0        0 2556494",
-        "00000000   999        0 2556494",
-    ))
-    .unwrap();
-    let dialled = conn("127.0.0.1:53696", "127.0.0.1:631");
-    assert_eq!(
-        answer(&rows, Raw::Tcp, dialled, Side::Peer),
-        Owner::Uid(999, None)
-    );
-    let nobody = conn("127.0.0.1:53696", "127.0.0.1:632");
-    assert!(matches!(
-        answer(&rows, Raw::Tcp, nobody, Side::Peer),
-        Owner::Unjudged(_)
-    ));
-    let shared = UDP
-        .replace("3600007F:0035", "00000000:0035")
-        .replace("   193        0 10158", "  1001        0 10158");
-    let flow = conn("127.0.0.1:34077", "127.0.0.53:53");
-    let rows = proc_net::rows(&shared).unwrap();
-    assert_eq!(
-        answer(&rows, Raw::Udp, flow, Side::Peer),
-        Owner::Unjudged("sockets of more than one account at that end")
-    );
-    assert!(proc_net::rows(&format!("{TCP}  33: not a row\n")).is_err());
+    assert!(diag::read(&answer[..40], &mut found).is_err(), "cut short");
 }
 
 /// The `socket_fdinfo` `PROC_PIDFDSOCKETINFO` answered for a TCP socket that
@@ -131,12 +117,17 @@ fn record(protocol: &str) -> Vec<u8> {
     hex::decode(hex.trim()).unwrap()
 }
 
-/// **libproc's records are read where they hold it** (LEND_OWNER §5, 2): a
-/// captured TCP socket's local and foreign address; a UDP socket's, bound
-/// and connected to none; a socket of neither, none; the `proc_bsdinfo` a
-/// process read of itself, uid 502, and a record of another length, none.
-/// Planted, each watched failing: the local and foreign addresses' offsets
-/// swapped (the ends read backwards); the uid read at 24, `pbi_gid` (20).
+/// **libproc's records are read where they hold it** (LEND_OWNER §5, 2;
+/// SHARE_BINDING §5.1): a captured TCP socket's local and foreign address
+/// and its handle; a UDP socket's, bound and connected to none, and the same
+/// with both `insi_vflag` flags on every address, read as IPv6's and dual;
+/// a socket of neither, none; the `proc_bsdinfo` a process read of itself,
+/// uid 502, its parent and its start in 2026, and a record of another
+/// length, none; a `proc_vnodepathinfo`'s folder. Planted, each watched
+/// failing: the local and foreign addresses' offsets swapped (the ends read
+/// backwards); the uid read at 24, `pbi_gid` (20); the handle read at 136,
+/// the `socket_info`'s own start, not `socket_fdinfo`'s (another handle);
+/// both flags read as IPv4 (the dual socket read as 0.0.0.0, not dual).
 #[test]
 fn libproc_s_records_are_read_where_they_hold_it() {
     assert_eq!(
@@ -144,35 +135,55 @@ fn libproc_s_records_are_read_where_they_hold_it() {
         record::SOCKET_LEN,
         "the capture's length"
     );
-    let tcp = record::socket(&record("tcp"));
+    let mut tcp = record("tcp");
+    tcp[160..168].copy_from_slice(&0x602d_d91e_a0a6_f331u64.to_ne_bytes());
     let dialled = (at("127.0.0.1:61126"), at("127.0.0.1:61125"));
-    assert_eq!(tcp, Some((Raw::Tcp, dialled)));
-    let udp = record::socket(&record("udp"));
     assert_eq!(
-        udp,
-        Some((Raw::Udp, (at("127.0.0.1:63655"), at("0.0.0.0:0"))))
+        record::socket(&tcp),
+        Some((Raw::Tcp, 0x602d_d91e_a0a6_f331, dialled, false))
     );
+    let udp = record::socket(&record("udp"));
+    let bound = (at("127.0.0.1:63655"), at("0.0.0.0:0"));
+    assert_eq!(udp, Some((Raw::Udp, 0, bound, false)));
+    // The same socket on every IPv6 address, taking IPv4's too: both flags.
+    let mut dual = record("udp");
+    dual[288] = 3;
+    dual[312..328].fill(0);
+    let every = (at("[::]:63655"), at("[::]:0"));
+    assert_eq!(record::socket(&dual), Some((Raw::Udp, 0, every, true)));
     let mut unix = record("tcp");
     unix[256..260].copy_from_slice(&0u32.to_ne_bytes());
     assert_eq!(record::socket(&unix), None);
-    let bsd = hex::decode(include_str!("fixtures/proc_bsdinfo.hex").trim()).unwrap();
+    // The capture's `proc_bsdinfo`, then a `proc_uniqidentifierinfo`: its
+    // UUID, then its unique id.
+    let mut bsd = hex::decode(include_str!("fixtures/proc_bsdinfo.hex").trim()).unwrap();
+    bsd.extend([[0; 16].as_slice(), &2_853_096u64.to_ne_bytes(), &[0; 32]].concat());
+    assert_eq!(record::unique(&bsd), Some(2_853_096));
+    assert_eq!(record::unique(&bsd[..136]), None);
     assert_eq!(record::uid(&bsd), Some(502));
     assert_eq!(record::uid(&bsd[..128]), None);
+    assert_eq!(record::ppid(&bsd), Some(75476));
+    let year = 1_767_225_600..1_798_761_600;
+    let start = record::start(&bsd).map(|us| us / 1_000_000);
+    assert!(start.is_some_and(|s| year.contains(&s)), "{start:?}");
+    assert_eq!(record::start(&bsd[..128]), None);
+    let mut vnode = vec![0u8; record::VNODE_LEN];
+    vnode[152..166].copy_from_slice(b"/Users/a/dev/g");
+    assert_eq!(record::cwd(&vnode), Some("/Users/a/dev/g".into()));
+    assert_eq!(record::cwd(&vnode[..100]), None);
 }
 
-/// **This computer answers for a connection and a flow made here**: a
-/// listener and the socket that dialled it, each end ours, the uid that
-/// owns the folder this test made, which [`mine`] says too; a UDP socket and
-/// one connected to it, ours. On a Mac also: a connection its listener
-/// accepts 30 ms late, in no process's files until then, found within
-/// [`ACCEPT_WITHIN`]; one never accepted is not this account's; a port of no
-/// socket of ours is not. Read as this computer reads them, so it passes on
-/// each only with its reader right. Planted on the Mac, watched failing:
-/// one scan, no look again (the late accept not this account's); errno
-/// not cleared (a process with no files made the scan unjudged).
+/// **This computer answers whose each end of a connection made here is**:
+/// a listener and the socket that dialled it, each end ours, the uid that
+/// owns the folder this test made, which [`mine`] says too. On a Mac also:
+/// a connection its listener accepts 30 ms late, in no process's files
+/// until then, found within [`ACCEPT_WITHIN`]; one never accepted is not
+/// this account's. Read as this computer reads them, so it passes on each
+/// only with its reader right. Planted on the Mac, watched failing: one
+/// scan, no look again (the late accept not this account's).
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[test]
-fn this_computer_answers_for_a_connection_made_here() {
+fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
     use std::os::unix::fs::MetadataExt as _;
     let dir = tempfile::tempdir().unwrap();
     let uid = std::fs::metadata(dir.path()).unwrap().uid();
@@ -184,35 +195,8 @@ fn this_computer_answers_for_a_connection_made_here() {
         local: dialled.local_addr().unwrap(),
         peer: dialled.peer_addr().unwrap(),
     };
-    assert_eq!(
-        owner(Raw::Tcp, made, Side::Peer, None),
-        Owner::Uid(uid, None)
-    );
-    assert_eq!(
-        owner(Raw::Tcp, made, Side::Local, None),
-        Owner::Uid(uid, None)
-    );
-    let service = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
-    let flow = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
-    flow.connect(service.local_addr().unwrap()).unwrap();
-    let sent = Conn {
-        local: flow.local_addr().unwrap(),
-        peer: service.local_addr().unwrap(),
-    };
-    assert_eq!(
-        owner(Raw::Udp, sent, Side::Peer, None),
-        Owner::Uid(uid, None)
-    );
-    // This test's own sockets, asked with what is kept: its program, this
-    // test, in no sandbox, read once.
-    let seen = Seen::default();
-    let tcp = owner(Raw::Tcp, made, Side::Peer, Some(&seen));
-    let Owner::Uid(read, Some(holder)) = &tcp else {
-        panic!("{tcp:?}")
-    };
-    assert_eq!((*read, &holder.sandbox), (uid, &Sandbox::No));
-    assert!(holder.pids.contains(&std::process::id()), "{holder:?}");
-    assert_eq!(owner(Raw::Udp, sent, Side::Peer, Some(&seen)), tcp);
+    assert_eq!(owner(made, Side::Peer), Owner::Uid(uid));
+    assert_eq!(owner(made, Side::Local), Owner::Uid(uid));
     #[cfg(target_os = "macos")]
     {
         let late = std::thread::spawn(move || {
@@ -224,237 +208,104 @@ fn this_computer_answers_for_a_connection_made_here() {
             local: queued.local_addr().unwrap(),
             peer: queued.peer_addr().unwrap(),
         };
-        assert_eq!(
-            owner(Raw::Tcp, queued, Side::Peer, None),
-            Owner::Uid(uid, None),
-            "accepted late"
-        );
+        assert_eq!(owner(queued, Side::Peer), Owner::Uid(uid), "accepted late");
         let (listener, _kept) = late.join().unwrap().unwrap();
         let never = std::net::TcpStream::connect(listener.local_addr().unwrap()).unwrap();
         let never = Conn {
             local: never.local_addr().unwrap(),
             peer: never.peer_addr().unwrap(),
         };
-        assert_eq!(
-            owner(Raw::Tcp, never, Side::Peer, None),
-            Owner::NotMine,
-            "never accepted"
-        );
-        let nobody = Conn {
-            local: sent.local,
-            peer: at("127.0.0.1:1"),
-        };
-        assert_eq!(owner(Raw::Udp, nobody, Side::Peer, None), Owner::NotMine);
-        // A process of ours with no open files, which libproc answers 0
-        // for, as it does a failure: the whole scan still answers.
-        let mut bare = std::process::Command::new("/bin/sh")
-            .args(["-c", "exec 0<&- 1>&- 2>&- /bin/sleep 5"])
-            .spawn()
-            .unwrap();
-        std::thread::sleep(std::time::Duration::from_millis(200));
-        let scanned = owner(Raw::Udp, nobody, Side::Peer, None);
-        bare.kill().unwrap();
-        bare.wait().unwrap();
-        assert_eq!(scanned, Owner::NotMine, "a process with no files");
+        assert_eq!(owner(never, Side::Peer), Owner::NotMine, "never accepted");
     }
 }
 
-/// **A Flatpak is read by the app its root names** (LEND_SANDBOX): a
-/// process's `/proc/<pid>` whose root holds the `.flatpak-info` read on the
-/// Fedora box (2026-11-19, sabnzbd) is that app, whichever instance; one
-/// whose root holds none is in no sandbox; one whose root is gone can't be
-/// judged, never none; one naming no app can't be judged. Planted, watched
-/// failing: `instance-id=` read for the app (the second run another app).
-#[test]
-fn a_flatpak_is_read_by_the_app_its_root_names() {
-    let info = |instance: &str| {
-        format!("[Application]\nname=org.sabnzbd.sabnzbd\nruntime=runtime/org.freedesktop.Platform/x86_64/26.08\n\n[Instance]\ninstance-id={instance}\napp-path=/home/a/.local/share/flatpak/app/org.sabnzbd.sabnzbd/x86_64/stable/c241/files\n")
-    };
-    let proc = tempfile::tempdir().unwrap();
-    std::fs::create_dir(proc.path().join("root")).unwrap();
-    let sabnzbd = Ok(Sandbox::App("org.sabnzbd.sabnzbd".into()));
-    for instance in ["1244589967", "839627432"] {
-        std::fs::write(proc.path().join("root/.flatpak-info"), info(instance)).unwrap();
-        assert_eq!(proc_net::flatpak(proc.path()), sabnzbd, "run {instance}");
-    }
-    std::fs::write(proc.path().join("root/.flatpak-info"), "[Application]\n").unwrap();
-    assert!(proc_net::flatpak(proc.path()).is_err(), "no app named");
-    std::fs::remove_file(proc.path().join("root/.flatpak-info")).unwrap();
-    assert_eq!(proc_net::flatpak(proc.path()), Ok(Sandbox::No));
-    std::fs::remove_dir(proc.path().join("root")).unwrap();
-    assert!(proc_net::flatpak(proc.path()).is_err(), "a process gone");
-}
-
-/// **The sockets a connection reaches are told apart by inode, and agree
-/// or say nothing**: each `/proc/net` row keeps its inode; the holders of
-/// the sockets there, one program, are it; two sandboxes or programs, or
-/// none read, can't be judged. Planted, watched failing: the inode read
-/// from the ninth field (the timeout, 0); `alike` taking the first said.
-#[test]
-fn the_sockets_a_connection_reaches_agree_or_say_nothing() {
-    use crate::node::holder;
-    let rows = proc_net::rows(TCP).unwrap();
-    assert_eq!((rows[0].2, rows[1].2), (2556494, 2550773));
-    let said = |all: Vec<Read>| proc_net::alike(all.into_iter(), "none");
-    let app = || holder(Sandbox::App("org.sabnzbd.sabnzbd".into()), "sabnzbd");
-    let none = |name| holder(Sandbox::No, name);
-    assert_eq!(said(vec![Ok(app()), Ok(app())]), Ok(app()));
-    assert_eq!(said(vec![Ok(none("serve"))]), Ok(none("serve")));
-    assert!(
-        said(vec![Ok(none("sabnzbd")), Ok(app())]).is_err(),
-        "two sandboxes"
-    );
-    assert!(
-        said(vec![Ok(none("serve")), Ok(none("other"))]).is_err(),
-        "two programs"
-    );
-    assert_eq!(said(vec![]), Err("none"));
-    assert!(said(vec![Ok(app()), Err("unread")]).is_err());
-}
-
-/// **A sandbox is read once for what a taker must make anew** (LEND_SANDBOX):
-/// asked again at the same key, `Seen` answers what it kept without
-/// reading; at another key it reads; a read that failed is not kept; full,
-/// it empties. And a Mac's key: the `proc_bsdinfo` capture's start, in
-/// 2026, none for a record of another length. Planted, watched failing:
-/// nothing kept (read twice); never emptied (4097 kept); the start read at
-/// 112 (not in 2026).
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-#[test]
-fn a_sandbox_is_read_once_for_what_a_taker_must_make_anew() {
-    let seen = Seen::default();
-    let reads = std::cell::Cell::new(0);
-    let read = |holder: Read| {
-        reads.set(reads.get() + 1);
-        holder
-    };
-    let no = || crate::node::holder(Sandbox::No, "serve");
-    assert_eq!(seen.get_or((7, 0), || read(Ok(no()))), Ok(no()));
-    assert_eq!(seen.get_or((7, 0), || read(Err("again"))), Ok(no()));
-    assert_eq!(reads.get(), 1, "kept, not read again");
-    assert!(seen.get_or((8, 0), || read(Err("unread"))).is_err());
-    assert_eq!(seen.get_or((8, 0), || read(Ok(no()))), Ok(no()));
-    assert_eq!(reads.get(), 3, "a failed read not kept");
-    for pid in 0..KEPT as u64 + 1 {
-        let _ = seen.get_or((pid, 1), || Ok(no()));
-    }
-    assert!(seen.0.lock().unwrap().len() <= KEPT, "emptied when full");
-    let bsd = hex::decode(include_str!("fixtures/proc_bsdinfo.hex").trim()).unwrap();
-    let year = 1_767_225_600..1_798_761_600;
-    let start = record::start(&bsd).map(|us| us / 1_000_000);
-    assert!(start.is_some_and(|s| year.contains(&s)), "{start:?}");
-    assert_eq!(record::start(&bsd[..128]), None);
-}
-
-/// **A program is its processes' commands, whatever their titles**
-/// (LEND_PROGRAM §2, §6): a process's command is its executable's path and
-/// its arguments past the first, a title's NUL padding passed over, so an
-/// nginx master and worker, their titles in their first argument, are one
-/// program, and two holders of one command count once; a holder running
-/// another command is another program; an executable an update replaced
-/// (` (deleted)`) is read at its path; a Mac's `KERN_PROCARGS2` answer is
-/// read past its path's padding, up to its count, its environment never.
-/// Planted, each watched failing: ` (deleted)` not stripped (two programs);
-/// the count not kept to (the environment read as arguments).
-#[test]
-fn a_program_is_its_processes_commands_whatever_their_titles() {
-    let proc = |exe: &str, cmdline: &[u8]| {
-        let proc = tempfile::tempdir().unwrap();
-        std::os::unix::fs::symlink(exe, proc.path().join("exe")).unwrap();
-        std::fs::write(proc.path().join("cmdline"), cmdline).unwrap();
-        proc_net::ran(proc.path()).unwrap()
-    };
-    let nginx = "/usr/bin/nginx";
-    let master = proc(nginx, b"nginx: master process /usr/bin/nginx\0\0\0\0\0\0");
-    let worker = proc(
-        nginx,
-        b"nginx: worker process\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-    );
-    assert_eq!(
-        (&master, &worker),
-        (&vec![nginx.as_bytes().to_vec()], &master)
-    );
-    assert_eq!(command([master.clone(), worker]), command([master.clone()]));
-    let served = b"python3\0-m\0http.server\08000\0";
-    let python = proc("/usr/bin/python3.13", served);
-    assert_eq!(
-        python,
-        proc("/usr/bin/python3.13 (deleted)", served),
-        "updated"
-    );
-    let both = command([python.clone(), master]);
-    assert_ne!(both, command([python.clone()]), "every holder counted");
-    assert_eq!(both.name, "nginx, python3.13");
-    let other = proc("/usr/bin/python3.13", b"python3\0-m\0http.server\08001\0");
-    assert_ne!(command([other]).digest, command([python]).digest);
-    let mut procargs = 3u32.to_ne_bytes().to_vec();
-    procargs.extend(b"/usr/bin/python3\0\0\0\0python3\0-m\0http.server\0PATH=/bin\0\0");
-    let args = |a: &[&str]| a.iter().map(|a| a.as_bytes().to_vec()).collect::<Vec<_>>();
-    assert_eq!(record::args(&procargs), Some(args(&["-m", "http.server"])));
-    assert_eq!(record::args(&procargs[..2]), None);
-}
-
-/// A listener on 127.0.0.1 held by this Python and, as its first argument
-/// says, by a child once it runs: `two` the same command under another
-/// title, `sleep` the `sleep` program. It prints its port and its child's
-/// pid, 0 for none, and keeps each connection it accepts.
+/// A Python program, as its first argument says: `tcp` a listener on
+/// 127.0.0.1, `two` the same with a child holding it too, `handoff` the
+/// same with a child that doesn't, to which it hands each connection it
+/// accepts, as Node cluster's primary does, the child writing `!` on it
+/// once the parent has let go; `udp` a UDP socket bound to every address
+/// alone, `reused` one with `SO_REUSEADDR`, `beside` one on 127.0.0.1 with
+/// `SO_REUSEADDR` and `SO_REUSEPORT`, as F5 binds beside it on a Mac;
+/// `dual` a UDP socket on every IPv6 address taking IPv4's too, `v6only`
+/// one taking IPv6's alone; `reuseport` a TCP listener with `SO_REUSEPORT`,
+/// and `joins` one that, the first connection it accepts, closes its
+/// listener and prints `took`; on the port its second argument names, else
+/// any. It prints its port and its child's pid (0 for none), and keeps each
+/// connection it accepts.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 const SERVE: &str = r#"
 import os, socket, sys, time
-if os.environ.pop("HELD", None):
-    time.sleep(60)
-s = socket.socket()
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind(("127.0.0.1", 0))
-s.listen(8)
-s.set_inheritable(True)
+how, port = sys.argv[1], int(sys.argv[2] or 0)
+udp = how in ("udp", "beside", "reused", "inflight", "dual", "v6only")
+six = how in ("dual", "v6only")
+s = socket.socket(socket.AF_INET6 if six else socket.AF_INET, socket.SOCK_DGRAM if udp else socket.SOCK_STREAM)
+if six:
+    s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, how == "v6only")
+if how in ("tcp", "two", "beside", "reused", "inflight"):
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+if how in ("beside", "reuseport", "joins", "inflight"):
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+if how == "deferred":
+    s.setsockopt(socket.IPPROTO_TCP, socket.TCP_DEFER_ACCEPT, 5)
+s.bind(("::" if six else "0.0.0.0" if how in ("udp", "reused") else "127.0.0.1", port))
+bound = s.getsockname()[1]
+if not udp:
+    s.listen(8)
+if how == "inflight":
+    kept, carrier = socket.socketpair()
+    socket.send_fds(kept, [b"x"], [s.fileno()])
+    s.close()
 child = 0
-if sys.argv[1] in ("two", "sleep"):
+if how == "two":
+    s.set_inheritable(True)
     ran, done = os.pipe()
     child = os.fork()
     if child == 0:
-        os.environ["HELD"] = "1"
-        if sys.argv[1] == "two":
-            os.execv(sys.executable, ["another-title"] + sys.orig_argv[1:])
-        os.execv("/bin/sleep", ["sleep", "60"])
+        os.close(ran)
+        os.write(done, b"1")
+        time.sleep(60)
+        os._exit(0)
     os.close(done)
     os.read(ran, 1)
-print(s.getsockname()[1], child, flush=True)
+if how == "handoff":
+    near, far = socket.socketpair()
+    child = os.fork()
+    if child == 0:
+        s.close()
+        while True:
+            _, fds, _, _ = socket.recv_fds(far, 1, 1)
+            far.recv(1)
+            os.write(fds[0], b"!")
+print(bound, child, flush=True)
 kept = []
 while True:
+    if udp:
+        time.sleep(60)
     kept.append(s.accept())
+    if how == "handoff":
+        taken = kept.pop()[0]
+        socket.send_fds(near, [b"x"], [taken.fileno()])
+        taken.close()
+        near.send(b"!")
+    if how == "joins":
+        s.close()
+        print("took", flush=True)
+        time.sleep(60)
 "#;
 
-/// **A program is read by its command, and a restart keeps it**
-/// (LEND_PROGRAM §2, §4, §6), as this computer reads it: a Python server
-/// read with what is kept is in no sandbox, its pid among its holders;
-/// started again with the same command, the same program; with other
-/// arguments, another. A listener a child holds too, under another title:
-/// on Linux both its holders, one program; that child is among them, as
-/// `among` asks, on a Mac by the listener it holds; this test's process is
-/// not. On Linux a child running `sleep` makes another program than the
-/// Python alone. Planted on Linux, watched failing: `holders` hashing only
-/// the first holder (the `sleep` child not counted).
+/// A running [`SERVE`], its port and its child's pid; its group killed
+/// when dropped, its child with it.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-#[test]
-fn a_program_is_read_by_its_command_and_a_restart_keeps_it() {
-    use std::io::BufRead as _;
-    use std::os::unix::process::CommandExt as _;
-    /// A running [`SERVE`], its port and its child's pid; its group
-    /// killed when dropped, its child with it.
-    struct Serving(std::process::Child, u16, u32);
-    impl Drop for Serving {
-        fn drop(&mut self) {
-            let group = format!("-{}", self.0.id());
-            let _ = std::process::Command::new("kill")
-                .args(["-9", "--", &group])
-                .status();
-            let _ = self.0.wait();
-        }
-    }
-    let serve = |how: &str| {
+struct Serving(std::process::Child, u16, u32);
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+impl Serving {
+    fn new(how: &str, port: Option<u16>) -> Self {
+        use std::io::BufRead as _;
+        use std::os::unix::process::CommandExt as _;
+        let port = port.map(|p| p.to_string()).unwrap_or_default();
         let mut python = std::process::Command::new("python3")
-            .args(["-c", SERVE, how])
+            .args(["-c", SERVE, how, &port])
             .stdout(std::process::Stdio::piped())
             .process_group(0)
             .spawn()
@@ -463,51 +314,657 @@ fn a_program_is_read_by_its_command_and_a_restart_keeps_it() {
         let out = python.stdout.take().unwrap();
         std::io::BufReader::new(out).read_line(&mut said).unwrap();
         let (port, child) = said.trim().split_once(' ').expect("a port and a pid");
-        Serving(python, port.parse().unwrap(), child.parse().unwrap())
+        Self(python, port.parse().unwrap(), child.parse().unwrap())
+    }
+
+    /// The process it runs as, by its pid and start now.
+    fn pid(&self) -> (u32, u64) {
+        (self.0.id(), start(self.0.id()).expect("its start reads"))
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+impl Drop for Serving {
+    fn drop(&mut self) {
+        let group = format!("-{}", self.0.id());
+        let _ = std::process::Command::new("kill")
+            .args(["-9", "--", &group])
+            .status();
+        let _ = self.0.wait();
+    }
+}
+
+/// What `answering` reads of `at`'s port approved, with `pid` when given.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn approved(
+    raw: Raw,
+    at: &Serving,
+    pid: Option<(u32, u64)>,
+) -> Result<binding::Approved, binding::Refused> {
+    let read = answering(raw, at.1, pid.map(|p| p.0)).expect("the port reads");
+    let chosen = pid.map(|(pid, start)| binding::Chosen {
+        pid,
+        start,
+        now: read.start,
+        parents: read.parents.clone(),
+    });
+    binding::approve(&read.read, chosen.as_ref())
+}
+
+/// `at`'s TCP port dialled and read as the door reads it, then checked
+/// against `approved`.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn carried(approved: &binding::Approved, at: &Serving) -> Result<(), binding::Held> {
+    let dialled = std::net::TcpStream::connect(("127.0.0.1", at.1)).unwrap();
+    let conn = Conn {
+        local: dialled.local_addr().unwrap(),
+        peer: dialled.peer_addr().unwrap(),
     };
-    let read = |at: &Serving| {
-        let dialled = std::net::TcpStream::connect(("127.0.0.1", at.1)).unwrap();
-        let made = Conn {
+    let (read, took) = port(Raw::Tcp, at.1, Some(conn)).expect("the port reads");
+    binding::check(Some(approved), &read, &took)
+}
+
+/// **A share's port is approved as it answers, and held once it changes**
+/// (SHARE_BINDING §5.1-§5.3, §9), as this computer reads it: a Python
+/// listener is shown as `python3` in this test's folder, approved with its
+/// own pid and start, and a connection to it carried; started again on the
+/// same port, the same command, it is held; with a stale start refused as
+/// stopped; with a sibling's pid, which holds none of its sockets, refused
+/// as another's. A listener its child holds too is approved by its parent's
+/// pid, and a connection the child accepts carried. A UDP socket is
+/// approved and its datagrams carried; one beside it on the same address
+/// (F5) holds them. Planted, each watched failing: the holder check
+/// skipped in `binding::approve` (the sibling's pid approved); on the Fedora
+/// box, the cgroup check skipped in `binding::check` (an accept in another
+/// cgroup carried, uid_tests.rs `a_listener_joined_by_reuseport...`).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn a_share_s_port_is_approved_as_it_answers_and_held_once_it_changes() {
+    let one = Serving::new("tcp", None);
+    let read = answering(Raw::Tcp, one.1, None).unwrap();
+    let shown = format!("{:?}", read.shown);
+    assert!(
+        shown.contains("python3") || shown.contains("Python"),
+        "{shown}"
+    );
+    let approved = approved(Raw::Tcp, &one, Some(one.pid())).unwrap();
+    assert_eq!(carried(&approved, &one), Ok(()));
+    // A sibling of it, which holds none of its sockets, nor an ancestor of
+    // them (this test is one: its child's sockets are its own to lend).
+    let mut sleep = std::process::Command::new("sleep")
+        .arg("30")
+        .spawn()
+        .unwrap();
+    let sibling = (sleep.id(), start(sleep.id()).unwrap());
+    let refused = super::tests::approved(Raw::Tcp, &one, Some(sibling));
+    let _ = (sleep.kill(), sleep.wait());
+    assert_eq!(refused, Err(binding::Refused::Another));
+    let stale = (one.pid().0, one.pid().1 + 1);
+    assert_eq!(
+        super::tests::approved(Raw::Tcp, &one, Some(stale)),
+        Err(binding::Refused::Stopped)
+    );
+    let port = one.1;
+    drop(one);
+    let again = Serving::new("tcp", Some(port));
+    assert_eq!(
+        carried(&approved, &again),
+        Err(binding::Held::Another),
+        "started again"
+    );
+    drop(again);
+    let two = Serving::new("two", None);
+    assert_ne!(two.2, 0, "a child");
+    let parent = super::tests::approved(Raw::Tcp, &two, Some(two.pid())).unwrap();
+    assert_eq!(carried(&parent, &two), Ok(()));
+    drop(two);
+    let udp = Serving::new("udp", None);
+    let datagrams = super::tests::approved(Raw::Udp, &udp, Some(udp.pid())).unwrap();
+    let (read, took) = super::port(Raw::Udp, udp.1, None).unwrap();
+    assert_eq!(binding::check(Some(&datagrams), &read, &took), Ok(()));
+    // A Mac lets a program of this account bind a more specific address
+    // beside a wildcard UDP socket and take its datagrams (F5): it is read,
+    // and holds them.
+    #[cfg(target_os = "macos")]
+    {
+        let beside = Serving::new("beside", Some(udp.1));
+        let (read, took) = super::port(Raw::Udp, udp.1, None).unwrap();
+        assert_eq!(read.sockets.len(), 2, "both read: {read:?}");
+        let held = binding::check(Some(&datagrams), &read, &took);
+        assert_eq!(held, Err(binding::Held::Another), "a socket beside");
+        drop(beside);
+    }
+    drop(udp);
+}
+
+/// **A connection its approved program hands to a process it started is
+/// carried** (SHARE_BINDING_REVIEWS §7 #1; Node cluster's round-robin): a
+/// listener on 127.0.0.1, approved by its pid, whose child holds no
+/// listener; it hands the door's connection to the child, which says so on
+/// it once its parent has let go, and the check made then finds the child
+/// alone holding it, and carries it. Planted on this Mac, watched failing:
+/// the acceptor alone compared, not its parents (held).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn a_connection_handed_to_a_process_its_program_started_is_carried() {
+    use std::io::Read as _;
+    let handoff = Serving::new("handoff", None);
+    assert_ne!(handoff.2, 0, "a child");
+    let approved = approved(Raw::Tcp, &handoff, Some(handoff.pid())).unwrap();
+    let mut dialled = std::net::TcpStream::connect(("127.0.0.1", handoff.1)).unwrap();
+    let conn = Conn {
+        local: dialled.local_addr().unwrap(),
+        peer: dialled.peer_addr().unwrap(),
+    };
+    dialled.read_exact(&mut [0; 1]).expect("the child has it");
+    let (read, took) = port(Raw::Tcp, handoff.1, Some(conn)).expect("the port reads");
+    let checked = binding::check(Some(&approved), &read, &took);
+    assert_eq!(checked, Ok(()), "{took:?}");
+}
+
+/// **A UDP socket on every IPv6 address is reached at 127.0.0.1 when it
+/// takes IPv4's too, and at ::1 when it doesn't** (SHARE_BINDING_REVIEWS §7
+/// #2), as this computer reads it: sock_diag's `INET_DIAG_SKV6ONLY` on
+/// Linux, libproc's `insi_vflag` on a Mac; the dual one's datagrams are
+/// carried. Planted, each watched failing: on this Mac, the approval's
+/// libproc read skipped (the IPv6-only one reached at 127.0.0.1); on the
+/// Fedora box, `INET_DIAG_SKV6ONLY` not read (the same).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn a_udp_socket_on_every_ipv6_address_is_reached_as_it_takes_ipv4_or_not() {
+    let dual = Serving::new("dual", None);
+    let approved = approved(Raw::Udp, &dual, Some(dual.pid())).unwrap();
+    assert_eq!(approved.at.to_string(), "127.0.0.1", "dual");
+    let (read, took) = port(Raw::Udp, dual.1, None).unwrap();
+    assert_eq!(binding::check(Some(&approved), &read, &took), Ok(()));
+    let alone = Serving::new("v6only", None);
+    let approved = super::tests::approved(Raw::Udp, &alone, None).unwrap();
+    assert_eq!(approved.at.to_string(), "::1", "IPv6 alone");
+}
+
+/// `how` [`SERVE`] on `port`, run in a systemd user scope of its own, so in
+/// a cgroup of its own, and its lines.
+#[cfg(target_os = "linux")]
+fn scoped(how: &str, port: u16) -> (std::process::Child, std::sync::mpsc::Receiver<String>) {
+    use std::io::BufRead as _;
+    let mut child = std::process::Command::new("systemd-run")
+        .args([
+            "--user",
+            "--scope",
+            "-q",
+            "python3",
+            "-c",
+            SERVE,
+            how,
+            &port.to_string(),
+        ])
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("systemd-run runs here");
+    let (tell, told) = std::sync::mpsc::channel();
+    let out = std::io::BufReader::new(child.stdout.take().unwrap());
+    std::thread::spawn(move || {
+        out.lines()
+            .map_while(Result::ok)
+            .for_each(|l| drop(tell.send(l)))
+    });
+    told.recv_timeout(std::time::Duration::from_secs(10))
+        .expect("it listens");
+    (child, told)
+}
+
+/// **On Linux a listener that joins with `SO_REUSEPORT` is held, and so is a
+/// connection it took before it closed** (SHARE_BINDING §5.2 (a) and (b),
+/// §9): A listens with `SO_REUSEPORT` in a scope of its own and is approved;
+/// B joins in another scope: its listener is read, and a connection is
+/// held by (a). B, having taken a connection, closes its listener: the
+/// door's check of that connection, made after it, finds only A listening,
+/// and holds it by (b), the cgroup B's. The pause between connect and check
+/// is this test's own: it checks once B says it took the connection.
+/// Planted, watched failing on the Fedora box: the cgroup check skipped in
+/// `binding::check` (B's connection carried).
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "drives systemd-run --user scopes: run on Linux by hand"]
+fn a_listener_joining_with_reuseport_is_held_and_so_is_its_accept() {
+    let port = std::net::TcpListener::bind("127.0.0.1:0")
+        .unwrap()
+        .local_addr()
+        .unwrap()
+        .port();
+    let (mut a, _) = scoped("reuseport", port);
+    let approved = binding::approve(&answering(Raw::Tcp, port, None).unwrap().read, None).unwrap();
+    let (mut b, took) = scoped("joins", port);
+    let dial = || {
+        let dialled = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
+        let conn = Conn {
             local: dialled.local_addr().unwrap(),
             peer: dialled.peer_addr().unwrap(),
         };
-        match owner(Raw::Tcp, made, Side::Peer, Some(&Seen::default())) {
-            Owner::Uid(_, Some(holder)) => holder,
-            other => panic!("{other:?}"),
-        }
+        (dialled, conn)
     };
-    let one = serve("one");
-    let first = read(&one);
-    assert_eq!(first.sandbox, Sandbox::No);
-    assert!(first.pids.contains(&one.0.id()), "{first:?}");
-    drop(one);
-    let again = serve("one");
-    assert_eq!(read(&again).command, first.command, "started again");
-    drop(again);
-    let other = serve("other");
-    assert_ne!(read(&other).command.digest, first.command.digest);
-    drop(other);
-    let two = serve("two");
-    let titled = read(&two);
-    assert!(among(&titled, two.2, Raw::Tcp, two.1), "{titled:?}");
-    assert!(!among(&titled, std::process::id(), Raw::Tcp, two.1));
-    #[cfg(target_os = "linux")]
-    {
-        let exe = std::fs::read_link(format!("/proc/{}/exe", two.0.id())).unwrap();
-        let ran = ["-c", SERVE, "two"].map(|a| a.as_bytes().to_vec());
-        let ran = std::iter::once(exe.into_os_string().into_encoded_bytes()).chain(ran);
-        assert_eq!(titled.pids.len(), 2, "{titled:?}");
-        assert_eq!(titled.command, command([ran.collect()]), "one program");
-        drop(two);
-        let slept = serve("sleep");
-        let both = read(&slept);
-        let python = proc_net::ran(std::path::Path::new(&format!("/proc/{}", slept.0.id())));
-        assert_eq!(both.pids.len(), 2, "{both:?}");
-        assert_ne!(
-            both.command,
-            command([python.unwrap()]),
-            "the child counted"
-        );
-        assert!(both.command.name.contains("sleep"), "{both:?}");
+    // Read before any connection, which B would take and then close on.
+    let (read, by) = super::port(Raw::Tcp, port, None).unwrap();
+    assert_eq!(read.sockets.len(), 2, "both listeners read");
+    let joined = binding::check(Some(&approved), &read, &by);
+    assert_eq!(joined, Err(binding::Held::Another), "(a)");
+    let wait = std::time::Duration::from_millis(300);
+    let mut held = None;
+    for _ in 0..64 {
+        let (dialled, conn) = dial();
+        if took.recv_timeout(wait).is_ok() {
+            let (read, by) = super::port(Raw::Tcp, port, Some(conn)).unwrap();
+            assert_eq!(read.sockets.len(), 1, "B's listener closed: {read:?}");
+            held = Some((binding::check(Some(&approved), &read, &by), dialled));
+            break;
+        }
     }
+    let _ = (a.kill(), b.kill(), a.wait(), b.wait());
+    let (held, _dialled) = held.expect("B took a connection within 64");
+    assert_eq!(
+        held,
+        Err(binding::Held::Another),
+        "(b): accepted in B's cgroup"
+    );
+}
+
+/// **On Linux a server that waits on the first bytes is carried**
+/// (SHARE_BINDING_REVIEWS §6 #5): a listener with `TCP_DEFER_ACCEPT` keeps
+/// the door's connection a request until data comes (tcp_minisocks.c
+/// `tcp_check_req`), listed in SYN-RECV with no cgroup; approved alone on
+/// its port, it is read as the listener's to take ([`Took::Waiting`]) and
+/// carried, and the bytes reach it. Planted, watched failing on the Fedora
+/// box: a request taken for an unread cgroup (held unjudged, as before).
+#[cfg(target_os = "linux")]
+#[test]
+fn a_server_waiting_on_the_first_bytes_is_carried_on_linux() {
+    use std::io::Write as _;
+    let deferred = Serving::new("deferred", None);
+    let read = answering(Raw::Tcp, deferred.1, None).unwrap().read;
+    let approved = binding::approve(&read, None).unwrap();
+    let mut dialled = std::net::TcpStream::connect(("127.0.0.1", deferred.1)).unwrap();
+    let conn = Conn {
+        local: dialled.local_addr().unwrap(),
+        peer: dialled.peer_addr().unwrap(),
+    };
+    let (now, took) = super::port(Raw::Tcp, deferred.1, Some(conn)).unwrap();
+    assert_eq!(took, Took::Waiting);
+    assert_eq!(binding::check(Some(&approved), &now, &took), Ok(()));
+    dialled.write_all(b"GET").unwrap();
+}
+
+/// A listener on `port` with `SO_REUSEPORT` and `TCP_DEFER_ACCEPT`, run in a
+/// systemd user scope of its own, as its stdin says: `listen`, `shut`
+/// (`shutdown`, which stops it listening and keeps it bound), and `take`
+/// (accept, and say what came first). Each said back once done.
+#[cfg(target_os = "linux")]
+const CYCLE: &str = r#"
+import socket, sys
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+s.setsockopt(socket.IPPROTO_TCP, socket.TCP_DEFER_ACCEPT, 5)
+s.bind(("127.0.0.1", int(sys.argv[1])))
+print("bound", flush=True)
+for line in sys.stdin:
+    said = line.strip()
+    if said == "listen":
+        s.listen(8)
+    elif said == "shut":
+        s.shutdown(socket.SHUT_RD)
+    elif said == "take":
+        c, _ = s.accept()
+        c.settimeout(5)
+        said = "took " + c.recv(64).decode()
+    print(said, flush=True)
+"#;
+
+/// [`CYCLE`] on `port`: a function that tells it a word and waits for it
+/// said back, and its process, to kill.
+#[cfg(target_os = "linux")]
+fn cycling(port: u16) -> (impl FnMut(&str) -> String, std::process::Child) {
+    use std::io::{BufRead as _, Write as _};
+    let mut child = std::process::Command::new("systemd-run")
+        .args([
+            "--user",
+            "--scope",
+            "-q",
+            "python3",
+            "-c",
+            CYCLE,
+            &port.to_string(),
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("systemd-run runs here");
+    let mut told = std::io::BufReader::new(child.stdout.take().unwrap()).lines();
+    let mut stdin = child.stdin.take().unwrap();
+    assert_eq!(told.next().unwrap().unwrap(), "bound");
+    let tell = move |word: &str| {
+        writeln!(stdin, "{word}").unwrap();
+        told.next().unwrap().unwrap()
+    };
+    (tell, child)
+}
+
+/// **On Linux a listener that stopped listening is read, since it may take
+/// the door's waiting connection when it listens again**
+/// (SHARE_BINDING_REVIEWS §6 #5): A and B, `SO_REUSEPORT` and
+/// `TCP_DEFER_ACCEPT`, each in a scope of its own; A approved. A stops
+/// listening, B listens alone, and the door connects: its handshake reaches
+/// B, and waits. B stops listening and A listens again: the check, made
+/// now, reads A listening and B bound, and holds it. Had it carried, B
+/// listening again takes the door's bytes: a request is made a socket by
+/// the listener its handshake reached once that one listens (tcp_ipv4.c
+/// `tcp_v4_rcv`), which this test shows. Planted, watched failing on the
+/// Fedora box: bound sockets left out of the read (the check carried).
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "drives systemd-run --user scopes: run on Linux by hand"]
+fn a_listener_that_stopped_listening_is_read_since_it_may_listen_again() {
+    use std::io::Write as _;
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let (mut a, mut a_runs) = cycling(port);
+    a("listen");
+    let approved = binding::approve(&super::port(Raw::Tcp, port, None).unwrap().0, None);
+    let approved = approved.unwrap();
+    let (mut b, mut b_runs) = cycling(port);
+    a("shut");
+    b("listen");
+    let mut dialled = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
+    let conn = Conn {
+        local: dialled.local_addr().unwrap(),
+        peer: dialled.peer_addr().unwrap(),
+    };
+    b("shut");
+    a("listen");
+    let (read, took) = super::port(Raw::Tcp, port, Some(conn)).unwrap();
+    let checked = binding::check(Some(&approved), &read, &took);
+    b("listen");
+    dialled.write_all(b"GET").unwrap();
+    let taken = b("take");
+    let _ = (a_runs.kill(), b_runs.kill(), a_runs.wait(), b_runs.wait());
+    assert_eq!(took, Took::Waiting);
+    assert_eq!(read.sockets.len(), 2, "A listening, B bound: {read:?}");
+    assert_eq!(checked, Err(binding::Held::Another));
+    assert_eq!(
+        taken, "took GET",
+        "B, listening again, took the door's bytes"
+    );
+}
+
+/// **A computer keeps its programs in cgroup v2 when `/proc/self/cgroup`
+/// has a `0::` line, and its kernel lists bound sockets from 6.8**
+/// (SHARE_BINDING_REVIEWS §6 #5, #11b): v2 alone and v1 beside v2 do, v1
+/// alone doesn't; 6.8 and later list them, 6.7 and what can't be read
+/// don't. Planted, each watched failing: any line taken for v2 (v1 alone
+/// judged by its root cgroup); 6.7 taken for one that lists them.
+#[test]
+fn a_computer_s_cgroups_and_kernel_are_read_from_their_files() {
+    assert!(super::cgroups_v2(
+        "0::/user.slice/user-1000.slice/session-2.scope\n"
+    ));
+    assert!(super::cgroups_v2(
+        "12:pids:/user.slice\n1:name=systemd:/user.slice\n0::/user.slice\n"
+    ));
+    assert!(!super::cgroups_v2(
+        "12:pids:/user.slice\n1:name=systemd:/user.slice\n"
+    ));
+    assert!(!super::cgroups_v2(""));
+    assert!(super::lists_bound("7.3.3-200.fc43.x86_64\n"));
+    assert!(super::lists_bound("6.8.0-31-generic\n"));
+    assert!(!super::lists_bound("6.7.12-200.fc39.x86_64\n"));
+    assert!(!super::lists_bound("5.14.0-427.el9.x86_64\n"));
+    assert!(!super::lists_bound(""));
+}
+
+/// **On Linux another account's listener is approved by its cookie** (§9,
+/// A3): systemd-resolved's on 5355, where it listens: read with its uid,
+/// shown as its account, approved by cookie and cgroup, and a connection
+/// to it carried; approved with another cookie, held. Planted, watched
+/// failing on the Fedora box: the cookie compare skipped in
+/// `binding::check` (the other cookie carried).
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "reads systemd-resolved's port, where one listens: run on Linux by hand"]
+fn another_account_s_listener_is_approved_by_its_cookie() {
+    let read = answering(Raw::Tcp, 5355, None).expect("5355 reads");
+    assert!(
+        !read.read.sockets.is_empty(),
+        "systemd-resolved listens on 5355 here"
+    );
+    assert!(
+        format!("{:?}", read.shown).contains("Account"),
+        "{:?}",
+        read.shown
+    );
+    let mut approved = binding::approve(&read.read, None).unwrap();
+    let dialled = std::net::TcpStream::connect(("127.0.0.1", 5355)).unwrap();
+    let conn = Conn {
+        local: dialled.local_addr().unwrap(),
+        peer: dialled.peer_addr().unwrap(),
+    };
+    let (now, took) = super::port(Raw::Tcp, 5355, Some(conn)).unwrap();
+    assert_eq!(binding::check(Some(&approved), &now, &took), Ok(()));
+    approved.sockets = approved.sockets.iter().map(|c| c + 1).collect();
+    assert_eq!(
+        binding::check(Some(&approved), &now, &took),
+        Err(binding::Held::Another)
+    );
+}
+
+/// **What the checks of a datagram cost** (SHARE_BINDING §5.2, §10): a UDP
+/// socket alone on a port, read and checked twice per datagram, as the door
+/// does before and after each, at 60 and 200 datagrams a second for five
+/// seconds each: the time each read takes, and the share of a processor
+/// they use. Printed, not asserted: run with `--nocapture`.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+#[ignore = "measures for seconds: run by hand with --nocapture"]
+#[expect(clippy::disallowed_methods, reason = "a measurement's own clock")]
+fn what_the_checks_of_a_datagram_cost() {
+    let service = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+    let port = service.local_addr().unwrap().port();
+    let approved = binding::approve(&super::port(Raw::Udp, port, None).unwrap().0, None).unwrap();
+    for rate in [60u32, 200] {
+        let (mut took, began) = (Vec::new(), std::time::Instant::now());
+        let every = std::time::Duration::from_secs(1) / rate;
+        while began.elapsed() < std::time::Duration::from_secs(5) {
+            let at = std::time::Instant::now();
+            for _ in 0..2 {
+                let (read, by) = super::port(Raw::Udp, port, None).unwrap();
+                assert_eq!(binding::check(Some(&approved), &read, &by), Ok(()));
+            }
+            took.push(at.elapsed());
+            std::thread::sleep(every.saturating_sub(at.elapsed()));
+        }
+        took.sort();
+        let (n, spent) = (took.len(), took.iter().sum::<std::time::Duration>());
+        let (median, p99) = (took[n / 2], took[n * 99 / 100]);
+        let busy = spent.as_secs_f64() / began.elapsed().as_secs_f64() * 100.0;
+        println!("{rate}/s: {n} datagrams, both checks median {median:?}, p99 {p99:?}, {busy:.1}% of a processor");
+    }
+}
+
+/// An ntstat message: its context, its type, and what follows its head.
+fn stat_message(context: u64, kind: u32, body: &[u8]) -> Vec<u8> {
+    let len = u16::try_from(16 + body.len()).unwrap();
+    [
+        &context.to_ne_bytes()[..],
+        &kind.to_ne_bytes(),
+        &len.to_ne_bytes(),
+        &[0, 0],
+        body,
+    ]
+    .concat()
+}
+
+/// A UDP socket's `SRC_DESC` (10003), `srcref` its reference: a
+/// descriptor of `len` bytes, its local address `at` (a `sockaddr_in`'s or
+/// `sockaddr_in6`'s bytes), the last to use it `pid` with unique id `upid`,
+/// of account `uid`.
+fn described(srcref: u64, at: &[u8], (pid, uid, upid): (u32, u32, u64), len: usize) -> Vec<u8> {
+    let mut d = vec![0u8; len];
+    d[..8].copy_from_slice(&upid.to_ne_bytes());
+    d[56..56 + at.len()].copy_from_slice(at);
+    d[128..132].copy_from_slice(&pid.to_ne_bytes());
+    if len >= 272 {
+        d[268..272].copy_from_slice(&uid.to_ne_bytes());
+    }
+    let head = [
+        &srcref.to_ne_bytes()[..],
+        &[0; 8],
+        &4u32.to_ne_bytes(),
+        &[0; 4],
+    ]
+    .concat();
+    stat_message(0, 10003, &[head, d].concat())
+}
+
+/// A `sockaddr_in` of `ip` and `port`.
+fn v4(ip: [u8; 4], port: u16) -> Vec<u8> {
+    [&[16, 2][..], &port.to_be_bytes(), &ip, &[0; 8]].concat()
+}
+
+/// What `Ask::Stats` reads: the room given, then each record, its length first.
+fn stats_answer(room: u32, records: &[Vec<u8>]) -> Vec<u8> {
+    let framed = records
+        .iter()
+        .map(|r| [&u32::try_from(r.len()).unwrap().to_ne_bytes()[..], r].concat());
+    [room.to_ne_bytes().to_vec()]
+        .into_iter()
+        .chain(framed)
+        .collect::<Vec<_>>()
+        .concat()
+}
+
+/// **ntstat's answer is read where it holds it, and nothing else is taken
+/// for one** (SHARE_BINDING_UDP §4.6; ntstat.h:518-555, :977-1068): each
+/// UDP socket's local address, last process by pid and unique id, and
+/// account; and why it can't be told, so the share holds: no end, an error
+/// answered, a descriptor of another length, a message past its record, an
+/// address of no family, more read than ¾ of the room less 4 KiB, and no
+/// canary, svrngs's own unbound socket, found with its pid, uid and unique
+/// id. Planted, each watched failing: the canary skipped; the length check
+/// skipped; the ¾ bound skipped.
+#[test]
+fn ntstat_s_answer_is_read_where_it_holds_it() {
+    let me = (4242, 502, 77);
+    let canary = described(1, &v4([0; 4], 0), me, 280);
+    let game = described(2, &v4([0; 4], 34197), (900, 502, 88), 280);
+    let six = [
+        &[28, 30][..],
+        &34197u16.to_be_bytes(),
+        &[0; 4],
+        &[0; 15],
+        &[1],
+        &[0; 4],
+    ]
+    .concat();
+    let rogue = described(3, &six, (901, 502, 89), 280);
+    let added = stat_message(1, 0, &[]);
+    let (ended, room) = (stat_message(2, 0, &[]), 4 << 20);
+    let read = |records: &[Vec<u8>]| record::stats(&stats_answer(room, records), me);
+    let all = [canary.clone(), game.clone(), rogue].concat();
+    let got = read(&[added.clone(), all, ended.clone()]).unwrap();
+    assert_eq!(got.len(), 3);
+    let game_read = record::Stat {
+        srcref: 2,
+        local: at("0.0.0.0:34197"),
+        pid: 900,
+        upid: 88,
+        uid: 502,
+    };
+    assert_eq!(got[1], game_read);
+    assert_eq!(got[2].local, at("[::1]:34197"));
+    let both = [canary.clone(), game.clone()].concat();
+    let none = Err("this Mac's list of UDP sockets didn't end");
+    assert_eq!(read(&[added.clone(), both.clone()]), none);
+    let refused = stat_message(2, 1, &[0; 8]);
+    let said = Err("this Mac refused to list its UDP sockets");
+    assert_eq!(read(&[added.clone(), refused]), said);
+    let other = Err("this Mac describes a UDP socket in another form");
+    let longer = described(2, &v4([0; 4], 34197), (900, 502, 88), 296);
+    assert_eq!(
+        read(&[[canary.clone(), longer].concat(), ended.clone()]),
+        other
+    );
+    let cut = both[..both.len() - 8].to_vec();
+    let past = Err("a message's length runs past its record");
+    assert_eq!(read(&[cut, ended.clone()]), past);
+    let nowhere = described(2, &[0; 28], (900, 502, 88), 280);
+    let unaddressed = Err("this Mac describes a UDP socket's address in another form");
+    assert_eq!(
+        read(&[[canary.clone(), nowhere].concat(), ended.clone()]),
+        unaddressed
+    );
+    let near = record::stats(&stats_answer(6000, &[both.clone(), ended.clone()]), me);
+    assert_eq!(
+        near,
+        Err("this Mac's list of UDP sockets came near the end of its room")
+    );
+    let theirs = Err("this Mac's list of UDP sockets doesn't hold svrngs's own");
+    assert_eq!(read(&[game.clone(), ended.clone()]), theirs);
+    let moved = described(1, &v4([0; 4], 0), (4242, 502, 78), 280);
+    assert_eq!(
+        read(&[moved, game, ended]),
+        theirs,
+        "a canary read off by its unique id"
+    );
+}
+
+/// **A UDP socket is held by the process that last used it while its pid
+/// is still that process** (SHARE_BINDING_UDP §4.6 (4)): the unique id of
+/// the process at that pid now matched to the socket's; another, or none
+/// there, holds nothing, so the share holds. Planted, watched failing: the
+/// unique id not compared (a pid used again taken as the socket's user).
+#[test]
+fn a_udp_socket_is_held_by_its_last_user_while_its_pid_is_that_process() {
+    let stat = record::Stat {
+        srcref: 2,
+        local: at("0.0.0.0:34197"),
+        pid: 900,
+        upid: 88,
+        uid: 502,
+    };
+    assert_eq!(super::last_user(&stat, Some((1, 55, 88))), Some((900, 55)));
+    assert_eq!(
+        super::last_user(&stat, Some((1, 55, 89))),
+        None,
+        "the pid used again"
+    );
+    assert_eq!(super::last_user(&stat, None), None, "no process there");
+}
+
+/// **On a Mac a UDP port is read by ntstat, as it is now, whatever keeps its
+/// sockets** (SHARE_BINDING_UDP §4.6): a socket this test binds is read on
+/// its port, at its address, held by this process by its pid and start; a
+/// program's socket bound beside the approved one, kept only in a message
+/// it sent itself and hasn't read, is read too, and holds the share.
+#[cfg(target_os = "macos")]
+#[test]
+fn a_mac_udp_port_is_read_by_ntstat_as_it_is_now() {
+    let ours = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
+    let port = ours.local_addr().unwrap().port();
+    let (read, took) = super::port(Raw::Udp, port, None).unwrap();
+    assert_eq!(took, Took::Datagram);
+    let me = (std::process::id(), start(std::process::id()).unwrap());
+    let socket = &read.sockets[..];
+    assert_eq!(socket.len(), 1, "{read:?}");
+    assert_eq!(
+        (socket[0].holders.clone(), socket[0].at),
+        ([me].into(), [127, 0, 0, 1].into())
+    );
+    let game = Serving::new("udp", None);
+    let approved = approved(Raw::Udp, &game, Some(game.pid())).unwrap();
+    let (alone, took) = super::port(Raw::Udp, game.1, None).unwrap();
+    assert_eq!(binding::check(Some(&approved), &alone, &took), Ok(()));
+    let kept = Serving::new("inflight", Some(game.1));
+    let (now, took) = super::port(Raw::Udp, game.1, None).unwrap();
+    assert_eq!(now.sockets.len(), 2, "{now:?}");
+    let held = binding::check(Some(&approved), &now, &took);
+    assert_eq!(held, Err(binding::Held::Another));
+    drop(kept);
 }

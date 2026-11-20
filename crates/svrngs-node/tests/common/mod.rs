@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 //! What the integration tests share: one copy, where accept.rs and
 //! node_sync.rs each wrote it out (REVIEW-audit-u1-auto-1).
 

@@ -131,7 +131,11 @@ fn lend(sam: &Path, lend: &str, port: u16, raw: &str) {
     std::fs::create_dir_all(&lends).unwrap();
     let groups: Vec<_> = svrngs::group::groups(sam).iter().map(|s| s.id()).collect();
     let body = json!({ "port": port, "raw": raw, "kind": "echo", "limit": 3, "groups": groups });
-    std::fs::write(lends.join(format!("{lend}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join(format!("{lend}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// Where Alex's computer opens Sam's `lend`: the room's port for its label.

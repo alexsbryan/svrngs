@@ -42,7 +42,6 @@
 //! with the proof, the token and the intent, before a lend's service sees
 //! the request ([`Sessions::strip`]).
 use crate::iroh::Net;
-use crate::lend::Raw;
 use crate::uid::{Conn, Owner, Side};
 use crate::{api::Bearer, oidc::provider::Codes};
 use axum::extract::ConnectInfo;
@@ -511,12 +510,12 @@ impl Sessions {
         let read = match from {
             Some(peer) => {
                 let local = SocketAddr::new(peer.ip(), self.port);
-                net.owner(Raw::Tcp, Conn { local, peer }, Side::Peer).await
+                net.owner(Conn { local, peer }, Side::Peer).await
             }
             None => Owner::Unjudged("no connection to read"),
         };
         let ours = match (&read, me) {
-            (Owner::Uid(uid, _), Ok(me)) => *uid == me,
+            (Owner::Uid(uid), Ok(me)) => *uid == me,
             (Owner::NoReader, _) => true,
             _ => false,
         };

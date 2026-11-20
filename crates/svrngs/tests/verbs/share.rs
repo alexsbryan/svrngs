@@ -11,7 +11,6 @@ use svrngs::cli::{self, Refusal, Refused, Said, Unjudged};
 use svrngs::share::{self, Share};
 use svrngs_node::lend::Program as LentProgram;
 use svrngs_node::node::Wire;
-use svrngs_node::uid::Owner;
 
 use crate::{computer, name, no_relay};
 
@@ -20,11 +19,6 @@ const SECRET: &str = r#"MediaBrowser Token="sams-own-1234""#;
 
 /// The port Sam's pad is lent at, nothing listening there.
 const PAD: u16 = 8123;
-
-/// The probe `share` asks whether a port listens: here, it does.
-fn listens(_: NonZeroU16) -> bool {
-    true
-}
 
 /// What `svrngs share <port> --kind <kind>` asks, nothing else said.
 fn share_of(port: u16, kind: &str) -> Share {
@@ -42,6 +36,7 @@ fn share_of(port: u16, kind: &str) -> Share {
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
         pid: None,
+        replace: false,
     }
 }
 
@@ -78,7 +73,8 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
         audience: both,
         ..share_of(PAD, "pad")
     };
-    let pad = share::lend_of(&asked, listens, None, "").unwrap();
+    let mut pad = share::lend_of(&asked, None, "").unwrap();
+    svrngs_node::node::approve(&mut pad);
     cli::share_lend(dir, &pad, Some(SECRET)).unwrap();
     let narrowed = cli::unshare(dir, &pad.name, &named(&["trip"])).unwrap();
     assert_eq!(narrowed, Said::Narrowed(pad.name.clone()));
@@ -130,7 +126,8 @@ async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     let sam = computer(&wire, 1).await;
     let made = made::new_group(&sam.node, name("house"), name("Sam"), None, &[]);
     made.await.expect("Sam makes house");
-    let pad = share::lend_of(&share_of(PAD, "pad"), listens, None, "").unwrap();
+    let mut pad = share::lend_of(&share_of(PAD, "pad"), None, "").unwrap();
+    svrngs_node::node::approve(&mut pad);
     cli::share_lend(sam.dir.path(), &pad, None).unwrap();
     let said = cli::unshare(sam.dir.path(), &pad.name, &["house".to_string()]);
     said.expect("true already: a legacy lend reaches no group");
@@ -243,8 +240,8 @@ struct Lender<'a> {
     running: crate::Running<'a>,
     typed: &'a str,
     asked: std::cell::RefCell<Vec<String>>,
-    /// Whose program each port's is, where a test says; else as `running`'s.
-    owner: Option<Owner>,
+    /// What answers on each port, where a test says; else as `running`'s.
+    answers: Option<crate::Answered>,
 }
 
 impl<'a> Lender<'a> {
@@ -254,7 +251,7 @@ impl<'a> Lender<'a> {
             running,
             typed,
             asked,
-            owner: None,
+            answers: None,
         }
     }
 }
@@ -266,13 +263,16 @@ impl cli::Here for Lender<'_> {
     async fn ask(&self, route: &str, body: &impl serde::Serialize) -> cli::Asked {
         self.running.ask(route, body).await
     }
-    fn listens(&self, port: NonZeroU16) -> bool {
-        self.running.listens(port)
+    fn answering(
+        &self,
+        raw: svrngs_node::lend::Raw,
+        port: NonZeroU16,
+        pid: Option<u32>,
+    ) -> crate::Answered {
+        (self.answers.clone()).unwrap_or_else(|| self.running.answering(raw, port, pid))
     }
-    fn owner(&self, raw: Option<svrngs_node::lend::Raw>, port: NonZeroU16) -> Owner {
-        self.owner
-            .clone()
-            .unwrap_or_else(|| self.running.owner(raw, port))
+    async fn bound(&self, lend: &svrngs_node::lend::Lend) -> crate::Checked {
+        self.running.bound(lend).await
     }
     fn prompt(&self, _: &svrngs_node::lend::LendName, asked: &str, _: bool) -> cli::Prompted {
         self.asked.borrow_mut().push(asked.to_string());
@@ -632,9 +632,10 @@ async fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
 
     // svrngs not running: no terms read, and `share` says so before it runs.
     let pad = share_of(9010, "pad");
-    let lend = share::lend_of(&pad, listens, None, "").unwrap();
+    let lend = share::lend_of(&pad, None, "").unwrap();
     let said = Said::Shared {
-        lend,
+        lend: Box::new(lend),
+        answers: Vec::new(),
         secret: false,
         accounts: None,
         client: None,
@@ -649,76 +650,213 @@ async fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
     );
 }
 
-/// **A lend keeps the account its program runs as, and on a Mac only this
-/// one's** (LEND_OWNER §4): `share 4533`, its program read as uid 4242's,
-/// is lent with that account kept beside it; read as no program of this
-/// account's, as a Mac reads another account's, it is refused, exit 1, in
-/// words that say what stopped it and the fix, and nothing is lent. The
-/// home page's Lend says the same words (svrngs-node tests/home.rs
-/// `a_program_of_another_account_is_refused_where_it_is_lent`). Planted,
-/// watched failing: `share::bound` not asked (lent, no owner kept).
+/// What answers on a port as a test says it: socket `id`, held by process
+/// `pid` started at `start`, shown as `program` in `~/dev/<program>`; `pid`'s
+/// start now `now`.
+fn answering(
+    id: u64,
+    (pid, start): (u32, u64),
+    program: &str,
+    now: Option<u64>,
+) -> crate::Answered {
+    let socket = svrngs_node::binding::Socket {
+        id,
+        cgroup: None,
+        holders: [(pid, start)].into(),
+        at: std::net::Ipv4Addr::LOCALHOST.into(),
+        dual: false,
+    };
+    let read = svrngs_node::binding::Read {
+        boot: None,
+        lasting: true,
+        sockets: vec![socket],
+        unlisted: false,
+    };
+    let shown = svrngs_node::lend::Answer::Program {
+        pid,
+        start,
+        program: program.into(),
+        folder: Some(format!("~/dev/{program}")),
+    };
+    Ok(svrngs_node::uid::Answering {
+        read,
+        parents: Default::default(),
+        start: now,
+        shown: vec![shown],
+    })
+}
+
+/// **A share is kept to what answers on its port, and says what that is**
+/// (SHARE_BINDING §5.1): `share 4533` approves the socket read there and
+/// says it is navidrome in its folder; read as another account's on a Mac,
+/// none of this account's listed, it is refused, exit 1, in words that say
+/// what stopped it and the fix, and nothing is lent; so is one that listens
+/// only on a LAN address, and a UDP one on IPv6 alone (SHARE_BINDING_REVIEWS
+/// §6 #2). The home page's Lend says the same words (svrngs-node
+/// tests/home.rs `what_the_page_lends_is_what_it_showed`). Lent, it says
+/// what svrngs checks and when it closes. Planted, each watched failing:
+/// `share::approve` not asked (lent, nothing approved); the UDP check of
+/// the address skipped (lent at ::1, which its flows can't reach).
 #[tokio::test]
-async fn a_lend_keeps_its_program_s_account_and_a_mac_only_this_one_s() {
+async fn a_share_is_kept_to_what_answers_on_its_port_and_says_what_that_is() {
     use svrngs_node::lend::{self, LendName};
     let wire = Wire::default();
     let (sam, _held) = sams_lab(&wire).await;
     let navidrome = LendName::parse("navidrome").unwrap();
     let mut theirs = Lender::of(&sam, SECRET);
-    theirs.owner = Some(Owner::NotMine);
+    let mut unlisted = answering(1, (1, 1), "navidrome", None).unwrap();
+    (unlisted.read.sockets, unlisted.read.unlisted) = (Vec::new(), true);
+    theirs.answers = Some(Ok(unlisted));
     let refused = shares(&theirs, &["4533", "--group", "Lab"])
         .await
         .unwrap_err();
-    let words = "svrngs can't lend port 4533: the program there doesn't run as you, and on a Mac svrngs can keep a lend only to programs that run as you. Run it as you, then lend it again.";
+    let words = "svrngs can't share port 4533: the program there doesn't run as you, and on a Mac svrngs can keep a share only to programs that run as you. Run it as you, then share it again.";
     assert_eq!(
         (refused.to_string().as_str(), refused.exit_code()),
         (words, 1)
     );
+    assert_eq!(
+        lend::read(sam.dir.path(), &navidrome).unwrap(),
+        None,
+        "nothing lent"
+    );
+    let at = |at: &str| {
+        let mut on = answering(1, (1, 1), "navidrome", None).unwrap();
+        on.read.sockets[0].at = at.parse().unwrap();
+        let mut lender = Lender::of(&sam, SECRET);
+        lender.answers = Some(Ok(on));
+        lender
+    };
+    let refused = shares(&at("192.168.1.5"), &["4533", "--group", "Lab"]).await;
+    let words = "svrngs can't share port 4533: the program there listens only on 192.168.1.5, and svrngs reaches a share at this computer's own address. Have it listen on 127.0.0.1, ::1 or every address, then share it again.";
+    assert_eq!(refused.unwrap_err().to_string(), words);
+    let udp = ["4533", "--udp", "--program", "navidrome", "--group", "Lab"];
+    let refused = shares(&at("::1"), &udp).await.unwrap_err().to_string();
+    let words = "svrngs can't share UDP port 4533: svrngs sends a UDP share's datagrams to 127.0.0.1, and the program there doesn't listen on it. Have it listen on 127.0.0.1, or on every address, then share it again.";
+    assert_eq!(refused, words);
     assert_eq!(
         lend::read(sam.dir.path(), &navidrome).unwrap(),
         None,
         "nothing lent"
     );
     let mut kept = Lender::of(&sam, SECRET);
-    kept.owner = Some(Owner::Uid(4242, None));
-    shares(&kept, &["4533", "--group", "Lab"])
+    kept.answers = Some(answering(0x700e, (4321, 77), "navidrome", None));
+    let said = shares(&kept, &["4533", "--group", "Lab"])
         .await
         .expect("navidrome is lent");
+    assert!(
+        said.contains("Lent navidrome: navidrome in ~/dev/navidrome. svrngs checks port 4533 before each connection it carries there. While another program is on the port, it is closed. If the program starts again, navidrome closes until you approve what runs there: `svrngs approve navidrome`."),
+        "{said}"
+    );
     let lent = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
-    assert_eq!(lent.terms.owner, Some(4242));
+    assert_eq!(
+        lent.terms.approved.map(|a| a.sockets),
+        Some([0x700e].into())
+    );
 }
 
-/// **A lend is kept to the program its lender chose** (LEND_PROGRAM §4):
-/// `share 4533 --pid 999`, no process read on the port being 999, is
-/// refused, exit 1, in words that say what to do, and nothing is lent;
-/// `--pid 4321`, one of them, is lent with its program kept, and the share
-/// says its name. Planted, watched failing: the check skipped (lent).
+/// **A share is kept to the program its lender chose** (SHARE_BINDING
+/// §5.1): `share 4533 --pid 999@1`, no socket on the port held by 999 or a
+/// child, is refused, exit 1, in the doc's words, and nothing is lent;
+/// `--pid 4321@76`, its start since another's, is refused as stopped;
+/// `--pid 4321@77` is lent. `svrngs approve` approves what answers now,
+/// with `--pid` as `share` takes it, its other fields kept. Planted,
+/// watched failing: the holder check skipped (999 lent).
 #[tokio::test]
-async fn a_lend_is_kept_to_the_program_its_lender_chose() {
-    use svrngs_node::lend::{self, LendName, Sandbox};
+async fn a_share_is_kept_to_the_program_its_lender_chose() {
+    use svrngs_node::lend::{self, LendName};
     let wire = Wire::default();
     let (sam, _held) = sams_lab(&wire).await;
     let navidrome = LendName::parse("navidrome").unwrap();
-    let mine = svrngs_node::uid::mine().unwrap();
-    let mut serve = svrngs_node::node::holder(Sandbox::No, "navidrome");
-    serve.pids = vec![4321];
     let mut lender = Lender::of(&sam, SECRET);
-    lender.owner = Some(Owner::Uid(mine, Some(serve.clone())));
+    lender.answers = Some(answering(0x700e, (4321, 77), "navidrome", Some(1)));
     let chose = |pid| ["4533", "--group", "Lab", "--pid", pid];
-    let refused = shares(&lender, &chose("999")).await.unwrap_err();
-    let words = "svrngs can't lend port 4533: process 999 isn't the program answering there now. Look at what runs on port 4533 again, then lend it.";
+    let refused = shares(&lender, &chose("999@1")).await.unwrap_err();
+    let words = "svrngs can't share port 4533: another program also listens on port 4533. Stop it, or choose that one, then share it again.";
     assert_eq!(
         (refused.to_string().as_str(), refused.exit_code()),
         (words, 1)
     );
+    lender.answers = Some(answering(0x700e, (4321, 77), "navidrome", Some(77)));
+    let stale = shares(&lender, &chose("4321@76")).await.unwrap_err();
+    let words = "svrngs can't share port 4533: that program stopped; choose it again.";
+    assert_eq!(stale.to_string(), words);
     assert_eq!(
         lend::read(sam.dir.path(), &navidrome).unwrap(),
         None,
         "nothing lent"
     );
-    let said = shares(&lender, &chose("4321"))
+    shares(&lender, &chose("4321@77"))
         .await
         .expect("navidrome is lent");
-    assert!(said.contains("Kept to navidrome as it runs now"), "{said}");
     let lent = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
-    assert_eq!(lent.terms.command, Some(serve.command));
+    assert_eq!(
+        lent.terms.approved.map(|a| a.sockets),
+        Some([0x700e].into())
+    );
+    lender.answers = Some(answering(0x800e, (5000, 90), "navidrome", Some(90)));
+    let approve =
+        cli::parse(["svrngs", "approve", "navidrome", "--pid", "5000@90"].map(String::from));
+    let said = cli::answer(approve.unwrap(), &lender, &no_relay())
+        .await
+        .unwrap();
+    assert_eq!(
+        said,
+        "navidrome is kept to navidrome in ~/dev/navidrome now.\n"
+    );
+    let again = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
+    assert_eq!(
+        again.terms.approved.clone().map(|a| a.sockets),
+        Some([0x800e].into())
+    );
+    assert_eq!(
+        (again.name, again.kind, again.terms.audience),
+        (lent.name, lent.kind, lent.terms.audience)
+    );
+}
+
+/// **A name shared from another port moves only when asked** (SHARE_BINDING
+/// §5.8; SHARE_BINDING_REVIEWS §6 #10): `share 4534 --name navidrome`, the
+/// name shared from 4533, is refused with the fix; with `--replace`, it is
+/// shared from 4534; shared as UDP from 4534, refused the same; its file
+/// unreadable, refused as that, never taken for none. Planted, each watched
+/// failing: `share::renamed` not asked (moved unasked); the port alone
+/// compared (moved to UDP unasked); an unreadable file taken for none
+/// (shared over it unasked).
+#[tokio::test]
+async fn a_name_shared_from_another_port_moves_only_when_asked() {
+    use svrngs_node::lend::{self, LendName};
+    let wire = Wire::default();
+    let (sam, _held) = sams_lab(&wire).await;
+    let lender = Lender::of(&sam, SECRET);
+    shares(&lender, &["4533", "--group", "Lab"]).await.unwrap();
+    let moved = [
+        "4534",
+        "--group",
+        "Lab",
+        "--program",
+        "navidrome",
+        "--name",
+        "navidrome",
+    ];
+    let refused = shares(&lender, &moved).await.unwrap_err();
+    let words = "navidrome is already shared from port 4533: give this one another name, or add --replace to share navidrome from here instead.";
+    assert_eq!(
+        (refused.to_string().as_str(), refused.exit_code()),
+        (words, 1)
+    );
+    let replaced = [&moved[..], &["--replace"]].concat();
+    shares(&lender, &replaced).await.expect("moved when asked");
+    let lent = lend::read(sam.dir.path(), &LendName::parse("navidrome").unwrap()).unwrap();
+    assert_eq!(lent.and_then(|l| l.port()).map(|p| p.get()), Some(4534));
+    let udp = [&moved[1..], &["4534", "--udp"]].concat();
+    let refused = shares(&lender, &udp).await.unwrap_err().to_string();
+    let words = "navidrome is already shared from port 4534: give this one another name, or add --replace to share navidrome from here instead.";
+    assert_eq!(refused, words);
+    let file = lend::lends_dir(sam.dir.path()).join("navidrome.json");
+    std::fs::write(&file, "not a lend").unwrap();
+    let refused = shares(&lender, &moved).await.unwrap_err().to_string();
+    let unkept = "navidrome can't be changed on this computer: ";
+    assert!(refused.starts_with(unkept), "{refused}");
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), "not a lend");
 }

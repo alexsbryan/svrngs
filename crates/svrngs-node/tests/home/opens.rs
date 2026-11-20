@@ -61,7 +61,11 @@ fn declare(dir: &Path, name: &str, port: u16, kind: &str, group: &str) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
     let body = json!({ "groups": [group], "port": port, "kind": kind, "limit": 3, "refused": [] });
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        at.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// What `node`'s `/v1/lends` lists of `group`.

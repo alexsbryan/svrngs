@@ -110,7 +110,9 @@ async fn a_lend_has_its_own_key_and_no_proof_reaches_the_service() {
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(
         dir.join("night.json"),
-        serde_json::json!({"port":PORT,"kind":"night","limit":3,"groups":["house"]}).to_string(),
+        svrngs_node::node::approving(
+            &serde_json::json!({"port":PORT,"kind":"night","limit":3,"groups":["house"]}),
+        ),
     )
     .unwrap();
     let name = Label::of(&signing(1).verifying_key().to_bytes(), "night").to_string();
@@ -171,7 +173,9 @@ async fn a_same_origin_redirect_is_followed_once_by_the_proof_that_asked_it() {
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(
         dir.join("canary.json"),
-        serde_json::json!({"port":PORT,"kind":"canary","limit":3,"groups":["house"]}).to_string(),
+        svrngs_node::node::approving(
+            &serde_json::json!({"port":PORT,"kind":"canary","limit":3,"groups":["house"]}),
+        ),
     )
     .unwrap();
     let name = Label::of(&signing(1).verifying_key().to_bytes(), "canary").to_string();
@@ -346,7 +350,7 @@ async fn an_open_lets_in_only_a_browser_this_account_runs() {
         let host = format!("{name}.localhost:{}", api.port());
         let headers = format!("Origin: http://{host}\r\nSec-Fetch-Site: same-origin\r\n");
         // The port every on-wire ask comes from (common/on_wire.rs `sent`).
-        on_wire::owns(&alex, 50_000, Owner::Uid(mine + 1, None));
+        on_wire::owns(&alex, 50_000, Owner::Uid(mine + 1));
         let theirs = ask(api, "POST", &host, &path, &headers, "").await;
         assert_eq!(theirs.status, 401, "{name}: {}", theirs.body);
         assert!(
@@ -356,7 +360,7 @@ async fn an_open_lets_in_only_a_browser_this_account_runs() {
             "{}",
             theirs.body
         );
-        on_wire::owns(&alex, 50_000, Owner::Uid(mine, None));
+        on_wire::owns(&alex, 50_000, Owner::Uid(mine));
         let ours = ask(api, "POST", &host, &path, &headers, "").await;
         assert_eq!(ours.status, 200, "{name}: the code unspent: {}", ours.body);
     }

@@ -65,7 +65,11 @@ fn lends(dir: &std::path::Path, group: &str, name: &str, port: u16, upload_bps: 
     if let Some(bps) = upload_bps {
         body["upload_bps"] = bps.into();
     }
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        at.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// `dir`'s computer lends `name` on `port`, of `kind`, declaring the kinds
@@ -74,7 +78,11 @@ fn declare(dir: &std::path::Path, group: &str, name: &str, port: u16, kind: &str
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
     let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "groups": [group] });
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        at.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// `path` asked of `node`'s API at the origin of the lend `at`, by a

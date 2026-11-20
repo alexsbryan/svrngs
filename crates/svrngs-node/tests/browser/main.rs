@@ -402,7 +402,11 @@ fn lend_reading(dir: &Path, name: &str, port: u16, reads: &[&str]) {
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "groups": [NS], "port": port, "kind": "k", "limit": 3, "refused": [], "reads": reads });
-    std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join(format!("{name}.json")),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
 }
 
 /// svrngs's question for the app lent as `app` and the lend `lend`, each
@@ -1530,7 +1534,11 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
     let lends = svrngs_node::lend::lends_dir(cy_dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "k", "limit": 3, "refused": [], "asks": WORDS });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     let (page_label, shelf_label) = (label(1, "page"), label(2, "shelf"));
     // Bo stopped 200 other apps on the shelf before: what apps use is then
     // about 19 KB, past the page's first read of an answer (hyper's 8 KiB),

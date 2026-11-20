@@ -436,6 +436,7 @@ async fn any_answers(net: &dyn crate::iroh::Net, relays: &BTreeSet<Url>) -> bool
 /// (iroh-relay-1.0.2 http.rs:15, server.rs:738); one over HTTPS, a
 /// connection taken at its address, since the node holds no TLS client of
 /// its own to ask the probe through.
+#[expect(clippy::disallowed_methods, reason = "dial: a relay")]
 pub(crate) async fn answers(relay: &Url) -> bool {
     let host = relay
         .host_str()

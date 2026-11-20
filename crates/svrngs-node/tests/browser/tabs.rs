@@ -32,7 +32,11 @@ async fn the_group_s_page_in_two_tabs_reaches_the_group_from_one(engine: Engine)
     let lends = svrngs_node::lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "k", "refused": [], "asks": "the shelf" });
-    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    std::fs::write(
+        lends.join("shelf.json"),
+        svrngs_node::node::approving(&body),
+    )
+    .unwrap();
     // One app bo stopped, so each ask of what apps use answers a line.
     let name = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
     let choices = svrngs_node::lend::choices_path(dir.path(), &name);

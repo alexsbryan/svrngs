@@ -55,7 +55,11 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, S
         body.as_object_mut()
             .unwrap()
             .extend(more.as_object().unwrap().clone());
-        std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+        std::fs::write(
+            lends.join(format!("{name}.json")),
+            svrngs_node::node::approving(&body),
+        )
+        .unwrap();
     }
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await

@@ -138,15 +138,13 @@ fn lend(name: &str, port: u16) -> Lend {
             sign_in_with_svrngs: None,
             asks: None,
             sends: Vec::new(),
-            owner: None,
-            sandbox: None,
-            command: None,
+            approved: None,
         },
     }
 }
 
-/// What `declare` writes, `read` and `all` read back, the account its
-/// program ran as with it; `withdraw` takes it
+/// What `declare` writes, `read` and `all` read back, what its lender
+/// approved on its port with it; `withdraw` takes it
 /// back, its secret with it, and says when there was nothing to take.
 #[test]
 fn a_lend_declared_is_read_back_and_withdrawn_whole() {
@@ -158,17 +156,15 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
         Program::parse("films").unwrap(),
         Program::parse("music").unwrap(),
     ];
-    // The account its program ran as (LEND_OWNER §5, 7); planted, watched
-    // failing: `write` leaving it out (read back as none).
-    shelf.terms.owner = Some(1000);
-    // And the sandbox (LEND_SANDBOX); planted, watched failing: `write`
-    // leaving it out.
-    shelf.terms.sandbox = Some(Sandbox::App("org.jellyfin.JellyfinServer".into()));
-    // And the program (LEND_PROGRAM §2); planted, watched failing: `write`
-    // leaving it out.
-    shelf.terms.command = Some(Command {
-        name: "jellyfin".into(),
-        digest: "5f1c".into(),
+    // What its lender approved (SHARE_BINDING §5.1), every field; planted,
+    // watched failing: `write` leaving it out (read back as none).
+    shelf.terms.approved = Some(crate::binding::Approved {
+        boot: Some(u64::MAX - 7),
+        sockets: [0x700e, 0x100e].into(),
+        cgroups: [4242].into(),
+        processes: [(812, 1_763_600_000_123_456)].into(),
+        at: "::1".parse().unwrap(),
+        held: true,
     });
     declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
     declare(root.path(), &lend("pad", 9000), None).unwrap();
@@ -197,6 +193,34 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
         !withdraw(root.path(), &shelf.name).unwrap(),
         "nothing left to take"
     );
+}
+
+/// **A lend from V1.12.2 written again keeps what V1.12.2 wrote**
+/// (SHARE_BINDING_REVIEWS §6 #9): its `owner`, `sandbox` and `command` are
+/// never read, so it is held until its lender approves, and come back as
+/// they were when anything else of it changes, so V1.12.2 started again
+/// finds its own and records nothing from traffic. Planted, watched
+/// failing: `write` keeping none of them (the file written again without
+/// `owner`).
+#[test]
+fn a_lend_from_v1_12_2_written_again_keeps_what_v1_12_2_wrote() {
+    let root = tempfile::tempdir().unwrap();
+    let dir = lends_dir(root.path());
+    std::fs::create_dir_all(&dir).unwrap();
+    let then = r#"{"port":8096,"kind":"k","groups":["g"],"owner":501,"sandbox":"no","command":{"name":"serve","digest":"5f1c"}}"#;
+    std::fs::write(dir.join("old.json"), then).unwrap();
+    let name = LendName::parse("old").unwrap();
+    assert_eq!(
+        read(root.path(), &name).unwrap().unwrap().terms.approved,
+        None
+    );
+    assert!(set_audience(root.path(), &name, vec!["h".into()]).unwrap());
+    let now: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("old.json")).unwrap()).unwrap();
+    assert_eq!(now["groups"], serde_json::json!(["h"]));
+    assert_eq!(now["owner"], serde_json::json!(501));
+    assert_eq!(now["sandbox"], serde_json::json!("no"));
+    assert_eq!(now["command"]["digest"], serde_json::json!("5f1c"));
 }
 
 /// A declaration holding a sign-in of the lender's own is refused as a
@@ -426,6 +450,7 @@ fn an_audience_edit_keeps_the_rest_and_a_limit_edit_keeps_the_audience() {
 fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
     let house = |g: &str| g == "house";
     let offered = |groups: Option<Vec<String>>, carried: Option<&str>| Offered {
+        token: None,
         name: LendName::parse("jellyfin").unwrap(),
         kind: Program::parse("k").unwrap(),
         limit: None,
@@ -439,7 +464,7 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
         sends: Vec::new(),
         answering: None,
         held: None,
-        command: None,
+        answers: None,
     };
     assert!(offered(Some(vec!["house".into()]), None).listed(house));
     assert!(!offered(Some(vec!["house".into()]), None).listed(|g| g == "trip"));

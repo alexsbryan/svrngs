@@ -28,15 +28,16 @@ impl cli::Here for Opener<'_> {
     async fn ask(&self, route: &str, body: &impl serde::Serialize) -> cli::Asked {
         self.0.ask(route, body).await
     }
-    fn listens(&self, port: std::num::NonZeroU16) -> bool {
-        self.0.listens(port)
-    }
-    fn owner(
+    fn answering(
         &self,
-        raw: Option<svrngs_node::lend::Raw>,
+        raw: svrngs_node::lend::Raw,
         port: std::num::NonZeroU16,
-    ) -> svrngs_node::uid::Owner {
-        self.0.owner(raw, port)
+        pid: Option<u32>,
+    ) -> crate::Answered {
+        self.0.answering(raw, port, pid)
+    }
+    async fn bound(&self, lend: &svrngs_node::lend::Lend) -> crate::Checked {
+        self.0.bound(lend).await
     }
     fn prompt(&self, n: &svrngs_node::lend::LendName, a: &str, s: bool) -> cli::Prompted {
         self.0.prompt(n, a, s)
@@ -83,10 +84,10 @@ async fn the_opener_is_handed_the_open_and_only_this_account_s_browser_can_use_i
     let origin = format!("http://{at}");
     let mine = svrngs_node::uid::mine().unwrap();
     // `browsed` asks from 127.0.0.1:50000, which the wire says is whose.
-    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine + 1, None));
+    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine + 1));
     let (status, keyed, _) = browsed(&alex.node, ("POST", &at, path), Some(&origin)).await;
     assert_eq!((status, keyed), (401, false), "another account's program");
-    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine, None));
+    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine));
     let (status, keyed, body) = browsed(&alex.node, ("POST", &at, path), Some(&origin)).await;
     assert_eq!(
         (status, keyed),

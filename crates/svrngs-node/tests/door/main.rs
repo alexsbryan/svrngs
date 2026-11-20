@@ -166,7 +166,8 @@ impl Pair {
         let dir = lend::lends_dir(self.dir.path());
         std::fs::create_dir_all(&dir).unwrap();
         let body = serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": refused, "groups": [NS] });
-        std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
+        let body = svrngs_node::node::approving(&body);
+        std::fs::write(dir.join(format!("{name}.json")), body).unwrap();
     }
 
     /// A keeps `value` as the lend's secret, sent as `header`.
@@ -334,7 +335,8 @@ impl World {
     fn lend(&self, name: &str, body: serde_json::Value) {
         let dir = lend::lends_dir(self.dir.path());
         std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
+        let body = svrngs_node::node::approving(&body);
+        std::fs::write(dir.join(format!("{name}.json")), body).unwrap();
     }
 
     /// A keeps `value` as the lend's secret, sent as `header`.
@@ -571,7 +573,8 @@ fn lends_on(dir: &std::path::Path, name: &str, port: u16) {
     std::fs::create_dir_all(&lends).unwrap();
     let body =
         serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": [], "groups": [NS] });
-    std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+    let body = svrngs_node::node::approving(&body);
+    std::fs::write(lends.join(format!("{name}.json")), body).unwrap();
 }
 
 /// `node` stands in `ns`, founded by ada, and A knows where it listens.

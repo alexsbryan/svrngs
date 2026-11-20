@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 //! Direct connections on this WiFi (webrtc-network; DESIGN §3): the home
 //! page turns them on for the network this computer is on now, and the
 //! file keeps them, so svrngs answers an offer on that network alone. The

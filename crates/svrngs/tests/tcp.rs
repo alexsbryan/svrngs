@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A TCP port is lent (give-tcp; svrn-docs rings/current/GIVE.md §6): Sam
 //! runs `svrngs share <port> --tcp --kind echo`, and a program on Alex's
@@ -161,14 +162,26 @@ fn share_tcp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
     asked.audience = cli::audience_of(sam.dir.path(), asked.port, &named).unwrap();
     assert_eq!(asked.raw, Some(Raw::Tcp));
     // A TCP port answers a connection, so it is lent only when one does.
-    let unanswered = share::lend_of(&asked, |_| false, None, "");
+    let unanswered = share::approve(
+        (asked.port, Raw::Tcp),
+        svrngs_node::uid::answering(Raw::Tcp, 1, None),
+        None,
+        None,
+    );
     assert!(
         matches!(unanswered, Err(ShareRefusal::NothingListens(_))),
         "a TCP port nothing listens on is refused: {unanswered:?}"
     );
-    let lend = share::lend_of(&asked, |_| true, share::well_known_kind(asked.port), "")
+    let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
         .expect("a TCP port and its kind");
+    let read = svrngs_node::uid::answering(Raw::Tcp, port, None);
+    lend.terms.approved = Some(
+        share::approve((asked.port, Raw::Tcp), read, None, None)
+            .expect("this test's echo")
+            .0,
+    );
     assert_eq!(lend.source, Source::Raw(Raw::Tcp, asked.port));
+    svrngs_node::node::approve(&mut lend);
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
     lend
 }
@@ -202,7 +215,8 @@ async fn share_tcp_lends_a_port_and_a_member_s_bytes_come_back() {
     let port = echo().await;
     let lend = share_tcp(&sam, port, &[]);
     let said = Said::Shared {
-        lend: lend.clone(),
+        lend: Box::new(lend.clone()),
+        answers: Vec::new(),
         secret: false,
         accounts: None,
         client: None,
@@ -435,21 +449,24 @@ async fn a_port_its_group_is_taken_from_is_cut_and_no_other() {
     assert_eq!(still.as_deref(), Some(&b"two"[..]), "other carries on");
 }
 
-/// **A raw TCP lend's port answered by another account than it recorded
-/// is held** (LEND_OWNER §5, 6): Sam's echo runs as this test's account;
-/// its lend recorded as another's, Alex's connection is told so in Sam's
-/// words and closed, its bytes carried nowhere; recorded as this one's, it
-/// crosses. Read by this computer's own reader (svrngs-node uid.rs), so
-/// it passes only with it right. Planted, watched failing: the held
-/// connection carried anyway (the echo answered).
+/// **A raw TCP lend's port answered by another socket than its lender
+/// approved is held** (SHARE_BINDING §5.2, §5.7): Sam's echo runs here; its
+/// lend approved for another socket, Alex's connection is told so in Sam's
+/// words and closed, its bytes carried nowhere; approved again as it
+/// answers, it crosses. Read by this computer's own reader (svrngs-node
+/// uid.rs), so it passes only with it right. Planted, watched failing: the
+/// held connection carried anyway (the echo answered).
 #[tokio::test(flavor = "multi_thread")]
-async fn a_port_answered_by_another_account_than_its_lend_recorded_is_held() {
+async fn a_port_answered_by_another_socket_than_its_lender_approved_is_held() {
     let (sam, them, _) = house(&[(2, "Alex")]).await;
     let lend = share_tcp(&sam, echo().await, &[]);
-    let mine = svrngs_node::uid::mine().unwrap();
+    let approved = lend.terms.approved.clone();
+    let mut other = approved.clone().unwrap();
+    other.sockets = [1].into();
+    other.processes = [(1, 1)].into();
     let recorded =
-        |uid| svrngs_node::lend::mutate(sam.dir.path(), &lend.name, |l| l.terms.owner = Some(uid));
-    assert_eq!(recorded(mine + 1).ok(), Some(true));
+        |a| svrngs_node::lend::mutate(sam.dir.path(), &lend.name, |l| l.terms.approved = Some(a));
+    assert_eq!(recorded(other).ok(), Some(true));
     let (carried, local) = open(&them[0], &sam, &lend).await;
     let (mut told, _alex) = carried.expect("Alex's computer opens Sam's echo");
     let mut theirs = TcpStream::connect(local).await.unwrap();
@@ -463,9 +480,9 @@ async fn a_port_answered_by_another_account_than_its_lend_recorded_is_held() {
     );
     let told = timeout(Duration::from_secs(5), told.recv()).await;
     let told = told.expect("told within 5s").expect("the lender's words");
-    let words = "echo is closed for now: another program is answering in its place";
+    let words = "echo is closed for now: a program Sam didn’t choose was on its port";
     assert!(told.contains(words), "{told}");
-    assert_eq!(recorded(mine).ok(), Some(true));
+    assert_eq!(recorded(approved.unwrap()).ok(), Some(true));
     let mut ours = TcpStream::connect(local).await.unwrap();
     assert_eq!(
         asks(&mut ours, b"ours").await.as_deref(),
