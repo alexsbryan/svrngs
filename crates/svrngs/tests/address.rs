@@ -245,8 +245,9 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
     );
     assert!(!refused.contains("stop it"), "{refused}");
     assert!(
-        refused.contains("cli: new — svrngs runs here already, so it is asked"),
-        "{refused}"
+        refused.contains("cli: svrngs runs here already, so it is asked")
+            && refused.contains("/v1/new"),
+        "`new`, asked at its route: {refused}"
     );
     for broken in [None, Some("not an address")] {
         std::fs::remove_file(&api).unwrap();
