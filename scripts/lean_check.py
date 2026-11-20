@@ -877,10 +877,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # review fixes need, each reported. Its pass cut 10 lines in those files.
 # Then 18 for `svrngs approve` to show what answers and ask before it
 # approves (cli.rs): 24,204. Its pass cut 5 there.
+# Then 12 for a Mac to refuse a UDP socket on every address that lets
+# another bind beside it (uid.rs 10, share.rs 2): 24,216. Its pass cut 1.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24205,
+    ".": 24217,
 
     "js": 8694,
 
