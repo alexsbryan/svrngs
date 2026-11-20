@@ -82,6 +82,7 @@ function worker(answer) {
     awayPage: async () => undefined,
     dials: new Map(),
     directs: new Map(),
+    dataLinks: new Map(),
     dialFor: (lender) => scope.dials.get(lender) ?? dialFor(lender),
     failed: new Set(),
     trace: (line) => said.push(line),

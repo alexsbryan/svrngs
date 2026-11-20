@@ -292,9 +292,10 @@ function dialAt(lend) {
 /** @param {Passed} lend */
 function letGo(lend) {
   const [key, others] = [lenderOf(lend), lend.lenders?.length ?? 0];
-  // The dial at that lender, and the data endpoint that went with it: a
-  // fetch of a dead dial's rides nothing.
-  for (const maps of [dials, directs]) maps.delete(key);
+  // The dial at that lender, and the data endpoint that went with it and
+  // its link: a fetch of a dead dial's rides nothing, and the next, dialled
+  // from this run's endpoint, names this run's link, not that endpoint's.
+  for (const maps of [dials, directs, dataLinks]) maps.delete(key);
   if (others > 0) failed.add(key);
   trace(`RUNTIME: ${key} let go for ${lend.name}, ${others} other computers carry it`);
 }
@@ -1561,9 +1562,9 @@ async function holdPass(given, reply) {
     given.key = await crypto.subtle.importKey('jwk', given.key, 'Ed25519', false, ['sign']);
   }
   handed = given;
-  // The dials, and the direct attempts' endpoints with them: a new pass
-  // starts this origin's lends afresh.
-  for (const maps of [dials, directs]) maps.clear();
+  // The dials, and the direct attempts' endpoints and links with them: a
+  // new pass starts this origin's lends afresh, and a link names its pass.
+  for (const maps of [dials, directs, dataLinks]) maps.clear();
   endpoint = null;
   const lends = `${given.lends.length} lend(s)`;
   const imported = bytes ? ', and its holder’s bytes, imported here and kept nowhere' : '';

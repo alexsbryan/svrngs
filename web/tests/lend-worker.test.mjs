@@ -93,6 +93,7 @@ const WORKER = [
   'let handed = null;',
   'const dials = new Map();',
   'const directs = new Map();',
+  'const dataLinks = new Map();',
   'let asks = 0;',
   'let endpoint = null;',
   ...['handedNow', 'PLAIN', 'REFUSED', 'say', 'unheld', 'fromHere', 'handsPass'].map((name) =>
@@ -446,6 +447,10 @@ const SERVED = [
   'let walled = null;',
   'const dials = new Map();',
   'const directs = new Map();',
+  // This run's link, and a direct path's data endpoint's, by lender
+  // (`passed`), set by `links`.
+  'let linked = null;',
+  'const dataLinks = new Map();',
   'let asks = 0;',
   ...[
     'whereOf',
@@ -480,8 +485,10 @@ const SERVED = [
     'gathered',
     'frame',
     'headOf',
+    'passed',
   ].map((name) => defined(LEND, name)),
-  '({ whereOf, lent, told, bounded, socket })',
+  '({ whereOf, lent, told, bounded, socket,',
+  '  links: (own, lender, data) => { linked = own; dataLinks.set(lender, data); } })',
 ].join('\n');
 
 // The worker at `own`'s origin, holding `lends` (the first its own), each
@@ -512,7 +519,7 @@ function lendWorker({ lends, door = () => assert.fail('no door asked'), unreache
     actsPosted: () => assert.fail('no acts posted here'),
     opening: () => assert.fail('no lend it reads opened here'),
     unheldAt: () => assert.fail('the pass is held'),
-    passed: async () => [['x-svrngs-pass', 'PASS']],
+    bound: async () => {},
     awayPage: async () => AWAY,
     failed: new Set(),
     // A dial to `lender`, as the wasm's `dial_lend` answers one.
@@ -824,6 +831,26 @@ test('a socket opens again once its lender answers again, the page never loaded 
     ['cy', 'cy'],
     'the dial it failed on let go, the next dialled afresh',
   );
+});
+
+// A request names the link of the endpoint it goes through (`passed`): a
+// lender's data endpoint's once a direct path went through it. A dial let
+// go (`letGo`) lets that link go with it, so the next request, dialled
+// afresh from this run's endpoint, names this run's: one naming a data
+// endpoint it does not come from the door refuses (an offer's 403, 4d905564).
+test('a dial let go lets its data endpoint’s link go, so the next names this run’s', async () => {
+  const worker = lendWorker({ lends: [page, shelf], door: ranges });
+  worker.links('RUN-LINK', 'ada', 'DATA-LINK');
+  const linkOf = async () => {
+    const res = await worker.fetched(`${ORIGIN}/title.mp4`, { headers: { range: 'bytes=0-1' } });
+    await res.arrayBuffer();
+    return worker.asked.at(-1).headers['x-svrngs-link'];
+  };
+  assert.equal(await linkOf(), 'DATA-LINK', 'while the data endpoint carries it');
+  worker.lid(false);
+  await worker.fetched(`${ORIGIN}/title.mp4`, { headers: { range: 'bytes=0-1' } });
+  worker.lid(true);
+  assert.equal(await linkOf(), 'RUN-LINK', 'dialled afresh from this run');
 });
 
 test('a lent page is told the lends it reads and who did not answer, never the pass or its holder', async () => {

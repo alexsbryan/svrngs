@@ -41,6 +41,7 @@ async function asked(method, error, body, lend = { key: 'key' }) {
     SLICE: 1 << 20,
     dials: new Map([['key', dial]]),
     directs: new Map(),
+    dataLinks: new Map(),
     dialFor: async (key) => (dialled.push(key), dial),
     failed: new Set(),
     trace: (line) => said.push(line),

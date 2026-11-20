@@ -130,6 +130,7 @@ function worker(handed, carry, page = signer()) {
     SIGNER: GROUP_PAGE,
     dials: new Map(),
     directs: new Map(),
+    dataLinks: new Map(),
     dialled: async (lender) => dial(lender),
     trace: (line) => traced.push(line),
     store: {
