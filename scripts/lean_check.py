@@ -847,12 +847,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # a raise: these are the merge's counts as the pass's start, each of its cuts
 # to land the counts back under 23,101 and 8,674, and the caps then lowered to
 # where they land.
+# (2026-11-19) The pass landed: a first round of cuts (49 commits) and the
+# architectural one (C3, C1, C2, L1, N2, N3; 7cf71342..f24b2937) leave all
+# code but JavaScript at 23,314 and JavaScript at 8,666. The caps are lowered
+# to there. All code but JavaScript stays 213 over 23,101: that is a raise,
+# the operator's.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 23796,
+    ".": 23315,
 
-    "js": 8688,
+    "js": 8667,
 
     "swift": 1,
 }
