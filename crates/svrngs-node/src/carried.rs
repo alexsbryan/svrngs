@@ -383,7 +383,7 @@ impl Folders {
     /// its own.
     pub(crate) async fn reads(&self, lend: &Lend) -> Result<Vec<Program>, Withheld> {
         if !matches!(lend.source, Source::Carried(..)) {
-            return Ok(lend.reads.clone());
+            return Ok(lend.terms.reads.clone());
         }
         let mut kinds = self.words(lend, READS).await?;
         kinds.extend(self.words(lend, SENDS).await?);

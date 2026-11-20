@@ -176,7 +176,7 @@ fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     let jf = Program::parse("jellyfin").unwrap();
     let lend = lend_of(&share(8096), |_| true, Some(jf.clone()), "").unwrap();
     assert_eq!(
-        (lend.name.as_str(), lend.kind.as_str(), lend.limit),
+        (lend.name.as_str(), lend.kind.as_str(), lend.terms.limit),
         ("jellyfin", "jellyfin", None)
     );
     let mut typed = share(5000);
@@ -185,7 +185,7 @@ fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
     typed.limit = Some(port(7));
     let lend = lend_of(&typed, |_| true, None, "").unwrap();
     assert_eq!(
-        (lend.name.as_str(), lend.kind.as_str(), lend.limit),
+        (lend.name.as_str(), lend.kind.as_str(), lend.terms.limit),
         ("pad", "notes", Some(port(7)))
     );
     assert_eq!(
@@ -286,7 +286,7 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
         .map(|p| RefusedPath::parse(p).unwrap())
         .to_vec();
     let lend = lend_of(&typed, |_| true, None, "").unwrap();
-    let refused: Vec<&str> = lend.refused.iter().map(RefusedPath::as_str).collect();
+    let refused: Vec<&str> = lend.terms.refused.iter().map(RefusedPath::as_str).collect();
     assert_eq!(
         refused,
         [
@@ -481,7 +481,8 @@ fn a_group_s_file_only_adds_to_what_svrngs_ships() {
     asked.kind = Some(program("llama-server"));
     let refused_of = |terms| {
         let lend = lend_of(&asked, |_| true, None, terms).unwrap();
-        lend.refused
+        lend.terms
+            .refused
             .iter()
             .map(|p| p.as_str().to_string())
             .collect::<Vec<_>>()
@@ -499,7 +500,7 @@ fn a_group_s_file_only_adds_to_what_svrngs_ships() {
     let mut notes = share(5000);
     notes.kind = Some(program("notes"));
     let lend = lend_of(&notes, |_| true, None, "- notes keeps: /admin").unwrap();
-    assert_eq!(lend.refused, [RefusedPath::parse("/admin").unwrap()]);
+    assert_eq!(lend.terms.refused, [RefusedPath::parse("/admin").unwrap()]);
 }
 
 /// **The lend is the yes** (CONTRACTS §6.1): what a group's file keeps is
@@ -520,7 +521,7 @@ fn a_lend_keeps_the_terms_it_was_lent_under() {
     let read = svrngs_node::lend::read(root.path(), &lend.name)
         .unwrap()
         .unwrap();
-    assert_eq!(read.refused, [RefusedPath::parse("/admin").unwrap()]);
+    assert_eq!(read.terms.refused, [RefusedPath::parse("/admin").unwrap()]);
 }
 
 /// **A file that says its program is lent as bytes is held to it**
@@ -626,11 +627,12 @@ fn a_lend_keeps_the_sends_its_terms_say() {
     let read = svrngs_node::lend::read(root.path(), &lend.name)
         .unwrap()
         .unwrap();
-    let rows: Vec<&str> = read.sends.iter().map(|s| s.as_str()).collect();
+    let rows: Vec<&str> = read.terms.sends.iter().map(|s| s.as_str()).collect();
     assert_eq!(rows, ["POST /v1/embeddings", "POST /v1/rerank"]);
     asked.raw = Some(svrngs_node::lend::Raw::Tcp);
     assert!(lend_of(&asked, |_| true, None, "")
         .unwrap()
+        .terms
         .sends
         .is_empty());
 }

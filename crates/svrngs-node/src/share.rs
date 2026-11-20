@@ -38,7 +38,9 @@ use std::path::Path;
 use std::time::Duration;
 
 use crate::lend::SendRow;
-use crate::lend::{Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source, Upload};
+use crate::lend::{
+    self, Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source, Upload,
+};
 use crate::uid::{self, Conn, Owner, Side};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
@@ -336,7 +338,7 @@ pub fn accounts_of<'a>(kind: &Program, terms: &'a str) -> Option<Signs<'a>> {
 /// ([`accounts_of`]), where one header sent for all made everyone one
 /// person, nor for a raw lend, which carries the person's own.
 pub fn adds_headers(lend: &Lend, terms: &str) -> bool {
-    let signs = lend.sign_in_with_svrngs.is_some() || matches!(lend.source, Source::Raw(..));
+    let signs = lend.terms.sign_in_with_svrngs.is_some() || matches!(lend.source, Source::Raw(..));
     let signs = signs || accounts_of(&lend.kind, terms).is_some();
     tracing::debug!(target: "share", lend = %lend.name, signs, "share: headers its door adds asked of its lender, unless it signs people in or is raw");
     !signs
@@ -550,8 +552,8 @@ pub fn bound(lend: &mut Lend, read: Owner, pid: Option<u32>) -> Result<(), Share
         tracing::debug!(target: "share", lend = %lend.name, port, pid, "share: refused — the process asked for isn't the program answering");
         return Err(ShareRefusal::NotThere(port, pid));
     }
-    lend.owner = owner;
-    (lend.sandbox, lend.command) = holder.map(|h| (h.sandbox, h.command)).unzip();
+    lend.terms.owner = owner;
+    (lend.terms.sandbox, lend.terms.command) = holder.map(|h| (h.sandbox, h.command)).unzip();
     Ok(())
 }
 
@@ -641,16 +643,15 @@ pub fn lend_of(
         name,
         source: raw.map_or(Source::Port(share.port), |r| Source::Raw(r, share.port)),
         kind,
-        audience: share.audience.clone(),
-        limit: share.limit,
-        refused,
-        upload: share.upload,
-        reads: share.reads.clone(),
-        sign_in_with_svrngs: None,
-        asks: share.asks.clone(),
-        sends,
-        owner: None,
-        sandbox: None,
-        command: None,
+        terms: lend::Terms {
+            audience: share.audience.clone(),
+            limit: share.limit,
+            refused,
+            upload: share.upload,
+            reads: share.reads.clone(),
+            asks: share.asks.clone(),
+            sends,
+            ..lend::Terms::default()
+        },
     })
 }

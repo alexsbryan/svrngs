@@ -145,11 +145,11 @@ pub(super) fn check(
     app: Option<&Label>,
 ) -> Result<(), Response> {
     let own = lend.label(&door.key);
-    let choice = match (&lend.asks, app) {
+    let choice = match (&lend.terms.asks, app) {
         (Some(_), Some(app)) => (read(door, lend)?.remove(person)).and_then(|mut k| k.remove(app)),
         _ => None,
     };
-    let (asks, app) = (lend.asks.is_some(), app.map(Label::as_str));
+    let (asks, app) = (lend.terms.asks.is_some(), app.map(Label::as_str));
     let said = choice.as_ref().map(|c| c.said);
     let judged = rules::choose(&door.key, asks, own.as_str(), app, said);
     tracing::debug!(target: "door", lend = %lend.name, %person, app, asks,

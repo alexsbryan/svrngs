@@ -980,7 +980,7 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     let limit = || {
         lend::read(sam_dir.path(), &name)
             .unwrap()
-            .map(|l| l.limit.map(|n| n.get()))
+            .map(|l| l.terms.limit.map(|n| n.get()))
     };
     let typed = "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n";
     async fn open(node: &Node, shelf: &Label, typed: &str) -> Got {
@@ -1146,6 +1146,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
 
     let declared = lend::read(dir.path(), &name).unwrap().unwrap();
     let client = declared
+        .terms
         .sign_in_with_svrngs
         .expect("the declaration holds the client");
     assert_eq!(client.client_id, id);
@@ -1604,7 +1605,7 @@ async fn a_program_of_another_account_is_refused_where_it_is_lent() {
     let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &body).await;
     assert_eq!(got.status, 200, "{}", got.body);
     assert_eq!(
-        lend::read(dir.path(), &pad).unwrap().unwrap().owner,
+        lend::read(dir.path(), &pad).unwrap().unwrap().terms.owner,
         Some(4242)
     );
     // A Flatpak server of this account's is lent, bound to its own app and
@@ -1618,7 +1619,7 @@ async fn a_program_of_another_account_is_refused_where_it_is_lent() {
     assert_eq!(got.status, 200, "{}", got.body);
     let flat = lend::LendName::parse("flat").unwrap();
     let lent = lend::read(dir.path(), &flat).unwrap().unwrap();
-    let recorded = (lent.owner, lent.sandbox, lent.command);
+    let recorded = (lent.terms.owner, lent.terms.sandbox, lent.terms.command);
     let jellyfin = (Some(mine), Some(jellyfin.sandbox), Some(jellyfin.command));
     assert_eq!(recorded, jellyfin);
     let mut serve = svrngs_node::node::holder(svrngs_node::lend::Sandbox::No, "serve");
@@ -1795,9 +1796,9 @@ async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
     assert_eq!(paused.status, 204, "{}", paused.body);
     let name = lend::LendName::parse("shelf").unwrap();
     let kept = lend::read(dir.path(), &name).unwrap().unwrap();
-    assert_eq!(kept.audience, lend::Audience::Selected(Vec::new()));
+    assert_eq!(kept.terms.audience, lend::Audience::Selected(Vec::new()));
     assert!(
-        kept.sign_in_with_svrngs.is_some(),
+        kept.terms.sign_in_with_svrngs.is_some(),
         "the audience edit kept the client"
     );
     alex.net().close().await;
@@ -1834,7 +1835,11 @@ async fn an_audience_names_only_groups_the_lender_stands_in() {
     let bos = ask(browser, "POST", &home, "/lent", &own, &to("bos")).await;
     assert_eq!(bos.status, 400, "{}", bos.body);
     let name = lend::LendName::parse("shelf").unwrap();
-    let kept = lend::read(dir.path(), &name).unwrap().unwrap().audience;
+    let kept = lend::read(dir.path(), &name)
+        .unwrap()
+        .unwrap()
+        .terms
+        .audience;
     assert_eq!(kept, lend::Audience::Selected(vec![NS.into()]));
     let house = ask(browser, "POST", &home, "/lent", &own, &to(NS)).await;
     assert_eq!(house.status, 204, "{}", house.body);

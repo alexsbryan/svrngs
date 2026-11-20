@@ -281,17 +281,19 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
         name: LendName::parse(name).unwrap(),
         source: Source::Port(NonZeroU16::new(8096).unwrap()),
         kind: lend::Program::parse("k").unwrap(),
-        audience: lend::Audience::Selected(groups.iter().map(|g| g.to_string()).collect()),
-        limit: NonZeroU16::new(3),
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-        sends: Vec::new(),
-        owner: None,
-        sandbox: None,
-        command: None,
+        terms: crate::lend::Terms {
+            audience: lend::Audience::Selected(groups.iter().map(|g| g.to_string()).collect()),
+            limit: NonZeroU16::new(3),
+            refused: Vec::new(),
+            upload: None,
+            reads: Vec::new(),
+            sign_in_with_svrngs: None,
+            asks: None,
+            sends: Vec::new(),
+            owner: None,
+            sandbox: None,
+            command: None,
+        },
     }
 }
 
@@ -877,11 +879,8 @@ fn one_person_s_two_devices_resolve_to_one_person_key() {
         assert_eq!(member.person.as_str(), "bo");
     }
     let mut counts = Counts::default();
-    let one = port_lend("one", &[HOUSE]);
-    let one = Lend {
-        limit: NonZeroU16::new(1),
-        ..one
-    };
+    let mut one = port_lend("one", &[HOUSE]);
+    one.terms.limit = NonZeroU16::new(1);
     let t0 = now();
     for device in [2, 6] {
         let (_, member) = member_for(&a, &one, &actor(device)).unwrap();

@@ -83,7 +83,10 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     let narrowed = cli::unshare(dir, &pad.name, &named(&["trip"])).unwrap();
     assert_eq!(narrowed, Said::Narrowed(pad.name.clone()));
     let kept = lend::read(dir, &pad.name).unwrap().unwrap();
-    assert_eq!(kept.audience, Audience::Selected(vec![seeds[0].clone()]));
+    assert_eq!(
+        kept.terms.audience,
+        Audience::Selected(vec![seeds[0].clone()])
+    );
     let secret = svrngs_node::declared::read_declared_in(&lend::secret_dir(dir, &pad.name));
     assert!(secret.iter().any(|(_, v)| v == SECRET), "{secret:?}");
     let gone = cli::unshare(dir, &pad.name, &[]).unwrap();
@@ -132,7 +135,7 @@ async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     let said = cli::unshare(sam.dir.path(), &pad.name, &["house".to_string()]);
     said.expect("true already: a legacy lend reaches no group");
     let kept = lend::read(sam.dir.path(), &pad.name).unwrap().unwrap();
-    assert_eq!(kept.audience, Audience::Legacy);
+    assert_eq!(kept.terms.audience, Audience::Legacy);
 }
 
 /// **A folder is synced by asking svrngs running here, in one group**
@@ -357,6 +360,7 @@ async fn share_turns_on_signing_people_in_with_svrngs() {
         .unwrap()
         .unwrap();
     let client = declared
+        .terms
         .sign_in_with_svrngs
         .expect("the declaration holds the client");
     let id = client.client_id;
@@ -680,7 +684,7 @@ async fn a_lend_keeps_its_program_s_account_and_a_mac_only_this_one_s() {
         .await
         .expect("navidrome is lent");
     let lent = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
-    assert_eq!(lent.owner, Some(4242));
+    assert_eq!(lent.terms.owner, Some(4242));
 }
 
 /// **A lend is kept to the program its lender chose** (LEND_PROGRAM §4):
@@ -716,5 +720,5 @@ async fn a_lend_is_kept_to_the_program_its_lender_chose() {
         .expect("navidrome is lent");
     assert!(said.contains("Kept to navidrome as it runs now"), "{said}");
     let lent = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
-    assert_eq!(lent.command, Some(serve.command));
+    assert_eq!(lent.terms.command, Some(serve.command));
 }

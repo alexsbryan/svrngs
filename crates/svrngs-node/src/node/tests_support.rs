@@ -165,7 +165,7 @@ impl Node {
         let read = crate::lend::read(&self.asking.door.data_dir, &lend)
             .ok()
             .flatten();
-        let through = read.and_then(|l| l.audience.ids()?.first().cloned());
+        let through = read.and_then(|l| l.terms.audience.ids()?.first().cloned());
         self.asking.door.oidc.mint(crate::oidc::Code {
             lend,
             client: client.into(),

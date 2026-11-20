@@ -129,17 +129,19 @@ fn lend(name: &str, port: u16) -> Lend {
         name: LendName::parse(name).unwrap(),
         source: Source::Port(NonZeroU16::new(port).unwrap()),
         kind: Program::parse("k").unwrap(),
-        audience: Audience::Selected(vec!["house".to_string()]),
-        limit: NonZeroU16::new(3),
-        refused: vec![refused("/admin")],
-        upload: None,
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-        sends: Vec::new(),
-        owner: None,
-        sandbox: None,
-        command: None,
+        terms: crate::lend::Terms {
+            audience: Audience::Selected(vec!["house".to_string()]),
+            limit: NonZeroU16::new(3),
+            refused: vec![refused("/admin")],
+            upload: None,
+            reads: Vec::new(),
+            sign_in_with_svrngs: None,
+            asks: None,
+            sends: Vec::new(),
+            owner: None,
+            sandbox: None,
+            command: None,
+        },
     }
 }
 
@@ -150,21 +152,21 @@ fn lend(name: &str, port: u16) -> Lend {
 fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     let root = tempfile::tempdir().unwrap();
     let mut shelf = lend("shelf", 8096);
-    shelf.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
+    shelf.terms.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
     // The kinds it reads (u5-2) come back too; planted: not written.
-    shelf.reads = vec![
+    shelf.terms.reads = vec![
         Program::parse("films").unwrap(),
         Program::parse("music").unwrap(),
     ];
     // The account its program ran as (LEND_OWNER §5, 7); planted, watched
     // failing: `write` leaving it out (read back as none).
-    shelf.owner = Some(1000);
+    shelf.terms.owner = Some(1000);
     // And the sandbox (LEND_SANDBOX); planted, watched failing: `write`
     // leaving it out.
-    shelf.sandbox = Some(Sandbox::App("org.jellyfin.JellyfinServer".into()));
+    shelf.terms.sandbox = Some(Sandbox::App("org.jellyfin.JellyfinServer".into()));
     // And the program (LEND_PROGRAM §2); planted, watched failing: `write`
     // leaving it out.
-    shelf.command = Some(Command {
+    shelf.terms.command = Some(Command {
         name: "jellyfin".into(),
         digest: "5f1c".into(),
     });
@@ -229,7 +231,10 @@ fn an_upload_is_declared_or_absent_never_defaulted() {
     std::fs::create_dir_all(lends_dir(root.path())).unwrap();
     let file = lends_dir(root.path()).join("shelf.json");
     std::fs::write(&file, r#"{"port": 8096, "kind": "k", "limit": 3}"#).unwrap();
-    assert_eq!(read(root.path(), &name).unwrap().unwrap().upload, None);
+    assert_eq!(
+        read(root.path(), &name).unwrap().unwrap().terms.upload,
+        None
+    );
     std::fs::write(
         &file,
         r#"{"port": 8096, "kind": "k", "limit": 3, "upload_bps": 0}"#,
@@ -241,7 +246,12 @@ fn an_upload_is_declared_or_absent_never_defaulted() {
         r#"{"port": 8096, "kind": "k", "limit": 3, "upload_bps": 30000000}"#,
     )
     .unwrap();
-    let upload = read(root.path(), &name).unwrap().unwrap().upload.unwrap();
+    let upload = read(root.path(), &name)
+        .unwrap()
+        .unwrap()
+        .terms
+        .upload
+        .unwrap();
     assert_eq!(upload.bps(), 30_000_000);
     assert_eq!(upload.to_string(), "30 Mbit/s");
     assert_eq!(
@@ -295,7 +305,7 @@ fn a_sign_in_client_is_checked_written_owner_only_and_never_both() {
         client_id: "abc.DEF-1_~".into(),
         client_secret: Some("s3cret-._~".into()),
     };
-    shelf.sign_in_with_svrngs = Some(client.clone());
+    shelf.terms.sign_in_with_svrngs = Some(client.clone());
     declare(root.path(), &shelf, None).unwrap();
     assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
     let file = lends_dir(root.path()).join("shelf.json");
@@ -335,9 +345,9 @@ fn a_lend_with_no_selection_reaches_nothing_and_a_selection_reaches_its_ids() {
     let file = lends_dir(root.path()).join("jellyfin.json");
     std::fs::write(&file, r#"{"port": 8096, "kind": "k", "refused": []}"#).unwrap();
     let legacy = read(root.path(), &name).unwrap().unwrap();
-    assert_eq!(legacy.audience, Audience::Legacy);
+    assert_eq!(legacy.terms.audience, Audience::Legacy);
     assert!(
-        !legacy.audience.reaches("house") && !legacy.audience.reaches("trip"),
+        !legacy.terms.audience.reaches("house") && !legacy.terms.audience.reaches("trip"),
         "a legacy declaration reaches no group"
     );
     std::fs::write(
@@ -346,11 +356,14 @@ fn a_lend_with_no_selection_reaches_nothing_and_a_selection_reaches_its_ids() {
     )
     .unwrap();
     let scoped = read(root.path(), &name).unwrap().unwrap();
-    assert_eq!(scoped.audience, Audience::Selected(vec!["house".into()]));
-    assert!(scoped.audience.reaches("house"));
-    assert!(!scoped.audience.reaches("trip"));
     assert_eq!(
-        scoped.audience.ids(),
+        scoped.terms.audience,
+        Audience::Selected(vec!["house".into()])
+    );
+    assert!(scoped.terms.audience.reaches("house"));
+    assert!(!scoped.terms.audience.reaches("trip"));
+    assert_eq!(
+        scoped.terms.audience.ids(),
         Some(["house".to_string()].as_slice())
     );
 }
@@ -364,8 +377,8 @@ fn a_lend_with_no_selection_reaches_nothing_and_a_selection_reaches_its_ids() {
 fn an_audience_edit_keeps_the_rest_and_a_limit_edit_keeps_the_audience() {
     let root = tempfile::tempdir().unwrap();
     let mut jellyfin = lend("jellyfin", 8096);
-    jellyfin.audience = Audience::Selected(vec!["house".into()]);
-    jellyfin.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
+    jellyfin.terms.audience = Audience::Selected(vec!["house".into()]);
+    jellyfin.terms.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
     declare(root.path(), &jellyfin, Some(("authorization", "s3cret"))).unwrap();
     let file = lends_dir(root.path()).join("jellyfin.json");
 
@@ -377,10 +390,13 @@ fn an_audience_edit_keeps_the_rest_and_a_limit_edit_keeps_the_audience() {
     .unwrap();
     let after = read(root.path(), &jellyfin.name).unwrap().unwrap();
     assert_eq!(
-        after.audience,
+        after.terms.audience,
         Audience::Selected(vec!["house".into(), "trip".into()])
     );
-    assert_eq!(after.upload, jellyfin.upload, "the upload is kept");
+    assert_eq!(
+        after.terms.upload, jellyfin.terms.upload,
+        "the upload is kept"
+    );
     assert_eq!(after.kind, jellyfin.kind, "the kind is kept");
     assert_eq!(
         crate::declared::read_declared_in(&secret_dir(root.path(), &jellyfin.name)),
@@ -391,16 +407,16 @@ fn an_audience_edit_keeps_the_rest_and_a_limit_edit_keeps_the_audience() {
     assert!(bytes_before.contains("trip"), "the audience is written");
 
     mutate(root.path(), &jellyfin.name, |l| {
-        l.limit = NonZeroU16::new(5)
+        l.terms.limit = NonZeroU16::new(5)
     })
     .unwrap();
     let after_limit = read(root.path(), &jellyfin.name).unwrap().unwrap();
     assert_eq!(
-        after_limit.audience,
+        after_limit.terms.audience,
         Audience::Selected(vec!["house".into(), "trip".into()]),
         "a limit edit preserves the audience"
     );
-    assert_eq!(after_limit.limit, NonZeroU16::new(5));
+    assert_eq!(after_limit.terms.limit, NonZeroU16::new(5));
 }
 
 /// What a lend is lent to is disclosed by `listed`: a declared lend only
@@ -510,9 +526,9 @@ fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
     );
     let name = LendName::parse("media").unwrap();
     let media = read(dir.path(), &name).unwrap().unwrap();
-    assert_eq!(media.audience, Audience::Legacy);
+    assert_eq!(media.terms.audience, Audience::Legacy);
     assert_eq!(
-        (media.limit, media.sign_in_with_svrngs.is_some()),
+        (media.terms.limit, media.terms.sign_in_with_svrngs.is_some()),
         (NonZeroU16::new(2), true)
     );
     stamp(dir.path(), &[]);
@@ -534,18 +550,26 @@ fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
     let pad = read(dir.path(), &LendName::parse("pad").unwrap())
         .unwrap()
         .unwrap();
-    assert_eq!(pad.audience, Audience::Legacy, "and it reaches nobody");
+    assert_eq!(
+        pad.terms.audience,
+        Audience::Legacy,
+        "and it reaches nobody"
+    );
 
     let house = vec!["house".to_string()];
     stamp(dir.path(), &house);
     let audience = |name: &str| {
         let name = LendName::parse(name).unwrap();
-        read(dir.path(), &name).unwrap().unwrap().audience
+        read(dir.path(), &name).unwrap().unwrap().terms.audience
     };
     assert_eq!(audience("media"), Audience::Selected(house.clone()));
     assert_eq!(audience("pad"), Audience::Selected(house.clone()));
     let kept = read(dir.path(), &LendName::parse("media").unwrap()).unwrap();
-    assert_eq!(kept.unwrap().limit, NonZeroU16::new(2), "the rest kept");
+    assert_eq!(
+        kept.unwrap().terms.limit,
+        NonZeroU16::new(2),
+        "the rest kept"
+    );
     let later = vec!["house".to_string(), "later".to_string()];
     stamp(dir.path(), &later);
     assert_eq!(audience("media"), Audience::Selected(house), "a snapshot");
@@ -574,7 +598,7 @@ fn a_withdrawal_while_a_change_holds_the_lend_is_busy_never_undone() {
     let mut during = None;
     let changed = mutate(root.path(), &shelf.name, |l| {
         during = Some(withdraw(root.path(), &shelf.name));
-        l.limit = NonZeroU16::new(5);
+        l.terms.limit = NonZeroU16::new(5);
     });
     assert!(changed.unwrap(), "the change is written");
     let said = during.unwrap();
@@ -604,31 +628,35 @@ fn a_withdrawal_while_a_change_holds_the_lend_is_busy_never_undone() {
 fn a_redeclaration_while_a_change_holds_the_lend_is_busy_never_undone() {
     let root = tempfile::tempdir().unwrap();
     let both = Audience::Selected(vec!["house".into(), "trip".into()]);
-    let shelf = Lend {
-        audience: both,
-        ..lend("shelf", 9)
-    };
+    let mut shelf = lend("shelf", 9);
+    shelf.terms.audience = both;
     declare(root.path(), &shelf, None).unwrap();
-    let narrowed = Lend {
-        audience: Audience::Selected(vec!["house".into()]),
-        ..shelf.clone()
-    };
+    let mut narrowed = shelf.clone();
+    narrowed.terms.audience = Audience::Selected(vec!["house".into()]);
     let mut during = None;
     let changed = mutate(root.path(), &shelf.name, |l| {
         during = Some(declare(root.path(), &narrowed, None));
-        l.limit = NonZeroU16::new(5);
+        l.terms.limit = NonZeroU16::new(5);
     });
     assert!(changed.unwrap(), "the change is written");
     let said = during.unwrap();
-    let now = read(root.path(), &shelf.name).unwrap().unwrap().audience;
+    let now = read(root.path(), &shelf.name)
+        .unwrap()
+        .unwrap()
+        .terms
+        .audience;
     assert!(
-        !(said.is_ok() && now != narrowed.audience),
+        !(said.is_ok() && now != narrowed.terms.audience),
         "declare said it narrowed, and the change wrote the old audience back"
     );
     assert!(matches!(said, Err(LendError::Busy { .. })), "{said:?}");
     declare(root.path(), &narrowed, None).unwrap();
-    let kept = read(root.path(), &shelf.name).unwrap().unwrap().audience;
-    assert_eq!(kept, narrowed.audience, "taken once let go");
+    let kept = read(root.path(), &shelf.name)
+        .unwrap()
+        .unwrap()
+        .terms
+        .audience;
+    assert_eq!(kept, narrowed.terms.audience, "taken once let go");
 }
 
 /// **A change let go is never held by a program starting at the time**

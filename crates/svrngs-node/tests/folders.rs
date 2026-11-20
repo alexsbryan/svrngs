@@ -1833,7 +1833,8 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
     let kept = |name: &str| {
         let lend = svrngs_node::lend::read(group._dirs[0].path(), &LendName::parse(name).unwrap());
         lend.unwrap().map(|l| {
-            l.refused
+            l.terms
+                .refused
                 .iter()
                 .map(|p| p.as_str().to_string())
                 .collect::<Vec<_>>()
@@ -1958,8 +1959,13 @@ async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
     let sends = || {
         let lend =
             svrngs_node::lend::read(group._dirs[0].path(), &LendName::parse("model").unwrap());
-        lend.unwrap()
-            .map(|l| l.sends.iter().map(|s| s.to_string()).collect::<Vec<_>>())
+        lend.unwrap().map(|l| {
+            l.terms
+                .sends
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+        })
     };
     assert_eq!(sends(), None, "nothing lent until it is pressed again");
     let (status, lent) = lend_from_the_page(&group.ana, asked(Some(""))).await;

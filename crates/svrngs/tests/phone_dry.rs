@@ -79,18 +79,20 @@ async fn sam_through_a_relay_on_this_computer() {
         name: LendName::parse("film").unwrap(),
         source: svrngs_node::lend::Source::Port(port),
         kind: Program::parse("film").unwrap(),
-        // Lent to House, the group just made (LENDING_SCOPE).
-        audience: svrngs_node::lend::Audience::Selected(vec![house.id().to_string()]),
-        limit: Some(limit),
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-        sends: Vec::new(),
-        owner: None,
-        sandbox: None,
-        command: None,
+        terms: svrngs_node::lend::Terms {
+            // Lent to House, the group just made (LENDING_SCOPE).
+            audience: svrngs_node::lend::Audience::Selected(vec![house.id().to_string()]),
+            limit: Some(limit),
+            refused: Vec::new(),
+            upload: None,
+            reads: Vec::new(),
+            sign_in_with_svrngs: None,
+            asks: None,
+            sends: Vec::new(),
+            owner: None,
+            sandbox: None,
+            command: None,
+        },
     };
     lend::declare(&sam_dir, &film, None).unwrap();
     let link = printed.https.expect("an https link on the origin");

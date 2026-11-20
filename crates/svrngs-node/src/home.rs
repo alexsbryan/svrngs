@@ -452,7 +452,7 @@ async fn lent(State(at): State<Asking>) -> Response {
         (_, Err(e)) => return unread("it cannot read what you lend already", &e),
     };
     let all: Vec<_> = all.into_iter().flatten().collect();
-    let signing: Vec<_> = (all.iter().filter(|l| l.sign_in_with_svrngs.is_some()))
+    let signing: Vec<_> = (all.iter().filter(|l| l.terms.sign_in_with_svrngs.is_some()))
         .map(|l| l.name.to_string())
         .collect();
     // How apps read each, by its groups' own terms as well as svrngs's; a
@@ -497,8 +497,8 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Res
         // Its limit, through `mutate` like every change, so it never
         // restores an audience another narrowed (LENDING_SCOPE).
         LendChange::Limit(limit) => lend::mutate(dir, &c.lend, |lend| {
-            tracing::debug!(target: "lend", lend = %c.lend, was = ?lend.limit, now = ?limit, "lend: its limit changed");
-            lend.limit = limit;
+            tracing::debug!(target: "lend", lend = %c.lend, was = ?lend.terms.limit, now = ?limit, "lend: its limit changed");
+            lend.terms.limit = limit;
         }),
         LendChange::Groups(groups) => match chosen(&at, &groups) {
             Ok(()) => lend::set_audience(dir, &c.lend, groups),
@@ -626,8 +626,9 @@ async fn sign_in(at: &Asking, name: &LendName) -> Handled {
     // (`lend::mutate`), so it never writes back an audience read stale.
     let mut had = false;
     let done = lend::mutate(dir, name, |lend| {
-        had = lend.sign_in_with_svrngs.is_some();
-        lend.sign_in_with_svrngs
+        had = lend.terms.sign_in_with_svrngs.is_some();
+        lend.terms
+            .sign_in_with_svrngs
             .get_or_insert_with(|| client.clone());
     });
     match done {
@@ -870,7 +871,7 @@ fn drawn(word: &Program, text: String, by: &str) -> Response {
 /// who wrote them where ([`crate::folder::Folders::agreed`]), read now, for
 /// how apps read it; none for a lend to no group.
 async fn terms_of(at: &Asking, lend: &lend::Lend) -> crate::folder::carried::Said {
-    let Audience::Selected(groups) = &lend.audience else {
+    let Audience::Selected(groups) = &lend.terms.audience else {
         return Ok(Default::default());
     };
     at.door.folders.agreed(groups, &lend.kind).await

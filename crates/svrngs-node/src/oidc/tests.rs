@@ -294,7 +294,7 @@ impl Lender {
     fn code(&self, who: svrngs_core::token::Subject, device: &str, extra: &str) -> String {
         let name = crate::lend::LendName::parse("media").unwrap();
         let lend = crate::lend::read(self.dir.path(), &name).unwrap().unwrap();
-        let client = lend.sign_in_with_svrngs.clone().unwrap();
+        let client = lend.terms.sign_in_with_svrngs.clone().unwrap();
         let redirect: String = form_urlencoded::byte_serialize(REDIRECT.as_bytes()).collect();
         let query = format!(
             "response_type=code&client_id={CLIENT}&redirect_uri={redirect}&scope=openid\

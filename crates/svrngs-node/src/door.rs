@@ -644,24 +644,24 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
         let (answering, held) = answering(door, &lend).await;
         let (group, groups, raw) = match lend.source {
             Source::Carried(_, group) => (Some(group.clone()), Some(vec![group]), None),
-            Source::Port(_) => (None, lend.audience.ids().map(<[String]>::to_vec), None),
-            Source::Raw(raw, _) => (None, lend.audience.ids().map(<[String]>::to_vec), Some(raw)),
+            Source::Port(_) => (None, lend.terms.audience.ids().map(<[String]>::to_vec), None),
+            Source::Raw(raw, _) => (None, lend.terms.audience.ids().map(<[String]>::to_vec), Some(raw)),
         };
         Some(Offered {
             name: lend.name,
             kind: lend.kind,
-            limit: lend.limit,
+            limit: lend.terms.limit,
             using,
-            upload: lend.upload,
+            upload: lend.terms.upload,
             reads,
-            asks: lend.asks,
+            asks: lend.terms.asks,
             group,
             groups,
             raw,
-            sends: lend.sends,
+            sends: lend.terms.sends,
             answering,
             held,
-            command: lend.command.map(|c| c.name),
+            command: lend.terms.command.map(|c| c.name),
         })
     });
     let offered = n0_future::join_all(each).await;
@@ -1552,7 +1552,7 @@ pub(crate) async fn lend_for(
         return Err(LendRefusal::Path.say(StatusCode::FORBIDDEN, words));
     }
     if service_path == crate::oidc::AUTHORIZE_PATH {
-        let Some(client) = lend.sign_in_with_svrngs.as_ref() else {
+        let Some(client) = lend.terms.sign_in_with_svrngs.as_ref() else {
             tracing::debug!(target: "door", actor, lend = %lend.name, "door: refused — the authorize path on a lend that does not sign people in with svrngs");
             let words = format!("{} does not sign people in with svrngs", lend.name);
             return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, words));
@@ -1580,7 +1580,7 @@ pub(crate) async fn lend_for(
             req.uri().query(),
         ));
     }
-    let row = |m: &str| lend.sends.iter().any(|s| s.is(m, &service_path));
+    let row = |m: &str| lend.terms.sends.iter().any(|s| s.is(m, &service_path));
     let asked = match (upgrade_of(req.headers()), req.method().as_str()) {
         (None, "GET" | "HEAD") => Asked::Read,
         (None, m) if row(m) && req.uri().query().is_none() => Asked::Send,
@@ -1602,7 +1602,7 @@ pub(crate) async fn lend_for(
             let name = &lend.name;
             let mut words = format!("Apps can only read {by}’s {name}.");
             // Where it sends, said exactly, for an app off by a slash.
-            for row in &lend.sends {
+            for row in &lend.terms.sends {
                 words += &format!(" An app on a computer sends to it only as {row}, exactly.");
             }
             return Err(LendRefusal::closed(words));
@@ -1643,7 +1643,7 @@ pub(crate) async fn lend_for(
         Verdict::In { people, share } => {
             let path = observed.as_ref();
             tracing::info!(target: "door", person = asker.person.as_str(), lend = %lend.name, people, share_bps = ?share,
-                declared_bps = ?lend.upload.map(lend::Upload::bps), relayed = ?path.map(|o| o.relay.is_some()), rtt_ms = ?path.map(|o| o.rtt.as_millis()),
+                declared_bps = ?lend.terms.upload.map(lend::Upload::bps), relayed = ?path.map(|o| o.relay.is_some()), rtt_ms = ?path.map(|o| o.rtt.as_millis()),
                 sent = ?path.map(|o| o.sent), received = ?path.map(|o| o.received), relay = ?path.and_then(|o| o.relay.clone()), "door: let in, and told their share of the declared upload");
             if share.is_none() {
                 tracing::debug!(target: "door", lend = %lend.name, "door: the lend declares no upload, so no share is told");
@@ -1787,7 +1787,11 @@ pub(crate) type Recorded<'a> = (Option<u32>, Option<&'a Sandbox>, Option<&'a Com
 
 /// `lend`'s [`Recorded`].
 fn recorded(lend: &Lend) -> Recorded<'_> {
-    (lend.owner, lend.sandbox.as_ref(), lend.command.as_ref())
+    (
+        lend.terms.owner,
+        lend.terms.sandbox.as_ref(),
+        lend.terms.command.as_ref(),
+    )
 }
 
 /// The one decider of [`Bound`]: the same account, then the same sandbox
@@ -1831,8 +1835,8 @@ pub(crate) async fn kept(door: &Door, lend: &Lend, conn: Conn) -> Result<(), Hol
         Bound::Record(uid, holder) => {
             tracing::info!(target: "door", lend = %lend.name, uid, ?holder, "door: a lend from before this records the account, sandbox and program answering it");
             let kept = lend::mutate(&door.data_dir, &lend.name, |l| {
-                l.owner = Some(uid);
-                (l.sandbox, l.command) = holder.map(|h| (h.sandbox, h.command)).unzip();
+                l.terms.owner = Some(uid);
+                (l.terms.sandbox, l.terms.command) = holder.map(|h| (h.sandbox, h.command)).unzip();
             });
             tracing::debug!(target: "door", lend = %lend.name, ?kept, "door: recorded");
             Ok(())
@@ -2049,7 +2053,7 @@ async fn forward(
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
-    tell_origin(&mut parts.headers, lend.sign_in_with_svrngs.is_some());
+    tell_origin(&mut parts.headers, lend.terms.sign_in_with_svrngs.is_some());
     parts.headers.insert(header::HOST, own_address(port));
     own_origin(&mut parts.headers, &label, (lend, port));
     if let Some(protocol) = upgrade.clone() {

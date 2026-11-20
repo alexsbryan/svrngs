@@ -543,7 +543,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
     assert_eq!(
-        read.asks.as_deref(),
+        read.terms.asks.as_deref(),
         Some(words),
         "the words come back whole"
     );

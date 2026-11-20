@@ -448,7 +448,7 @@ async fn a_port_answered_by_another_account_than_its_lend_recorded_is_held() {
     let lend = share_tcp(&sam, echo().await, &[]);
     let mine = svrngs_node::uid::mine().unwrap();
     let recorded =
-        |uid| svrngs_node::lend::mutate(sam.dir.path(), &lend.name, |l| l.owner = Some(uid));
+        |uid| svrngs_node::lend::mutate(sam.dir.path(), &lend.name, |l| l.terms.owner = Some(uid));
     assert_eq!(recorded(mine + 1).ok(), Some(true));
     let (carried, local) = open(&them[0], &sam, &lend).await;
     let (mut told, _alex) = carried.expect("Alex's computer opens Sam's echo");

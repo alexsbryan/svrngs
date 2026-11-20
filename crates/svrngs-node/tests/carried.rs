@@ -2492,7 +2492,11 @@ async fn a_carried_taste_sends() {
     };
     let lend = svrngs_node::share::lend_of(&asked, |_| true, None, "").unwrap();
     assert_eq!(
-        lend.sends.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
+        lend.terms
+            .sends
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>(),
         ["POST /v1/embeddings"]
     );
     svrngs_node::lend::declare(dirs[1].path(), &lend, None).unwrap();

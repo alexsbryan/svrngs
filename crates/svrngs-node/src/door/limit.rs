@@ -96,7 +96,7 @@ impl Counts {
         viewers.retain(|_, v| v.counted(now));
         let known = viewers.contains_key(actor);
         let at_most = |l: &NonZeroU16| !known && viewers.len() >= usize::from(l.get());
-        if let Some(limit) = lend.limit.filter(at_most) {
+        if let Some(limit) = lend.terms.limit.filter(at_most) {
             return Verdict::Full {
                 using: u32::try_from(viewers.len()).unwrap_or(u32::MAX),
                 limit,
@@ -116,7 +116,7 @@ impl Counts {
         // lender's to raise.
         Verdict::In {
             people,
-            share: lend.upload.map(|u| u.bps() / u64::from(people.get())),
+            share: lend.terms.upload.map(|u| u.bps() / u64::from(people.get())),
         }
     }
 

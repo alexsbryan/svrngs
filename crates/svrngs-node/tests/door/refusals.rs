@@ -182,6 +182,7 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
         lend::read(world.dir.path(), &name)
             .unwrap()
             .unwrap()
+            .terms
             .audience
     };
     let held = vec![NS.to_string(), "trip".to_string(), "yard".to_string()];
@@ -958,7 +959,7 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
     assert_eq!(ask(bo, "GET", "/lend/old/whoami", "").await.status, 200);
     let old = lend::read(world.dir.path(), &LendName::parse("old").unwrap());
     assert_eq!(
-        old.unwrap().unwrap().owner,
+        old.unwrap().unwrap().terms.owner,
         Some(mine),
         "recorded at its first connection"
     );
@@ -1004,7 +1005,7 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
     assert_eq!(ask(bo, "GET", "/lend/old/whoami", "").await.status, 200);
     let old = lend::read(world.dir.path(), &LendName::parse("old").unwrap());
     let old = old.unwrap().unwrap();
-    let recorded = (old.owner, old.sandbox, old.command);
+    let recorded = (old.terms.owner, old.terms.sandbox, old.terms.command);
     assert_eq!(
         recorded,
         (Some(mine), Some(Sandbox::No), Some(serve.command))

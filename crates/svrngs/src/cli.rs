@@ -816,14 +816,14 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
             let mut lend = share::lend_of(&asked, |p| here.listens(p), known, theirs)?;
             share::bound(&mut lend, here.owner(asked.raw, asked.port), asked.pid)?;
-            if !lend.sends.is_empty() && !sends_said(here, &lend)? {
-                lend.sends.clear();
+            if !lend.terms.sends.is_empty() && !sends_said(here, &lend)? {
+                lend.terms.sends.clear();
             }
             let accounts = share::accounts_of(&lend.kind, theirs);
             let client = asked.sign_in.then(svrngs_node::oidc::client).transpose()?;
             if let Some(client) = &client {
                 tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
-                lend.sign_in_with_svrngs = Some(client.clone());
+                lend.terms.sign_in_with_svrngs = Some(client.clone());
             }
             let secret = match share::adds_headers(&lend, theirs) {
                 false => {
@@ -1415,13 +1415,13 @@ impl std::fmt::Display for Said {
                     Source::Raw(raw, port) => (&lend.name, (port, format!("{} ", raw.said()))),
                     Source::Carried(..) => return writeln!(f, "{} is carried in its group's folder.", lend.name),
                 };
-                match lend.limit {
+                match lend.terms.limit {
                     Some(n) => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, up to {n} {} at once.",
                         if n.get() == 1 { "person" } else { "people" })?,
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
                 }
-                if let Some(program) = &lend.command {
+                if let Some(program) = &lend.terms.command {
                     let p = &program.name;
                     writeln!(f, "Kept to {p} as it runs now: started the same way again, {p} keeps it; anything else on port {port} is held until you share {name} again.")?;
                 }
@@ -1450,7 +1450,7 @@ impl std::fmt::Display for Said {
                     None => {}
                 }
                 let (table, group) = (share::kept_of(kind, ""), share::kept_of(kind, theirs));
-                let (kept, typed): (Vec<_>, Vec<_>) = lend.refused.iter().partition(|p| table.contains(p));
+                let (kept, typed): (Vec<_>, Vec<_>) = lend.terms.refused.iter().partition(|p| table.contains(p));
                 let said = format!(": your groups' programs/{kind}.txt keeps it back");
                 for path in typed {
                     let why = if group.contains(path) { said.as_str() } else { "" };
@@ -1461,19 +1461,19 @@ impl std::fmt::Display for Said {
                     writeln!(f, "They cannot open {}: svrngs keeps these back whenever a {} is lent, since they show one person's use of it to the others or change it for everyone.",
                         paths.join(", "), lend.kind)?;
                 }
-                if let Some(words) = &lend.asks {
+                if let Some(words) = &lend.terms.asks {
                     writeln!(
                         f,
                         "An app uses it only once the person it acts for says yes to: \"{words}\"."
                     )?;
                 }
-                for kind in &lend.reads {
+                for kind in &lend.terms.reads {
                     writeln!(
                         f,
                         "It can open the {kind} your groups lend, as whoever opens it."
                     )?;
                 }
-                if let Some(upload) = lend.upload {
+                if let Some(upload) = lend.terms.upload {
                     writeln!(
                         f,
                         "Each is told their share of the {upload} upload you stated."
@@ -1601,7 +1601,7 @@ fn joined_said(joined: &Joined) -> String {
 /// all but what's kept back, and only another app is held to reading.
 fn sends_said(here: &impl Here, lend: &Lend) -> Result<bool, Refusal> {
     use std::io::IsTerminal;
-    let paths: Vec<&str> = lend.sends.iter().map(|s| s.path()).collect();
+    let paths: Vec<&str> = lend.terms.sends.iter().map(|s| s.path()).collect();
     let (name, at) = (&lend.name, paths.join(" and "));
     let terminal = std::io::stdin().is_terminal();
     let words = format!("People in your group can use all of {name} that isn't kept back. Apps your friends open on their computers can only read it, unless you let them also send to it at {at}; even then, each app sends only after the friend who opened it says yes. Let apps send? Type y, then press Enter: ");
@@ -1705,7 +1705,7 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     let ids = groups.iter().map(|g| group_named(root, g).map(|s| s.id()));
     let ids = ids.collect::<Result<Vec<_>, _>>()?;
     let narrowed = |lend: &mut Lend| {
-        if let Audience::Selected(kept) = &mut lend.audience {
+        if let Audience::Selected(kept) = &mut lend.terms.audience {
             kept.retain(|id| !ids.contains(id));
         }
     };

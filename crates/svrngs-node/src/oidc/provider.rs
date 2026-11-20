@@ -124,6 +124,7 @@ impl Provider {
         let name = LendName::parse(raw).inspect_err(not).ok()?;
         match lend::read(&self.data_dir, &name) {
             Ok(Some(mut lend)) => lend
+                .terms
                 .sign_in_with_svrngs
                 .take()
                 .map(|client| (name, lend, client)),

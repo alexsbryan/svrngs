@@ -289,11 +289,12 @@ impl Raw {
 /// representation"): the explicit stable group IDs its lender chose, or the
 /// legacy declaration that named none. A closed type (AGENTS 9) so a
 /// selection is never confused with its absence.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Audience {
     /// A declaration that predates selection, or one never stamped: no
     /// group is reached, and the person must choose. Never all groups
     /// (ARCH 6): an old broad declaration is paused, not inherited.
+    #[default]
     Legacy,
     /// The groups the lender explicitly chose, by their stable IDs. Empty
     /// is paused to groups; a carried app's own group is separate and never
@@ -319,14 +320,21 @@ impl Audience {
 }
 
 /// A lend as its declaration says, or as its group's folder carries it:
-/// where it is answered from, what it is, which groups it is lent to, how
-/// many people may use it at once, what the door refuses of it, and the
-/// upload its lender declares, if any.
+/// where it is answered from, what it is, and the terms it is lent on.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lend {
     pub name: LendName,
     pub source: Source,
     pub kind: Program,
+    pub terms: Terms,
+}
+
+/// The terms a lend is lent on, as its lender declared them: which groups
+/// it is lent to, how many people may use it at once, what the door
+/// refuses of it, the upload its lender declares, if any, and the rest.
+/// None of them, for a carried app's own ([`Lend::carried`]).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Terms {
     /// The groups its lender explicitly chose (LENDING_SCOPE). A carried
     /// app's audience is its own group ([`Source::Carried`]), never this.
     pub audience: Audience,
@@ -418,7 +426,7 @@ impl Lend {
     pub fn reaches(&self, group: &str) -> bool {
         match &self.source {
             Source::Carried(_, own) => own == group,
-            Source::Port(_) | Source::Raw(..) => self.audience.reaches(group),
+            Source::Port(_) | Source::Raw(..) => self.terms.audience.reaches(group),
         }
     }
 
@@ -439,26 +447,19 @@ impl Lend {
             kind: Program(app.0.clone()),
             source: Source::Carried(app, group.into()),
             // A carried app's reach is its own group, by `Source::Carried`;
-            // this audience is never consulted for one.
-            audience: Audience::Selected(Vec::new()),
-            limit: None,
-            refused: Vec::new(),
-            upload: None,
-            // Read from its files as each person runs them, which a lookup
-            // reads none of ([`crate::folder::Folders::reads`]).
-            reads: Vec::new(),
-            sign_in_with_svrngs: None,
-            asks: None,
-            sends: Vec::new(),
-            owner: None,
-            sandbox: None,
-            command: None,
+            // this audience is never consulted for one. Its reads are read
+            // from its files as each person runs them, which a lookup reads
+            // none of ([`crate::folder::Folders::reads`]).
+            terms: Terms {
+                audience: Audience::Selected(Vec::new()),
+                ..Terms::default()
+            },
         })
     }
 
     /// The refused path covering `path`, if one does.
     pub fn refusing(&self, path: &str) -> Option<&RefusedPath> {
-        self.refused.iter().find(|r| r.covers(path))
+        self.terms.refused.iter().find(|r| r.covers(path))
     }
 }
 
@@ -786,17 +787,19 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         name: name.clone(),
         source: (file.raw).map_or(Source::Port(file.port), |r| Source::Raw(r, file.port)),
         kind: file.kind,
-        audience: file.groups.map_or(Audience::Legacy, Audience::Selected),
-        limit: file.limit,
-        refused,
-        upload: file.upload,
-        reads: file.reads,
-        sign_in_with_svrngs,
-        asks: file.asks,
-        sends: file.sends,
-        owner: file.owner,
-        sandbox: file.sandbox,
-        command: file.command,
+        terms: Terms {
+            audience: file.groups.map_or(Audience::Legacy, Audience::Selected),
+            limit: file.limit,
+            refused,
+            upload: file.upload,
+            reads: file.reads,
+            sign_in_with_svrngs,
+            asks: file.asks,
+            sends: file.sends,
+            owner: file.owner,
+            sandbox: file.sandbox,
+            command: file.command,
+        },
     }))
 }
 
@@ -835,8 +838,8 @@ pub fn stamp(data_dir: &Path, groups: &[String]) {
         }
         let lent = mutate(data_dir, &name, |lend| {
             tracing::info!(target: "lend", lend = %name, groups = groups.len(), "lend: a declaration from before groups goes to the groups this computer stands in now; in none, it needs selection");
-            if lend.audience == Audience::Legacy && !groups.is_empty() {
-                lend.audience = Audience::Selected(groups.to_vec());
+            if lend.terms.audience == Audience::Legacy && !groups.is_empty() {
+                lend.terms.audience = Audience::Selected(groups.to_vec());
             }
         });
         if let Err(e) = lent {
@@ -882,7 +885,7 @@ pub fn declare(
     lend: &Lend,
     secret: Option<(&str, &str)>,
 ) -> Result<(), LendError> {
-    if secret.is_some() && lend.sign_in_with_svrngs.is_some() {
+    if secret.is_some() && lend.terms.sign_in_with_svrngs.is_some() {
         tracing::debug!(target: "lend", lend = %lend.name,
             "lend: refused — a lend declares its own password or a sign-in with svrngs, never both");
         return Err(LendError::TwoSecrets);
@@ -900,8 +903,8 @@ pub fn declare(
     }
     write(data_dir, lend)?;
     tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
-        limit = ?lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
-        secret = secret.is_some(), asks = lend.asks.is_some(),
+        limit = ?lend.terms.limit, refused = lend.terms.refused.len(), upload = ?lend.terms.upload.map(Upload::bps),
+        secret = secret.is_some(), asks = lend.terms.asks.is_some(),
         "lend: declared");
     Ok(())
 }
@@ -974,9 +977,9 @@ pub fn set_audience(
     groups: Vec<String>,
 ) -> Result<bool, LendError> {
     mutate(data_dir, name, |lend| {
-        tracing::debug!(target: "lend", lend = %name, was = ?lend.audience, now = groups.len(),
+        tracing::debug!(target: "lend", lend = %name, was = ?lend.terms.audience, now = groups.len(),
             "lend: the groups it is lent to changed");
-        lend.audience = Audience::Selected(groups);
+        lend.terms.audience = Audience::Selected(groups);
     })
 }
 
@@ -993,24 +996,24 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         port,
         raw,
         kind: lend.kind.clone(),
-        groups: lend.audience.ids().map(<[String]>::to_vec),
-        limit: lend.limit,
-        refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
-        upload: lend.upload,
-        reads: lend.reads.clone(),
-        sign_in_with_svrngs: lend.sign_in_with_svrngs.clone(),
-        asks: lend.asks.clone(),
-        sends: lend.sends.clone(),
-        owner: lend.owner,
-        sandbox: lend.sandbox.clone(),
-        command: lend.command.clone(),
+        groups: lend.terms.audience.ids().map(<[String]>::to_vec),
+        limit: lend.terms.limit,
+        refused: lend.terms.refused.iter().map(|r| r.0.clone()).collect(),
+        upload: lend.terms.upload,
+        reads: lend.terms.reads.clone(),
+        sign_in_with_svrngs: lend.terms.sign_in_with_svrngs.clone(),
+        asks: lend.terms.asks.clone(),
+        sends: lend.terms.sends.clone(),
+        owner: lend.terms.owner,
+        sandbox: lend.terms.sandbox.clone(),
+        command: lend.terms.command.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));
     // A declaration holding the client secret is written the way this node
     // writes a secret: 0600, and whole (SIGN_IN_WITH_SVRNGS §5, "Turning it
     // on"). One with none keeps the ordinary whole write.
-    let write = if lend.sign_in_with_svrngs.is_some() {
+    let write = if lend.terms.sign_in_with_svrngs.is_some() {
         crate::declared::write_secret(&path, text.as_bytes())
     } else {
         crate::declared::write_whole(&path, text.as_bytes())

@@ -20,18 +20,20 @@ fn shelf(upload: Option<u64>) -> Lend {
         name: LendName::parse("shelf").unwrap(),
         source: crate::lend::Source::Port(NonZeroU16::new(8096).unwrap()),
         kind: Program::parse("k").unwrap(),
-        audience: Audience::Selected(vec!["house".to_string()]),
-        limit: NonZeroU16::new(3),
-        refused: Vec::new(),
-        // Read as a declaration's `upload_bps` is.
-        upload: upload.map(|b| serde_json::from_value(serde_json::json!(b)).unwrap()),
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-        sends: Vec::new(),
-        owner: None,
-        sandbox: None,
-        command: None,
+        terms: crate::lend::Terms {
+            audience: Audience::Selected(vec!["house".to_string()]),
+            limit: NonZeroU16::new(3),
+            refused: Vec::new(),
+            // Read as a declaration's `upload_bps` is.
+            upload: upload.map(|b| serde_json::from_value(serde_json::json!(b)).unwrap()),
+            reads: Vec::new(),
+            sign_in_with_svrngs: None,
+            asks: None,
+            sends: Vec::new(),
+            owner: None,
+            sandbox: None,
+            command: None,
+        },
     }
 }
 

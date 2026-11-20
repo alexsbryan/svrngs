@@ -206,18 +206,20 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
         kind: Program::parse("shelf").unwrap(),
-        // Lent once Sam has made house, below (LENDING_SCOPE).
-        audience: svrngs_node::lend::Audience::Legacy,
-        limit: NonZeroU16::new(3),
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-        sends: Vec::new(),
-        owner: None,
-        sandbox: None,
-        command: None,
+        terms: svrngs_node::lend::Terms {
+            // Lent once Sam has made house, below (LENDING_SCOPE).
+            audience: svrngs_node::lend::Audience::Legacy,
+            limit: NonZeroU16::new(3),
+            refused: Vec::new(),
+            upload: None,
+            reads: Vec::new(),
+            sign_in_with_svrngs: None,
+            asks: None,
+            sends: Vec::new(),
+            owner: None,
+            sandbox: None,
+            command: None,
+        },
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
 
@@ -524,18 +526,20 @@ async fn phone_joins_through(
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
         kind: Program::parse("shelf").unwrap(),
-        // Lent to the group Sam's computer keeps (LENDING_SCOPE).
-        audience: svrngs_node::lend::Audience::Selected(sam.rail().namespaces().unwrap()),
-        limit: NonZeroU16::new(3),
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-        sends: Vec::new(),
-        owner: None,
-        sandbox: None,
-        command: None,
+        terms: svrngs_node::lend::Terms {
+            // Lent to the group Sam's computer keeps (LENDING_SCOPE).
+            audience: svrngs_node::lend::Audience::Selected(sam.rail().namespaces().unwrap()),
+            limit: NonZeroU16::new(3),
+            refused: Vec::new(),
+            upload: None,
+            reads: Vec::new(),
+            sign_in_with_svrngs: None,
+            asks: None,
+            sends: Vec::new(),
+            owner: None,
+            sandbox: None,
+            command: None,
+        },
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
     let args =
