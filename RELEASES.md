@@ -20,6 +20,24 @@ exactly the file you checked, and the link's page only joins:
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/sign-release.sh`).
 
+## V1.13.1, 20 November 2026
+
+V1.13.1 fixes three things a phone test of V1.13.0 found.
+
+**A phone back on your WiFi goes direct again.** When a phone left your
+home WiFi mid-film it carried on through the relay, as it should, but it
+stayed there after it came back. Now it goes straight to your computer
+again once it's back on the WiFi you turned direct connections on for.
+
+**Seeking a film through the relay takes seconds.** A phone seeking far
+into a film through the relay used to wait for everything it had already
+asked for to arrive first, which could take a minute. Now it waits a few
+seconds.
+
+**A shared folder at rest stays at rest.** A folder you share kept
+svrngs busy checking it even when nothing in it changed. Now svrngs
+looks again only when something in it changes.
+
 ## V1.13.0, 20 November 2026
 
 V1.13.0 moves your computers to svrngs's own relay, and lets a phone at
