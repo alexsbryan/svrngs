@@ -154,6 +154,12 @@ fn libproc_s_records_are_read_where_they_hold_it() {
     let mut unix = record("tcp");
     unix[256..260].copy_from_slice(&0u32.to_ne_bytes());
     assert_eq!(record::socket(&unix), None);
+    // Its `soi_options`: the capture's none, then `SO_REUSEPORT` with
+    // `SO_ACCEPTCONN` beside it, as a listener on this Mac read (0x202).
+    let mut shared = record("udp");
+    assert!(!record::reuses(&shared), "the capture's options are none");
+    shared[188..190].copy_from_slice(&0x202u16.to_ne_bytes());
+    assert!(record::reuses(&shared), "SO_REUSEPORT read");
     // The capture's `proc_bsdinfo`, then a `proc_uniqidentifierinfo`: its
     // UUID, then its unique id.
     let mut bsd = hex::decode(include_str!("fixtures/proc_bsdinfo.hex").trim()).unwrap();
@@ -224,7 +230,8 @@ fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
 /// same with a child that doesn't, to which it hands each connection it
 /// accepts, as Node cluster's primary does, the child writing `!` on it
 /// once the parent has let go; `udp` a UDP socket bound to every address
-/// alone, `reused` one with `SO_REUSEADDR`, `beside` one on 127.0.0.1 with
+/// alone, `reused` one with `SO_REUSEADDR`, `shared` one with
+/// `SO_REUSEPORT`, `beside` one on 127.0.0.1 with
 /// `SO_REUSEADDR` and `SO_REUSEPORT`, as F5 binds beside it on a Mac;
 /// `dual` a UDP socket on every IPv6 address taking IPv4's too, `v6only`
 /// one taking IPv6's alone; `reuseport` a TCP listener with `SO_REUSEPORT`,
@@ -236,18 +243,18 @@ fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
 const SERVE: &str = r#"
 import os, socket, sys, time
 how, port = sys.argv[1], int(sys.argv[2] or 0)
-udp = how in ("udp", "beside", "reused", "inflight", "dual", "v6only")
+udp = how in ("udp", "beside", "reused", "shared", "inflight", "dual", "v6only")
 six = how in ("dual", "v6only")
 s = socket.socket(socket.AF_INET6 if six else socket.AF_INET, socket.SOCK_DGRAM if udp else socket.SOCK_STREAM)
 if six:
     s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, how == "v6only")
 if how in ("tcp", "two", "beside", "reused", "inflight"):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-if how in ("beside", "reuseport", "joins", "inflight"):
+if how in ("beside", "reuseport", "joins", "inflight", "shared"):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 if how == "deferred":
     s.setsockopt(socket.IPPROTO_TCP, socket.TCP_DEFER_ACCEPT, 5)
-s.bind(("::" if six else "0.0.0.0" if how in ("udp", "reused") else "127.0.0.1", port))
+s.bind(("::" if six else "0.0.0.0" if how in ("udp", "reused", "shared") else "127.0.0.1", port))
 bound = s.getsockname()[1]
 if not udp:
     s.listen(8)
@@ -480,6 +487,38 @@ fn a_udp_socket_on_every_ipv6_address_is_reached_as_it_takes_ipv4_or_not() {
     let alone = Serving::new("v6only", None);
     let approved = super::tests::approved(Raw::Udp, &alone, None).unwrap();
     assert_eq!(approved.at.to_string(), "::1", "IPv6 alone");
+}
+
+/// **On a Mac, a UDP socket on every address that lets others bind beside
+/// it isn't approved** (SHARE_BINDING_REVIEWS §9 #2): another account may
+/// bind beside it there (in_pcb.c:1016-1031), and the Mac's read lists only
+/// this account's sockets, so `share` refuses it, saying to listen on
+/// 127.0.0.1 for svrngs. One on every address alone, and one on 127.0.0.1
+/// with `SO_REUSEPORT`, beside which no other account can bind, are
+/// approved. Planted, each watched failing: the options read at 186, not
+/// 188 (the shared one approved); the address not asked (the one on
+/// 127.0.0.1 refused); `share::approve` not asking (the shared one
+/// approved).
+#[cfg(target_os = "macos")]
+#[test]
+fn a_udp_socket_others_may_bind_beside_isn_t_approved_on_a_mac() {
+    let said = |how| {
+        let at = Serving::new(how, None);
+        let read = answering(Raw::Udp, at.1, None).expect("the port reads");
+        let port = std::num::NonZeroU16::new(at.1).unwrap();
+        let approved = crate::share::approve((port, Raw::Udp), Ok(read), None, None);
+        approved
+            .map(|_| ())
+            .map_err(|e| e.to_string().replace(&at.1.to_string(), "P"))
+    };
+    let refused = "svrngs can't share UDP port P: the program there listens on every address and lets other programs listen on the port beside it, so on a Mac svrngs can't keep the share to it alone. Have it listen on 127.0.0.1 for svrngs, then share it again.";
+    assert_eq!(
+        said("shared"),
+        Err(refused.into()),
+        "0.0.0.0 with SO_REUSEPORT"
+    );
+    assert_eq!(said("udp"), Ok(()), "0.0.0.0 alone");
+    assert_eq!(said("beside"), Ok(()), "127.0.0.1 with SO_REUSEPORT");
 }
 
 /// `how` [`SERVE`] on `port`, run in a systemd user scope of its own, so in

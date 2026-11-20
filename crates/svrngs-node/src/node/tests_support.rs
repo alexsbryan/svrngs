@@ -1031,6 +1031,7 @@ pub fn answering() -> crate::uid::Answering {
         parents: Default::default(),
         start: Some(1),
         shown: vec![(1, shown)],
+        beside: false,
     }
 }
 

@@ -698,6 +698,7 @@ fn answering(
         parents: Default::default(),
         start: now,
         shown: vec![(id, shown)],
+        beside: false,
     })
 }
 

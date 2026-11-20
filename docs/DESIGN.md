@@ -245,9 +245,12 @@ socket on the port takes what is sent there, bound to it, to every IPv4
 address, or to every IPv6 address without `IPV6_V6ONLY` (sock_diag says
 which on Linux, libproc on a Mac), else ::1 (a UDP share only at
 127.0.0.1); a program listening only on another address is refused, with
-the fix. On a Mac no other account can bind that address beside an approved
-socket there (XNU `in_pcbbind`), and on Linux every account's socket there
-is read. Only the sockets that take what is sent there are approved and
+the fix. On a Mac, XNU's `in_pcbbind` refuses another account a bind
+beside a socket there unless both are on every address and that socket
+lets others bind beside it (`SO_REUSEPORT`), and this account's read lists
+only its own sockets, so a UDP approval of such a socket is refused, with
+the fix: listen on 127.0.0.1 for svrngs. On Linux every account's socket
+there is read. Only the sockets that take what is sent there are approved and
 judged: one on another address gets none of the door's traffic. `svrngs
 share --pid <pid>@<start>`, and the home page's lend of a program it
 showed, approve only when each of those sockets is held by that process or

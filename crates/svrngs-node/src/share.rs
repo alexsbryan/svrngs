@@ -281,6 +281,8 @@ pub enum ShareRefusal {
     Elsewhere(NonZeroU16, std::net::IpAddr),
     #[error("svrngs can't share UDP port {0}: svrngs sends a UDP share's datagrams to 127.0.0.1, and the program there doesn't listen on it. Have it listen on 127.0.0.1, or on every address, then share it again.")]
     UdpOnIpv6(NonZeroU16),
+    #[error("svrngs can't share UDP port {0}: the program there listens on every address and lets other programs listen on the port beside it, so on a Mac svrngs can't keep the share to it alone. Have it listen on 127.0.0.1 for svrngs, then share it again.")]
+    UdpBeside(NonZeroU16),
     #[error("svrngs can't share port {0}: what answers on port {0} changed; choose it again.")]
     Changed(NonZeroU16),
     #[error("{0} is already shared from {1}: give this one another name, or add --replace to share {0} from here instead.")]
@@ -367,6 +369,7 @@ pub fn approve(
         Err(Refused::Another) => Err(ShareRefusal::AlsoListens(port)),
         Err(Refused::Elsewhere(at)) => Err(ShareRefusal::Elsewhere(port, at)),
         Ok(a) if raw == Raw::Udp && a.at.is_ipv6() => Err(ShareRefusal::UdpOnIpv6(port)),
+        Ok(_) if raw == Raw::Udp && read.beside => Err(ShareRefusal::UdpBeside(port)),
         Ok(a) if shown.is_some_and(|t| t != token(&a)) => Err(ShareRefusal::Changed(port)),
         Ok(a) => covered(&a)
             .map(|said| (a, said))

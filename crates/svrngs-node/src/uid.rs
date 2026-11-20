@@ -93,11 +93,18 @@ pub struct Answering {
     /// What each socket is shown as, by its id: a socket shown nothing has
     /// no entry, and an approval of it is refused (`share::approve`).
     pub shown: Vec<(u64, Answer)>,
+    /// On a Mac, a UDP socket there takes 127.0.0.1's datagrams on every
+    /// address and lets others bind beside it (`SO_REUSEPORT`), which a
+    /// program of another account may then do (`in_pcbbind`), where this
+    /// account's read can't list it: an approval of it is refused
+    /// (`share::approve`).
+    pub beside: bool,
 }
 
 /// A share's port read to approve, as each system's reader gives it: the
-/// sockets, each process's parent among those read, what to show.
-type Held = (Read, BTreeMap<u32, u32>, Vec<(u64, Answer)>);
+/// sockets, each process's parent among those read, what to show, and
+/// [`Answering::beside`].
+type Held = (Read, BTreeMap<u32, u32>, Vec<(u64, Answer)>, bool);
 
 /// How long a reader looks again for a TCP end it doesn't list yet,
 /// waiting longer each time: a Mac's connection is in no process's files
@@ -137,11 +144,12 @@ pub fn port(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unr
 /// §5.1), from the same read, and the start now of `pid`, when one is
 /// asked for. Blocking.
 pub fn answering(raw: Raw, port: u16, pid: Option<u32>) -> Result<Answering, Unread> {
-    let read = held(raw, port).map(|(read, parents, shown)| Answering {
+    let read = held(raw, port).map(|(read, parents, shown, beside)| Answering {
         read,
         parents,
         start: pid.and_then(start),
         shown,
+        beside,
     });
     tracing::debug!(target: "uid", ?raw, port, ?pid, read = ?read.as_ref().map(|a| (&a.read, &a.shown)), "uid: what answers on a share's port, to approve");
     read
@@ -296,7 +304,7 @@ fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
         (s.id, Answer::Account { account })
     }));
     let parents = procs.iter().map(|(pid, p)| (*pid, p.0)).collect();
-    Ok((read, parents, shown))
+    Ok((read, parents, shown, false))
 }
 
 /// This Linux computer's sockets on a port, its processes and its boot.
@@ -621,7 +629,7 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
     }
     let scan = scanned(me, raw, port, conn.map(|c| (c.peer, c.local)))?;
     let named = |pid: &i32| Some((pid.unsigned_abs(), mac::bsd(*pid)?.1));
-    let socket = |(&id, (at, dual, pids)): (&u64, &mac::On)| binding::Socket {
+    let socket = |(&id, (at, dual, _, pids)): (&u64, &mac::On)| binding::Socket {
         id,
         cgroup: None,
         holders: pids.iter().filter_map(named).collect(),
@@ -709,17 +717,25 @@ fn last_user(stat: &record::Stat, now: Option<(u32, u64, u64)>) -> Option<Proces
 /// account's ([`Read::unlisted`]). A UDP socket on every IPv6 address is
 /// dual only where libproc reads a dual one on the port held by a process
 /// holding it, so 127.0.0.1 is chosen only where an approved socket takes
-/// IPv4's: then no other account can bind it beside it, since `in_pcbbind`
-/// refuses another uid one its lookup finds (in_pcb.c:1016-1044), and that
-/// lookup finds a socket that takes IPv4's (:2391); likewise ::1 beside any
-/// IPv6 socket on it or every address (in6_pcb.c:398-415, :1289).
+/// IPv4's. Another uid's bind there is refused when `in_pcbbind`'s lookup
+/// finds a socket on the address (in_pcb.c:1016-1044), and that lookup
+/// finds one that takes IPv4's (:2391); likewise ::1 beside any IPv6 socket
+/// on it or every address (in6_pcb.c:398-415, :1289). It is let through
+/// when both are on every address and the one found has `SO_REUSEPORT`
+/// (in_pcb.c:1016-1031, xnu main), so such a UDP socket is said
+/// ([`Answering::beside`]).
 #[cfg(target_os = "macos")]
 #[expect(clippy::disallowed_methods, reason = "dial: unwritten probe")]
 fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
     let (mut read, _) = sockets(raw, port, None)?;
+    let mut beside = false;
     if raw == Raw::Udp {
         let scan = scanned(mine().map_err(Unread::Failed)?, raw, port, None)?;
-        let duals = scan.on.values().filter(|(_, dual, _)| *dual);
+        let open = |(at, dual, reuses, _): &mac::On| {
+            *reuses && at.is_unspecified() && (at.is_ipv4() || *dual)
+        };
+        beside = scan.on.values().any(open);
+        let duals = scan.on.values().filter(|(_, dual, ..)| *dual);
         let duals: BTreeSet<i32> = duals.flat_map(|(.., pids)| pids.iter().copied()).collect();
         for s in &mut read.sockets {
             s.dual = s
@@ -739,7 +755,7 @@ fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
     let up = holders.clone().flat_map(|(_, (pid, _))| mac::up(pid));
     let parents = up.map(|(pid, _, parent)| (pid, parent)).collect();
     let shown = holders.map(|(id, p)| (id, mac::shown(p))).collect();
-    Ok((read, parents, shown))
+    Ok((read, parents, shown, beside))
 }
 
 /// No reader here.
@@ -829,6 +845,14 @@ mod record {
         let foreign = SocketAddr::new(ip(FADDR, v4)?, port(FPORT)?);
         Some((raw, handle, (local, foreign), dual))
     }
+
+    /// Whether a `socket_fdinfo`'s socket lets others bind beside it: its
+    /// `soi_options` holds `SO_REUSEPORT` (0x200, sys/socket.h).
+    pub(super) fn reuses(socket: &[u8]) -> bool {
+        let options = socket.get(OPTIONS..OPTIONS + 2);
+        matches!(options, Some(&[a, b]) if u16::from_ne_bytes([a, b]) & 0x200 != 0)
+    }
+    const OPTIONS: usize = 188;
 
     /// A `proc_bsdinfo`'s uid: none for a record of another length.
     pub(super) fn uid(bsd: &[u8]) -> Option<u32> {
@@ -1038,9 +1062,10 @@ mod record {
 mod mac {
     use super::*;
 
-    /// A socket on the port: its address, whether it is dual, and the pids
-    /// holding it.
-    pub(super) type On = (IpAddr, bool, BTreeSet<i32>);
+    /// A socket on the port: its address, whether it is dual, whether it
+    /// lets others bind beside it ([`record::reuses`]), and the pids holding
+    /// it.
+    pub(super) type On = (IpAddr, bool, bool, BTreeSet<i32>);
 
     /// One scan of this account's processes ([`scan`]).
     pub(super) struct Scan {
@@ -1114,9 +1139,8 @@ mod mac {
                 holds |= end.is_some_and(|(at, to)| same(local, at) && same(foreign, to));
                 if Some(local.port()) == port && (raw == Raw::Udp || foreign.port() == 0) {
                     let at = on.entry(handle);
-                    at.or_insert_with(|| (local.ip(), dual, BTreeSet::new()))
-                        .2
-                        .insert(pid);
+                    let made = || (local.ip(), dual, record::reuses(&socket), BTreeSet::new());
+                    at.or_insert_with(made).3.insert(pid);
                 }
             }
             took = took.or(holds.then_some(pid));

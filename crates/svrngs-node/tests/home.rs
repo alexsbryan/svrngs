@@ -1830,6 +1830,7 @@ async fn keep_sharing_it_is_offered_only_where_approving_it_would_be_taken() {
         parents: Default::default(),
         start: None,
         shown,
+        beside: false,
     };
     let mut theirs = Answering::default();
     theirs.read.unlisted = true;
