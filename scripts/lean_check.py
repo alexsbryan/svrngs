@@ -872,10 +872,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # unread port, door.rs 3 and lend.rs 1): all code but JavaScript 24,160, the
 # operator's word ("Raise it"), after a pass over the files it touches found
 # no unused item and no repeat that wasn't layout or different words.
+# Then 26 for an approval to cover only what was shown (share.rs 14, door.rs
+# 9, uid.rs 3): 24,186, the operator's yes to raising by what the release's
+# review fixes need, each reported. Its pass cut 10 lines in those files.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24161,
+    ".": 24187,
 
     "js": 8694,
 
