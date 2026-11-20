@@ -884,22 +884,23 @@ impl Host {
         let mut peers = self.standing_peers(groups);
         peers.retain(|(actor, _, _)| Some(actor.as_str()) != asker);
         let mut asks = Vec::with_capacity(peers.len());
+        // Whose each ask is stays beside its task, never only in what the
+        // task returns, so the join knows whose ask ended however it ends.
         for (actor, person, contact) in peers {
             let transport = self.transport.clone();
-            asks.push(tokio::spawn(async move {
+            asks.push((person, actor.clone(), tokio::spawn(async move {
                 let asked = tokio::time::timeout(ANSWER_WITHIN, ask_lends(&*transport, &actor, contact));
-                let answer = asked.await.unwrap_or_else(|_| {
+                asked.await.unwrap_or_else(|_| {
                     tracing::debug!(target: "node", actor, within_ms = ANSWER_WITHIN.as_millis() as u64,
                         "node: lends — the computer did not answer in time, so it is named unanswered");
                     Answered::Unanswered
-                });
-                (person, actor, answer)
-            }));
+                })
+            })));
         }
         let mut lends = Lends::default();
-        for ask in asks {
+        for (named, key, ask) in asks {
             match ask.await {
-                Ok((named, key, Answered::Lends(answered, version))) => {
+                Ok(Answered::Lends(answered, version)) => {
                     for offered in answered {
                         let Some(address) = self.origin(&key, &offered, version) else {
                             continue;
@@ -913,10 +914,10 @@ impl Host {
                         });
                     }
                 }
-                Ok((person, _, Answered::Unanswered)) => lends.unlisted.unanswered.push(person),
-                Ok((person, _, Answered::Unheard)) => lends.unlisted.unheard.push(person),
-                Ok((person, _, Answered::Refused)) => lends.unlisted.refused.push(person),
-                Ok((person, _, Answered::Older)) => lends.unlisted.older.push(person),
+                Ok(Answered::Unanswered) => lends.unlisted.unanswered.push(named),
+                Ok(Answered::Unheard) => lends.unlisted.unheard.push(named),
+                Ok(Answered::Refused) => lends.unlisted.refused.push(named),
+                Ok(Answered::Older) => lends.unlisted.older.push(named),
                 Err(e) => {
                     tracing::warn!(target: "node", error = %e, "node: lends — an ask ended without an answer")
                 }
