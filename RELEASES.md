@@ -51,8 +51,8 @@ nothing to anything else. If the program starts again, a container is made
 afresh, or something else is on the port, the lend closes, and its line on
 your home page says what answers there now. **Keep sharing it** keeps the
 same link for the same groups, kept to what that line showed. In a
-terminal, `svrngs approve <name>` does the same and says what it kept it
-to. Tools that show you a program before you lend it, like the Omarchy bar
+terminal, `svrngs approve <name>` says what answers now and asks you
+first: type `y` to keep sharing it with that. Tools that show you a program before you lend it, like the Omarchy bar
 plugin from svrngs-fam 0.5.0, approve only what they showed you.
 
 **After you update, choose what each lend shares.** A lend made before

@@ -15,7 +15,9 @@
 //! svrngs share <port> --group G... [--name N] [--program P] [--pid I@S] [--replace] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
 //!                                          lend a service on this computer
 //! svrngs unshare <name> [--group G]...     stop lending it, or to G only
-//! svrngs approve <name> [--pid I@S]        keep lending it to what answers now
+//! svrngs approve <name> [--pid I@S] [--token T]
+//!                                          say what answers now, and keep lending it
+//!                                          to that on a y, or to what a list showed
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
 //! svrngs room <name>...                    open lends to this computer's WiFi,
@@ -209,8 +211,9 @@ pub enum Verb {
     /// withdraws it.
     Unshare(LendName, Vec<String>),
     /// `approve`: what answers on the lend's port approved, with `--pid`
-    /// the process its lender chose (svrn-docs SHARE_BINDING §5.4).
-    Approve(LendName, Option<share::Pid>),
+    /// the process its lender chose (svrn-docs SHARE_BINDING §5.4), and
+    /// `--token` what a lend's list showed of it (`Offered::token`).
+    Approve(LendName, Option<share::Pid>, Option<String>),
     /// `share --folder --group`, asked of svrngs running here: the
     /// directory, absolute, and the group as typed.
     Folder {
@@ -280,7 +283,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut reads = Vec::new();
     let (mut folder, mut groups) = (None, Vec::new());
     let mut asks = None;
-    let mut pid = None;
+    let (mut pid, mut token) = (None, None);
     let mut replace = false;
     let mut sign_in = false;
     let mut readers = false;
@@ -300,6 +303,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--relay" => matches!(verb.as_str(), "new" | "link"),
             "--at" => verb == "relay",
             "--joined" => matches!(verb.as_str(), "remove" | "handover"),
+            "--token" => verb == "approve",
             "--as" | "--origin" | "--name" | "--program" | "--kind" | "--pid" | "--limit"
             | "--refuse" | "--upload" | "--reads" | "--sign-in" | "--folder" | "--group"
             | "--ask" => true,
@@ -353,6 +357,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 asks = Some(raw);
             }
             "--joined" if valued => joined = Some(joined_of(&raw)?),
+            "--token" if valued => token = Some(raw),
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
             "--print" if verb == "open" => print = true,
@@ -499,7 +504,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "approve" => {
             let raw = positional.ok_or("approve wants a name: `svrngs approve <name>`")?;
-            Ok(Verb::Approve(lend_name(&raw)?, pid))
+            Ok(Verb::Approve(lend_name(&raw)?, pid, token))
         }
         "room" => {
             let first = positional.ok_or("room wants what to serve: `svrngs room <name>...`")?;
@@ -620,6 +625,8 @@ pub enum Refused {
     Meet(String),
     #[error("you are in no group on this computer, so a relay for your groups would let nobody through: join one first, or say --open to relay for everyone")]
     RelayForNobody,
+    #[error("svrngs approve shows you what answers on {0}'s port before it keeps sharing {0}, and there's no terminal here to ask you: run it in a terminal, or press Keep sharing it on your home page")]
+    Unshown(LendName),
 }
 
 /// A precondition of the run is absent, so nothing is claimed: exit 3.
@@ -774,7 +781,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         Verb::Check(dir) => checked(&dir)?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
-        Verb::Approve(name, pid) => approve(here, &name, pid)?,
+        Verb::Approve(name, pid, token) => approve(here, &name, pid, token)?,
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
         Verb::Update => match update::apply(&root).await? {
             update::Outcome::Current => "This computer has the latest svrngs.\n".into(),
@@ -1033,6 +1040,11 @@ pub trait Here {
     /// ([`svrngs_node::door::bound`]).
     fn bound(&self, lend: &Lend) -> impl Future<Output = Result<Bound, Unsent>>;
     fn prompt(&self, name: &LendName, asked: &str, shown: bool) -> Prompted;
+    /// Whether a person is at this terminal to answer a question: standard
+    /// input is one.
+    fn terminal(&self) -> bool {
+        std::io::IsTerminal::is_terminal(&std::io::stdin())
+    }
     /// Whether the program that opens addresses on this computer took `what`:
     /// the one way the command reaches a browser, so a test stands in for it.
     fn browse(&self, what: &std::ffi::OsStr) -> bool;
@@ -1635,20 +1647,23 @@ fn joined_said(joined: &Joined) -> String {
 /// technical lender reads `sends:` at the yes"): people in the group reach
 /// all but what's kept back, and only another app is held to reading.
 fn sends_said(here: &impl Here, lend: &Lend) -> Result<bool, Refusal> {
-    use std::io::IsTerminal;
     let paths: Vec<&str> = lend.terms.sends.iter().map(|s| s.path()).collect();
     let (name, at) = (&lend.name, paths.join(" and "));
-    let terminal = std::io::stdin().is_terminal();
+    let terminal = here.terminal();
     let words = format!("People in your group can use all of {name} that isn't kept back. Apps your friends open on their computers can only read it, unless you let them also send to it at {at}; even then, each app sends only after the friend who opened it says yes. Let apps send? Type y, then press Enter: ");
-    let yes = terminal
-        && here
-            .prompt(name, &words, true)?
-            .is_some_and(|y| ["y", "yes"].contains(&y.to_lowercase().as_str()));
+    let yes = terminal && said_yes(here, name, &words)?;
     tracing::debug!(target: "cli", lend = %name, terminal, yes, "cli: share — its lender's yes to apps sending to it, or none");
     if !yes {
         eprintln!("Apps your friends open on their computers can only read {name}, not send to it at {at}; people in your group still use all of it that isn't kept back. To let apps send, run this again in a terminal and type y.");
     }
     Ok(yes)
+}
+
+/// Whether its lender, asked `words` at this terminal of the lend `name`,
+/// types y or yes: anything else, nothing typed included, is no.
+fn said_yes(here: &impl Here, name: &LendName, words: &str) -> Result<bool, Refusal> {
+    let said = here.prompt(name, words, true)?.unwrap_or_default();
+    Ok(["y", "yes"].contains(&said.to_lowercase().as_str()))
 }
 
 /// `svrngs share --readers`: the account apps reading `lend` are let in as,
@@ -1732,15 +1747,34 @@ type Read = (Terms, String);
 
 /// `svrngs approve`: what answers on the port of the lend `name` approved,
 /// with `pid` the process its lender chose, and nothing else of it changed
-/// (svrn-docs SHARE_BINDING §5.4); what answers, said.
+/// (svrn-docs SHARE_BINDING §5.4), only as its lender was shown it: by
+/// `token`, what a lend's list showed; else at a terminal, what answers now
+/// said first, approved on a y by that read's token, so what changed before
+/// the y is refused; else refused, nothing approved unseen. What it approved,
+/// said.
 pub fn approve(
     here: &impl Here,
     name: &LendName,
     pid: Option<share::Pid>,
+    token: Option<String>,
 ) -> Result<String, Refusal> {
     let (lend, port) = share::shared(here.root(), name)?;
-    let read = here.answering(lend.raw(), port, pid.map(|p| p.pid));
-    let (approved, answers) = share::approve((port, lend.raw()), read, pid, None)?;
+    let read = || here.answering(lend.raw(), port, pid.map(|p| p.pid));
+    let terminal = here.terminal();
+    tracing::debug!(target: "cli", lend = %name, given = token.is_some(), terminal, "cli: approve — what answers approved by the token given, else said and asked at a terminal, else refused");
+    let token = match token {
+        Some(token) => token,
+        None if !terminal => return Err(Refused::Unshown(name.clone()).into()),
+        None => {
+            let (seen, answers) = share::approve((port, lend.raw()), read(), pid, None)?;
+            let asked = format!("Now answering on {name}'s port: {}. Keep sharing {name} with it? Type y, then press Enter: ", what_answers(&answers));
+            if !said_yes(here, name, &asked)? {
+                return Ok(format!("Nothing approved: {name} stays closed.\n"));
+            }
+            share::token(&seen)
+        }
+    };
+    let (approved, answers) = share::approve((port, lend.raw()), read(), pid, Some(&token))?;
     share::reapproved(here.root(), name, approved)?;
     Ok(format!(
         "{name} is kept to {} now.\n",
@@ -1749,13 +1783,11 @@ pub fn approve(
 }
 
 /// What answers on a port, as its lender is told it: each program in its
-/// folder, or the account another's runs as, "and" between them.
+/// folder, or the account another's runs as, "and" between them. An
+/// approval always has one: `share::approve` refuses a socket shown nothing.
 fn what_answers(answers: &[Answer]) -> String {
     let said: Vec<String> = answers.iter().map(ToString::to_string).collect();
-    match said.is_empty() {
-        true => "what answers on its port".into(),
-        false => said.join(" and "),
-    }
+    said.join(" and ")
 }
 
 /// `svrngs share`'s write: `lend` declared in the data dir at `root`, with

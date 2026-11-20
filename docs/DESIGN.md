@@ -273,10 +273,13 @@ it stops within a second. A TCP connection is judged alone; a read that
 fails, a socket there whose holder can't be read, or nothing there, holds
 only that connection or datagram. A held share is refused 502, its asker
 told it is closed for now, and its lender's line says what answers now with
-one button, Keep sharing it (`svrngs approve <name>`, `POST
-/v1/lends/<name>/approve` with the token its list gave for what it showed,
-refused once that changed, and a `pid` without its `start` or the reverse
-refused 422), which changes only `approved`. The list gives that token only
+one button, Keep sharing it (`POST /v1/lends/<name>/approve` with the
+token its list gave for what it showed, refused once that changed, and a
+`pid` without its `start` or the reverse refused 422), which changes only
+`approved`. `svrngs approve <name>` says what answers now at a terminal and
+approves it on a y, by that read's token, so what took the port while its
+person read is refused; without a terminal it approves only with
+`--token`, and is refused otherwise. The list gives that token only
 where approving it would be taken, decided by `share::approve`, the one
 decider, and a page or panel offers the button by the token alone: nothing
 answering, no reader, a read that failed, and a socket whose program can't

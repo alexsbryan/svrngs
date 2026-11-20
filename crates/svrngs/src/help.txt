@@ -93,9 +93,13 @@ an app's page svrngs won't load, and what to change.
       A name you share from another port, or as another protocol, is
       refused unless you add --replace.
 
-  svrngs approve <name> [--pid <id>@<start>]
-      Keep sharing <name> with what answers on its port now, and say what
-      that is. Nothing else about it changes. --pid is as for `share`.
+  svrngs approve <name> [--pid <id>@<start>] [--token <token>]
+      Say what answers on <name>'s port now, and keep sharing <name> with
+      it once you type y. If something else took the port while you read,
+      nothing is approved. Nothing else about it changes. --pid is as for
+      `share`. Without a terminal, it approves only with --token, the
+      token a program read from the lend's row in svrngs's API, for what
+      that row showed.
 
   svrngs unshare <name> [--group <group>]...
       Stop lending <name>; with --group, stop lending it to that group

@@ -242,6 +242,11 @@ struct Lender<'a> {
     asked: std::cell::RefCell<Vec<String>>,
     /// What answers on each port, where a test says; else as `running`'s.
     answers: Option<crate::Answered>,
+    /// What answers once a prompt is asked, where a test says: what changed
+    /// while its person read it.
+    changed: Option<crate::Answered>,
+    /// Whether a person is at the terminal ([`cli::Here::terminal`]).
+    terminal: bool,
 }
 
 impl<'a> Lender<'a> {
@@ -252,6 +257,8 @@ impl<'a> Lender<'a> {
             typed,
             asked,
             answers: None,
+            changed: None,
+            terminal: false,
         }
     }
 }
@@ -269,7 +276,15 @@ impl cli::Here for Lender<'_> {
         port: NonZeroU16,
         pid: Option<u32>,
     ) -> crate::Answered {
-        (self.answers.clone()).unwrap_or_else(|| self.running.answering(raw, port, pid))
+        let changed = self
+            .changed
+            .clone()
+            .filter(|_| !self.asked.borrow().is_empty());
+        (changed.or_else(|| self.answers.clone()))
+            .unwrap_or_else(|| self.running.answering(raw, port, pid))
+    }
+    fn terminal(&self) -> bool {
+        self.terminal
     }
     async fn bound(&self, lend: &svrngs_node::lend::Lend) -> crate::Checked {
         self.running.bound(lend).await
@@ -804,6 +819,7 @@ async fn a_share_is_kept_to_the_program_its_lender_chose() {
     beside.read.sockets.push(elsewhere);
     beside.shown.extend(lan.shown);
     lender.answers = Some(Ok(beside));
+    (lender.terminal, lender.typed) = (true, "y");
     let approve =
         cli::parse(["svrngs", "approve", "navidrome", "--pid", "5000@90"].map(String::from));
     let said = cli::answer(approve.unwrap(), &lender, &no_relay())
@@ -822,6 +838,98 @@ async fn a_share_is_kept_to_the_program_its_lender_chose() {
         (again.name, again.kind, again.terms.audience),
         (lent.name, lent.kind, lent.terms.audience)
     );
+}
+
+/// **`svrngs approve` shows what answers before it approves** (SHARE_BINDING
+/// §5.4; SHARE_BINDING_REVIEWS §9 #3): with no terminal and no token it is
+/// refused, exit 1, in words that say where to approve, nothing approved.
+/// At a terminal it says what answers now and asks: anything but y approves
+/// nothing; y approves what it said, by that read's token, so a program that
+/// took the port while its person read is refused as changed; with
+/// `--token` from a lend's list it approves what that list showed, asking
+/// nothing, and a token for what answered before is refused. Planted, each
+/// watched failing: no look first (approved with no terminal); a y assumed
+/// (approved on n); the token of what was said not passed (the program that
+/// took the port approved).
+#[tokio::test]
+async fn svrngs_approve_shows_what_answers_before_it_approves() {
+    use svrngs_node::lend::{self, LendName};
+    let wire = Wire::default();
+    let (sam, _held) = sams_lab(&wire).await;
+    let navidrome = LendName::parse("navidrome").unwrap();
+    let mut lender = Lender::of(&sam, SECRET);
+    lender.answers = Some(answering(0x700e, (4321, 77), "navidrome", None));
+    shares(&lender, &["4533", "--group", "Lab"]).await.unwrap();
+    let kept = || lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
+    let sockets = || kept().terms.approved.map(|a| a.sockets);
+    let other = answering(0x800e, (5000, 90), "other", None);
+    let approve = |args: &[&str]| {
+        let argv = ["svrngs", "approve", "navidrome"].iter().chain(args);
+        cli::parse(argv.map(|s| s.to_string())).unwrap()
+    };
+    lender.answers = Some(other.clone());
+    let refused = cli::answer(approve(&[]), &lender, &no_relay())
+        .await
+        .unwrap_err();
+    let words = "svrngs approve shows you what answers on navidrome's port before it keeps sharing navidrome, and there's no terminal here to ask you: run it in a terminal, or press Keep sharing it on your home page";
+    assert_eq!(
+        (refused.to_string().as_str(), refused.exit_code()),
+        (words, 1)
+    );
+    assert_eq!(sockets(), Some([0x700e].into()), "nothing approved unseen");
+    lender.terminal = true;
+    lender.typed = "n";
+    let said = cli::answer(approve(&[]), &lender, &no_relay())
+        .await
+        .unwrap();
+    assert_eq!(said, "Nothing approved: navidrome stays closed.\n");
+    assert_eq!(
+        lender.asked.borrow().last().map(String::as_str),
+        Some("Now answering on navidrome's port: other in ~/dev/other. Keep sharing navidrome with it? Type y, then press Enter: ")
+    );
+    assert_eq!(sockets(), Some([0x700e].into()), "nothing approved on n");
+    lender.typed = "y";
+    lender.asked.borrow_mut().clear();
+    lender.changed = Some(answering(0x900e, (6000, 1), "third", None));
+    let refused = cli::answer(approve(&[]), &lender, &no_relay())
+        .await
+        .unwrap_err();
+    let words = "svrngs can't share port 4533: what answers on port 4533 changed; choose it again.";
+    assert_eq!(refused.to_string(), words);
+    assert_eq!(
+        sockets(),
+        Some([0x700e].into()),
+        "what took the port meanwhile not approved"
+    );
+    lender.changed = None;
+    let said = cli::answer(approve(&[]), &lender, &no_relay())
+        .await
+        .unwrap();
+    assert_eq!(said, "navidrome is kept to other in ~/dev/other now.\n");
+    assert_eq!(sockets(), Some([0x800e].into()));
+    let listed = svrngs_node::share::approve(
+        (4533.try_into().unwrap(), lend::Raw::Tcp),
+        other,
+        None,
+        None,
+    );
+    let token = svrngs_node::share::token(&listed.unwrap().0);
+    let asked = lender.asked.borrow().len();
+    lender.terminal = false;
+    lender.answers = Some(answering(0xa00e, (7000, 2), "fourth", None));
+    let refused = cli::answer(approve(&["--token", &token]), &lender, &no_relay())
+        .await
+        .unwrap_err();
+    assert_eq!(
+        refused.to_string(),
+        "svrngs can't share port 4533: what answers on port 4533 changed; choose it again."
+    );
+    lender.answers = Some(answering(0x800e, (5000, 90), "other", None));
+    let said = cli::answer(approve(&["--token", &token]), &lender, &no_relay())
+        .await
+        .unwrap();
+    assert_eq!(said, "navidrome is kept to other in ~/dev/other now.\n");
+    assert_eq!(lender.asked.borrow().len(), asked, "a token asks nothing");
 }
 
 /// **A name shared from another port moves only when asked** (SHARE_BINDING
