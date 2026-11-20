@@ -858,12 +858,21 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # steps in go), -2 (a transport config no dial reads), -1 (the trace
 # collector) and -6 (the folder walk's second stat). All code but JavaScript
 # 23,311 -> 23,323 (2026-11-20: "Approved").
+# (2026-11-20) The share binding (a share bound to the socket or process the
+# person approved) lands on V1.13.0: all code but JavaScript 24,275 (V1.13.1's
+# 12, above, among them) and JavaScript 8,693 while it lands, 24,150 once its
+# rules move to Eudoxia. A
+# raise without a pass, the operator's one exception to cutting first: "Just
+# raise caps -- I don't need breakages from line golfing … Cutting before
+# raising is the norm. In this case you said cutting was leading to mangling
+# and I have some urgency here." Its cuts follow as their own reviewed work,
+# and lower the caps where they land.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 23324,
+    ".": 24276,
 
-    "js": 8667,
+    "js": 8694,
 
     "swift": 1,
 }
