@@ -307,6 +307,12 @@ pub fn asleep(key: PublicKey) {
     WIRE.with(|w| w.asleep(key));
 }
 
+/// Each fetch of `key` on this test's wire panics in the task that asks
+/// it ([`Wire::panics`]): a fault in the asker's own ask.
+pub fn panics(key: PublicKey) {
+    WIRE.with(|w| w.panics(key));
+}
+
 /// The socket at `port` on `node`'s computer is `owner`'s on this test's
 /// wire ([`Wire::owns`]): another account's program, or browser.
 #[allow(

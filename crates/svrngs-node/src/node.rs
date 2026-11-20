@@ -196,7 +196,9 @@ pub struct Named {
 /// (bash-first-minute (c); Demo C's dry run, finding 6).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Unlisted {
-    /// Whose computer did not answer.
+    /// Whose computer's answer was not had here: it did not answer within
+    /// [`ANSWER_WITHIN`], the dial of it failed, or this computer's ask of
+    /// it ended (panicked) before saying how it answered.
     pub unanswered: Vec<Named>,
     /// Whose computer answered that it has not heard this one is in its
     /// group: it closed the connection as not admitted.
@@ -899,8 +901,14 @@ impl Host {
         }
         let mut lends = Lends::default();
         for (named, key, ask) in asks {
-            match ask.await {
-                Ok(Answered::Lends(answered, version)) => {
+            // A task that ended without its answer (panicked, cancelled) is
+            // could-not-judge as a dial that failed is, never left out.
+            let answer = ask.await.unwrap_or_else(|e| {
+                tracing::warn!(target: "node", actor = key, error = %e, "node: lends — the ask ended without the computer's answer, so it is named unanswered");
+                Answered::Unanswered
+            });
+            match answer {
+                Answered::Lends(answered, version) => {
                     for offered in answered {
                         let Some(address) = self.origin(&key, &offered, version) else {
                             continue;
@@ -914,13 +922,10 @@ impl Host {
                         });
                     }
                 }
-                Ok(Answered::Unanswered) => lends.unlisted.unanswered.push(named),
-                Ok(Answered::Unheard) => lends.unlisted.unheard.push(named),
-                Ok(Answered::Refused) => lends.unlisted.refused.push(named),
-                Ok(Answered::Older) => lends.unlisted.older.push(named),
-                Err(e) => {
-                    tracing::warn!(target: "node", error = %e, "node: lends — an ask ended without an answer")
-                }
+                Answered::Unanswered => lends.unlisted.unanswered.push(named),
+                Answered::Unheard => lends.unlisted.unheard.push(named),
+                Answered::Refused => lends.unlisted.refused.push(named),
+                Answered::Older => lends.unlisted.older.push(named),
             }
         }
         (lends.lent).sort_by_key(|l| (l.person.clone(), l.offered.name.clone()));

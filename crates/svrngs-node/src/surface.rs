@@ -20,7 +20,7 @@
 //!   this computer's browser opens it, its `origin` (u5-2,
 //!   [`crate::origin`]); and the people whose computer did not say
 //!   what they lend, named in [`crate::node::Unlisted`]'s four lists by how:
-//!   `unanswered` within [`crate::node::ANSWER_WITHIN`], `unheard`,
+//!   `unanswered`, no answer had within [`crate::node::ANSWER_WITHIN`], `unheard`,
 //!   `refused` and `older` — their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
 //!   answers a member, for one group.
 //! - `GET /svrngs-reads`, at a lend's own origin and to its pages (mnp-2,

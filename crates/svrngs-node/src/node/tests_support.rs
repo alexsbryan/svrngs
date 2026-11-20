@@ -256,13 +256,15 @@ pub struct Wire(
 
 /// Who is on a [`Wire`]: each key's acceptor decision, each pair of keys
 /// the first has no path from to the second ([`Wire::part`]), each key
-/// whose computer answers no dial ([`Wire::asleep`]), and each service a
+/// whose computer answers no dial ([`Wire::asleep`]), each key whose fetch
+/// panics on the asker's side ([`Wire::panics`]), and each service a
 /// computer's door reaches at a port ([`Wire::listen`]).
 #[derive(Default)]
 struct Met {
     admits: std::collections::BTreeMap<[u8; 32], crate::iroh::Admitting>,
     parted: std::collections::BTreeSet<([u8; 32], [u8; 32])>,
     asleep: std::collections::BTreeSet<[u8; 32]>,
+    panics: std::collections::BTreeSet<[u8; 32]>,
     services: std::collections::BTreeMap<([u8; 32], u16), Listening>,
     /// Whose each computer's socket at a port is, where a test says
     /// ([`Wire::owns`]); else this account's.
@@ -326,6 +328,15 @@ impl Wire {
     /// [`Unsent::Asleep`], as [`IrohTransport`]'s dial is.
     pub fn asleep(&self, key: PublicKey) {
         self.0.lock().unwrap().asleep.insert(*key.as_bytes());
+    }
+
+    /// A fault in the asker, not in `key`'s computer: each [`Fetch`] of
+    /// `key` panics in the task that asks it, as a bug in this computer's
+    /// own ask would, before anything is sent. The fault no transport here
+    /// has otherwise, so a fan-out's join is watched taking a task that
+    /// never returned.
+    pub fn panics(&self, key: PublicKey) {
+        self.0.lock().unwrap().panics.insert(*key.as_bytes());
     }
 
     /// `url` does as `now` says from here on, each computer's homes read
@@ -486,6 +497,21 @@ impl Fetch for OnWire {
         req: crate::iroh::WholeRequest,
     ) -> crate::iroh::Fetched<'a> {
         Box::pin(async move {
+            // Read and let go before the panic, so the wire's lock is not
+            // poisoned for every other computer on it.
+            let panics = self
+                .wire
+                .0
+                .lock()
+                .unwrap()
+                .panics
+                .contains(peer.key.as_bytes());
+            if panics {
+                panic!(
+                    "a fault planted in the fetch of {} (Wire::panics)",
+                    peer.key.fmt_short()
+                );
+            }
             let (head, body) = self.send(peer, req.map(Into::into)).await?.into_parts();
             let body = axum::body::to_bytes(body, usize::MAX).await;
             Ok(crate::iroh::Whole::from_parts(

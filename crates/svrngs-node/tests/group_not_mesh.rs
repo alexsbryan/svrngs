@@ -289,6 +289,68 @@ async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
     assert!(lends.lent.is_empty(), "{lends:?}");
 }
 
+/// **A lost answer is said, never dropped** (AGENTS.md 6): A founds the
+/// group and admits Bo's, Cy's and Dee's computers; Bo's lends `pad`. A's
+/// ask of Cy's panics, a fault planted in A's own fetch (on_wire
+/// `panics`), and Dee's computer is on no wire, so A's dial of it fails.
+/// Bo's lend still arrives, and Cy's and Dee's computers are each named
+/// unanswered — what they lend not known, never left out as lending
+/// nothing. Watched failing with the join's `Err` arm as it was, warned
+/// and dropped: Dee alone named, Cy nowhere.
+#[tokio::test]
+async fn a_lost_answer_is_named_unanswered_and_the_others_lends_arrive() {
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let (a, bo, cy) = (
+        start(1, &dirs[0]).await,
+        start(2, &dirs[1]).await,
+        start(3, &dirs[2]).await,
+    );
+    for node in [&a, &bo, &cy] {
+        hold(node, NS, 1);
+    }
+    for (person, k) in [("bo", 2), ("cy", 3), ("dee", 4)] {
+        admit(&a, NS, person, k);
+    }
+    let declared = svrngs_node::lend::lends_dir(dirs[1].path());
+    std::fs::create_dir_all(&declared).unwrap();
+    let pad =
+        serde_json::json!({ "port": 1, "kind": "k", "limit": 3, "refused": [], "groups": [NS] });
+    std::fs::write(declared.join("pad.json"), pad.to_string()).unwrap();
+    on_wire::panics(cy.net().id());
+
+    let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
+        .await
+        .expect("the ask finishes");
+    let lent: Vec<_> = (lends.lent.iter())
+        .map(|l| (l.person.to_string(), l.offered.name.as_str().to_owned()))
+        .collect();
+    assert_eq!(
+        lent,
+        [("bo".into(), "pad".into())],
+        "Bo's lend arrives: {lends:?}"
+    );
+    let mut unanswered: Vec<_> = (lends.unlisted.unanswered.iter())
+        .map(|n| (n.person.to_string(), n.person_key.clone()))
+        .collect();
+    unanswered.sort();
+    let named = |p: &str, k: u8| (p.to_string(), actor_of(&signing(k)));
+    assert_eq!(
+        unanswered,
+        [named("cy", 3), named("dee", 4)],
+        "the panicked ask and the failed dial each named unanswered: {lends:?}"
+    );
+    let Unlisted {
+        unheard,
+        refused,
+        older,
+        ..
+    } = &lends.unlisted;
+    assert!(
+        unheard.is_empty() && refused.is_empty() && older.is_empty(),
+        "{lends:?}"
+    );
+}
+
 /// C, admitted to nothing, has its connection closed by A's acceptor with no
 /// HTTP answer. D, admitted only to A's second group, is served that group
 /// and refused (403) the first — a header naming A makes D no more A — and
