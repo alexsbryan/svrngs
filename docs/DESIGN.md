@@ -2904,15 +2904,27 @@ page gives that line, from the page its group's https links are on, ours
 where the computer keeps none, to a computer that cannot keep yet, with
 the one other install it needs, Podman (`apps/give/page/index.js`).
 
-Publishing the binaries with the page is the operator's, in three steps, so
-the page carries its release's signature:
-1. `scripts/release.sh build` builds the site and prints its directory,
-   deploying nothing;
-2. `scripts/release.sh sign <tag> <commit> <site>`, the operator's, signs into
-   the site's `get/`, signs the tag and makes the GitHub release;
-3. `scripts/release.sh page <site>` checks `get/SHA256SUMS.sig` against
+Publishing the binaries with the page is the operator's, in three commands
+typed as they are, each ending with the next, so the page carries its
+release's signature (`scripts/release.sh`):
+1. `scripts/release.sh build` builds the commit that set Cargo.toml's
+   version, though main has moved on (`build <commit>` names another), by
+   that commit's own build scripts under the gate lock, in one worktree kept
+   from release to release, `../svrngs-release`. It refuses a tree with
+   changes of its own, deploys nothing, and saves the tag, commit and site
+   the next two read;
+2. `scripts/release.sh sign`, the operator's, refuses a commit not on
+   `origin/main` and a tag that exists, then signs into the site's `get/`,
+   signs the tag and makes the GitHub release;
+3. `scripts/release.sh page` checks `get/SHA256SUMS.sig` against
    `svrngs-release-key.asc` in a keyring of its own, refuses a site without a
-   valid signature, and publishes one with it.
+   valid signature, publishes one with it, and leaves none of the Vercel
+   CLI's files in the site.
+
+sign and page read the commit's `cli::SHIPPED` (§3, "Where a computer meets
+its groups"): a build at n0's relays they go on with and say so; a build at
+svrngs's they refuse while the relay `DEFAULT_RELAY` names does not answer
+(`scripts/relay-answers.sh`); a switch they cannot read they refuse.
 
 The release's own last step is pacman's package. `scripts/arch-package.py
 <version>` reads the GitHub release back, checking it against the release
@@ -2920,12 +2932,6 @@ key and nothing else, and writes `packaging/arch/PKGBUILD`'s version and
 sums from it. It then checks the result with `makepkg --verifysource` in an
 Arch container, after that check has refused a copy with one sum changed.
 The release's record keeps its verdict.
-
-With no argument it refuses and names the three steps. Each run reads
-`cli::SHIPPED` (§3, "Where a computer meets its groups"): a build at n0's
-relays it goes on with and says so; a build at svrngs's it refuses while the
-relay `DEFAULT_RELAY` names does not answer (`scripts/relay-answers.sh`); a
-switch it cannot read it refuses.
 
 ## 8. Risks
 
