@@ -893,10 +893,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then 15 for a flow checked while a server makes another flow's socket to
 # be unjudged and stay open (door/udp.rs, uid.rs, door/bound.rs): 24,310;
 # the operator: "Approved".
+# Then 14 for a socket connected to nothing to be unjudged only while a new
+# flow awaits it, and a flow opened while its port is unjudged to carry once
+# it is (door.rs, door/udp.rs): 24,324. Its pass cut 4; the operator: "Yes".
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24311,
+    ".": 24325,
 
     "js": 8694,
 
