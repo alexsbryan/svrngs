@@ -59,24 +59,22 @@ On your home page, under your group, click *"Sam’s coder (llama-server)"* (*"S
 
 ## Use a friend's model from a program
 
-A chat app, an editor's assistant or a script on your computer can call Sam's model as an OpenAI-compatible server.
+A chat app, an editor's assistant such as opencode or aider, or a script on your computer can call Sam's model as an OpenAI-compatible server. It needs no key from you.
 
-![A program on Bo’s computer calls the copied address with Bo’s svrngs token; the token stops at Bo’s computer, and Sam’s computer checks it is Bo before llama-server answers.](../diagrams/guide/models.svg)
+![A program on Bo’s computer calls the address Bo copied while Play is on, with any text as its key; Bo’s svrngs lets in only Bo’s own programs, drops the key, and asks Sam’s computer as Bo.](../diagrams/guide/models.svg)
 
-1. On your home page, under your group's **Shared apps**, find Sam's model, press **Address** beside it, then **Copy its address for a program**. The page says *"Copied: http://….localhost:…/. Paste it where a program on this computer, such as a chat app, asks for an address."* The address stays the same when svrngs or your computer restarts.
+1. On your home page, under your group's **Shared apps**, find Sam's model and press **Play** beside it. The row says *"Connect to http://….localhost:…/."* and copies that address. The address stays the same when svrngs or your computer restarts, and Play stays on until you press **Stop**.
 2. In the program, set the OpenAI base URL to that address with `v1` on the end.
-3. For the API key, give it your svrngs token: the text in `~/.svrngs/token`. svrngs lets a program on your computer through only with it, and doesn't pass it on to Sam.
+3. If the program insists on an API key, type any text, such as `none`. svrngs doesn't read it, and doesn't pass it on to Sam.
+
+While Play is on, any program you run on this computer can use Sam's model as you. A web page in your browser can't, and neither can a program another account on this computer runs. Your home page lists it under **What acts as you**, with its **Stop**.
 
 In Python:
 
 ```python
-from pathlib import Path
 import openai
 
-client = openai.OpenAI(
-    base_url="<the address you copied>v1",
-    api_key=Path("~/.svrngs/token").expanduser().read_text().strip(),
-)
+client = openai.OpenAI(base_url="<the address you copied>v1", api_key="none")
 reply = client.chat.completions.create(model="any",
     messages=[{"role": "user", "content": "Name three rivers in Spain."}])
 print(reply.choices[0].message.content)
@@ -87,12 +85,11 @@ With curl:
 ```
 ADDR='<the address you copied>'
 curl "${ADDR}v1/chat/completions" \
-  -H "Authorization: Bearer $(cat ~/.svrngs/token)" \
   -H 'Content-Type: application/json' \
   -d '{"messages":[{"role":"user","content":"Name three rivers in Spain."}]}'
 ```
 
-The address ends in `/`, so `v1/...` goes straight after it. Sam's computer has to be on, with llama-server running.
+The address ends in `/`, so `v1/...` goes straight after it. Sam's computer has to be on, with llama-server running. Without Play, the address answers a program with *"Open svrngs from your computer"*: press **Play** first.
 
 ## Let only so many use it at once
 
@@ -148,7 +145,7 @@ It says *"Point your interface at http://127.0.0.1:8787/v1"* (your number may di
 
 **Point your chat app at it.** In any OpenAI-compatible app, set the base URL to that address. Any API key will do: the pantry adds your svrngs token itself. The app's model list then shows ids like `Ana/coder` and `Sam/voice`: the friend's name, a slash, and the model's own name (what llama-server's `--alias` sets). Picking `Ana/coder` sends your chat to Ana's computer.
 
-**Tools.** A friend's tool is any MCP server that speaks Streamable HTTP. Paste its address from `list`, with `/mcp` on the end, into your app's MCP settings. Like a program, your app needs to send your token, as the header `Authorization: Bearer <the text in ~/.svrngs/token>`.
+**Tools.** A friend's tool is any MCP server that speaks Streamable HTTP. On your home page, press **Play** beside it, as for a model, then paste its address with `/mcp` on the end into your app's MCP settings. Your app needs no key for it.
 
 To lend your own model or tool for the pantry, run it on `127.0.0.1` and lend it under any name: `svrngs share 8108 --program mcp --name tools --group <group>`. More recipes (speech, speech to text, a vision bridge) are in [apps/pantry/README.md](../../apps/pantry/README.md).
 

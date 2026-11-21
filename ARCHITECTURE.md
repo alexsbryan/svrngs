@@ -446,7 +446,12 @@ half on a person's own computer: one owner on the room's model, binding
 `127.0.0.1:<room::port_of(label)>` for each lend whose Play is on, kept in
 `<data dir>/play.json`, while this computer's person and the lender stand
 in a group held here together, read every 5 s; `/v1/play` turns it, for
-the home page's Play and Stop.
+the home page's Play and Stop. A lend at an address binds nothing: its
+owner tells the lends' origins what it has on, as it last looked
+(`Played`), and `origin.rs`'s `lent` asks `play::shown` of a request that
+shows neither a session nor the token, which lets in a program of this
+account (`play::ours`, the socket's owner read by `Sessions::whose`), its
+`Authorization` taken off.
 
 Sign in with svrngs (SIGN_IN_WITH_SVRNGS §5, §6; DESIGN §3, "The room",
 call 6): `crates/svrngs-core/src/token.rs` makes an app's claims from the

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Play: a port a member lends, UDP or TCP, opened on this computer while
-// Play is on, for a program here to connect to, said as /v1/play says it
-// (play.rs `Open::said`), its address copied as it is turned on. PLAY is
+// Play is on, for a program here to connect to, or a lend at an address
+// let in there to a program here, said as /v1/play says it (play.rs
+// `Open::said`), its address copied as it is turned on. PLAY is
 // the page's one read of /v1/play, asked as this file loads and again once
 // a round of the groups' reads. Each read is counted, so an older answer
 // is refused by name. It feeds two lists: the index's cell for each port
@@ -23,13 +24,14 @@ import { get, post } from './routes.js?v=__VERSION__';
  */
 
 /**
- * A port with Play on, as /v1/play answers it (play.rs `Playing`): where
- * it is open or why not (play.rs `Open`, by `is`), and that said.
+ * A lend with Play on, as /v1/play answers it (play.rs `Playing`): where
+ * a program connects, where it is open or why not (play.rs `Open`, by
+ * `is`), and that said.
  * @typedef {object} Playing
  * @property {string | null} person
  * @property {string} key
  * @property {string} name
- * @property {number} port
+ * @property {string} at
  * @property {{ is: 'at', words: string | null } | { is: 'apart' | 'unread' | 'taken' } | { is: 'unopened', words: string }} open
  * @property {string} said
  */
@@ -85,7 +87,7 @@ const answer =
 /** @param {Playing | undefined} playing */
 const copy = (playing) =>
   playing?.open.is === 'at'
-    ? navigator.clipboard.writeText(`127.0.0.1:${playing.port}`).then(
+    ? navigator.clipboard.writeText(playing.at).then(
         () => ' Copied.',
         () => ' Copy it from here.',
       )

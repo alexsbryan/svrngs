@@ -47,7 +47,7 @@ use crate::lend::{AppName, Offered, Program};
 use crate::node::Asking;
 use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
-use crate::session::{Shown, AS_PATH};
+use crate::session::{peer, Shown, AS_PATH};
 use crate::surface::{seed_of, AppRoute};
 use crate::version::VERSION;
 
@@ -79,6 +79,9 @@ pub(crate) enum Unconsented {
     /// The room door (`crate::room`): it checks only that the caller's
     /// address is on this computer's network, which proves no person.
     NetworkOnly,
+    /// A program Play lets in at a lend's address (`crate::play::shown`):
+    /// it reaches the lend as the person, and Play grants no yes to write.
+    Played,
 }
 
 impl Appending {
@@ -96,6 +99,7 @@ impl Appending {
                 })?)
             }
             (Shown::Token, None) => Self::Denied(Unconsented::NoKind),
+            (Shown::Played, _) => Self::Denied(Unconsented::Played),
             (Shown::Session, _) if intent => Self::Granted,
             _ => Self::Denied(Unconsented::NoIntent),
         };
@@ -225,8 +229,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     if req.uri().path() == crate::session::OPEN_PATH {
-        let from = crate::session::peer(&req);
-        let ours = at.sessions.ours(from, &*at.host.transport).await;
+        let ours = at.sessions.ours(peer(&req), &*at.host.transport).await;
         return Ok(at.sessions.redeem(label.as_str(), &req, ours));
     }
     if let Some(answer) = at.sessions.public(label.as_str(), &req) {
@@ -236,12 +239,16 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     // (`crate::surface::reads`), is taken off before anything is decided.
     let cap = capped(&mut req)?;
     // A browser with this origin's session, else a program with the token,
-    // which is the lend's own; neither is carried on to the lend.
+    // else one Play lets in, each the lend's own; none is carried on to
+    // the lend, nor the key a program Play lets in sent (`crate::play`).
     let mut shown = if at.sessions.socket(label.as_str(), &mut req) {
         Shown::Session
     } else {
         at.sessions.shown(&req, label.as_str())
     };
+    if shown == Shown::Neither {
+        shown = crate::play::shown(&at, &label, &mut req).await?;
+    }
     let mut own_proof = shown == Shown::Session;
     let mut appending = Appending::for_request(shown, req.headers())?;
     // The proof, before it is stripped: a redirect its answer names is
@@ -285,7 +292,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, method = %req.method(), ?appending, "origin: refused — a write with this origin's proof but not from its own page's intent");
         return refuse("only this origin's client may submit a write");
     }
-    let program = (shown == Shown::Token).then(|| label.clone());
+    let program = matches!(shown, Shown::Token | Shown::Played).then(|| label.clone());
     let Some(app) = program.or_else(|| app_of(req.headers(), &label)) else {
         tracing::debug!(target: "origin", %label, "origin: refused — from another page that names no origin");
         return refuse("a page reaches another lend only by fetch, which says where it is from");

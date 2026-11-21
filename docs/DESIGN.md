@@ -367,6 +367,25 @@ seconds, whatever their own computer does (`door::udp::serve`).
   as its person while Play is on: each Play on is a line under "What acts
   as you", "Open on this computer: <name> (<lender>’s), while Play is
   on.", whose Stop is the row's own.
+- **Play at an address.** Another computer's lend at an address, an app
+  on a port such as a model, has Play too, beside its Address; a carried
+  app has none. Nothing more listens: while it is on, the lend's address
+  on that computer, `http://<label>.localhost:<port>/`, which its row says
+  and copies, also lets in a program's request with no key. It must not be
+  a page's, so no `Origin` and no `Sec-Fetch-Site`, which a browser sends
+  with every request here, by the record API's own decider (`api.rs`
+  `page_of`; Node's `fetch` sends `Sec-Fetch-Mode` alone); and its socket
+  must be of the account svrngs runs as, read as an open's is (`uid.rs`). Any `Authorization` it sends is never read, and is
+  taken off before the lend is asked, since a program that insists on a
+  key sends any text. Another account's program, and one whose account
+  can't be read, are refused, saying why; a page goes on to a browser's
+  way in (`play.rs` `shown`, `ours`). The lender's terms, the door's
+  rules and the browser's session are as for any asker, and the program
+  writes no entry as its person (`origin.rs` `Unconsented::Played`). Off,
+  the address is as it was. So opencode, aider or an OpenAI client uses a
+  friend's model given the address and any key, and the token is never
+  pasted into an app. It is listed under "What acts as you" as a raw
+  port's is.
 
 **The person's own programs are the trust boundary.** A program on this
 computer asks the record API showing the token in the data dir's `token`
@@ -380,15 +399,18 @@ it could read their key, so it speaks as its person, and only as its
 person: the record API writes a body naming this computer's person as its
 own act, and refuses one naming anyone else (`not_yours`), whose entries
 are signed on their own devices. Sign-in's routes keep their client's own
-secret. Any process on the lender's computer can still reach a lent port
-and type an identity header, as it can reach any localhost service. A tie
-between the node and each process it lends to waits in PLAN §2.
+secret. A lend's address lets a program in without it only while its
+person has Play on there (above). Any process on the lender's computer
+can still reach a lent port and type an identity header, as it can
+reach any localhost service. A tie between the node and each process it
+lends to waits in PLAN §2.
 
 **A browser comes in through an open.** The home page and each lend's
 origin answer a browser only with a fresh proof from that exact origin,
-including its port, and a program only with the token
-(`crates/svrngs-node/src/session.rs`). An open's code is single-use and
-gone in a minute. Its GET serves fixed bootstrap code; an own-origin POST
+including its port, and a program only with the token, or at a lend's
+address by Play (above) (`crates/svrngs-node/src/session.rs`). An open's
+code is single-use and gone in a minute. Its GET serves fixed bootstrap
+code; an own-origin POST
 redeems it, and the bootstrap imports the returned HMAC key as a
 nonextractable key in that origin's IndexedDB. `svrngs open`, install.sh's
 opener and the home page's `/to` mint these opens. Cookies authorize nothing:

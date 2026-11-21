@@ -352,3 +352,213 @@ async fn a_member_who_stops_standing_loses_the_listener() {
     let (_, read) = play(&alex, None).await;
     assert!(read.to_string().contains("no group together"), "{read}");
 }
+
+/// An HTTP program on Sam's computer: each request's head kept, and
+/// answered `ok`.
+async fn http_ok() -> (u16, std::sync::Arc<std::sync::Mutex<Vec<String>>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let heads: std::sync::Arc<std::sync::Mutex<Vec<String>>> = Default::default();
+    let kept = heads.clone();
+    tokio::spawn(async move {
+        while let Ok((mut c, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let mut head = Vec::new();
+                let mut byte = [0; 1];
+                while !head.ends_with(b"\r\n\r\n") && c.read_exact(&mut byte).await.is_ok() {
+                    head.push(byte[0]);
+                }
+                // svrngs's own look at whether its program answers sends
+                // nothing; only a request's head is kept.
+                if !head.is_empty() {
+                    let head = String::from_utf8_lossy(&head).into_owned();
+                    kept.lock().unwrap().push(head);
+                }
+                let ok = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok";
+                let _ = c.write_all(ok.as_bytes()).await;
+            });
+        }
+    });
+    (port, heads)
+}
+
+/// Sam lends `port` as `name`, a lend at an address, to the groups Sam
+/// holds.
+fn lend_at_an_address(sam: &Path, name: &str, port: u16) {
+    let lends = svrngs_node::lend::lends_dir(sam);
+    std::fs::create_dir_all(&lends).unwrap();
+    let groups: Vec<_> = svrngs::group::groups(sam).iter().map(|s| s.id()).collect();
+    let body = json!({ "port": port, "kind": "echo", "limit": 3, "groups": groups });
+    let declared = svrngs_node::node::approving(&body);
+    std::fs::write(lends.join(format!("{name}.json")), declared).unwrap();
+}
+
+/// Sam's `lend` at an address, with Play on for it on Alex's computer: the
+/// address Alex's home page copies, and the heads Sam's program was sent.
+async fn played_at_an_address(
+    lend: &str,
+) -> (
+    String,
+    std::sync::Arc<std::sync::Mutex<Vec<String>>>,
+    [Node; 2],
+    [tempfile::TempDir; 2],
+) {
+    let (sam_dir, alex_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (sam, alex, _) = house(sam_dir.path(), alex_dir.path()).await;
+    let (port, heads) = http_ok().await;
+    lend_at_an_address(sam_dir.path(), lend, port);
+    let (status, on) = play(&alex, turn("on", lend)).await;
+    assert_eq!(status, 200, "{on}");
+    let address = on[0]["at"].as_str().unwrap().to_string();
+    let label = Label::of(signing(1).verifying_key().as_bytes(), lend);
+    let api = alex.api_addr().port();
+    assert_eq!(address, format!("http://{label}.localhost:{api}/"), "{on}");
+    assert_eq!(on[0]["said"], format!("Connect to {address}."), "{on}");
+    (address, heads, [sam, alex], [sam_dir, alex_dir])
+}
+
+/// **A lend's address answers a program here with Play on, on either
+/// loopback**: Sam lends a program at an address; with Play on, a program
+/// on Alex's computer, sending any text as its key, is answered at the
+/// address on 127.0.0.1 and on ::1, the first address a Mac and Linux
+/// give `<label>.localhost`, its socket's owner read by this system's own reader
+/// (libproc on a Mac, sock_diag on Linux); the key never reaches Sam's
+/// program. Planted, watched failing: the API listening on 127.0.0.1
+/// alone (::1 refused its connection).
+#[tokio::test(flavor = "multi_thread")]
+async fn play_lets_a_program_in_at_a_lend_s_address_on_either_loopback() {
+    let (address, heads, [_sam, alex], _dirs) = played_at_an_address("chat").await;
+    let host = address
+        .trim_start_matches("http://")
+        .split(':')
+        .next()
+        .unwrap()
+        .to_string();
+    let port = alex.api_addr().port();
+    for at in [
+        SocketAddr::from((Ipv4Addr::LOCALHOST, port)),
+        (std::net::Ipv6Addr::LOCALHOST, port).into(),
+    ] {
+        let http = reqwest::Client::builder()
+            .no_proxy()
+            .resolve(&host, at)
+            .build()
+            .unwrap();
+        let asked = http
+            .get(format!("{address}v1/models"))
+            .bearer_auth("any-text-at-all");
+        let answer = asked.send().await.unwrap_or_else(|e| panic!("{at}: {e}"));
+        let status = answer.status().as_u16();
+        assert_eq!(
+            (status, answer.text().await.unwrap()),
+            (200, "ok".into()),
+            "at {at}"
+        );
+    }
+    let heads = heads.lock().unwrap();
+    assert_eq!(heads.len(), 2, "{heads:?}");
+    assert!(
+        !heads.iter().any(|h| h.contains("any-text-at-all")),
+        "{heads:?}"
+    );
+}
+
+/// **curl and Node reach a lend's address with Play on**, each resolving
+/// `<label>.localhost` as it does on this computer: getaddrinfo names ::1
+/// first on a Mac and on Linux, and curl names both itself. By hand: the
+/// programs on PATH.
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "by hand: curl and node on PATH"]
+async fn curl_and_node_reach_a_lend_s_address_with_play_on() {
+    let (address, _heads, _nodes, _dirs) = played_at_an_address("talk").await;
+    let url = format!("{address}v1/models");
+    let curl = tokio::process::Command::new("curl")
+        .args([
+            "-sS",
+            "--noproxy",
+            "*",
+            "-H",
+            "Authorization: Bearer none",
+            &url,
+        ])
+        .output();
+    let curl = curl.await.expect("curl runs");
+    let said = String::from_utf8_lossy(&curl.stdout);
+    assert_eq!(
+        said,
+        "ok",
+        "curl: {}",
+        String::from_utf8_lossy(&curl.stderr)
+    );
+    let script = "fetch(process.argv[1], { headers: { authorization: 'Bearer none' } }).then(r => r.text()).then(t => process.stdout.write(t))";
+    let node = tokio::process::Command::new("node")
+        .args(["-e", script, &url])
+        .output();
+    let node = node.await.expect("node runs");
+    let said = String::from_utf8_lossy(&node.stdout);
+    assert_eq!(
+        said,
+        "ok",
+        "node: {}",
+        String::from_utf8_lossy(&node.stderr)
+    );
+    eprintln!("RESULT: curl and node reached {url}");
+}
+
+/// **Another account's program is refused at a lend's address with Play
+/// on**, on a real socket of another uid: a uid of this account's own
+/// subordinate range (/etc/subuid), as `unshare --map-auto` gives it
+/// without root, read by sock_diag. By hand on Linux: it needs
+/// newuidmap and a range in /etc/subuid.
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "by hand on Linux: unshare --map-auto and a range in /etc/subuid"]
+async fn another_account_s_program_is_refused_at_a_lend_s_address() {
+    let (address, heads, [_sam, alex], _dirs) = played_at_an_address("fond").await;
+    let host = address
+        .trim_start_matches("http://")
+        .trim_end_matches('/')
+        .to_string();
+    let script = "import sys, urllib.request as u\nr = u.Request('http://127.0.0.1:' + sys.argv[1] + '/v1/models', headers={'Host': sys.argv[2], 'Authorization': 'Bearer none'})\ntry:\n    print(u.urlopen(r).status, flush=True)\nexcept Exception as e:\n    print(e.code, e.read().decode(), flush=True)";
+    let port = alex.api_addr().port().to_string();
+    let argv = [
+        "--map-auto",
+        "--map-root-user",
+        "setpriv",
+        "--reuid=1",
+        "--regid=1",
+        "--clear-groups",
+        "python3",
+        "-I",
+        "-c",
+        script,
+        &port,
+        &host,
+    ];
+    let theirs = tokio::process::Command::new("unshare").args(argv).output();
+    let theirs = theirs.await.expect("unshare runs");
+    let said = String::from_utf8_lossy(&theirs.stdout);
+    eprintln!(
+        "another account's program: {said} {}",
+        String::from_utf8_lossy(&theirs.stderr)
+    );
+    assert!(said.starts_with("403"), "{said}");
+    assert!(said.contains("this came from another account"), "{said}");
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "another account's program reached Sam's"
+    );
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve(host.split(':').next().unwrap(), alex.api_addr())
+        .build()
+        .unwrap();
+    let ours = http
+        .get(format!("{address}v1/models"))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(ours.status(), 200, "this account's program, beside it");
+    eprintln!("RESULT: another account's program refused at {address}, this account's answered");
+}

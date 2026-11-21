@@ -241,10 +241,14 @@ impl Onwards {
     }
 }
 
+/// What a request shows at the home page or a lend's origin: the token, a
+/// session's proof, a program of this account Play lets in at a lend's
+/// address (`crate::play::shown`), or none of these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Shown {
     Token,
     Session,
+    Played,
     Neither,
 }
 
@@ -502,18 +506,22 @@ impl Sessions {
         }
     }
 
-    /// Whether a request `from` an address came from a socket of the account
-    /// svrngs runs as: its connection to this port, from that address, as a
-    /// browser's on loopback is ([`peer`]). Where no reader is, as before.
-    pub(crate) async fn ours(&self, from: Option<SocketAddr>, net: &dyn Net) -> bool {
-        let me = crate::uid::mine();
-        let read = match from {
-            Some(peer) => {
-                let local = SocketAddr::new(peer.ip(), self.port);
-                net.owner(Conn { local, peer }, Side::Peer).await
-            }
-            None => Owner::Unjudged("no connection to read"),
+    /// Whose socket a request `from` an address came from: its connection
+    /// to this port, from that address ([`peer`]), on 127.0.0.1 or ::1, as
+    /// a browser's or a program's on loopback is.
+    pub(crate) async fn whose(&self, from: Option<SocketAddr>, net: &dyn Net) -> Owner {
+        let Some(peer) = from else {
+            return Owner::Unjudged("no connection to read");
         };
+        let local = SocketAddr::new(peer.ip(), self.port);
+        net.owner(Conn { local, peer }, Side::Peer).await
+    }
+
+    /// Whether a request `from` an address came from a socket of the
+    /// account svrngs runs as ([`Sessions::whose`]). Where no reader is, as
+    /// before.
+    pub(crate) async fn ours(&self, from: Option<SocketAddr>, net: &dyn Net) -> bool {
+        let (read, me) = (self.whose(from, net).await, crate::uid::mine());
         let ours = match (&read, me) {
             (Owner::Uid(uid), Ok(me)) => *uid == me,
             (Owner::NoReader, _) => true,

@@ -195,11 +195,12 @@ export function guideUse(k, draw) {
     b += k.text(74, 352, 'API key', { size: 15, weight: 700 });
     b +=
       k.rect(70, 362, 180, 32, { fill: 'whitesmoke', sw: 2 }) +
-      k.text(80, 384, '~/.svrngs/token', { size: 15, mono: true });
+      k.text(80, 384, 'any text', { size: 15, mono: true });
     b += k.arrow(320, 300, 378, 300, { sw: 3, head: 11 });
     b += svrngs(380, 200, 200, 220);
-    b += k.tick(402, 271, 7) + k.text(420, 276, 'token checked', { size: 16 });
-    b += lit(396, 330, 'token stops here', 17);
+    b += k.tick(402, 271, 7) + k.text(420, 276, 'Play is on', { size: 16 });
+    b += k.tick(402, 305, 7) + k.text(420, 310, 'Bo’s own program', { size: 16 });
+    b += lit(396, 352, 'key stops here', 17);
     b += k.text(396, 392, 'asks as Bo', { size: 16 });
 
     b += owned(680, 150, 480, 290, 'Sam’s computer');
@@ -213,14 +214,14 @@ export function guideUse(k, draw) {
     b += k.text(974, 256, 'Sam’s coder', { size: 15 });
     b += k.text(974, 282, ':8101', { size: 15, mono: true });
 
-    b += lit(40, 488, 'Your token stops at your computer. Sam never receives it.', 20);
+    b += lit(40, 488, 'Play lets in your own programs. Sam never sees their key.', 20);
     draw(
       'guide/models.svg',
       W,
       H,
       b,
       'A program on your computer calls a friend’s model',
-      'A program on Bo’s computer calls the address Bo copied, a name ending in .localhost, with the token from ~/.svrngs/token as its API key. Bo’s svrngs checks the token and asks Sam’s computer as Bo; the token goes no further. Sam’s computer checks it is Bo, adds Sam’s own key if llama-server has one, and passes the request to llama-server.',
+      'A program on Bo’s computer calls the address Bo copied with Play on, a name ending in .localhost, with any text as its API key. Bo’s svrngs lets in only Bo’s own programs, drops the key, and asks Sam’s computer as Bo. Sam’s computer checks it is Bo, adds Sam’s own key if llama-server has one, and passes the request to llama-server.',
     );
   }
 

@@ -1247,3 +1247,129 @@ async fn a_lent_app_named_for_a_folder_writes_nothing_in_its_part() {
     sam.net().close().await;
     alex.net().close().await;
 }
+
+/// Play turned `turn` (`on` or `off`) for Sam's `name` on `node`, as the
+/// home page's Play and Stop ask it: what has Play on then.
+async fn play(node: &Node, turn: &str, name: &str) -> String {
+    let ask = serde_json::json!({ turn: { "key": actor_of(&signing(2)), "name": name } });
+    let (api, ask) = (node.api_addr(), ask.to_string());
+    let text = format!("POST /v1/play HTTP/1.1\r\nHost: {api}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{ask}", node.token().trim(), ask.len());
+    let (head, body) = on_wire::raw(api, &text).await;
+    assert!(
+        head.starts_with("HTTP/1.1 200"),
+        "Play {turn}: {head}{body}"
+    );
+    body
+}
+
+/// **Play lets a program of this account in at a lend's address, with no
+/// key** (DESIGN §3, "Play"; svrn-docs share-binding-release-test's
+/// pre-review of 1.13.2, finding 5: programs were told to paste the
+/// token). Sam lends a llama-server at an address, and a program on Alex's
+/// computer asks it as an OpenAI client does, `Authorization: Bearer` and
+/// any text. Play off, it is refused as before, the service never asked.
+/// Play on: answered, Node's `fetch`, which sends `Sec-Fetch-Mode` alone,
+/// too, and the key it sent never reaches Sam's computer; a page's
+/// request, by `Origin` or by `Sec-Fetch-Site`, is refused as before; a program of another account (the socket's owner read as
+/// another uid, or, as a Mac reads it, as none of this account's), or one
+/// whose account can't be read, is refused, saying why; the lender's terms
+/// still keep `/slots` back. Stopped, it is refused again. Planted, each
+/// watched failing: Play's check of the address skipped (answered with
+/// Play off); its page check skipped (the page answered); its owner check
+/// skipped (another account answered); the key left on (Sam's service
+/// sees it).
+#[tokio::test]
+async fn play_lets_a_program_of_this_account_in_at_a_lend_s_address() {
+    use svrngs_node::uid::Owner;
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = wire_pair(alex_dir.path(), sam_dir.path()).await;
+    let heads = served(&sam, TELLY);
+    let at = lend::lends_dir(sam_dir.path());
+    std::fs::create_dir_all(&at).unwrap();
+    // Its terms as `svrngs share --program llama-server` writes them, one kept back.
+    let body = serde_json::json!({ "port": TELLY, "kind": "llama-server", "limit": 3, "groups": [NS], "refused": ["/slots"] });
+    let lent = svrngs_node::node::approving(&body);
+    std::fs::write(at.join("model.json"), lent).unwrap();
+    let (api, label) = (
+        alex.api_addr(),
+        Label::of(&signing(2).verifying_key().to_bytes(), "model"),
+    );
+    let host = format!("{label}.localhost:{}", api.port());
+    let asked = |path: &str, extra: &str| {
+        let rest = format!("GET {path} HTTP/1.1\r\nConnection: close\r\nAuthorization: Bearer any-text-at-all\r\n{extra}");
+        let host = host.clone();
+        async move {
+            let (head, body) = ask_on(api, &host, &rest).await;
+            format!("{head}{body}")
+        }
+    };
+    let reached = || heads.lock().unwrap().len();
+    let mine = svrngs_node::uid::mine().unwrap();
+
+    let off = asked("/v1/models", "").await;
+    assert!(off.starts_with("HTTP/1.1 401"), "Play off: {off}");
+    assert_eq!(reached(), 0, "Play off: the service was asked");
+
+    let on = play(&alex, "on", "model").await;
+    let address = format!("Connect to http://{host}/.");
+    assert!(on.contains(&address), "{on}");
+    let answered = asked("/v1/models", "").await;
+    assert!(answered.starts_with("HTTP/1.1 200"), "Play on: {answered}");
+    assert!(answered.ends_with("ok"), "{answered}");
+    let sent = last(&heads).to_ascii_lowercase();
+    assert!(
+        !sent.contains("any-text-at-all") && !sent.contains("authorization"),
+        "the key a program sent reached Sam's computer: {sent}"
+    );
+
+    let pages = [
+        ("Origin: http://example.com\r\n", "an Origin"),
+        (
+            "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\n",
+            "a Sec-Fetch-Site and no Origin",
+        ),
+    ];
+    for (extra, which) in pages {
+        let page = asked("/v1/models", extra).await;
+        assert!(
+            page.starts_with("HTTP/1.1 401"),
+            "a page, by {which}: {page}"
+        );
+    }
+    // Node's `fetch` sends `Sec-Fetch-Mode` alone, and is a program.
+    let node = asked("/v1/models", "Sec-Fetch-Mode: cors\r\n").await;
+    assert!(node.starts_with("HTTP/1.1 200"), "Node's fetch: {node}");
+    let theirs = "Play lets in programs of your own account on this computer, and this came from another account’s";
+    let unread = "Play lets in programs of your own account on this computer, and which account this came from can’t be read here";
+    let others = [
+        (Owner::Uid(mine + 1), theirs),
+        (Owner::NotMine, theirs),
+        (
+            Owner::Unjudged("no socket at that end on this computer"),
+            unread,
+        ),
+        (Owner::NoReader, unread),
+    ];
+    for (owner, words) in others {
+        // The port every on-wire ask comes from (common/on_wire.rs `sent`).
+        on_wire::owns(&alex, 50_000, owner.clone());
+        let refused = asked("/v1/models", "").await;
+        assert!(refused.starts_with("HTTP/1.1 403"), "{owner:?}: {refused}");
+        assert!(refused.contains(words), "{owner:?}: {refused}");
+    }
+    on_wire::owns(&alex, 50_000, Owner::Uid(mine));
+    let kept = asked("/slots", "").await;
+    assert!(kept.starts_with("HTTP/1.1 403"), "{kept}");
+    assert!(kept.contains("model is lent without /slots"), "{kept}");
+    assert_eq!(
+        reached(),
+        2,
+        "only this account's programs' asks reached the service"
+    );
+
+    let stopped = play(&alex, "off", "model").await;
+    assert!(!stopped.contains("model"), "{stopped}");
+    let off = asked("/v1/models", "").await;
+    assert!(off.starts_with("HTTP/1.1 401"), "Play stopped: {off}");
+    assert_eq!(reached(), 2, "Play stopped: the service was asked");
+}

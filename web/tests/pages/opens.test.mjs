@@ -111,7 +111,7 @@ test('Play says where to connect and copies it, and its Stop under what acts as 
       person: 'cy',
       key: CY,
       name: 'played',
-      port,
+      at: `127.0.0.1:${port}`,
       open: { is: 'at', words: null },
       said: `Connect to 127.0.0.1:${port}.`,
     },
@@ -146,6 +146,54 @@ test('Play says where to connect and copies it, and its Stop under what acts as 
     { off: { key: CY, name: 'played' } },
   ]);
   assert.deepEqual([page.went, again.went, again.unanswered], [[], [], []]);
+});
+
+// The same of a lend at an address (play.rs `shown`): cy lends `model`, a
+// page's, and ada's index gives it Play after its Address. Pressed, its cell
+// says the lend's address here, as /v1/play answers it (play.rs `Playing`'s
+// `at`), copies it, and "What acts as you" lists it with its Stop, as a
+// port's. That a program of this account is let in there with no key, and
+// nothing else is, is the node's: crates/svrngs-node/tests/lend_origin.rs
+// `play_lets_a_program_of_this_account_in_at_a_lend_s_address`.
+test('Play on a lend at an address says its address, copies it, and is listed with its Stop', async () => {
+  const model = lend('model', { key: CY, person: 'cy', kind: 'llama-server' });
+  const at = `http://${'m'.repeat(62)}.localhost:4000/`;
+  const on = [
+    {
+      person: 'cy',
+      key: CY,
+      name: 'model',
+      at,
+      open: { is: 'at', words: null },
+      said: `Connect to ${at}.`,
+    },
+  ];
+  const turns = [];
+  const answers = (playing) =>
+    ada({
+      people: [row('ada', ADA, 'started'), row('cy', CY)],
+      lent: [model],
+      'GET /v1/play': playing,
+      'POST /v1/play': (body) => (turns.push(body), body.on ? on : []),
+    });
+  const cells = (page) => page.text('#home .index li').join('\n');
+
+  const page = await open(`${AT}/?ui=a`, answers([]));
+  const plays = /^(Play|Stop)$/;
+  const buttons = () => page.text('#home .index li button').filter((b) => plays.test(b));
+  assert.deepEqual(buttons(), ['Play'], cells(page));
+  await page.press('#home .index li button', 'Play');
+  assert.ok(cells(page).includes(`Connect to ${at}. Copied.`), cells(page));
+  assert.deepEqual(page.copied, [at]);
+  const line = 'Open on this computer: model (cy’s), while Play is on. Stop';
+  assert.ok(page.text('#acts p').includes(line), page.text('#acts p').join('\n'));
+  await page.press('#acts p button', 'Stop');
+  assert.ok(!cells(page).includes('Connect to'), cells(page));
+  assert.deepEqual(buttons(), ['Play'], cells(page));
+  assert.deepEqual(turns, [
+    { on: { key: CY, name: 'model' } },
+    { off: { key: CY, name: 'model' } },
+  ]);
 });
 
 // How a program's file says its lender makes the account or key apps read

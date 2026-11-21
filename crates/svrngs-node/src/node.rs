@@ -515,6 +515,7 @@ impl Node {
             seeds,
             room,
             plays,
+            played: Default::default(),
             sessions: crate::session::Sessions::new(token.clone(), host.api_port),
             lenders: crate::origin::Lenders::default(),
         };
@@ -1076,6 +1077,9 @@ pub(crate) struct Asking {
     pub(crate) room: crate::room::owner::Room,
     /// Play's handle: its turns, and what it opens now ([`crate::play`]).
     pub(crate) plays: crate::play::Plays,
+    /// What has Play on, as Play's owner last looked, which a lend's origin
+    /// reads ([`crate::play::Played`]).
+    pub(crate) played: crate::play::Played,
     /// Who opened the home page and each lend's origin ([`crate::session`]).
     pub(crate) sessions: crate::session::Sessions,
     /// Which computers carry each carried app ([`crate::origin::Lenders`]).

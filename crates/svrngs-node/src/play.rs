@@ -20,12 +20,20 @@
 //! Play lines): a raw port carries no token, so any program on this
 //! computer reaches the lend as this person while Play is on, which the
 //! home page says beside its Stop. Nothing listens while it is off.
+//!
+//! **A lend at an address** (an app on a port, a model among them) opens
+//! nowhere new: while Play is on, its address on this computer,
+//! `http://<label>.localhost:<port>/`, lets in a program of this account
+//! with no key, as [`shown`] decides it for
+//! `crate::origin`'s `lent`, the lender's terms and the door's rules as
+//! for any asker. Off, the address is as it was: a browser's session or
+//! the token.
 
 use std::collections::BTreeMap;
 use std::net::Ipv4Addr;
 
-use axum::extract::State;
-use axum::http::StatusCode;
+use axum::extract::{Request, State};
+use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::{routing::get, Json, Router};
 use n0_future::task::AbortOnDropHandle;
@@ -37,6 +45,8 @@ use crate::door::{tcp, udp, LendRefusal};
 use crate::lend::{LendName, Raw};
 use crate::node::Asking;
 use crate::room::{kept, port_of};
+use crate::session::{peer, Shown};
+use crate::uid::Owner;
 use crate::Person;
 
 /// Where Play is read and turned on and off: the home page's Play and Stop.
@@ -46,13 +56,19 @@ pub const ROUTE: &str = "/v1/play";
 pub const PLAY_FILE: &str = "play.json";
 
 /// A lend with Play on, as [`PLAY_FILE`] keeps it: the lender's key, the
-/// lend's name, and how its bytes travel, as its lender lent it.
+/// lend's name, and how its bytes travel, as its lender lent it: a raw
+/// port's way, or none for a lend at an address.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct On {
     key: String,
     name: LendName,
-    raw: Raw,
+    raw: Option<Raw>,
 }
+
+/// What has Play on, as Play's owner last looked ([`play`]): where
+/// [`shown`] reads whether Play is open at a lend's address, and only
+/// Play's owner writes.
+pub(crate) type Played = tokio::sync::watch::Sender<Vec<Playing>>;
 
 /// Where a lend with Play on is now: a closed set (AGENTS 9).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -73,29 +89,31 @@ pub enum Open {
 }
 
 impl Open {
-    /// What the home page says of it, the one wording, its port `port`.
-    pub fn said(&self, port: u16) -> String {
+    /// What the home page says of it, the one wording, a program connecting
+    /// `at`.
+    pub fn said(&self, at: &str) -> String {
         match self {
-            Open::At(None) => format!("Connect to 127.0.0.1:{port}."),
-            Open::At(Some(w)) => format!("Connect to 127.0.0.1:{port}. Its lender’s computer last said: {w}."),
+            Open::At(None) => format!("Connect to {at}."),
+            Open::At(Some(w)) => format!("Connect to {at}. Its lender’s computer last said: {w}."),
             Open::Apart => "Closed: you and its lender are in no group together now.".into(),
             Open::Unread => "Closed for now: this computer cannot read which groups it is in.".into(),
             Open::Unopened(w) => format!("Closed for now: {w}. It opens again on its own once it can."),
-            Open::Taken => format!("Closed for now: another program on this computer holds 127.0.0.1:{port}. Stop that program, and it opens again."),
+            Open::Taken => format!("Closed for now: another program on this computer holds {at}. Stop that program, and it opens again."),
         }
     }
 }
 
 /// A lend with Play on, as [`ROUTE`] answers it: whose it is, `None` for a
-/// key no group held here names now; the lender's key; its name; its port;
-/// where it is open or why not; and that in a person's words
-/// ([`Open::said`]).
+/// key no group held here names now; the lender's key; its name; where a
+/// program connects, `127.0.0.1:<port>` for a raw port and the lend's
+/// address here for one at an address (`crate::origin::origin`); where it
+/// is open or why not; and that in a person's words ([`Open::said`]).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Playing {
     pub person: Option<Person>,
     pub key: String,
     pub name: LendName,
-    pub port: u16,
+    pub at: String,
     pub open: Open,
     pub said: String,
 }
@@ -133,7 +151,8 @@ pub(crate) fn spawn(at: Asking, asked: kept::Asks<Turn, Playing>) -> AbortOnDrop
 /// Each lend `on` open or not: open while this computer's person and its
 /// lender stand in a group held here together, its carrying kept while it
 /// runs and opened anew once it has ended; every other in `open` dropped,
-/// which closes its port; and what has Play on, as it stands.
+/// which closes its port; and what has Play on, as it stands, told to
+/// [`Played`] too.
 async fn play(at: &Asking, on: &[On], open: &mut Opened) -> Vec<Playing> {
     let (mut was, mut plays) = (std::mem::take(open), Vec::new());
     for o in on {
@@ -149,27 +168,31 @@ async fn play(at: &Asking, on: &[On], open: &mut Opened) -> Vec<Playing> {
                 while let Ok(words) = told.try_recv() {
                     last = Some(words);
                 }
-                open.insert(label, ((told, task), last.clone()));
+                open.insert(label.clone(), ((told, task), last.clone()));
                 Open::At(last)
             }
-            (Ok(_), None) => opened(at, o, (label, port), open).await,
+            (Ok(_), None) => opened(at, o, (label.clone(), port), open).await,
         };
-        tracing::debug!(target: "play", key = o.key, lend = %o.name, port, ?now, "play: open only while its person and its lender stand in a group together, at its label's port");
+        let to = (o.raw.map(|_| format!("127.0.0.1:{port}")))
+            .unwrap_or_else(|| crate::origin::origin(&label, at.host.api_port));
+        tracing::debug!(target: "play", key = o.key, lend = %o.name, to, ?now, "play: open only while its person and its lender stand in a group together, a port at its label's port, a lend at an address there alone");
         plays.push(Playing {
             person: (at.host.rail.standing_anywhere(&o.key)).map(|(_, m)| m.person),
             key: o.key.clone(),
             name: o.name.clone(),
-            port,
-            said: now.said(port),
+            said: now.said(&to),
+            at: to,
             open: now,
         });
     }
+    at.played.send_replace(plays.clone());
     plays
 }
 
 /// The lend `o` opened at `port` on 127.0.0.1, UDP or TCP as it is lent,
 /// carried to its lender's computer: [`Open::At`], kept in `open`; or why
-/// not.
+/// not. A lend at an address opens nothing here: its address lets a
+/// program in ([`shown`]).
 async fn opened(at: &Asking, o: &On, (label, port): (Label, u16), open: &mut Opened) -> Open {
     let local = (Ipv4Addr::LOCALHOST, port);
     let to = (at.host.contact(&o.key)).and_then(|c| at.host.transport.endpoint_addr_for(&c));
@@ -181,11 +204,12 @@ async fn opened(at: &Asking, o: &On, (label, port): (Label, u16), open: &mut Ope
         Open::Taken
     };
     let carried = match o.raw {
-        Raw::Udp => match UdpSocket::bind(local).await {
+        None => return Open::At(None),
+        Some(Raw::Udp) => match UdpSocket::bind(local).await {
             Ok(socket) => udp::carried(net, to, name, socket).await,
             Err(e) => return taken(e),
         },
-        Raw::Tcp => match TcpListener::bind(local).await {
+        Some(Raw::Tcp) => match TcpListener::bind(local).await {
             Ok(listener) => tcp::carried(net, to, name, listener).await,
             Err(e) => return taken(e),
         },
@@ -210,8 +234,9 @@ async fn listed(State(at): State<Asking>) -> Response {
 
 /// `POST /v1/play`: `ask` turned, and what has Play on then ([`listed`]).
 /// A lend is turned on only as its lender's computer lends it to this one
-/// now, a port: how its bytes travel is asked of that computer, never
-/// taken from the page.
+/// now, a port or at an address: how its bytes travel is asked of that
+/// computer, never taken from the page. A carried app, the group's page
+/// and no program's, is not Play's.
 async fn turn(State(at): State<Asking>, Json(ask): Json<PlayAsk>) -> Response {
     let (key, name) = match ask {
         PlayAsk::Off { key, name } => return turned(&at, Turn::Off(key, name)).await,
@@ -221,14 +246,62 @@ async fn turn(State(at): State<Asking>, Json(ask): Json<PlayAsk>) -> Response {
         Ok((groups, Some(_))) => at.host.lends_in(&groups, None).await.lent,
         _ => Vec::new(),
     };
-    let asked = |l: &crate::node::Lent| l.key == key && l.offered.name == name;
-    let raw = (lent.iter().find(|l| asked(l))).and_then(|l| l.offered.raw);
-    tracing::debug!(target: "play", key, lend = %name, ?raw, "play: turned on only as its lender lends it now, a port");
-    let Some(raw) = raw else {
-        let words = format!("{name} is not lent to this computer as a port now");
+    let asked = |l: &&crate::node::Lent| l.key == key && l.offered.name == name;
+    let raw =
+        (lent.iter().find(asked)).map(|l| (l.offered.group.is_none()).then_some(l.offered.raw));
+    tracing::debug!(target: "play", key, lend = %name, ?raw, "play: turned on only as its lender lends it now, a port or at an address, and never a carried app");
+    let Some(Some(raw)) = raw else {
+        let words = format!("{name} is not lent to this computer now");
         return LendRefusal::Unlent.say(StatusCode::CONFLICT, words);
     };
     turned(&at, Turn::On(vec![On { key, name, raw }])).await
+}
+
+/// Why Play lets in no program at a lend's address it opened, in the words
+/// its refusal says: a closed set (AGENTS 9).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+pub(crate) enum Unplayed {
+    #[error("Play lets in programs of your own account on this computer, and this came from another account’s")]
+    Theirs,
+    /// Whose program it is can't be read: why.
+    #[error("Play lets in programs of your own account on this computer, and which account this came from can’t be read here: {0}")]
+    Unread(&'static str),
+}
+
+/// Whether the socket a program asked from, as `owner`, is of this
+/// process's account, `me`: Play's rule of whose program it lets in.
+fn ours(owner: Owner, me: Option<u32>) -> Result<(), Unplayed> {
+    match (owner, me) {
+        (Owner::Uid(uid), Some(me)) if uid == me => Ok(()),
+        (Owner::Uid(_) | Owner::NotMine, Some(_)) => Err(Unplayed::Theirs),
+        (Owner::Unjudged(why), _) => Err(Unplayed::Unread(why)),
+        (_, None) => Err(Unplayed::Unread("this program's own account can't be read")),
+        (Owner::NoReader, _) => Err(Unplayed::Unread("this system has no reader of sockets")),
+    }
+}
+
+/// What `req` at the lend `l`'s address shows by Play: [`Shown::Played`],
+/// its `Authorization` taken off unread, since a program that insists on a
+/// key sends any text, where Play opened it and `req` is a program's of
+/// this account ([`ours`]), its socket's owner read as an open's is
+/// (`crate::session::Sessions::whose`). [`Shown::Neither`], as before
+/// Play, where Play is off, or where `req` is a page's, as the record API
+/// tells one (`crate::api::page_of`: an `Origin` or a `Sec-Fetch-Site`,
+/// which a program's own HTTP client doesn't send). Or refused, saying
+/// why.
+pub(crate) async fn shown(at: &Asking, l: &Label, req: &mut Request) -> Result<Shown, Response> {
+    let address = crate::origin::origin(l, at.host.api_port);
+    let on = (at.played.borrow().iter()).any(|p| p.at == address && matches!(p.open, Open::At(_)));
+    if !on || crate::api::page_of(req.headers()).is_some() {
+        tracing::debug!(target: "play", label = %l, on, "play: a lend's address lets in by Play no page, and nothing while Play is off");
+        return Ok(Shown::Neither);
+    }
+    let owner = at.sessions.whose(peer(req), &*at.host.transport).await;
+    let judged = ours(owner.clone(), crate::uid::mine().ok());
+    tracing::debug!(target: "play", label = %l, ?owner, ?judged, "play: on at this lend's address, so it lets in a program of this account, whatever key it sends");
+    judged.map_err(|why| LendRefusal::closed(why.to_string()))?;
+    req.headers_mut().remove(header::AUTHORIZATION);
+    Ok(Shown::Played)
 }
 
 /// `turn` made by Play's owner, and what has Play on then; why that cannot

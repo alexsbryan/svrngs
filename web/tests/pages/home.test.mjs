@@ -606,7 +606,9 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
 // in a tab, the one that asks a yes last among them, as its cell takes a
 // row of its own; then ports, this computer's own port last, with no
 // caption: it has no Play. A lend that opens friends' lends as you keeps "Open" on its
-// button, where the press is the yes.
+// button, where the press is the yes. Another computer's lend at an address
+// has Play after its Address (lend-name.js `played`); this computer's own,
+// and an app the group's folder carries, have none.
 test('each grid of the index is under the sentence its cells share, and a cell says only what differs', async () => {
   const bo = { key: BO, person: 'bo', raw: 'udp' };
   const lent = [
@@ -630,7 +632,7 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   assert.deepEqual(cells(page), [
     'Money This app’s shared entries. Address',
     'ada’s shelf (k) Address',
-    'bo’s notes (k) Address',
+    'bo’s notes (k) Address Play',
     'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
     'bo’s echo (k) Play',
     'bo’s game (k) Play',
@@ -641,7 +643,7 @@ test('each grid of the index is under the sentence its cells share, and a cell s
       ...page.text('#home .index > ul > li > form button'),
       ...page.text('#home .index > ul > li > span button'),
     ],
-    ['Open ada’s page (k)', 'Play', 'Play'],
+    ['Open ada’s page (k)', 'Play', 'Play', 'Play'],
   );
   const full = await home(ada({ lent: [lend('shelf', { using: 3 })] }));
   assert.deepEqual(cells(full), ['ada’s shelf (k) Full now. Address']);
@@ -1503,7 +1505,7 @@ test('Play in one group’s index is said on in every index, and its Stop too', 
       person: 'cy',
       key: CY,
       name: 'played',
-      port: 41000,
+      at: '127.0.0.1:41000',
       said: 'Connect to 127.0.0.1:41000.',
       open: { is: 'at', words: null },
     },

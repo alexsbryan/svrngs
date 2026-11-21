@@ -148,12 +148,15 @@ short name.
 ## Programs on your computer
 
 - **A program gets a page saying *"Open svrngs from your computer"***, or
-  a 401. A program reaches what your group lends only with your svrngs
-  token. Give it the text in `~/.svrngs/token` as its API key, or as the
-  header `Authorization: Bearer <token>`. [Models](models.md) has examples.
+  a 401, at a friend's lend's address. Press **Play** beside the lend on
+  your home page: while Play is on, a program of yours reaches it there
+  with any text as its key. [Models](models.md) has examples.
+- ***"Play lets in programs of your own account on this computer, and …"***
+  Play is on, and the request came from a program another account runs,
+  or from one svrngs couldn't tell. Run the program as yourself.
 - **`{"error":"this page answers only itself"}`**
   The program was given your home page's address. Give it the address
-  **Copy its address for a program** copies instead.
+  **Play** copies instead.
 
 ## Removing someone, and leaving
 

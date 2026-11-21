@@ -80,7 +80,7 @@ const says = (lend, group, me) => {
 
 /**
  * A grid's caption, its lends, the caption's id, and what a cell is drawn with.
- * @typedef {Pick<PlaceProps, 'g' | 's'> & { caption: string, lent: Lent[], by: string, shelf: Lends['shelf'] }} GridProps
+ * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { caption: string, lent: Lent[], by: string, shelf: Lends['shelf'] }} GridProps
  */
 
 // A grid under its caption, a list named by it. Over several the caption
@@ -119,7 +119,7 @@ function Index({ g: group, s: state, me }) {
     <div class="index">
       ${[...grids].map(
         ([caption, each], at) =>
-          html`<${Grid} caption=${caption} lent=${each} by=${`says-${group.id}-${at}`} shelf=${lends.shelf} g=${group} s=${state} />`,
+          html`<${Grid} caption=${caption} lent=${each} by=${`says-${group.id}-${at}`} shelf=${lends.shelf} g=${group} s=${state} me=${me} />`,
       )}
       ${under && html`<p>${under}</p>`}
     </div>

@@ -7,7 +7,9 @@
 // is the yes. A port does not open in a tab: it is named, then said to be
 // this computer's own, or given the Play that opens another's here
 // (play.js `Turn`). Last in a cell that opens in a tab, "Address": what is for
-// other devices and programs, in a popover (wifi.js `Address`).
+// other devices and programs, in a popover (wifi.js `Address`); then, for
+// another computer's lend no folder carries, its Play, which lets a program
+// here in at its address.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { agreed, label, may, named, notRunning, opens } from '../question.js?v=__VERSION__';
 import { Turn } from './play.js?v=__VERSION__';
@@ -18,11 +20,17 @@ import { Opening, Reach } from './reach.js?v=__VERSION__';
 /**
  * The lend, the group's shelf, the id of its grid's caption, none for this
  * computer's own port, and what its cell is drawn with.
- * @typedef {Pick<PlaceProps, 'g' | 's'> & { l: Lent, shelf: Lends['shelf'], by?: string }} LendNameProps
+ * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { l: Lent, shelf: Lends['shelf'], by?: string }} LendNameProps
  */
 
+// Another computer's lend that no folder carries has Play, which lets a
+// program here in at its address (play.rs `shown`).
+/** @param {Lent} lend @param {string} me @param {number} round */
+const played = (lend, me, round) =>
+  lend.key !== me && !lend.group && html`${' '}<${Turn} l=${lend} round=${round} />`;
+
 /** @param {LendNameProps} props */
-export function LendName({ l: lend, shelf, by, g: group, s: state }) {
+export function LendName({ l: lend, shelf, by, g: group, s: state, me }) {
   const round = state.asked?.lends ?? 1;
   // Its way in has an id, `at-`, the place a person's popover links to
   // (people.js `Person`): the link goes to the way in, under its caption.
@@ -53,5 +61,5 @@ export function LendName({ l: lend, shelf, by, g: group, s: state }) {
   // here; that it is on is the usual, so only that it is full, or that its
   // program is not running on its lender's computer, is said.
   const full = `${opens(lend) === 'full' ? ' Full now.' : ''}${notRunning(lend)}`;
-  return html`${opener}${' '}<span id=${`said-${id}`}>${agreed(lend, shelf, group, [may(lend, group)])}${full}</span>${' '}<${Address} l=${lend} id=${`address-${id}`} round=${round} />`;
+  return html`${opener}${' '}<span id=${`said-${id}`}>${agreed(lend, shelf, group, [may(lend, group)])}${full}</span>${' '}<${Address} l=${lend} id=${`address-${id}`} round=${round} />${played(lend, me, round)}`;
 }
