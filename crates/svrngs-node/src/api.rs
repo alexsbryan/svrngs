@@ -205,16 +205,24 @@ async fn to_a_lend(State((home, lends)): State<Pages>, request: Request, next: N
 /// browser opens: loopback alone let both in, since a browser on this
 /// computer is a caller on loopback.
 async fn not_from_a_page(request: Request, next: Next) -> Response {
-    let headers = request.headers();
-    let Some(page) = headers
-        .get(axum::http::header::ORIGIN)
-        .or_else(|| headers.get("sec-fetch-site"))
-    else {
+    let Some(page) = page_of(request.headers()) else {
         return next.run(request).await;
     };
     tracing::warn!(target: "rails", page = ?page, path = %request.uri().path(), "api: refused — a page in a browser asked the record");
     let why = "the record is served to this computer's apps, not to a page in a browser";
     refuse(StatusCode::FORBIDDEN, "from_a_page", why)
+}
+
+/// What says a request is a page's in a browser, which a program's own
+/// HTTP client doesn't send: its `Origin`, or its `Sec-Fetch-Site`, which a
+/// browser sends with every request it makes here (Fetch Metadata; this
+/// computer's addresses are potentially trustworthy). Node's `fetch` sends
+/// `Sec-Fetch-Mode` alone, so it is a program's. The one decider, for the
+/// record ([`not_from_a_page`]) and Play at a lend's address
+/// (`crate::play::shown`).
+pub(crate) fn page_of(headers: &axum::http::HeaderMap) -> Option<&axum::http::HeaderValue> {
+    let origin = headers.get(axum::http::header::ORIGIN);
+    origin.or_else(|| headers.get("sec-fetch-site"))
 }
 
 /// A refusal in the record's one shape beside the group's

@@ -10,6 +10,16 @@ use crate::uid::{Conn, Owner, Side};
 use eudoxia_community::binding;
 
 impl Node {
+    /// This node's journals, signed with its key.
+    pub fn rail(&self) -> &Arc<RingRail> {
+        &self.host.rail
+    }
+
+    /// This computer's folders, where `new` and `join` place a group's.
+    pub fn folders(&self) -> &crate::folder::Folders {
+        &self.asking.door.folders
+    }
+
     /// A group made as `svrngs new` asks the svrngs running here for one,
     /// at [`crate::group::NEW_ROUTE`] ([`Asking::made`]).
     pub async fn made(&self, asked: crate::group::NewAsk) -> Result<crate::group::NewMade, String> {

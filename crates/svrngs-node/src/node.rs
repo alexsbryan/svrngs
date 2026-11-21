@@ -612,11 +612,6 @@ impl Node {
         })
     }
 
-    /// This node's journals, signed with its key.
-    pub fn rail(&self) -> &Arc<RingRail> {
-        &self.host.rail
-    }
-
     /// Where an app on this computer reaches the record: a loopback
     /// address ([`crate::api`]).
     pub fn api_addr(&self) -> SocketAddr {
@@ -626,11 +621,6 @@ impl Node {
     /// The endpoint this node dials and is dialled on, and its dials.
     pub fn net(&self) -> &dyn Net {
         &*self.host.transport
-    }
-
-    /// This computer's folders, where `new` and `join` place a group's.
-    pub fn folders(&self) -> &crate::folder::Folders {
-        &self.asking.door.folders
     }
 
     /// What the round reads, and what makes a link ([`crate::invite`]).

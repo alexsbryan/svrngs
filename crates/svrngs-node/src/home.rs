@@ -185,11 +185,8 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) ->
     .merge(crate::removal::router(at.clone()))
     .merge(crate::room::route::router(at.clone()))
     .merge(crate::webrtc::direct::router(direct))
-    .merge(crate::play::router(at.clone()));
-    let home = home.layer(axum::middleware::from_fn_with_state(
-        at.clone(),
-        only_itself,
-    ));
+    .merge(crate::play::router(at.clone()))
+    .layer(axum::middleware::from_fn_with_state(at.clone(), only_itself));
     (home, crate::origin::router(at))
 }
 

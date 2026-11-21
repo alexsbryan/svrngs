@@ -200,11 +200,7 @@ async fn approve(
     // The home page's host is matched by the API's routes, then by the
     // home page's (api.rs `to_a_lend`), each naming `name`: a
     // `Path<String>` refused every approval asked there.
-    let name = named
-        .into_iter()
-        .next_back()
-        .map(|(_, name)| name)
-        .unwrap_or_default();
+    let (_, name) = named.into_iter().next_back().unwrap_or_default();
     let dir = &at.door.data_dir;
     let refused = |e: crate::share::ShareRefusal| {
         tracing::debug!(target: "share", lend = name, error = %e, "share: refused — nothing approved");
