@@ -474,6 +474,55 @@ async fn play_lets_a_program_in_at_a_lend_s_address_on_either_loopback() {
     }
 }
 
+/// **Play lets a program reach the lend, and none of svrngs's own
+/// addresses at it**: with Play on, a program here asking the lend's
+/// address for what svrngs answers there in the lend's place — the lends
+/// its page reads (`/svrngs-reads`, whose read addresses outlive Play),
+/// its stop, its opener, its reads through svrngs and by a read's address
+/// — is refused in words that say so, and Sam's program is sent nothing;
+/// the lend's own path, beside them, answers. Planted, watched failing:
+/// V1.13.3's candidate answered `/svrngs-reads` 200 with the lends it reads.
+#[tokio::test(flavor = "multi_thread")]
+async fn play_reaches_the_lend_and_none_of_svrngs_s_own_addresses_at_it() {
+    let (address, heads, [_sam, alex], _dirs) = played_at_an_address("own").await;
+    let host = address.trim_start_matches("http://").split(':').next();
+    let host = host.unwrap().to_string();
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve(&host, alex.api_addr())
+        .build()
+        .unwrap();
+    let label = host.trim_end_matches(".localhost");
+    for (path, post) in [
+        ("svrngs-reads".to_string(), false),
+        (format!("svrngs-reads/{label}/svrngs-stop"), true),
+        ("svrngs-to?lender=a&lend=b".into(), false),
+        (format!("svrngs-lend/{label}/v1/models"), false),
+        ("svrngs-as/a-capability/v1/models".into(), false),
+    ] {
+        let url = format!("{address}{path}");
+        let asked = if post {
+            http.post(&url)
+        } else {
+            http.get(&url)
+        };
+        let answer = asked.send().await.unwrap();
+        let (status, said) = (answer.status().as_u16(), answer.text().await.unwrap());
+        assert_eq!(status, 403, "{path}: {said}");
+        assert!(said.contains("svrngs’s own address"), "{path}: {said}");
+    }
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "Sam's program was sent one"
+    );
+    let models = http
+        .get(format!("{address}v1/models"))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(models.text().await.unwrap(), "ok", "the lend's own path");
+}
+
 /// **curl and Node reach a lend's address with Play on**, each resolving
 /// `<label>.localhost` as it does on this computer: getaddrinfo names ::1
 /// first on a Mac and on Linux, and curl names both itself. By hand: the

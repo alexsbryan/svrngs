@@ -380,8 +380,13 @@ seconds, whatever their own computer does (`door::udp::serve`).
   `X-Api-Key`, `Api-Key` or `X-Goog-Api-Key` (`play.rs` `KEYS`, read from
   OpenAI's, Anthropic's, Azure OpenAI's and Google's clients), is never
   read, and is taken off before the lend is asked, since a program that
-  insists on a key sends any text. Another account's program, and one whose account
-  can't be read, are refused, saying why; a page goes on to a browser's
+  insists on a key sends any text. It reaches the lend alone: what
+  svrngs answers at a lend's address in the lend's place, the lends its
+  page reads (`/svrngs-reads`, whose read addresses outlive Play), its
+  stop, `/svrngs-to`, `/svrngs-lend` and a read's address, is refused to
+  it, saying so (`origin.rs` `lent`, `play.rs` `Unplayed::Svrngs`).
+  Another account's program, and one whose account can't be read, are
+  refused, saying why; a page goes on to a browser's
   way in (`play.rs` `shown`, `ours`). The lender's terms, the door's
   rules and the browser's session are as for any asker, and the program
   writes no entry as its person (`origin.rs` `Unconsented::Played`). Off,

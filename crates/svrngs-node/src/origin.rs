@@ -240,7 +240,8 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     let cap = capped(&mut req)?;
     // A browser with this origin's session, else a program with the token,
     // else one Play lets in, each the lend's own; none is carried on to
-    // the lend, nor the key a program Play lets in sent (`crate::play`).
+    // the lend, nor the key a program Play lets in sent, which reaches the
+    // lend alone, never svrngs's own addresses here (`crate::play`).
     let mut shown = if at.sessions.socket(label.as_str(), &mut req) {
         Shown::Session
     } else {
@@ -248,6 +249,13 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     };
     if shown == Shown::Neither {
         shown = crate::play::shown(&at, &label, &mut req).await?;
+    }
+    let route = AppRoute::of(req.uri().path_and_query().map_or("/", |p| p.as_str()));
+    if shown == Shown::Played && (cap.is_some() || route != AppRoute::Own) {
+        tracing::debug!(target: "origin", %label, ?route, "origin: refused — a program Play let in asked what svrngs answers here, not the lend");
+        return Err(LendRefusal::closed(
+            crate::play::Unplayed::Svrngs.to_string(),
+        ));
     }
     let mut own_proof = shown == Shown::Session;
     let mut appending = Appending::for_request(shown, req.headers())?;
@@ -301,7 +309,6 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, %app, "origin: refused — this origin's proof, from a page its fetch names as another app's");
         return refuse("an origin's proof cannot name another app");
     }
-    let route = AppRoute::of(req.uri().path_and_query().map_or("/", |p| p.as_str()));
     match route {
         AppRoute::Reads | AppRoute::To if app != label => {
             tracing::debug!(target: "origin", %label, %app, to = route == AppRoute::To, "origin: refused — another app's page asks the lends this one reads, or opens one");

@@ -266,6 +266,12 @@ pub(crate) enum Unplayed {
     /// Whose program it is can't be read: why.
     #[error("Play lets in programs of your own account on this computer, and which account this came from can’t be read here: {0}")]
     Unread(&'static str),
+    /// It asked what svrngs answers at the lend's address in the lend's
+    /// place (`crate::surface::AppRoute`), or by a read's address: the
+    /// lends its page reads, whose read addresses outlive Play, its stop,
+    /// its opener, its reads through svrngs.
+    #[error("Play lets a program on this computer use the lend itself, and this asked svrngs’s own address there, which answers only your browser, or a program with your token")]
+    Svrngs,
 }
 
 /// The headers a program's client sends a key in, as each one's own client
@@ -292,11 +298,12 @@ fn ours(owner: Owner, me: Option<u32>) -> Result<(), Unplayed> {
 /// each header of [`KEYS`] taken off unread, since a program that insists
 /// on a key sends any text, where Play opened it and `req` is a program's
 /// of this account ([`ours`]), its socket's owner read as an open's is
-/// (`crate::session::Sessions::whose`). [`Shown::Neither`], as before
-/// Play, where Play is off, or where `req` is a page's, as the record API
-/// tells one (`crate::api::page_of`: an `Origin` or a `Sec-Fetch-Site`,
-/// which a program's own HTTP client doesn't send). Or refused, saying
-/// why.
+/// (`crate::session::Sessions::whose`); it reaches the lend itself alone
+/// (`crate::origin`'s `lent`, [`Unplayed::Svrngs`]). [`Shown::Neither`], as
+/// before Play, where Play is off, or where `req` is a page's, as the
+/// record API tells one (`crate::api::page_of`: an `Origin` or a
+/// `Sec-Fetch-Site`, which a program's own HTTP client doesn't send). Or
+/// refused, saying why.
 pub(crate) async fn shown(at: &Asking, l: &Label, req: &mut Request) -> Result<Shown, Response> {
     let address = crate::origin::origin(l, at.host.api_port);
     let on = (at.played.borrow().iter()).any(|p| p.at == address && matches!(p.open, Open::At(_)));

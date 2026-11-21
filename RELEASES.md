@@ -31,9 +31,10 @@ page. Programs on this computer, such as opencode or an OpenAI library,
 can then use its address, `http://<name>.localhost:<port>/`, with no key.
 If a program asks for one, type any text, never a real key: svrngs removes
 the `Authorization`, `X-Api-Key`, `Api-Key` and `X-Goog-Api-Key` headers,
-where programs send a key, before your friend's computer sees a request. Web
-pages in your browser and other accounts on this computer still can't use
-it, and your friend's rules for what they lent still apply. **Stop** closes
+where programs send a key, before your friend's computer sees a request.
+Play reaches only what your friend lent, never svrngs's own addresses
+there. Web pages in your browser and other accounts on this computer still
+can't use it, and your friend's rules for what they lent still apply. **Stop** closes
 it, and **What acts as you** lists it while it's on. svrngs now answers on
 `::1` as well as `127.0.0.1`, since some programs look up a `.localhost`
 name there first. Nothing svrngs shows asks you to give an app svrngs's own
