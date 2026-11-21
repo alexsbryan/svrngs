@@ -20,6 +20,42 @@ exactly the file you checked, and the link's page only joins:
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/release.sh sign`).
 
+## V1.13.3, 21 November 2026
+
+V1.13.3 lets your own apps use what a friend lends at an address, with no
+key, and only ever updates svrngs forward.
+
+**Use a friend's model from your apps.** When a friend lends a model, or
+anything else you open at an address, press **Play** on it on your home
+page. Programs on this computer, such as opencode or an OpenAI library,
+can then use its address, `http://<name>.localhost:<port>/`, with no key.
+If a program asks for one, type any text: svrngs doesn't pass it on. Web
+pages in your browser and other accounts on this computer still can't use
+it, and your friend's rules for what they lent still apply. **Stop** closes
+it, and **What acts as you** lists it while it's on. svrngs now answers on
+`::1` as well as `127.0.0.1`, since some programs look up a `.localhost`
+name there first. Nothing svrngs shows asks you to give an app svrngs's own
+token any more.
+
+**Updates only go forward.** svrngs installs only a release signed after
+its own, whatever page it updates from, so no page can move a computer to an
+older svrngs. A computer installed from a link is held to this too.
+
+**The Omarchy bar plugin.** svrngs-fam 0.5.1 needs V1.13.3:
+- It updates svrngs from svrngs's own page, and uses the invite only to join.
+- It talks only to svrngs running as you.
+- **Keep sharing it** keeps a share only to a program of yours.
+- **Copy address** on a model turns on Play and copies the address, with no
+  key.
+
+Groups and the record work as in V1.13.2. Press **Update and restart** on
+your home page, or run `svrngs update` and then `svrngs restart`. Your
+phone's page updates itself.
+
+V1.13.3 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.13.3`. Its publication and readback are recorded in
+`demo/runs/v1.13.3/2026-11-21/README.md`.
+
 ## V1.13.2, 20 November 2026
 
 V1.13.2 keeps a game in a container open when friends join it at once.
