@@ -15,7 +15,7 @@
 # from it (scripts/build-release.sh; DESIGN §7): at once for a build that
 # meets its groups at n0's relays, and for one at svrngs's only once that
 # relay answers (scripts/relay-answers.sh) — the switch, `SHIPPED` in the
-# release commit's crates/svrngs/src/cli.rs, read by build and page. Needs
+# release commit's crates/svrngs/src/cli.rs, read by sign and page. Needs
 # the vercel CLI, logged in to the scope, gpg, gh, and build-release.sh's
 # toolchain.
 #
