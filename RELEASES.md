@@ -20,6 +20,23 @@ exactly the file you checked, and the link's page only joins:
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/sign-release.sh`).
 
+## V1.13.2, 20 November 2026
+
+V1.13.2 keeps a game in a container open when friends join it at once.
+
+**Friends can join together.** When you lend a game that runs in a
+rootless Podman container, two or three friends joining at the same moment
+no longer close its lend. Each of them gets in, and you don't have to
+choose what runs on its port again.
+
+Groups and the record work as in V1.13.1. Press **Update and restart** on
+your home page, or run `svrngs update` and then `svrngs restart`. Your
+phone's page updates itself.
+
+V1.13.2 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.13.2`. Its publication and readback are recorded in
+`demo/runs/v1.13.2/2026-11-20/README.md`.
+
 ## V1.13.1, 20 November 2026
 
 V1.13.1 keeps each lend to exactly what you chose on its port, moves your
