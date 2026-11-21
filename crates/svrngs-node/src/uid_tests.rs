@@ -206,8 +206,12 @@ fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
         local: dialled.local_addr().unwrap(),
         peer: dialled.peer_addr().unwrap(),
     };
-    assert_eq!(owner(made, Side::Peer), Owner::Uid(uid));
-    assert_eq!(owner(made, Side::Local), Owner::Uid(uid));
+    assert_eq!(owner(made), Owner::Uid(uid));
+    let back = Conn {
+        local: made.peer,
+        peer: made.local,
+    };
+    assert_eq!(owner(back), Owner::Uid(uid), "and from the other end");
     #[cfg(target_os = "macos")]
     {
         let late = std::thread::spawn(move || {
@@ -219,14 +223,14 @@ fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
             local: queued.local_addr().unwrap(),
             peer: queued.peer_addr().unwrap(),
         };
-        assert_eq!(owner(queued, Side::Peer), Owner::Uid(uid), "accepted late");
+        assert_eq!(owner(queued), Owner::Uid(uid), "accepted late");
         let (listener, _kept) = late.join().unwrap().unwrap();
         let never = std::net::TcpStream::connect(listener.local_addr().unwrap()).unwrap();
         let never = Conn {
             local: never.local_addr().unwrap(),
             peer: never.peer_addr().unwrap(),
         };
-        assert_eq!(owner(never, Side::Peer), Owner::NotMine, "never accepted");
+        assert_eq!(owner(never), Owner::NotMine, "never accepted");
     }
 }
 

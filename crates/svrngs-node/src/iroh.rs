@@ -50,7 +50,7 @@ use tokio::time::timeout;
 
 use crate::door::bound::Unchecked;
 use crate::lend::Raw;
-use crate::uid::{Conn, Owner, Side};
+use crate::uid::{Conn, Owner};
 
 use n0_future::task::AbortOnDropHandle;
 use std::sync::Arc;
@@ -288,9 +288,9 @@ pub trait Net: Fetch + std::any::Any {
     /// A connection to the share at this computer's `at`, unchecked, which
     /// only [`crate::door::bound`] opens: TCP on loopback in the product.
     fn service(&self, at: SocketAddr) -> Later<'_, std::io::Result<Unchecked>>;
-    /// Whose the socket at `side` of `conn` on this computer is
+    /// Whose the socket at the far end of `conn` on this computer is
     /// ([`crate::uid::owner`]): read off the async runtime in the product.
-    fn owner(&self, conn: Conn, side: Side) -> Later<'_, Owner>;
+    fn owner(&self, conn: Conn) -> Later<'_, Owner>;
     /// The `raw` sockets on a share's `port`, and what took `conn`, the
     /// door's connection to it ([`crate::uid::port`]): read off the async
     /// runtime in the product.
@@ -460,8 +460,8 @@ impl Net for IrohTransport {
     fn service(&self, at: SocketAddr) -> Later<'_, std::io::Result<Unchecked>> {
         Box::pin(crate::door::bound::dial(at))
     }
-    fn owner(&self, conn: Conn, side: Side) -> Later<'_, Owner> {
-        let read = tokio::task::spawn_blocking(move || crate::uid::owner(conn, side));
+    fn owner(&self, conn: Conn) -> Later<'_, Owner> {
+        let read = tokio::task::spawn_blocking(move || crate::uid::owner(conn));
         Box::pin(async move { read.await.unwrap_or(Owner::Unjudged("the read stopped")) })
     }
     fn read_port(&self, raw: Raw, port: u16, conn: Option<Conn>) -> Later<'_, PortRead> {

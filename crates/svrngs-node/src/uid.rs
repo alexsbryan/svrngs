@@ -47,14 +47,6 @@ pub struct Conn {
     pub peer: SocketAddr,
 }
 
-/// Which end of a [`Conn`] is asked about: the socket at its `local`
-/// address, or the one at its `peer`'s.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Side {
-    Local,
-    Peer,
-}
-
 /// Whose a socket is, as this computer says now.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Owner {
@@ -116,15 +108,12 @@ type Held = (Read, BTreeMap<u32, u32>, Vec<(u64, Answer)>, bool);
 /// request through the door may take.
 pub const ACCEPT_WITHIN: std::time::Duration = std::time::Duration::from_millis(100);
 
-/// The uid holding the socket at `side` of the TCP connection `conn`, read
-/// now and never kept, or why it can't be told ([`Owner::Unjudged`]). It
-/// may wait up to [`ACCEPT_WITHIN`], so an async caller reads it off its
-/// runtime.
-pub fn owner(conn: Conn, side: Side) -> Owner {
-    let (at, to) = match side {
-        Side::Local => (conn.local, conn.peer),
-        Side::Peer => (conn.peer, conn.local),
-    };
+/// The uid holding the socket at the far end of the TCP connection `conn`,
+/// its `peer`'s, read now and never kept, or why it can't be told
+/// ([`Owner::Unjudged`]). It may wait up to [`ACCEPT_WITHIN`], so an async
+/// caller reads it off its runtime.
+pub fn owner(conn: Conn) -> Owner {
+    let (at, to) = (conn.peer, conn.local);
     let owner = read(at, to);
     tracing::debug!(target: "uid", %at, %to, ?owner, "uid: whose the socket at this end is");
     owner

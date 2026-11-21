@@ -6,7 +6,7 @@
 use super::*;
 use crate::door::bound::Unchecked;
 use crate::iroh::Endpoint;
-use crate::uid::{Conn, Owner, Side};
+use crate::uid::{Conn, Owner};
 use eudoxia_community::binding;
 
 impl Node {
@@ -625,12 +625,9 @@ impl Net for OnWire {
             }
         })
     }
-    /// What [`Wire::owns`] says of the asked end's port, else this account's.
-    fn owner(&self, conn: Conn, side: Side) -> crate::iroh::Later<'_, Owner> {
-        let port = match side {
-            Side::Local => conn.local.port(),
-            Side::Peer => conn.peer.port(),
-        };
+    /// What [`Wire::owns`] says of the far end's port, else this account's.
+    fn owner(&self, conn: Conn) -> crate::iroh::Later<'_, Owner> {
+        let port = conn.peer.port();
         let met = self.wire.0.lock().unwrap();
         let said = met.owners.get(&(*self.key.as_bytes(), port)).cloned();
         let owner =
