@@ -24,3 +24,12 @@ person chose on its port. RELEASES.md says what a person sees.
 As V1.12.2's (../../v1.12.2/2026-11-19/): `deploy-page.sh --build` in a
 clean detached worktree at `bd8db5a0`, `sign-release.sh`, then
 `deploy-page.sh --site`, the readback and the Arch package.
+
+1. **The build.** `scripts/deploy-page.sh --build` in `~/dev/svrngs-v1.13.1`,
+   detached at `bd8db5a0`: exit 0 ([publish.log](publish.log)).
+2. **The release.** `scripts/sign-release.sh v1.13.1 bd8db5a0… <site>`: the
+   tag `v1.13.1` is signed by the release key (`git tag -v v1.13.1`: "Good
+   signature from svrngs releases") and is GitHub's latest release, 21 files.
+3. **The Arch package.** `scripts/arch-package.py 1.13.1`: five signatures by
+   the release key, a planted sum refused, makepkg `--verifysource` passed
+   ([arch-package.json](arch-package.json), [arch-package.log](arch-package.log)).
