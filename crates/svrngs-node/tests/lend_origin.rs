@@ -627,13 +627,13 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
         eprintln!("{row}: {got:?}");
         assert_eq!(got, want, "{row}");
     }
-    // A program without the token is told where it is, and its lend's
+    // A program with Play off is told to turn it on, and its lend's
     // service is never asked (give-session).
     let before = heads["night"].lock().unwrap().len();
     let host = format!("{night}.localhost:{port}");
     let (head, said) = ask_on(api, &host, "GET /x HTTP/1.1\r\nConnection: close\r\n").await;
     assert!(head.starts_with("HTTP/1.1 401"), "{head}{said}");
-    assert!(said.contains("token"), "{said}");
+    assert!(said.contains("Play is on"), "{said}");
     assert_eq!(heads["night"].lock().unwrap().len(), before);
     sam.net().close().await;
     alex.net().close().await;

@@ -137,7 +137,7 @@ async fn another_browser_is_told_how_to_come_in_and_can() {
     let host = format!("svrngs.localhost:{}", alex.node.api_addr().port());
     let (_, _, refused) = browsed(&alex.node, ("GET", &host, "/"), None).await;
     assert!(refused.contains("svrngs open --print"), "{refused}");
-    assert!(refused.contains("A program, not a browser"), "{refused}");
+    assert!(refused.contains("while Play is on for it"), "{refused}");
 
     let verb = cli::parse(["svrngs", "open", "--print"].map(String::from)).unwrap();
     assert!(matches!(verb, Verb::Open(None, true)), "{verb:?}");
