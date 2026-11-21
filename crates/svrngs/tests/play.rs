@@ -423,9 +423,12 @@ async fn played_at_an_address(
 /// on Alex's computer, sending any text as its key, is answered at the
 /// address on 127.0.0.1 and on ::1, the first address a Mac and Linux
 /// give `<label>.localhost`, its socket's owner read by this system's own reader
-/// (libproc on a Mac, sock_diag on Linux); the key never reaches Sam's
-/// program. Planted, watched failing: the API listening on 127.0.0.1
-/// alone (::1 refused its connection).
+/// (libproc on a Mac, sock_diag on Linux); no key reaches Sam's program, in
+/// any header a model's client sends one in (`Authorization`, `X-Api-Key`,
+/// `Api-Key`, `X-Goog-Api-Key`), whatever its case. Planted, watched
+/// failing: the API listening on 127.0.0.1 alone (::1 refused its
+/// connection); Play taking off `Authorization` alone (Sam's program was
+/// sent `X-Api-Key`).
 #[tokio::test(flavor = "multi_thread")]
 async fn play_lets_a_program_in_at_a_lend_s_address_on_either_loopback() {
     let (address, heads, [_sam, alex], _dirs) = played_at_an_address("chat").await;
@@ -447,7 +450,10 @@ async fn play_lets_a_program_in_at_a_lend_s_address_on_either_loopback() {
             .unwrap();
         let asked = http
             .get(format!("{address}v1/models"))
-            .bearer_auth("any-text-at-all");
+            .bearer_auth("any-text-at-all")
+            .header("X-Api-Key", "an-anthropic-key")
+            .header("api-key", "an-azure-key")
+            .header("X-GOOG-API-KEY", "a-google-key");
         let answer = asked.send().await.unwrap_or_else(|e| panic!("{at}: {e}"));
         let status = answer.status().as_u16();
         assert_eq!(
@@ -458,10 +464,14 @@ async fn play_lets_a_program_in_at_a_lend_s_address_on_either_loopback() {
     }
     let heads = heads.lock().unwrap();
     assert_eq!(heads.len(), 2, "{heads:?}");
-    assert!(
-        !heads.iter().any(|h| h.contains("any-text-at-all")),
-        "{heads:?}"
-    );
+    for key in [
+        "any-text-at-all",
+        "an-anthropic-key",
+        "an-azure-key",
+        "a-google-key",
+    ] {
+        assert!(!heads.iter().any(|h| h.contains(key)), "{key}: {heads:?}");
+    }
 }
 
 /// **curl and Node reach a lend's address with Play on**, each resolving

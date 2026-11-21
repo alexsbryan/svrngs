@@ -29,7 +29,9 @@ key, and only ever updates svrngs forward.
 anything else you open at an address, press **Play** on it on your home
 page. Programs on this computer, such as opencode or an OpenAI library,
 can then use its address, `http://<name>.localhost:<port>/`, with no key.
-If a program asks for one, type any text: svrngs doesn't pass it on. Web
+If a program asks for one, type any text, never a real key: svrngs removes
+the `Authorization`, `X-Api-Key`, `Api-Key` and `X-Goog-Api-Key` headers,
+where programs send a key, before your friend's computer sees a request. Web
 pages in your browser and other accounts on this computer still can't use
 it, and your friend's rules for what they lent still apply. **Stop** closes
 it, and **What acts as you** lists it while it's on. svrngs now answers on

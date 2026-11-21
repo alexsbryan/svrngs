@@ -33,7 +33,7 @@ use std::collections::BTreeMap;
 use std::net::Ipv4Addr;
 
 use axum::extract::{Request, State};
-use axum::http::{header, StatusCode};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{routing::get, Json, Router};
 use n0_future::task::AbortOnDropHandle;
@@ -268,6 +268,14 @@ pub(crate) enum Unplayed {
     Unread(&'static str),
 }
 
+/// The headers a program's client sends a key in, as each one's own client
+/// sends it (read 2026-11-21): `Authorization`, OpenAI's and Anthropic's
+/// and most; `x-api-key`, as Anthropic's pages spell a request;
+/// `api-key`, Azure OpenAI's; `x-goog-api-key`, Google's. Taken off a
+/// request Play lets in, unread, in any case, as a header's name is one. A
+/// key in its address or a cookie is not one svrngs can tell from the rest.
+const KEYS: [&str; 4] = ["authorization", "x-api-key", "api-key", "x-goog-api-key"];
+
 /// Whether the socket a program asked from, as `owner`, is of this
 /// process's account, `me`: Play's rule of whose program it lets in.
 fn ours(owner: Owner, me: Option<u32>) -> Result<(), Unplayed> {
@@ -281,9 +289,9 @@ fn ours(owner: Owner, me: Option<u32>) -> Result<(), Unplayed> {
 }
 
 /// What `req` at the lend `l`'s address shows by Play: [`Shown::Played`],
-/// its `Authorization` taken off unread, since a program that insists on a
-/// key sends any text, where Play opened it and `req` is a program's of
-/// this account ([`ours`]), its socket's owner read as an open's is
+/// each header of [`KEYS`] taken off unread, since a program that insists
+/// on a key sends any text, where Play opened it and `req` is a program's
+/// of this account ([`ours`]), its socket's owner read as an open's is
 /// (`crate::session::Sessions::whose`). [`Shown::Neither`], as before
 /// Play, where Play is off, or where `req` is a page's, as the record API
 /// tells one (`crate::api::page_of`: an `Origin` or a `Sec-Fetch-Site`,
@@ -300,7 +308,8 @@ pub(crate) async fn shown(at: &Asking, l: &Label, req: &mut Request) -> Result<S
     let judged = ours(owner.clone(), crate::uid::mine().ok());
     tracing::debug!(target: "play", label = %l, ?owner, ?judged, "play: on at this lend's address, so it lets in a program of this account, whatever key it sends");
     judged.map_err(|why| LendRefusal::closed(why.to_string()))?;
-    req.headers_mut().remove(header::AUTHORIZATION);
+    let headers = req.headers_mut();
+    KEYS.iter().for_each(|key| drop(headers.remove(*key)));
     Ok(Shown::Played)
 }
 

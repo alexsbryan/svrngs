@@ -65,7 +65,7 @@ A chat app, an editor's assistant such as opencode or aider, or a script on your
 
 1. On your home page, under your group's **Shared apps**, find Sam's model and press **Play** beside it. The row says *"Connect to http://….localhost:…/."* and copies that address. The address stays the same when svrngs or your computer restarts, and Play stays on until you press **Stop**.
 2. In the program, set the OpenAI base URL to that address with `v1` on the end.
-3. If the program insists on an API key, type any text, such as `none`. svrngs doesn't read it, and doesn't pass it on to Sam.
+3. If the program insists on an API key, type any text, such as `none`, never a real key. svrngs removes it unread before Sam's computer sees the request, in whichever header your program sends it: `Authorization`, `X-Api-Key`, `Api-Key` or `X-Goog-Api-Key`.
 
 While Play is on, any program you run on this computer can use Sam's model as you. A web page in your browser can't, and neither can a program another account on this computer runs. Your home page lists it under **What acts as you**, with its **Stop**.
 

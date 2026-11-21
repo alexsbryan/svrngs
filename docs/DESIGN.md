@@ -375,9 +375,12 @@ seconds, whatever their own computer does (`door::udp::serve`).
   a page's, so no `Origin` and no `Sec-Fetch-Site`, which a browser sends
   with every request here, by the record API's own decider (`api.rs`
   `page_of`; Node's `fetch` sends `Sec-Fetch-Mode` alone); and its socket
-  must be of the account svrngs runs as, read as an open's is (`uid.rs`). Any `Authorization` it sends is never read, and is
-  taken off before the lend is asked, since a program that insists on a
-  key sends any text. Another account's program, and one whose account
+  must be of the account svrngs runs as, read as an open's is (`uid.rs`).
+  A key it sends in a header a client sends one in, `Authorization`,
+  `X-Api-Key`, `Api-Key` or `X-Goog-Api-Key` (`play.rs` `KEYS`, read from
+  OpenAI's, Anthropic's, Azure OpenAI's and Google's clients), is never
+  read, and is taken off before the lend is asked, since a program that
+  insists on a key sends any text. Another account's program, and one whose account
   can't be read, are refused, saying why; a page goes on to a browser's
   way in (`play.rs` `shown`, `ours`). The lender's terms, the door's
   rules and the browser's session are as for any asker, and the program
