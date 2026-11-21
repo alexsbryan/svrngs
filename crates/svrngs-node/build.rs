@@ -48,4 +48,27 @@ fn main() {
         programs += &format!("({word:?}, include_str!({path:?})),");
     }
     std::fs::write(out.join("programs.rs"), programs + "]").expect("programs are written");
+
+    // update.rs's `BUILT`, the floor every release is held to: when this
+    // svrngs's commit was made, the later of SOURCE_DATE_EPOCH, as a builder
+    // says it, and git's time for HEAD, read in this package's folder, where
+    // a build script runs. Neither known stops the build: no floor would take
+    // any release ever signed, and this build's clock is a time nobody chose.
+    let git = |args: &[&str]| {
+        let said = std::process::Command::new("git").args(args).output().ok()?;
+        let text = String::from_utf8(said.stdout).ok()?;
+        said.status.success().then(|| text.trim().to_string())
+    };
+    // Rerun whenever HEAD moves: its reflog, which every commit and checkout
+    // writes, so the floor is never an earlier commit's.
+    if let Some(moved) = git(&["rev-parse", "--git-path", "logs/HEAD"]) {
+        println!("cargo::rerun-if-changed={moved}");
+    }
+    println!("cargo::rerun-if-env-changed=SOURCE_DATE_EPOCH");
+    let epoch = std::env::var("SOURCE_DATE_EPOCH").ok();
+    let times = [epoch, git(&["log", "-1", "--format=%ct"])];
+    let time = |t: &String| t.parse::<u32>().expect("SOURCE_DATE_EPOCH is in seconds");
+    let built = times.iter().flatten().map(time).max();
+    let built = built.expect("svrngs builds in its git checkout, or with SOURCE_DATE_EPOCH saying when its commit was made");
+    std::fs::write(out.join("built.rs"), built.to_string()).expect("the floor is written");
 }

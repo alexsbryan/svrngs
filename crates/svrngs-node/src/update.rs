@@ -7,8 +7,9 @@
 //! sums name, checks it, unpacks only `svrngs`, and renames the new one
 //! over it. Nothing is guessed, and the page is not the trust: its sums
 //! are read only once [`signed`] finds them signed by a key built into
-//! svrngs, the signature made no earlier than the one this computer last
-//! accepted, which `release` keeps (DESIGN §7, "A computer updates only
+//! svrngs, the signature made no earlier than the svrngs running: its own
+//! commit ([`BUILT`]), or the signature this computer last accepted, which
+//! `release` keeps, whichever is later (DESIGN §7, "A computer updates only
 //! from a signed release"). `install.sh` trusts the page's HTTPS alone, as
 //! the install line does.
 //!
@@ -39,6 +40,12 @@ pub mod signed;
 /// `install.sh` never writes. `web/install.sh` spells the same file in
 /// shell; `tests/install.rs` pins the pair.
 pub const RELEASE_FILE: &str = "release";
+
+/// When this svrngs's own commit was made, in seconds since 1970, as
+/// build.rs reads it: no release signed before it is installed, whatever
+/// [`RELEASE_FILE`] keeps or lacks. A release is signed after its commit, so
+/// its own still passes.
+pub const BUILT: u32 = include!(concat!(env!("OUT_DIR"), "/built.rs"));
 
 /// What a package beside svrngs's binary says of how it is updated, from
 /// the binary's own directory: `/usr/bin/svrngs` reads
@@ -110,7 +117,7 @@ pub enum UpdateError {
     Unsigned(String),
     #[error("No update: {0} offers a new svrngs whose signature (get/SHA256SUMS.sig) is not the svrngs release key’s ({1}), so it can’t be told from anyone’s. Whoever runs that page can put the release’s own signature there.")]
     BadSignature(String, signed::Refusal),
-    #[error("No update: {0} offers a svrngs signed earlier than the one this computer last installed, and svrngs never goes back. Whoever runs that page can put the newest release there.")]
+    #[error("No update: {0} offers a svrngs older than the one this computer runs, and svrngs never goes back, so nothing changed. Whoever runs that page can put the newest release there.")]
     Older(String),
     #[error("{0}")]
     CouldNotJudge(String),
@@ -241,7 +248,7 @@ pub async fn apply_at(
 }
 
 /// The page’s release, its sums read only once found signed by one of
-/// `keys` no earlier than the last signature accepted here, and this
+/// `keys` no earlier than the floor [`installed`] decides, and this
 /// computer’s record of what it installed.
 async fn latest(dir: &Path, get: &impl Get, keys: &[[u8; 32]]) -> Result<Latest, UpdateError> {
     let page = page(dir)?;
@@ -266,11 +273,11 @@ async fn latest(dir: &Path, get: &impl Get, keys: &[[u8; 32]]) -> Result<Latest,
         }
     };
     let (installed, floor) = installed(dir)?;
-    if floor.is_some_and(|floor| signed.created() < floor) {
-        tracing::debug!(target: "update", page = %named, created = signed.created(), ?floor, "update: refused — the page’s release was signed earlier than the one last installed");
+    if signed.created() < floor {
+        tracing::debug!(target: "update", page = %named, created = signed.created(), floor, built = BUILT, "update: refused — the page’s release was signed before the svrngs this computer runs");
         return Err(UpdateError::Older(named));
     }
-    tracing::debug!(target: "update", created = signed.created(), ?floor, "update: the page’s sums are signed by a release key, no earlier than the last accepted");
+    tracing::debug!(target: "update", created = signed.created(), floor, built = BUILT, "update: the page’s sums are signed by a release key, no earlier than the svrngs this computer runs");
     let sums = String::from_utf8(sums)
         .map_err(|e| UpdateError::CouldNotJudge(format!("the page’s answer is not text: {e}")))?;
     let want = wanted(&sums, &tarball)?;
@@ -283,28 +290,26 @@ async fn latest(dir: &Path, get: &impl Get, keys: &[[u8; 32]]) -> Result<Latest,
     })
 }
 
-/// What this computer last installed, as `release` keeps it: the
-/// tarball’s hash, and the time of the signature it was accepted under,
-/// when one was kept.
-fn installed(dir: &Path) -> Result<(Option<String>, Option<u32>), UpdateError> {
-    let unread = |e: String| {
-        UpdateError::CouldNotJudge(format!(
-            "what this computer last installed cannot be read: {e}"
-        ))
+/// What this computer last installed, as `release` keeps it, the tarball’s
+/// hash, and the floor: the one decider of it, the later of [`BUILT`] and
+/// the time of the signature the last update was accepted under, kept on
+/// the second line. No file is none installed, held to [`BUILT`] alone.
+fn installed(dir: &Path) -> Result<(Option<String>, u32), UpdateError> {
+    let unread = |e: &dyn std::fmt::Display| {
+        let why = format!("what this computer last installed cannot be read: {e}");
+        tracing::debug!(target: "update", why, "update: the floor cannot be judged");
+        UpdateError::CouldNotJudge(why)
     };
     let raw = match fs::read_to_string(dir.join(RELEASE_FILE)) {
-        Ok(raw) => raw,
-        Err(e) if e.kind() == ErrorKind::NotFound => return Ok((None, None)),
-        Err(e) => return Err(unread(e.to_string())),
+        Err(e) if e.kind() == ErrorKind::NotFound => String::new(),
+        raw => raw.map_err(|e| unread(&e))?,
     };
-    let mut lines = raw.lines().map(str::trim);
-    let hash = lines.next().map(str::to_ascii_lowercase);
-    let floor = lines.next().filter(|line| !line.is_empty());
-    let floor = floor.map(str::parse::<u32>).transpose();
-    Ok((
-        hash.filter(|hash| !hash.is_empty()),
-        floor.map_err(|e| unread(e.to_string()))?,
-    ))
+    let mut lines = raw.lines().map(str::trim).map(str::to_ascii_lowercase);
+    let hash = lines.next().filter(|hash| !hash.is_empty());
+    let kept = lines.next().filter(|line| !line.is_empty());
+    let kept = kept.map(|kept| kept.parse::<u32>()).transpose();
+    let kept = kept.map_err(|e| unread(&e))?;
+    Ok((hash, kept.map_or(BUILT, |kept| kept.max(BUILT))))
 }
 
 /// The page as a person names it: its address with no scheme, nor a last

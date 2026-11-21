@@ -346,7 +346,7 @@ fn update_state(state: &str) -> Response {
 /// `GET /update`: whether the page this computer came from offers a svrngs
 /// it does not run; `unknown` when that cannot be judged, never `current`;
 /// `held` when the page's release is refused (its signature missing, not a
-/// release key's, or older than the last accepted), said where the offer
+/// release key's, or older than the svrngs running), said where the offer
 /// would be; `packaged` when a package updates this one.
 async fn update_check(State(at): State<Asking>) -> Response {
     match crate::update::check(&at.door.data_dir).await {

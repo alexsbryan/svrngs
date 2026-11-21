@@ -1,6 +1,7 @@
 //! The home page’s update (PLAN §1, the update row): the page’s
-//! `SHA256SUMS`, once found signed by a release key no earlier than the
-//! last signature accepted (DESIGN §7), is the one decider of its release,
+//! `SHA256SUMS`, once found signed by a release key no earlier than this
+//! build's own commit or the last signature accepted, whichever is later
+//! (DESIGN §7), is the one decider of its release,
 //! `release` in the data dir the one record of what this computer
 //! installed and when its signature was made, and only a tarball that
 //! matches the page’s sum and unpacks to a regular file replaces the
@@ -20,7 +21,7 @@ use sha2::{Digest, Sha256};
 use svrngs_node::invite::ORIGIN_FILE;
 use svrngs_node::update::signed::{verify, Refusal, RELEASE_KEYS};
 use svrngs_node::update::{
-    apply_at, check_by, fetch, packaged as packaged_words, Check, Get, Outcome, UpdateError,
+    apply_at, check_by, fetch, packaged as packaged_words, Check, Get, Outcome, UpdateError, BUILT,
     RELEASE_FILE,
 };
 
@@ -77,8 +78,10 @@ fn exe(dir: &Path) -> std::path::PathBuf {
     dir.join("svrngs")
 }
 
-/// When the tests' releases are signed, unless one says otherwise.
-const SIGNED_AT: u32 = 1_800_000_000;
+/// When the tests' releases are signed, unless one says otherwise: after
+/// this build's own commit, as a newer release is, so no test's release
+/// falls under the build's floor as its commits pass any fixed time.
+const SIGNED_AT: u32 = BUILT + 1_000;
 
 /// The key the tests' pages sign their releases with, never the release
 /// key, and the keys their updates are held to: that one alone.
@@ -457,7 +460,7 @@ async fn a_signed_release_older_than_the_last_accepted_is_refused() {
     assert!(refused.judged());
     assert_eq!(
         refused.to_string(),
-        "No update: page.invalid offers a svrngs signed earlier than the one this computer last installed, and svrngs never goes back. Whoever runs that page can put the newest release there."
+        "No update: page.invalid offers a svrngs older than the one this computer runs, and svrngs never goes back, so nothing changed. Whoever runs that page can put the newest release there."
     );
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
     let kept = std::fs::read_to_string(dir.path().join(RELEASE_FILE)).unwrap();
@@ -492,8 +495,56 @@ async fn a_newer_signed_release_installs_and_keeps_its_time() {
     assert_eq!(checked.unwrap(), Check::Current);
 }
 
+/// **A fresh install takes no release signed before the svrngs it runs**:
+/// no `release` kept, as `install.sh` leaves it, and a page's release
+/// validly signed a second before [`BUILT`], this build's own commit; `check`
+/// and `apply` refuse Older in a person's words, saying nothing changed,
+/// judged, the binary kept and no `release` written. v1.11.2's own sums,
+/// signed by the release key, are refused alike. One signed at BUILT
+/// itself, as a build's own release is, is offered. Planted: the floor only what `release` keeps (update.rs
+/// `installed`): Available, then Updated, the older release in place.
+#[tokio::test]
+async fn a_fresh_install_takes_no_release_signed_before_its_own() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"an older svrngs");
+    let older = release(&name, tarball.clone(), BUILT - 1);
+    installed(dir.path());
+
+    let checked = check_by(dir.path(), page(&older), &keys()).await;
+    assert!(
+        matches!(&checked, Err(UpdateError::Older(at)) if at == "page.invalid"),
+        "{checked:?}"
+    );
+    let applied = apply_at(dir.path(), &exe(dir.path()), page(&older), &keys()).await;
+    let Err(refused) = applied else {
+        panic!("{applied:?}")
+    };
+    assert!(refused.judged());
+    assert_eq!(
+        refused.to_string(),
+        "No update: page.invalid offers a svrngs older than the one this computer runs, and svrngs never goes back, so nothing changed. Whoever runs that page can put the newest release there."
+    );
+    assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
+    assert!(!dir.path().join(RELEASE_FILE).exists());
+
+    let v1_11_2 = HashMap::from([
+        ("get/SHA256SUMS".to_string(), SUMS.to_vec()),
+        ("get/SHA256SUMS.sig".to_string(), SIG.to_vec()),
+    ]);
+    let checked = check_by(dir.path(), page(&v1_11_2), RELEASE_KEYS).await;
+    assert!(
+        matches!(&checked, Err(UpdateError::Older(_))),
+        "{checked:?}"
+    );
+
+    let own = release(&name, tarball, BUILT);
+    let checked = check_by(dir.path(), page(&own), &keys()).await;
+    assert_eq!(checked.unwrap(), Check::Available);
+}
+
 /// **`release` as `install.sh` writes it, one line, is still read**: its
-/// hash the page's, Current, with no floor; a second line that is no time
+/// hash the page's, Current, with no floor kept; a second line that is no time
 /// cannot be judged, never read as none. Planted: the hash read as the
 /// whole file (the hash then read as the time: CouldNotJudge, here and in
 /// each test above that keeps a time); a second line that is no time read
