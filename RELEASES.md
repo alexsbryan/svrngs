@@ -51,11 +51,12 @@ UDP program that, when you lend it, listens on every address and lets other
 programs listen on its port too: it says to have it listen on 127.0.0.1 for
 svrngs. svrngs checks the port before each connection it carries, and
 before and after each batch of datagrams it sends, and holds the lend
-closed when something you didn't choose is there. On a Linux computer that
-keeps each program in a cgroup of its own, as systemd does, a socket that
-the program makes under your account to answer one of your friends, as
-rootless Podman does for each flow to a container's UDP port, is carried
-as the program's. When the program listens anew, after it starts again, or
+closed when something you didn't choose is there. On Linux, a socket made
+under your account in the program's own cgroup to answer one of your
+friends, as rootless Podman makes one for each flow to a container's UDP
+port, is carried as the program's. A cgroup holds what systemd started
+together: a service, or an app and everything started from its window, as
+a terminal and the programs run in it. When the program listens anew, after it starts again, or
 something else listens on the port, the lend closes, and its line on your
 home page says what answers there now.
 **Keep sharing it** keeps the same link for the same groups, kept to
