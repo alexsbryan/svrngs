@@ -890,10 +890,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # unread, not as nothing (door.rs): 24,283. Its pass cut 1.
 # Then 12 for a closed flow to stay named while a socket is connected to it
 # (door.rs, door/bound.rs): 24,295. Its pass cut 1.
+# Then 15 for a flow checked while a server makes another flow's socket to
+# be unjudged and stay open (door/udp.rs, uid.rs, door/bound.rs): 24,310;
+# the operator: "Approved".
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24296,
+    ".": 24311,
 
     "js": 8694,
 
