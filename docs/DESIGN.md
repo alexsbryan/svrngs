@@ -2885,7 +2885,11 @@ time, and no critical subpacket it does not read. Anything else is refused,
 never skipped. The floor is the later of two times, with one decider
 (`update.rs` `installed`): when the running svrngs's own commit was made,
 which its build compiles in (`BUILT`, the later of `SOURCE_DATE_EPOCH` and
-git's time for HEAD; a build that knows neither stops and says so), and the
+git's time for HEAD; a build that knows neither stops and says so). A
+release says its commit's time as `SOURCE_DATE_EPOCH`
+(`scripts/build-release.sh`), the one thing that makes the build read it
+again, so a commit alone rebuilds nothing; a dev build keeps the time its
+build last read, at or below its commit. The other time is the
 creation time of the signature its last update was accepted under, which
 `release` in the data dir keeps on a second line beside the hash. A release
 is signed after its commit, so its own signature passes, and a computer whose

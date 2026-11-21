@@ -42,9 +42,10 @@ pub mod signed;
 pub const RELEASE_FILE: &str = "release";
 
 /// When this svrngs's own commit was made, in seconds since 1970, as
-/// build.rs reads it: no release signed before it is installed, whatever
-/// [`RELEASE_FILE`] keeps or lacks. A release is signed after its commit, so
-/// its own still passes.
+/// build.rs reads it: a release's exactly, as scripts/build-release.sh says
+/// it; a dev build's no later. No release signed before it is installed,
+/// whatever [`RELEASE_FILE`] keeps or lacks. A release is signed after its
+/// commit, so its own still passes.
 pub const BUILT: u32 = include!(concat!(env!("OUT_DIR"), "/built.rs"));
 
 /// What a package beside svrngs's binary says of how it is updated, from

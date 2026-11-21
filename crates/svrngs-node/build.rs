@@ -54,21 +54,22 @@ fn main() {
     // says it, and git's time for HEAD, read in this package's folder, where
     // a build script runs. Neither known stops the build: no floor would take
     // any release ever signed, and this build's clock is a time nobody chose.
-    let git = |args: &[&str]| {
-        let said = std::process::Command::new("git").args(args).output().ok()?;
-        let text = String::from_utf8(said.stdout).ok()?;
-        said.status.success().then(|| text.trim().to_string())
-    };
-    // Rerun whenever HEAD moves: its reflog, which every commit and checkout
-    // writes, so the floor is never an earlier commit's.
-    if let Some(moved) = git(&["rev-parse", "--git-path", "logs/HEAD"]) {
-        println!("cargo::rerun-if-changed={moved}");
-    }
+    //
+    // Only SOURCE_DATE_EPOCH reruns this script, never a commit: a commit
+    // here, docs alone included, would rebuild svrngs-node and all above it
+    // for every worker's next cargo run. A release is exact all the same, as
+    // scripts/build-release.sh says its own commit's time there. A dev build
+    // keeps git's time from when this script last ran, a floor at or below
+    // its commit, which only lets it take a release it would anyway: no one
+    // installs a dev build from a page.
     println!("cargo::rerun-if-env-changed=SOURCE_DATE_EPOCH");
-    let epoch = std::env::var("SOURCE_DATE_EPOCH").ok();
-    let times = [epoch, git(&["log", "-1", "--format=%ct"])];
-    let time = |t: &String| t.parse::<u32>().expect("SOURCE_DATE_EPOCH is in seconds");
-    let built = times.iter().flatten().map(time).max();
+    let mut ask = std::process::Command::new("git");
+    let said = ask.args(["log", "-1", "--format=%ct"]).output().ok();
+    let said = said.filter(|said| said.status.success());
+    let git = said.and_then(|said| String::from_utf8(said.stdout).ok());
+    let times = [std::env::var("SOURCE_DATE_EPOCH").ok(), git];
+    let time = |t: &String| t.trim().parse().expect("SOURCE_DATE_EPOCH is seconds");
+    let built: Option<u32> = times.iter().flatten().map(time).max();
     let built = built.expect("svrngs builds in its git checkout, or with SOURCE_DATE_EPOCH saying when its commit was made");
     std::fs::write(out.join("built.rs"), built.to_string()).expect("the floor is written");
 }

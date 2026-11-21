@@ -55,6 +55,12 @@ export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
 # `svrngs version` names the commit each binary is built from.
 SVRNGS_COMMIT="$(git rev-parse --short HEAD)$(git diff --quiet HEAD || echo -dirty)"
 export SVRNGS_COMMIT
+# The floor update.rs holds every release to (`BUILT`): this commit's own
+# time. Said here, it reruns crates/svrngs-node/build.rs whenever it changes,
+# so ../svrngs-release's target/, warm from the last release, never keeps
+# that one's time; that script reruns on nothing else.
+SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+export SOURCE_DATE_EPOCH
 GET="$OUT/get"
 rm -rf "$GET"
 mkdir -p "$GET"
