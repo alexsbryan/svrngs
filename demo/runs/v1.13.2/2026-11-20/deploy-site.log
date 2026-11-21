@@ -1,0 +1,61 @@
+deploy-page: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site, its sums signed by the release key, to svrngs-page (svrnmesh)
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+
+  Directory       /private/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site
+
+Searching for existing projects…
+
+✓ Linked          svrnmesh/svrngs-page
+
+Retrieving project…
+> Downloading a fresh `VERCEL_OIDC_TOKEN` for svrnmesh/svrngs-page
+Downloading
+
+✓ Created         .env.local file and added it to .gitignore
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+Deploying svrngs-page
+Uploading [--------------------] (0.0B/80.8MB)
+Uploading [=====---------------] (20.2MB/80.8MB)
+Uploading [==========----------] (40.4MB/80.8MB)
+Uploading [===============-----] (60.6MB/80.8MB)
+Uploading [====================] (80.8MB/80.8MB)
+  Inspect         https://vercel.com/svrnmesh/svrngs-page/Gu6v8UokDD9iraWNAjRkfMwnGcSP
+  Production      https://svrngs-page-i9z781z9p-svrnmesh.vercel.app
+Building…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+Previous build caches not available.
+Downloading 92 deployment files...
+[2K[1A[2K[G  Production      https://svrngs-page-i9z781z9p-svrnmesh.vercel.app
+Completing…
+▲ Aliased         https://group.svrnme.sh
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_Gu6v8UokDD9iraWNAjRkfMwnGcSP",
+    "url": "https://svrngs-page-i9z781z9p-svrnmesh.vercel.app",
+    "inspectorUrl": "https://vercel.com/svrnmesh/svrngs-page/Gu6v8UokDD9iraWNAjRkfMwnGcSP",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_Gu6v8UokDD9iraWNAjRkfMwnGcSP"
+  },
+  "message": "Deployment svrngs-page-i9z781z9p-svrnmesh.vercel.app ready.",
+  "next": [
+    {
+      "command": "vercel curl https://svrngs-page-i9z781z9p-svrnmesh.vercel.app",
+      "when": "Verify deployment, including when Deployment Protection is enabled"
+    },
+    {
+      "command": "vercel inspect svrngs-page-i9z781z9p-svrnmesh.vercel.app --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site",
+      "when": "Promote to production"
+    }
+  ]
+}
