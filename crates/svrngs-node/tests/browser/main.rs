@@ -77,7 +77,7 @@ fn no_seed(_: &Path) -> Result<Option<String>, String> {
 
 /// The published page reaches nothing on this computer (v1patch-loopback;
 /// svrn-docs WHAT_RUNS_AS_YOU.md §2): the `index.html` `scripts/build-web.sh`
-/// writes, the build `scripts/deploy-page.sh` ships, holds no `127.0.0.1`
+/// writes, the build `scripts/release.sh` ships, holds no `127.0.0.1`
 /// and no `localhost` in its `connect-src`.
 #[test]
 fn the_published_page_allows_no_loopback() {

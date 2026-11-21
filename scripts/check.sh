@@ -206,7 +206,7 @@ elif reached playback; then echo "never-ran  WebKit's seeks back to back, a rate
 # the build's relay alone, and Bo's joins by its link. Whether the relay is
 # up is no property of the code, so it is asked by iroh alone first: silent
 # then, or silent again after a svrngs failed, the step is could-not-judge,
-# with why (`step`, above); deploy-page.sh is where its silence fails. A
+# with why (`step`, above); release.sh is where its silence fails. A
 # failure with it answering is ours.
 step "internet" cargo test -p svrngs --test internet
 step "app laws" ${SVRNGS_RUN:-} node web/tests/run.mjs apps

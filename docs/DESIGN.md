@@ -2704,7 +2704,7 @@ where the apps open (`crates/svrngs/src/cli.rs`, `checked_page`). A page at
 an address no name falls under, an IP address, or on a host that fails is
 refused, the reason saying what such a host must do; a page
 address that does not give the page is not judged (exit 3). group.svrnme.sh
-does (`scripts/deploy-page.sh`), so a group that names ours types nothing
+does (`scripts/release.sh`), so a group that names ours types nothing
 more. The cost: the page's host and the phone's name lookups see which app
 is opened, since its label names its lender's key and the app. The host
 sends `frame-ancestors 'none'` on every answer but `sign.html`
@@ -2906,11 +2906,11 @@ the one other install it needs, Podman (`apps/give/page/index.js`).
 
 Publishing the binaries with the page is the operator's, in three steps, so
 the page carries its release's signature:
-1. `scripts/deploy-page.sh --build` builds the site and prints its directory,
+1. `scripts/release.sh build` builds the site and prints its directory,
    deploying nothing;
-2. `scripts/sign-release.sh <tag> <commit> <site>`, the operator's, signs into
+2. `scripts/release.sh sign <tag> <commit> <site>`, the operator's, signs into
    the site's `get/`, signs the tag and makes the GitHub release;
-3. `scripts/deploy-page.sh --site <site>` checks `get/SHA256SUMS.sig` against
+3. `scripts/release.sh page <site>` checks `get/SHA256SUMS.sig` against
    `svrngs-release-key.asc` in a keyring of its own, refuses a site without a
    valid signature, and publishes one with it.
 

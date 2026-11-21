@@ -18,7 +18,7 @@ one yourself, run `gpg --import svrngs-release-key.asc`, then
 exactly the file you checked, and the link's page only joins:
 `sh install.sh --archive svrngs-<os>-<arch>.tar.gz '<your link>'`. The
 key signs only when the person who releases svrngs types its passphrase
-(`scripts/sign-release.sh`).
+(`scripts/release.sh sign`).
 
 ## V1.13.2, 20 November 2026
 

@@ -150,7 +150,7 @@ pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCAL
 /// keeps none of its own while the build ships [`MeetAt::Svrngs`], with no
 /// address lookup (PLAN §3, the operator, 2026-10-12). It answers before
 /// any build meeting its groups there is published (DESIGN §7,
-/// `scripts/deploy-relay.sh`, `scripts/deploy-page.sh`).
+/// `scripts/deploy-relay.sh`, `scripts/release.sh`).
 pub const DEFAULT_RELAY: &str = "https://relay.svrnme.sh/";
 
 /// Where a computer meets each group it holds that keeps no relay of its
@@ -169,7 +169,7 @@ pub enum MeetAt {
 /// `rings/current/relay-load` and a real phone through it
 /// (demo/runs/phone-home/2026-11-20), n0's public relays behind it only
 /// while it does not answer (`svrngs_node::tiers::behind`).
-/// `scripts/deploy-page.sh` reads this line, and publishes a build at
+/// `scripts/release.sh` reads this line, and publishes a build at
 /// svrngs's only while its relay answers (DESIGN §7).
 pub const SHIPPED: MeetAt = MeetAt::Svrngs;
 

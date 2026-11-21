@@ -13,7 +13,7 @@
 # name's A and AAAA at Vercel, and a wait until the relay answers — its
 # certificate asked by the relay once the name leads there. "Answers" has
 # one home, scripts/relay-answers.sh. Then a build whose default relay this
-# is may be published (scripts/deploy-page.sh).
+# is may be published (scripts/release.sh).
 #
 #   scripts/deploy-relay.sh --host root@<address> [--name relay.svrnme.sh]
 #     [--scope svrnmesh] [--dry-run]
@@ -124,5 +124,5 @@ else
     [ "$tries" -lt 120 ] || { echo "deploy-relay: https://$NAME/ does not answer after 30 minutes; its records and journalctl -u svrngs-relay on the box say why" >&2; exit 1; }
     sleep 15
   done
-  say "https://$NAME/ answers; a build whose default it is may be published now (scripts/deploy-page.sh)"
+  say "https://$NAME/ answers; a build whose default it is may be published now (scripts/release.sh)"
 fi

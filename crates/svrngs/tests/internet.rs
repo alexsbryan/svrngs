@@ -16,7 +16,7 @@
 //! step's verdict, never a pass and never a failure. When a svrngs fails
 //! and the relay is then asked again and does not answer, the same.
 //! Otherwise a failure is ours, and fails. The relay's silence is a failure
-//! where it is owed: `scripts/deploy-page.sh` refuses to publish a build
+//! where it is owed: `scripts/release.sh` refuses to publish a build
 //! at svrngs's while it does not answer (DESIGN §7).
 //!
 //! A test target of its own, `test = false` (crates/svrngs/Cargo.toml), so

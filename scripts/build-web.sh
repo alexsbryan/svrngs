@@ -3,7 +3,7 @@
 # build-web.sh — build the page into a deployable static site.
 #
 # The output is ONE directory to upload to the guest runtime's static origin
-# (today group.svrnme.sh, by scripts/deploy-page.sh): index.html + the wasm module and its glue. No server, no
+# (today group.svrnme.sh, by scripts/release.sh): index.html + the wasm module and its glue. No server, no
 # certificate, no data.
 #
 #   target/web/site/   <- upload this
@@ -141,7 +141,7 @@ sed -e 's#="\./#="/#g' -e 's#<body>#<body id="missing">#' "$OUT/index.html" >"$O
 echo
 echo "built: $OUT  (version ${VERSION})"
 echo "  size: $(du -h "$OUT/wasm/svrngs_web_bg.wasm" | cut -f1) wasm"
-echo "  scripts/deploy-page.sh publishes it where a group's link opens it"
+echo "  scripts/release.sh publishes it where a group's link opens it"
 echo "  Serve it with gzip/brotli on (the wasm compresses well) and, if the"
 echo "  host allows, the headers index.html's meta tags ask for — a CDN gives"
 echo "  both; nothing here depends on them."

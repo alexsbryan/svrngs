@@ -57,7 +57,7 @@ test("test-support under svrngs's [dependencies] is caught, by line", () => {
 });
 
 test('the release and the deploy name no feature', () => {
-  for (const f of ['scripts/build-release.sh', 'scripts/deploy-page.sh']) {
+  for (const f of ['scripts/build-release.sh', 'scripts/release.sh']) {
     assert.deepEqual(read(f).match(/--(all-)?features/g), null, f);
   }
 });
