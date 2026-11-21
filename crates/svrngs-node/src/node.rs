@@ -245,7 +245,9 @@ pub(crate) type Serve =
 /// folders, their store shut ([`Stop`]).
 pub struct Node {
     host: Arc<Host>,
-    /// The state its routers ask, kept for what only a test asks.
+    /// The state its routers ask, kept for what only a test asks
+    /// (node/tests_support.rs): each router holds its own.
+    #[cfg(any(test, feature = "test-support"))]
     pub(crate) asking: Asking,
     api: crate::api::Serving,
     /// What [`Self::api`] serves, kept so a test can ask it as a caller
@@ -603,6 +605,7 @@ impl Node {
         Ok(Self {
             _folders: Stop(store, host.clone()),
             host,
+            #[cfg(any(test, feature = "test-support"))]
             asking,
             api,
             #[cfg(any(test, feature = "test-support"))]
