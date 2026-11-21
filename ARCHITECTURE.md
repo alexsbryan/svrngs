@@ -323,7 +323,10 @@ seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the
 roster's origin; `err` is the one `ring_routes.rs` carries; `serve`
 answers the address it bound with the task (`Serving`, which stops the
-listener when dropped), where upstream's answered the task alone. The live
+listener when dropped), where upstream's answered the task alone; `bind`
+takes ::1 at 127.0.0.1's port too, served by the same router, so
+`<label>.localhost`'s first address, ::1 on a Mac and on Linux, reaches a
+lend's origin. The live
 lane came over in U3: `LiveBuffer`, bounded per group, which the live route
 fills and `GET /v1/rail/live` drains, and `POST /v1/rail/live`; `live.rs`
 is the inference daemon's fan-out (`routes_rail_live.rs`, `push_ephemeral`

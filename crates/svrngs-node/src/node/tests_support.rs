@@ -872,7 +872,7 @@ impl Node {
         let unbound: Serve = Box::new(move |_| {
             Ok(crate::api::Serving {
                 addr: SocketAddr::from(([127, 0, 0, 1], port)),
-                _task: n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {})),
+                _tasks: Vec::new(),
             })
         });
         Self::on_wire_serving(wire, (data_dir, key, seeds), (port, unbound)).await
@@ -915,7 +915,7 @@ impl Node {
         let unbound: Serve = Box::new(move |_| {
             Ok(crate::api::Serving {
                 addr: SocketAddr::from(([127, 0, 0, 1], port)),
-                _task: n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {})),
+                _tasks: Vec::new(),
             })
         });
         let net = Arc::new(OnWire {

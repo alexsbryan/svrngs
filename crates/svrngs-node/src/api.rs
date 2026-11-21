@@ -18,7 +18,7 @@
 //! reads the token as it could read their key, so it still acts as them
 //! (WHAT_CAN_ACT_AS_YOU §4, kept for their own programs).
 
-use std::net::SocketAddr;
+use std::net::{Ipv6Addr, SocketAddr};
 
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
@@ -270,13 +270,13 @@ pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
 }
 
 /// The API being served, on the address it is bound to. Dropping it stops
-/// the listener. (svrngs: upstream's `serve` answered the task alone, for a
+/// each listener. (svrngs: upstream's `serve` answered the task alone, for a
 /// port its config named; the node binds whatever port the command asks,
 /// `0` among them, so the address bound is answered too.)
 pub struct Serving {
     /// Where an app on this computer reaches the API.
     pub addr: SocketAddr,
-    pub(crate) _task: AbortOnDropHandle<()>,
+    pub(crate) _tasks: Vec<AbortOnDropHandle<()>>,
 }
 
 /// A listener bound on loopback, not yet served. (svrngs: upstream's
@@ -284,39 +284,60 @@ pub struct Serving {
 /// endpoint, so a refused address leaves no endpoint open, and serves once
 /// the endpoint's transport exists, which the live lane dials through.)
 pub struct Bound {
-    listener: tokio::net::TcpListener,
+    /// The address asked's, then, for 127.0.0.1's, ::1's at its port.
+    listeners: Vec<tokio::net::TcpListener>,
     /// Where it listens.
     pub addr: SocketAddr,
 }
 
 /// Bind. Refuses a non-loopback address by name, and one another program
-/// holds as that.
+/// holds as that. Bound on 127.0.0.1, it binds ::1 at the same port too: a
+/// Mac and Linux both name `<label>.localhost` ::1 first, then 127.0.0.1
+/// (getaddrinfo, in Python and in Node, 2026-11-21), so a program given a
+/// lend's address asks ::1 first, and one that asks the first address
+/// alone reaches nothing else. Another program holding it there is refused
+/// as on 127.0.0.1, since it would answer a lend's address; a computer
+/// with no ::1 listens on 127.0.0.1 alone, and says so.
 pub async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
     check_loopback(listen)?;
-    let listener = tokio::net::TcpListener::bind(listen)
+    let mut listeners = vec![listening(listen).await?];
+    let addr = (listeners[0].local_addr()).map_err(|e| ApiError::Listen(listen, e))?;
+    let six = SocketAddr::from((Ipv6Addr::LOCALHOST, addr.port()));
+    if listen.is_ipv4() {
+        match listening(six).await {
+            Ok(listener) => listeners.push(listener),
+            Err(ApiError::Listen(_, e)) => {
+                tracing::warn!(target: "rails", %six, error = %e, "api: not on ::1, so a program that asks `<label>.localhost`'s first address alone reaches no lend here")
+            }
+            Err(taken) => return Err(taken),
+        }
+    }
+    Ok(Bound { listeners, addr })
+}
+
+/// `listen` bound alone, or refused by name.
+async fn listening(listen: SocketAddr) -> Result<tokio::net::TcpListener, ApiError> {
+    tokio::net::TcpListener::bind(listen)
         .await
         .map_err(|e| match e.kind() {
             std::io::ErrorKind::AddrInUse => ApiError::Taken(listen),
             _ => ApiError::Listen(listen, e),
-        })?;
-    let addr = listener
-        .local_addr()
-        .map_err(|e| ApiError::Listen(listen, e))?;
-    Ok(Bound { listener, addr })
+        })
 }
 
-/// Serve `router` ([`router`]'s) on what [`bind`] bound.
+/// Serve `router` ([`router`]'s) on what [`bind`] bound, each listener.
 pub fn serve(router: Router, bound: Bound) -> Serving {
-    let Bound { listener, addr } = bound;
-    tracing::info!(target: "rails", %addr, "api: serving the record to this computer's apps");
-    let task = tokio::spawn(async move {
-        let served = router.into_make_service_with_connect_info::<SocketAddr>();
-        if let Err(e) = axum::serve(listener, served).await {
-            tracing::error!(target: "rails", error = %e, "api: listener stopped");
-        }
-    });
-    Serving {
-        addr,
-        _task: AbortOnDropHandle::new(task),
-    }
+    let Bound { listeners, addr } = bound;
+    tracing::info!(target: "rails", %addr, listeners = listeners.len(), "api: serving the record to this computer's apps, on 127.0.0.1 and on ::1 where it has one");
+    let made = router.into_make_service_with_connect_info::<SocketAddr>();
+    let serving = |listener: tokio::net::TcpListener| {
+        let served = axum::serve(listener, made.clone());
+        AbortOnDropHandle::new(tokio::spawn(async move {
+            if let Err(e) = served.await {
+                tracing::error!(target: "rails", error = %e, "api: listener stopped");
+            }
+        }))
+    };
+    let _tasks = listeners.into_iter().map(serving).collect();
+    Serving { addr, _tasks }
 }

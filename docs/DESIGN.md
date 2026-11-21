@@ -2806,7 +2806,13 @@ own loopback (`crates/svrngs-node/src/origin.rs`). Its port is the record
 API's, taken at the first start and kept in the data dir (`<data dir>/api`,
 `svrngs_node::api::kept_address`), so a bookmark and a program's address
 survive a restart; another program holding it is said by the command, exit
-3, with what to do, never a new port taken in silence. The command,
+3, with what to do, never a new port taken in silence. It listens on
+127.0.0.1 and on ::1 at that one port (`svrngs_node::api::bind`), since a
+Mac and Linux (systemd's `myhostname`) name `<label>.localhost` ::1 first,
+then 127.0.0.1, to a program's lookup, in Python and in Node, and a
+program that asks the first address alone reaches nothing else; another program
+holding either is refused as above, and a computer with no ::1 listens on
+127.0.0.1 alone and says so at warn. The command,
 `install.sh` and the home page say the page's address in one sentence
 (`svrngs_node::home::address`). The home page, at
 `http://svrngs.localhost:<port>/`, answers only itself — reads from its own

@@ -411,6 +411,35 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     house.close().await;
 }
 
+/// **The API answers on ::1 too, at its one port** (DESIGN §7, "On a
+/// computer"): a Mac and Linux name `<label>.localhost` ::1 first to
+/// getaddrinfo, in Python and Node, so a program given a lend's address
+/// asks there first, and one that asks the first alone reaches nothing
+/// else. Asked at 127.0.0.1 and at [::1], each at the port the `api` file
+/// names, the one router answers both: the record to the token, and a
+/// page's `Origin` refused (api.rs `not_from_a_page`). Planted, watched
+/// failing: nothing listening on ::1, the ask refused its connection.
+#[tokio::test]
+async fn the_api_answers_on_both_loopbacks_at_its_one_port() {
+    let house = House::over_quic().await;
+    let port = house.alex.api_addr().port();
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    for at in [format!("127.0.0.1:{port}"), format!("[::1]:{port}")] {
+        let url = format!("http://{at}{}", svrngs_node::surface::GROUPS_ROUTE);
+        let asked = http.get(&url).bearer_auth(house.alex.token()).send().await;
+        let answer = asked.unwrap_or_else(|e| panic!("nothing answers at {at}: {e}"));
+        assert_eq!(answer.status(), 200, "the record at {at}");
+        let page = http.get(&url).bearer_auth(house.alex.token());
+        let page = page
+            .header("origin", "http://example.com")
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(page.status(), 403, "a page refused at {at}");
+    }
+    house.close().await;
+}
+
 /// **An app asks which groups this computer holds, on the wire**: the
 /// exact row of `an_app_finds_the_api_and_asks_the_groups_this_computer_holds`,
 /// asked of Alex's routes in this process (common/on_wire.rs), no endpoint
