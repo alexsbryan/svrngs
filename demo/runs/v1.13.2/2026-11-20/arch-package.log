@@ -1,0 +1,14 @@
+planted refused
+    svrngs.service ... Passed
+    svrngs.desktop ... Passed
+    give.service ... Passed
+    svrngs.svg ... Passed
+==> Validating source_x86_64 files with sha256sums...
+    svrngs-1.13.2-linux-x86_64.tar.gz ... Passed
+    svrngs-1.13.2-linux-x86_64.tar.gz.sig ... Passed
+    give-1.13.2-linux-x86_64.tar.gz ... Passed
+    give-1.13.2-linux-x86_64.tar.gz.sig ... Passed
+==> Verifying source file signatures with gpg...
+    svrngs-1.13.2-linux-x86_64.tar.gz ... Passed
+    give-1.13.2-linux-x86_64.tar.gz ... Passed
+

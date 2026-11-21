@@ -12,7 +12,7 @@
 # the svrngs release that carries it.
 pkgbase=svrngs-bin
 pkgname=(svrngs-bin svrngs-give-bin)
-pkgver=1.13.1
+pkgver=1.13.2
 pkgrel=1
 pkgdesc="Keep what your group shares on your own computers"
 arch=('x86_64' 'aarch64')
@@ -37,14 +37,14 @@ sha256sums=('156550c74ba7b2f43db0ffc4774f02919a9cd5583de4f83982dda870cbfe742c'
             '167affad6218b4d1cf3aa15c3c9a427f474e0e71795a6f8d8ecc3f6e7e98c603')
 # Each tarball's sum is its line in the release's SHA256SUMS; each .sig's is
 # the sum of that asset as the release serves it, so none is SKIP.
-sha256sums_x86_64=('36607bc8bccb6c8300fdf867d7e5b47b4fba86b1f9fdfb7e46290a7fb5e5647e'
-                   'a8f7121df8dc35fe725478ee2b1bd75e4da2f8e6b46dd5108a940092e125c88a'
-                   '82c5c0d397bf9a42b6018d8a5b07c1df01cd08248a6236f0f8c105504e5df572'
-                   '42b0e4b834d2cc46eed5be87c6d978427fc914c3d8c70bfc80feda11e9bb9f59')
-sha256sums_aarch64=('003286006550b4ead3c07ae3eaa8611940d67d14703ca6765320ea4c11f1fb2e'
-                    '45ca394f17961d943aba7c99b252a5e421e64eed3c65a241ffa3d35f364eaa0d'
-                    'cc6d5ae7c5205e0c4e7c59dbfa9775b4dfee94744c84070980fe4bd47391b259'
-                    'dcc2f8a2304c7ca0b82a93bbe94269bb84191b952be466a682bf2056f4f4cf08')
+sha256sums_x86_64=('f14e550bc81e0ba8379eb2807cf968d58d6e6128b9593190194cf61c4052481d'
+                   '887c21d08868180d3f2403aa29752829cfbbc0d8fa1882f41dfeb5d51d43547c'
+                   'f969cf863dd8ed873468fb311de2d32298cd988709d072e19188fb41ad0af22d'
+                   '98e41e260286ad516d07757761db43455b11aee6fef007e6998d77572f45443d')
+sha256sums_aarch64=('a1b8551627ab5f7ab385cab50066f9d62fb38167ede00c3d9f2de0f98426bfd4'
+                    '3c31c3352c8edf9eddbf986ac36ebb18e72b51c5004460a42ade5c23faf53c0d'
+                    'b79d3841e6913d352ee78f0c11f3fed89b48aaacac3c2a75691b5c1c2241603e'
+                    'fb26959ada4d424e1dd9d88a12c9604e864908b21411139feed9e12fbe922726')
 
 package_svrngs-bin() {
   provides=('svrngs')

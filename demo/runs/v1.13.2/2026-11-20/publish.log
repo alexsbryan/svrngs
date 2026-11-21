@@ -1,0 +1,57 @@
+building web for wasm32-unknown-unknown (release)…
+macOS: using /opt/homebrew/opt/llvm/bin/clang for the wasm C sources (Apple clang cannot target wasm32)
+   Compiling svrngs-core v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-core)
+   Compiling svrngs-web v0.1.0 (/Users/alexsbryan/dev/svrngs-v1.13.2/web)
+    Finished `release` profile [optimized] target(s) in 14.08s
+wasm-opt: -Oz applied
+
+built: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site  (version c2e267153f70)
+  size: 4.7M wasm
+  scripts/deploy-page.sh publishes it where a group's link opens it
+  Serve it with gzip/brotli on (the wasm compresses well) and, if the
+  host allows, the headers index.html's meta tags ask for — a CDN gives
+  both; nothing here depends on them.
+build-release: darwin-aarch64 (aarch64-apple-darwin) by cargo build…
+   Compiling svrngs-core v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-core)
+   Compiling svrngs-node v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-node)
+   Compiling svrngs-runtime v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-runtime)
+   Compiling svrngs v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 52.78s
+build-release: darwin-x86_64 (x86_64-apple-darwin) by cargo build…
+   Compiling svrngs-core v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-core)
+   Compiling svrngs-node v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-node)
+   Compiling svrngs-runtime v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-runtime)
+   Compiling svrngs v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 52.58s
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+   Compiling svrngs-core v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-core)
+   Compiling svrngs-node v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-node)
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+   Compiling svrngs-runtime v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-runtime)
+   Compiling svrngs v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 55.43s
+build-release: linux-aarch64 (aarch64-unknown-linux-musl) by cargo zigbuild…
+   Compiling svrngs-core v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-core)
+   Compiling svrngs-node v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-node)
+warning: dropping unsupported crate type `cdylib` for target `aarch64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+   Compiling svrngs-runtime v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs-runtime)
+   Compiling svrngs v1.13.2 (/Users/alexsbryan/dev/svrngs-v1.13.2/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 01s
+
+built: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site/get
+02d0b26987ccef909947b9d929904a8f07049915d8f374ef37c50c01e74661a5  svrngs-darwin-aarch64.tar.gz
+d50075a80c774672fde1a3dccda8880836290781ecc7452b86944feca3937c91  svrngs-darwin-x86_64.tar.gz
+a1b8551627ab5f7ab385cab50066f9d62fb38167ede00c3d9f2de0f98426bfd4  svrngs-linux-aarch64.tar.gz
+f14e550bc81e0ba8379eb2807cf968d58d6e6128b9593190194cf61c4052481d  svrngs-linux-x86_64.tar.gz
+bd9f40708f76a17811e7a83b2ab95f63d93c77970c428b84ca38b53505a8c060  give-darwin-aarch64.tar.gz
+8bc342b4e5905c40d738bfae0daed37096ba479b980d0212765b37db6ffe63fc  give-darwin-x86_64.tar.gz
+b79d3841e6913d352ee78f0c11f3fed89b48aaacac3c2a75691b5c1c2241603e  give-linux-aarch64.tar.gz
+f969cf863dd8ed873468fb311de2d32298cd988709d072e19188fb41ad0af22d  give-linux-x86_64.tar.gz
+deploy-page: 9be0fcc7 built, not deployed; the operator signs it, then:
+  scripts/sign-release.sh v1.13.2 9be0fcc774cb66c4b1df89da3785db14fd0552d3 /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site
+  scripts/deploy-page.sh --site /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site
+/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.eyiigoGxvn/site
