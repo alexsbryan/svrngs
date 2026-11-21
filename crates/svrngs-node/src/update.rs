@@ -373,41 +373,30 @@ fn wanted(sums: &str, tarball: &str) -> Result<String, UpdateError> {
 /// with the one HTTP client, from [`crate::http`].
 #[expect(clippy::disallowed_methods, reason = "dial: the update page")]
 pub async fn fetch(url: &str, max: usize) -> Result<Vec<u8>, UpdateError> {
-    let client = crate::http::client().map_err(|e| {
-        tracing::debug!(target: "update", error = %e, "update: no HTTP client can be made");
-        UpdateError::CouldNotJudge(format!("this computer cannot ask the page: {e}"))
-    })?;
-    let answer = client
-        .get(url)
-        .timeout(Duration::from_secs(30))
-        .send()
-        .await
-        .map_err(|e| {
-            tracing::debug!(target: "update", url, error = %e, "update: the page did not answer");
-            UpdateError::CouldNotJudge(format!("cannot reach the page svrngs came from: {e}"))
-        })?;
+    // Each way the file is not read: traced with the page's address, and said.
+    let unread = |why: String| {
+        tracing::debug!(target: "update", url, why, "update: the page’s file was not read");
+        UpdateError::CouldNotJudge(why)
+    };
+    let client = crate::http::client();
+    let client = client.map_err(|e| unread(format!("this computer cannot ask the page: {e}")))?;
+    let asked = client.get(url).timeout(Duration::from_secs(30)).send();
+    let answer = asked.await;
+    let answer =
+        answer.map_err(|e| unread(format!("cannot reach the page svrngs came from: {e}")))?;
     if answer.status() == reqwest13::StatusCode::NOT_FOUND {
         tracing::debug!(target: "update", url, "update: the page has no such file");
         return Err(UpdateError::Missing);
     }
     if !answer.status().is_success() {
-        tracing::debug!(target: "update", url, status = %answer.status(), "update: the page answered with no file");
-        return Err(UpdateError::CouldNotJudge(format!(
-            "the page answered {}",
-            answer.status()
-        )));
+        return Err(unread(format!("the page answered {}", answer.status())));
     }
-    let bytes = answer.bytes().await.map_err(|e| {
-        tracing::debug!(target: "update", url, error = %e, "update: the page’s answer stopped before it ended");
-        UpdateError::CouldNotJudge(format!(
-            "the page’s answer stopped before it ended: {e}"
-        ))
-    })?;
+    let bytes = answer.bytes().await;
+    let bytes =
+        bytes.map_err(|e| unread(format!("the page’s answer stopped before it ended: {e}")))?;
     if bytes.len() > max {
-        tracing::debug!(target: "update", url, len = bytes.len(), max, "update: refused — the page’s answer is larger than this update reads");
-        return Err(UpdateError::CouldNotJudge(format!(
-            "the page’s answer is larger than {max} bytes"
-        )));
+        let why = format!("the page’s answer is larger than {max} bytes");
+        return Err(unread(why));
     }
     tracing::debug!(target: "update", url, len = bytes.len(), "update: the page’s file read");
     Ok(bytes.to_vec())

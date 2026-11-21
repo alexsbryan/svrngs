@@ -12,10 +12,9 @@ fn main() {
     let here = Path::new(env!("CARGO_MANIFEST_DIR"));
     let listed = std::fs::read_to_string(here.join("src/shelf.txt")).expect("shelf.txt is read");
     println!("cargo::rerun-if-changed=src/shelf.txt");
-    let file = |at: &Path, f: &str| {
-        println!("cargo::rerun-if-changed={}", at.join(f).display());
-        format!("({f:?}, include_str!({:?}))", at.join(f))
-    };
+    // A file include_str! reads rustc watches itself, so this script reruns
+    // only when the list changes.
+    let file = |at: &Path, f: &str| format!("({f:?}, include_str!({:?}))", at.join(f));
     let look = file(&here.join("src/home"), "look.css");
     let mut shelf = String::from("&[");
     let lines = listed
