@@ -22,25 +22,7 @@ key signs only when the person who releases svrngs types its passphrase
 
 ## V1.13.1, 20 November 2026
 
-V1.13.1 fixes three things a phone test of V1.13.0 found.
-
-**A phone back on your WiFi goes direct again.** When a phone left your
-home WiFi mid-film it carried on through the relay, as it should, but it
-stayed there after it came back. Now it goes straight to your computer
-again once it's back on the WiFi you turned direct connections on for.
-
-**Seeking a film through the relay takes seconds.** A phone seeking far
-into a film through the relay used to wait for everything it had already
-asked for to arrive first, which could take a minute. Now it waits a few
-seconds.
-
-**A shared folder at rest stays at rest.** A folder you share kept
-svrngs busy checking it even when nothing in it changed. Now svrngs
-looks again only when something in it changes.
-
-## V1.13.0, 20 November 2026
-
-V1.13.0 keeps each lend to exactly what you chose on its port, moves your
+V1.13.1 keeps each lend to exactly what you chose on its port, moves your
 computers to svrngs's own relay, and lets a phone at home skip it.
 
 **A lend reaches only what you chose.** A lend is kept to what answered
@@ -56,9 +38,9 @@ closed when something you didn't choose is there. On a Linux computer that
 keeps each program in a cgroup of its own, as systemd does, a socket that
 the program makes under your account to answer one of your friends, as
 rootless Podman does for each flow to a container's UDP port, is carried
-as the program's. When the program listens anew, after
-it starts again, or something else listens on the port, the lend closes,
-and its line on your home page says what answers there now.
+as the program's. When the program listens anew, after it starts again, or
+something else listens on the port, the lend closes, and its line on your
+home page says what answers there now.
 **Keep sharing it** keeps the same link for the same groups, kept to
 exactly what that line showed. Where svrngs can't read the program there,
 the line says so instead, *"svrngs couldn’t read what answers on its
@@ -68,13 +50,12 @@ to keep sharing it with that. The Omarchy bar plugin from svrngs-fam 0.5.0
 keeps sharing by what svrngs read for it, so a change since is refused.
 
 **After you update, choose what each lend shares.** A lend made before
-V1.13.0 is closed until you do. Its line on your home page says: *"shelf
+V1.13.1 is closed until you do. Its line on your home page says: *"shelf
 is closed until you choose what it shares. svrngs checks what answers on
 its port before each connection, and before and after each batch of
 datagrams, and closes it when something you didn’t choose is there."*, then
-what answers
-now. Press **Keep sharing it**, or run `svrngs approve shelf`. Your
-friends' links stay the same.
+what answers now. Press **Keep sharing it**, or run `svrngs approve shelf`.
+Your friends' links stay the same.
 
 **Your groups meet at svrngs's relay.** When two computers can't reach
 each other directly, or a phone opens something you lend, the bytes now
@@ -99,13 +80,15 @@ connections on** lets a phone on the same WiFi as this computer get what
 you lend straight from it, faster, with no relay between. It's for that
 WiFi alone: svrngs knows it by its router, so another network that hands
 out the same addresses isn't it. If the phone loses the WiFi mid-film, the
-film carries on through the relay. Direct connections stay off until you
+film carries on through the relay, and goes straight to your computer again
+once the phone is back on that WiFi. Direct connections stay off until you
 turn them on.
 
 **Each computer has its share of the relay.** svrngs's relay is for
 connecting, not for carrying films: it passes each computer about
 1 Mbit/s, after a burst of 8 MiB. That's plenty for apps, pages and
-messages. When a lender's share is used up, a phone asking for something
+messages. A phone seeking far into a film through the relay waits only a
+few seconds. When a lender's share is used up, a phone asking for something
 large of theirs, like a film, gets *"Sam’s computer has used its share of
 the public way for now. Play it at full speed on the same Wi-Fi as Sam’s
 computer, or in the svrngs app, soon."* Small things still pass. The
@@ -113,6 +96,10 @@ lender's home page says *"This computer's share of the public way was used
 up on <day>; large things you lend wait until it connects afresh."*
 Nothing over a direct connection or a group's own relay is held back.
 `svrngs relay --open` holds each computer to the same share.
+
+**A shared folder at rest stays at rest.** A folder you share kept
+svrngs busy checking it even when nothing in it changed. Now svrngs
+looks again only when something in it changes.
 
 **`svrngs link --origin` works while svrngs runs.** Before, it refused,
 saying svrngs was already running. And `svrngs link` now says so when this
@@ -123,9 +110,9 @@ Groups and the record work as in V1.12.2. Press **Update and restart** on
 your home page, or run `svrngs update` and then `svrngs restart`. Your
 phone's page updates itself.
 
-V1.13.0 is the build at `group.svrnme.sh`, from the commit tagged
-`v1.13.0`. Its publication and readback are recorded in
-`demo/runs/v1.13.0/2026-11-20/README.md`.
+V1.13.1 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.13.1`. Its publication and readback are recorded in
+`demo/runs/v1.13.1/2026-11-20/README.md`.
 
 ## V1.12.2, 19 November 2026
 

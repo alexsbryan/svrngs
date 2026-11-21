@@ -19,7 +19,7 @@ else. Its queue is svrn-docs `rings/current/EXTENSION_POINT.md` §10, in order.
 branch off main and ralph this Plan up"): the queue `ralph/next/relay-commons/`
 on `ralph/relay-commons`. It is the six units of svrn-docs
 `rings/current/RELAY_COMMONS.md`, after a survey, with a final audit. The box
-is the operator's (§3, 2026-11-18); the switch is in the code from V1.13.0,
+is the operator's (§3, 2026-11-18); the switch is in the code from V1.13.1,
 and its release is theirs (§2).
 
 **Current authority replacement**: Eudoxia owns authority, and every group is
@@ -159,7 +159,7 @@ v1ui queue made the home page and the phone's page what V1 shows (landed,
 
 That is V1, released 16 October 2026 (`RELEASES.md`; the page published at
 `de8923f7`, commit `5bc0db8e`), and it meets its groups at n0's relays and
-lookup, as `cli::SHIPPED` named until V1.13.0. V1.1, released 17 October 2026, is the
+lookup, as `cli::SHIPPED` named until V1.13.1. V1.1, released 17 October 2026, is the
 page and downloads published at `a555a225`: V1 with the north-star audit's
 fixes, the loopback patch, the trust floor and pinned carried code, and none
 of House rules, which waits for its run and this queue's closing audit.
@@ -512,7 +512,7 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: `SHIPPED` is
-svrngs's relay from V1.13.0 (§2; DESIGN §7), with #134 and #135
+svrngs's relay from V1.13.1 (§2; DESIGN §7), with #134 and #135
 (`ralph/REVIEW_FINDINGS.md`) landed before it by n0-emergency.
 The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 §12.1).
@@ -546,7 +546,7 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | a size cap on Give's own lines, `apps/give/` beside the repository's and the core's: lean_check counts no `apps/` and the queue reported it each row (PLAN §1, give-app-runtime to give-page-host) | Give has landed, so the trigger has come; the cap is the operator's to set (`demo/runs/give/2026-10-26-release/NEEDS_HUMAN.md`) |
 | Give's people runs, `demo/give.md`: a Factorio world kept through a move and a takeover against the bars the operator chose, and a newcomer's fluency counted, once with Podman installed and once without. Never-ran (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`, "Go with those") | the operator names who and plays them |
 | the two-home game sessions of `demo/factorio.md` and `demo/minecraft.md`: each game 30 minutes between two homes, once on a direct path and once with the relay forced, desyncs, drops and the game's ping counted per path. Never-ran: no bars are set, and the one rehearsal (`demo/runs/factorio/2026-10-26-rehearsal.json`) ran both computers on one host, so neither path | the operator sets the bars and plays them (2026-10-26: "we can do the two-home session another time"), or a group playing through a lent port reports a desync or a drop |
-| the switch's release: V1.13.0, the build meeting its groups at svrngs's relay with n0's behind it (`cli::SHIPPED`, flipped in the code; relay-park, §3, 2026-10-13, and RELAY_COMMONS's units before it, landed), published by `scripts/deploy-page.sh`, which refuses while `relay.svrnme.sh` does not answer (DESIGN §7) | the operator releases it (`ralph/next/relay-commons/STATE.md`, HUMAN-switch) |
+| the switch's release: V1.13.1, the build meeting its groups at svrngs's relay with n0's behind it (`cli::SHIPPED`, flipped in the code; relay-park, §3, 2026-10-13, and RELAY_COMMONS's units before it, landed), published by `scripts/deploy-page.sh`, which refuses while `relay.svrnme.sh` does not answer (DESIGN §7) | the operator releases it (`ralph/next/relay-commons/STATE.md`, HUMAN-switch) |
 | "we run your relay": svrngs runs a relay for a group, at a markup, by `deploy-relay.sh` and a monthly payment, with no product code (svrn-docs `rings/current/RELAY_COMMONS.md`, "Waiting for its trigger") | groups asking, counted by the form |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (DESIGN §3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (DESIGN §3, "The room", call 2) | a group with no computer in the room asks, counted |
@@ -1487,7 +1487,7 @@ opened, and found a relay for the group alone playing a phone nothing
 homes, a phone's lend through a relay for its group alone, the phone's
 typed name and publishing that build, the last two the operator's. Its
 computers and phones met their groups at n0's relays, the build's chosen
-default, until the operator's switch to `relay.svrnme.sh` in V1.13.0, after
+default, until the operator's switch to `relay.svrnme.sh` in V1.13.1, after
 V1 (§2; §3, 2026-10-13 and 2026-10-15).
 
 | Unit | What lands | Bar, watched failing first |
