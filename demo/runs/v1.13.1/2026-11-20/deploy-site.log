@@ -1,0 +1,68 @@
+deploy-page: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.O3Dew8eYFv/site, its sums signed by the release key, to svrngs-page (svrnmesh)
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+
+  Directory       /private/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.O3Dew8eYFv/site
+
+Searching for existing projects…
+
+✓ Linked          svrnmesh/svrngs-page
+
+Retrieving project…
+> Downloading a fresh `VERCEL_OIDC_TOKEN` for svrnmesh/svrngs-page
+Downloading
+
+✓ Created         .env.local file and added it to .gitignore
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+Deploying svrngs-page
+Uploading [--------------------] (0.0B/80.9MB)
+Uploading [=====---------------] (20.2MB/80.9MB)
+Uploading [==========----------] (40.5MB/80.9MB)
+Uploading [===============-----] (60.7MB/80.9MB)
+Uploading [====================] (80.9MB/80.9MB)
+  Inspect         https://vercel.com/svrnmesh/svrngs-page/Aho4r2ex5Lz9NQvph6wZtNEmpKk9
+  Production      https://svrngs-page-ij10cp9nv-svrnmesh.vercel.app
+Building…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+Previous build caches not available.
+Downloading 92 deployment files...
+[2K[1A[2K[G  Production      https://svrngs-page-ij10cp9nv-svrnmesh.vercel.app
+Completing…
+▲ Aliased         https://group.svrnme.sh
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_Aho4r2ex5Lz9NQvph6wZtNEmpKk9",
+    "url": "https://svrngs-page-ij10cp9nv-svrnmesh.vercel.app",
+    "inspectorUrl": "https://vercel.com/svrnmesh/svrngs-page/Aho4r2ex5Lz9NQvph6wZtNEmpKk9",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_Aho4r2ex5Lz9NQvph6wZtNEmpKk9"
+  },
+  "message": "Deployment svrngs-page-ij10cp9nv-svrnmesh.vercel.app ready.",
+  "next": [
+    {
+      "command": "vercel curl https://svrngs-page-ij10cp9nv-svrnmesh.vercel.app",
+      "when": "Verify deployment, including when Deployment Protection is enabled"
+    },
+    {
+      "command": "vercel inspect svrngs-page-ij10cp9nv-svrnmesh.vercel.app --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.O3Dew8eYFv/site",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.O3Dew8eYFv/site",
+      "when": "Promote to production"
+    }
+  ]
+}
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│                     Update available! v59.10.0 ≫ v66.6.0                     │
+│   Changelog: https://github.com/vercel/vercel/releases/tag/vercel%4066.6.0   │
+│                   Run `npm i -g vercel@latest` to update.                    │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
