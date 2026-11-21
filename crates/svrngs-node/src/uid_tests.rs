@@ -671,7 +671,10 @@ fn a_connected_socket_names_a_flow_only_as_this_account_s_in_its_own_cgroup() {
         v6only: false,
     };
     let v2 = "0::/user.slice/user-1000.slice/session-2.scope\n";
-    let flow = binding::Took::Flow([at("127.0.0.1:40000")].into());
+    let flow = binding::Took::Flow {
+        named: [at("127.0.0.1:40000")].into(),
+        new: [at("127.0.0.1:40000")].into(),
+    };
     let socket = |id, peer| binding::Socket {
         id,
         cgroup: Some(4),

@@ -275,8 +275,8 @@ pub(crate) async fn udp_port(
         binding::Peer::Unread | binding::Peer::Unconnected => None,
     };
     let peers = now.map(|sockets| sockets.iter().filter_map(to).collect());
-    let named = of.0.flows(of.1, peers).await;
-    read.map(|(now, _)| (now, Took::Flow(named)))
+    let (named, new) = of.0.flows(of.1, peers).await;
+    read.map(|(now, _)| (now, Took::Flow { named, new }))
 }
 
 /// A TCP connection to this computer's `at`, unchecked: the product's

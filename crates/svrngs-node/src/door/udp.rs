@@ -49,6 +49,13 @@ pub(crate) const HEAD: usize = 10;
 /// How long a flow with no packet either way stays open: a program that
 /// sends nothing for a minute has gone, or will open its flow again.
 pub(crate) const IDLE: Duration = Duration::from_secs(60);
+/// How long after a flow opens its server may still be making its socket for
+/// it, bound and not yet connected (`Took::Flow`'s `new`): some 6 times the
+/// longest gap between rootless Podman's pasta binding a flow's socket and
+/// connecting it, 156 ms in a release run on the Fedora box (2026-11-20).
+/// Past it, a socket connected to nothing in the approved cgroup is
+/// another's, as the approved program made again is.
+pub(crate) const AWAITED: Duration = Duration::from_secs(1);
 /// How long a packet's fragments wait for the rest: past it, one was lost.
 pub(crate) const WHOLE_WITHIN: Duration = Duration::from_secs(2);
 /// How often each side looks for what is past its time.
@@ -198,9 +205,12 @@ async fn carrying(lent: Lending<'_>, raw: Option<Raw>, mut send: SendStream) {
         };
         if ask {
             let opened = opened(&lent, flow).await;
-            let refused = opened.as_ref().err().map(|w| format!("{flow} {w}\n"));
-            let _ = send.write_all(refused.unwrap_or_default().as_bytes()).await;
-            flows.insert(flow, opened.map_err(|_| now()));
+            let said = match &opened {
+                Err(why) | Ok((_, Some(why))) => format!("{flow} {why}\n"),
+                Ok((_, None)) => String::new(),
+            };
+            let _ = send.write_all(said.as_bytes()).await;
+            flows.insert(flow, opened.map(|(packets, _)| packets).map_err(|_| now()));
         }
         if let Some(Ok(packets)) = flows.get(&flow) {
             let _ = packets.try_send(packet);
@@ -215,9 +225,10 @@ pub(super) type Lending<'a> = (&'a Door, &'a str, &'a Lend, NonZeroU16, &'a Conn
 
 /// A flow's first packet, let in by [`admitted`] and its port checked
 /// ([`Flow`]): a socket on 127.0.0.1:0 connected to the lent port alone, in
-/// a task of its own, checked before and after each packet it sends; or
-/// why not, in a person's words.
-async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, String> {
+/// a task of its own, checked before and after each packet it sends, and
+/// why what answers can't be judged yet where it can't; or why not, in a
+/// person's words.
+async fn opened(lent: &Lending<'_>, flow: u32) -> Result<(Opening, Option<String>), String> {
     let (door, actor, lend, port, conn) = *lent;
     let held = admitted(lent, &format!("udp: flow {flow}")).await?;
     let live = live(door, lend)?;
@@ -232,14 +243,25 @@ async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, 
     let socket = Flow::open(socket.map_err(unreached)?, to).await;
     let socket = socket.map_err(unreached)?;
     let judged = (door.folders.host.transport.as_ref(), &*door.data_dir, &live);
-    let checked = socket.check(judged).await;
-    checked.map_err(|unsent| said(door, lend, unsent))?;
+    // What answers can't be judged now, as while a server makes another
+    // flow's socket: the flow opens all the same, carrying nothing until a
+    // check judges it ([`stays`]), so its next packet isn't refused for a
+    // minute, and its friend is told why once.
+    let unjudged = match socket.check(judged).await {
+        Err(unsent) if stays(unsent) => Some(said(door, lend, unsent)),
+        checked => checked
+            .map(|()| None)
+            .map_err(|unsent| said(door, lend, unsent))?,
+    };
     tracing::debug!(target: "door", actor, lend = %lend.name, flow, port, counted = held.is_some(), "udp: a flow opened, its socket connected to the lent port");
     let (packets, sent) = mpsc::channel(256);
     let lent = (door.clone(), live);
     tokio::spawn(flowing(lent, socket, (conn.clone(), flow), sent, held));
-    Ok(packets)
+    Ok((packets, unjudged))
 }
+
+/// What a flow is sent its packets by.
+type Opening = mpsc::Sender<Vec<u8>>;
 
 /// One use of a raw lend, `what` in the traces, let in by the dialer's
 /// standing in a group the lend is lent to *now* and the lend's limit,

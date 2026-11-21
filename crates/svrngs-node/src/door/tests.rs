@@ -1419,7 +1419,7 @@ async fn a_server_s_socket_for_a_closed_flow_is_carried_until_it_closes() {
     assert_eq!(listed().await, Ok(()), "its socket gone");
     assert_eq!(
         using.flows(&shelf.name, None).await,
-        Open::new(),
+        (Open::new(), Open::new()),
         "no longer named"
     );
     pasta(Some(from));
@@ -1522,6 +1522,77 @@ async fn a_flow_checked_while_another_s_socket_is_made_keeps_its_socket() {
         "another cgroup"
     );
     assert!(held(), "held in its file");
+}
+
+/// **The approved program made again in its cgroup is another's beside no
+/// flow awaiting its server's socket** (eudoxia `Took::Flow`'s `new`,
+/// [`super::udp::AWAITED`]): a socket connected to nothing in the approved
+/// cgroup beside a flow opened within `AWAITED` is unjudged, perhaps pasta's
+/// for it; past `AWAITED`, and with no flow open, it is the program made
+/// again, another's, and the lend is held in its file; two beside one new
+/// flow, another's. Planted, watched failing: every flow named taken as new
+/// (the program made again beside an old flow unjudged, never held).
+#[tokio::test]
+async fn the_program_made_again_in_its_cgroup_is_another_s_beside_no_new_flow() {
+    let service = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let at = service.local_addr().unwrap();
+    let wire = crate::node::Wire::default();
+    let key = crate::iroh::SecretKey::from_bytes(&[11; 32]).public();
+    let net = wire.net(key);
+    let mut shelf = Lend::carried("game", "house").unwrap();
+    shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(at.port()).unwrap());
+    shelf.terms.approved = binding::approve(&alone(1), None).ok();
+    let dir = tempfile::tempdir().unwrap();
+    crate::lend::declare(dir.path(), &shelf, None).unwrap();
+    let held = || {
+        let kept = crate::lend::read(dir.path(), &shelf.name).unwrap().unwrap();
+        kept.terms.approved.unwrap().held
+    };
+    let (using, judged) = (
+        Using::spawn(),
+        (&net as &dyn crate::iroh::Net, dir.path(), &shelf),
+    );
+    // The approved socket, where `kept`, and each of `again` connected to
+    // nothing in the approved cgroup.
+    let reads = |kept: bool, again: &[u64]| {
+        let mut read = alone(1);
+        read.sockets.retain(|_| kept);
+        for &id in again {
+            let socket = binding::Socket {
+                peer: binding::Peer::Unconnected,
+                ..alone(id).sockets[0].clone()
+            };
+            read.sockets.push(socket);
+        }
+        wire.reads(key, at.port(), Ok((read, binding::Took::Datagram)));
+    };
+    let listed = || async {
+        let read = bound::udp_port(judged.0, at.port(), (&using, &shelf.name)).await;
+        bound::decided(dir.path(), &shelf, read)
+    };
+    reads(true, &[]);
+    tokio::time::pause();
+    let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let flow = bound::Flow::open(socket, (at, &using, &shelf.name))
+        .await
+        .unwrap();
+    reads(true, &[2]);
+    let unjudged = Err(bound::Unsent::Held(Hold::Unjudged));
+    assert_eq!(listed().await, unjudged, "beside a new flow");
+    assert!(!held(), "nothing held in its file");
+    tokio::time::advance(super::udp::AWAITED * 2).await;
+    reads(false, &[2]);
+    let another = Err(bound::Unsent::Held(Hold::Another));
+    assert_eq!(listed().await, another, "made again, beside an old flow");
+    assert!(held(), "held in its file");
+    drop(flow);
+    assert_eq!(listed().await, another, "made again, no flow open");
+    let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let _new = bound::Flow::open(socket, (at, &using, &shelf.name))
+        .await
+        .unwrap();
+    reads(true, &[2, 3]);
+    assert_eq!(listed().await, another, "two beside one new flow");
 }
 
 /// **A UDP share's answers are carried back only through its check**

@@ -286,7 +286,16 @@ so a socket a server makes on the port for one of them, connected to that
 flow's socket alone, is admitted where it was made in an approved cgroup,
 as rootless Podman's pasta makes one for each flow. A flow that closed is
 still named while a read of the port finds a socket connected to it, as
-pasta's outlives the flow, and no longer once none is. Linux's reader gives a
+pasta's outlives the flow, and no longer once none is. A socket read as
+connected to nothing in an approved cgroup, as pasta's is between its bind
+and its connect, makes a flow's check unjudged while a flow opened within
+a second (`udp::AWAITED`) still awaits its server's socket, one such socket
+for each such flow: that batch, or that answer, is carried nowhere, and the
+flow stays open with its socket, so a game sees the same friend, and
+nothing is held in the lend's file. Past those, and beside no new flow, it
+is another's, as the approved program made again in its cgroup is. A flow
+whose opening check is unjudged opens all the same, carrying nothing until
+a check judges it, its friend told why once. Linux's reader gives a
 socket's peer, what it is connected to or that it is connected to
 nothing, only where it is this account's and svrngs runs in a cgroup v2 of
 its own, not the root one (uid.rs `peer`), the same reading the TCP cgroup

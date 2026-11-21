@@ -12,8 +12,8 @@ description = "A group's record: signed acts, admission into one total order, me
 base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 blake3 = { workspace = true }
 ed25519-dalek = { workspace = true }
-eudoxia = { git = "https://github.com/alexsbryan/eudoxia", rev = "f6b106d40bab3a4d83b4aa6274632f768ca2bd2f", default-features = false }
-eudoxia-community = { git = "https://github.com/alexsbryan/eudoxia", rev = "f6b106d40bab3a4d83b4aa6274632f768ca2bd2f" }
+eudoxia = { git = "https://github.com/alexsbryan/eudoxia", rev = "a0d3b0e5049f2dd84bdd7322d63518264704447d", default-features = false }
+eudoxia-community = { git = "https://github.com/alexsbryan/eudoxia", rev = "a0d3b0e5049f2dd84bdd7322d63518264704447d" }
 hex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

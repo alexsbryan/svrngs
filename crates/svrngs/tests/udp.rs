@@ -462,3 +462,88 @@ async fn a_flow_open_on_a_share_that_is_held_stops() {
         reached.len()
     );
 }
+
+/// A Python program on Sam's computer, as its first argument says: `echo`,
+/// answering each packet with itself on 127.0.0.1, with `SO_REUSEPORT` so
+/// another socket may bind its address beside it, and printing its port;
+/// `orphan`, binding the port its second argument names beside it, sending
+/// once, so it is that socket's last user, then leaving it to a child that
+/// sends nothing and printing the child's pid as it exits. A Mac then reads
+/// that socket's last user as gone, and can't judge it.
+#[cfg(target_os = "macos")]
+const BESIDE: &str = r#"
+import os, socket, sys, time
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+s.bind(("127.0.0.1", int(sys.argv[2]) if sys.argv[1] == "orphan" else 0))
+if sys.argv[1] == "orphan":
+    s.sendto(b"x", ("127.0.0.1", 9))
+    child = os.fork()
+    if child == 0:
+        time.sleep(60)
+        os._exit(0)
+    print(child, flush=True)
+    os._exit(0)
+print(s.getsockname()[1], flush=True)
+while True:
+    data, at = s.recvfrom(65535)
+    s.sendto(data, at)
+"#;
+
+/// [`BESIDE`] run as `how` beside `port`, and the line it printed.
+#[cfg(target_os = "macos")]
+fn beside(how: &str, port: u16) -> (std::process::Child, u32) {
+    use std::io::BufRead as _;
+    let mut python = std::process::Command::new("python3")
+        .args(["-c", BESIDE, how, &port.to_string()])
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .expect("python3 runs here");
+    let mut said = String::new();
+    let out = python.stdout.take().unwrap();
+    std::io::BufReader::new(out).read_line(&mut said).unwrap();
+    (python, said.trim().parse().expect("a number"))
+}
+
+/// **A flow opened while what answers on its port can't be judged opens,
+/// carries nothing then, and carries once it can** (door/udp.rs `opened`):
+/// on Sam's Mac a socket beside echo's on its port whose last user has
+/// exited can't be judged, as a socket a server is still making for another
+/// flow can't on Linux. Alex's program keeps sending: nothing comes back
+/// while that socket is there, Alex is told why once at most, and once it
+/// closes, echo's answers come back within seconds on the flow opened first.
+/// Planted, watched failing: an unjudged opening refused and remembered for
+/// a minute (no answer within the wait).
+#[cfg(target_os = "macos")]
+#[tokio::test(flavor = "multi_thread")]
+async fn a_flow_opened_while_its_port_is_unjudged_carries_once_it_is() {
+    let (sam, them) = house(&[(2, "Alex")]).await;
+    let (mut echo, port) = beside("echo", 0);
+    let echoes = share_udp(&sam, u16::try_from(port).unwrap(), &[]);
+    let (mut orphan, child) = beside("orphan", u16::try_from(port).unwrap());
+    orphan.wait().unwrap();
+    let (carried, at_echo) = open(&them[0], &sam, &echoes).await;
+    let (mut told, _echo) = carried.expect("Alex's computer opens Sam's echo");
+    let mut heard = keeps_sending(program().await, at_echo, b"echo");
+    tokio::time::sleep(Duration::from_millis(1500)).await;
+    assert!(
+        drained(&mut heard).is_empty(),
+        "nothing carried while it can't be judged"
+    );
+    let gone = std::process::Command::new("kill")
+        .args(["-9", &child.to_string()])
+        .status();
+    assert!(gone.unwrap().success(), "the orphan's child stops");
+    let mut answered = false;
+    for _ in 0..50 {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        if drained(&mut heard).iter().any(|p| p == b"echo") {
+            answered = true;
+            break;
+        }
+    }
+    let _ = (echo.kill(), echo.wait());
+    let lines = std::iter::from_fn(|| told.try_recv().ok()).count();
+    assert!(answered, "echo's answers come back once it can be judged");
+    assert!(lines <= 1, "told why {lines} times");
+}

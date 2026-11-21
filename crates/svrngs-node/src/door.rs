@@ -488,8 +488,9 @@ enum Use {
     /// A flow's own socket, by its address, opened on a UDP lend, or closed.
     Flow(LendName, std::net::SocketAddr, bool),
     /// The flows a check of a lend names, with the peers of the sockets its
-    /// read found connected, where it read them.
-    Flows(LendName, Option<Open>, oneshot::Sender<Open>),
+    /// read found connected, where it read them: those named, and those
+    /// among them opened within [`udp::AWAITED`].
+    Flows(LendName, Option<Open>, oneshot::Sender<(Open, Open)>),
 }
 
 /// The flows on a lend a check names, each by its own socket's address.
@@ -510,7 +511,8 @@ impl Using {
         tokio::spawn(async move {
             let (mut counts, mut reads) = (Counts::default(), Reads::default());
             // Each lend's flows, open (true) or closed and still named.
-            let mut flows = BTreeMap::<LendName, BTreeMap<_, bool>>::new();
+            // Each lend's flows, open since when, or closed and still named.
+            let mut flows = BTreeMap::<LendName, BTreeMap<_, Option<Instant>>>::new();
             while let Some(u) = rx.recv().await {
                 let now = now();
                 match u {
@@ -538,7 +540,8 @@ impl Using {
                         let _ = answer.send(counts.people(&lend, now));
                     }
                     Use::Flow(lend, at, open) => {
-                        flows.entry(lend).or_default().insert(at, open);
+                        let since = open.then_some(now);
+                        flows.entry(lend).or_default().insert(at, since);
                     }
                     // A closed flow is named while a read finds a socket
                     // still connected to it, as a server's for it may outlive
@@ -550,9 +553,12 @@ impl Using {
                     Use::Flows(lend, peers, answer) => {
                         let named = flows.entry(lend).or_default();
                         named.retain(|at, open| {
-                            *open || peers.as_ref().is_none_or(|p| p.contains(at))
+                            open.is_some() || peers.as_ref().is_none_or(|p| p.contains(at))
                         });
-                        drop(answer.send(named.keys().copied().collect()))
+                        let fresh =
+                            |s: &Option<Instant>| s.is_some_and(|s| now - s <= udp::AWAITED);
+                        let new = named.iter().filter(|(_, s)| fresh(s)).map(|(at, _)| *at);
+                        drop(answer.send((named.keys().copied().collect(), new.collect())))
                     }
                 }
             }
@@ -593,9 +599,11 @@ impl Using {
 
     /// The flows a check of `lend` names now ([`Took::Flow`]): those open,
     /// and those closed that a socket among `peers`, read connected on its
-    /// port, is still connected to, the rest no longer named; none when the
-    /// count's task is gone, where a server's socket for one isn't admitted.
-    pub(crate) async fn flows(&self, lend: &LendName, peers: Option<Open>) -> Open {
+    /// port, is still connected to, the rest no longer named; and those open
+    /// within [`udp::AWAITED`], whose server may not have connected its
+    /// socket for them yet. None when the count's task is gone, where a
+    /// server's socket for one isn't admitted.
+    pub(crate) async fn flows(&self, lend: &LendName, peers: Option<Open>) -> (Open, Open) {
         let (answer, told) = oneshot::channel();
         let _ = self.0.send(Use::Flows(lend.clone(), peers, answer));
         told.await.unwrap_or_default()

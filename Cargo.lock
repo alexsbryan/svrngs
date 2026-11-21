@@ -1252,7 +1252,7 @@ dependencies = [
 [[package]]
 name = "eudoxia"
 version = "0.1.0"
-source = "git+https://github.com/alexsbryan/eudoxia?rev=f6b106d40bab3a4d83b4aa6274632f768ca2bd2f#f6b106d40bab3a4d83b4aa6274632f768ca2bd2f"
+source = "git+https://github.com/alexsbryan/eudoxia?rev=a0d3b0e5049f2dd84bdd7322d63518264704447d#a0d3b0e5049f2dd84bdd7322d63518264704447d"
 dependencies = [
  "ed25519-dalek 2.2.0",
  "serde",
@@ -1263,7 +1263,7 @@ dependencies = [
 [[package]]
 name = "eudoxia-community"
 version = "0.1.0"
-source = "git+https://github.com/alexsbryan/eudoxia?rev=f6b106d40bab3a4d83b4aa6274632f768ca2bd2f#f6b106d40bab3a4d83b4aa6274632f768ca2bd2f"
+source = "git+https://github.com/alexsbryan/eudoxia?rev=a0d3b0e5049f2dd84bdd7322d63518264704447d#a0d3b0e5049f2dd84bdd7322d63518264704447d"
 dependencies = [
  "eudoxia",
  "serde",
