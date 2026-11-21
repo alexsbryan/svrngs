@@ -29,7 +29,7 @@ import * as play from './play.js?v=__VERSION__';
 
 const NOTES = {
   opens: 'Each Stop holds from the app’s next request.',
-  play: 'Any program on this computer reaches these as you while Play is on.',
+  play: 'Programs running as you, in containers and sandboxes too, reach these while Play is on.',
 };
 
 /**

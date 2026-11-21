@@ -375,7 +375,9 @@ seconds, whatever their own computer does (`door::udp::serve`).
   a page's, so no `Origin` and no `Sec-Fetch-Site`, which a browser sends
   with every request here, by the record API's own decider (`api.rs`
   `page_of`; Node's `fetch` sends `Sec-Fetch-Mode` alone); and its socket
-  must be of the account svrngs runs as, read as an open's is (`uid.rs`).
+  must be of the account svrngs runs as, read as an open's is (`uid.rs`),
+  so a program of that account is let in even in a container or a sandbox
+  that can't read its files.
   A key it sends in a header a client sends one in, `Authorization`,
   `X-Api-Key`, `Api-Key` or `X-Goog-Api-Key` (`play.rs` `KEYS`, read from
   OpenAI's, Anthropic's, Azure OpenAI's and Google's clients), is never

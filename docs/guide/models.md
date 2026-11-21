@@ -67,7 +67,7 @@ A chat app, an editor's assistant such as opencode or aider, or a script on your
 2. In the program, set the OpenAI base URL to that address with `v1` on the end.
 3. If the program insists on an API key, type any text, such as `none`, never a real key. svrngs removes it unread before Sam's computer sees the request, in whichever header your program sends it: `Authorization`, `X-Api-Key`, `Api-Key` or `X-Goog-Api-Key`.
 
-While Play is on, any program you run on this computer can use Sam's model as you. A web page in your browser can't, and neither can a program another account on this computer runs. Your home page lists it under **What acts as you**, with its **Stop**.
+While Play is on, any program running as you on this computer can use Sam's model as you, including apps in containers or sandboxes that can't read your files. A web page in your browser can't, and neither can a program another account on this computer runs. Your home page lists it under **What acts as you**, with its **Stop**.
 
 In Python:
 
@@ -141,9 +141,9 @@ node apps/pantry/pantry.mjs list
 node apps/pantry/pantry.mjs serve
 ```
 
-It says *"Point your interface at http://127.0.0.1:8787/v1"* (your number may differ). Keep it running. It uses the same address next time, so your chat app keeps working after a restart. It listens only on your own computer.
+It says *"Point your interface at http://127.0.0.1:8787/v1"* (your number may differ), then which file holds its key. Keep it running. It uses the same address next time, so your chat app keeps working after a restart. It listens only on your own computer.
 
-**Point your chat app at it.** In any OpenAI-compatible app, set the base URL to that address. Any API key will do: the pantry adds your svrngs token itself. The app's model list then shows ids like `Ana/coder` and `Sam/voice`: the friend's name, a slash, and the model's own name (what llama-server's `--alias` sets). Picking `Ana/coder` sends your chat to Ana's computer.
+**Point your chat app at it.** In any OpenAI-compatible app, set the base URL to that address, and its API key to what that file, `pantry-token`, holds: the pantry's own key, which it asks for on every request and never sends to a friend. The app's model list then shows ids like `Ana/coder` and `Sam/voice`: the friend's name, a slash, and the model's own name (what llama-server's `--alias` sets). Picking `Ana/coder` sends your chat to Ana's computer.
 
 **Tools.** A friend's tool is any MCP server that speaks Streamable HTTP. On your home page, press **Play** beside it, as for a model, then paste its address with `/mcp` on the end into your app's MCP settings. Your app needs no key for it.
 

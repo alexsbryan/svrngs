@@ -27,8 +27,10 @@ key, and only ever updates svrngs forward.
 
 **Use a friend's model from your apps.** When a friend lends a model, or
 anything else you open at an address, press **Play** on it on your home
-page. Programs on this computer, such as opencode or an OpenAI library,
-can then use its address, `http://<name>.localhost:<port>/`, with no key.
+page. Any program running as you on this computer, such as opencode or an
+OpenAI library, can then use its address, `http://<name>.localhost:<port>/`,
+with no key, including apps in containers or sandboxes that can't read your
+files.
 If a program asks for one, type any text, never a real key: svrngs removes
 the `Authorization`, `X-Api-Key`, `Api-Key` and `X-Goog-Api-Key` headers,
 where programs send a key, before your friend's computer sees a request.
