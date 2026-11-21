@@ -1009,7 +1009,7 @@ fn read() -> binding::Read {
         holders: [(1, 1)].into(),
         at: std::net::Ipv4Addr::LOCALHOST.into(),
         dual: false,
-        peer: None,
+        peer: binding::Peer::Unread,
     };
     binding::Read {
         boot: None,

@@ -334,14 +334,18 @@ async fn flowing(
         tokio::select! {
             got = packets.recv() => {
                 let Some(packet) = got else { break };
-                if let Err(unsent) = socket.send(judged, packet, &mut packets).await {
-                    tracing::warn!(target: "door", flow, lend = %lend.name, ?unsent, "udp: a flow stopped — what is on the lent port isn't what its lender approved");
-                    break;
+                match socket.send(judged, packet, &mut packets).await {
+                    Err(unsent) if !stays(unsent) => {
+                        tracing::warn!(target: "door", flow, lend = %lend.name, ?unsent, "udp: a flow stopped — what is on the lent port isn't what its lender approved");
+                        break;
+                    }
+                    sent => tracing::debug!(target: "door", flow, ?sent, "udp: a batch sent, or none, what answers unjudged"),
                 }
             }
             got = socket.recv(judged) => match got {
                 Ok(answer) => carry(&conn, flow, &mut number, answer),
                 Err(Unsent::Away) => {}
+                Err(unsent) if stays(unsent) => {}
                 Err(held) => {
                     tracing::warn!(target: "door", flow, lend = %lend.name, ?held, "udp: an answer dropped and the flow stopped — what is on the lent port isn't what its lender approved");
                     break;
@@ -355,6 +359,16 @@ async fn flowing(
         last = now();
     }
     tracing::debug!(target: "door", flow, idle = past(last, IDLE, now()), counted = held.is_some(), "udp: a flow closed, idle past its expiry, its connection gone, or held");
+}
+
+/// Whether a flow whose check refused a batch, or an answer, `unsent`, stays
+/// open: where what answers can't be judged now, as while a server binds a
+/// socket for another flow and has yet to connect it, nothing of that batch
+/// is carried, either way, and the flow keeps its socket and its address,
+/// so a game sees the same friend, checking again on the next. Anything
+/// else ends it.
+pub(crate) fn stays(unsent: Unsent) -> bool {
+    unsent == Unsent::Held(crate::lend::Hold::Unjudged)
 }
 
 /// Why a member's computer could not open a raw lend.

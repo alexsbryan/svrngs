@@ -37,7 +37,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::net::{IpAddr, SocketAddr};
 
 use crate::lend::{Answer, Raw};
-use eudoxia_community::binding::{self, Process, Read, Took};
+use eudoxia_community::binding::{self, Peer, Process, Read, Took};
 
 /// A connection on this computer, by its two ends as one of its sockets
 /// sees them: its own address, and the address it is connected to.
@@ -277,19 +277,24 @@ fn cgroups_v2(cgroups: &str) -> bool {
     cgroups.lines().any(|l| l.starts_with("0::"))
 }
 
-/// The one address the socket `d` is connected to, as a check may take it
-/// to name a server's socket for one of svrngs's flows (`Socket::peer`): a
-/// UDP socket's, connected, of this account (`me`), where svrngs runs in a
-/// cgroup v2 of its own, not the root one (`/proc/self/cgroup` reading
-/// `cgroups`), so its cgroup names its program. Else none, so the socket is
-/// judged as one not connected.
+/// What the socket `d` is connected to, as a check may take it to name a
+/// server's socket for one of svrngs's flows (`Socket::peer`), read for a
+/// UDP socket of this account (`me`) where svrngs runs in a cgroup v2 of its
+/// own, not the root one (`/proc/self/cgroup` reading `cgroups`), so its
+/// cgroup names its program: the one address it is connected to, or nothing
+/// (`idiag_dport` 0, `idiag_dst` unspecified). Elsewhere unread, so the
+/// socket is judged as one no flow names.
 #[cfg(any(target_os = "linux", test))]
-fn peer(d: &diag::Diag, raw: Raw, cgroups: &str, me: Option<u32>) -> Option<SocketAddr> {
+fn peer(d: &diag::Diag, raw: Raw, cgroups: &str, me: Option<u32>) -> Peer {
     let apart = cgroups
         .lines()
         .any(|l| l.starts_with("0::") && l.trim() != "0::/");
-    let trusted = raw == Raw::Udp && apart && me == Some(d.uid) && d.peer.port() != 0;
-    trusted.then(|| SocketAddr::new(d.peer.ip().to_canonical(), d.peer.port()))
+    match d.peer {
+        _ if raw != Raw::Udp || !apart || me != Some(d.uid) => Peer::Unread,
+        at if at.port() != 0 => Peer::To(SocketAddr::new(at.ip().to_canonical(), at.port())),
+        at if at.ip().is_unspecified() => Peer::Unconnected,
+        _ => Peer::Unread,
+    }
 }
 
 /// Whether a kernel whose `/proc/sys/kernel/osrelease` reads `release`
@@ -660,7 +665,7 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
         holders: pids.iter().filter_map(named).collect(),
         at: *at,
         dual: *dual,
-        peer: None,
+        peer: Peer::Unread,
     };
     let read = Read {
         boot: Some(boot),
@@ -713,7 +718,7 @@ fn datagrams(me: u32, port: u16) -> Result<Read, Unread> {
         holders: last_user(s, mac::bsd(s.pid as i32)).into_iter().collect(),
         at: s.local.ip(),
         dual: true,
-        peer: None,
+        peer: Peer::Unread,
     };
     let sockets = listed
         .iter()

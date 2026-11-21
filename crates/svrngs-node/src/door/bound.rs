@@ -270,7 +270,11 @@ pub(crate) async fn udp_port(
 ) -> Result<(Read, Took), Unread> {
     let read = net.read_port(Raw::Udp, port, None).await;
     let now = read.as_ref().ok().map(|(now, _)| &now.sockets);
-    let peers = now.map(|sockets| sockets.iter().filter_map(|s| s.peer).collect());
+    let to = |s: &binding::Socket| match s.peer {
+        binding::Peer::To(at) => Some(at),
+        binding::Peer::Unread | binding::Peer::Unconnected => None,
+    };
+    let peers = now.map(|sockets| sockets.iter().filter_map(to).collect());
     let named = of.0.flows(of.1, peers).await;
     read.map(|(now, _)| (now, Took::Flow(named)))
 }

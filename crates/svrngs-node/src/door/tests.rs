@@ -967,7 +967,7 @@ fn alone(id: u64) -> binding::Read {
             holders: Default::default(),
             at: std::net::Ipv4Addr::LOCALHOST.into(),
             dual: false,
-            peer: None,
+            peer: binding::Peer::Unread,
         }],
         unlisted: false,
     }
@@ -1327,7 +1327,7 @@ async fn a_server_s_socket_for_a_flow_in_the_approved_cgroup_is_carried() {
         for (n, (peer, cgroup)) in (2..).zip(answering) {
             let socket = binding::Socket {
                 cgroup: Some(cgroup),
-                peer: Some(peer),
+                peer: binding::Peer::To(peer),
                 ..alone(n).sockets[0].clone()
             };
             read.sockets.push(socket);
@@ -1389,7 +1389,7 @@ async fn a_server_s_socket_for_a_closed_flow_is_carried_until_it_closes() {
     let pasta = |answering: Option<std::net::SocketAddr>| {
         let mut read = alone(1);
         let socket = |peer| binding::Socket {
-            peer: Some(peer),
+            peer: binding::Peer::To(peer),
             ..alone(2).sockets[0].clone()
         };
         read.sockets.extend(answering.map(socket));
@@ -1428,6 +1428,100 @@ async fn a_server_s_socket_for_a_closed_flow_is_carried_until_it_closes() {
         Err(bound::Unsent::Held(Hold::Another)),
         "a socket connected to it after"
     );
+}
+
+/// **A flow checked while a server is opening a socket for another flow is
+/// unjudged, carries nothing that batch, and keeps its socket** (a release
+/// run's podman-udp case, 2026-11-20): rootless Podman's pasta binds each
+/// flow's socket before it connects it. A first flow's check that reads a
+/// second's socket in that window, connected to nothing, in the approved
+/// cgroup, is unjudged: that batch reaches nothing, the lend isn't held in
+/// its file, and the flow stays open ([`super::udp::stays`]), so its next
+/// batch, once that socket is connected to the second flow, reaches the
+/// program from the same address. One connected to nothing in another
+/// cgroup holds the lend in its file. Planted, each watched failing: an
+/// unjudged check ending the flow (`stays` false); an unjudged hold kept in
+/// the lend's file.
+#[tokio::test]
+async fn a_flow_checked_while_another_s_socket_is_made_keeps_its_socket() {
+    let service = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let at = service.local_addr().unwrap();
+    let wire = crate::node::Wire::default();
+    let key = crate::iroh::SecretKey::from_bytes(&[10; 32]).public();
+    let net = wire.net(key);
+    let mut shelf = Lend::carried("game", "house").unwrap();
+    shelf.source = Source::Raw(Raw::Udp, std::num::NonZeroU16::new(at.port()).unwrap());
+    shelf.terms.approved = binding::approve(&alone(1), None).ok();
+    let dir = tempfile::tempdir().unwrap();
+    crate::lend::declare(dir.path(), &shelf, None).unwrap();
+    let held = || {
+        crate::lend::read(dir.path(), &shelf.name)
+            .unwrap()
+            .unwrap()
+            .terms
+            .approved
+            .unwrap()
+            .held
+    };
+    let (using, judged) = (
+        Using::spawn(),
+        (&net as &dyn crate::iroh::Net, dir.path(), &shelf),
+    );
+    let pasta = |peer: binding::Peer, cgroup| {
+        let mut read = alone(1);
+        let socket = binding::Socket {
+            peer,
+            cgroup: Some(cgroup),
+            ..alone(2).sockets[0].clone()
+        };
+        read.sockets.push(socket);
+        wire.reads(key, at.port(), Ok((read, binding::Took::Datagram)));
+    };
+    wire.reads(key, at.port(), Ok((alone(1), binding::Took::Datagram)));
+    let (mut flows, mut from) = (Vec::new(), Vec::new());
+    for _ in 0..2 {
+        let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let flow = bound::Flow::open(socket, (at, &using, &shelf.name))
+            .await
+            .unwrap();
+        let (_queue, mut more) = tokio::sync::mpsc::channel(1);
+        flow.send(judged, b"hi".to_vec(), &mut more).await.unwrap();
+        from.push(service.recv_from(&mut [0u8; 16]).await.unwrap().1);
+        flows.push(flow);
+    }
+    let (_queue, mut more) = tokio::sync::mpsc::channel(1);
+    pasta(binding::Peer::Unconnected, 4);
+    let unjudged = flows[0].send(judged, b"window".to_vec(), &mut more).await;
+    assert_eq!(
+        unjudged,
+        Err(bound::Unsent::Held(Hold::Unjudged)),
+        "in the window"
+    );
+    assert!(
+        super::udp::stays(unjudged.unwrap_err()),
+        "the flow stays open"
+    );
+    assert!(!held(), "nothing held in its file");
+    pasta(binding::Peer::To(from[1]), 4);
+    flows[0]
+        .send(judged, b"after".to_vec(), &mut more)
+        .await
+        .unwrap();
+    let mut got = [0u8; 16];
+    let (n, again) = service.recv_from(&mut got).await.unwrap();
+    assert_eq!(
+        (&got[..n], again),
+        (&b"after"[..], from[0]),
+        "the next batch, from the same address"
+    );
+    pasta(binding::Peer::Unconnected, 5);
+    let another = flows[0].send(judged, b"other".to_vec(), &mut more).await;
+    assert_eq!(
+        another,
+        Err(bound::Unsent::Held(Hold::Another)),
+        "another cgroup"
+    );
+    assert!(held(), "held in its file");
 }
 
 /// **A UDP share's answers are carried back only through its check**

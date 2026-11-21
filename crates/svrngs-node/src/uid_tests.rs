@@ -624,11 +624,10 @@ fn a_new_container_behind_podman_s_forwarder_is_held() {
 }
 
 /// **A connected UDP socket is read with the one address it is connected
-/// to** (eudoxia 4560910, `Socket::peer`), on Linux by sock_diag's
-/// `idiag_dst` and `idiag_dport`, so a server's socket for one of svrngs's
-/// flows is known by it; an unconnected one with none; a Mac's read names
-/// none. Planted, watched failing on the Fedora box: `peer` left none on
-/// Linux.
+/// to** (eudoxia `Socket::peer`), on Linux by sock_diag's `idiag_dst` and
+/// `idiag_dport`, so a server's socket for one of svrngs's flows is known by
+/// it, and one connected to nothing is read so; a Mac's read can't tell.
+/// Planted, watched failing on the Fedora box: `peer` left unread on Linux.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[test]
 fn a_connected_udp_socket_is_read_with_its_peer() {
@@ -640,18 +639,25 @@ fn a_connected_udp_socket_is_read_with_its_peer() {
         read.sockets.first().map(|s| s.peer)
     };
     let linux = cfg!(target_os = "linux");
-    let connected = linux.then(|| far.local_addr().unwrap());
+    let (connected, unconnected) = match linux {
+        true => (
+            binding::Peer::To(far.local_addr().unwrap()),
+            binding::Peer::Unconnected,
+        ),
+        false => (binding::Peer::Unread, binding::Peer::Unread),
+    };
     assert_eq!(peer(&near), Some(connected), "connected");
-    assert_eq!(peer(&far), Some(None), "not connected");
+    assert_eq!(peer(&far), Some(unconnected), "not connected");
 }
 
 /// **A connected socket names a flow only where its cgroup names its
 /// program, and only of this account** (SHARE_BINDING_REVIEWS §10 A): its
 /// peer is read where svrngs runs in a cgroup v2 of its own and the socket
-/// is this account's, else none, so a check of a flow holds it. Planted,
-/// each watched failing: the cgroup asked of nothing (one of this account's
-/// on a cgroup v1 computer carried); the account asked of nothing (another
-/// account's in the approved cgroup carried).
+/// is this account's, else unread, so a check of a flow holds it; one
+/// connected to nothing there is read so, and a check of a flow beside it is
+/// unjudged. Planted, each watched failing: the cgroup asked of nothing (one
+/// of this account's on a cgroup v1 computer carried); the account asked of
+/// nothing (another account's in the approved cgroup carried).
 #[test]
 fn a_connected_socket_names_a_flow_only_as_this_account_s_in_its_own_cgroup() {
     let connected = |uid| diag::Diag {
@@ -677,10 +683,10 @@ fn a_connected_socket_names_a_flow_only_as_this_account_s_in_its_own_cgroup() {
     let read = |peer| binding::Read {
         boot: None,
         lasting: true,
-        sockets: vec![socket(1, None), socket(2, peer)],
+        sockets: vec![socket(1, binding::Peer::Unread), socket(2, peer)],
         unlisted: false,
     };
-    let approved = binding::approve(&read(None), None).unwrap();
+    let approved = binding::approve(&read(binding::Peer::Unread), None).unwrap();
     let approved = binding::Approved {
         sockets: [1].into(),
         ..approved
@@ -708,9 +714,28 @@ fn a_connected_socket_names_a_flow_only_as_this_account_s_in_its_own_cgroup() {
     }
     assert_eq!(
         peer(&connected(1000), Raw::Tcp, v2, Some(1000)),
-        None,
+        binding::Peer::Unread,
         "TCP"
     );
+    // Connected to nothing, between a server's bind and its connect: read
+    // so only as this account's in its cgroup, and judged unjudged there.
+    let unconnected = |uid| diag::Diag {
+        peer: at("0.0.0.0:0"),
+        ..connected(uid)
+    };
+    let window = |d: &diag::Diag, cgroups| {
+        let peer = peer(d, Raw::Udp, cgroups, Some(1000));
+        (peer, binding::check(Some(&approved), &read(peer), &flow))
+    };
+    let unjudged = (binding::Peer::Unconnected, Err(binding::Held::Unjudged));
+    assert_eq!(
+        window(&unconnected(1000), v2),
+        unjudged,
+        "this account's, connecting"
+    );
+    let unread = (binding::Peer::Unread, Err(binding::Held::Another));
+    assert_eq!(window(&unconnected(1001), v2), unread, "another account's");
+    assert_eq!(window(&unconnected(1000), v1), unread, "cgroup v1 alone");
 }
 
 /// **A UDP socket on every IPv6 address is reached at 127.0.0.1 when it
