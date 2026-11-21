@@ -125,13 +125,6 @@ export const play = machine(
   { at: { play: 'reading' }, asked: { play: 1 }, round: 1, said: {}, copied: {} },
   [{ run: 'read', n: 1, failed: 'unread' }],
 );
-/**
- * @param {State} state
- * @param {Port} lend
- */
-const on = (state, lend) =>
-  state.at.play === 'unread' ? undefined : state.plays?.find(same(lend));
-
 // What Play does, said once as the caption of the index's ports that have
 // one (index.js), never beside each Play.
 export const PLAYS = 'Play opens it on this computer, for a program here to connect to.';
@@ -156,7 +149,7 @@ export function Turn({ l: lend, words, round, by, id }) {
     if (round !== undefined) play.dispatch({ type: 'read', round });
   }, [round]);
   const state = useStore(play);
-  const open = on(state, lend);
+  const open = state.at.play === 'unread' ? undefined : state.plays?.find(same(lend));
   const said = open && `${open.said}${state.copied[keyOf(lend)] ?? ''} `;
   const before = words ? words(lend) : said;
   const Tag = words ? 'p' : 'span';

@@ -10,7 +10,6 @@ use std::collections::BTreeMap;
 use std::net::SocketAddr;
 
 use axum::extract::{Request, State};
-use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::Response;
 use axum::Router;
@@ -18,6 +17,7 @@ use n0_future::task::AbortOnDropHandle;
 use svrngs_core::pass::Label;
 
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
+use crate::folder::carried::Handled;
 use crate::lend::LendName;
 use crate::network::{guess, Whereabouts};
 use crate::node::Asking;
@@ -100,9 +100,7 @@ async fn listen(at: &Asking, label: Label, addr: SocketAddr, listening: &mut Lis
         .with_state((at.clone(), label.clone()))
         .layer(axum::middleware::from_fn(from_this_network))
         .into_make_service_with_connect_info::<SocketAddr>();
-    let serving = tokio::spawn(async move {
-        let _ = axum::serve(listener, routes).await;
-    });
+    let serving = tokio::spawn(async move { drop(axum::serve(listener, routes).await) });
     tracing::info!(target: "room", %addr, %label, "room: serving a lend to this computer's network");
     listening.insert(label, (addr, AbortOnDropHandle::new(serving)));
     Served::At(addr)
@@ -116,10 +114,7 @@ pub(super) const IN_ROOM: Appending = Appending::Denied(Unconsented::NetworkOnly
 
 /// A request at the room door, carried to its lend as at its origin, for
 /// the lend's own page: the room serves one lend at each port.
-async fn in_room(
-    State((at, label)): State<(Asking, Label)>,
-    req: Request,
-) -> Result<Response, Response> {
+async fn in_room(State((at, label)): State<(Asking, Label)>, req: Request) -> Handled {
     crate::origin::reach(&at, label.clone(), label, IN_ROOM, req).await
 }
 
@@ -135,5 +130,5 @@ pub(super) async fn from_this_network(request: Request, next: Next) -> Response 
     }
     tracing::debug!(target: "room", ?caller, path = %request.uri().path(), "room: refused — the caller is not on this computer's network");
     let why = "this is opened only on the network of the computer that serves it";
-    crate::door::LendRefusal::Closed.say(StatusCode::FORBIDDEN, why)
+    crate::door::LendRefusal::closed(why)
 }

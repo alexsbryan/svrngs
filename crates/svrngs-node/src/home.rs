@@ -200,12 +200,9 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
     let ([site, mode, origin, host], own_page) = crate::origin::fetch(req.headers());
     let at_own = host.is_some_and(|h| h.eq_ignore_ascii_case(&own));
     let reads = matches!(*req.method(), Method::GET | Method::HEAD);
-    let answers = at_own
-        && if reads {
-            own_page
-        } else {
-            site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
-        };
+    let own_write =
+        site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"));
+    let answers = at_own && if reads { own_page } else { own_write };
     let public = || at.sessions.public(crate::session::HOME, &req);
     if let Some(answer) = at_own.then(public).flatten() {
         return (HEADS, answer).into_response();

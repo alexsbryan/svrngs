@@ -541,10 +541,8 @@ impl Sessions {
             .collect::<Vec<_>>()
             .join("; ");
         headers.remove(header::COOKIE);
-        if !others.is_empty() {
-            if let Ok(h) = others.parse() {
-                headers.insert(header::COOKIE, h);
-            }
+        if let Some(h) = others.parse().ok().filter(|_| !others.is_empty()) {
+            headers.insert(header::COOKIE, h);
         }
     }
 

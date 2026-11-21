@@ -14,7 +14,7 @@ use axum::{Json, Router};
 use svrngs_core::pass::Label;
 
 use super::{On, RoomAsk, Turn, ROUTE};
-use crate::door::LendRefusal;
+use crate::door::{self, LendRefusal};
 use crate::lend::LendName;
 use crate::node::Asking;
 
@@ -74,15 +74,12 @@ async fn turned(at: &Asking, turn: Turn) -> Response {
 /// stays on; or the words of a name none is.
 async fn named(at: &Asking, names: &[LendName]) -> Result<Vec<(String, LendName)>, String> {
     let groups = at.host.rail.standings().unwrap_or_default();
-    let own = crate::door::offered(&at.door, false)
-        .await
-        .unwrap_or_default();
+    let own = door::offered(&at.door, false).await.unwrap_or_default();
     let own = own.into_iter().map(|o| (at.host.actor.clone(), o.name));
     let others = at.host.lends_in(&groups, None).await.lent;
     let others = others.into_iter().map(|l| (l.key, l.offered.name));
     let on = at.room.turn(Turn::Read).await.and_then(Result::ok);
-    let on = on.unwrap_or_default();
-    let on = on.into_iter().map(|r| (r.key, r.name));
+    let on = on.into_iter().flatten().map(|r| (r.key, r.name));
     let found: Vec<_> = own
         .chain(others)
         .chain(on)

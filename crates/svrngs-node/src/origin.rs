@@ -49,6 +49,7 @@ use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
 use crate::session::{Shown, AS_PATH};
 use crate::surface::{seed_of, AppRoute};
+use crate::version::VERSION;
 
 /// Whether a lent app's answer may write entries as the person asking
 /// ([`APPEND_HEADER`]), by what the request proved: decided by the door
@@ -276,44 +277,34 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, "origin: refused — neither this origin's session nor the token, and no whole tab's navigation");
         return Err(at.sessions.refused(""));
     }
+    let refuse = |why: &str| Err(LendRefusal::closed(why));
     if own_proof
         && matches!(appending, Appending::Denied(_))
         && !matches!(*req.method(), Method::GET | Method::HEAD)
     {
         tracing::debug!(target: "origin", %label, method = %req.method(), ?appending, "origin: refused — a write with this origin's proof but not from its own page's intent");
-        return Err(LendRefusal::closed(
-            "only this origin's client may submit a write",
-        ));
+        return refuse("only this origin's client may submit a write");
     }
     let program = (shown == Shown::Token).then(|| label.clone());
     let Some(app) = program.or_else(|| app_of(req.headers(), &label)) else {
         tracing::debug!(target: "origin", %label, "origin: refused — from another page that names no origin");
-        return Err(LendRefusal::closed(
-            "a page reaches another lend only by fetch, which says where it is from",
-        ));
+        return refuse("a page reaches another lend only by fetch, which says where it is from");
     };
     if own_proof && app != label {
         tracing::debug!(target: "origin", %label, %app, "origin: refused — this origin's proof, from a page its fetch names as another app's");
-        return Err(LendRefusal::closed(
-            "an origin's proof cannot name another app",
-        ));
+        return refuse("an origin's proof cannot name another app");
     }
     let route = AppRoute::of(req.uri().path_and_query().map_or("/", |p| p.as_str()));
-    let (reads, to) = (route == AppRoute::Reads, route == AppRoute::To);
-    if reads || to {
-        if app != label {
-            tracing::debug!(target: "origin", %label, %app, to, "origin: refused — another app's page asks the lends this one reads, or opens one");
-            return Err(LendRefusal::closed(
-                "only an app's own origin may ask its capabilities",
-            ));
-        }
-        if to {
-            return crate::surface::to(&at, &label, req.uri().clone()).await;
-        }
-        tracing::debug!(target: "origin", %label, "origin: its own page asks the lends it reads; reaching an app grants no authority over its capabilities");
-        return crate::surface::reads(&at, &label).await;
-    }
     match route {
+        AppRoute::Reads | AppRoute::To if app != label => {
+            tracing::debug!(target: "origin", %label, %app, to = route == AppRoute::To, "origin: refused — another app's page asks the lends this one reads, or opens one");
+            return refuse("only an app's own origin may ask its capabilities");
+        }
+        AppRoute::To => return crate::surface::to(&at, &label, req.uri().clone()).await,
+        AppRoute::Reads => {
+            tracing::debug!(target: "origin", %label, "origin: its own page asks the lends it reads; reaching an app grants no authority over its capabilities");
+            return crate::surface::reads(&at, &label).await;
+        }
         AppRoute::Lend(read, tail) if matches!(label.whose(), Whose::Carried) => {
             return routed(&at, (label, app), (read, tail), req).await;
         }
@@ -572,19 +563,16 @@ async fn appended(
     let Some(named) = answer.headers_mut().remove(APPEND_HEADER) else {
         return Ok(answer);
     };
+    let refuse = |why: &str| Err(LendRefusal::closed(why));
     if let Appending::Denied(why) = appending {
         tracing::debug!(target: "origin", %label, ?why, "origin: refused — a lent app's answer named entries this request did not consent to, so none is written and the answer withheld");
-        return Err(LendRefusal::closed(
-            "this request did not authorize entries from the app",
-        ));
+        return refuse("this request did not authorize entries from the app");
     }
     let (rail, (contact, lender)) = (&at.host.rail, serving.dialled(&at.host.actor));
     let lend = declared(at, label, serving).await;
     if let Some(l) = lend.as_ref().filter(|l| !appending.permits(&l.kind)) {
         tracing::debug!(target: "origin", %label, kind = %l.kind.as_str(), ?appending, "origin: refused — the lend's declared kind is not the one the program accepts entries of");
-        return Err(LendRefusal::closed(
-            "this app is not the one x-svrngs-append named, so no entry was written",
-        ));
+        return refuse("this app is not the one x-svrngs-append named, so no entry was written");
     }
     let who = contact.and_then(|_| rail.standing_anywhere(lender));
     let whose = who.map_or("Your".into(), |(_, m)| format!("{}’s", m.person));
@@ -595,7 +583,8 @@ async fn appended(
         LendRefusal::Closed.say(StatusCode::UNPROCESSABLE_ENTITY, format!("{what} answered with entries svrngs cannot read, so they were not saved."))
     })?;
     let judged = |act: &Value| {
-        let kind = &lend.as_ref().ok_or(Unwritten::Unread)?.kind;
+        let lend = lend.as_ref().ok_or(Unwritten::Unread)?;
+        let kind = &lend.kind;
         let group = act["group"].as_str();
         let read = rail.admission(group.ok_or(Unwritten::Unread)?).ok();
         let both =
@@ -604,9 +593,7 @@ async fn appended(
             .filter(|a| both(&a.membership().standing))
             .ok_or(Unwritten::NotBoth)?;
         // Only a group the lend reaches, never another both stand in.
-        let reached = lend
-            .as_ref()
-            .is_some_and(|l| l.clone().listed(|g| Some(g) == group));
+        let reached = lend.clone().listed(|g| Some(g) == group);
         reached.then_some(()).ok_or(Unwritten::NotLent)?;
         // A part the group's folders claim is theirs, whoever lends a
         // server by that name; of the record, so every computer reads it
@@ -669,17 +656,13 @@ async fn appended(
 /// its declarations, another computer's asked of it now.
 async fn declared(at: &Asking, label: &Label, serving: &Serving) -> Option<Offered> {
     let (contact, lender) = serving.dialled(&at.host.actor);
+    let net = &*at.host.transport;
     let (lends, version) = match contact {
-        None => (
-            door::offered(&at.door, false).await.ok()?,
-            crate::version::VERSION,
-        ),
-        Some(c) => {
-            match crate::node::ask_lends(&*at.host.transport, label.as_str(), c.clone()).await {
-                crate::node::Answered::Lends(lends, version) => (lends, version),
-                _ => return None,
-            }
-        }
+        None => (door::offered(&at.door, false).await.ok()?, VERSION),
+        Some(c) => match crate::node::ask_lends(net, label.as_str(), c.clone()).await {
+            crate::node::Answered::Lends(lends, version) => (lends, version),
+            _ => return None,
+        },
     };
     lends
         .into_iter()
@@ -756,10 +739,9 @@ impl Lenders {
     pub(crate) fn heard(&self, lent: &[crate::node::Lending]) {
         let mut heard: BTreeMap<Label, Vec<String>> = BTreeMap::new();
         for l in lent.iter().filter(|l| l.offered.group.is_some()) {
-            let Some(label) = l.offered.label(&l.key, l.version) else {
-                continue;
-            };
-            heard.entry(label).or_default().push(l.key.clone());
+            if let Some(label) = l.offered.label(&l.key, l.version) {
+                heard.entry(label).or_default().push(l.key.clone());
+            }
         }
         self.0.send_modify(|all| all.extend(heard));
     }

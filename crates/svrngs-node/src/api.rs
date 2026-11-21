@@ -244,24 +244,19 @@ async fn holds_the_token(State(token): State<Bearer>, request: Request, next: Ne
 /// upstream relied on the bind alone; DESIGN §3, "Localhost is the trust
 /// boundary".)
 async fn from_this_computer(request: Request, next: Next) -> Response {
-    let caller = crate::session::peer(&request);
-    let refused = |why: String| refuse(StatusCode::FORBIDDEN, "not_loopback", why);
-    match caller {
-        Some(addr) => match check_loopback(addr) {
-            Ok(()) => {
-                tracing::debug!(target: "rails", caller = %addr, path = %request.uri().path(), "api: a caller on this computer");
-                next.run(request).await
-            }
-            Err(refusal) => {
-                tracing::warn!(target: "rails", caller = %addr, path = %request.uri().path(), "api: refused — the caller is not on this computer");
-                refused(refusal.to_string())
-            }
-        },
-        None => {
-            tracing::warn!(target: "rails", path = %request.uri().path(), "api: refused — the caller's address is unknown, so it cannot be shown to be on this computer");
-            refused("the caller's address is unknown; the record is served to this computer's apps alone".into())
-        }
+    let refused = |why: &str| refuse(StatusCode::FORBIDDEN, "not_loopback", why);
+    let Some(addr) = crate::session::peer(&request) else {
+        tracing::warn!(target: "rails", path = %request.uri().path(), "api: refused — the caller's address is unknown, so it cannot be shown to be on this computer");
+        return refused(
+            "the caller's address is unknown; the record is served to this computer's apps alone",
+        );
+    };
+    if let Err(refusal) = check_loopback(addr) {
+        tracing::warn!(target: "rails", caller = %addr, path = %request.uri().path(), "api: refused — the caller is not on this computer");
+        return refused(&refusal.to_string());
     }
+    tracing::debug!(target: "rails", caller = %addr, path = %request.uri().path(), "api: a caller on this computer");
+    next.run(request).await
 }
 
 /// The bind guard, as a function so it has a failing input that can be
@@ -270,11 +265,8 @@ async fn from_this_computer(request: Request, next: Next) -> Response {
 pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
     // svrngs: canonical first, so `::ffff:127.0.0.1` reads as the loopback
     // it is, where `Ipv6Addr::is_loopback` alone says no.
-    if listen.ip().to_canonical().is_loopback() {
-        Ok(())
-    } else {
-        Err(ApiError::NotLoopback(listen))
-    }
+    let loopback = listen.ip().to_canonical().is_loopback();
+    loopback.then_some(()).ok_or(ApiError::NotLoopback(listen))
 }
 
 /// The API being served, on the address it is bound to. Dropping it stops
