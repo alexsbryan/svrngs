@@ -577,14 +577,12 @@ impl Sessions {
     }
 
     pub(crate) fn refused(&self, why: &str) -> Response {
-        let file = self.token.file().display().to_string();
-        let file = file.replace('&', "&amp;").replace('<', "&lt;");
         let opener = if cfg!(target_os = "macos") {
             "Applications"
         } else {
             "applications menu"
         };
-        let page = format!("<!doctype html><meta charset=utf-8><title>Open svrngs from your computer</title><h1>Open svrngs from your computer</h1><p>{why}</p><p>Open svrngs from your {opener}, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.</p><p>To use this browser too, open the Terminal app, type <code>svrngs open --print</code>, and open the address it shows here within a minute.</p><p>A program, not a browser, sends the token in {file}.</p><p id=svrngs-session-state></p><script type=module src=/svrngs-session.js></script>");
+        let page = format!("<!doctype html><meta charset=utf-8><title>Open svrngs from your computer</title><h1>Open svrngs from your computer</h1><p>{why}</p><p>Open svrngs from your {opener}, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.</p><p>To use this browser too, open the Terminal app, type <code>svrngs open --print</code>, and open the address it shows here within a minute.</p><p>A program on this computer uses a friend's lend while Play is on for it, on your home page.</p><p id=svrngs-session-state></p><script type=module src=/svrngs-session.js></script>");
         let heads = [NO_STORE, (header::REFERRER_POLICY, "no-referrer")];
         (StatusCode::UNAUTHORIZED, heads, Html(page)).into_response()
     }
