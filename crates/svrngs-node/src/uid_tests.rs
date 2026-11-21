@@ -739,6 +739,22 @@ fn a_connected_socket_names_a_flow_only_as_this_account_s_in_its_own_cgroup() {
     let unread = (binding::Peer::Unread, Err(binding::Held::Another));
     assert_eq!(window(&unconnected(1001), v2), unread, "another account's");
     assert_eq!(window(&unconnected(1000), v1), unread, "cgroup v1 alone");
+    // Mid-connect: a UDP connect sets the address before the port, so a read
+    // between the two sees an address and port 0. It is connecting too.
+    let midway = |uid| diag::Diag {
+        peer: at("127.0.0.1:0"),
+        ..connected(uid)
+    };
+    assert_eq!(
+        window(&midway(1000), v2),
+        unjudged,
+        "this account's, midway"
+    );
+    assert_eq!(
+        window(&midway(1001), v2),
+        unread,
+        "another account's, midway"
+    );
 }
 
 /// **A UDP socket on every IPv6 address is reached at 127.0.0.1 when it

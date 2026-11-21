@@ -282,7 +282,9 @@ fn cgroups_v2(cgroups: &str) -> bool {
 /// UDP socket of this account (`me`) where svrngs runs in a cgroup v2 of its
 /// own, not the root one (`/proc/self/cgroup` reading `cgroups`), so its
 /// cgroup names its program: the one address it is connected to, or nothing
-/// (`idiag_dport` 0, `idiag_dst` unspecified). Elsewhere unread, so the
+/// (`idiag_dport` 0). A connect sets `idiag_dst` before `idiag_dport`
+/// (`__ip4_datagram_connect`), so an address with port 0 is a server
+/// connecting, read as connected to nothing yet. Elsewhere unread, so the
 /// socket is judged as one no flow names.
 #[cfg(any(target_os = "linux", test))]
 fn peer(d: &diag::Diag, raw: Raw, cgroups: &str, me: Option<u32>) -> Peer {
@@ -292,8 +294,7 @@ fn peer(d: &diag::Diag, raw: Raw, cgroups: &str, me: Option<u32>) -> Peer {
     match d.peer {
         _ if raw != Raw::Udp || !apart || me != Some(d.uid) => Peer::Unread,
         at if at.port() != 0 => Peer::To(SocketAddr::new(at.ip().to_canonical(), at.port())),
-        at if at.ip().is_unspecified() => Peer::Unconnected,
-        _ => Peer::Unread,
+        _ => Peer::Unconnected,
     }
 }
 
