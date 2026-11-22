@@ -303,12 +303,8 @@ impl LendRefusal {
     fn said(self, status: StatusCode, mut body: serde_json::Value) -> Response {
         body["kind"] = self.as_str().into();
         let words = Words(body["error"].as_str().unwrap_or_default().to_string());
-        let mut answer = (status, Json(body)).into_response();
-        answer.extensions_mut().insert(words);
-        answer
-            .headers_mut()
-            .insert(REFUSED_HEADER, HeaderValue::from_static(self.as_str()));
-        answer
+        let kind = [(REFUSED_HEADER, HeaderValue::from_static(self.as_str()))];
+        (status, kind, Extension(words), Json(body)).into_response()
     }
 }
 
@@ -778,28 +774,24 @@ async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
     let Some(port) = lend.port() else {
         return (None, None);
     };
-    let at = lend
-        .terms
-        .approved
-        .as_ref()
-        .map_or(std::net::Ipv4Addr::LOCALHOST.into(), |a| a.at);
-    let dialed = tokio::net::TcpStream::connect((at, port.get()));
-    let took = match lend.raw() {
-        Raw::Tcp => Some(
-            tokio::time::timeout(ANSWER_WAIT, dialed)
-                .await
-                .is_ok_and(|d| d.is_ok()),
-        ),
-        Raw::Udp => None,
-    };
+    let approved = lend.terms.approved.as_ref();
     let net = door.folders.host.transport.as_ref();
-    let read = match lend.raw() {
-        Raw::Udp => bound::udp_port(net, port.get(), (&door.using, &lend.name)).await,
-        Raw::Tcp => net.read_port(Raw::Tcp, port.get(), None).await,
+    let (took, read) = match lend.raw() {
+        Raw::Tcp => {
+            let at = approved.map_or(std::net::Ipv4Addr::LOCALHOST.into(), |a| a.at);
+            let dialed = tokio::net::TcpStream::connect((at, port.get()));
+            let took = tokio::time::timeout(ANSWER_WAIT, dialed).await;
+            let read = net.read_port(Raw::Tcp, port.get(), None).await;
+            (Some(took.is_ok_and(|d| d.is_ok())), read)
+        }
+        Raw::Udp => {
+            let read = bound::udp_port(net, port.get(), (&door.using, &lend.name)).await;
+            (None, read)
+        }
     };
     let held = match bound::decided(&door.data_dir, lend, read) {
         Err(Unsent::Held(held)) => Some(held),
-        _ => lend.terms.approved.is_none().then_some(Hold::Unapproved),
+        _ => approved.is_none().then_some(Hold::Unapproved),
     };
     tracing::debug!(target: "door", lend = %lend.name, ?took, ?held, "door: lends — whether a lend's port takes a connection, and whether what is there is what its lender approved");
     (took, held)
@@ -1202,15 +1194,14 @@ impl LendPath {
 fn drop_echoed_secret(
     headers: &mut HeaderMap,
     secret: &[(HeaderName, HeaderValue)],
-) -> Vec<String> {
+) -> Vec<HeaderName> {
     let holds = |v: &HeaderValue| {
         secret.iter().any(|(_, s)| {
             let s = s.as_bytes();
             !s.is_empty() && v.as_bytes().windows(s.len()).any(|w| w == s)
         })
     };
-    let echoed = strip(headers, |_, v| holds(v));
-    echoed.iter().map(HeaderName::to_string).collect()
+    strip(headers, |_, v| holds(v))
 }
 
 /// Who asks for a lend through the door: a closed set (AGENTS 9), each
