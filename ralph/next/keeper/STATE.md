@@ -178,7 +178,7 @@ These are the figures the launch approved, in code lines as
   - a planted copy that needs an environment variable: rolled back, with
     the original answering again.
 
-- [ ] svrngs-economize — depends [] — ONE UNIT, behaviour kept: the
+- [x] svrngs-economize c2c69a5cc — depends [] — ONE UNIT, behaviour kept: the
   economizing pass over the code svrngs-renew extends:
   `crates/svrngs-node/src/door/bound.rs`, `share.rs`, `uid.rs`,
   `home/page/lent-row.js` and `lend-change.js`. It cuts in none of the
