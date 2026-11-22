@@ -243,7 +243,12 @@ pub async fn ring_sync(
 /// (the app-state spike's `answer`, svrn-docs
 /// `rings/current/app-state-spike/spike.patch:1410-1455`); only to a dialer
 /// standing in the group, as the record's sync is, so a removed device's
-/// computer is refused. A database this computer keeps none of is 404.
+/// computer is refused. Of the body, the group and app alone are read before
+/// the dialer is found standing, and the call after. A database this
+/// computer doesn't hold is 404, found among those it holds by its name,
+/// never by a path the wire names. The call is taken off the runtime's
+/// threads, as the page's reads are; a refusal answers its short name alone,
+/// and its words are said here, at debug.
 pub async fn ring_state(
     State(state): State<RingInbound>,
     dialer: Option<Extension<Dialer>>,
@@ -251,33 +256,33 @@ pub async fn ring_state(
 ) -> Result<Response, Response> {
     let malformed =
         |e: postcard::Error| err(StatusCode::BAD_REQUEST, format!("malformed body: {e}"));
-    let ((group, app), call): ((svrngs_db::Name, svrngs_db::Name), svrngs_db::Call) =
-        postcard::from_bytes(&body).map_err(malformed)?;
+    let refused = |r: svrngs_db::Refused| {
+        let (status, name) = r.said();
+        err(StatusCode::from_u16(status).expect("a status"), name)
+    };
+    let ((group, app), call): ((svrngs_db::Name, svrngs_db::Name), &[u8]) =
+        postcard::take_from_bytes(&body).map_err(malformed)?;
     let (group, app) = (group.as_str(), app.as_str());
     let dialer = dialer.map(|Extension(d)| d);
     let (asker, _) = standing_asker(&state.rail, dialer, "state", group)
         .map_err(|why| err(StatusCode::FORBIDDEN, why))?;
-    let (bound, from) = (
-        crate::ring_sync::bound(&state.rail, group),
-        svrngs_db::Device::parse(&asker),
-    );
-    // Only a database this computer holds, found among them by its name, so
-    // no path is built from the wire's.
     let mut held = state.states.held(group).into_iter();
     let db = held
         .find(|db| db.app == app)
         .ok_or(svrngs_db::Refused::NotHere);
-    let answer = db.and_then(|db| {
+    let db = db.map_err(refused)?;
+    let call: svrngs_db::Call = postcard::from_bytes(call).map_err(malformed)?;
+    let (bound, from) = (
+        crate::ring_sync::bound(&state.rail, group),
+        svrngs_db::Device::parse(&asker),
+    );
+    let offered = call.sets.len();
+    let answer = tokio::task::spawn_blocking(move || {
         db.ingest(&call, &bound, from.as_ref())
             .and(db.missing(&call.ask, RING_SYNC_OPS_BUDGET_BYTES))
     });
-    tracing::debug!(target: "rails", group, app, offered = call.sets.len(), refused = ?answer.as_ref().err(), "ring state: a member's call taken and answered, or refused");
-    let refused = |r: svrngs_db::Refused| {
-        err(
-            StatusCode::from_u16(r.said().0).expect("a status"),
-            r.to_string(),
-        )
-    };
+    let answer = (answer.await).unwrap_or_else(|e| Err(svrngs_db::Refused::Fault(e.to_string())));
+    tracing::debug!(target: "rails", group, app, asker, offered, refused = ?answer.as_ref().err(), "ring state: a member's call taken and answered, or refused, its words said here alone");
     Ok(postcard::to_allocvec(&answer.map_err(refused)?)
         .expect("a call is written in memory")
         .into_response())

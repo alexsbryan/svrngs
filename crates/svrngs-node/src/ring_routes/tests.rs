@@ -603,3 +603,59 @@ async fn the_state_route_serves_only_a_database_this_computer_holds() {
         "the other file, untouched"
     );
 }
+
+/// `call` for `app`'s database in `group`, posted to the state route as
+/// `dialer`'s stream reaches it: its status and its body as it came.
+async fn state_said(inbound: RingInbound, dialer: &SigningKey, body: Vec<u8>) -> (u16, String) {
+    let mut req = axum::http::Request::post(crate::ring_sync::STATE_ROUTE)
+        .body(axum::body::Body::from(body))
+        .unwrap();
+    req.extensions_mut()
+        .insert(crate::iroh::tests::dialer(dialer));
+    let answer = router(inbound).oneshot(req).await.unwrap();
+    let status = answer.status().as_u16();
+    let bytes = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    (status, String::from_utf8_lossy(&bytes).into_owned())
+}
+
+/// **The state route reads no call before its asker stands, and tells a
+/// member no words of this computer's own**: a dialer standing nowhere in
+/// the group is refused before its call is read, so a call that isn't one is
+/// refused as any stranger is; a member whose call meets a fault here is
+/// answered with the refusal's short name alone. Plants: the call decoded
+/// before standing (a stranger's call that isn't one is 400); the
+/// refusal's words answered (this computer's own words, to a member).
+#[tokio::test]
+async fn the_state_route_reads_no_call_before_standing_and_says_no_words_of_its_own() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
+    let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    db.write(&card).unwrap();
+
+    let stranger = SigningKey::from_bytes(&[12u8; 32]);
+    let mut body = postcard::to_allocvec(&(NS, "board")).unwrap();
+    body.extend_from_slice(&[0xff; 64]);
+    let (status, _) = state_said(inbound.clone(), &stranger, body).await;
+    assert_eq!(status, 403, "refused for standing, its call unread");
+
+    // A kept set this computer can't read back: its own fault.
+    let spoilt = std::process::Command::new("sqlite3")
+        .arg(dir.path().join(format!("ada/state/{NS}/board.db")))
+        .arg("UPDATE svrngs_sets SET bytes = x'ff';")
+        .status()
+        .unwrap();
+    assert!(spoilt.success());
+    let asked = postcard::to_allocvec(&((NS, "board"), svrngs_db::Call::default())).unwrap();
+    let (status, said) = state_said(inbound, &key(), asked).await;
+    assert_eq!(status, 500);
+    assert!(
+        !said.contains("couldn"),
+        "this computer's own words, said to a member: {said}"
+    );
+}
