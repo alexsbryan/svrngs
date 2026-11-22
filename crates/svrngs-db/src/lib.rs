@@ -8,7 +8,9 @@
 //! (`shim.c`). SQLite calls the shim as it starts, so cr-sqlite is loaded on
 //! every connection and no Rust in svrngs calls it: nothing here is `unsafe`.
 //! `tests/crsqlite.rs` holds that, with its plant; a database opened where
-//! cr-sqlite's functions are missing is refused ([`Refused::Unbuilt`]).
+//! cr-sqlite's functions are missing is refused ([`Refused::Unbuilt`]). A
+//! database's connection closes as it drops, cr-sqlite's statements
+//! finalized first ([`close`]).
 //!
 //! Each carried app in each group gets a SQLite file on this computer
 //! ([`States`]), opened from the `schema.sql` beside its `index.html`, its
@@ -167,10 +169,40 @@ pub struct Db {
     pub group: String,
     pub app: String,
     #[expect(clippy::disallowed_types, reason = "one connection, one statement at a time")]
-    conn: std::sync::Mutex<Connection>,
+    conn: std::sync::Mutex<Open>,
     tables: BTreeMap<String, Table>,
     gate: Arc<Gate>,
     changed: watch::Sender<u64>,
+}
+
+/// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
+/// whether its database opened or was refused.
+struct Open(Option<Connection>);
+
+impl Drop for Open {
+    fn drop(&mut self) {
+        let conn = self.0.take().expect("a connection is open until it drops");
+        let path = conn.path().unwrap_or_default().to_owned();
+        let closed = close(conn);
+        tracing::debug!(target: "state", path, closed = closed.is_ok(), "state: a database's connection closed as it dropped, cr-sqlite's statements finalized first, or SQLite refused");
+        if let Err(e) = closed {
+            tracing::error!(target: "state", path, %e, "state: a database's connection did not close, so it and its file stay open until svrngs exits");
+        }
+    }
+}
+
+/// `conn`, a connection cr-sqlite is loaded on, closed, or SQLite's words
+/// for why not. cr-sqlite's statements are finalized first, so SQLite can
+/// close it: only libSQL's build of cr-sqlite finalizes them itself
+/// (`vendor/cr-sqlite/core/src/crsqlite.c:31-36`, `:80-83`, under `#ifdef
+/// LIBSQL`). A statement left open makes `sqlite3_close` refuse, and
+/// rusqlite drops a connection without a word when it does (rusqlite 0.41
+/// `inner_connection.rs:401-406`), so the connection and its file stay
+/// open for the life of the process. `Connection::close` flushes rusqlite's
+/// own cache of statements (rusqlite 0.41 `lib.rs:821-826`).
+pub fn close(conn: Connection) -> Result<(), rusqlite::Error> {
+    conn.query_row("SELECT crsql_finalize()", [], |_| Ok(()))?;
+    conn.close().map_err(|(_, e)| e)
 }
 
 /// What the authorizer and the progress handler, each installed once at
@@ -276,7 +308,7 @@ fn page_rule(
 
 impl Db {
     fn open(path: &Path, (group, app): (&str, &str), schema: &str) -> Result<Self, Refused> {
-        let mut conn = Connection::open(path).map_err(fault)?;
+        let conn = Connection::open(path).map_err(fault)?;
         // cr-sqlite, loaded on each connection by SQLite itself (shim.c): a
         // build without the shim holds none of its functions, and a database
         // opened there would merge nothing, so none is.
@@ -286,11 +318,17 @@ impl Db {
             tracing::error!(target: "state", group, app, %e, "state: this svrngs was built without cr-sqlite, so no database opens");
             return Err(Refused::Unbuilt);
         }
+        // Closed as it drops from here, refused below or not: cr-sqlite
+        // prepared statements on it as it loaded
+        // (`vendor/cr-sqlite/core/src/ext-data.c:24-29`), which only
+        // [`close`] finalizes. Without cr-sqlite, above, it has none.
+        let mut open = Open(Some(conn));
+        let conn = open.0.as_mut().expect("just opened");
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;")
             .map_err(fault)?;
         // A database with no table of the app's is new: its schema applied,
         // then its tables made cr-sqlite's.
-        let mut tables = tables_of(&conn)?;
+        let mut tables = tables_of(conn)?;
         tracing::debug!(target: "state", group, app, fresh = tables.is_empty(), "state: a database opened; its schema applied only when new");
         if tables.is_empty() {
             conn.authorizer(Some(schema_rule)).map_err(fault)?;
@@ -298,7 +336,7 @@ impl Db {
             conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
                 .map_err(fault)?;
             applied.map_err(|e| Refused::Malformed(format!("schema.sql: {e}")))?;
-            tables = tables_of(&conn)?;
+            tables = tables_of(conn)?;
             for t in tables.keys() {
                 conn.query_row("SELECT crsql_as_crr(?1)", [t], |_| Ok(()))
                     .map_err(|e| Refused::Malformed(format!("{t}: {e}")))?;
@@ -319,7 +357,7 @@ impl Db {
         Ok(Self {
             group: group.into(),
             app: app.into(),
-            conn: conn.into(),
+            conn: open.into(),
             tables,
             gate,
             changed: watch::Sender::new(0),
@@ -338,6 +376,7 @@ impl Db {
         let params = (params.iter().enumerate()).map(|(i, v)| form::value(v, &format!("params[{i}]")));
         let params = params.collect::<Result<Vec<_>, _>>()?;
         let conn = self.conn.lock().expect("the database's lock");
+        let conn = conn.0.as_ref().expect("a connection is open until it drops");
         self.gate.page.store(true, Relaxed);
         let prepared = conn.prepare(sql);
         self.gate.page.store(false, Relaxed);
@@ -366,6 +405,7 @@ impl Db {
         tracing::debug!(target: "state", group = self.group, app = self.app, ops = listed.len(), refused = ?statements.as_ref().err(), "state: a write's ops made statements by key, or refused");
         let statements = statements?;
         let conn = self.conn.lock().expect("the database's lock");
+        let conn = conn.0.as_ref().expect("a connection is open until it drops");
         conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
         let ran = (statements.iter()).map(|(sql, values)| conn.execute(sql, rusqlite::params_from_iter(values)));
         let ran = ran.sum::<Result<usize, _>>();

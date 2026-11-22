@@ -338,3 +338,31 @@ fn a_schema_s_trigger_is_refused() {
     assert!(matches!(refused, Refused::Malformed(_)), "{refused:?}");
     assert!(refused.to_string().contains("not authorized"), "{refused}");
 }
+
+/// **A database closes as it drops**, and so does one refused at open:
+/// cr-sqlite's statements finalized, SQLite closes the connection and its
+/// file, and the last connection to a database in WAL mode checkpoints it
+/// and removes its log as it closes (libsqlite3-sys 0.39.1
+/// `sqlite3/sqlite3.c:69474-69500`, `sqlite3WalClose`). A table with no key
+/// is refused by `crsql_as_crr`, after `schema.sql` made it. Plant: `close`
+/// without `crsql_finalize`: SQLite refuses to close each connection, and
+/// each log stays, as does its database's file handle.
+#[test]
+fn a_database_closes_as_it_drops() {
+    let (dir, db) = board();
+    write(
+        &db,
+        json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]),
+    )
+    .unwrap();
+    let log = dir.path().join("state/g/board.db-wal");
+    assert!(log.exists(), "open, the database keeps its log");
+    drop(db);
+    assert!(!log.exists(), "dropped, the database closed and left no log");
+    let keyless = States::new(dir.path()).open("g", "notes", "CREATE TABLE notes (body TEXT);\n");
+    let refused = keyless.err().expect("a table with no key is refused");
+    println!("MEASURE a table with no key: {refused}");
+    assert!(matches!(refused, Refused::Malformed(_)), "{refused:?}");
+    let log = dir.path().join("state/g/notes.db-wal");
+    assert!(!log.exists(), "refused at open, the database closed and left no log");
+}

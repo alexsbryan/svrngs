@@ -7,7 +7,8 @@
 //! question 9: "The live engine is checked once slice A's build lands").
 //! cr-sqlite is cited under `vendor/cr-sqlite/core/`.
 
-// Linked for its object, which holds cr-sqlite and the shim SQLite calls.
+// Linked for its object, which holds cr-sqlite and the shim SQLite calls,
+// and closes each copy's connection as svrngs-db closes a database's.
 extern crate svrngs_db;
 
 use std::cell::{Cell, RefCell};
@@ -285,20 +286,15 @@ impl LiveCopy {
     }
 }
 
-/// The connection closed, or the run stopped saying why. cr-sqlite's
-/// statements are finalized first, so SQLite can close it: only libSQL's
-/// build closes them itself (src/crsqlite.c:31-36, :80-83, under `#ifdef
-/// LIBSQL`). A statement left open makes `sqlite3_close` refuse, and
-/// rusqlite drops a connection without a word when it does
-/// (`inner_connection.rs:401-406`), so the connection and its database stay
-/// for the process's life: a dropped copy's tables were still there to the
-/// next connection on its name, and before the fork's fix of
-/// `TableInfo::clear_stmts` (rs/core/src/tableinfo.rs:708-755), each copy
-/// that broke a tie on site kept its connection: 4,140 in 600 seeds.
+/// The connection closed as svrngs-db closes a database's
+/// ([`svrngs_db::close`]), or the run stopped saying why. A connection
+/// SQLite can't close stays, with its database, for the process's life: a
+/// dropped copy's tables were still there to the next connection on its
+/// name, and before the fork's fix of `TableInfo::clear_stmts`
+/// (rs/core/src/tableinfo.rs:708-755), each copy that broke a tie on site
+/// kept its connection: 4,140 in 600 seeds.
 fn close(conn: Connection) {
-    conn.flush_prepared_statement_cache();
-    ok(conn.query_row("SELECT crsql_finalize()", [], |_| Ok(())), "finalizes");
-    if let Err((_, e)) = conn.close()
+    if let Err(e) = svrngs_db::close(conn)
         && !std::thread::panicking()
     {
         panic!("the live copy closes: {e}");
