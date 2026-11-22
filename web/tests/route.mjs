@@ -3,6 +3,9 @@
 // `database()`, `posted(db, text)` and `serve()`, so the same tests run
 // against the real route as against the stand-in. It names no app's table.
 //
+// Which of the file's tables are the app's is svrngs's to say, so it is
+// asked (`tables`).
+//
 // The route is named by SVRNGS_ROUTE, JSON `{origin, port, token, db}`: the
 // app's origin on a computer, that computer's svrngs's port and token, and
 // the app's database file there, as crates/svrngs/tests/scenes/magnets.rs
@@ -49,36 +52,50 @@ export async function posted(db, text) {
   return body;
 }
 
-/** Each of the app's tables in `file`, and its key's columns: cr-sqlite's own beside them are not the app's. */
-function tables(file) {
-  const named = "SELECT name FROM sqlite_schema WHERE type = 'table' AND name NOT LIKE '%crsql%'";
-  return file
-    .prepare(named)
-    .all()
-    .map(({ name }) => {
-      const columns = file.prepare('SELECT name FROM pragma_table_info(?) WHERE pk > 0').all(name);
-      return { name, key: columns.map((c) => c.name) };
-    });
+/**
+ * Each of the app's tables in `file`, and its key's columns. svrngs lets a
+ * page read only the tables svrngs-db's `tables_of` names, the ones its
+ * write form takes (crates/svrngs-db/src/lib.rs, `page_rule`'s `own`), and
+ * none of cr-sqlite's, SQLite's or its own beside them (`internal`). So the
+ * route is asked of each table in the file, never a copy of that rule: one
+ * refused as not-allowed isn't the app's, and any other refusal is thrown.
+ */
+async function tables(file) {
+  const every = file.prepare("SELECT name FROM sqlite_schema WHERE type = 'table'").all();
+  const mine = [];
+  for (const { name } of every) {
+    const read = JSON.stringify({ sql: `SELECT * FROM "${name}" LIMIT 0` });
+    const asked = await posted(null, read).catch((e) => e);
+    if (asked instanceof Refused && asked.refused === 'not-allowed') continue;
+    if (asked instanceof Error) throw asked;
+    const columns = file.prepare('SELECT name FROM pragma_table_info(?) WHERE pk > 0').all(name);
+    mine.push({ name, key: columns.map((c) => c.name) });
+  }
+  return mine;
 }
 
-/** Every row of every table of the app's deleted through the route, by key. */
+/** Every row of every table of the app's deleted through the route, by key: those tables. */
 async function emptied(file) {
-  for (const { name, key } of tables(file)) {
+  const mine = await tables(file);
+  for (const { name, key } of mine) {
     const keys = file.prepare(`SELECT ${key.map((k) => `"${k}"`).join(', ')} FROM "${name}"`).all();
     const write = keys.map((k) => ({ delete: name, key: { ...k } }));
     if (write.length) await posted(null, JSON.stringify({ write }));
   }
+  return mine;
 }
 
 /**
  * The app's database, emptied: `run(statements)` runs each on the file,
- * nothing checked, and gives each one's {rows}, once it is; `stop()`.
+ * nothing checked, and gives each one's {rows}, once it is; `tables()`,
+ * the names of the app's tables there, as svrngs names them; `stop()`.
  */
 export function database() {
   const file = new DatabaseSync(real.db, { readOnly: true });
   const ready = emptied(file);
   return {
     ready,
+    tables: async () => (await ready).map((t) => t.name),
     async run(statements) {
       await ready;
       return statements.map(({ sql, params = [] }) => ({

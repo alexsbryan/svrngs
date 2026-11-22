@@ -272,8 +272,9 @@ export async function posted(db, text) {
  * `schema` in SQLite, in a process of its own (sqlite.py), asked one thing
  * at a time: `run(statements)` runs them as one transaction, nothing
  * checked, and gives each one's answer in order; `read(sql, params)` runs
- * one statement only if SQLite finds it only reads, and gives its {rows}.
- * Either rejects with a Refused, nothing of it kept.
+ * one statement only if SQLite finds it only reads, and gives its {rows};
+ * `tables()` names the app's tables. Either rejects with a Refused,
+ * nothing of it kept.
  */
 export function database(schema = SCHEMA) {
   const child = spawn('python3', ['-I', join(APP, 'tests/sqlite.py'), schema], {
@@ -297,9 +298,12 @@ export function database(schema = SCHEMA) {
       waiting.push({ done, fail });
       child.stdin.write(`${JSON.stringify(asked)}\n`);
     });
+  const run = async (statements) => (await ask({ run: statements })).answers;
   return {
-    run: async (statements) => (await ask({ run: statements })).answers,
+    run,
     read: (sql, params = []) => ask({ read: { sql, params } }),
+    /** The app's tables, as the write form reads them (TABLES), the route's `tables` stood in for. */
+    tables: async () => [...new Set((await run([{ sql: TABLES }]))[0].rows.map((r) => r.tbl))],
     stop,
   };
 }

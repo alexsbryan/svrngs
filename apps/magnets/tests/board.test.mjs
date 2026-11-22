@@ -175,14 +175,10 @@ export const LAWS = {
   /** Each table has a NOT NULL primary key, no other UNIQUE and no foreign key. */
   async 'the schema is one cr-sqlite takes'(app) {
     // Read unchecked, as the stand-in reads its own schema: the route takes
-    // no PRAGMA as a read. cr-sqlite's own tables, beside the app's in a
-    // real database, are not the app's.
-    const tables = (
-      await unchecked(
-        app,
-        "SELECT name AS id FROM sqlite_schema WHERE type = 'table' AND name NOT LIKE '%crsql%'",
-      )
-    ).map((r) => r.id);
+    // no PRAGMA as a read. Which tables are the app's, beside cr-sqlite's
+    // and svrngs's own in a real database, its database says (`tables`).
+    const db = app.database(app.schema);
+    const tables = await db.tables().finally(db.stop);
     if (!tables.length) return 'the schema makes no table';
     for (const t of tables) {
       const [columns, indexes, keys] = await Promise.all(
