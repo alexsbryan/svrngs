@@ -28,13 +28,13 @@ $ llama-server -m ~/models/qwen2.5-7b.gguf --port 8101
 $ svrngs share 8101 --program llama-server --name coder --group house
 …
 coder runs from a terminal: closing it, or restarting this computer, stops it.
-To keep it running whenever this computer is on: svrngs-keeper keep 8101
+To keep it running whenever this computer is on: svrngs-keeper keep 8101 --lend coder
 ```
 
 **Promote it.** One command, one yes:
 
 ```
-$ svrngs-keeper keep 8101
+$ svrngs-keeper keep 8101 --lend coder
 svrngs-keeper will run coder: llama-server with your model
 ~/models/qwen2.5-7b.gguf on port 8101, context 4096.
 It starts when this computer starts, before anyone logs in, and starts again
@@ -164,7 +164,11 @@ These are the figures the launch approved, in code lines as
     port and answer within 30 s. If it doesn't, start the original again
     with its arguments, folder and full environment, and say so.
   - Then it runs `svrngs approve <lend>` in the same terminal, when that
-    port is lent.
+    port is lent: `keep <port> --lend <lend>`, which also names the card.
+    No svrngs command says which lend a port is (the loopback API's routes,
+    crates/svrngs-node/src/surface.rs:158-161), and the lend files are
+    lend.rs's schema, so svrngs, which knows the lend, gives its name.
+    Without `--lend` it ends by saying the `svrngs approve` to run.
 
   read: the spike's `cmd` reads (four ways to start llama-server).
   check: on this host:
@@ -248,7 +252,7 @@ These are the figures the launch approved, in code lines as
   - Sam's scene, end to end, in the spike's Fedora VM. Sam and Alex are
     two accounts, each with a node, met at a local `svrngs relay`.
   - The steps: llama-server in a terminal, `svrngs share`,
-    `svrngs-keeper keep 8101`, then three no-login reboots, a kill -9,
+    `svrngs-keeper keep 8101 --lend coder`, then three no-login reboots, a kill -9,
     `svrngs unshare` and a reboot.
   - Alex's request is timed each time, and Sam typed nothing after the
     promotion.
