@@ -12,6 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::change::{Change, ChangeSet, RowKey, SENTINEL, SetId, Site, State, Val, pack};
 use crate::rule::Rule;
+use crate::sync::{Book, Call, Ingested};
 
 /// Each device's mark: every set of the device up to this version has been
 /// taken here, or by a source this copy pulled from in full.
@@ -52,6 +53,23 @@ pub trait Replica {
     /// whether any of its own rose.
     fn adopt(&mut self, _marks: &Marks) -> bool {
         false
+    }
+    /// Whether the sync's bookkeeping hands this copy each set it takes
+    /// (`take`); not for a copy that keeps its own marks, svrngs-db's, which
+    /// takes each call whole (`called`).
+    fn takes_sets(&self) -> bool {
+        true
+    }
+    /// A call taken whole by a copy that keeps its own marks, and the copy
+    /// held to what the reference's bookkeeping made of it, `out`, and to the
+    /// book it left, `book` (`db.rs`).
+    fn called(&mut self, _call: &Call, _out: &Ingested, _book: &Book) {}
+    /// What the reference's bookkeeping sends `to` from this copy, `call`, to
+    /// which a copy that keeps its own marks is held.
+    fn sent(&self, _to: &Self, _call: &Call)
+    where
+        Self: Sized,
+    {
     }
 }
 

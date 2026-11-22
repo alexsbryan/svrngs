@@ -350,7 +350,10 @@ impl<R: Replica> Sim<R> {
             return;
         }
         if let Some((sync, Carry::Calls)) = self.synced {
-            let call = sync.call(self.copies[from].kept(), &self.books[from], &self.books[to]);
+            let call = sync.call_from(
+                (&self.copies[from], &self.books[from]),
+                (&self.copies[to], &self.books[to]),
+            );
             self.counts.sent += call.sets.len();
             self.counts.calls += 1;
             if self.rng.chance(10) {
@@ -516,7 +519,10 @@ impl<R: Replica> Sim<R> {
             let mut moved = false;
             for (from, to) in pairs {
                 let before = self.books[to].clone();
-                let call = sync.call(self.copies[from].kept(), &self.books[from], &self.books[to]);
+                let call = sync.call_from(
+                    (&self.copies[from], &self.books[from]),
+                    (&self.copies[to], &self.books[to]),
+                );
                 self.ingest(to, &call);
                 if self.rng.chance(5) {
                     self.ingest(to, &call);
@@ -626,7 +632,7 @@ impl<R: Replica> Sim<R> {
                     }
                     Some((sync, _)) => {
                         let mut book = Book::default();
-                        let call = sync.call(self.copies[c].kept(), &self.books[c], &book);
+                        let call = sync.call_from((&self.copies[c], &self.books[c]), (&newcomer, &book));
                         refused += sync.ingest(&mut newcomer, &mut book, &call, &gone).refused.len();
                         if let Some(set) = call.sets.first() {
                             sync.ingest(&mut newcomer, &mut book, &Call::carried(set), &gone);
@@ -667,7 +673,10 @@ impl<R: Replica> Sim<R> {
         for _ in 0..10 {
             for &from in &standing {
                 for &to in standing.iter().filter(|&&t| t != from) {
-                    let call = sync.call(self.copies[from].kept(), &self.books[from], &self.books[to]);
+                    let call = sync.call_from(
+                        (&self.copies[from], &self.books[from]),
+                        (&self.copies[to], &self.books[to]),
+                    );
                     let got = sync.ingest(&mut self.copies[to], &mut self.books[to], &call, &gone);
                     v.refetched += got.refused.len() + got.stopped.len();
                     v.resent += got.held.len();

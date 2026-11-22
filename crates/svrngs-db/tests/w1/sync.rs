@@ -199,6 +199,11 @@ impl Book {
         &self.marks
     }
 
+    /// The sets counted above their marks.
+    pub fn above(&self) -> &BTreeSet<SetId> {
+        &self.above
+    }
+
     pub fn mark(&self, site: Site) -> i64 {
         self.marks.get(&site).copied().unwrap_or(0)
     }
@@ -325,10 +330,22 @@ impl Sync {
         }
     }
 
+    /// What `from`, whose book is `fb`, sends `to`, whose book is `tb`
+    /// ([`Sync::call`]), to which a copy that keeps its own marks is held
+    /// (`Replica::sent`).
+    pub fn call_from<R: Replica>(self, (from, fb): (&R, &Book), (to, tb): (&R, &Book)) -> Call {
+        let call = self.call(from.kept(), fb, tb);
+        from.sent(to, &call);
+        call
+    }
+
     /// Whether this copy refuses the set: an owned row of another person's,
-    /// always, and under the spike's rule a device that doesn't stand now.
+    /// or a `col_version` or causal length past 2^53, always, every copy
+    /// alike (APP_STATE §4, the four outcomes); and under the spike's rule a
+    /// device that doesn't stand now.
     fn refuses(self, set: &ChangeSet, removed: &BTreeSet<Site>) -> bool {
-        breach(set) || (self.standing_now && removed.contains(&set.id().0))
+        let unbounded = set.changes().iter().any(|c| c.col_version > 1 << 53 || c.cl > 1 << 53);
+        breach(set) || unbounded || (self.standing_now && removed.contains(&set.id().0))
     }
 
     /// A call taken by `copy`: its sets in (device, seq) order (1135-1136),
@@ -360,7 +377,9 @@ impl Sync {
                 }
                 continue;
             }
-            copy.take(set);
+            if copy.takes_sets() {
+                copy.take(set);
+            }
             book.count(self.mark, id);
             out.taken.push(id);
         }
@@ -373,6 +392,7 @@ impl Sync {
                 }
             }
         }
+        copy.called(call, &out, book);
         out
     }
 }

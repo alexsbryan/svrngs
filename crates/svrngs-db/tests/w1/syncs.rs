@@ -89,9 +89,11 @@ impl<R: Replica> Net<R> {
 
     /// One call from `from` to `to` by `to`'s marks; the sets it carried.
     fn call(&mut self, from: usize, to: usize) -> Vec<SetId> {
-        let call = self
-            .sync
-            .call(self.copies[from].kept(), &self.books[from], &self.books[to]);
+        let (f, t) = (
+            (&self.copies[from], &self.books[from]),
+            (&self.copies[to], &self.books[to]),
+        );
+        let call = self.sync.call_from(f, t);
         self.take(to, &call)
     }
 
@@ -697,7 +699,7 @@ fn chosen() -> Vec<(Variant, Carry)> {
     out
 }
 
-fn range(var: &str, default: &str) -> std::ops::Range<u64> {
+pub fn range(var: &str, default: &str) -> std::ops::Range<u64> {
     let seeds = std::env::var(var).unwrap_or_else(|_| default.into());
     let (first, end) = seeds.split_once("..").expect("<first>..<end>");
     first.parse().expect("a first seed")..end.parse().expect("an end seed")
