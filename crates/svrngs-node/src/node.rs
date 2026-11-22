@@ -474,6 +474,7 @@ impl Node {
                 .await
                 .map_err(NodeError::Endpoint)?;
         let (woken, changed) = (folders.woken.clone(), nudge.clone());
+        let round_folders = folders.clone();
         rail.on_write(move |ns| {
             tracing::debug!(target: "node", namespace = ns, "node: journal changed; folder application and sync woken");
             woken.send_modify(|m| *m.entry(ns.into()).or_default() += 1);
@@ -606,7 +607,7 @@ impl Node {
                 None => Admit::Refuse,
             },
         ));
-        let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
+        let round = spawn_ring_sync_loop(round_folders, every, nudge, rounds);
         Ok(Self {
             _folders: Stop(store, host.clone()),
             host,

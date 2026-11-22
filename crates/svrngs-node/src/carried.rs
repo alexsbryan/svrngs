@@ -597,17 +597,53 @@ impl Folders {
 }
 
 impl Folders {
+    /// The app `app`'s database in `group`, opened from the `schema.sql`
+    /// that runs as `who`'s person ([`runs_as`]): their yes, else the
+    /// version it was brought with, which runs as everyone; or svrngs-db's
+    /// refusal. Withheld where those files hold no `schema.sql`.
+    async fn database(
+        &self,
+        (app, group): (&AppName, &str),
+        who: Who<'_>,
+    ) -> Result<Result<Arc<Db>, Refused>, Withheld> {
+        let schema = format!("apps/{app}/{}", svrngs_db::SCHEMA);
+        let schema = self.runs_at(group, app, &schema, who).await?;
+        tracing::debug!(target: "folder", group, %app, schema = schema.is_some(), "carried: an app's database asked; none without a schema.sql in the files that run as the person");
+        let schema = String::from_utf8_lossy(&schema.ok_or(NO_SCHEMA)?).into_owned();
+        Ok(self.host.states.open(group, app.as_str(), Some(&schema)))
+    }
+
+    /// Every app database this computer keeps in `group`, as the round
+    /// syncs them: each carried app whose files that run as this computer's
+    /// person hold a `schema.sql`, opened here from it whether or not a page
+    /// opened it, and each already on this disk. The seat's decision
+    /// (svrn-docs APP_STATE Decisions, 2026-11-22): the yes is the consent to
+    /// the app's schema, so every computer whose person said yes keeps the
+    /// app's writes, and a lid closing on one strands none of them while
+    /// another is awake; a computer none of whose people runs a version with
+    /// a schema holds none. None while this computer stands in no group here.
+    pub(crate) async fn kept(&self, group: &str) -> Vec<Arc<Db>> {
+        let Ok(Standing::Members(people)) = self.host.rail.standing(group) else {
+            return Vec::new();
+        };
+        let read = self.layout(group).inspect_err(|why| tracing::warn!(target: "folder", namespace = group, %why, "carried: the group's record cannot be read, so no app's database is opened for its yes"));
+        let kinds: BTreeSet<&str> = read
+            .iter()
+            .flat_map(|r| r.placed.iter().filter_map(app_of))
+            .collect();
+        for app in kinds.into_iter().filter_map(|k| AppName::parse(k).ok()) {
+            let kept = (self.database((&app, group), (&people, &self.host.actor))).await;
+            tracing::debug!(target: "folder", group, %app, refused = ?kept.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database kept here, as the files that run as this computer's person hold its schema; or why not");
+        }
+        self.host.states.held(group)
+    }
+
     /// The app `kind`'s database in `group`, for the key `key` of `people`,
     /// opened from the `schema.sql` that runs as that key's person: a read,
     /// a write as them, or a subscription (the module docs).
     async fn sql(&self, app: (&AppName, &str), who: (&People, &str, Wrote), req: Request) -> Given {
         let ((app, group), (people, key, wrote)) = (app, who);
-        let schema = format!("apps/{app}/{}", svrngs_db::SCHEMA);
-        let schema = self.runs_at(group, app, &schema, (people, key)).await?;
-        tracing::debug!(target: "folder", group, %app, schema = schema.is_some(), "carried: an app's database asked; none without a schema.sql");
-        let schema = schema.ok_or(NO_SCHEMA)?;
-        let schema = String::from_utf8_lossy(&schema);
-        let db = match self.host.states.open(group, app.as_str(), Some(&schema)) {
+        let db = match self.database((app, group), (people, key)).await? {
             Ok(db) => db,
             Err(r) => return Ok(refused(&r)),
         };

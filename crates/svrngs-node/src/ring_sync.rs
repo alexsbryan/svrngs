@@ -215,7 +215,7 @@ impl AskRound {
 /// begun and ended for a waiting door. The loop is aborted when the
 /// handle returned drops.
 pub fn spawn_ring_sync_loop(
-    host: Arc<Host>,
+    folders: crate::folder::Folders,
     interval: Duration,
     nudge: Arc<Notify>,
     rounds: Rounds,
@@ -234,7 +234,7 @@ pub fn spawn_ring_sync_loop(
             let started = Instant::now();
             rounds.send_modify(|p| p.begun += 1);
             let answered = || rounds.send_modify(|p| p.answered += 1);
-            let outcome = run_one_round(host.as_ref(), &answered, &mut told).await;
+            let outcome = run_one_round(&folders, &answered, &mut told).await;
             rounds.send_modify(|p| p.ended = p.begun);
             if outcome.namespaces > 0 {
                 debug!(
@@ -264,7 +264,8 @@ pub fn spawn_ring_sync_loop(
 
 /// One anti-entropy pass over every namespace this node holds, against every
 /// online peer **standing in its register** (svrngs: upstream, its roster),
-/// every pair dialled at once and `answered` told as each member answers.
+/// every pair dialled at once and `answered` told as each member answers;
+/// `folders`' host's, with the app databases `folders` says it keeps.
 ///
 /// (svrngs, asleep-1-none-held: upstream dialled one pair after another, so
 /// an asleep member held every exchange after it to its dial's ten-second
@@ -273,11 +274,11 @@ pub fn spawn_ring_sync_loop(
 /// no prediction named" 1. Each exchange is idempotent and keyed on the op
 /// id, so two at once with one journal duplicate nothing.)
 pub async fn run_one_round(
-    host: &Host,
+    folders: &crate::folder::Folders,
     answered: &(impl Fn() + Sync),
     told: &mut LeavesTold,
 ) -> RoundOutcome {
-    let mut outcome = RoundOutcome::default();
+    let (host, mut outcome) = (folders.host.as_ref(), RoundOutcome::default());
     let rail = &host.rail;
     let Ok(namespaces) = rail.namespaces().inspect_err(|e| {
         warn!(error = %e, "ring sync: cannot enumerate namespaces");
@@ -354,12 +355,16 @@ pub async fn run_one_round(
             "ring sync: namespace register"
         );
 
+        // The app databases this computer keeps, opened before any member is
+        // dialled, so a member's call this round finds each one here too.
+        let kept = Arc::new(folders.kept(namespace).await);
         for OnlinePeer { contact, .. } in offered_to {
+            let kept = kept.clone();
             dials.push(async move {
                 let ended = exchange_with((transport, contact), rail, namespace).await;
                 if ended.stop.is_none() {
                     answered();
-                    states((transport, contact), host, namespace).await;
+                    states((transport, contact), host, namespace, &kept).await;
                 }
                 ended
             });
@@ -647,18 +652,19 @@ pub(crate) fn bound(rail: &RingRail, group: &str) -> svrngs_db::Binds {
     svrngs_db::Binds::new(keys, crate::peer_wire::ASK_ROOM_BYTES)
 }
 
-/// Each app database this computer keeps in `group`, exchanged with the
-/// member at `to`, after the record's in the same round (the app-state
+/// Each app database this computer keeps in `group`
+/// ([`crate::folder::Folders::kept`]), exchanged with the member at `to`,
+/// after the record's in the same round (the app-state
 /// spike's `exchange`, svrn-docs `rings/current/app-state-spike/spike.patch:1355-1401`):
 /// its waiting sets judged again by the record, then a call a chunk, each
 /// giving what the member's last ask lacks and taking what the member's
 /// answer gives, until neither moves or the chunks are spent.
-async fn states(to: To<'_>, host: &Host, group: &str) {
+async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>]) {
     let bound = Arc::new(bound(&host.rail, group));
     // The member called, the computer its sets are signed by, which a full
     // answer's marks for its own sites are taken on the word of.
     let from = svrngs_db::Device::parse(&key_actor(&to.1.key));
-    for db in host.states.held(group) {
+    for db in kept {
         let judge = bound.clone();
         let again = off(&db, move |db| db.rejudge(&*judge)).await;
         let mut theirs: Option<svrngs_db::Ask> = None;

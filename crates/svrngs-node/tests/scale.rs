@@ -896,7 +896,9 @@ async fn the_account_matches_a_hand_count() {
     //   before chunk 1's push, 3 per reached member, 1 for member 3; each
     //   member answers each of its 3 posts with one (`answer`); and every
     //   offer below catches it up first (journal.rs
-    //   `ops_missing_from_within`): 3 x 2 + 1 + 3 x 2 + 10 = 23.
+    //   `ops_missing_from_within`): 3 x 2 + 1 + 3 x 2 + 10 = 23; and node
+    //   0's layout of the group, read once before it dials, for the app
+    //   databases it keeps (carried.rs `Folders::kept`), 1: 24.
     // - offer: node 0 once a chunk, 2 per reached member; each member once
     //   per post, 3. Unread when the peer's digest is ours: node 0's in
     //   chunk 2, and the member's at posts 2 and 3, once node 0's two acts
@@ -913,31 +915,33 @@ async fn the_account_matches_a_hand_count() {
     //   its endpoint at the round's start and once to dial it (relay
     //   fallbacks), 2; and its read of the record, after each reached
     //   member's exchange, that the member's app databases are judged by
-    //   (ring_sync.rs `states`, `bound`), read before it lists them, so with
-    //   none kept here it posts nothing, 2: 45.
+    //   (ring_sync.rs `states`, `bound`), with none kept here posting
+    //   nothing, 2; and the digest and the register read before it dials,
+    //   which app databases it keeps (carried.rs `Folders::kept`), 2: 47.
     // - register: node 0 asks whether its group already names its relay
     //   before it dials (ring_sync.rs `run_one_round`, `Host::say_relay`:
     //   it does, so no `RelayAt` is committed), lists its members (node.rs
-    //   `standings`) and then offers the group to them (`run_one_round`);
+    //   `standings`), offers the group to them (`run_one_round`) and asks
+    //   whether it stands there to keep its app databases (`Folders::kept`);
     //   each member admits node 0's one connection (node.rs `admit_dialer`)
     //   and checks each of 3 posts (ring_routes.rs `standing_asker`):
-    //   3 + (1 + 3) x 2 = 11. Each member's first read folds (nothing asked
+    //   4 + (1 + 3) x 2 = 12. Each member's first read folds (nothing asked
     //   its register before the round), and node 0's was folded before its
     //   first by `cut_over`'s read of the whole register, which traces no
     //   line counted here. The interpreter reads every act, so the two
     //   records node 0 pushes at post 1 make each member's next check fold
     //   again (release 2; before, records moved no membership and kept
-    //   it): node 0's 3 kept, each member's admit and post 2 rebuilt, its
-    //   posts 1 and 3 kept: kept 3 + 2 x 2, rebuilt 2 x 2.
+    //   it): node 0's 4 kept, each member's admit and post 2 rebuilt, its
+    //   posts 1 and 3 kept: kept 4 + 2 x 2, rebuilt 2 x 2.
     let hand = serde_json::json!({
         "dialled": 3, "reached": 2, "asleep": 1, "refused": 0,
         "acts_moved": 4,
         "cpu_s": null, "wall_s": null,
         "folds": {
-            "write_index": {"kept": 45, "rebuilt": 0},
-            "digest": {"kept": 23, "rebuilt": 0},
+            "write_index": {"kept": 47, "rebuilt": 0},
+            "digest": {"kept": 24, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
-            "register": {"kept": 7, "rebuilt": 4},
+            "register": {"kept": 8, "rebuilt": 4},
         },
     });
     assert_eq!(account, hand, "the round's account against the hand count");

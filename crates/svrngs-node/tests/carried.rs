@@ -3272,10 +3272,10 @@ async fn board_on(node: &Node, group: &str) -> String {
 /// **An app's database syncs between the group's computers** (svrn-docs
 /// `rings/current/APP_STATE.md` §4, "What travels"; invariant 8): Board,
 /// carried on Ana's computer, reaches Ben's folder, and each computer keeps
-/// its own copy. Ana writes a card; her copy, and Ben's once he opens Board,
-/// are said syncing until they first sync in full, and none shows a fresh
-/// board as the group's. A round later Ben's copy has her card and is said
-/// syncing no more; his card reaches hers the same way. Plants, each watched
+/// its own copy, Ben's from his round, synced there with Ana's. Ana writes a
+/// card. A round later Ben's copy has her card and is said syncing no more;
+/// his card reaches hers the same way. (A copy said syncing until it first
+/// syncs in full is the next test's.) Plants, each watched
 /// failing: the round leaving the databases out (Ben never has Ana's card);
 /// a copy's first full sync never kept (Ben's still said syncing).
 #[tokio::test]
@@ -3296,6 +3296,7 @@ async fn an_app_s_database_syncs_between_the_group_s_computers() {
     );
     drop(folder);
     let origin_b = board_on(ben, &group).await;
+    round(ben).await;
 
     let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
     assert_eq!(
@@ -3306,8 +3307,8 @@ async fn an_app_s_database_syncs_between_the_group_s_computers() {
     let (_, ben_first) = sql(ben, &origin_b, read.clone()).await;
     assert_eq!(
         ben_first,
-        json!({ "rows": [], "more": false, "syncing": true }),
-        "a new copy, not the group's yet"
+        json!({ "rows": [], "more": false }),
+        "Ben's copy, kept from his round, the group's before Ana wrote"
     );
     let milk_row = json!([{ "id": "c1", "title": "milk" }]);
     let synced = || async {
@@ -3340,6 +3341,98 @@ async fn an_app_s_database_syncs_between_the_group_s_computers() {
         sql(ana, &origin_a, read).await,
         (200, both),
         "Ben's card on Ana's copy, synced"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **Every computer whose person said yes to an app keeps its database,
+/// a page opened there or not** (svrn-docs `rings/current/APP_STATE.md`,
+/// Decisions, 2026-11-22): the yes is the consent to its schema. Ana brings
+/// Board without a schema; Ben says yes to it as it is. Ana adds its
+/// `schema.sql`, which runs as everyone who never said yes, Ana and Cy, and
+/// as Ben only after a yes to it. Ana writes a card, and a round later Cy's
+/// computer has it, though Cy never opened Board, while Ben's holds no copy.
+/// Ana's lid closes, and Ben says yes: his computer keeps a copy at once,
+/// said syncing while no synced copy answers it (invariant 8), and Cy's
+/// round brings it Ana's card. Plant, watched failing: the round opening no
+/// database for a yes (Cy's first read is a fresh copy, syncing, no card).
+#[tokio::test]
+async fn every_computer_whose_person_said_yes_keeps_the_app_s_database() {
+    let (nodes, dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 74, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let mut folders = Vec::new();
+    for (node, root) in [ana, ben, cy].into_iter().zip(&roots) {
+        folders.push(synced_in(node, root.path(), &group).await);
+    }
+    carry(&folders[0], "Board");
+    let all = [ana, ben, cy];
+    let has = |f: &str| {
+        folders
+            .iter()
+            .all(|d| d.join("apps/Board").join(f).exists())
+    };
+    assert!(
+        until(&all, || has("index.html")).await,
+        "Board reaches every folder"
+    );
+    let said = on_home(ben, "/runs", &json!([group, "Board"])).await;
+    assert!(said.status().is_success(), "{:?}", said.text().await);
+    let schema = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT);\n";
+    std::fs::write(folders[0].join("apps/Board/schema.sql"), schema).unwrap();
+    assert!(
+        until(&all, || has("schema.sql")).await,
+        "its schema reaches every folder"
+    );
+    let origin_a = board_on(ana, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    for node in [cy, ana, ben] {
+        round(node).await;
+    }
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let card = json!({ "rows": [{ "id": "c1", "title": "milk" }], "more": false });
+    let origin_c = board_on(cy, &group).await;
+    assert_eq!(
+        sql(cy, &origin_c, read.clone()).await,
+        (200, card.clone()),
+        "Cy's computer kept Ana's card, synced, before any page of his asked"
+    );
+    let bens = dirs[1].path().join("state").join(&group).join("Board.db");
+    assert!(
+        !bens.exists(),
+        "no copy on Ben's computer before his yes to its schema"
+    );
+
+    on_wire::asleep(ana.net().id());
+    on_wire::part(ben, cy);
+    let said = on_home(ben, "/runs", &json!([group, "Board"])).await;
+    assert!(said.status().is_success(), "{:?}", said.text().await);
+    round(ben).await;
+    assert!(
+        bens.exists(),
+        "a copy on Ben's computer once he says yes to its schema"
+    );
+    let origin_b = board_on(ben, &group).await;
+    assert_eq!(
+        sql(ben, &origin_b, read.clone()).await,
+        (200, json!({ "rows": [], "more": false, "syncing": true })),
+        "Ben's copy, before it meets a synced one"
+    );
+    round(cy).await;
+    assert_eq!(
+        sql(ben, &origin_b, read).await,
+        (200, card),
+        "Ben's copy has Ana's card, synced, from Cy's computer"
     );
     for node in &nodes {
         node.net().close().await;
