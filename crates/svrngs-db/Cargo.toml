@@ -11,7 +11,16 @@ description = "An app's database in a group: SQLite tables beside the group's re
 # "What SQL may do"). 0.41, not the spike's 0.35, which RUSTSEC-2026-0459
 # flags (APP_STATE §8 q8).
 rusqlite = { version = "=0.41.0", features = ["bundled", "hooks"] }
+# A page's statements and rows as JSON, a BLOB as hex, and who is told the
+# database changed: the crates and versions the node's lock already holds.
+serde_json = { workspace = true }
+hex = { workspace = true }
+tokio = { version = "1", default-features = false, features = ["sync"] }
+tracing = { workspace = true }
 
 [build-dependencies]
 # cr-sqlite's four C files and the shim, by the target's C compiler.
 cc = "1"
+
+[dev-dependencies]
+tempfile = "3"

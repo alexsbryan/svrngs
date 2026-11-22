@@ -4702,7 +4702,12 @@ name = "svrngs-db"
 version = "1.13.3"
 dependencies = [
  "cc",
+ "hex",
  "rusqlite",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
