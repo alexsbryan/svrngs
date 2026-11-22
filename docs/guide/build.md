@@ -385,14 +385,30 @@ browser. svrngs files each under your lend's program, so `--program hello` write
 escape anything else in the JSON as `\uXXXX`. If an entry can't be saved,
 svrngs withholds your answer and tells the person why.
 
-**Read** through your own computer's loopback API. Its address is in the
-`api` file of svrngs's data folder (`~/.svrngs`, or `$SVRNGS_DIR`), and
-every call shows the `token` file beside it:
+**Read** through your own computer's svrngs, asked as you. `svrngs ask`
+asks it from a terminal, or from a program in any language, and prints its
+answer:
 
 ```
-curl -H "Authorization: Bearer $(cat ~/.svrngs/token)" "$(cat ~/.svrngs/api)/v1/groups"
-curl -H "Authorization: Bearer $(cat ~/.svrngs/token)" "$(cat ~/.svrngs/api)/v1/rail/log?namespace=<group id>"
+svrngs ask /v1/groups
+svrngs ask '/v1/rail/log?namespace=<group id>'
 ```
+
+It never sends svrngs's token. It checks first that what answers is your
+svrngs, then asks with a code good for that one connection. To post, put
+the JSON after the route: `svrngs ask <route> '<json>'`. It exits 1, saying
+why, when svrngs refuses, and 3 when svrngs isn't running. From Python:
+
+```python
+import json, subprocess
+asked = subprocess.run(["svrngs", "ask", "/v1/groups"], capture_output=True, text=True, check=True)
+groups = json.loads(asked.stdout)["groups"]
+```
+
+A JavaScript program can copy
+[`apps/client/svrngs.mjs`](../../apps/client/svrngs.mjs) beside its code
+and ask with it: `import { ask } from './svrngs.mjs'`, then
+`await ask('/v1/groups')`.
 
 `/v1/groups` lists your groups by `id`; `/v1/rail/log` answers every app's
 entries in the group as `ops` (yours are those whose `kind` begins
@@ -457,8 +473,14 @@ refused, and so is one without the token.
   it"*: start your server first.
 - *"say which program is on port 4400: `svrngs share 4400 --program <name>` …"*: add
   `--program` with a name of your choosing.
-- *"send this computer's token, which … holds, as `Authorization: Bearer
-  <token>`: …"*: read the `token` file and send it.
+- *"svrngs answers a program here only as you: ask through `svrngs ask
+  <route>`, or apps/client/svrngs.mjs …"*: your program asked without a
+  code. Ask through `svrngs ask <route>`, or copy
+  [`apps/client/svrngs.mjs`](../../apps/client/svrngs.mjs) beside your
+  program and ask with it.
+- *"svrngs doesn't take its token from a program any more: …"*: your
+  program sent svrngs's token. Ask the same way instead, and never send the
+  `token` file's text to anything.
 - *"the record is served to this computer's apps, not to a page in a
   browser"*: call the loopback API from your server, not from page code.
 - *"an act is JSON, {op} or {corrects, op}"*: your `POST` to `svrngs/acts`
