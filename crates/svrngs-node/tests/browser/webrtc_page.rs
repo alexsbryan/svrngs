@@ -320,6 +320,73 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
     drop(ada);
 }
 
+in_webkit!(
+    /// **A direct path's data endpoint presents the pass and the holder's
+    /// link naming its key at its relays** (lend-guests; RELAY_COMMONS
+    /// design 4), as the run's own endpoint does, so a group's own relay
+    /// admits it, the key standing in no group: the phone opens ada's page
+    /// with the direct path, and every connection the data endpoint's key —
+    /// as its trace names it — made to the relay presented a token that
+    /// reads as the pass and a link (svrngs-core's `presented`), which the
+    /// call a group's own relay makes of it takes from that key:
+    /// `authority::resolve` for the pass's own app (crates/svrngs/src/relay.rs
+    /// `pass_holds`; that relay's admission of such a token is
+    /// crates/svrngs/tests/relay.rs's to show). Planted, watched red: the data
+    /// endpoint bound presenting no token, as before.
+    a_direct_paths_data_endpoint_presents_its_pass_and_link_at_its_relays
+);
+async fn a_direct_paths_data_endpoint_presents_its_pass_and_link_at_its_relays(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, _mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    direct_on(dir.path());
+
+    let seen = drive(
+        engine,
+        "runtime.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            "film": film_args(),
+            "direct": true,
+        }),
+        None,
+    )
+    .await;
+    let trace = seen["trace"].as_str().unwrap_or_default();
+    let data = trace
+        .split_once("the data endpoint's key ")
+        .and_then(|(_, key)| key.get(..64))
+        .unwrap_or_else(|| panic!("the worker's trace names no data endpoint's key:\n{trace}"));
+    let presented = harness::presented_by(data);
+    assert!(
+        !presented.is_empty(),
+        "the data endpoint {data} never reached the relay:\n{trace}"
+    );
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    for token in presented {
+        let token = token.unwrap_or_else(|| panic!("the data endpoint {data} presented no token"));
+        let (pass, link) = svrngs_core::pass::presented(&token)
+            .unwrap_or_else(|| panic!("the data endpoint's token reads as no pass: {token}"));
+        assert!(link.is_some(), "the data endpoint presented the pass alone");
+        assert_eq!(pass.app.to_string(), label(1, "page"), "the lend's pass");
+        let held =
+            svrngs_core::authority::resolve(&pass, link.as_ref(), data, &pass.app, now, || ());
+        assert!(
+            held.is_ok(),
+            "the pass and link do not hold for the data endpoint's key: {held:?}"
+        );
+    }
+    drop(ada);
+}
+
 /// The paths the trace's first `goes direct` line holds, as JSON
 /// (`Direct::paths`): serde_json orders an object's keys, so `kind` and
 /// `selected` are not adjacent, and a path is read rather than matched as

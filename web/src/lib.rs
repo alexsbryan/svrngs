@@ -250,17 +250,9 @@ async fn bind(
     // (relay-default), as upstream refused a dial string with no relay
     // (ring-runtime/src/lib.rs:91-99). Dotless, as WebKit reaches them.
     relays.iter().for_each(|relay| t!("LAYER parse: ok — relay {relay}"));
-    // A pass's holder presents the pass to every relay it was handed: the
-    // group's own admits it by the pass (self-host); the build's fallback
-    // and n0's ignore the token.
-    let map: iroh::RelayMap = relays.iter().cloned().collect();
-    let mode = iroh::RelayMode::Custom(match token {
-        Some(token) => map.with_auth_token(token),
-        None => map,
-    });
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
-        .relay_mode(mode);
+        .relay_mode(presented_at(&relays, token));
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)…");
@@ -285,6 +277,18 @@ async fn bind(
     }
     t!("LAYER relay-connect: ok — endpoint reports online (relay handshake done)");
     Ok(Bound { ep, issuer, relays })
+}
+
+/// `relays`, each presented `token` when there is one: a lend's worker's
+/// pass and the holder's link naming the key it dials from, by which a
+/// group's own relay admits that key (self-host); the build's fallback and
+/// n0's ignore it.
+fn presented_at(relays: &[RelayUrl], token: Option<String>) -> iroh::RelayMode {
+    let map: iroh::RelayMap = relays.iter().cloned().collect();
+    iroh::RelayMode::Custom(match token {
+        Some(token) => map.with_auth_token(token),
+        None => map,
+    })
 }
 
 /// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
@@ -866,13 +870,20 @@ pub struct Direct {
 /// reaching the network through `relays` (the pass's, as the run's
 /// endpoint is), dialling the lender through `relay` when it is named:
 /// every datagram out goes to `out`, and what the window's channel brings
-/// comes in through [`data_push`].
+/// comes in through [`data_push`]. Its key is `key`, made fresh for the
+/// attempt, which `link`, the holder's, names: it presents `pass` and
+/// `link` at its relays, as the run's own endpoint does
+/// ([`holder_endpoint`]), since a group's own relay admits it by them, the
+/// key standing in no group (self-host).
 #[wasm_bindgen]
 pub async fn direct_start(
     lender: String,
     relay: Option<String>,
-    relays: Vec<String>,
+    relays: Option<Vec<String>>,
     out: js_sys::Function,
+    key: Vec<u8>,
+    pass: String,
+    link: String,
 ) -> Result<Direct, JsError> {
     let lender: iroh::EndpointId = lender.parse().map_err(|e| {
         JsError::new(&format!(
@@ -880,7 +891,7 @@ pub async fn direct_start(
         ))
     })?;
     let named = named(&relay)?;
-    let mut parsed = handed(&relays)?;
+    let mut parsed = handed(&relays.unwrap_or_default())?;
     // A pass kept before relay fallbacks names one relay and no `relays`:
     // the relay named for the lend is the data endpoint's way in then
     // (web/lend.js `direct`, as `opened` reads them).
@@ -890,7 +901,8 @@ pub async fn direct_start(
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
-    let secret = iroh::SecretKey::generate();
+    let secret = iroh::SecretKey::from_bytes(&signing(key)?.to_bytes());
+    t!("LAYER key: ok — the data endpoint's key {}", secret.public());
     let me = *secret.public().as_bytes();
     let (arrived, arrivals) = tokio::sync::mpsc::unbounded_channel();
     // The wire's send must be `Send`, which `out` is not: it takes the
@@ -908,7 +920,7 @@ pub async fn direct_start(
     });
     let data = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
-        .relay_mode(iroh::RelayMode::custom(parsed.clone()))
+        .relay_mode(presented_at(&parsed, Some(presenting(&pass, Some(&link)))))
         .add_custom_transport(wire::Wire::new(&me, arrivals, send))
         .transport_config(paths::quick_paths(Some(dial::QUEUED)))
         .bind()
@@ -929,11 +941,6 @@ pub async fn direct_start(
 
 #[wasm_bindgen]
 impl Direct {
-    /// The data endpoint's key, which the offer names.
-    pub fn key(&self) -> String {
-        self.data.0.id().to_string()
-    }
-
     /// The direct attempt, driven here so the worker's JavaScript stays
     /// thin (webrtc-page): the window is asked over `port` — the worker's
     /// end of the channel it announced itself on (`{webrtc: 'here'}`,

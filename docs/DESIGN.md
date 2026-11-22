@@ -2160,7 +2160,11 @@ film's bytes need not cross a relay when the phone and its lender share a
 Wi-Fi: the lend's endpoint offers the lender a WebRTC path on the dial it
 already holds (`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend
 worker's fresh endpoint, and the window holds the channel, since a worker
-has no `RTCPeerConnection`. The offer is answered only to a dialer
+has no `RTCPeerConnection`. That endpoint's key is made for the attempt and
+named by the holder's link, so it presents the pass and that link at its
+relays, as the run's own endpoint does (`web/src/lib.rs` `direct_start`):
+a group's own relay admits it by them for the relay leg beside the channel
+("A relay anyone runs", above). The offer is answered only to a dialer
 holding a live pass for a lend this computer lends
 (`door::holder_of_offer`), only while this computer is on a network its
 lender turned direct connections on for from the home page
