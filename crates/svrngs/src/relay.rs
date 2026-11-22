@@ -115,27 +115,28 @@ impl AccessControl for Admits {
         // A pass's holder (self-host): a lend's page dials from a fresh key
         // that stands in no group, and the pass its person signed for it is
         // what a group's own relay admits it by, as the door admits it for
-        // the lends the pass names.
-        if let Some(token) = request.auth_token() {
-            return pass_holds(&key, &token, root, signer).await;
-        }
-        let asked = key.clone();
+        // the lends the pass names; then the person stands here or not,
+        // read as their own key's is. A token that holds nothing is refused.
+        let person = match request.auth_token().map(|token| pass_holds(&key, &token)) {
+            Some(None) => return Access::Deny { reason: None },
+            held => held.flatten(),
+        };
+        let asked = person.clone().unwrap_or_else(|| key.clone());
         // The record is read from disk, off the relay's own tasks.
         let stands = tokio::task::spawn_blocking(move || {
             RingRail::new(root, signer).standing_anywhere(&asked)
         });
-        verdict(&key, None, stands.await)
+        verdict(&key, person.as_deref(), stands.await)
     }
 }
 
-/// Whether the dialer `key`, presenting `token`, is a pass's holder a
-/// group held here admits: the token read as a [`Pass`], signed by the
-/// person it names, live, naming `key` as its holder, whose person stands
-/// in a group held here. Any other token is refused, each branch traced.
-async fn pass_holds(key: &str, token: &str, root: PathBuf, signer: Arc<SigningKey>) -> Access {
+/// The person whose pass the dialer `key` holds, presenting `token`: the
+/// token read as a [`Pass`], signed by the person it names, live, naming
+/// `key` as its holder. `None` for any other token, each branch traced.
+fn pass_holds(key: &str, token: &str) -> Option<String> {
     let Some(pass) = Pass::decode(token) else {
         tracing::debug!(target: "relay", key, "relay: refused — the token is not a pass that reads");
-        return Access::Deny { reason: None };
+        return None;
     };
     let why = if pass.holder != key {
         Some("the pass's holder is another key")
@@ -148,13 +149,9 @@ async fn pass_holds(key: &str, token: &str, root: PathBuf, signer: Arc<SigningKe
     };
     if let Some(why) = why {
         tracing::debug!(target: "relay", key, person = %pass.person, why, "relay: refused — a pass that does not admit this dialer");
-        return Access::Deny { reason: None };
+        return None;
     }
-    let person = pass.person.clone();
-    // The record is read from disk, off the relay's own tasks.
-    let stands =
-        tokio::task::spawn_blocking(move || RingRail::new(root, signer).standing_anywhere(&person));
-    verdict(key, Some(&pass.person), stands.await)
+    Some(pass.person)
 }
 
 /// Whether `key` is let through, by the read of where it — or `person`,
