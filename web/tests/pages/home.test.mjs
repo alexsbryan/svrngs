@@ -1469,6 +1469,38 @@ test('a leave is said as a leave on both pages, and a link to it again is refuse
   assert.deepEqual([anas.went, anas.unanswered], [[], []]);
 });
 
+// Leaving from the group's own page in layout B, the one people get
+// (home-reading.js `first`): Leave is under Manage this group, so the
+// page is at `?group=trip` when it is pressed. Left, the page is All your
+// groups: the leave said once, the groups still yours, and the way to
+// Groups you left, never "This group is not available here" over a page
+// with every place hidden. What a person reads is the page less what B
+// hides (`hidden`, grouped.js). The plant is the fault this law was
+// written for: watched failing with leave.js keeping `?group=` on a leave.
+test('leaving a group from its page in layout B lands on All your groups', async () => {
+  const trip = (left) => group({ id: 'trip', name: 'Trip', keeps: false, left });
+  const state = { left: false };
+  const answers = ada({
+    groups: [group({ name: 'House' }), trip(false)],
+    'POST /v1/leaves': () => ((state.left = true), { outcome: 'left' }),
+  });
+  answers['GET /v1/groups'] = () => ({
+    groups: [group({ name: 'House' }), trip(state.left)],
+    key: ADA,
+  });
+  const page = await home(answers, '/?group=trip');
+  await page.press('#group-trip button', 'Leave Trip');
+  const seen = (at) =>
+    at.attributes?.hidden === undefined ? (at.data ?? at.childNodes.map(seen).join(' ')) : '';
+  const read = seen(page.root).replace(/\s+/g, ' ');
+  assert.ok(read.includes('You left Trip.'), read);
+  assert.ok(!read.includes('not available'), read);
+  assert.deepEqual(page.text('nav a[aria-current=page]'), ['All your groups']);
+  assert.deepEqual(page.text('.group-list a'), ['House']);
+  assert.ok(read.includes('Groups you left'), read);
+  assert.deepEqual([page.went, page.unanswered], [[], []]);
+});
+
 // leave_page::a_leave_reaches_the_leavers_other_computer, the page's
 // half: three groups /v1/groups says were left are each listed under
 // Groups you left by whose each is. That each reaches her other computer:
