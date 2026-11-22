@@ -33,18 +33,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::Ordering::Relaxed;
 
-use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, Value as Sql, ValueRef};
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, TransactionBehavior::Immediate, params};
 use serde::{Deserialize, Serialize};
 use svrngs_core::set::{At, Nonce, Site, site};
 
+use crate::parse::{BOUND, Change};
 use crate::{Db, Refused, fault};
-
-/// A `col_version` or a causal length past this is refused for good: one at
-/// `i64::MAX` freezes its cell (svrn-docs
-/// `app-state-diligence/engine-and-sync.md`, C3), and every copy reads the
-/// bound alike from the set.
-const BOUND: i64 = 1 << 53;
 
 /// A set's seq at its database, and a mark, a have or a twin's place: from 1
 /// to `i64::MAX`, what SQLite holds. Parsed as the wire is read, so a call
@@ -191,31 +186,6 @@ pub enum Took {
     /// This copy couldn't apply it: its mark holds, and the next call
     /// fetches it again.
     Fault,
-}
-
-/// One change row of a set, as `crsql_changes` carries it, less the site
-/// and version its set names once.
-#[derive(Serialize, Deserialize)]
-struct Change {
-    table: String,
-    pk: Vec<u8>,
-    cid: String,
-    #[serde(with = "Value")]
-    val: Sql,
-    col_version: i64,
-    cl: i64,
-    seq: i64,
-}
-
-/// rusqlite's value, as postcard writes it.
-#[derive(Serialize, Deserialize)]
-#[serde(remote = "Sql")]
-enum Value {
-    Null,
-    Integer(i64),
-    Real(f64),
-    Text(String),
-    Blob(Vec<u8>),
 }
 
 /// Whether the record binds a device's key, as [`Db::ingest`] is told.

@@ -57,6 +57,7 @@ use serde_json::{Value, json};
 use tokio::sync::watch;
 
 mod form;
+mod parse;
 mod sync;
 pub use form::FORM;
 use form::Table;
