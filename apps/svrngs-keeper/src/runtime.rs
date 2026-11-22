@@ -23,6 +23,8 @@ pub enum RunError {
     Podman(#[from] PodmanError),
     #[error("{0} is not a name give runs an app under: lowercase letters, digits and -, at most 40")]
     Name(String),
+    #[error("{0} runs a program installed on this computer: svrngs-keeper keeps it here, and give cannot run it")]
+    Native(String),
     #[error("Podman here runs as root; give keeps apps only in rootless Podman")]
     Rootful,
     #[error("{service} stopped, exit {code}. Its last lines:\n{logs}")]
@@ -168,6 +170,10 @@ impl<'a> App<'a> {
     /// Start the app with its door on `127.0.0.1:<at>`. Its volumes are made
     /// if they are not here, and kept as they are if they are.
     pub fn start(&self, at: u16, agreed: &Agreed) -> Result<(), RunError> {
+        if self.card.native.is_some() {
+            tracing::debug!(title = self.card.title, "refused: a native card is not run in podman");
+            return Err(RunError::Native(self.card.title.clone()));
+        }
         let (name, door) = (self.name.as_str(), self.card.door);
         for v in &self.card.volumes {
             let v = self.volume(v);

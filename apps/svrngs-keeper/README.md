@@ -9,7 +9,10 @@ svrngs crate and no Give (`tests/surface.rs`).
 ## The files
 
 - `src/card.rs`: a card, the app's own `compose.yaml` with an `x-svrngs`
-  block, read once, with each refusal naming its field.
+  block, read once, with each refusal naming its field. A native card's
+  `x-svrngs.native` names a program installed here (a command, a folder,
+  the names of the settings it reads) and it has no services; Give refuses
+  it (`tests/native.rs`).
 - `src/runtime.rs`: start, health, snapshot, restore and stop, for one card
   under one name, on Podman's command line (`src/podman.rs`).
 - `src/machine.rs`: Podman's machine on a Mac.

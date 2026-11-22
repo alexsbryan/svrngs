@@ -8,6 +8,11 @@
 //! without its author hearing why. Five are refused for what they would let
 //! an app do to the computer that keeps it: `build`, `privileged`, a custom
 //! network, host networking, and a bind mount from the host.
+//!
+//! A native card (`x-svrngs.native`) runs a program installed on this
+//! computer instead of services: svrngs-keeper keeps it in a user unit, and
+//! Give refuses it, since another computer may not have the program
+//! (svrn-docs HOSTING_AND_GIVE_BOUNDARY.md).
 
 use std::collections::BTreeMap;
 use std::time::Duration;
@@ -29,7 +34,11 @@ pub struct Card {
     pub volumes: Vec<String>,
     pub asks: Vec<Ask>,
     /// In the order the file gives them, which is the order they start.
+    /// Empty for a native card, and only for one.
     pub services: Vec<Service>,
+    /// The program a native card runs. When it is here, the card has no
+    /// services, volumes or asks: parsing refused any.
+    pub native: Option<Native>,
     /// The file's bytes, hashed (blake3, hex): each snapshot names the
     /// version that wrote it, and a copy is started only by that version
     /// (GIVE.md §4, "Versions and drift").
@@ -39,6 +48,19 @@ pub struct Card {
     /// start again parses by these same rules (docs/APP_ACCESS_AND_STOP.md
     /// B5).
     pub text: String,
+}
+
+/// A program installed on this computer, as a native card runs it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Native {
+    /// The program and its arguments, as words that no shell splits. A word
+    /// may begin `~/`, for the home folder of whoever keeps it.
+    pub command: Vec<String>,
+    /// The folder it runs in: absolute, `~`, or under `~/`.
+    pub folder: String,
+    /// The settings it reads from the environment of whoever keeps it, by
+    /// name; a card never carries their values.
+    pub environment: Vec<String>,
 }
 
 /// Which published port is the app's door, and how it is spoken.
@@ -215,6 +237,75 @@ fn refuse<T>(field: &str, why: impl Into<String>) -> Result<T, Refused> {
 
 const NETWORK: &str = "give runs each app on a network of its own, so a custom network is refused";
 
+const NATIVE_ALONE: &str =
+    "a native card runs its own program in its own folder, so it has no services, volumes or asks";
+
+/// `x-svrngs.native`: `command`, `folder`, and `environment` if it reads any.
+/// Each value becomes a line of a systemd unit, so a control character, which
+/// could begin another line, is refused in all of them.
+fn read_native(v: &Value) -> Result<Native, Refused> {
+    let at = "x-svrngs.native";
+    let m = mapping(v, at)?;
+    for key in keys(m, at)? {
+        if !matches!(key, "command" | "folder" | "environment") {
+            return refuse(
+                &format!("{at}.{key}"),
+                "a native program has a command, a folder and the names of its environment",
+            );
+        }
+    }
+    let plain = |word: &str, field: &str| {
+        if word.chars().any(char::is_control) {
+            refuse(
+                &format!("{at}.{field}"),
+                "has a control character, which no command or folder needs",
+            )
+        } else {
+            Ok(())
+        }
+    };
+    let command = words(get(m, "command", at)?, &format!("{at}.command"))?;
+    match command.first() {
+        Some(program) if !program.is_empty() => {}
+        _ => return refuse(&format!("{at}.command"), "names the program to run first"),
+    }
+    for word in &command {
+        plain(word, "command")?;
+    }
+    let folder = string(get(m, "folder", at)?, &format!("{at}.folder"))?;
+    plain(&folder, "folder")?;
+    if !(folder.starts_with('/') || folder == "~" || folder.starts_with("~/")) {
+        return refuse(&format!("{at}.folder"), "is absolute, ~, or under ~/");
+    }
+    let environment = match m.get("environment") {
+        None => Vec::new(),
+        Some(v) => list(v, &format!("{at}.environment"))?
+            .iter()
+            .map(|name| {
+                let name = string(name, &format!("{at}.environment"))?;
+                let ok = name
+                    .as_bytes()
+                    .first()
+                    .is_some_and(|b| b.is_ascii_alphabetic() || *b == b'_')
+                    && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_');
+                if ok {
+                    Ok(name)
+                } else {
+                    refuse(
+                        &format!("{at}.environment"),
+                        format!("{name} is not a setting's name: letters, digits and _, never a value"),
+                    )
+                }
+            })
+            .collect::<Result<_, _>>()?,
+    };
+    Ok(Native {
+        command,
+        folder,
+        environment,
+    })
+}
+
 fn read(text: &str) -> Result<Card, Refused> {
     let root: Value = serde_yaml::from_str(text).map_err(|e| Refused::Unreadable(e.to_string()))?;
     let root = mapping(&root, "the card")?;
@@ -230,27 +321,40 @@ fn read(text: &str) -> Result<Card, Refused> {
         }
     }
     let volumes = read_volumes(root.get("volumes"))?;
-    let services = mapping(get(root, "services", "the card")?, "services")?;
-    if services.is_empty() {
-        return refuse("services", "the card names no service");
-    }
+    let native = root
+        .get("x-svrngs")
+        .and_then(Value::as_mapping)
+        .and_then(|x| x.get("native"));
     let mut out = Vec::new();
-    for (name, service) in services {
-        let name = string(name, "services")?;
-        out.push(read_service(&name, service, &volumes)?);
+    match (native, root.get("services")) {
+        (Some(_), Some(_)) => return refuse("services", NATIVE_ALONE),
+        (Some(_), None) if !volumes.is_empty() => return refuse("volumes", NATIVE_ALONE),
+        (Some(_), None) => {}
+        (None, services) => {
+            let services = services.map_or_else(|| refuse("the card", "has no services"), Ok)?;
+            let services = mapping(services, "services")?;
+            if services.is_empty() {
+                return refuse("services", "the card names no service");
+            }
+            for (name, service) in services {
+                let name = string(name, "services")?;
+                out.push(read_service(&name, service, &volumes)?);
+            }
+        }
     }
     let x = mapping(get(root, "x-svrngs", "the card")?, "x-svrngs")?;
     for key in keys(x, "x-svrngs")? {
-        if !matches!(key, "title" | "about" | "door" | "state" | "asks") {
+        if !matches!(key, "title" | "about" | "door" | "state" | "asks" | "native") {
             return refuse(
                 &format!("x-svrngs.{key}"),
-                "x-svrngs has five fields: title, about, door, state and asks",
+                "x-svrngs has six fields: title, about, door, state, asks and native",
             );
         }
     }
+    let native = native.map(read_native).transpose()?;
     let title = string(get(x, "title", "x-svrngs")?, "x-svrngs.title")?;
     let about = string(get(x, "about", "x-svrngs")?, "x-svrngs.about")?;
-    let door = read_door(get(x, "door", "x-svrngs")?, &out)?;
+    let door = read_door(get(x, "door", "x-svrngs")?, &out, native.is_some())?;
     // `state` is never assumed: an app that keeps nothing says `state: []`.
     let state = list(get(x, "state", "x-svrngs")?, "x-svrngs.state")?
         .iter()
@@ -270,6 +374,9 @@ fn read(text: &str) -> Result<Card, Refused> {
             .map(read_ask)
             .collect::<Result<_, _>>()?,
     };
+    if native.is_some() && !asks.is_empty() {
+        return refuse("x-svrngs.asks", NATIVE_ALONE);
+    }
     Ok(Card {
         title,
         about,
@@ -278,6 +385,7 @@ fn read(text: &str) -> Result<Card, Refused> {
         volumes,
         asks,
         services: out,
+        native,
         version: String::new(),
         text: String::new(),
     })
@@ -516,7 +624,8 @@ fn read_health(v: &Value, at: &str) -> Result<Option<Healthcheck>, Refused> {
     }))
 }
 
-fn read_door(v: &Value, services: &[Service]) -> Result<Door, Refused> {
+/// A native card's door is its program's own port, which no service lists.
+fn read_door(v: &Value, services: &[Service], native: bool) -> Result<Door, Refused> {
     let at = "x-svrngs.door";
     let m = mapping(v, at)?;
     for key in keys(m, at)? {
@@ -537,7 +646,7 @@ fn read_door(v: &Value, services: &[Service]) -> Result<Door, Refused> {
         Some("udp") => Protocol::Udp,
         _ => return refuse(&format!("{at}.protocol"), "a door's protocol is http, tcp or udp"),
     };
-    if !services.iter().any(|s| s.ports.contains(&(port, protocol.transport()))) {
+    if !native && !services.iter().any(|s| s.ports.contains(&(port, protocol.transport()))) {
         return refuse(
             at,
             format!("{port}/{} is not in any service's ports", protocol.transport().as_str()),
