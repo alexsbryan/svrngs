@@ -502,9 +502,8 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 /// for every lender it reaches, never one per dial.
 #[wasm_bindgen]
 pub async fn endpoint(key: Vec<u8>, token: String, meets: Option<Vec<String>>) -> Result<Endpoint, JsError> {
-    Ok(Endpoint {
-        bound: bind_for(key, &token, &meets.unwrap_or_default()).await?,
-    })
+    let bound = bind_for(key, &token, &meets.unwrap_or_default()).await?;
+    Ok(Endpoint { bound })
 }
 
 /// Bind one endpoint for a pass's holder, whose key is `key` — this run's,
@@ -737,10 +736,8 @@ pub fn approve_line(
     let line: svrngs_core::Op<svrngs_core::SignedOp> = serde_json::from_str(&line)?;
     let pass = svrngs_core::approve_in_open(&approver, &group, &reach, &issued, &line, now as i64)
         .map_err(|error| JsError::new(&error.to_string()))?;
-    Ok(js_sys::Array::of2(
-        &serde_json::to_string(&pass)?.into(),
-        &js_sys::Uint8Array::from(pass.approval_message().as_slice()).into(),
-    ))
+    let message = js_sys::Uint8Array::from(pass.approval_message().as_slice());
+    Ok(js_sys::Array::of2(&serde_json::to_string(&pass)?.into(), &message))
 }
 
 type Stamp = (f64, f64, Option<String>);
@@ -998,26 +995,18 @@ impl Direct {
         // its path the window's channel, and whichever holds the channel
         // carries the dial: the second when it has it, its relay backup with
         // it, else the first, whose relay the remote's addresses add.
+        let (data, peer) = (&self.data.0, self.peer);
+        let dial = |at: Vec<iroh::TransportAddr>, what: &'static str| async move {
+            let to = iroh::EndpointAddr::from_parts(peer, at);
+            (data.connect(to, Alpn::Lend.bytes()).await).map_err(|e| JsError::new(&format!("{what}: {e}")))
+        };
         let custom = iroh::TransportAddr::Custom(wire::addr_of(self.peer.as_bytes()));
-        let first = self
-            .data
-            .0
-            .connect(
-                iroh::EndpointAddr::from_parts(self.peer, [custom.clone()]),
-                Alpn::Lend.bytes(),
-            )
-            .await
-            .map_err(|e| JsError::new(&format!("dial webrtc: {e}")))?;
+        let first = dial(vec![custom.clone()], "dial webrtc").await?;
         let mut at = vec![custom];
         if let Some(relay) = &self.relay {
             at.push(iroh::TransportAddr::Relay(relay.clone()));
         }
-        let second = self
-            .data
-            .0
-            .connect(iroh::EndpointAddr::from_parts(self.peer, at), Alpn::Lend.bytes())
-            .await
-            .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
+        let second = dial(at, "dial both").await?;
         self.conn = Some(if on_the_channel(&second, false) { second } else { first });
         // The direct path is the attempt's point, and iroh may settle the
         // connection on the relay first (the channel is still opening),

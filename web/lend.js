@@ -796,8 +796,7 @@ async function proxied(asked, held) {
   if (set) await keepCookies(asked, set);
   if (asked.where.read) return inert(res);
   const turned = (await refusedAppend(asked, res)) ?? redirected(asked, res);
-  if (turned) return turned;
-  return served(asked, res, said, set);
+  return turned ?? served(asked, res, said, set);
 }
 
 // The headers `asked` goes to the door with: the page's, but its cookies
