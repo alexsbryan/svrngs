@@ -634,7 +634,7 @@ async fn an_app_has_this_computers_key_sign_its_bytes() {
 }
 
 /// Every route of the record, as an app asks it: its method and path.
-const RECORD_ROUTES: [(&str, &str); 16] = [
+const RECORD_ROUTES: [(&str, &str); 17] = [
     ("POST", "/v1/rail/append?namespace=house"),
     ("GET", "/v1/rail/log?namespace=house"),
     ("POST", "/v1/rail/live?namespace=house"),
@@ -652,6 +652,7 @@ const RECORD_ROUTES: [(&str, &str); 16] = [
     ("POST", "/v1/removals"),
     ("POST", "/v1/handovers"),
     ("POST", "/v1/leaves"),
+    ("POST", "/v1/sleeps"),
     ("GET", "/v1/room"),
     ("POST", "/v1/room"),
 ];

@@ -81,6 +81,11 @@ pub const ACTS: &str = "/svrngs/acts";
 /// writes it, at its own origin.
 pub const SQL: &str = "/svrngs/sql";
 
+/// Where this computer's own platform says, as its person, that the
+/// computer is about to sleep, as a lid closes ([`sleeps`]): Arch's
+/// `packaging/arch/svrngs.sleep`, by `svrngs ask`.
+pub const SLEEPS: &str = "/v1/sleeps";
+
 /// The most a carried app's write reads: an act's most, and its envelope.
 const WRITE_MOST: usize = svrngs_core::MAX_PAYLOAD_BYTES + 1024;
 
@@ -686,6 +691,16 @@ impl Folders {
         tracing::debug!(target: "folder", group, %app, refused = ?answered.as_ref().err(), "carried: an app's database answered a POST, or refused it and why");
         Ok(answered.map_or_else(|r| refused(&r), |a| Json(a).into_response()))
     }
+}
+
+/// `POST /v1/sleeps` ([`SLEEPS`]): the app databases this computer keeps
+/// pushed to an awake member before it sleeps
+/// ([`crate::ring_sync::before_sleep`]), answered once each group's are,
+/// or no member answered: `{took, groups}`, the groups an awake member
+/// took, of those it keeps a database in.
+pub(crate) async fn sleeps(State(f): State<Folders>) -> Json<Value> {
+    let (took, groups) = crate::ring_sync::before_sleep(&f.host).await;
+    Json(json!({ "took": took, "groups": groups }))
 }
 
 /// A refusal of an app's database, as its page reads one: `{refused,
