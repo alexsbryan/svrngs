@@ -31,7 +31,7 @@ impl Lattice for Join {
         Join::join(self, other)
     }
     fn state(&self) -> State {
-        Join::state(self)
+        Join::state(self, TABLES)
     }
 }
 

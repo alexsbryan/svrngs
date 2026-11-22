@@ -23,23 +23,36 @@ use crate::rule::Rule;
 /// write which row"), and each device writes it only under its own person's
 /// key, as an honest one does. `x` has no type, so SQLite converts no value
 /// put in it (its affinity is BLOB), and it takes every kind of value; every
-/// other column takes only its own type, its text never a number's.
+/// other column takes only its own type, its text never a number's. `tiles`
+/// has a NOT NULL column with a DEFAULT, which cr-sqlite allows only so
+/// (`tableinfo.rs:1117-1130`). The simulator writes only `magnets` and
+/// `votes`, so a seed's run is as it was before `tiles`; the case of column
+/// defaults writes `tiles` (`cases.rs`).
 pub const SCHEMA: &str = "
     CREATE TABLE magnets (id TEXT PRIMARY KEY NOT NULL, pos INTEGER, word TEXT, x);
     CREATE TABLE votes (person_key TEXT NOT NULL, item INTEGER NOT NULL,
-      n INTEGER, note TEXT, PRIMARY KEY (person_key, item)) STRICT;";
+      n INTEGER, note TEXT, PRIMARY KEY (person_key, item)) STRICT;
+    CREATE TABLE tiles (id TEXT PRIMARY KEY NOT NULL, pos INTEGER,
+      size INTEGER NOT NULL DEFAULT 3) STRICT;";
 
 /// `SCHEMA`'s tables as the model copy reads them, each with its non-key
-/// columns in schema order. The live copy holds these to the columns the
-/// engine reads from `SCHEMA` (`live.rs`, `LiveCopy::new`).
+/// columns in schema order and their defaults. The live copy holds these to
+/// what the engine reads from `SCHEMA` (`live.rs`, `LiveCopy::new`).
 pub const TABLES: &[Table] = &[
     Table {
         name: "magnets",
         cols: &["pos", "word", "x"],
+        defaults: &[],
     },
     Table {
         name: "votes",
         cols: &["n", "note"],
+        defaults: &[],
+    },
+    Table {
+        name: "tiles",
+        cols: &["pos", "size"],
+        defaults: &[("size", Val::Integer(3))],
     },
 ];
 
@@ -337,7 +350,8 @@ impl<R: Replica> Sim<R> {
     pub fn judge(&mut self, rule: Rule, make: &dyn Fn(Site) -> R) -> Result<(), String> {
         let standing = self.standing();
         let admissible: BTreeSet<SetId> = standing.iter().flat_map(|&c| self.seen[c].iter().copied()).collect();
-        let want = reference::under(rule, self.written.iter().filter(|s| admissible.contains(&s.id())));
+        let admitted = self.written.iter().filter(|s| admissible.contains(&s.id()));
+        let want = reference::under(rule, TABLES, admitted);
         for &c in &standing {
             let got = self.copies[c].state();
             if got != want {
@@ -386,10 +400,10 @@ pub fn diff(got: &State, want: &State) -> String {
     "no row differs".into()
 }
 
-/// One seeded run, met and judged under today's rule; a failure names its
-/// seed and what the run did.
+/// One seeded run, met and judged under the rule svrngs keeps; a failure
+/// names its seed and what the run did.
 pub fn one<R: Replica>(seed: u64, make: &dyn Fn(Site) -> R) -> Result<(), String> {
-    one_under(seed, Rule::Today, make).map(|_| ())
+    one_under(seed, Rule::default(), make).map(|_| ())
 }
 
 /// One seeded run of copies `make` builds under `rule`, met and judged by

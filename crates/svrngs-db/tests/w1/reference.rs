@@ -13,29 +13,37 @@
 //!   value in cr-sqlite's order (`:93`, `:108`; `Val::cmp_crsql`), then the
 //!   larger site (`:95-106`, with merge-equal-values on, as svrngs sets it).
 //!   The site only names which of two equal values' sets stands.
-//! - **A column no change at that length reaches is NULL,** as on a copy
-//!   that creates the row from a set at that length: it inserts the key
-//!   alone (`:620-640`; `tableinfo.rs:391-406`).
+//! - **A column no change at that length reaches takes its DEFAULT,** NULL
+//!   where it has none, as on a copy that creates the row from a set at
+//!   that length: it inserts the key alone, `INSERT OR IGNORE` (`:620-645`;
+//!   `tableinfo.rs:391-406`), or with the one column changed (`:672-690`;
+//!   `tableinfo.rs:802-822`), and SQLite fills every other column with its
+//!   default. So the state is read through the schema (`Join::state`).
 //!
 //! So the state is a join: per row, the pair (causal length, each column's
 //! highest change at it), where a longer length replaces the columns and an
 //! equal one takes each column's maximum. It is commutative, associative and
 //! idempotent (`laws.rs`).
 //!
-//! **Where cr-sqlite's merge equals it.** A copy that held a row alive keeps
-//! its old values when a change at a longer odd length arrives, each at
-//! `col_version` 0 (`tableinfo.rs:440-454`, called at
+//! **Where cr-sqlite's merge equals it.** A column change at a longer odd
+//! length over a row standing here clears the row first, under N, the rule
+//! the fork's engine keeps (`:621-625`, `clear_earlier_life` at `:744-803`),
+//! so the copy holds the row as a copy without it makes it, from the key
+//! alone. A row-level change at a longer odd length keeps the old values,
+//! each at `col_version` 0 (`tableinfo.rs:440-454`, called at
 //! `changes_vtab_write.rs:273`), and only a change at the new length replaces
-//! one; a copy without the row makes it from the key alone. So a copy ends on
-//! this model's state when it has taken, at the row's length, a change of
-//! every non-key column. The set that re-adds a row carries one of each: a
-//! local insert clocks every non-key column (`local_writes/mod.rs`,
-//! `mark_locally_inserted`).
+//! one. But the set that carries it re-adds the row with a change of every
+//! non-key column: a local insert clocks each (`local_writes/mod.rs`,
+//! `mark_locally_inserted`). So a copy ends on this model's state. Under
+//! today's rule, a copy that held the row alive kept its old values for a
+//! column change too, and ended on another state where the re-add was
+//! missing (`rule.rs`).
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::change::{Change, ChangeSet, RowKey, SENTINEL, SetId, State, Val};
+use crate::replica::Table;
 use crate::rule::Rule;
 
 /// The join of every change taken so far.
@@ -127,40 +135,39 @@ impl Join {
         self
     }
 
-    /// The table state: the rows at an odd causal length, each with its
-    /// winning values that are not NULL.
-    pub fn state(&self) -> State {
+    /// The table state in these tables: the rows at an odd causal length,
+    /// each with its winning values, and each column no change reaches at
+    /// its default (`Table::fresh`), less the NULLs.
+    pub fn state(&self, tables: &[Table]) -> State {
         self.rows
             .iter()
             .filter(|(_, line)| line.cl % 2 == 1)
             .map(|(key, line)| {
-                let values = line
-                    .cells
-                    .iter()
-                    .filter(|(_, c)| c.val != Val::Null)
-                    .map(|(cid, c)| (cid.clone(), c.val.clone()))
-                    .collect();
+                let mut values = Table::named(tables, &key.0).fresh();
+                values.extend(line.cells.iter().map(|(cid, c)| (cid.clone(), c.val.clone())));
+                values.retain(|_, v| *v != Val::Null);
                 (key.clone(), values)
             })
             .collect()
     }
 }
 
-/// The reference model: the state these admissible sets merge to, in any
-/// order.
-pub fn state<'a>(sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
-    Join::of(sets).state()
+/// The reference model: the state these admissible sets merge to in these
+/// tables, in any order.
+pub fn state<'a>(tables: &[Table], sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
+    Join::of(sets).state(tables)
 }
 
-/// The state the admissible sets merge to under `rule` (`rule.rs`): the join
-/// of all of them, under today's rule and N; of those H's fixpoint admits;
-/// or of each device's sets below its first missing one, under P.
-pub fn under<'a>(rule: Rule, sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
+/// The state the admissible sets merge to in these tables under `rule`
+/// (`rule.rs`): the join of all of them, under today's rule and N; of those
+/// H's fixpoint admits; or of each device's sets below its first missing
+/// one, under P.
+pub fn under<'a>(rule: Rule, tables: &[Table], sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
     let sets: Vec<&ChangeSet> = sets.into_iter().collect();
     match rule {
-        Rule::Today | Rule::NewLifeEmpty => state(sets),
-        Rule::WaitForLife => state(given_life(&sets)),
-        Rule::Contiguous => state(contiguous(&sets)),
+        Rule::Today | Rule::NewLifeEmpty => state(tables, sets),
+        Rule::WaitForLife => state(tables, given_life(&sets)),
+        Rule::Contiguous => state(tables, contiguous(&sets)),
     }
 }
 

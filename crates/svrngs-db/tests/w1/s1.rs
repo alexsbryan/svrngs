@@ -22,19 +22,33 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::change::{Change, ChangeSet, Rng, RowKey, SENTINEL, SetId, Site, State, Val, pack};
 use crate::reference;
 use crate::replica::{ModelCopy, Op, Plant, Replica, Table};
+use crate::rule::Rule;
 
 const T: &[Table] = &[Table {
     name: "t",
     cols: &["a", "b"],
+    defaults: &[],
 }];
 const MAGNETS: &[Table] = &[Table {
     name: "magnets",
     cols: &["pos"],
+    defaults: &[],
 }];
 const CARDS: &[Table] = &[Table {
     name: "cards",
     cols: &["title", "col"],
+    defaults: &[],
 }];
+/// Every table S1's cases write, for the reference to read each by.
+const S1: &[Table] = &[T[0], MAGNETS[0], CARDS[0]];
+
+/// The engine S1 ran, Fly's fork before svrngs's patch: today's rule
+/// (`rule.rs`). Under N its totals part from the recorded ones: in seeds 172
+/// and 1554 of order Any, a column change cleared a value of the row's
+/// earlier life that today's engine keeps, and a later local update set it
+/// back to that value, a change under N and none under today's, so one more
+/// set each, 59311 and not 59309.
+const S1_RULE: Rule = Rule::Today;
 
 /// A scripted case's devices, and every set written, in the order written.
 struct Case {
@@ -47,7 +61,9 @@ struct Case {
 impl Case {
     fn new(tables: &'static [Table], n: u8) -> Case {
         Case {
-            copies: (1..=n).map(|i| ModelCopy::new(Site::of(i), tables)).collect(),
+            copies: (1..=n)
+                .map(|i| ModelCopy::ruled(Site::of(i), tables, S1_RULE))
+                .collect(),
             had: vec![BTreeSet::new(); n as usize],
             log: Vec::new(),
         }
@@ -341,7 +357,7 @@ fn misses(model: impl Fn(&[&ChangeSet]) -> State) -> Vec<String> {
 }
 
 fn the_reference(sets: &[&ChangeSet]) -> State {
-    reference::state(sets.iter().copied())
+    reference::state(S1, sets.iter().copied())
 }
 
 /// The plant MAGNETS_BUILD §3 names for W: a model that lets the later edit
@@ -403,8 +419,8 @@ fn the_edit_made_after_seeing_wins_in_200_fresh_pairs() {
         } else {
             (255 - i / 2, i / 2 + 1)
         };
-        let mut a = ModelCopy::new(Site::of(ana), T);
-        let mut b = ModelCopy::new(Site::of(ben), T);
+        let mut a = ModelCopy::ruled(Site::of(ana), T, S1_RULE);
+        let mut b = ModelCopy::ruled(Site::of(ben), T, S1_RULE);
         let first = a.write(&[insert_a("ana")]).unwrap();
         b.take(&first);
         let after = b
@@ -416,7 +432,7 @@ fn the_edit_made_after_seeing_wins_in_200_fresh_pairs() {
             .unwrap();
         a.take(&after);
         let want = "'ben-after-seeing'";
-        let model = cell(&reference::state([&first, &after]));
+        let model = cell(&reference::state(T, [&first, &after]));
         lost += (cell(&a.state()) != want || cell(&b.state()) != want || model != want) as u32;
     }
     // s1-run-2000x80.txt:42: "lost in 0 of 200 pairs".
@@ -485,7 +501,9 @@ fn op(rng: &mut Rng) -> Op {
 /// reads only stamps, so it is left out. Adds its outcome to `totals`.
 fn run(order: Order, seed: u64, steps: usize, plant: Plant, totals: &mut Totals) {
     let mut rng = Rng(seed);
-    let mut copies: Vec<ModelCopy> = (1..=3).map(|i| ModelCopy::planted(Site::of(i), T, plant)).collect();
+    let mut copies: Vec<ModelCopy> = (1..=3)
+        .map(|i| ModelCopy::made(Site::of(i), T, plant, S1_RULE))
+        .collect();
     let mut sets: Vec<Set> = Vec::new();
     let mut known: Vec<Vec<bool>> = vec![Vec::new(); 3];
 
@@ -573,7 +591,7 @@ fn run(order: Order, seed: u64, steps: usize, plant: Plant, totals: &mut Totals)
     totals.clock_rows_equal += clocks.windows(2).all(|w| w[0] == w[1]) as u64;
     totals.column_clocks_equal += columns.windows(2).all(|w| w[0] == w[1]) as u64;
     totals.sets += sets.len() as u64;
-    let want = reference::state(sets.iter().map(|s| &s.set));
+    let want = reference::state(T, sets.iter().map(|s| &s.set));
     totals.off_the_reference += data.iter().any(|d| *d != want) as u64;
 
     // S1's causality count (s1.rs:266-286): a set written after taking a

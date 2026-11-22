@@ -1,7 +1,7 @@
 //! What copies exchange: a change row as cr-sqlite's `crsql_changes`
 //! carries it, and a change set, one write transaction's rows. Fly's fork is
 //! cited at the svrngs pin, github.com/alexsbryan/cr-sqlite branch `svrngs`
-//! at `6a59c477`, paths under `core/rs/core/src/`.
+//! at `c3062b8d`, paths under `core/rs/core/src/`.
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;

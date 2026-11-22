@@ -5,7 +5,7 @@
 //! the order sets arrive, as the engine does, so it is a second decider for
 //! the reference to judge, not the reference again. svrngs-db goes behind the
 //! same trait when it is built. It is built with a rule for a set above a
-//! missing re-add (`rule.rs`), today's by default.
+//! missing re-add (`rule.rs`), by default N, the one the fork's engine keeps.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -55,20 +55,45 @@ pub trait Replica {
     }
 }
 
-/// A table of an app's schema: its name and its non-key columns in schema
+/// A table of an app's schema: its name, its non-key columns in schema
 /// order, the order cr-sqlite clocks an insert's columns in
-/// (`local_writes/mod.rs`, `mark_locally_inserted`).
+/// (`local_writes/mod.rs`, `mark_locally_inserted`), and each column's
+/// DEFAULT where it has one.
 #[derive(Clone, Copy, Debug)]
 pub struct Table {
     pub name: &'static str,
     pub cols: &'static [&'static str],
+    pub defaults: &'static [(&'static str, Val)],
+}
+
+impl Table {
+    /// The table named so among these.
+    pub fn named<'a>(tables: &'a [Table], name: &str) -> &'a Table {
+        tables
+            .iter()
+            .find(|t| t.name == name)
+            .unwrap_or_else(|| panic!("no table {name}"))
+    }
+
+    /// A row as SQLite makes it from its key alone, or from some of its
+    /// columns: each other column at its DEFAULT, NULL where it has none.
+    pub fn fresh(&self) -> BTreeMap<String, Val> {
+        let default = |col: &str| self.defaults.iter().find(|(c, _)| *c == col).map(|(_, v)| v.clone());
+        self.cols
+            .iter()
+            .map(|c| (c.to_string(), default(c).unwrap_or(Val::Null)))
+            .collect()
+    }
 }
 
 /// One op of a write, its row named by key (APP_STATE §4, "The write form").
 #[derive(Clone, Debug)]
 pub enum Op {
-    /// Makes the row with `row`'s columns and the rest NULL; on a key that
-    /// has a row, sets `on_conflict`'s columns of it to `row`'s values. The
+    /// Makes the row with `row`'s columns and the rest at their DEFAULT, NULL
+    /// where there is none, as plain SQL does; on a key that has a row, sets
+    /// `on_conflict`'s columns of it to `row`'s values. svrngs's write form
+    /// binds NULL in every column an insert doesn't name (`src/form.rs`), so
+    /// every insert here of a table with a DEFAULT names each column. The
     /// write form sets every column it names (`Op::insert`); S1's upsert set
     /// only `a` (magnets-spikes `code/src/bin/s1.rs:137`).
     Insert {
@@ -180,7 +205,8 @@ impl ModelCopy {
         ModelCopy::made(site, tables, Plant::None, rule)
     }
 
-    fn made(site: Site, tables: &'static [Table], plant: Plant, rule: Rule) -> ModelCopy {
+    /// A copy under one of question 9's rules, with a fault planted.
+    pub fn made(site: Site, tables: &'static [Table], plant: Plant, rule: Rule) -> ModelCopy {
         assert!(
             tables.iter().all(|t| !t.cols.is_empty()),
             "a table of keys alone takes cr-sqlite's other insert path (after_insert.rs:50-54), which this model leaves out"
@@ -207,15 +233,14 @@ impl ModelCopy {
     }
 
     fn cols(&self, table: &str) -> &'static [&'static str] {
-        self.tables
-            .iter()
-            .find(|t| t.name == table)
-            .unwrap_or_else(|| panic!("no table {table}"))
-            .cols
+        Table::named(self.tables, table).cols
     }
 
-    fn nulls(&self, table: &str) -> BTreeMap<String, Val> {
-        self.cols(table).iter().map(|c| (c.to_string(), Val::Null)).collect()
+    /// The key's row as SQLite makes it (`Table::fresh`): by a local insert
+    /// of some of its columns, by the merge's insert of one
+    /// (`tableinfo.rs:802-822`), or from its key alone (`:391-406`).
+    fn fresh(&self, table: &str) -> BTreeMap<String, Val> {
+        Table::named(self.tables, table).fresh()
     }
 
     /// A row's causal length here: its sentinel's version, else 1 if it has
@@ -285,7 +310,7 @@ impl ModelCopy {
                     let cv = s.cv + if s.cv % 2 == 0 { 1 } else { 2 };
                     *s = Clock { cv, ..next(me) };
                 }
-                let mut values = self.nulls(table);
+                let mut values = self.fresh(table);
                 for (c, v) in row {
                     values.insert(c.to_string(), v.clone());
                 }
@@ -355,7 +380,7 @@ impl ModelCopy {
         rows
     }
 
-    /// One change merged, `crsql_merge_insert` (changes_vtab_write.rs:424-737).
+    /// One change merged, `crsql_merge_insert` (changes_vtab_write.rs:424-742).
     fn merge(&mut self, c: &Change) {
         let key = (c.table.clone(), c.pk.clone());
         let local_cl = self.local_cl(&key);
@@ -394,9 +419,10 @@ impl ModelCopy {
         }
         let exists = local_cl != 0;
         let longer = c.cl > local_cl;
-        // :620-640: a column change at a longer length brings the row back
+        // :620-645: a column change at a longer length brings the row back
         // first, its sentinel at that length. Over a row standing here, at an
-        // odd length, its earlier life's values stay (resurrect, below).
+        // odd length, today's engine keeps its earlier life's values
+        // (resurrect, below), and N clears them first.
         if longer && (exists || c.cl > 1) {
             if local_cl % 2 == 1 {
                 let carried = self
@@ -405,10 +431,12 @@ impl ModelCopy {
                     .is_some_and(|row| row.iter().any(|(cid, v)| *cid != c.cid && *v != Val::Null));
                 self.earlier += usize::from(carried);
                 if self.rule == Rule::NewLifeEmpty {
-                    // N: the row as a copy that never held it makes it, from
-                    // its key alone. A deleted row is held so here already:
-                    // its row gone and its columns' clocks dropped
-                    // (merge_delete, :304-366).
+                    // N, the fork's patch (:621-625, clear_earlier_life at
+                    // :744-803): the row as a copy that never held it makes
+                    // it, from its key alone. Its base row is deleted and its
+                    // columns' clocks dropped, as merge_delete leaves a
+                    // deleted row (:316-339, :354-363), and the sentinel is
+                    // left for the resurrect to set.
                     self.rows.remove(&key);
                     if let Some(clocks) = self.clocks.get_mut(&key) {
                         clocks.retain(|cid, _| cid == SENTINEL);
@@ -423,25 +451,26 @@ impl ModelCopy {
                 },
             );
         }
-        // :645-665: a longer length, or a row this copy never had, wins
+        // :650-670: a longer length, or a row this copy never had, wins
         // outright; otherwise the column's own clock decides.
         if !(longer || !exists || self.wins(&key, c)) {
             return;
         }
-        let nulls = self.nulls(&c.table);
+        let fresh = self.fresh(&c.table);
         self.rows
             .entry(key.clone())
-            .or_insert(nulls)
+            .or_insert(fresh)
             .insert(c.cid.clone(), c.val.clone());
         self.clocks.entry(key).or_default().insert(c.cid.clone(), Clock::of(c));
     }
 
     /// merge_sentinel_only_insert (:229-289): the key's row made if it has
-    /// none (tableinfo.rs:391-406), its columns' clocks zeroed with their
-    /// values kept (tableinfo.rs:440-454), and the sentinel set.
+    /// none, each column at its default (tableinfo.rs:391-406), its columns'
+    /// clocks zeroed with their values kept (tableinfo.rs:440-454), and the
+    /// sentinel set.
     fn resurrect(&mut self, key: &RowKey, sentinel: Clock) {
-        let nulls = self.nulls(&key.0);
-        self.rows.entry(key.clone()).or_insert(nulls);
+        let fresh = self.fresh(&key.0);
+        self.rows.entry(key.clone()).or_insert(fresh);
         let clocks = self.clocks.entry(key.clone()).or_default();
         if self.plant != Plant::KeepClocksOnResurrect {
             for (cid, clock) in clocks.iter_mut() {

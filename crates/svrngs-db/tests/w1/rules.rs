@@ -1,8 +1,8 @@
 //! Question 9's rules (`rule.rs`; svrn-docs APP_STATE.md §8 q9) on model
 //! copies, each built under a rule and judged by the reference under it: on
 //! the fixed cases slice B opens with (MAGNETS_BUILD.md §3, "Slice B"), the
-//! minimal case, two removals and seeds 2706 and 5691; on the gate's seeds;
-//! and on the soak's.
+//! minimal case, two removals, column defaults and seeds 2706 and 5691; on
+//! the gate's seeds; and on the soak's.
 //!
 //! A seed names a run under one rule, and a rule that changes what a copy
 //! keeps changes the simulator's later draws. So each fixed seed is said
@@ -113,24 +113,25 @@ fn n_and_h_keep_each_fixed_case_on_the_reference() {
     }
 }
 
-/// The plant of the test above, and P's split: today's rule fails every
-/// fixed case, and P fails two removals, where the missing re-add is another
-/// device's, and nothing else.
+/// The plant of the test above and of the one below, and P's split: today's
+/// rule fails every fixed case, and P fails two removals, where the missing
+/// re-add is another device's, and nothing else.
 #[test]
 fn today_s_rule_fails_each_fixed_case_and_p_fails_two_removals() {
-    let all: BTreeSet<String> = ["the minimal case", "two removals", "seed 2706", "seed 5691"]
-        .map(String::from)
-        .into();
+    let all: BTreeSet<String> = Case::ALL
+        .map(|c| c.name().to_owned())
+        .into_iter()
+        .chain(SPLIT.map(|seed| format!("seed {seed}")))
+        .collect();
     assert_eq!(failing(Rule::Today), all);
     assert_eq!(failing(Rule::Contiguous), BTreeSet::from(["two removals".to_owned()]));
 }
 
-/// W1 on the fixed cases under the rule svrngs keeps, `Rule::default()`. It
-/// joins the gate in the commit that makes it pass (MAGNETS_BUILD §3, "Slice
-/// B"). Run `cargo test -p svrngs-db --test w1 -- --ignored rule_svrngs_keeps
-/// --nocapture`.
+/// W1 on the fixed cases under the rule svrngs keeps, `Rule::default()`, N
+/// since the fork's patch (MAGNETS_BUILD §3, "Slice B"). Its plant is
+/// today's rule in its place, which fails each (above). Run `cargo test -p
+/// svrngs-db --test w1 -- rule_svrngs_keeps --nocapture`.
 #[test]
-#[ignore = "fails on today's rule, APP_STATE §8 q9; it joins the gate with the rule slice B keeps"]
 fn the_fixed_cases_hold_under_the_rule_svrngs_keeps() {
     let failed = failing(Rule::default());
     assert!(failed.is_empty(), "{} fails {failed:?}", Rule::default().name());
@@ -196,12 +197,13 @@ fn rules() -> Vec<Rule> {
     }
 }
 
-/// Each rule on the gate's seeds. It fails where any rule run fails, today's
-/// included, so it waits out of the gate for slice B's choice, whose seeds
-/// then replace today's there. Run `cargo test -p svrngs-db --test w1 --
-/// --ignored each_rule_on_the_gate --nocapture`, `W1_RULES` to name rules.
+/// Each rule on the gate's seeds. It fails where any rule run fails, so it
+/// stays out of the gate: H fails seeds 5 and 500. The gate runs the rule
+/// svrngs keeps on them (`seeds.rs`, `live.rs`). Run `cargo test -p
+/// svrngs-db --test w1 -- --ignored each_rule_on_the_gate --nocapture`,
+/// `W1_RULES` to name rules.
 #[test]
-#[ignore = "today's rule and P fail some, APP_STATE §8 q9; the rule slice B keeps takes today's place in the gate"]
+#[ignore = "H fails seeds 5 and 500; the gate runs the rule svrngs keeps on these seeds"]
 fn each_rule_on_the_gate_s_seeds() {
     let failed: Vec<String> = rules().into_iter().flat_map(|r| runs(r, GATE)).collect();
     assert!(failed.is_empty(), "{} runs failed", failed.len());

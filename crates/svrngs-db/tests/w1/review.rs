@@ -12,6 +12,7 @@ use crate::replica::{ModelCopy, Op, Plant, Replica, Table};
 const MAGNETS: &[Table] = &[Table {
     name: "magnets",
     cols: &["pos"],
+    defaults: &[],
 }];
 
 const JO: usize = 0;
@@ -90,7 +91,7 @@ fn review_case<R: Replica>(make: &dyn Fn(Site) -> R) -> Result<(), String> {
         }
         assert!(round < 10, "the meet settles");
     }
-    let want = reference::state([&first, &jo, &sam]);
+    let want = reference::state(MAGNETS, [&first, &jo, &sam]);
     if pos(&want) != Some(3) {
         return Err(format!("the reference is at {:?}, not Sam's 3", pos(&want)));
     }

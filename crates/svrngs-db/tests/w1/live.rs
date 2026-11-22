@@ -165,6 +165,19 @@ impl LiveCopy {
                 "sim::TABLES names {}'s non-key columns as SCHEMA has them",
                 t.name
             );
+            let defaults = names(
+                "SELECT name || ' ' || dflt_value FROM pragma_table_info(?) WHERE pk = 0 AND dflt_value IS NOT NULL ORDER BY cid",
+            );
+            let literal = |v: &Val| match v {
+                Val::Integer(i) => i.to_string(),
+                other => panic!("sim::TABLES gives a default SCHEMA can't: {other:?}"),
+            };
+            let want: Vec<String> = t.defaults.iter().map(|(c, v)| format!("{c} {}", literal(v))).collect();
+            assert_eq!(
+                defaults, want,
+                "sim::TABLES gives {}'s defaults as SCHEMA has them",
+                t.name
+            );
             shapes.push(Shape {
                 name: t.name,
                 keys,
@@ -456,9 +469,18 @@ impl Pair {
 
     /// A pair whose model copy is planted.
     pub fn planted(site: Site, plant: Plant) -> Pair {
+        Pair::of(ModelCopy::planted(site, TABLES, plant))
+    }
+
+    /// A pair whose model copy keeps another rule than the engine's.
+    pub fn ruled(site: Site, rule: Rule) -> Pair {
+        Pair::of(ModelCopy::ruled(site, TABLES, rule))
+    }
+
+    fn of(model: ModelCopy) -> Pair {
         Pair {
-            model: ModelCopy::planted(site, TABLES, plant),
-            live: LiveCopy::new(site),
+            live: LiveCopy::new(model.site()),
+            model,
             parted: Cell::new(false),
         }
     }
@@ -618,42 +640,92 @@ fn the_pair_catches_a_model_copy_that_keeps_clocks_on_resurrect() {
     assert!(first.contains("the state"), "{first}");
 }
 
-/// The live engine over seeds 0..6000, which hold both seeds W's soak found
-/// the split on, or over `W1_SEEDS` as `<first>..<end>`: each seed on model
-/// copies alone, live copies alone and pairs, every failure and
-/// disagreement said. It fails where the model does, while the split
-/// stands. Run `cargo test --release -p svrngs-db --test w1 -- --ignored
-/// six_thousand --nocapture`.
+/// One thread's part of the live soak: each failure and disagreement by its
+/// seed, the runs that met question 9's moment, and how often it came.
+#[derive(Default)]
+struct Soaked {
+    said: Vec<(u64, String)>,
+    met: usize,
+    moments: usize,
+}
+
+/// The live engine's soak: seeds 0..100,000, or `W1_SEEDS` as
+/// `<first>..<end>`, each on model copies alone, live copies alone and
+/// pairs, shared among the computer's threads, every failure and
+/// disagreement said, and how many runs met question 9's moment
+/// (`ModelCopy::earlier`). Where no pair parts, the live copies' runs are
+/// the model's, so they met the same moments. Run it where there are many
+/// cores, the Fedora box: `cargo test --release -p svrngs-db --test w1 --
+/// --ignored live_engine_s_soak --nocapture`.
 #[test]
-#[ignore = "6,000 runs each of model copies, live copies and pairs, not the gate's"]
-fn the_live_engine_over_six_thousand_seeds() {
-    let seeds = std::env::var("W1_SEEDS").unwrap_or_else(|_| "0..6000".into());
+#[ignore = "100,000 runs each of model copies, live copies and pairs, not the gate's"]
+#[expect(clippy::disallowed_methods, reason = "the soak's time, said")]
+fn the_live_engine_s_soak() {
+    let seeds = std::env::var("W1_SEEDS").unwrap_or_else(|_| "0..100000".into());
     let (first, end) = seeds.split_once("..").expect("W1_SEEDS is <first>..<end>");
     let (first, end): (u64, u64) = (first.parse().expect("a first seed"), end.parse().expect("an end seed"));
-    let mut said = Vec::new();
-    for seed in first..end {
-        let (m, l) = (sim::one(seed, &model), sim::one(seed, &LiveCopy::new));
-        let (p, parted) = watched(format!("seed {seed}"), || sim::one(seed, &Pair::new));
-        for (who, v) in [("model copies", m), ("live copies", l), ("pairs", p)] {
-            said.extend(v.err().map(|e| format!("FAILED, {who}: {e}")));
-        }
-        said.extend(parted.into_iter().map(|p| format!("PARTED {p}")));
-    }
-    for s in &said {
+    let threads = std::thread::available_parallelism().map_or(1, |n| n.get() as u64);
+    let start = std::time::Instant::now();
+    let each: Vec<Soaked> = std::thread::scope(|s| {
+        let runs: Vec<_> = (0..threads)
+            .map(|t| {
+                s.spawn(move || {
+                    let mut soaked = Soaked::default();
+                    for seed in (first..end).filter(|seed| seed % threads == t) {
+                        let shape = sim::Shape::of(seed);
+                        let mut alone = sim::Sim::new(seed, shape, &model);
+                        alone.run(shape.steps);
+                        alone.meet();
+                        let here: usize = alone.copies().iter().map(ModelCopy::earlier).sum();
+                        soaked.met += usize::from(here > 0);
+                        soaked.moments += here;
+                        let m = alone
+                            .judge(Rule::default(), &model)
+                            .map_err(|e| format!("seed {seed}: {e}"));
+                        let l = sim::one(seed, &LiveCopy::new);
+                        let (p, parted) = watched(format!("seed {seed}"), || sim::one(seed, &Pair::new));
+                        for (who, v) in [("model copies", m), ("live copies", l), ("pairs", p)] {
+                            soaked
+                                .said
+                                .extend(v.err().map(|e| (seed, format!("FAILED, {who}: {e}"))));
+                        }
+                        soaked
+                            .said
+                            .extend(parted.into_iter().map(|p| (seed, format!("PARTED {p}"))));
+                    }
+                    soaked
+                })
+            })
+            .collect();
+        runs.into_iter()
+            .map(|run| run.join().expect("a thread of runs ran"))
+            .collect()
+    });
+    let mut said: Vec<&(u64, String)> = each.iter().flat_map(|s| &s.said).collect();
+    said.sort_by_key(|(seed, _)| *seed);
+    for (_, s) in &said {
         println!("{s}");
     }
-    println!("seeds {first}..{end}: {} failures and disagreements", said.len());
+    let met: usize = each.iter().map(|s| s.met).sum();
+    let moments: usize = each.iter().map(|s| s.moments).sum();
+    println!(
+        "seeds {first}..{end}: {} failures and disagreements; {met} runs met question 9's moment, {moments} times; {:.1} s on {threads} threads",
+        said.len(),
+        start.elapsed().as_secs_f64()
+    );
     assert!(said.is_empty());
 }
 
-/// The split W's soak found (svrn-docs APP_STATE.md §8, question 9), on the
-/// live engine: the minimal case and two removals (`cases.rs`), then seeds
-/// 2706 and 5691, each on model copies alone, live copies alone and pairs,
-/// under today's rule, the engine's. It fails while copies split. Run
-/// `cargo test -p svrngs-db --test w1 -- --ignored split --nocapture`.
+/// The copies agree on the live engine, the fork's, which keeps N (`rule.rs`;
+/// svrn-docs APP_STATE.md §8, question 9): the fixed cases (`cases.rs`), then
+/// seeds 2706 and 5691, where W's soak found today's split, each on model
+/// copies alone, live copies alone and pairs, under the rule svrngs keeps.
+/// Its plants, each watched failing: the engine before its patch, the
+/// submodule at 6a59c477, where the live copies split as today's do; and the
+/// pairs' model copy under today's rule, kept in the gate below. Run `cargo
+/// test -p svrngs-db --test w1 -- copies_agree --nocapture`.
 #[test]
-#[ignore = "fails while the split stands, APP_STATE §8 q9, slice B's to decide"]
-fn the_split_on_the_live_engine() {
+fn the_copies_agree_on_the_live_engine() {
     let mut failed = Vec::new();
     let mut verdict = |what: String, v: &Result<(), String>| {
         let said = v.as_ref().map_or_else(|e| format!("FAILED {e}"), |_| "passed".into());
@@ -666,15 +738,15 @@ fn the_split_on_the_live_engine() {
         0 => Ok(()),
         n => Err(format!("{n} pairs parted")),
     };
-    let today = Rule::Today;
+    let rule = Rule::default();
     for case in Case::ALL {
         let name = case.name();
         println!("{name}, model copies alone:");
-        let (_, said, v) = case.run(today, &model);
+        let (_, said, v) = case.run(rule, &model);
         println!("{said}");
         verdict(format!("{name}, model copies"), &v);
         println!("{name}, live copies alone:");
-        let (live, said, v) = case.run(today, &LiveCopy::new);
+        let (live, said, v) = case.run(rule, &LiveCopy::new);
         println!("{said}");
         for &(c, copy) in case.standing() {
             println!("    {copy}'s crsql_changes rows:");
@@ -684,7 +756,7 @@ fn the_split_on_the_live_engine() {
         }
         verdict(format!("{name}, live copies"), &v);
         println!("{name}, pairs:");
-        let ((_, _, v), parted) = watched(name.into(), || case.run(today, &Pair::new));
+        let ((_, _, v), parted) = watched(name.into(), || case.run(rule, &Pair::new));
         for p in &parted {
             println!("    parted: {p}");
         }
@@ -706,4 +778,21 @@ fn the_split_on_the_live_engine() {
         );
     }
     assert!(failed.is_empty(), "failed: {failed:?}");
+}
+
+/// The plant of the test above, kept in the gate: pairs whose model copy
+/// keeps today's rule part from the engine on each fixed case, at the take
+/// that brings a row back where its re-add is missing. So the engine is not
+/// today's, and a pair would say so if a bump of the fork dropped its patch.
+#[test]
+fn the_pair_catches_a_model_copy_under_today_s_rule() {
+    let make = |site| Pair::ruled(site, Rule::Today);
+    for case in Case::ALL {
+        let (_, parted) = watched(case.name().into(), || case.run(Rule::Today, &make));
+        let first = parted
+            .first()
+            .unwrap_or_else(|| panic!("{}: no pair parted", case.name()));
+        println!("caught: {first}");
+        assert!(first.contains("the state"), "{first}");
+    }
 }

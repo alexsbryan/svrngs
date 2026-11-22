@@ -316,3 +316,25 @@ fn a_post_asks_one_read_or_one_write() {
         );
     }
 }
+
+/// **No app's trigger sees a merge**: `schema.sql` makes tables and indexes
+/// and nothing else (APP_STATE §4, "Its schema"; `schema_rule`), so a
+/// trigger is refused and the database not opened. cr-sqlite's merge
+/// deletes and inserts an app's rows under its sync bit, which only its own
+/// triggers heed: since the fork's patch, a column change that brings back
+/// a row standing in an earlier life deletes it and makes it again
+/// (`vendor/cr-sqlite/core/rs/core/src/changes_vtab_write.rs:621-625`,
+/// `:744-803`). Plant: `schema_rule` allowing `CreateTrigger`: the schema is
+/// applied, its tables made cr-sqlite's, and the database opened.
+#[test]
+fn a_schema_s_trigger_is_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    let schema = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\n\
+        CREATE TABLE seen (n INTEGER PRIMARY KEY NOT NULL);\n\
+        CREATE TRIGGER gone AFTER DELETE ON cards BEGIN INSERT INTO seen VALUES (1); END;\n";
+    let opened = States::new(dir.path()).open("g", "board", schema);
+    let refused = opened.err().expect("a schema with a trigger is refused");
+    println!("MEASURE a schema's trigger: {refused}");
+    assert!(matches!(refused, Refused::Malformed(_)), "{refused:?}");
+    assert!(refused.to_string().contains("not authorized"), "{refused}");
+}

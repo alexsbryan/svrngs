@@ -3,15 +3,17 @@
 //! - `minimal`: the minimal case of the split (svrn-docs APP_STATE.md §8,
 //!   "Question 9, in full");
 //! - `two_removals`: the re-add is another device's, and the device that
-//!   moved the cat after it is removed too.
+//!   moved the cat after it is removed too;
+//! - `defaults`: the minimal case on a column with a DEFAULT.
 
 use std::collections::BTreeSet;
 
-use crate::change::{ChangeSet, SetId, Site, State, Val, pack};
+use crate::change::{ChangeSet, RowKey, SetId, Site, State, Val, pack};
 use crate::live::{kept_ids, named};
 use crate::reference;
 use crate::replica::{Op, Replica};
 use crate::rule::Rule;
+use crate::sim::TABLES;
 
 /// The copies of the cases.
 pub const A: usize = 0;
@@ -23,22 +25,24 @@ pub const C: usize = 2;
 pub enum Case {
     Minimal,
     TwoRemovals,
+    Defaults,
 }
 
 impl Case {
-    pub const ALL: [Case; 2] = [Case::Minimal, Case::TwoRemovals];
+    pub const ALL: [Case; 3] = [Case::Minimal, Case::TwoRemovals, Case::Defaults];
 
     pub fn name(self) -> &'static str {
         match self {
             Case::Minimal => "the minimal case",
             Case::TwoRemovals => "two removals",
+            Case::Defaults => "column defaults",
         }
     }
 
     /// The copies standing at its end, each by its index and name.
     pub fn standing(self) -> &'static [(usize, &'static str)] {
         match self {
-            Case::Minimal => &[(A, "A"), (B, "B")],
+            Case::Minimal | Case::Defaults => &[(A, "A"), (B, "B")],
             Case::TwoRemovals => &[(B, "B")],
         }
     }
@@ -49,6 +53,7 @@ impl Case {
         match self {
             Case::Minimal => minimal(rule, make),
             Case::TwoRemovals => two_removals(rule, make),
+            Case::Defaults => defaults(rule, make),
         }
     }
 }
@@ -57,11 +62,37 @@ pub fn cat() -> Vec<Val> {
     vec![Val::text("cat")]
 }
 
-/// The cat as a person sees it on the board: `{pos 5, word milk}`, `{}` for
-/// a cat with no column set, or `no cat`.
-pub fn board(state: &State) -> String {
-    let Some(row) = state.get(&("magnets".to_owned(), pack(&cat()))) else {
-        return "no cat".to_owned();
+pub fn tile() -> Vec<Val> {
+    vec![Val::text("tile")]
+}
+
+/// The row a case moves, by its table and key, and its name on the board.
+pub struct Thing {
+    row: RowKey,
+    name: &'static str,
+}
+
+impl Thing {
+    pub fn cat() -> Thing {
+        Thing {
+            row: ("magnets".to_owned(), pack(&cat())),
+            name: "cat",
+        }
+    }
+
+    pub fn tile() -> Thing {
+        Thing {
+            row: ("tiles".to_owned(), pack(&tile())),
+            name: "tile",
+        }
+    }
+}
+
+/// A case's thing as a person sees it on the board: `{pos 5, word milk}`,
+/// `{}` for one with no column set, or `no cat`.
+fn board(state: &State, thing: &Thing) -> String {
+    let Some(row) = state.get(&thing.row) else {
+        return format!("no {}", thing.name);
     };
     let cols: Vec<String> = row
         .iter()
@@ -134,21 +165,22 @@ fn meet<R: Replica>(copies: &mut [R], standing: &[usize]) {
     }
 }
 
-/// W1 on a case's standing copies, said: they agree, each is the reference's
-/// under `rule` over the sets they hold, and a newcomer synced from each, its
-/// marks adopted and its sets in kept order and reversed, ends equal to it
-/// and to the reference.
+/// W1 on a case's standing copies, said by the thing it moves: they agree,
+/// each is the reference's under `rule` over the sets they hold, and a
+/// newcomer synced from each, its marks adopted and its sets in kept order
+/// and reversed, ends equal to it and to the reference.
 fn judged<R: Replica>(
     rule: Rule,
     make: &dyn Fn(Site) -> R,
     copies: &[R],
-    standing: &[(usize, &str)],
+    (thing, standing): (&Thing, &[(usize, &str)]),
     (newcomer, site): (&str, Site),
     (over, admissible): (&str, &[&ChangeSet]),
 ) -> (String, Result<(), String>) {
-    let want = reference::under(rule, admissible.iter().copied());
+    let shown = |state: &State| board(state, thing);
+    let want = reference::under(rule, TABLES, admissible.iter().copied());
     let names = |ids: &BTreeSet<SetId>| ids.iter().map(|id| named(*id)).collect::<Vec<_>>();
-    let mut said = vec![format!("  the reference over {over}: {}", board(&want))];
+    let mut said = vec![format!("  the reference over {over}: {}", shown(&want))];
     let mut wrong = Vec::new();
     for &(c, name) in standing {
         let (state, kept) = (copies[c].state(), kept_ids(&copies[c]));
@@ -159,7 +191,7 @@ fn judged<R: Replica>(
         };
         said.push(format!(
             "  {name}: {}, keeping {:?}{holding}, its clock rows naming {:?}",
-            board(&state),
+            shown(&state),
             names(&kept),
             names(&copies[c].standing())
         ));
@@ -174,7 +206,7 @@ fn judged<R: Replica>(
                 fresh.take(set);
             }
             let got = fresh.state();
-            said.push(format!("    {newcomer} synced from {name}, {order}: {}", board(&got)));
+            said.push(format!("    {newcomer} synced from {name}, {order}: {}", shown(&got)));
             if got != state {
                 wrong.push(format!("{newcomer} synced from {name}, {order}, is not equal to it"));
             }
@@ -226,7 +258,7 @@ pub fn minimal<R: Replica>(rule: Rule, make: &dyn Fn(Site) -> R) -> (Vec<R>, Str
         rule,
         make,
         &copies,
-        Case::Minimal.standing(),
+        (&Thing::cat(), Case::Minimal.standing()),
         ("a newcomer", Site::of(250)),
         ("A's add and C's move", &[&a1, &c3]),
     );
@@ -259,9 +291,69 @@ pub fn two_removals<R: Replica>(rule: Rule, make: &dyn Fn(Site) -> R) -> (Vec<R>
         rule,
         make,
         &copies,
-        Case::TwoRemovals.standing(),
+        (&Thing::cat(), Case::TwoRemovals.standing()),
         ("D", Site::of(4)),
         ("a1 and a2", &[&a1, &a2]),
     );
     (copies, said, verdict)
+}
+
+/// Column defaults: the minimal case on a tile, whose `size` is NOT NULL
+/// with a DEFAULT of 3 (`sim::SCHEMA`), so every insert names it, as the
+/// write form asks (APP_STATE §4, "The write form"). A (site 1) adds the
+/// tile at pos 1, size 7, and C (site 3) takes it. C deletes the tile, adds
+/// it back at pos 1, size 5, and moves it to 5. A takes the move; B (site 2)
+/// takes the move, then A's add. C is removed, so its delete and re-add never
+/// reach the group, and A and B meet in full. The move brings the tile back
+/// where its re-add is missing: B makes it from its key, its size the
+/// default (`tableinfo.rs:391-406`). Under N, A clears its earlier life,
+/// size 7, to the same; under today's rule A keeps it. C's size 5 went with
+/// its re-add, and no copy can show it. Returns the copies, what each ends
+/// on, and W1's verdict under `rule` (`judged`), over the sets A and B hold,
+/// A's add and C's move.
+pub fn defaults<R: Replica>(rule: Rule, make: &dyn Fn(Site) -> R) -> (Vec<R>, String, Result<(), String>) {
+    let mut copies: Vec<R> = (1..=3).map(|i| make(Site::of(i))).collect();
+    let add = Op::insert(
+        "tiles",
+        tile(),
+        vec![("pos", Val::Integer(1)), ("size", Val::Integer(7))],
+    );
+    let a1 = copies[A].write(&[add]).expect("A adds the tile");
+    copies[C].take(&a1);
+    let delete = Op::Delete {
+        table: "tiles",
+        key: tile(),
+    };
+    copies[C].write(&[delete]).expect("C deletes it");
+    let readd = Op::insert(
+        "tiles",
+        tile(),
+        vec![("pos", Val::Integer(1)), ("size", Val::Integer(5))],
+    );
+    copies[C].write(&[readd]).expect("C adds it back");
+    let to_5 = Op::Update {
+        table: "tiles",
+        key: tile(),
+        set: vec![("pos", Val::Integer(5))],
+    };
+    let c3 = copies[C].write(&[to_5]).expect("C moves it");
+    let own = board(&copies[C].state(), &Thing::tile());
+    copies[A].take(&c3);
+    copies[B].take(&c3);
+    copies[B].take(&a1);
+    remove(&mut copies, &[C]);
+    meet(&mut copies, &[A, B]);
+    let (said, verdict) = judged(
+        rule,
+        make,
+        &copies,
+        (&Thing::tile(), Case::Defaults.standing()),
+        ("a newcomer", Site::of(250)),
+        ("A's add and C's move", &[&a1, &c3]),
+    );
+    (
+        copies,
+        format!("  C's own board before its removal: {own}\n{said}"),
+        verdict,
+    )
 }
