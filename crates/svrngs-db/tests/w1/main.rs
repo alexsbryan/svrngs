@@ -11,6 +11,8 @@
 //! - `sim`: the seeded simulator of deliveries, and its judge of a full meet.
 //! - `live`: the live copy, cr-sqlite itself behind the same trait, and the
 //!   pair, a model copy and a live copy in lockstep.
+//! - `cases`: the cases driven by hand, on any copy: the minimal case of the
+//!   split.
 //!
 //! The tests, each beside the plant it was watched failing on:
 //! - `laws`: the join's laws over seeded histories;
@@ -20,6 +22,7 @@
 //! - `live`: the live engine on the gate's seeds, the pair on them, and the
 //!   split, which the gate doesn't run.
 
+mod cases;
 mod change;
 mod laws;
 mod live;
