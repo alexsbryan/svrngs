@@ -389,7 +389,8 @@ impl Person {
     /// computer writes, as you: the status and the answer.
     pub async fn post(&self, path: &str, body: &Value) -> (u16, Value) {
         let at = format!("http://{}", self.api);
-        let sent = svrngs_node::api::asked(&at, path, &self.token(), Some(body.to_string()));
+        let token = self.token();
+        let sent = svrngs_node::api::asked(&at, path, &token, Some(body.to_string()));
         let (status, got) = sent.await.expect("svrngs proves itself and answers");
         (status, serde_json::from_slice(&got).unwrap_or(Value::Null))
     }
