@@ -672,11 +672,11 @@ async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>
     let mut answered = true;
     for db in kept {
         let judge = bound.clone();
-        let again = off(&db, move |db| db.rejudge(&*judge)).await;
+        let again = off(db, move |db| db.rejudge(&*judge)).await;
         let mut theirs: Option<svrngs_db::Ask> = None;
         for chunk in 1..=MAX_CHUNKS_PER_EXCHANGE {
             let asked = theirs.take();
-            let ours = off(&db, move |db| match asked {
+            let ours = off(db, move |db| match asked {
                 Some(ask) => db.missing(&ask, RING_SYNC_OPS_BUDGET_BYTES),
                 None => db.ask().map(|ask| svrngs_db::Call {
                     ask,
@@ -697,7 +697,7 @@ async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>
                 answer.and_then(|a| postcard::from_bytes::<svrngs_db::Call>(a.body()).ok());
             let (judge, from) = (bound.clone(), from.clone());
             let ingested = match answer {
-                Some(a) => off(&db, move |db| (db.ingest(&a, &*judge, from.as_ref()), a)).await,
+                Some(a) => off(db, move |db| (db.ingest(&a, &*judge, from.as_ref()), a)).await,
                 None => None,
             };
             let (took, answer) = ingested.unzip();
