@@ -19,8 +19,9 @@
 //! it reads until a time. The page signs one for the lend it opens, and the
 //! lend's origin dials with the holder, so the person's key never enters a
 //! lend's origin; a computer signs one for itself, naming the app its page
-//! is (sup-1). The door checks it ([`Pass::check`]) and then sets the
-//! person as it would for the person's own key, and the app from `app`.
+//! is (sup-1). The door checks it ([`crate::authority::resolve`]) and then
+//! sets the person as it would for the person's own key, and the app from
+//! `app`.
 //! Pure: the time is an argument.
 
 use alloc::string::String;
@@ -279,12 +280,6 @@ impl Pass {
             field(&mut msg, op.as_bytes());
         }
         msg
-    }
-
-    /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
-    /// app or one of its reads.
-    pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        crate::authority::resolve(self, None, holder, lend, now, || ())
     }
 
     /// The link this pass's holder signs to `holder`, unsigned, its
