@@ -251,16 +251,22 @@ pub async fn ring_state(
 ) -> Result<Response, Response> {
     let malformed =
         |e: postcard::Error| err(StatusCode::BAD_REQUEST, format!("malformed body: {e}"));
-    let ((group, app), call): ((String, String), svrngs_db::Call) =
+    let ((group, app), call): ((svrngs_db::Name, svrngs_db::Name), svrngs_db::Call) =
         postcard::from_bytes(&body).map_err(malformed)?;
+    let (group, app) = (group.as_str(), app.as_str());
     let dialer = dialer.map(|Extension(d)| d);
-    let (asker, _) = standing_asker(&state.rail, dialer, "state", &group)
+    let (asker, _) = standing_asker(&state.rail, dialer, "state", group)
         .map_err(|why| err(StatusCode::FORBIDDEN, why))?;
     let (bound, from) = (
-        crate::ring_sync::bound(&state.rail, &group),
+        crate::ring_sync::bound(&state.rail, group),
         svrngs_db::Device::parse(&asker),
     );
-    let db = state.states.open(&group, &app, None);
+    // Only a database this computer holds, found among them by its name, so
+    // no path is built from the wire's.
+    let mut held = state.states.held(group).into_iter();
+    let db = held
+        .find(|db| db.app == app)
+        .ok_or(svrngs_db::Refused::NotHere);
     let answer = db.and_then(|db| {
         db.ingest(&call, &bound, from.as_ref())
             .and(db.missing(&call.ask, RING_SYNC_OPS_BUDGET_BYTES))

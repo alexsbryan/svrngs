@@ -150,6 +150,34 @@ pub fn asked(body: &Value) -> Result<Asked<'_>, Refused> {
     }
 }
 
+/// A database's name in its directory, its group's or its app's: one part
+/// of a path under a folder, as the folder's own rule reads one
+/// (`svrngs_core::SyncPath::parse`), and no `/`. So it is never empty, `.`
+/// or `..`, and holds no `\`, NUL or drive, and a database is opened under
+/// its group's directory and nowhere else, as `Path::join` would put one
+/// named by an absolute path wherever it names. Parsed where a name comes
+/// in, the wire's included.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "String")]
+pub struct Name(String);
+
+impl Name {
+    /// `text` as a name, if it is a plain one.
+    pub fn parse(text: &str) -> Option<Self> {
+        let part = !text.contains('/') && svrngs_core::SyncPath::parse(text).is_ok();
+        part.then(|| Self(text.into()))
+    }
+}
+
+svrngs_core::text_newtype!(Name);
+
+impl TryFrom<String> for Name {
+    type Error = String;
+    fn try_from(text: String) -> Result<Self, String> {
+        Self::parse(&text).ok_or_else(|| "not a plain name".into())
+    }
+}
+
 /// This computer's app databases, by group and app, and the key that signs
 /// their sets.
 pub struct States {
@@ -186,12 +214,16 @@ impl States {
 
     /// [`Self::open`] and [`Self::carry`]: a new one made `root` or not.
     fn made(&self, group: &str, app: &str, (schema, root): (Option<&str>, bool)) -> Result<Arc<Db>, Refused> {
+        let names = Name::parse(group).zip(Name::parse(app));
+        tracing::debug!(target: "state", group, app, plain = names.is_some(), "state: an app's database asked by its group's and app's names, opened only by plain ones");
+        let (dir, file) = names
+            .map(|(g, a)| (self.dir.join(g.as_str()), format!("{a}.db")))
+            .ok_or(Refused::NotHere)?;
         let mut dbs = self.dbs.lock().expect("the databases' lock");
         if let Some(db) = dbs.get(&(group.into(), app.into())) {
             return Ok(db.clone());
         }
-        let (dir, key) = (self.dir.join(group), self.key.clone());
-        let path = dir.join(format!("{app}.db"));
+        let (path, key) = (dir.join(file), self.key.clone());
         tracing::debug!(target: "state", group, app, made = schema.is_some(), on_disk = path.exists(), "state: an app's database asked, made from its schema if new, or only one on disk");
         if schema.is_none() && !path.exists() {
             return Err(Refused::NotHere);
@@ -207,7 +239,12 @@ impl States {
     /// each one on its disk, opened if it isn't yet. One that won't open
     /// is left out, said at warn.
     pub fn held(&self, group: &str) -> Vec<Arc<Db>> {
-        let files = std::fs::read_dir(self.dir.join(group)).into_iter().flatten().flatten();
+        let dir = Name::parse(group).map(|g| self.dir.join(g.as_str()));
+        let files = dir
+            .and_then(|d| std::fs::read_dir(d).ok())
+            .into_iter()
+            .flatten()
+            .flatten();
         let apps = files.filter_map(|f| Some(f.file_name().to_str()?.strip_suffix(".db")?.to_owned()));
         let opened = apps.map(|app| (self.open(group, &app, None), app));
         let said = |(db, app): (Result<_, _>, String)| {

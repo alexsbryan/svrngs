@@ -1,6 +1,7 @@
-//! What a database leaves behind when a step fails: a call that fails
-//! leaves no transaction open, and a set is kept and counted together or
-//! not at all.
+//! What a database leaves behind when a step fails, and where it opens one:
+//! a call that fails leaves no transaction open, a set is kept and counted
+//! together or not at all, and a database is opened only under its group's
+//! directory, by a plain name.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -75,4 +76,58 @@ fn a_waiting_set_is_kept_and_counted_together_or_not_at_all() {
     assert_eq!(kept, 0, "a set kept, uncounted");
     assert_eq!(b.ingest(&sent, &|_| false, None).unwrap()[0].1, Took::Waits);
     svrngs_db::close(side).unwrap();
+}
+
+fn sqlite3(path: &Path, sql: &str) -> String {
+    let out = std::process::Command::new("sqlite3")
+        .arg(path)
+        .arg(sql)
+        .output()
+        .unwrap();
+    String::from_utf8_lossy(&out.stdout).trim().to_owned()
+}
+
+/// **A database is opened only by a plain name, under its group's
+/// directory**: a name that is a path, absolute or climbing out, or holds a
+/// separator, opens nothing, and a SQLite file elsewhere is left as it was:
+/// its tables, and its journal mode. Plant: a name with a `/` taken (the
+/// other file gains cr-sqlite's tables).
+#[test]
+fn a_database_is_opened_only_by_a_plain_name() {
+    let dir = tempfile::tempdir().unwrap();
+    let elsewhere = dir.path().join("elsewhere");
+    std::fs::create_dir_all(&elsewhere).unwrap();
+    let other = elsewhere.join("other.db");
+    let made = std::process::Command::new("sqlite3")
+        .arg(&other)
+        .arg("CREATE TABLE notes (x);")
+        .status();
+    assert!(made.unwrap().success());
+    let states = States::new(&dir.path().join("computer-1"), key(1));
+    let absolute = elsewhere.join("other");
+    let names = [
+        ("g", absolute.to_str().unwrap()),
+        ("g", "../../elsewhere/other"),
+        ("g", "sub/other"),
+        ("g", "sub\\other"),
+        ("g", ".."),
+        ("g", ""),
+        ("../elsewhere", "other"),
+    ];
+    let mut opened = Vec::new();
+    for (group, app) in names {
+        for schema in [None, Some(SCHEMA)] {
+            if states.open(group, app, schema).is_ok() {
+                opened.push(format!("{group}/{app}, made: {}", schema.is_some()));
+            }
+        }
+    }
+    assert_eq!(
+        sqlite3(&other, ".tables"),
+        "notes",
+        "the other file's tables, untouched"
+    );
+    assert_eq!(sqlite3(&other, "PRAGMA journal_mode"), "delete", "and its journal mode");
+    assert!(opened.is_empty(), "opened: {opened:?}");
+    assert!(states.open("g", "board", Some(SCHEMA)).is_ok(), "a plain name opens");
 }

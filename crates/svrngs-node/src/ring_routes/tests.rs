@@ -565,3 +565,41 @@ async fn a_call_with_a_key_cr_sqlite_cannot_unpack_is_answered_and_its_set_refus
     let (status, _) = state(inbound, Some(&key()), (NS, "board"), &Default::default()).await;
     assert_eq!(status, 200, "and the computer answers on");
 }
+
+/// **The state route serves only a database this computer holds, by a
+/// plain name**: a standing member's call naming an app by a path, absolute
+/// or climbing out of the group's directory, is not served, and a SQLite
+/// file elsewhere is left as it was. Either line holds alone: the wire's
+/// name parsed as a plain one, and the database found among those held.
+/// Plant: both taken away, a name taking any text and the database opened
+/// by the wire's name (the other file gains cr-sqlite's tables).
+#[tokio::test]
+async fn the_state_route_serves_only_a_database_this_computer_holds() {
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let other = dir.path().join("other.db");
+    let made = std::process::Command::new("sqlite3")
+        .arg(&other)
+        .arg("CREATE TABLE notes (x);")
+        .status()
+        .unwrap();
+    assert!(made.success());
+    let absolute = dir.path().join("other");
+    for app in [absolute.to_str().unwrap(), "../../../other"] {
+        let asked = svrngs_db::Call::default();
+        let (status, _) = state(inbound.clone(), Some(&key()), (NS, app), &asked).await;
+        assert_ne!(status, 200, "{app} served");
+    }
+    let tables = std::process::Command::new("sqlite3")
+        .arg(&other)
+        .arg(".tables")
+        .output()
+        .unwrap();
+    assert_eq!(
+        String::from_utf8_lossy(&tables.stdout).trim(),
+        "notes",
+        "the other file, untouched"
+    );
+}
