@@ -1268,10 +1268,8 @@ impl Printed {
     /// As svrngs running here told it ([`new_running`], [`link_running`]):
     /// the page is the https link's origin.
     fn told(client: String, https: Option<String>) -> Self {
-        let page = https
-            .as_deref()
-            .and_then(Link::parse)
-            .and_then(|l| l.origin);
+        let link = https.as_deref().and_then(Link::parse);
+        let page = link.and_then(|l| l.origin);
         Self {
             client,
             https,
@@ -1797,10 +1795,8 @@ pub fn approve(
     };
     let (approved, answers) = share::approve((port, lend.raw()), read(), pid, Some(&token))?;
     share::reapproved(here.root(), name, approved)?;
-    Ok(format!(
-        "{name} is kept to {} now.\n",
-        what_answers(&answers)
-    ))
+    let kept = what_answers(&answers);
+    Ok(format!("{name} is kept to {kept} now.\n"))
 }
 
 /// What answers on a port, as its lender is told it: each program in its
@@ -1845,11 +1841,8 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     let lent = lend::all(root).map_err(keep)?.into_iter().flatten();
     let lent = lent.map(|l| l.name).collect();
     tracing::debug!(target: "cli", lend = %name, "cli: unshare — refused, nothing lent by that name");
-    Err(Refused::NotLent {
-        name: name.clone(),
-        lent,
-    }
-    .into())
+    let name = name.clone();
+    Err(Refused::NotLent { name, lent }.into())
 }
 
 /// What the bare command prints: the groups held, where apps reach them,
@@ -1875,12 +1868,8 @@ async fn serve(
 ) -> Result<(), Refusal> {
     let stays = !matches!(command, Verb::Join { run: false, .. });
     if let Verb::Join { link, person, .. } = &mut command {
-        *person = Some(
-            person
-                .take()
-                .or_else(user_name)
-                .ok_or(Refused::NoNameToJoin)?,
-        );
+        let named = person.take().or_else(user_name);
+        *person = Some(named.ok_or(Refused::NoNameToJoin)?);
         // Its home relay reached before the exchange, so the joiner says it
         // there and the issuer can dial it back; else not before its first
         // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
@@ -2056,11 +2045,8 @@ pub fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
         many => {
             let ids = many.iter().map(|s| s.id()[..8].to_string()).collect();
             tracing::debug!(target: "cli", reference, n = many.len(), "cli: refused — the name is ambiguous");
-            Err(Refused::Ambiguous {
-                name: reference.to_string(),
-                ids,
-            }
-            .into())
+            let name = reference.to_string();
+            Err(Refused::Ambiguous { name, ids }.into())
         }
     }
 }

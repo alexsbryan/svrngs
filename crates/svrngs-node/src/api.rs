@@ -306,6 +306,7 @@ struct Reached(Option<SocketAddr>);
 /// ([`crate::origin`], u5-2), which answer no route of the record's. All
 /// behind the one loopback check.
 pub fn router(api: RailApi, apps: Router, signin: Router, pages: Pages, token: Bearer) -> Router {
+    let held = axum::middleware::from_fn_with_state(token.clone(), holds_the_token);
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
@@ -321,10 +322,7 @@ pub fn router(api: RailApi, apps: Router, signin: Router, pages: Pages, token: B
         .route("/v1/rail/people", get(crate::rail::people))
         .with_state(api)
         .merge(apps)
-        .layer(axum::middleware::from_fn_with_state(
-            token.clone(),
-            holds_the_token,
-        ))
+        .layer(held)
         .merge(signin)
         // svrngs: asked before a program sends the token, so asked without.
         .route("/v1/proof", post(proved).with_state(token))
@@ -350,9 +348,8 @@ async fn to_a_lend(State((home, lends)): State<Pages>, request: Request, next: N
         _ if crate::origin::label_of(host).is_some() => lends,
         _ => return next.run(request).await,
     };
-    to.oneshot(request)
-        .await
-        .unwrap_or_else(|never| match never {})
+    let Ok(answered) = to.oneshot(request).await;
+    answered
 }
 
 /// The record is served to this computer's apps, never to a page in a

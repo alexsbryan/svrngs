@@ -307,9 +307,8 @@ pub enum ShareRefusal {
 pub fn shared(data_dir: &Path, name: &LendName) -> Result<(Lend, NonZeroU16), ShareRefusal> {
     let read = crate::lend::read(data_dir, name);
     let read = read.map_err(|e| ShareRefusal::Unkept(name.clone(), e.to_string()))?;
-    let shared = read.and_then(|lend| Some((lend.port()?, lend)));
-    shared
-        .map(|(port, lend)| (lend, port))
+    let port = read.as_ref().and_then(Lend::port);
+    read.zip(port)
         .ok_or_else(|| ShareRefusal::NotShared(name.clone()))
 }
 
@@ -558,9 +557,8 @@ pub fn readers_of<'a>(kind: &Program, terms: &'a str) -> Option<ReadersSignIn<'a
 /// so `@evil.example/x` would post the typed password to evil.example
 /// (CONTRACTS §6.3).
 fn readers_in(row: &str) -> Option<ReadersSignIn<'_>> {
-    let (row, asked) = row
-        .split_once(" | ")
-        .map_or((row, None), |(r, a)| (r, Some(a)));
+    let asked = row.split_once(" | ");
+    let (row, asked) = asked.map_or((row, None), |(r, a)| (r, Some(a)));
     let words: Vec<&str> = row.splitn(5, ' ').collect();
     let [path, name, password, token, sent] = words.try_into().ok()?;
     let fits = path.starts_with('/') && sent.contains("{}");
@@ -624,9 +622,8 @@ pub fn keep_key(dir: &Path, name: &LendName, how: Key<'_>, key: &str) -> Result<
 pub async fn tried(to: Bound, port: NonZeroU16, how: Key<'_>, key: &str) -> Option<u16> {
     let (header, sent, path) = how.filter(|(.., path)| !path.is_empty())?;
     let asked = axum::http::Request::get(path).header(header, sent.replace("{}", key));
-    let status = asked_on(to, port, asked, String::new())
-        .await
-        .map(|(s, _)| s);
+    let answered = asked_on(to, port, asked, String::new()).await;
+    let status = answered.map(|(s, _)| s);
     tracing::debug!(target: "share", port, path, ?status, "share: a pasted key tried once on its own service, or none answered");
     status
 }
