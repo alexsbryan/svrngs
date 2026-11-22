@@ -1,7 +1,8 @@
 //! `svrngs relay` (relay-verb (b)): a relay the verb starts on 127.0.0.1,
 //! over the data of a computer that runs svrngs beside it, lets through a
-//! key standing in a group that computer holds and a pass's holder for the
-//! group's lends, and refuses one that stands in none and holds no pass;
+//! key standing in a group that computer holds and a key a pass of the
+//! group's names, itself or by its holder's link, and refuses one that
+//! stands in none and holds no pass;
 //! `--open` lets both through; a computer in no group is refused the verb.
 //! Planted: every key let through, as an open relay would.
 
@@ -19,7 +20,8 @@ use iroh_relay::client::{ClientBuilder, ConnectError};
 use svrngs::cli::{self, Refusal, Refused, Unjudged};
 use svrngs::group::Name;
 use svrngs::relay::{self, At, Relay, SHARE_BURST, SHARE_RATE};
-use svrngs_core::pass::{Label, Pass};
+use svrngs_core::authority::resolve;
+use svrngs_core::pass::{presenting, Label, Pass};
 use svrngs_node::iroh::{RelayUrl, SecretKey};
 use svrngs_node::SigningKey;
 
@@ -167,6 +169,203 @@ async fn a_group_only_relay_admits_a_pass_s_holder_for_the_group_s_lends() {
         !admits_with(&groups, &other, Some(&pass)).await,
         "the pass names its holder, and another key presenting it is refused"
     );
+    sam.endpoint().close().await;
+}
+
+/// Seconds since 1970 on this host's clock.
+fn unix_now() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("this host's clock reads after 1970")
+        .as_secs() as i64
+}
+
+/// `pass`, and the link `holder` signs in its own name carrying it to
+/// `run`'s key, as a lend's worker has its holder sign one for the key of
+/// its run (web/lend.js `linkTo`), where `holder` is the pass's holder.
+fn linked(pass: &Pass, holder: &SigningKey, run: &SecretKey) -> (Pass, Option<Pass>) {
+    let mut link = pass.link(&hex::encode(run.public().as_bytes()));
+    link.person = svrngs_core::actor_of(holder);
+    link.sig = svrngs_core::sign_message(holder, &link.message());
+    (pass.clone(), Some(link))
+}
+
+/// What a lend's worker presents at its relays for a pass and its link:
+/// web/src/lib.rs `holder_endpoint`'s own call.
+fn token((pass, link): &(Pass, Option<Pass>)) -> String {
+    presenting(&pass.encode(), link.as_ref().map(Pass::encode).as_deref())
+}
+
+/// **A worker dialing from its run's key reaches a lender at its group's
+/// own relay** (relay-link): a lend's worker binds its endpoint as
+/// web/src/lib.rs `holder_endpoint` does — relay-only, handed the group's
+/// own relay and the build's fallback (here the harness's open relay), its
+/// key this run's own (web/lend.js `opened`), presenting its pass and the
+/// holder's link naming that key — and dials a lender homed at the group's
+/// own relay alone (tiers.rs: a group's own HTTPS relay alone while it
+/// answers) at the relay the lender's record names, as lend.js `dialled`
+/// does. Planted, watched red: the relay's old rule, the pass's holder the
+/// dialing key (`pass.holder == key`), where the dial had no answer.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_worker_dialing_from_its_run_s_key_reaches_a_lender_at_its_group_s_own_relay() {
+    use std::time::Duration;
+    const ALPN: &[u8] = b"relay-link/1";
+    let (fallback, _, dir, sam) = common::sams_computer(SAM).await;
+    let house = Name::parse("house").unwrap();
+    made::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[])
+        .await
+        .expect("Sam makes house");
+    let own = relay_over(dir.path(), false)
+        .await
+        .expect("Sam's relay starts");
+    let own_url: RelayUrl = format!("http://{}/", own.http_addr().unwrap())
+        .parse()
+        .unwrap();
+    let fallback_url: RelayUrl = harness::relay_url(&fallback).parse().unwrap();
+
+    // The lender: Sam's key, homed at house's own relay alone, answering.
+    let ours = svrngs_node::iroh::RelayConfig {
+        relay_urls: vec![own_url.to_string()],
+        n0_services: false,
+        loopback_only: true,
+    };
+    let lender = svrngs_node::iroh::build_relayed_endpoint(
+        SecretKey::from_bytes(&[SAM; 32]),
+        vec![ALPN.to_vec()],
+        &ours,
+    )
+    .await
+    .expect("the lender binds");
+    tokio::time::timeout(Duration::from_secs(20), lender.online())
+        .await
+        .expect("the lender is let through at house's own relay");
+    let accepting = lender.clone();
+    tokio::spawn(async move {
+        let mut answered = Vec::new();
+        while let Some(incoming) = accepting.accept().await {
+            answered.extend(incoming.await.ok());
+        }
+    });
+
+    // The pass Sam's page signs to the holder, and this run's key, which
+    // the holder names in a link.
+    let sam_key = SigningKey::from_bytes(&[SAM; 32]);
+    let holder = SigningKey::from_bytes(&[7; 32]);
+    let app = Label::of(&sam_key.verifying_key().to_bytes(), "film");
+    let pass = Pass::sign(
+        &sam_key,
+        &svrngs_core::actor_of(&holder),
+        (app, vec![]),
+        unix_now() + 3600,
+    );
+    let run = SecretKey::from_bytes(&[9; 32]);
+    let presented = token(&linked(&pass, &holder, &run));
+
+    let map: iroh::RelayMap = [own_url.clone(), fallback_url].into_iter().collect();
+    let worker = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
+        .crypto_provider(std::sync::Arc::new(rustls::crypto::ring::default_provider()))
+        .secret_key(run)
+        .relay_mode(iroh::RelayMode::Custom(map.with_auth_token(presented)))
+        .clear_ip_transports()
+        .bind()
+        .await
+        .expect("the worker binds");
+    let at = iroh::EndpointAddr::new(lender.id()).with_relay_url(own_url);
+    let dialed = tokio::time::timeout(Duration::from_secs(20), worker.connect(at, ALPN)).await;
+    assert!(
+        matches!(dialed, Ok(Ok(_))),
+        "the run's key reaches the lender through house's own relay: {dialed:?}"
+    );
+    worker.close().await;
+    lender.close().await;
+    sam.endpoint().close().await;
+}
+
+/// **A group-only relay admits the key a holder's link names, as the door
+/// does, and no other** (relay-link): the run's key presenting the pass and
+/// the holder's link naming it is let through; the run's key with the pass
+/// alone, with a link from another holder, or with a link in the holder's
+/// name another key signed, and another key presenting the run's pass and
+/// link, are refused; and on each the door's own call,
+/// [`resolve`] for the pass's lend (door.rs `holder_of`), answers the same.
+/// Planted, each watched red: the old rule, the pass's holder the dialing
+/// key, where the run's key was refused; any key presenting a live pass
+/// let through, where the pass alone was let through; and the link judged
+/// by itself, not as the pass's holder's word, where another holder's link
+/// was.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_group_only_relay_admits_the_key_a_holder_s_link_names_and_no_other() {
+    let (_relay, _, dir, sam) = common::sams_computer(SAM).await;
+    let house = Name::parse("house").unwrap();
+    made::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[])
+        .await
+        .expect("Sam makes house");
+    let groups = relay_over(dir.path(), false)
+        .await
+        .expect("Sam's relay starts");
+
+    let sam_key = SigningKey::from_bytes(&[SAM; 32]);
+    let holder = SigningKey::from_bytes(&[7; 32]);
+    let stranger = SigningKey::from_bytes(&[6; 32]);
+    let app = Label::of(&sam_key.verifying_key().to_bytes(), "film");
+    let now = unix_now();
+    let pass = Pass::sign(
+        &sam_key,
+        &svrngs_core::actor_of(&holder),
+        (app.clone(), vec![]),
+        now + 3600,
+    );
+    let (run, other) = (
+        SecretKey::from_bytes(&[9; 32]),
+        SecretKey::from_bytes(&[8; 32]),
+    );
+    // A link in the holder's name that another key signed.
+    let (_, mut forged) = linked(&pass, &holder, &run);
+    if let Some(link) = forged.as_mut() {
+        link.sig = svrngs_core::sign_message(&stranger, &link.message());
+    }
+    let cases = [
+        (
+            "the run's key, the pass and the holder's link naming it",
+            &run,
+            linked(&pass, &holder, &run),
+            true,
+        ),
+        (
+            "the run's key and the pass alone",
+            &run,
+            (pass.clone(), None),
+            false,
+        ),
+        (
+            "the run's key and a link from another holder",
+            &run,
+            linked(&pass, &stranger, &run),
+            false,
+        ),
+        (
+            "the run's key and a link in the holder's name another key signed",
+            &run,
+            (pass.clone(), forged),
+            false,
+        ),
+        (
+            "another key and the run's pass and link",
+            &other,
+            linked(&pass, &holder, &run),
+            false,
+        ),
+    ];
+    for (case, key, pair, admitted) in cases {
+        let dialer = hex::encode(key.public().as_bytes());
+        let door = resolve(&pair.0, pair.1.as_ref(), &dialer, &app, now, || ()).is_ok();
+        assert_eq!(door, admitted, "the door: {case}");
+        assert_eq!(
+            admits_with(&groups, key, Some(&token(&pair))).await,
+            admitted,
+            "the relay: {case}"
+        );
+    }
     sam.endpoint().close().await;
 }
 

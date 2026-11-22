@@ -110,6 +110,38 @@ test('a pass kept before relay fallbacks opens at its one relay, the pass handed
   assert.equal(handedPass, 'the-pass', 'the pass is presented where the relay admits by it');
 });
 
+// A run's own endpoint dials from a key of this run, which the holder
+// names in a link, so the relays are handed the link beside the pass: a
+// group's own relay admits this run's key by the pair, as the door does
+// (crates/svrngs/src/relay.rs `pass_holds`; tests/relay.rs). A lend at an
+// older door dials as the holder itself, with no link. Watched failing
+// with the link left out of the endpoint, as before: the relays were
+// handed the pass alone.
+test("a run's own endpoint hands the relays its pass and the holder's link", async () => {
+  /** @type {unknown[][]} */
+  const handedTo = [];
+  /** @param {string | undefined} seed */
+  const context = (seed) => ({
+    handed: { seed, relays: ['https://own/'], pass: 'the-pass' },
+    init: async () => {},
+    store: { runtime: () => '' },
+    fromHex: () => new Uint8Array(32),
+    crypto: { getRandomValues: (/** @type {Uint8Array} */ bytes) => bytes.fill(9) },
+    actor: () => 'the-run-key',
+    linkTo: async (/** @type {string} */ to) => `the holder's link to ${to}`,
+    trace: () => {},
+    holder_endpoint: async (/** @type {unknown[]} */ ...args) => handedTo.push(args.slice(1)),
+  });
+  for (const seed of [undefined, 'ab']) {
+    const source = `let loaded, linked;\n${cut('lend.js', 'opened')}\nopened;`;
+    await runInNewContext(source, context(seed))();
+  }
+  assert.deepEqual(handedTo, [
+    [['https://own/'], 'the-pass', "the holder's link to the-run-key"],
+    [['https://own/'], 'the-pass', null],
+  ]);
+});
+
 // Review F6: a relay the record names for a lend that the page's policy
 // refuses went to the worker as none, unsaid, and the worker said the
 // group names none. The page says it refused that one, by name. Watched

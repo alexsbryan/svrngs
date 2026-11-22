@@ -19,9 +19,11 @@
 //! (`AccessControl::on_connect`): by default a computer or phone standing
 //! in a group this computer holds — the register's one answer,
 //! [`RingRail::standing_anywhere`], read from the record on disk as svrngs
-//! running beside it writes it — and a pass's holder for the group's lends
-//! ([`pass_holds`], self-host), whose fresh key stands in no group; with
-//! `--open`, everyone, each held to the share, [`SHARE_RATE`] with a
+//! running beside it writes it — and a lend's worker acting for such a
+//! person ([`pass_holds`], self-host): its key stands in no group, and
+//! the token it presents is its pass and the holder's link naming that
+//! key, judged as the lending computer's door judges them; with `--open`,
+//! everyone, each held to the share, [`SHARE_RATE`] with a
 //! [`SHARE_BURST`]. Every decision traces at debug.
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
@@ -36,8 +38,7 @@ use iroh_relay::server::{
     Access, AccessControl, AcmeConfig, CertConfig, ClientRateLimit, ClientRequest, QuicConfig,
     RelayConfig, Server, ServerConfig, TlsConfig,
 };
-use svrngs_node::pass::Pass;
-use svrngs_node::register::Member;
+use svrngs_node::{authority::resolve, pass::presented, register::Member};
 use svrngs_node::{namespaces_in, RailError, RingRail, SigningKey};
 use tokio::task::JoinError;
 
@@ -100,8 +101,8 @@ pub fn name(raw: &str) -> Result<String, String> {
 }
 
 /// Who the relay lets through: everyone, or whoever stands in a group
-/// held under the data dir, read with this computer's key, and a pass's
-/// holder the group's lends admit (self-host).
+/// held under the data dir, read with this computer's key, and a key a
+/// pass of theirs and its holder's link name (self-host).
 #[derive(Debug)]
 struct Admits(Option<(PathBuf, Arc<SigningKey>)>);
 
@@ -112,49 +113,48 @@ impl AccessControl for Admits {
             tracing::debug!(target: "relay", key, "relay: admitted — the relay is open");
             return Access::Allow;
         };
-        // A pass's holder (self-host): a lend's page dials from a fresh key
-        // that stands in no group, and the pass its person signed for it is
-        // what a group's own relay admits it by, as the door admits it for
-        // the lends the pass names.
-        if let Some(token) = request.auth_token() {
-            return pass_holds(&key, &token, root, signer).await;
-        }
-        let asked = key.clone();
+        // A lend's worker (self-host) dials from a key of its run, which
+        // stands in no group and which the pass's holder names in a link
+        // (web/lend.js `opened`): the pass its person signed and that link
+        // are what a group's own relay admits it by, as the door admits
+        // them for the lends the pass names; then the person stands here
+        // or not, read as their own key's is. A token that holds nothing
+        // is refused.
+        let person = match request.auth_token().map(|token| pass_holds(&key, &token)) {
+            Some(None) => return Access::Deny { reason: None },
+            held => held.flatten(),
+        };
+        let asked = person.clone().unwrap_or_else(|| key.clone());
         // The record is read from disk, off the relay's own tasks.
         let stands = tokio::task::spawn_blocking(move || {
             RingRail::new(root, signer).standing_anywhere(&asked)
         });
-        verdict(&key, None, stands.await)
+        verdict(&key, person.as_deref(), stands.await)
     }
 }
 
-/// Whether the dialer `key`, presenting `token`, is a pass's holder a
-/// group held here admits: the token read as a [`Pass`], signed by the
-/// person it names, live, naming `key` as its holder, whose person stands
-/// in a group held here. Any other token is refused, each branch traced.
-async fn pass_holds(key: &str, token: &str, root: PathBuf, signer: Arc<SigningKey>) -> Access {
-    let Some(pass) = Pass::decode(token) else {
-        tracing::debug!(target: "relay", key, "relay: refused — the token is not a pass that reads");
-        return Access::Deny { reason: None };
+/// The person the dialer `key`, presenting `token`, acts for: the token
+/// read as a pass and the link carrying it ([`presented`]), judged as the
+/// door judges the pair (door.rs `holder_of`), by [`resolve`] — the pass
+/// signed by the person it names, live, and held by `key` or by the holder
+/// whose link, live and no wider, names `key`. `None` for any other
+/// token, each branch traced.
+fn pass_holds(key: &str, token: &str) -> Option<String> {
+    let (read, clock) = (presented(token), svrngs_node::door::unix_now());
+    // Nothing to judge, the trace saying which: no pass and link that
+    // read, or no clock to judge them on.
+    let (Some((pass, link)), Some(now)) = (&read, clock) else {
+        tracing::debug!(target: "relay", key, token_reads = read.is_some(), clock_reads = clock.is_some(), "relay: refused — the token is not a pass, nor a pass and its link, that reads, or this computer's clock cannot be read");
+        return None;
     };
-    let why = if pass.holder != key {
-        Some("the pass's holder is another key")
-    } else if !pass.signed() {
-        Some("the pass is not signed by the person it names")
-    } else if svrngs_node::door::unix_now().is_none_or(|now| pass.until <= now) {
-        Some("the pass has lapsed, or this computer's clock cannot be read")
-    } else {
-        None
-    };
-    if let Some(why) = why {
-        tracing::debug!(target: "relay", key, person = %pass.person, why, "relay: refused — a pass that does not admit this dialer");
-        return Access::Deny { reason: None };
+    // The lend asked is the pass's own app: a relay opens no lend, and a
+    // pair the door takes for any lend the pass names it takes for its app
+    // (`resolve`'s `Wider`: a link names the pass's app).
+    if let Err(why) = resolve(pass, link.as_ref(), key, &pass.app, now, || ()) {
+        tracing::debug!(target: "relay", key, person = %pass.person, %why, "relay: refused — a pass that does not admit this dialer");
+        return None;
     }
-    let person = pass.person.clone();
-    // The record is read from disk, off the relay's own tasks.
-    let stands =
-        tokio::task::spawn_blocking(move || RingRail::new(root, signer).standing_anywhere(&person));
-    verdict(key, Some(&pass.person), stands.await)
+    Some(pass.person.clone())
 }
 
 /// Whether `key` is let through, by the read of where it — or `person`,
@@ -172,7 +172,7 @@ fn verdict(
             return Access::Allow;
         }
         (Ok(Some((group, _))), Some(person)) => {
-            tracing::debug!(target: "relay", key, person, group, "relay: admitted — a pass's holder, its person standing in a group held here");
+            tracing::debug!(target: "relay", key, person, group, "relay: admitted — a key acting for a pass's person, who stands in a group held here");
             return Access::Allow;
         }
         (Ok(None), None) => {

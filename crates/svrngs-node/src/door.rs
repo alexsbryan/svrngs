@@ -61,7 +61,7 @@
 //! request for a lend carries a pass in [`PASS_HEADER`], and the door lets
 //! its holder in as the person who signed it only when the pass opens this
 //! lend to the key that dialled, now, and its signer stands in a group
-//! held here ([`svrngs_core::pass::Pass::check`]); then it is that person's
+//! held here ([`svrngs_core::authority::resolve`]); then it is that person's
 //! request, counted, told its share and carried as any member's. A lend is
 //! named by its name or by its label ([`find`]), which names this
 //! computer's key. A pass a guest's visit key signed lets its holder in as
@@ -923,7 +923,7 @@ enum Watched {
 /// decision that let it in: a member's standing as a raw lend's is
 /// ([`udp::stands`]), a guest's visit by [`guest_admitted`], and the time
 /// `until` which the pass, or the link carrying it, opened the lend to its
-/// holder ([`holder_of`]), read on the clock [`Pass::check`] read it on.
+/// holder ([`holder_of`]), read on [`unix_now`], the clock it was judged by.
 /// What an answer streaming to them and an upgraded connection are cut by
 /// (LENDING_SCOPE §"Existing streams and app sessions"). Never for none.
 fn withdrawn(
@@ -1508,7 +1508,8 @@ fn own_app(
         None => Some("none that reads".to_string()),
         Some(p) if p.person != key => Some("signed by another key than the one dialling".into()),
         Some(p) => unix_now().map_or(Some("this computer's clock cannot be read".into()), |now| {
-            p.check(&key, &label, now).err().map(|f| f.to_string())
+            let fault = svrngs_core::authority::resolve(p, None, &key, &label, now, || ()).err();
+            fault.map(|f| f.to_string())
         }),
     };
     if let Some(why) = fault {

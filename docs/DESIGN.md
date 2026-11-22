@@ -2042,13 +2042,20 @@ end-to-end encrypted QUIC, a phone's page cannot use it (a browser refuses
 plain HTTP from an HTTPS page), and it admits as below. By default it
 lets through only the computers and phones that stand in a group its
 computer holds, read from the record on disk and asked again on each
-connection, each refusal traced, and a pass's holder for the group's
-lends: the token a lend's page presents at the relay's handshake is read
-as a pass, admitted when it is signed by the person it names, is live,
-names the dialing key as its holder, and its person stands in a group
-held here (self-host) — so a group's own relay need not be `--open` for
-the lends of its members, whose pages dial from a fresh key that stands
-in no group. A computer in no group is refused the
+connection, each refusal traced, and a lend's worker for the group's
+lends (self-host). The worker dials from a key of its run, which stands
+in no group and which the pass's holder names in a link ("Lent apps",
+call 6), so the token it presents at the relay's handshake is the pass
+and that link (`pass.rs` `presenting`); with no link it is the pass
+alone, from a worker dialing as the holder itself. The relay admits the
+pair by the call the lending computer's door makes, Eudoxia's
+`authority::resolve`, for the pass's own app — the pass signed by the
+person it names and live, held by the dialing key or by the holder whose
+link, live and no wider, names it — and then the person stands in a
+group held here, read as their own key's is (`relay.rs` `pass_holds`). So
+the relay and the door have one rule for a pass, a group's own relay
+need not be `--open` for its members' lends, and it lets through only
+keys the door would take as that person. A computer in no group is refused the
 verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each held to the share: 125,000 bytes a second, about a
 megabit, with an 8 MiB burst (`SHARE_RATE` and `SHARE_BURST`). The numbers
@@ -3069,9 +3076,10 @@ The release's record keeps its verdict.
    n0's public relays stay in every build as the emergency behind ours: a
    computer meets at n0's only while neither svrngs's relay nor its
    groups' own answers (§3), so an outage of ours is not an outage of the
-   groups. A group's own relay carries a phone's lends too: it admits a
-   pass's holder, the fresh key a lend's page dials from, by the pass its
-   person signed (§3, "A relay anyone runs"; self-host). And whoever
+   groups. A group's own relay carries a phone's lends too: it admits the
+   key a lend's worker dials from, by the pass its person signed and the
+   link its holder signed naming that key, as the door does (§3, "A relay
+   anyone runs"; self-host). And whoever
    serves a group's page serves the code that holds the person's key, its
    bytes unsealed while the page runs, so a group that does not trust
    svrnme.sh serves the page from its own origin. Likewise a lend's own
