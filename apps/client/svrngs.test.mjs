@@ -99,6 +99,44 @@ test('a request whose connection is gone is proved again on a new one, never sen
   assert.equal(stand.seen.proofs, 2, 'each connection proved before its ask');
 });
 
+// The plant: a read, then a program asking svrngs's proof itself on the
+// connection this file proved, then a read on that connection, whose code
+// was made for the nonce that proof replaced. The stand-in proves at any
+// host, as svrngs does at a `.localhost` address naming no lend.
+test("a program's own proof is refused in plain words, and the next ask is asked as before", async (t) => {
+  const stand = standin(groups);
+  t.after(stand.close);
+  const challenge = { challenge: '00'.repeat(32) };
+  await stand.client.ask('/v1/groups');
+  const own = stand.client.ask('/v1/proof', challenge);
+  await own.catch(() => {});
+  assert.equal((await stand.client.ask('/v1/groups')).groups.length, 1);
+  await assert.rejects(own, /svrngs\.mjs proves svrngs itself.*leave \/v1\/proof to it/);
+  const there = `http://127.0.0.1:${PORT}/v1/proof?again`;
+  await assert.rejects(stand.client.ask(there, challenge), /leave/);
+  assert.equal(stand.seen.proofs, 1, 'a proof asked but this file');
+  await stand.client.ask(`http://not-a-lend.localhost:${PORT}/v1/proof`, challenge);
+  assert.equal((await stand.client.ask('/v1/groups')).groups.length, 1);
+  assert.deepEqual(stand.seen.refused, []);
+  assert.deepEqual(
+    [stand.seen.connections, stand.seen.proofs],
+    [2, 3],
+    'proved again, on a new one',
+  );
+});
+
+// The plant: an answer with no body, 205 among them, as svrngs or a lend
+// may give; the next ask on the same connection.
+test('an empty answer reads as empty, and its connection serves the next ask', async (t) => {
+  const stand = standin((req, res) =>
+    req.url === '/v1/groups' ? groups(req, res) : res.writeHead(Number(req.url.slice(1))).end(),
+  );
+  t.after(stand.close);
+  for (const status of [205, 204]) assert.equal(await stand.client.ask(`/${status}`, {}), null);
+  assert.equal((await stand.client.ask('/v1/groups')).groups.length, 1);
+  assert.deepEqual([stand.seen.connections, stand.seen.proofs], [1, 1]);
+});
+
 test('svrngs refusing says so, with its words and status', async (t) => {
   const stand = standin((req, res) => json(res, 403, { error: 'not yours', kind: 'not_yours' }));
   t.after(stand.close);
@@ -152,17 +190,14 @@ test('a relay carrying the challenge to svrngs on a connection of its own proves
   const stand = standin(groups);
   t.after(stand.close);
   const relay = await squatted(t, (req, res) => {
-    const chunks = [];
-    req.on('data', (c) => chunks.push(c));
-    req.on('end', async () => {
-      const there = await stand.client.fetch(req.url, {
-        method: req.method,
-        body: Buffer.concat(chunks),
-      });
-      json(res, there.status, await there.json());
-    });
+    const { method, url: path, headers } = req;
+    const carried = { method, path, headers, createConnection: stand.connect };
+    req.pipe(
+      http.request(carried, (there) => there.pipe(res.writeHead(there.statusCode, there.headers))),
+    );
   });
   assert.equal(relay.refused?.withheld, 'unproven');
+  assert.equal(stand.seen.proofs, 1, "svrngs proved itself, for the relay's connection");
   noToken(relay.sent);
 });
 

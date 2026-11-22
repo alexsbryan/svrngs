@@ -11,7 +11,8 @@
 // not: svrngs refused (`.status`, `.answer`), or svrngs never was asked
 // (`.withheld`: away, older, unanswered or unproven). `route` is a path on
 // svrngs, as `/v1/groups`, or a lend's address on this computer,
-// `http://<name>.localhost:<port>/…`; it asks nothing else.
+// `http://<name>.localhost:<port>/…`; it asks nothing else, and never
+// svrngs's own /v1/proof, which this file asks itself.
 //
 // `svrngs(dir)` is the same for the svrngs whose data dir is `dir`, with
 // `fetch(route, init)` beside its `ask`: the global fetch's shape, for an
@@ -37,6 +38,7 @@ import net from 'node:net';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
+import { finished } from 'node:stream/promises';
 import { debuglog } from 'node:util';
 
 const trace = debuglog('svrngs');
@@ -263,7 +265,15 @@ export function svrngs(dir = dataDir(), { connect = net.connect } = {}) {
       throw new TypeError(
         'svrngs takes no Authorization from a program: leave it out, and this asks svrngs as you, without ever sending its token',
       );
-    const { host, path } = place(route, api());
+    const at = api();
+    const { host, path } = place(route, at);
+    // A proof asked on a connection gives it a new nonce in place of the
+    // one its code was made for (api.rs `proved`).
+    const proving = new URL(path, at.origin).pathname === '/v1/proof';
+    if (proving && host === at.host)
+      throw new TypeError(
+        'svrngs.mjs proves svrngs itself, on each connection before it asks anything there: leave /v1/proof to it, and ask the route you want',
+      );
     const body = init.body === undefined || init.body === null ? undefined : Buffer.from(init.body);
     for (;;) {
       let line = idle.pop();
@@ -273,6 +283,11 @@ export function svrngs(dir = dataDir(), { connect = net.connect } = {}) {
       }
       if (line) trace('connection used again: %s', path);
       line ??= await open();
+      // svrngs answers a `.localhost` address that names no lend with its
+      // own routes, its proof among them (api.rs `to_a_lend`), so a
+      // connection asked /v1/proof there is asked nothing more.
+      line.spent = proving;
+      if (proving) trace('/v1/proof asked at %s: its connection closed after it', host);
       let asked;
       try {
         asked = await send(line, host, path, { ...init, headers, body });
@@ -287,17 +302,19 @@ export function svrngs(dir = dataDir(), { connect = net.connect } = {}) {
   }
 
   /** `res` as a fetch Response; its connection kept for the next ask once it ends. */
-  function answered({ res, req }, line, method = 'GET') {
+  async function answered({ res, req }, line, method = 'GET') {
     res.on('end', () => {
-      if (!req.shouldKeepAlive || idle.length >= KEPT) line.close();
+      if (line.spent || !req.shouldKeepAlive || idle.length >= KEPT) line.close();
       else idle.push(line);
     });
     res.on('error', () => line.close());
     const headers = new Headers();
     for (const [name, value] of Object.entries(res.headers))
       for (const one of [value].flat()) headers.append(name, one);
-    const empty = [204, 304].includes(res.statusCode) || method.toUpperCase() === 'HEAD';
-    if (empty) res.resume();
+    // The statuses a Response holds no body for, and HEAD's answer.
+    const empty = [204, 205, 304].includes(res.statusCode) || method.toUpperCase() === 'HEAD';
+    // Its end waited for, so its connection is kept before the next ask.
+    if (empty) await finished(res.resume());
     return new Response(empty ? null : Readable.toWeb(res), {
       status: res.statusCode,
       statusText: res.statusMessage,
