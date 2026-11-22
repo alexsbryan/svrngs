@@ -54,7 +54,7 @@ answer, refusal, trace and wait is as before. Counted after `cargo fmt` and
 | share.rs | `key_header_fits` | the names never a lend's secret named apart | 1 |
 | share.rs | `sent` | the host named first; the body read to bytes at once | 3 |
 | share.rs | `lend_of` | the carries word's test named first | 1 |
-| uid.rs | `waited` | its `expect` reason short enough for one line | 3 |
+| uid.rs | `waited` | its `expect` reason short enough for one line (not cut: below) | 3 |
 | uid.rs | `read` (Linux) | the end's test named first | 2 |
 | uid.rs | `sockets` (Linux) | the bound-listing kernel's test named, still read only when reached | 1 |
 | uid.rs | `peer`, `lists_bound` | the line's and the number's reads named first | 2 |
@@ -70,6 +70,10 @@ Left: the struct literals rustfmt lays out field by field (`Flow::open`,
 `tracing` calls, and the signatures that stay past 100 columns
 (`decided`, `udp_port`, `lend_of`).
 
+Not cut: `waited`'s reason is pinned word for word in door/tests.rs's
+list of named allowances (`every_dial_of_a_share_s_port_goes_through_its_check`,
+which failed on the shorter one), and "at the edge" is its justification.
+
 ## The cuts
 
 Each its own commit, named by its file (`git log --oneline --
@@ -80,3 +84,4 @@ it lands.
 |---|---:|---:|---:|
 | door/bound.rs | 6 (`bound` 1 of the 2 thought) | 24,511 | 8,693 |
 | share.rs | 16 (`sent` 3, `fits` 1, as thought) | 24,495 | 8,693 |
+| uid.rs | 20 (`linux::read` 6, `linux::procs` 7) | 24,475 | 8,693 |

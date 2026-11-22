@@ -933,11 +933,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then the keeper's economizing pass before svrngs-renew, each cut lowering
 # its caps to one past where it lands
 # (demo/runs/economize/2026-11-keeper/SURVEY.md): door/bound.rs 6, 24,511;
-# share.rs 16, 24,495.
+# share.rs 16, 24,495; uid.rs 20, 24,475.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24496,
+    ".": 24476,
 
     "js": 8694,
 
