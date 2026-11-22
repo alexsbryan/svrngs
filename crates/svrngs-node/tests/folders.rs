@@ -96,7 +96,7 @@ impl Group {
 async fn ask(node: &Node, body: serde_json::Value) -> (u16, String) {
     let answer = http()
         .post(format!("http://{}/v1/folders", node.api_addr()))
-        .bearer_auth(node.token())
+        .asked_as_you()
         .header("content-type", "application/json")
         .body(body.to_string())
         .send()
@@ -1018,7 +1018,7 @@ async fn wire_of(bytes: &[u8]) -> (iroh_blobs::Hash, Vec<u8>) {
 async fn waiting(node: &Node) -> serde_json::Value {
     let answer = http()
         .get(format!("http://{}/v1/groups", node.api_addr()))
-        .bearer_auth(node.token())
+        .asked_as_you()
         .send()
         .await
         .unwrap();
@@ -1345,7 +1345,7 @@ async fn a_removed_member_gets_nothing_new_from_the_folder_and_keeps_what_they_h
 
     let removed = http()
         .post(format!("http://{}/v1/removals", group.ana.api_addr()))
-        .bearer_auth(group.ana.token())
+        .asked_as_you()
         .json(&serde_json::json!({ "group": seed("films", 9).id(), "person": "cy" }))
         .send()
         .await
@@ -1383,7 +1383,7 @@ async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, St
     );
     let answer = http()
         .put(url)
-        .bearer_auth(node.token())
+        .asked_as_you()
         .body(bytes.to_vec())
         .send()
         .await
@@ -1397,12 +1397,7 @@ async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, St
 /// answer names, and its body.
 async fn get_blob(node: &Node, group: &str, hash: &str) -> (u16, Option<String>, Vec<u8>) {
     let url = format!("http://{}/v1/blob/{hash}?group={group}", node.api_addr());
-    let answer = http()
-        .get(url)
-        .bearer_auth(node.token())
-        .send()
-        .await
-        .unwrap();
+    let answer = http().get(url).asked_as_you().send().await.unwrap();
     let holder = answer.headers().get("x-svrngs-holder");
     let holder = holder.map(|h| h.to_str().unwrap().to_string());
     (
@@ -1570,7 +1565,7 @@ async fn a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold() {
     let id = seed("films", 9).id();
     let leave = http()
         .post(format!("http://{}{LEAVES_ROUTE}", group.ben.api_addr()))
-        .bearer_auth(group.ben.token());
+        .asked_as_you();
     let left = leave
         .json(&LeaveAsk { group: id.clone() })
         .send()
@@ -1647,7 +1642,7 @@ async fn programs_said(node: &Node, word: &str) -> (u16, String) {
             node.api_addr(),
             svrngs_node::folder::PROGRAMS_ROUTE
         ))
-        .bearer_auth(node.token())
+        .asked_as_you()
         .json(&serde_json::json!([[seed("films", 9).id()], word]))
         .send()
         .await
@@ -1748,7 +1743,7 @@ async fn a_group_s_programs_file_is_read_through_its_record_or_refused() {
     );
     let removed = http()
         .post(format!("http://{}/v1/removals", group.ana.api_addr()))
-        .bearer_auth(group.ana.token())
+        .asked_as_you()
         .json(&serde_json::json!({ "group": seed("films", 9).id(), "person": "cy" }))
         .send()
         .await
@@ -1813,7 +1808,7 @@ async fn on_the_page(
 ) -> (u16, serde_json::Value) {
     let home = format!("svrngs.localhost:{}", node.api_addr().port());
     let answer = (http().request(method, format!("http://{home}{path}")))
-        .bearer_auth(node.token().trim())
+        .asked_as_you()
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))

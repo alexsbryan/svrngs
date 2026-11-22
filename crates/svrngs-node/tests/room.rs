@@ -160,15 +160,7 @@ fn http() -> reqwest::Client {
 /// The room on `node` asked `body` at `/v1/room`, as `svrngs room` and
 /// the home page ask it: its status and its answer.
 async fn asked(node: &Node, body: Value) -> (u16, Value) {
-    let answer = http()
-        .post(format!("http://{}/v1/room", node.api_addr()))
-        .bearer_auth(node.token())
-        .json(&body)
-        .send()
-        .await
-        .unwrap();
-    let status = answer.status().as_u16();
-    let text = answer.text().await.unwrap();
+    let (status, text) = node.ask_as_you("/v1/room", Some(body)).await;
     let body = serde_json::from_str(&text)
         .unwrap_or_else(|_| panic!("the room answered {status}, not JSON: {text:?}"));
     (status, body)
@@ -176,13 +168,7 @@ async fn asked(node: &Node, body: Value) -> (u16, Value) {
 
 /// The room on `node`, as `GET /v1/room` says it.
 async fn on(node: &Node) -> Value {
-    let answer = http()
-        .get(format!("http://{}/v1/room", node.api_addr()))
-        .bearer_auth(node.token())
-        .send()
-        .await
-        .unwrap();
-    let text = answer.text().await.unwrap();
+    let (_, text) = node.ask_as_you("/v1/room", None).await;
     serde_json::from_str(&text).unwrap_or_else(|_| panic!("the room said {text:?}"))
 }
 
@@ -521,14 +507,9 @@ async fn a_room_that_cannot_be_read_is_said_until_a_lend_is_turned_on_again() {
     let kept = alex_dir.path().join("room.json");
     std::fs::write(&kept, r#"{"on": "a TV"}"#).unwrap();
     let alex = alex(alex_dir.path(), SAM).await;
-    let unread = http()
-        .get(format!("http://{}/v1/room", alex.api_addr()))
-        .bearer_auth(alex.token())
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(unread.status(), 500);
-    let said: Value = unread.json().await.unwrap();
+    let (status, unread) = alex.ask_as_you("/v1/room", None).await;
+    assert_eq!(status, 500);
+    let said: Value = serde_json::from_str(&unread).unwrap();
     let words = said["error"].as_str().unwrap_or_default();
     assert!(
         words.starts_with("This computer cannot read what you opened to this WiFi (")

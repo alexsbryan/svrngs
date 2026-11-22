@@ -81,12 +81,10 @@ impl Dialled {
             .expect("Alex's round finishes");
         let label = Label::of(sam.endpoint().id().as_bytes(), "pad");
         let host = format!("{label}.localhost:{}", alex.api_addr().port());
-        // As a program on Alex's computer asks it, with its token.
-        let program = format!(
-            "GET / HTTP/1.1\r\nAuthorization: Bearer {}\r\n",
-            alex.token().trim()
-        );
-        let opened = plain(alex.api_addr().port(), &host, &program, "").await;
+        // As a program on Alex's computer asks it, as Alex.
+        let program = format!("GET / HTTP/1.1\r\n{}", svrngs_node::node::AS_YOU);
+        let token = alex.token();
+        let opened = plain_as(alex.api_addr().port(), &host, &program, "", Some(&token)).await;
         assert!(
             opened
                 .as_deref()
@@ -167,6 +165,18 @@ fn listening() -> Vec<u16> {
 /// no key sends it: the whole reply, or `None` when the port answers
 /// nothing within 10 s.
 async fn plain(port: u16, host: &str, head: &str, body: &str) -> Option<String> {
+    plain_as(port, host, head, body, None).await
+}
+
+/// [`plain`], its [`svrngs_node::node::AS_YOU`] made the code for its
+/// connection by `token` (common/mod.rs `as_you_in`).
+async fn plain_as(
+    port: u16,
+    host: &str,
+    head: &str,
+    body: &str,
+    token: Option<&str>,
+) -> Option<String> {
     let mut sock = tokio::net::TcpStream::connect(("127.0.0.1", port))
         .await
         .ok()?;
@@ -174,6 +184,10 @@ async fn plain(port: u16, host: &str, head: &str, body: &str) -> Option<String> 
         "{head}Host: {host}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
         body.len()
     );
+    let ask = match token {
+        Some(token) => common::as_you_in(&mut sock, token, &ask).await,
+        None => ask,
+    };
     sock.write_all(ask.as_bytes()).await.ok()?;
     let mut reply = Vec::new();
     tokio::time::timeout(Duration::from_secs(10), sock.read_to_end(&mut reply))

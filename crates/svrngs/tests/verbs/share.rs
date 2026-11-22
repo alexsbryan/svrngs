@@ -267,8 +267,8 @@ impl cli::Here for Lender<'_> {
     fn root(&self) -> &std::path::Path {
         self.running.root()
     }
-    async fn ask(&self, route: &str, body: &impl serde::Serialize) -> cli::Asked {
-        self.running.ask(route, body).await
+    async fn asked(&self, route: &str, body: Option<String>) -> cli::Answered {
+        self.running.asked(route, body).await
     }
     fn answering(
         &self,

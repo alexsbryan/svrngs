@@ -11,12 +11,14 @@
 //!
 //! **Loopback is not the auth; the token is** (give-token). The bind
 //! refuses any address that is not loopback, and every request to the
-//! record shows the token in [`TOKEN_FILE`] ([`holds_the_token`]). A
-//! container on a Mac running podman reaches the Mac's `127.0.0.1`
-//! (svrn-docs `rings/current/GIVE.md` §5), so loopback alone let a program
-//! meant to be contained write as the person; a program the person runs
-//! reads the token as it could read their key, so it still acts as them
-//! (WHAT_CAN_ACT_AS_YOU §4, kept for their own programs).
+//! record asks with a code the token in [`TOKEN_FILE`] makes for its own
+//! connection ([`ask`], [`holds_the_token`]), never with the token, which
+//! is refused from any program ([`as_whom`]; "Never send the key",
+//! V1.13.3). A container on a Mac running podman reaches the Mac's
+//! `127.0.0.1` (svrn-docs `rings/current/GIVE.md` §5), so loopback alone
+//! let a program meant to be contained write as the person; a program the
+//! person runs reads the token as it could read their key, so it still
+//! acts as them (WHAT_CAN_ACT_AS_YOU §4, kept for their own programs).
 
 use std::net::{Ipv6Addr, SocketAddr};
 
@@ -25,10 +27,13 @@ use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
+use axum::serve::IncomingStream;
 use axum::{Json, Router};
 use n0_future::task::AbortOnDropHandle;
+use tokio::net::TcpListener;
 
 use crate::rail::RailApi;
+use crate::share::{self, ANSWERED_WITHIN};
 
 /// Why the API did not start. (Upstream's were two variants of the daemon's
 /// `Refusal`, `lib.rs:122-123`, which did not come over; named here as the
@@ -52,29 +57,45 @@ pub enum ApiError {
 }
 
 /// The file in the data dir, beside [`API_FILE`] and owner-only (0600),
-/// holding the token a program shows the record, as `Authorization: Bearer
-/// <token>`: made at the first start and kept ([`kept_token`]).
+/// holding the token a program keys its asks of svrngs with ([`ask`]),
+/// never sending it: made at the first start and kept ([`kept_token`]).
 pub const TOKEN_FILE: &str = "token";
 
-/// This computer's token, and the file a refusal names for it.
+/// This computer's token: named for how a program showed it before
+/// V1.13.3, `Authorization: Bearer`, which svrngs now refuses ([`as_whom`]).
 #[derive(Clone)]
-pub struct Bearer(std::sync::Arc<(String, std::path::PathBuf)>);
+pub struct Bearer(std::sync::Arc<str>);
 
 impl Bearer {
-    /// Whether `headers` show it, as `Authorization: Bearer <token>`,
-    /// compared in constant time by the sign-in provider's `same`.
-    pub(crate) fn shown(&self, headers: &axum::http::HeaderMap) -> bool {
-        let shown = crate::oidc::provider::bearer(headers);
-        shown.is_ok_and(|s| crate::oidc::provider::same(s.as_bytes(), self.0 .0.as_bytes()))
+    /// What `request` asks with, compared in constant time by the sign-in
+    /// provider's `same`: the token itself, `Authorization: Bearer
+    /// <token>`, refused as [`Unasked::Bearer`]; a code, `Authorization:
+    /// Svrngs <code>`, taken only where it is [`ask`]'s for the nonce its
+    /// connection's last proof gave ([`Line`]) and that connection's two
+    /// ends, else refused saying why; or none of these.
+    fn asked(&self, request: &Request) -> Option<Result<(), Unasked>> {
+        let (same, secret) = (crate::oidc::provider::same, self.secret().as_bytes());
+        let shown = request.headers().get_all(axum::http::header::AUTHORIZATION);
+        let shown: Vec<_> = shown.iter().map(|h| h.as_bytes()).collect();
+        let token = |t: &&[u8]| t.strip_prefix(b"Bearer ").is_some_and(|t| same(t, secret));
+        match shown[..] {
+            _ if shown.iter().any(token) => return Some(Err(Unasked::Bearer)),
+            [_, _, ..] => return Some(Err(Unasked::Twice)),
+            _ => {}
+        }
+        let code = shown.first()?.strip_prefix(b"Svrngs ")?;
+        let line = request.extensions().get::<Line>();
+        let nonce = line.and_then(|l| l.nonce.borrow().clone());
+        let ends = crate::session::peer(request).zip(line.and_then(|l| l.server));
+        let Some((nonce, (client, server))) = nonce.zip(ends) else {
+            return Some(Err(Unasked::Unproved));
+        };
+        let made = same(code, ask(self.secret(), &nonce, client, server).as_bytes());
+        Some(made.then_some(()).ok_or(Unasked::Elsewhere))
     }
 
     pub(crate) fn secret(&self) -> &str {
-        &self.0 .0
-    }
-
-    /// The file it is kept in.
-    pub(crate) fn file(&self) -> &std::path::Path {
-        &self.0 .1
+        &self.0
     }
 }
 
@@ -103,7 +124,7 @@ pub fn kept_token(data_dir: &std::path::Path) -> Result<Bearer, ApiError> {
         .decode(text.trim())
         .is_ok_and(|b| b.len() == 32);
     tracing::debug!(target: "rails", path = %path.display(), made, "api: read this computer's token");
-    made.then(|| Bearer(std::sync::Arc::new((text.trim().into(), path.clone()))))
+    made.then(|| Bearer(text.trim().into()))
         .ok_or(ApiError::NoToken(path))
 }
 
@@ -145,20 +166,22 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
 }
 
 /// `body` posted to `route` of svrngs at `api`, as [`API_FILE`] names it,
-/// showing `token`, on one connection, and only once svrngs has proved on
-/// it that it holds the token: a fresh challenge asked of `POST /v1/proof`
-/// with no token, its answer checked against this connection's own two
-/// ends ([`proven`]). So nothing that can't prove it holds the token is
-/// sent any of it, not one byte: a program holding svrngs's address while
-/// svrngs is down, of any account, in a container or a sandbox or not, or
-/// one carrying the challenge to svrngs on a connection of its own; else
-/// why not. The one way svrngs's command shows the token (cli.rs
-/// `Here::ask`).
+/// or `route` got where there is none, asked as the person holding
+/// `token` on one connection, and only once svrngs has proved on it that
+/// it holds the token: a fresh challenge asked of `POST /v1/proof`, its
+/// answer checked against this connection's own two ends ([`proven`]),
+/// and then asked with the code made for the nonce that answer gave this
+/// connection ([`ask`]). So the token is sent nowhere, and what can't prove
+/// it holds it is sent no code either: a program holding svrngs's address
+/// while svrngs is down, of any account, in a container or a sandbox or
+/// not, or one carrying the challenge to svrngs on a connection of its
+/// own; else why not. The one way svrngs's command asks svrngs (cli.rs
+/// `Here::ask`, `svrngs ask`).
 #[expect(
     clippy::disallowed_methods,
-    reason = "dial: svrngs's own API, proved before the token, a challenge drawn for it"
+    reason = "dial: svrngs's own API, proved before it is asked"
 )]
-pub async fn asked(api: &str, route: &str, token: &str, body: String) -> Asked {
+pub async fn asked(api: &str, route: &str, token: &str, body: Option<String>) -> Asked {
     let away = |_: std::io::Error| Withheld::Away;
     let at = api.trim().trim_start_matches("http://");
     let at: SocketAddr = at.parse().map_err(|_| Withheld::Away)?;
@@ -168,23 +191,23 @@ pub async fn asked(api: &str, route: &str, token: &str, body: String) -> Asked {
         .map_err(|_| Withheld::Unanswered)?
         .map_err(away)?;
     let ends = crate::iroh::ends(&stream).map_err(away)?;
-    let mut drawn = [0u8; 32];
-    // As kept_token: getrandom failing is a host with no entropy.
-    getrandom::fill(&mut drawn).expect("failed to draw a proof's challenge");
-    let challenge = Challenge(hex::encode(drawn));
-    let mut on = crate::share::http_on(stream).await.ok_or(Withheld::Away)?;
+    let challenge = Challenge::drawn();
+    let mut on = share::http_on(stream).await.ok_or(Withheld::Away)?;
     let post = |route| axum::http::Request::post(route).header("content-type", "application/json");
     let asked = format!(r#"{{"challenge":"{}"}}"#, challenge.0);
-    let answer = crate::share::sent(&mut on, at.port(), post("/v1/proof"), asked);
+    let answer = share::sent::<ANSWERED_WITHIN>(&mut on, at.port(), post("/v1/proof"), asked);
     let answer = tokio::time::timeout(PROVE_WITHIN, answer).await.ok();
     let proved = proven(answer, &proof(token, &challenge, ends.local, ends.peer));
-    tracing::debug!(target: "rails", %at, client = %ends.local, ?proved, "api: whether svrngs proved it holds the token on this connection, the token sent on it only if so");
-    proved?;
+    tracing::debug!(target: "rails", %at, client = %ends.local, proved = ?proved.as_ref().map(|_| ()), "api: whether svrngs proved it holds the token on this connection and gave it a nonce, asked on it only if so");
+    let code = ask(token, &proved?, ends.local, ends.peer);
     // hyper takes a second request only once the first has let it go.
     on.ready().await.map_err(|_| Withheld::Away)?;
-    let asked = post(route).header("authorization", format!("Bearer {token}"));
-    let answer = crate::share::sent(&mut on, at.port(), asked, body).await;
-    answer.ok_or(Withheld::Away)
+    let method = if body.is_some() { "POST" } else { "GET" };
+    let asked = post(route).method(method);
+    let asked = asked.header("authorization", format!("Svrngs {code}"));
+    // svrngs proved, so its answer is read whole, never cut short.
+    let answer = share::sent::<{ usize::MAX }>(&mut on, at.port(), asked, body.unwrap_or_default());
+    answer.await.ok_or(Withheld::Away)
 }
 
 /// What svrngs answered an ask ([`asked`]), its status and body, or why
@@ -208,6 +231,44 @@ pub enum Withheld {
     Unproven,
 }
 
+/// Why svrngs answers a program not as its person ([`as_whom`],
+/// [`holds_the_token`]): a closed set (AGENTS 9), each said in words that
+/// say what to do instead.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+pub enum Unasked {
+    /// svrngs's token itself, `Authorization: Bearer <token>`, or another
+    /// Bearer at the record.
+    #[error("svrngs doesn't take its token from a program any more: ask through `svrngs ask <route>`, or apps/client/svrngs.mjs, as `svrngs guide` shows")]
+    Bearer,
+    /// svrngs's token itself at a lend's address, where a program that
+    /// can't ask with a code uses the lend by Play (`crate::play`).
+    #[error("svrngs doesn't take its token from a program any more. To use what's lent here from a program, press Play on it on your home page, and give the program any text as its key; or ask through `svrngs ask <route>`, or apps/client/svrngs.mjs")]
+    BearerAtALend,
+    /// More than one `Authorization`, so none of them is taken.
+    #[error("this request sends more than one Authorization header, so svrngs takes none of them: send one, the code for this connection, as `svrngs ask` and apps/client/svrngs.mjs do")]
+    Twice,
+    /// No code, or a credential of another kind, at the record.
+    #[error("svrngs answers a program here only as you: ask through `svrngs ask <route>`, or apps/client/svrngs.mjs, each of which asks with a code made for its own connection")]
+    Nothing,
+    /// A code on a connection that nothing was proved on.
+    #[error("nothing was proved on this connection, so svrngs takes no code on it: POST /v1/proof on it first, then ask on it, as `svrngs ask` and apps/client/svrngs.mjs do")]
+    Unproved,
+    /// A code made for another connection, or for this one before its
+    /// last proof.
+    #[error("this code was made for another connection, or before svrngs's last proof on this one: ask with the code for this connection's last proof, as `svrngs ask` and apps/client/svrngs.mjs do")]
+    Elsewhere,
+}
+
+impl Unasked {
+    /// Its refusal, 401 in the record's one shape ([`refuse`]): `no_bearer`
+    /// for a Bearer, `unasked` for the rest.
+    fn refused(self) -> Response {
+        let bearer = matches!(self, Self::Bearer | Self::BearerAtALend);
+        let kind = if bearer { "no_bearer" } else { "unasked" };
+        refuse(StatusCode::UNAUTHORIZED, kind, self)
+    }
+}
+
 /// How long svrngs's command waits for svrngs's address to take its
 /// connection, and then for svrngs to prove itself on it ([`asked`]): past svrngs's start, which holds
 /// its address well before it takes a connection there (node.rs
@@ -220,12 +281,25 @@ pub enum Withheld {
 /// (`door::bound::CONNECT_WITHIN`) and Give gives each call (apps/give).
 pub const PROVE_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
 
-/// A client's challenge for svrngs's proof ([`proof`]): 32 random bytes it
-/// makes fresh for each connection ([`asked`]), as 64 lowercase hex
-/// characters; parsed, so svrngs refuses anything else before it proves.
+/// 32 random bytes as 64 lowercase hex characters, made fresh: a client's
+/// challenge for svrngs's proof, for each connection ([`proof`],
+/// [`asked`]), and the nonce svrngs gives that connection with it, which
+/// its code is made for ([`ask`], [`proved`]); parsed, so svrngs refuses
+/// anything else before it proves, and its command any other nonce.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
 #[serde(try_from = "String")]
 pub struct Challenge(String);
+
+impl Challenge {
+    /// Drawn fresh.
+    #[expect(clippy::disallowed_methods, reason = "a challenge or a nonce drawn")]
+    fn drawn() -> Self {
+        let mut drawn = [0u8; 32];
+        // As kept_token: getrandom failing is a host with no entropy.
+        getrandom::fill(&mut drawn).expect("failed to draw a challenge or a nonce");
+        Self(hex::encode(drawn))
+    }
+}
 
 impl TryFrom<String> for Challenge {
     type Error = &'static str;
@@ -246,45 +320,76 @@ impl TryFrom<String> for Challenge {
 /// made for another connection, one a relay opened to it, proves nothing
 /// on this one.
 pub fn proof(token: &str, challenge: &Challenge, client: SocketAddr, server: SocketAddr) -> String {
+    mac(token, "proof", challenge, (client, server))
+}
+
+/// The code a program asks svrngs with as the person holding `token`, on
+/// the connection from `client` to `server` that svrngs gave `nonce` with
+/// its last proof ([`proved`]), each end as [`proof`] prints it: HMAC-SHA256
+/// under the token, trimmed, over `svrngs ask v1\n<nonce>\n<client>\n<server>`,
+/// as 64 lowercase hex characters, sent as `Authorization: Svrngs <code>`.
+/// The one decider of it, beside the proof's: svrngs checks it
+/// ([`Bearer::asked`]), the command makes it ([`asked`]), and Give keeps a
+/// copy (apps/give/src/record.rs `ask`), held to the same vectors
+/// (api_tests.rs). Useless on any other connection, and on this one after
+/// another proof, which gives it another nonce.
+pub fn ask(token: &str, nonce: &Challenge, client: SocketAddr, server: SocketAddr) -> String {
+    mac(token, "ask", nonce, (client, server))
+}
+
+/// HMAC-SHA256 under `token`, trimmed, over `svrngs <what> v1\n<fresh>\n<client>\n<server>`,
+/// in lowercase hex: a [`proof`] or an [`ask`]'s code, whose first lines
+/// differ, so neither is the other (session_tests.rs `no_mac_…`).
+fn mac(token: &str, what: &str, fresh: &Challenge, ends: (SocketAddr, SocketAddr)) -> String {
     let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, token.trim().as_bytes());
-    let message = format!("svrngs proof v1\n{}\n{client}\n{server}", challenge.0);
+    let message = format!("svrngs {what} v1\n{}\n{}\n{}", fresh.0, ends.0, ends.1);
     hex::encode(ring::hmac::sign(&key, message.as_bytes()))
 }
 
 /// What svrngs's `answer` to a challenge says, `wanted` the proof made for
-/// this connection's own ends: proved; older, with no proof to give (404);
-/// nothing answering, or nothing in time; or not svrngs proving itself.
-/// Compared in constant time (the sign-in provider's `same`).
-fn proven(answer: Option<Option<(u16, Vec<u8>)>>, wanted: &str) -> Result<(), Withheld> {
+/// this connection's own ends: proved, and the nonce it gave this
+/// connection; older, with no proof to give (404), or proved with no nonce,
+/// as a svrngs before it stopped taking the token; nothing answering, or
+/// nothing in time; or not svrngs proving itself. Compared in constant
+/// time (the sign-in provider's `same`).
+fn proven(answer: Option<Option<(u16, Vec<u8>)>>, wanted: &str) -> Result<Challenge, Withheld> {
     let (status, said) = answer.ok_or(Withheld::Unanswered)?.ok_or(Withheld::Away)?;
     let said: serde_json::Value = serde_json::from_slice(&said).unwrap_or_default();
     let shown = said["proof"].as_str().unwrap_or_default().as_bytes();
     (status != 404).then_some(()).ok_or(Withheld::Older)?;
     let proved = status == 200 && crate::oidc::provider::same(shown, wanted.as_bytes());
-    proved.then_some(()).ok_or(Withheld::Unproven)
+    proved.then_some(()).ok_or(Withheld::Unproven)?;
+    let nonce = serde_json::from_value(said["nonce"].clone());
+    nonce.map_err(|_| Withheld::Older)
 }
 
 /// `POST /v1/proof`, `{"challenge": "<hex>"}`: svrngs's [`proof`] that it
-/// holds the token, for a client's fresh challenge on this connection, as
-/// `{"proof": "<hex>"}`, asked with no token before a client sends it
-/// ([`asked`]). It tells no one anything of the token: a keyed proof over
-/// a challenge the client made, bound to the connection's two ends.
-/// Refused to a page in a browser as every route is ([`not_from_a_page`]),
-/// and refused 400 a challenge that isn't one, or a connection whose two
-/// ends are unknown, which [`serve`] tells each request.
+/// holds the token, for a client's fresh challenge on this connection, and
+/// a nonce drawn fresh for this connection alone, which its asks' code is
+/// made for ([`ask`]), as `{"proof": "<hex>", "nonce": "<hex>"}`; a later
+/// proof on the connection gives it another in its place ([`Line`]). Asked
+/// with nothing before a client asks anything else ([`asked`]). It tells no
+/// one anything of the token: a keyed proof over a challenge the client
+/// made, bound to the connection's two ends. Refused to a page in a browser
+/// as every route is ([`not_from_a_page`]), and refused 400 a challenge
+/// that isn't one, or a connection whose two ends are unknown, which
+/// [`serve`] tells each request.
 async fn proved(State(token): State<Bearer>, request: Request) -> Response {
-    let server = request.extensions().get::<Reached>().and_then(|r| r.0);
+    let line = request.extensions().get::<Line>().cloned();
+    let server = line.as_ref().and_then(|l| l.server);
     let ends = crate::session::peer(&request).zip(server);
     let body = axum::body::to_bytes(request.into_body(), 1024).await;
     let asked = serde_json::from_slice::<Challenged>(&body.unwrap_or_default());
-    let asked = asked.ok().zip(ends);
-    tracing::debug!(target: "rails", ?ends, proved = asked.is_some(), "api: a proof that svrngs holds the token asked, made for this connection's two ends, or refused");
-    let Some((Challenged { challenge }, (client, server))) = asked else {
+    let asked = asked.ok().zip(ends).zip(line);
+    tracing::debug!(target: "rails", ?ends, proved = asked.is_some(), "api: a proof that svrngs holds the token asked, made for this connection's two ends with a nonce for it alone in place of any before, or refused");
+    let Some(((Challenged { challenge }, (client, server)), line)) = asked else {
         let why = "send {\"challenge\": \"<hex>\"}, 32 bytes you made for this connection as 64 lowercase hex characters";
         return refuse(StatusCode::BAD_REQUEST, "no_challenge", why);
     };
+    let nonce = Challenge::drawn();
+    line.nonce.send_replace(Some(nonce.clone()));
     let proof = proof(token.secret(), &challenge, client, server);
-    Json(serde_json::json!({ "proof": proof })).into_response()
+    Json(serde_json::json!({ "proof": proof, "nonce": nonce.0 })).into_response()
 }
 
 /// What `POST /v1/proof` is asked.
@@ -294,12 +399,33 @@ struct Challenged {
     challenge: Challenge,
 }
 
-/// Where a connection reached svrngs, its own end of it: the address of
-/// the listener that took it, each bound to one ([`bind`]); none where it
-/// can't be read, and then nothing is proved. What a proof names as its
-/// server ([`proof`]).
+/// One connection to svrngs's API, as [`serve`] tells each request on it:
+/// the end it reached, svrngs's own, which a proof and a code name as
+/// their server, none where it can't be read, and then nothing is proved;
+/// and the nonce its last proof gave it ([`proved`]), kept for this
+/// connection alone, so a code made for it ([`ask`]) asks nothing on any
+/// other. Dropped with the connection.
+#[derive(Clone)]
+pub struct Line {
+    server: Option<SocketAddr>,
+    nonce: tokio::sync::watch::Sender<Option<Challenge>>,
+}
+
+impl Line {
+    /// A connection that reached svrngs at `server`, nothing proved on it
+    /// yet: one for each [`serve`] takes, and for each a test makes asking
+    /// routes in this process.
+    pub fn new(server: Option<SocketAddr>) -> Self {
+        let nonce = tokio::sync::watch::Sender::new(None);
+        Self { server, nonce }
+    }
+}
+
+/// What [`as_whom`] marks a request asked with its own connection's code:
+/// asked as the person, as the record ([`holds_the_token`]) and a lend's
+/// origin (`crate::session::Sessions::shown`) take it.
 #[derive(Debug, Clone, Copy)]
-struct Reached(Option<SocketAddr>);
+pub(crate) struct AsYou;
 
 /// The routes this API serves: the rail's, and `apps` — the routes an app
 /// asks beside the record ([`crate::surface::router`]) — each asked for
@@ -312,7 +438,7 @@ struct Reached(Option<SocketAddr>);
 /// ([`crate::origin`], u5-2), which answer no route of the record's. All
 /// behind the one loopback check.
 pub fn router(api: RailApi, apps: Router, signin: Router, pages: Pages, token: Bearer) -> Router {
-    let held = axum::middleware::from_fn_with_state(token.clone(), holds_the_token);
+    let held = axum::middleware::from_fn(holds_the_token);
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
@@ -331,9 +457,10 @@ pub fn router(api: RailApi, apps: Router, signin: Router, pages: Pages, token: B
         .layer(held)
         .merge(signin)
         // svrngs: asked before a program sends the token, so asked without.
-        .route("/v1/proof", post(proved).with_state(token))
+        .route("/v1/proof", post(proved).with_state(token.clone()))
         .layer(axum::middleware::from_fn(not_from_a_page))
         .layer(axum::middleware::from_fn_with_state(pages, to_a_lend))
+        .layer(axum::middleware::from_fn_with_state(token, as_whom))
         // svrngs: every request's caller is asked too, so a listener that
         // ever served beyond loopback would still answer no one else.
         .layer(axum::middleware::from_fn(from_this_computer))
@@ -393,17 +520,41 @@ pub(crate) fn refuse(status: StatusCode, kind: &str, error: impl ToString) -> Re
     (status, Json(said)).into_response()
 }
 
-/// Serve the record only to a program that shows this computer's token
-/// (give-token): a caller showing none, or another, is refused 401 naming
-/// the file that holds it, before any door runs.
-async fn holds_the_token(State(token): State<Bearer>, request: Request, next: Next) -> Response {
-    let holds = token.shown(request.headers());
-    tracing::debug!(target: "rails", holds, path = %request.uri().path(), "api: whether the caller showed this computer's token");
-    if holds {
-        return next.run(request).await;
+/// What a program asks svrngs with, decided once, before any route runs
+/// ([`Bearer::asked`]; "Never send the key", V1.13.3): svrngs's token
+/// itself, wherever it is shown, and a code not made for this connection's
+/// last proof, are refused 401 saying what to do, so the token's bytes
+/// reach no handler and no log, the words at a lend's address leading to
+/// Play, which a program that insists on a key uses with any text as its
+/// key; its own connection's code is marked [`AsYou`]; and anything else
+/// goes on as it came, another program's key that Play takes off among it
+/// (`crate::play::shown`).
+async fn as_whom(State(token): State<Bearer>, mut request: Request, next: Next) -> Response {
+    let host = request.headers().get(axum::http::header::HOST);
+    let lend = !crate::home::named(host) && crate::origin::label_of(host).is_some();
+    let asked = token.asked(&request);
+    tracing::debug!(target: "rails", ?asked, lend, path = %request.uri().path(), "api: what a program asked with: svrngs's token itself, refused; a code, taken as you only on the connection it was made for; or neither");
+    match asked {
+        Some(Ok(())) => drop(request.extensions_mut().insert(AsYou)),
+        Some(Err(Unasked::Bearer)) if lend => return Unasked::BearerAtALend.refused(),
+        Some(Err(why)) => return why.refused(),
+        None => {}
     }
-    let why = format!("send this computer's token, which {} holds, as `Authorization: Bearer <token>`: the record answers no program without it", token.file().display());
-    refuse(StatusCode::UNAUTHORIZED, "no_token", why)
+    next.run(request).await
+}
+
+/// Serve the record only to a program asking as the person (give-token):
+/// with the code for its own connection ([`as_whom`]). Any other is
+/// refused 401, saying how to ask, before any door runs.
+async fn holds_the_token(request: Request, next: Next) -> Response {
+    let asked = request.extensions().get::<AsYou>().is_some();
+    let bearer = crate::oidc::provider::bearer(request.headers()).is_ok();
+    tracing::debug!(target: "rails", asked, bearer, path = %request.uri().path(), "api: whether the caller asked as you, with its own connection's code");
+    match (asked, bearer) {
+        (true, _) => next.run(request).await,
+        (false, true) => Unasked::Bearer.refused(),
+        (false, false) => Unasked::Nothing.refused(),
+    }
 }
 
 /// Serve a request only from a caller on this computer: the bind guard's
@@ -525,14 +676,20 @@ fn listening(listen: SocketAddr) -> Result<tokio::net::TcpListener, ApiError> {
 }
 
 /// Serve `router` ([`router`]'s) on what [`bind`] bound, each listener,
-/// each request told the address its connection reached ([`Reached`]).
+/// each connection's requests told their connection ([`Line`]) and its
+/// caller.
 pub fn serve(router: Router, bound: Bound) -> Serving {
+    use tower::Layer as _;
     let Bound { listeners, addr } = bound;
     tracing::info!(target: "rails", %addr, listeners = listeners.len(), "api: serving the record to this computer's apps, on 127.0.0.1 and on ::1 where it has one");
     let serving = |listener: tokio::net::TcpListener| {
-        let reached = Reached(listener.local_addr().ok());
-        let routes = router.clone().layer(axum::Extension(reached));
-        let made = routes.into_make_service_with_connect_info::<SocketAddr>();
+        let routes = router.clone();
+        let made = tower::service_fn(move |conn: IncomingStream<'_, TcpListener>| {
+            let line = axum::Extension(Line::new(conn.io().local_addr().ok()));
+            let caller = axum::Extension(axum::extract::ConnectInfo(*conn.remote_addr()));
+            let routes = caller.layer(line.layer(routes.clone()));
+            std::future::ready(Ok::<_, std::convert::Infallible>(routes))
+        });
         let served = axum::serve(listener, made);
         AbortOnDropHandle::new(tokio::spawn(async move {
             if let Err(e) = served.await {

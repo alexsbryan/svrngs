@@ -65,7 +65,7 @@ async fn enrollment_is_one_use_and_proofs_are_bound_to_requests_not_cookies() {
     )
     .await;
     assert_eq!(cookie.status, 401);
-    let key = enroll(api, &alex.token(), "svrngs").await;
+    let key = enroll(api, "svrngs").await;
     let headers = proved(api, &key, &host, "GET", "/v1/groups", "").await;
     assert_eq!(
         ask(api, "GET", &host, "/lent", &headers, "").await.status,
@@ -118,7 +118,7 @@ async fn a_lend_has_its_own_key_and_no_proof_reaches_the_service() {
     let name = Label::of(&signing(1).verifying_key().to_bytes(), "night").to_string();
     let api = alex.api_addr();
     let host = format!("{name}.localhost:{}", api.port());
-    let key = enroll(api, &alex.token(), &name).await;
+    let key = enroll(api, &name).await;
     let headers = proved(api, &key, &host, "GET", "/films?x=1", "").await;
     let got = ask(api, "GET", &host, "/films?x=1", &headers, "").await;
     assert_eq!(got.status, 200);
@@ -181,7 +181,7 @@ async fn a_same_origin_redirect_is_followed_once_by_the_proof_that_asked_it() {
     let name = Label::of(&signing(1).verifying_key().to_bytes(), "canary").to_string();
     let api = alex.api_addr();
     let host = format!("{name}.localhost:{}", api.port());
-    let key = enroll(api, &alex.token(), &name).await;
+    let key = enroll(api, &name).await;
     let (said, _guards) = common::heard("session=debug,origin=debug");
 
     let headers = proved(api, &key, &host, "GET", "/redirect", "").await;
@@ -267,7 +267,7 @@ async fn ask(
 }
 
 /// `name`'s origin enrolled: an open, its page read, its code redeemed once.
-async fn enroll(api: SocketAddr, token: &str, name: &str) -> Vec<u8> {
+async fn enroll(api: SocketAddr, name: &str) -> Vec<u8> {
     let body = if name == "svrngs" {
         "{}".into()
     } else {
@@ -278,7 +278,7 @@ async fn enroll(api: SocketAddr, token: &str, name: &str) -> Vec<u8> {
         "POST",
         &api.to_string(),
         "/v1/open",
-        &format!("Authorization: Bearer {token}\r\n"),
+        svrngs_node::node::AS_YOU,
         &body,
     )
     .await;
@@ -343,8 +343,8 @@ async fn an_open_lets_in_only_a_browser_this_account_runs() {
     let night = Label::of(&signing(1).verifying_key().to_bytes(), "night").to_string();
     let lent = serde_json::json!({ "lend": night }).to_string();
     for (name, body) in [("svrngs", "{}"), (night.as_str(), lent.as_str())] {
-        let auth = format!("Authorization: Bearer {}\r\n", alex.token());
-        let opened = ask(api, "POST", &api.to_string(), "/v1/open", &auth, body).await;
+        let auth = svrngs_node::node::AS_YOU;
+        let opened = ask(api, "POST", &api.to_string(), "/v1/open", auth, body).await;
         let json: serde_json::Value = serde_json::from_str(&opened.body).unwrap();
         let path = path_of(json["open"].as_str().unwrap());
         let host = format!("{name}.localhost:{}", api.port());

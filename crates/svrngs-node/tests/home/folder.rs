@@ -35,7 +35,7 @@ async fn the_home_page_opens_the_group_s_folder_by_this_computer_s_opener() {
     std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
     let kept = http()
         .post(format!("http://{}/v1/folders", ana.api_addr()))
-        .bearer_auth(ana.token())
+        .asked_as_you()
         .json(&json!({ "dir": folder, "group": group }))
         .send()
         .await

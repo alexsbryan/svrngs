@@ -58,7 +58,7 @@ fn admit(node: &Node, ns: &str, person: &str, joining: u8) {
 async fn ask(node: &Node, route: &str, person: &str) -> (u16, Outcome) {
     let answer = http()
         .post(format!("http://{}{route}", node.api_addr()))
-        .bearer_auth(node.token())
+        .asked_as_you()
         .json(&RemovalAsk {
             group: NS.into(),
             person: person.into(),
@@ -172,7 +172,7 @@ async fn the_keeper_removes_and_the_removed_computer_is_told() {
             bo.api_addr(),
             svrngs_node::surface::GROUPS_ROUTE
         ))
-        .bearer_auth(bo.token())
+        .asked_as_you()
         .send()
         .await
         .unwrap()
@@ -422,7 +422,7 @@ mod leave_race {
     async fn leaves(node: &Node) -> Outcome {
         let answer = http()
             .post(format!("http://{}{LEAVES_ROUTE}", node.api_addr()))
-            .bearer_auth(node.token())
+            .asked_as_you()
             .json(&LeaveAsk { group: NS.into() })
             .send()
             .await
@@ -440,7 +440,7 @@ mod leave_race {
         };
         let answer = http()
             .post(format!("http://{}{REMOVALS_ROUTE}", node.api_addr()))
-            .bearer_auth(node.token())
+            .asked_as_you()
             .json(&ask)
             .send()
             .await
@@ -488,7 +488,7 @@ mod leave_race {
                 "http://{}/v1/rail/log?namespace={NS}",
                 node.api_addr()
             ))
-            .bearer_auth(node.token())
+            .asked_as_you()
             .send()
             .await
             .unwrap()

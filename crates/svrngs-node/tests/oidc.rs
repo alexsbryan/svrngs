@@ -132,7 +132,7 @@ async fn userinfo(node: &Node, token: &str) -> (u16, Value) {
         Duration::from_secs(30),
         http()
             .get(format!("http://{}/oidc/{LEND}/userinfo", node.api_addr()))
-            .bearer_auth(token)
+            .header("authorization", format!("Bearer {token}"))
             .send(),
     )
     .await

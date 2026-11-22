@@ -24,14 +24,9 @@ pub(super) async fn carried_at(at: &Node, app: &str) -> String {
 
 /// [`carried_at`], the app carried by `group`.
 pub(super) async fn carried_in(at: &Node, app: &str, group: &str) -> String {
-    let url = format!("http://{}/v1/lends?namespace={group}", at.api_addr());
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let path = format!("/v1/lends?namespace={group}");
     for _ in 0..60 {
-        let lends: Value = (http.get(&url).bearer_auth(at.token()).send().await)
-            .unwrap()
-            .json()
-            .await
-            .unwrap();
+        let lends: Value = serde_json::from_str(&at.ask_as_you(&path, None).await.1).unwrap();
         let listed = lends["lent"].as_array().into_iter().flatten();
         if let Some(l) = listed.into_iter().find(|l| l["kind"] == app) {
             return l["origin"].as_str().unwrap().to_string();
@@ -276,13 +271,13 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
     );
     // Cy's computer lists ada's pad, so the phone keeps ada's computer to
     // reach the group through.
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let ada_key = actor_of(&signing(1));
     let mut listed = false;
     for _ in 0..60 {
-        let url = format!("http://{}/v1/lends?namespace={NS}", cy.api_addr());
-        let asked = http.get(url).bearer_auth(cy.token()).send().await;
-        let lends: Value = asked.unwrap().json().await.unwrap();
+        let asked = cy
+            .ask_as_you(&format!("/v1/lends?namespace={NS}"), None)
+            .await;
+        let lends: Value = serde_json::from_str(&asked.1).unwrap();
         let mut lent = lends["lent"].as_array().into_iter().flatten();
         listed = lent.any(|l| l["key"] == ada_key);
         if listed {
@@ -310,12 +305,10 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
     })
     .await
     .expect("the phone opens the group through cy's computer");
-    let leave = http
-        .post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()))
-        .bearer_auth(cy.token());
-    let left = leave.json(&LeaveAsk { group: NS.into() }).send().await;
+    let leave = serde_json::to_value(LeaveAsk { group: NS.into() }).unwrap();
+    let (_, left) = cy.ask_as_you(LEAVES_ROUTE, Some(leave)).await;
     assert_eq!(
-        left.unwrap().json::<Outcome>().await.unwrap(),
+        serde_json::from_str::<Outcome>(&left).unwrap(),
         Outcome::Left
     );
     let cy_key = actor_of(&signing(2));

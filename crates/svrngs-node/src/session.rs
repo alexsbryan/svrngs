@@ -2,7 +2,8 @@
 //! A browser told from a program (give-session; svrn-docs
 //! `rings/current/GIVE.md` §5): the home page and each lend's origin answer
 //! a browser only with a proof by the key this computer gave that origin,
-//! and a program only with its token ([`crate::api::Bearer`]). Loopback
+//! and a program only with the code its token makes for its connection
+//! ([`crate::api::ask`]). Loopback
 //! alone let in a container on a Mac running podman, which reaches the
 //! Mac's `127.0.0.1` through gvproxy (GIVE.md §5, measured 2026-10-25).
 //!
@@ -39,7 +40,7 @@
 //! ([`Onwards`]); at any other address, or twice, it is refused as before.
 //!
 //! A cookie opens nothing: one a browser kept from before is taken off,
-//! with the proof, the token and the intent, before a lend's service sees
+//! with the proof, a program's code and the intent, before a lend's service sees
 //! the request ([`Sessions::strip`]).
 use crate::iroh::Net;
 use crate::uid::{Conn, Owner};
@@ -241,7 +242,8 @@ impl Onwards {
     }
 }
 
-/// What a request shows at the home page or a lend's origin: the token, a
+/// What a request shows at the home page or a lend's origin: a program's
+/// code for its connection, which `crate::api::as_whom` takes, a
 /// session's proof, a program of this account Play lets in at a lend's
 /// address (`crate::play::shown`), or none of these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -254,7 +256,6 @@ pub(crate) enum Shown {
 
 #[derive(Clone)]
 pub(crate) struct Sessions {
-    token: Bearer,
     key: ring::hmac::Key,
     codes: Arc<Codes<(String, String)>>,
     nonces: Arc<Nonces>,
@@ -274,7 +275,6 @@ impl Sessions {
         getrandom::fill(&mut epoch).expect("failed to draw the browser session's boot challenge");
         Self {
             key: ring::hmac::Key::new(ring::hmac::HMAC_SHA256, token.secret().as_bytes()),
-            token,
             codes: Arc::new(Codes::new()),
             nonces: Arc::new(Nonces::default()),
             onwards: Arc::new(Onwards::default()),
@@ -302,11 +302,11 @@ impl Sessions {
         URL_SAFE_NO_PAD.encode(ring::hmac::sign(&self.key, pair.as_bytes()))
     }
 
-    /// What `req` shows at the origin first named `name`: the token, a
-    /// fresh proof by that origin's key ([`Unproven`] says why not), or
+    /// What `req` shows at the origin first named `name`: a program's code
+    /// for its connection ([`crate::api::AsYou`]), a fresh proof by that origin's key ([`Unproven`] says why not), or
     /// neither.
     pub(crate) fn shown(&self, req: &Request, name: &str) -> Shown {
-        if self.token.shown(req.headers()) {
+        if req.extensions().get::<crate::api::AsYou>().is_some() {
             return Shown::Token;
         }
         let shown = match self.proved(req, name) {
@@ -535,7 +535,8 @@ impl Sessions {
         headers.remove(PROOF);
         headers.remove("x-svrngs-body");
         headers.remove(INTENT);
-        if self.token.shown(headers) {
+        // A code for this connection, which `api::as_whom` took as you.
+        if text(headers, "authorization").starts_with("Svrngs ") {
             headers.remove(header::AUTHORIZATION);
         }
         // Retire legacy cookies as well: old browsers may continue sending them.

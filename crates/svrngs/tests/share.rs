@@ -216,19 +216,13 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         .unwrap_or_else(|| panic!("an origin on Alex's computer: {address}"));
     assert!(host.ends_with(".localhost"), "{address}");
 
-    let http = reqwest::Client::builder()
-        .no_proxy()
-        .resolve(host, alex.node.api_addr())
-        .build()
-        .unwrap();
-    let answer = http
-        .get(format!("{address}notes?x=1"))
-        // A program Alex runs, which shows his token (give-session).
-        .bearer_auth(alex.node.token().trim())
-        .header("x-svrngs-person", "Sam")
-        .send()
-        .await
-        .unwrap();
+    // A program Alex runs, asking as Alex (give-session).
+    let notes = axum::http::Request::get("/notes?x=1")
+        .header("host", format!("{host}:{}", alex.node.api_addr().port()))
+        .header("x-svrngs-person", "Sam");
+    let notes = notes.body(String::new()).unwrap();
+    let answer =
+        svrngs_node::node::as_you_at(alex.node.api_addr(), &alex.node.token(), notes).await;
     assert_eq!(answer.status(), 200);
     for (n, v) in answer.headers() {
         assert!(
@@ -238,7 +232,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
             "Alex received Sam's password in {n}"
         );
     }
-    assert_eq!(answer.text().await.unwrap(), "ok");
+    assert_eq!(answer.body(), "ok");
     let head = heads
         .lock()
         .unwrap()
@@ -340,16 +334,12 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         .and_then(|a| a.split_once(':'))
         .map(|(h, _)| h.to_string())
         .unwrap();
-    let http = reqwest::Client::builder()
-        .no_proxy()
-        .resolve(&host, alex.node.api_addr())
-        .build()
-        .unwrap();
+    let (api, token) = (alex.node.api_addr(), alex.node.token());
+    let at = format!("{host}:{}", api.port());
     let ask = |method: &str, path: &str| {
-        let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
-        http.request(method, format!("{}{}", address.trim_end_matches('/'), path))
-            .bearer_auth(alex.node.token().trim())
-            .send()
+        let asked = axum::http::Request::builder().method(method).uri(path);
+        let asked = asked.header("host", &at).body(String::new()).unwrap();
+        svrngs_node::node::as_you_at(api, &token, asked)
     };
 
     let kept = [
@@ -374,12 +364,12 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         ("GET", "/models/sse", "/models"),
     ];
     for (method, path, under) in kept {
-        let answer = ask(method, path).await.unwrap();
+        let answer = ask(method, path).await;
         let (status, why) = (
             answer.status(),
             answer.headers().get("x-svrngs-refused").cloned(),
         );
-        let body = answer.text().await.unwrap();
+        let body = String::from_utf8_lossy(answer.body()).into_owned();
         assert_eq!(
             (status.as_u16(), why.as_ref().and_then(|v| v.to_str().ok())),
             (403, Some("path")),
@@ -411,9 +401,9 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         ("POST", "/apply-template"),
     ];
     for (method, path) in answered {
-        let answer = ask(method, path).await.unwrap();
+        let answer = ask(method, path).await;
         assert_eq!(answer.status(), 200, "{method} {path} was refused");
-        assert_eq!(answer.text().await.unwrap(), "ok", "{method} {path}");
+        assert_eq!(answer.body(), "ok", "{method} {path}");
     }
     assert_eq!(heads.lock().unwrap().len(), answered.len());
     assert!(
@@ -769,12 +759,14 @@ fn holds_lab(dir: &Path, logs: &Path) {
 }
 
 /// What svrngs running over `dir` answers `GET /v1/room`, at the API it
-/// wrote, as the home page reads it.
+/// wrote, asked as you, as the home page reads it.
 fn room_of(dir: &Path) -> serde_json::Value {
     let api = std::fs::read_to_string(dir.join("api")).unwrap();
     let token = std::fs::read_to_string(dir.join("token")).unwrap();
     let mut sock = std::net::TcpStream::connect(api.trim().trim_start_matches("http://")).unwrap();
-    let ask = format!("GET /v1/room HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: Bearer {token}\r\nConnection: close\r\n\r\n");
+    let code = svrngs_node::node::as_you_on_std(&mut sock, &token);
+    let ask =
+        format!("GET /v1/room HTTP/1.1\r\nHost: 127.0.0.1\r\n{code}Connection: close\r\n\r\n");
     sock.write_all(ask.as_bytes()).unwrap();
     let mut answer = String::new();
     sock.read_to_string(&mut answer).unwrap();

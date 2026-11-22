@@ -1,7 +1,8 @@
 //! svrngs's record, as give reaches it: the loopback API of the svrngs
-//! running on this computer, asked with its token (CHARTER fence 4: the
-//! record API, and nothing else of svrngs's), sent only once svrngs has
-//! proved it holds it ([`proof`]). Where it listens is the `api` file in
+//! running on this computer, asked as its person (CHARTER fence 4: the
+//! record API, and nothing else of svrngs's) with a code its token makes
+//! for one connection ([`ask`]), never the token, and only once svrngs has
+//! proved on it that it holds it ([`proof`]). Where it listens is the `api` file in
 //! svrngs's data dir and the token is the `token` file beside it, the data
 //! dir being `$SVRNGS_DIR`, else `~/.svrngs`, as svrngs's own command reads
 //! it (`svrngs --help`; apps/events/store.mjs reads the same two files).
@@ -14,7 +15,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
 
@@ -64,41 +65,52 @@ pub trait Answers: std::fmt::Debug + Send + Sync {
     fn call(&self, route: &str, body: Option<&Value>) -> Result<(u16, String), RecordError>;
 }
 
-/// svrngs's API at `api`, asked with its token.
-#[derive(Debug)]
+/// svrngs's API at `api`, asked with a code its token makes.
 struct Loopback {
     api: String,
     token: String,
+    /// How long svrngs has to answer: [`WITHIN`], but in a test.
+    within: Duration,
+}
+
+/// Where svrngs listens, and never the token, wherever Give's record is
+/// printed: a trace's, a panic's.
+impl std::fmt::Debug for Loopback {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Loopback")
+            .field("api", &self.api)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Answers for Loopback {
     /// `route` asked on one connection, and only once svrngs has proved on
-    /// it that it holds the token: a fresh challenge posted to `/v1/proof`
-    /// with no token, its answer checked against this connection's own two
-    /// ends ([`proof`]), then the ask, with the token, on that connection.
-    /// What can't prove it holds the token is sent none of it, not one
-    /// byte: a program holding svrngs's address while svrngs is down, of
-    /// any account, or one carrying the challenge to svrngs on a connection
-    /// of its own.
+    /// it that it holds the token: a fresh challenge posted to `/v1/proof`,
+    /// its answer checked against this connection's own two ends
+    /// ([`proof`]), then the ask on that connection with the code made for
+    /// the nonce svrngs gave it ([`ask`]). The token is sent nowhere, and
+    /// what can't prove it holds it is sent no code either: a program
+    /// holding svrngs's address while svrngs is down, of any account, or
+    /// one carrying the challenge to svrngs on a connection of its own.
     #[expect(
         clippy::disallowed_methods,
-        reason = "dial: svrngs's own API, proved before the token"
+        reason = "dial: svrngs's own API, proved before it is asked, by each answer's deadline"
     )]
     fn call(&self, route: &str, body: Option<&Value>) -> Result<(u16, String), RecordError> {
         let api = self.api.clone();
         let unanswered = |why: String| RecordError::Unanswered { api: api.clone(), why };
         let at: SocketAddr =
             (self.api.trim_start_matches("http://").parse()).map_err(|_| unanswered("that names no address".into()))?;
-        let stream = TcpStream::connect_timeout(&at, WITHIN).map_err(|e| unanswered(e.to_string()))?;
+        let stream = TcpStream::connect_timeout(&at, self.within).map_err(|e| unanswered(e.to_string()))?;
         let ends = (stream.local_addr(), stream.peer_addr());
         let (Ok(client), Ok(server)) = ends else {
             return Err(unanswered("this connection's ends are unknown".into()));
         };
-        (stream
-            .set_read_timeout(Some(WITHIN))
-            .and(stream.set_write_timeout(Some(WITHIN))))
-        .map_err(|e| unanswered(e.to_string()))?;
-        let mut on = BufReader::new(stream);
+        (stream.set_write_timeout(Some(self.within))).map_err(|e| unanswered(e.to_string()))?;
+        let mut on = BufReader::new(Line {
+            stream,
+            by: Instant::now() + self.within,
+        });
         let challenge = challenge().ok_or_else(|| unanswered("no randomness here to challenge it with".into()))?;
         let asked = json!({ "challenge": challenge }).to_string();
         let (status, said) =
@@ -109,20 +121,25 @@ impl Answers for Loopback {
         let said: Value = serde_json::from_str(&said).unwrap_or_default();
         let wanted = proof(&self.token, &challenge, client, server);
         let proved = status == 200 && same(said["proof"].as_str().unwrap_or_default().as_bytes(), wanted.as_bytes());
-        tracing::debug!(api, %client, status, proved, "record: whether svrngs proved it holds the token on this connection, the token sent on it only if so");
-        match (proved, status) {
-            (true, _) => {}
-            (false, 404) => return Err(RecordError::Behind { api }),
-            (false, _) => return Err(RecordError::Unproven { api }),
-        }
+        // A nonce as svrngs draws it; a proof with none is a svrngs from
+        // before it stopped taking the token.
+        let nonce = said["nonce"]
+            .as_str()
+            .filter(|n| n.len() == 64 && n.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')));
+        tracing::debug!(api, %client, status, proved, nonce = nonce.is_some(), "record: whether svrngs proved it holds the token on this connection and gave it a nonce, asked on it only if so");
+        let code = match (proved, nonce, status) {
+            (true, Some(nonce), _) => ask(&self.token, nonce, client, server),
+            (true, None, _) | (false, _, 404) => return Err(RecordError::Behind { api }),
+            (false, ..) => return Err(RecordError::Unproven { api }),
+        };
         let method = if body.is_some() { "POST" } else { "GET" };
         let body = body.map(Value::to_string);
-        exchange(&mut on, at, (method, route, Some(&self.token)), body.as_deref())
-            .map_err(|e| unanswered(e.to_string()))
+        on.get_mut().by = Instant::now() + self.within;
+        exchange(&mut on, at, (method, route, Some(&code)), body.as_deref()).map_err(|e| unanswered(e.to_string()))
     }
 }
 
-/// `method` `route` asked on `on`, showing `token` if there is one, `body`
+/// `method` `route` asked on `on`, with `code` if there is one, `body`
 /// posted if there is one, as HTTP/1.1 to svrngs at `at`: the status and
 /// the text answered, by its length, which svrngs gives every answer. Its
 /// head is read no further than [`HEAD_WITHIN`], and the proof's answer,
@@ -131,12 +148,12 @@ impl Answers for Loopback {
 /// memory (the 1.13.3 proof review, finding 7): past either, it is
 /// unreadable.
 fn exchange(
-    on: &mut BufReader<TcpStream>,
+    on: &mut BufReader<Line>,
     at: SocketAddr,
-    (method, route, token): (&str, &str, Option<&str>),
+    (method, route, code): (&str, &str, Option<&str>),
     body: Option<&str>,
 ) -> std::io::Result<(u16, String)> {
-    let shown = token.map_or(String::new(), |t| format!("Authorization: Bearer {t}\r\n"));
+    let shown = code.map_or(String::new(), |c| format!("Authorization: Svrngs {c}\r\n"));
     let body = body.unwrap_or_default();
     let typed = if body.is_empty() {
         ""
@@ -147,7 +164,7 @@ fn exchange(
         "{method} {route} HTTP/1.1\r\nHost: {at}\r\n{shown}{typed}Content-Length: {}\r\n\r\n{body}",
         body.len()
     );
-    on.get_mut().write_all(asked.as_bytes())?;
+    on.get_mut().stream.write_all(asked.as_bytes())?;
     let unreadable = |why: &str| std::io::Error::new(std::io::ErrorKind::InvalidData, why.to_string());
     let mut left = HEAD_WITHIN;
     let mut line = || {
@@ -181,7 +198,7 @@ fn exchange(
                 .map_err(|_| unreadable(&format!("its {name} is not a number")))?;
         }
     }
-    if token.is_none() && length > PROVED_WITHIN {
+    if code.is_none() && length > PROVED_WITHIN {
         return Err(unreadable("its answer is longer than a proof"));
     }
     let mut said = Vec::new();
@@ -190,6 +207,28 @@ fn exchange(
         return Err(std::io::ErrorKind::UnexpectedEof.into());
     }
     Ok((status, String::from_utf8_lossy(&said).into_owned()))
+}
+
+/// Give's one connection to svrngs, each read waiting only what is left
+/// before `by`, the one deadline of an answer, its head and its body (the
+/// never-send-the-key review, finding 5): so a peer giving the proof a
+/// byte at a time, each in time, is still refused at the deadline.
+struct Line {
+    stream: TcpStream,
+    by: Instant,
+}
+
+impl Read for Line {
+    #[expect(clippy::disallowed_methods, reason = "what is left of an answer's deadline")]
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let left = self.by.saturating_duration_since(Instant::now());
+        // A read timeout of zero is refused: nothing is left, so none is waited.
+        let left = Some(left)
+            .filter(|l| !l.is_zero())
+            .ok_or(std::io::ErrorKind::TimedOut)?;
+        self.stream.set_read_timeout(Some(left))?;
+        self.stream.read(buf)
+    }
 }
 
 /// The most of an answer's head [`exchange`] reads: far past svrngs's.
@@ -208,8 +247,22 @@ const PROVED_WITHIN: u64 = 4 << 10;
 /// `proof`), as give links no svrngs crate (tests/surface.rs); each held
 /// to the same vectors (tests/record.rs, api_tests.rs).
 pub fn proof(token: &str, challenge: &str, client: SocketAddr, server: SocketAddr) -> String {
+    mac(token, &format!("svrngs proof v1\n{challenge}\n{client}\n{server}"))
+}
+
+/// The code Give asks svrngs with on the connection from `client` to
+/// `server`, for the `nonce` svrngs's proof gave it: HMAC-SHA256 under the
+/// token, trimmed, over `svrngs ask v1\n<nonce>\n<client>\n<server>`, as
+/// [`proof`] prints each part, sent as `Authorization: Svrngs <code>`.
+/// Give's copy of svrngs's one decider of it (crates/svrngs-node/src/api.rs
+/// `ask`), held to the same vectors (tests/record.rs, api_tests.rs).
+pub fn ask(token: &str, nonce: &str, client: SocketAddr, server: SocketAddr) -> String {
+    mac(token, &format!("svrngs ask v1\n{nonce}\n{client}\n{server}"))
+}
+
+/// `message`'s HMAC-SHA256 under `token`, trimmed, in lowercase hex.
+fn mac(token: &str, message: &str) -> String {
     let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, token.trim().as_bytes());
-    let message = format!("svrngs proof v1\n{challenge}\n{client}\n{server}");
     hex(ring::hmac::sign(&key, message.as_bytes()).as_ref())
 }
 
@@ -254,9 +307,15 @@ fn read(path: &Path) -> Result<String, RecordError> {
 impl Record {
     /// The record of the svrngs set up in `data_dir`.
     pub fn at(data_dir: &Path) -> Result<Record, RecordError> {
+        Record::within(data_dir, WITHIN)
+    }
+
+    /// [`Record::at`], svrngs given `within` to answer each call, not
+    /// [`WITHIN`]: a test's shorter clock.
+    pub fn within(data_dir: &Path, within: Duration) -> Result<Record, RecordError> {
         let (api, token) = (read(&data_dir.join("api"))?, read(&data_dir.join("token"))?);
         tracing::debug!(api, data_dir = %data_dir.display(), "record: where svrngs listens, and its token read");
-        Ok(Record::by(Arc::new(Loopback { api, token })))
+        Ok(Record::by(Arc::new(Loopback { api, token, within })))
     }
 
     /// The record `answers` carries calls to, its refusals naming where.

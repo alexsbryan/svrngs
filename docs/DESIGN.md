@@ -398,40 +398,54 @@ seconds, whatever their own computer does (`door::udp::serve`).
   port's is.
 
 **The person's own programs are the trust boundary.** A program on this
-computer asks the record API showing the token in the data dir's `token`
-file, beside `api`, owner-only, as `Authorization: Bearer <token>`;
-without it every record route refuses, 401 `no_token`, naming the file
-(`crates/svrngs-node/src/api.rs`, `holds_the_token`). Loopback alone was
-the boundary until give-token, and it is not one: a container on a Mac
-running podman reaches the Mac's `127.0.0.1` (svrn-docs
+computer asks the record API as its person with a code its token makes for
+one connection, never with the token itself (the operator, 2026-11-21:
+"Never send the key"). The token is the data dir's `token` file, beside
+`api`, owner-only. On one connection to the address in `api` the program
+posts a fresh 32-byte challenge to `POST /v1/proof`, with nothing else;
+svrngs answers HMAC-SHA256 under the token over `svrngs proof v1`, the
+challenge and that connection's two ends, and a nonce, 32 fresh bytes kept
+for that connection alone, which a later proof on it replaces. The program
+checks the proof against what it makes over its own ends, in constant
+time, and only then asks on that same connection with `Authorization:
+Svrngs <code>`, HMAC-SHA256 under the token over `svrngs ask v1`, the nonce
+and the same ends (`crates/svrngs-node/src/api.rs` `proof`, `ask`,
+`proved`, `asked`; Give's copy in `apps/give/src/record.rs`,
+`apps/client/svrngs.mjs` and the Omarchy helper's, each held to the same
+vectors). svrngs takes a code only on the connection, and after the
+proof, it was made for, at the record and at a lend's address alike, and
+refuses one sent twice (`as_whom`, `Bearer::asked`); with none, every
+record route refuses 401, saying how to ask (`holds_the_token`,
+`Unasked`). The token itself, `Authorization: Bearer <token>`, is refused
+401 wherever it is shown, before any route runs, so its bytes reach no
+handler and no log; at a lend's address the words lead to Play. Any
+language asks through `svrngs ask <route> [<json>]`, which prints
+svrngs's answer whole, or through the client the guide shows. Loopback
+alone was the boundary until give-token, and it is not one: a container
+on a Mac running podman reaches the Mac's `127.0.0.1` (svrn-docs
 `rings/current/GIVE.md` §5). A program the person runs reads the token as
 it could read their key, so it speaks as its person, and only as its
 person: the record API writes a body naming this computer's person as its
 own act, and refuses one naming anyone else (`not_yours`), whose entries
 are signed on their own devices. Sign-in's routes keep their client's own
-secret. A lend's address lets a program in without it only while its
-person has Play on there (above). svrngs proves it holds the token before
-its command, its applications menu's opener or Give sends it there (the
-operator, 2026-11-21: "svrngs proves it first"): each opens one connection to the address svrngs wrote and post a fresh 32-byte
-challenge to `POST /v1/proof` with no token; svrngs answers HMAC-SHA256
-under the token over the challenge and that connection's two ends, and
-only an answer equal to what the asker makes for its own connection lets
-the token go, on that same connection (`api.rs` `proof`, `asked`,
-`proved`; Give's copy in `apps/give/src/record.rs`, held to the same
-vectors). The route answers without the token and tells nothing of it. So
-a program holding svrngs's address while svrngs is down, of any account,
-in a container or not, running svrngs's own file or not, or carrying the
-challenge to svrngs on a connection of its own, is sent none of the token,
-and the person is told what to do. What answers 404 there while a
-svrngs holds the data directory's lock is a svrngs older than the
-command, as an update leaves one running: where the login service runs
+secret. A lend's address lets a program in without a code only while its
+person has Play on there (above). So a program holding svrngs's address
+while svrngs is down, of any account, in a container or not, running
+svrngs's own file or not, or carrying the challenge to svrngs on a
+connection of its own, is sent a challenge, and at most a code good for
+no other connection, never the token, and the person is told what to do.
+This guards who holds svrngs's address; it is no private channel against
+a program that can watch or change the connection itself. What answers
+404 there while a svrngs holds the data directory's lock is a svrngs
+older than the command, as an update leaves one running: where the login service runs
 svrngs over that data directory, the command restarts it once, as
 `svrngs restart` does, and asks it again as it comes back (the operator,
 2026-11-21: "Restart automatically"); elsewhere, or if it is still older,
 the person is told what runs there and what to do. A 404 where no svrngs
 holds the lock is something else at svrngs's address, refused as one,
-and nothing is restarted for it. Give says to restart it. The asker
-waits up to 10 s for the proof (`PROVE_WITHIN`), since svrngs holds its
+and nothing is restarted for it; nor where the lock can't be looked at,
+which the command says. Give says to restart it. The asker waits up to
+10 s for the whole proof, its head and its body (`PROVE_WITHIN`), since svrngs holds its
 address before it takes a connection there, so a svrngs starting is
 waited for, never refused. Any process on the lender's computer
 can still reach a lent port and type an identity header, as it can
@@ -440,8 +454,8 @@ lends to waits in PLAN §2.
 
 **A browser comes in through an open.** The home page and each lend's
 origin answer a browser only with a fresh proof from that exact origin,
-including its port, and a program only with the token, or at a lend's
-address by Play (above) (`crates/svrngs-node/src/session.rs`). An open's
+including its port, and a program only asking as you with its
+connection's code, or at a lend's address by Play (above) (`crates/svrngs-node/src/session.rs`). An open's
 code is single-use and gone in a minute. Its GET serves fixed bootstrap
 code; an own-origin POST
 redeems it, and the bootstrap imports the returned HMAC key as a
@@ -498,7 +512,7 @@ and only the request that woke it goes to the lend. A phone's lend worker does t
 shim in each page, holding the pass under its own policy
 (`web/vercel.json`).
 An absence says "Open svrngs from your computer", naming the opener.
-Neither request proofs nor the token reach the lent service. Upgrading
+Neither request proofs nor a program's code reach the lent service. Upgrading
 from cookie sessions requires each browser origin to be opened again.
 
 **A lent app writes as whoever asks by naming the act.** Its answer names,
@@ -664,8 +678,8 @@ write budget is, so a number set on thin evidence costs seconds when it is
 wrong. It is counted at the lender's door (`door/limit.rs`, `Reads`, the
 number's one home; `door.rs`, `lend_for`), which every app's read reaches:
 a page's on a computer by the pass that computer signs for it, a phone's by
-the pass it holds. A person opening the lend, and a program with the token,
-which is the person, are not an app's reads. Reads leave no entry, so the
+the pass it holds. A person opening the lend, and a program asking as the
+person, are not an app's reads. Reads leave no entry, so the
 count is the door's own, in memory: a restart forgets it, and each app may
 read a whole burst again. Past it the read is refused `limit`, 429, with
 `Retry-After` and words naming the lend, the rate, whose computer serves

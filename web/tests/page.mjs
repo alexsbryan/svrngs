@@ -12,6 +12,8 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { asYou } from './as-you.mjs';
+
 export const INSTALL = 'npm ci --prefix web && npx --prefix web playwright install chromium webkit';
 
 // The page as an origin serves it: its directory at the root, with the
@@ -279,7 +281,7 @@ const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 
 // The hosts svrngs opened for this half (drive.rs `opens`): each
 // computer's home page and each lend its args name, opened in `context` by
-// a code from `/v1/open`, asked with the token as `svrngs open` asks it, and
+// a code from `/v1/open`, asked as you as `svrngs open` asks it (as-you.mjs), and
 // redeemed by a real bootstrap page, which imports the origin key and waits
 // for its authentication worker to control it. No cookie models authority.
 // A code is single-use, so each context mints its own; one
@@ -287,22 +289,19 @@ const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 async function opened(context) {
   for (const { port, token, names } of JSON.parse(process.env.SVRNGS_OPENS ?? '[]')) {
     for (const name of names) {
-      const body = JSON.stringify({
+      const body = {
         ...(name === 'svrngs' ? {} : { lend: name }),
         at: '/svrngs-session-ready',
-      });
-      const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
-      const asked = await fetch(`http://127.0.0.1:${port}/v1/open`, {
-        method: 'POST',
-        headers,
-        body,
-      }).catch((e) => e);
-      if (!asked.ok) {
-        console.error(`svrngs at ${port} did not open ${name}: ${asked.status ?? asked}`);
+      };
+      const asked = await asYou(port, token)
+        .ask('/v1/open', body)
+        .catch((e) => e);
+      if (asked instanceof Error) {
+        console.error(`svrngs at ${port} did not open ${name}: ${asked.message}`);
         continue;
       }
       // The ready endpoint is public bootstrap infrastructure, not the service.
-      const at = (await asked.json()).open;
+      const at = asked.open;
       const enrollment = await context.newPage();
       await enrollment.goto(at);
       await enrollment.waitForURL('**/svrngs-session-ready', { timeout: 30000 });

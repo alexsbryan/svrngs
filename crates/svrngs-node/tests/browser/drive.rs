@@ -23,7 +23,7 @@ pub fn opens_at(port: u16, token: &str) {
 
 /// An address that opens the host first named `name` (`svrngs`, or a
 /// lend's label) on the computer at `port`, at the path `at`, minted by
-/// its svrngs with its token as `svrngs open` asks it (give-session); none
+/// its svrngs as you as `svrngs open` asks it (give-session); none
 /// for a computer [`opens_at`] never named.
 #[allow(dead_code)]
 pub fn open_at(port: u16, name: &str, at: &str) -> Option<String> {
@@ -37,7 +37,8 @@ pub fn open_at(port: u16, name: &str, at: &str) -> Option<String> {
     }
     .to_string();
     let mut sock = std::net::TcpStream::connect(("127.0.0.1", port)).ok()?;
-    let ask = format!("POST /v1/open HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
+    let code = svrngs_node::node::as_you_on_std(&mut sock, &token);
+    let ask = format!("POST /v1/open HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n{code}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
     sock.write_all(ask.as_bytes()).ok()?;
     let mut reply = String::new();
     sock.read_to_string(&mut reply).ok()?;

@@ -25,8 +25,8 @@ impl cli::Here for Opener<'_> {
     fn root(&self) -> &Path {
         self.0.root()
     }
-    async fn ask(&self, route: &str, body: &impl serde::Serialize) -> cli::Asked {
-        self.0.ask(route, body).await
+    async fn asked(&self, route: &str, body: Option<String>) -> cli::Answered {
+        self.0.asked(route, body).await
     }
     fn answering(
         &self,

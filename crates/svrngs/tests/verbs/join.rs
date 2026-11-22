@@ -954,13 +954,13 @@ impl cli::Here for Older {
     fn root(&self) -> &std::path::Path {
         self.0.path()
     }
-    async fn ask(&self, _: &str, _: &impl serde::Serialize) -> cli::Asked {
+    async fn asked(&self, _: &str, _: Option<String>) -> cli::Answered {
         let answer = axum::Router::new().into_service();
         let req = axum::http::Request::post("/v1/joins").body(axum::body::Body::empty());
         let answer = tower::ServiceExt::oneshot(answer, req.unwrap())
             .await
             .unwrap();
-        Ok((answer.status().is_success(), String::new()))
+        Ok((answer.status().as_u16(), String::new()))
     }
     fn answering(
         &self,

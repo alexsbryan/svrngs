@@ -272,8 +272,9 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
 
 /// GET `path` at `address`, as a browser typing it asks (`Sec-Fetch-Site:
 /// none`, which the home page answers) or as a program does (`browser`
-/// false: no `Sec-Fetch-*`, which a lend answers as its own), showing the
-/// record `token` if any: its status line and body.
+/// false: no `Sec-Fetch-*`, which a lend answers as its own), asked as
+/// you by `token`, if any, with the code it makes for this connection
+/// (svrngs-node's `as_you_on_std`): its status line and body.
 fn get(address: &str, path: &str, browser: bool, token: Option<&str>) -> (String, String) {
     let authority = address
         .strip_prefix("http://")
@@ -288,7 +289,9 @@ fn get(address: &str, path: &str, browser: bool, token: Option<&str>) -> (String
     } else {
         ""
     };
-    let token = token.map_or(String::new(), |t| format!("Authorization: Bearer {t}\r\n"));
+    let token = token.map_or(String::new(), |t| {
+        svrngs_node::node::as_you_on_std(&mut sock, t)
+    });
     write!(
         sock,
         "GET {path} HTTP/1.1\r\nHost: {authority}\r\n{fetch}{token}Connection: close\r\n\r\n"
@@ -304,7 +307,7 @@ fn get(address: &str, path: &str, browser: bool, token: Option<&str>) -> (String
 }
 
 /// Where this computer opens its own lend `name`, as `/v1/lends` at the
-/// API in `dir` answers a program showing `token`.
+/// API in `dir` answers a program asking as you by `token`.
 fn origin_of(dir: &Path, name: &str, token: &str) -> String {
     let api = std::fs::read_to_string(dir.join(svrngs_node::api::API_FILE)).unwrap();
     let api = format!("{}/", api.trim());
@@ -398,7 +401,7 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
             "{run}: the token moved across a restart"
         );
         let lent = origin_of(dir.path(), "pad", read_before);
-        // As a program the person runs, showing the token: the address is
+        // As a program the person runs, asking as them: the address is
         // what this test holds, and a browser's session is session.rs's
         // (give-session).
         let (status, page) = get(&home, "/", true, Some(read_before));
@@ -612,6 +615,94 @@ async fn only_svrngs_proving_it_holds_your_token_is_sent_it() {
     sent_none_of_the_token(&seen);
     assert!(seen.contains("POST /v1/proof HTTP/1.1"), "{seen}");
     unproven(port, refused.expect_err("refused"));
+}
+
+/// `svrngs ask <args>` over `dir`, the shipped binary as a script runs
+/// it: its exit code, what it printed, and what it said.
+fn ask(dir: &Path, args: &[&str]) -> (Option<i32>, String, String) {
+    let ran = Process::new(env!("CARGO_BIN_EXE_svrngs"))
+        .arg("ask")
+        .args(args)
+        .env("SVRNGS_DIR", dir)
+        .env("HOME", dir)
+        .stdin(Stdio::null())
+        .output()
+        .unwrap();
+    let text = |b: &[u8]| String::from_utf8_lossy(b).into_owned();
+    (ran.status.code(), text(&ran.stdout), text(&ran.stderr))
+}
+
+/// What [`not_svrngs`] answers as svrngs's `/v1/groups` would.
+const GROUPS: &str = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\n{\"groups\":[]}";
+
+/// **`svrngs ask` sends a program squatting svrngs's address none of the
+/// token, nor a code** ("Never send the key", V1.13.3): Python holding the
+/// address while svrngs is down, answering every first request as
+/// svrngs's `/v1/groups` would, is sent `POST /v1/proof` alone, and
+/// `svrngs ask /v1/groups`, as a script runs it, prints nothing and exits
+/// 1, saying something other than your svrngs answers there. Planted,
+/// watched failing: 96ea3da7 knew no `ask` (exit 1, "unknown command
+/// `ask`"); and an ask sending the token as Bearer after the challenge's
+/// answer, whatever it said, sent Python `authorization: Bearer
+/// the-token-svrngs-keeps`.
+#[test]
+fn svrngs_ask_sends_a_squatter_none_of_the_token() {
+    let (mut python, port, mut sent) = not_svrngs(&[], GROUPS);
+    let dir = data_dir_at(port);
+    let (code, printed, said) = ask(dir.path(), &["/v1/groups"]);
+    // What Python was sent, said once that connection closed; none in 5 s
+    // is nothing asked of it.
+    let ((tx, heard), pid) = (std::sync::mpsc::channel(), python.id().to_string());
+    std::thread::spawn(move || tx.send(told(&mut python, &mut sent)));
+    let seen = heard
+        .recv_timeout(Duration::from_secs(5))
+        .unwrap_or_else(|_| {
+            Process::new("kill").arg(&pid).status().unwrap();
+            panic!("Python was asked nothing: {code:?} {said}")
+        });
+    sent_none_of_the_token(&seen);
+    assert!(seen.contains("POST /v1/proof HTTP/1.1"), "{seen}");
+    assert_eq!(printed, "", "{said}");
+    unproven(port, (code.unwrap_or_default() as u8, said));
+}
+
+/// **`svrngs ask` prints svrngs's answer, and says its refusal** ("Never
+/// send the key", V1.13.3), of svrngs running over its data dir: a route
+/// got, its JSON printed whole on a line of its own, exit 0; JSON posted to
+/// a route, its answer printed; a route svrngs refuses, nothing printed,
+/// exit 1, svrngs's status said; and what isn't a route or JSON refused
+/// before anything is asked, saying how to ask. As apps/jellyfin/folders
+/// runs it.
+#[test]
+fn svrngs_ask_prints_svrngs_s_answer_and_says_its_refusal() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let mut running = Program::start(dir.path(), &logs.path().join("svrngs"), &[]);
+    running.until("//svrngs.localhost:");
+    let (code, printed, said) = ask(dir.path(), &["/v1/groups"]);
+    assert_eq!(code, Some(0), "{said}");
+    let groups: serde_json::Value = serde_json::from_str(&printed).unwrap();
+    assert!(groups["groups"].is_array(), "{printed}");
+    assert!(printed.ends_with("}\n"), "{printed:?}");
+    let (code, printed, said) = ask(dir.path(), &["/v1/open", r#"{"at": "/"}"#]);
+    assert_eq!(code, Some(0), "{said}");
+    assert!(printed.contains("svrngs-open?code="), "{printed}");
+    let (code, printed, said) = ask(dir.path(), &["/v1/nothing-here"]);
+    assert_eq!((code, printed.as_str()), (Some(1), ""), "{said}");
+    assert!(
+        said.starts_with("svrngs: svrngs refused /v1/nothing-here: 404"),
+        "{said}"
+    );
+    for wrong in [
+        &["v1/groups"][..],
+        &["/v1/open", "{at"],
+        &["/v1/open", "{}", "{}"],
+        &[],
+    ] {
+        let (code, printed, said) = ask(dir.path(), wrong);
+        assert_eq!((code, printed.as_str()), (Some(1), ""), "{wrong:?}: {said}");
+        assert!(said.contains("svrngs ask"), "{wrong:?}: {said}");
+    }
 }
 
 /// `svrngs open` over `dir`, asked every 50 ms until svrngs answers it:
@@ -884,6 +975,41 @@ fn an_older_svrngs_the_login_service_doesn_t_run_is_not_restarted() {
     );
     assert!(
         told.contains(&older) && told.contains("none of your token"),
+        "{told}"
+    );
+}
+
+/// **A data dir whose lock svrngs can't look at restarts nothing** (the
+/// never-send-the-key review, finding 4): what answers 404 at svrngs's
+/// address, the login service running svrngs over this data dir, and its
+/// `lock` a folder, which no lock can be taken of: svrngs can't tell
+/// whether an older svrngs holds the data dir, so it restarts nothing,
+/// sends none of the token, and says so (exit 3). Planted, watched failing:
+/// 96ea3da7 read any failure to take the lock as an older svrngs holding
+/// it, and asked for a restart.
+#[test]
+fn a_lock_svrngs_cannot_look_at_restarts_nothing() {
+    let (dir, stubs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    std::fs::create_dir(dir.path().join("lock")).unwrap();
+    let (mut old, port, mut sent) = not_svrngs(&[], OLDER);
+    kept_at(dir.path(), port);
+    kept_by_login(dir.path(), dir.path());
+    restarting(stubs.path(), "");
+    let (out, asked) = restarted(dir.path(), stubs.path());
+    old.kill().unwrap();
+    let mut seen = String::new();
+    sent.read_to_string(&mut seen).unwrap();
+    sent_none_of_the_token(&seen);
+    assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
+    let told = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(3), "{told}");
+    let lock = dir.path().join("lock");
+    let words = format!(
+        "can't tell whether an older svrngs holds {}",
+        lock.display()
+    );
+    assert!(
+        told.contains(&words) && told.contains("restarted nothing"),
         "{told}"
     );
 }

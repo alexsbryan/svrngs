@@ -440,7 +440,8 @@ pub(crate) fn same(a: &[u8], b: &[u8]) -> bool {
 }
 
 /// The Bearer token from a request's `Authorization`, or why none: a
-/// userinfo request's, and a program's to the record ([`crate::api`]).
+/// userinfo request's, and one the record refuses, saying how to ask
+/// instead ([`crate::api`]).
 pub(crate) fn bearer(headers: &HeaderMap) -> Result<&str, &'static str> {
     headers
         .get(header::AUTHORIZATION)

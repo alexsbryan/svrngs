@@ -187,9 +187,16 @@ impl<'a> Browser<'a> {
         self.api
     }
 
-    /// The token's line, which a program on this computer sends.
-    pub fn bearer(&self) -> String {
-        format!("Authorization: Bearer {}\r\n", self.token)
+    /// The line a program on this computer asking svrngs as you sends
+    /// ([`svrngs_node::node::AS_YOU`]): its transport puts the code for its
+    /// connection in its place ([`as_you_in`]).
+    pub fn as_you(&self) -> String {
+        svrngs_node::node::AS_YOU.to_string()
+    }
+
+    /// The token, which a test's transport makes its codes with.
+    pub fn token(&self) -> &str {
+        &self.token
     }
 
     pub async fn shown(
@@ -202,7 +209,7 @@ impl<'a> Browser<'a> {
     ) -> String {
         match extra.contains("Sec-Fetch-Site") {
             true => self.proof(method, host, path, extra, body).await,
-            false => self.bearer(),
+            false => self.as_you(),
         }
     }
 
@@ -365,9 +372,9 @@ pub async fn proved(
 }
 
 /// The key an open enrolls at the home page (`lend` none) or the lend
-/// `lend`'s origin: `/v1/open`, asked with the token as `svrngs open` asks
-/// it, its code redeemed by a POST from that origin, as home/session.js
-/// redeems it (session.rs `redeem`).
+/// `lend`'s origin: `/v1/open`, asked as you as `svrngs open` asks it
+/// (svrngs-node api.rs `asked`), its code redeemed by a POST from that
+/// origin, as home/session.js redeems it (session.rs `redeem`).
 #[allow(
     dead_code,
     reason = "each test binary compiles this file; only some model a browser"
@@ -378,14 +385,10 @@ pub async fn opened_at(api: SocketAddr, token: &str, lend: Option<&str>) -> Vec<
     let client = client.redirect(reqwest::redirect::Policy::none());
     let client = client.build().unwrap();
     let body = lend.map_or(serde_json::json!({}), |l| serde_json::json!({ "lend": l }));
-    let open = client.post(format!("http://{api}/v1/open"));
-    // By hand, not reqwest's `json`, which the command's tests (scenes,
-    // people.rs) build without, since they include this file by path.
-    let open = open
-        .bearer_auth(token)
-        .header("content-type", "application/json");
-    let open = open.body(body.to_string()).send().await.unwrap();
-    let open: serde_json::Value = serde_json::from_slice(&open.bytes().await.unwrap()).unwrap();
+    let at = format!("http://{api}");
+    let open = svrngs_node::api::asked(&at, "/v1/open", token, Some(body.to_string()));
+    let (_, open) = open.await.expect("svrngs proves itself and answers");
+    let open: serde_json::Value = serde_json::from_slice(&open).unwrap();
     let url = open["open"].as_str().expect("an open's address");
     let (host, path) = url.trim_start_matches("http://").split_once('/').unwrap();
     let redeem = client.post(format!("http://{api}/{path}"));
@@ -403,4 +406,22 @@ pub async fn opened_at(api: SocketAddr, token: &str, lend: Option<&str>) -> Vec<
     URL_SAFE_NO_PAD
         .decode(answer["key"].as_str().expect("enrollment's origin key"))
         .unwrap()
+}
+
+/// `text`, a raw request, with [`svrngs_node::node::AS_YOU`] in it made the
+/// code for `stream`'s connection, once svrngs has proved itself on it
+/// ([`svrngs_node::node::as_you_on`]): what a test's socket sends a program's
+/// ask as you as.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some ask as you on a socket"
+)]
+pub async fn as_you_in(stream: &mut tokio::net::TcpStream, token: &str, text: &str) -> String {
+    match text.contains(svrngs_node::node::AS_YOU) {
+        true => {
+            let line = svrngs_node::node::as_you_on(stream, token).await;
+            text.replace(svrngs_node::node::AS_YOU, &line)
+        }
+        false => text.to_string(),
+    }
 }

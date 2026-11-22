@@ -348,17 +348,18 @@ impl Person {
         self.home.join("svrngs.log")
     }
 
-    /// The token its record asks of a program, from the file beside its
+    /// The token its record's code is made with, from the file beside its
     /// `api` file, as a program on this computer reads it (give-token).
     fn token(&self) -> String {
         std::fs::read_to_string(self.home.join(".svrngs/token")).unwrap_or_default()
     }
 
-    /// `GET <path>` of its record API, as a program on this computer asks.
+    /// `GET <path>` of its record API, as a program on this computer asks,
+    /// as you (svrngs-node api.rs `asked`).
     pub async fn get(&self, path: &str) -> Value {
-        let got = self.http.get(format!("http://{}{path}", self.api));
-        let got = got.bearer_auth(self.token()).send();
-        let got = got.await.unwrap().bytes().await.unwrap();
+        let at = format!("http://{}", self.api);
+        let got = svrngs_node::api::asked(&at, path, &self.token(), None).await;
+        let got = got.map(|(_, got)| got).unwrap_or_default();
         serde_json::from_slice(&got).unwrap_or(Value::Null)
     }
 
@@ -385,16 +386,11 @@ impl Person {
     }
 
     /// `POST <path>` of `body` to its record API, as a program on this
-    /// computer writes: the status and the answer.
+    /// computer writes, as you: the status and the answer.
     pub async fn post(&self, path: &str, body: &Value) -> (u16, Value) {
-        let sent = self.http.post(format!("http://{}{path}", self.api));
-        let sent = sent
-            .bearer_auth(self.token())
-            .header("content-type", "application/json")
-            .body(body.to_string());
-        let got = sent.send().await.unwrap();
-        let status = got.status().as_u16();
-        let got = got.bytes().await.unwrap();
+        let at = format!("http://{}", self.api);
+        let sent = svrngs_node::api::asked(&at, path, &self.token(), Some(body.to_string()));
+        let (status, got) = sent.await.expect("svrngs proves itself and answers");
         (status, serde_json::from_slice(&got).unwrap_or(Value::Null))
     }
 

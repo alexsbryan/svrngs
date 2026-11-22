@@ -165,20 +165,19 @@ that is the model, not svrngs.
 ![Sam's model answering Bo](runs/start/2026-10-13-story/data/shots/bo-chat-chromium.png)
 
 **9. A program on Bo's computer** — a chat app, an editor's assistant, a
-script — can ask Sam's model too. Press **Address** beside **Sam’s llama-server**, then **Copy its
-address for a program**: the page says *"Copied:"*
-and the address. Paste it where the program asks for an address (often
-called its *base URL*, or *OpenAI-compatible API*). The address stays the
-same when svrngs or the computer starts again. For its key, give it Bo's
-svrngs token, the text in `~/.svrngs/token`: since V1.3 a program on Bo's
-computer reaches a lend only with it (`crates/svrngs-node/src/session.rs`),
-and it goes no further than Bo's computer. The run, before V1.3, passed
-`none`. Its program, in Python, with the token:
+script — can ask Sam's model too. On Bo's home page, press **Play** beside
+**Sam’s llama-server**: the row says *"Connect to http://….localhost:…/."*
+and copies that address. Paste it where the program asks for an address
+(often called its *base URL*, or *OpenAI-compatible API*). The address
+stays the same when svrngs or the computer starts again, and Play stays on
+until Bo presses **Stop**. If the program asks for a key, give it any text,
+such as `none`, never a real key: svrngs drops it before Sam's computer
+sees the request (`crates/svrngs-node/src/play.rs`). The run passed `none`.
+Its program, in Python:
 
 ```python
-import openai, pathlib
-token = pathlib.Path("~/.svrngs/token").expanduser().read_text().strip()
-client = openai.OpenAI(base_url="<the address you copied>", api_key=token)
+import openai
+client = openai.OpenAI(base_url="<the address you copied>", api_key="none")
 for chunk in client.chat.completions.create(model="any", stream=True,
         messages=[{"role": "user", "content": "Name three rivers in Spain."}]):
     print(chunk.choices[0].delta.content or "", end="") if chunk.choices else None
@@ -201,9 +200,13 @@ do.
 - **The terminal waits after `svrngs share`**, its last line asking
   about a password. Press Enter.
 - **A program says "Missing credentials. Please pass an `api_key`"**
-  (Python's `openai`), or a page saying *"Open svrngs from your
-  computer"*. Give it the svrngs token, the text in `~/.svrngs/token`, as
-  its key (step 9).
+  (Python's `openai`). Give it any text, such as `none`, as its key (step 9).
+- **A program gets a page saying *"Open svrngs from your computer"***.
+  Play is off for that lend: press **Play** beside it on your home page
+  (step 9).
+- **A program gets *"svrngs doesn't take its token from a program any
+  more"***. It was given svrngs's token as its key. Give it any text
+  instead, with Play on (step 9).
 - **A program gets `{"error":"this page answers only itself"}`.** It was
   given the home page's address. Give it the address **Copy its address
   for a program** copies instead (step 9).

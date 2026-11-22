@@ -24,7 +24,7 @@ async fn the_shelf_brings_each_app_with_its_look_and_house_rules_with_canon() {
     std::fs::create_dir(&folder).unwrap();
     let kept = http()
         .post(format!("http://{}/v1/folders", ana.api_addr()))
-        .bearer_auth(ana.token())
+        .asked_as_you()
         .json(&json!({ "dir": folder, "group": group }))
         .send()
         .await
@@ -58,7 +58,7 @@ async fn the_shelf_brings_each_app_with_its_look_and_house_rules_with_canon() {
     let mut listed = Vec::new();
     for _ in 0..30 {
         let url = format!("http://{}/v1/lends?namespace={group}", ana.api_addr());
-        let seen: Value = (http().get(url).bearer_auth(ana.token().trim()).send())
+        let seen: Value = (http().get(url).asked_as_you().send())
             .await
             .unwrap()
             .json()

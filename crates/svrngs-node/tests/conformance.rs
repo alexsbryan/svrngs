@@ -700,16 +700,10 @@ async fn conformance(way: Way, engine: Engine) {
         );
     }
     if way == Way::Computer {
-        let http = reqwest::Client::builder().no_proxy().build().unwrap();
-        let log = http
-            .get(format!("http://{api}/v1/rail/log?namespace={NS}"))
-            .bearer_auth(g.alex.token())
-            .send()
-            .await
-            .unwrap()
-            .text()
-            .await
-            .unwrap();
+        let (_, log) = g
+            .alex
+            .ask_as_you(&format!("/v1/rail/log?namespace={NS}"), None)
+            .await;
         assert!(
             !log.contains(MARK),
             "a lent page's post reached the record: {log}"

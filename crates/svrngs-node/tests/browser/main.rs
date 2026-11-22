@@ -300,20 +300,14 @@ async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, Stri
 
 /// `folder` kept as `group`'s on `at`, as `share --folder` asks it.
 async fn keep_folder_in(at: &Node, folder: &Path, group: &str) {
-    let kept = reqwest::Client::builder()
-        .no_proxy()
-        .build()
-        .unwrap()
-        .post(format!("http://{}/v1/folders", at.api_addr()))
-        .bearer_auth(at.token())
-        .json(&svrngs_node::folder::FolderAsk {
-            dir: folder.to_path_buf(),
-            group: group.into(),
-        })
-        .send()
-        .await
-        .unwrap();
-    assert!(kept.status().is_success(), "{:?}", kept.text().await);
+    let ask = svrngs_node::folder::FolderAsk {
+        dir: folder.to_path_buf(),
+        group: group.into(),
+    };
+    let (status, said) = at
+        .ask_as_you("/v1/folders", Some(serde_json::to_value(ask).unwrap()))
+        .await;
+    assert!((200..300).contains(&status), "{said}");
 }
 
 in_webkit!(

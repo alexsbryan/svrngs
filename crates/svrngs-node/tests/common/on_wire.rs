@@ -20,10 +20,10 @@ use svrngs_node::SigningKey;
 use tower::ServiceExt;
 
 thread_local! {
-    /// Each started node's routes by the address its API names, and the
-    /// wire they meet on: one test's, since each `#[tokio::test]` runs on a
-    /// thread of its own.
-    static APIS: RefCell<HashMap<SocketAddr, (PublicKey, axum::Router)>> = RefCell::default();
+    /// Each started node's routes and token by the address its API names,
+    /// and the wire they meet on: one test's, since each `#[tokio::test]`
+    /// runs on a thread of its own.
+    static APIS: RefCell<HashMap<SocketAddr, (PublicKey, axum::Router, String)>> = RefCell::default();
     static WIRE: Wire = Wire::default();
     /// Each started node's key whose API listens on a socket, over QUIC.
     static QUIC: RefCell<std::collections::HashSet<PublicKey>> = RefCell::default();
@@ -124,9 +124,9 @@ impl<'a> Browser<'a> {
         self.node.api_addr()
     }
 
-    /// common/mod.rs `Browser::bearer`.
-    pub fn bearer(&self) -> String {
-        self.of.bearer()
+    /// common/mod.rs `Browser::as_you`.
+    pub fn as_you(&self) -> String {
+        self.of.as_you()
     }
 
     /// common/mod.rs `Browser::path`.
@@ -134,7 +134,8 @@ impl<'a> Browser<'a> {
         self.of.path(host, path, extra)
     }
 
-    /// common/mod.rs `Browser::shown`: a page's proof, else the token's line.
+    /// common/mod.rs `Browser::shown`: a page's proof, else a program's
+    /// asking as you.
     pub async fn shown(
         &self,
         method: &str,
@@ -145,7 +146,7 @@ impl<'a> Browser<'a> {
     ) -> String {
         match extra.contains("Sec-Fetch-Site") {
             true => self.proof(method, host, path, extra, body).await,
-            false => self.bearer(),
+            false => self.as_you(),
         }
     }
 
@@ -179,13 +180,13 @@ impl<'a> Browser<'a> {
 }
 
 /// common/mod.rs `opened_at`, its two asks of `node`'s routes: `/v1/open`
-/// with the token, then the code redeemed by a POST from that origin.
+/// as you, then the code redeemed by a POST from that origin.
 async fn opened(node: &Node, lend: Option<&str>) -> Vec<u8> {
     use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
     let api = node.api_addr();
     let body = lend.map_or(serde_json::json!({}), |l| serde_json::json!({ "lend": l }));
     let open = http().post(format!("http://{api}/v1/open"));
-    let open = open.bearer_auth(node.token().trim()).json(&body).send();
+    let open = open.asked_as_you().json(&body).send();
     let open: serde_json::Value = open.await.unwrap().json().await.unwrap();
     let url = open["open"].as_str().expect("an open's address");
     let (host, path) = url.trim_start_matches("http://").split_once('/').unwrap();
@@ -436,10 +437,11 @@ pub fn served(node: &Node) {
     if net.is::<svrngs_node::iroh::IrohTransport>() {
         QUIC.with(|q| q.borrow_mut().insert(key));
     }
-    let was = APIS.with(|a| a.borrow_mut().insert(at, (key, node.api_routes())));
+    let token = node.token().trim().to_string();
+    let was = APIS.with(|a| a.borrow_mut().insert(at, (key, node.api_routes(), token)));
     // The same key again is its computer restarted; another's would be
     // asked in its place.
-    if let Some((other, _)) = was.filter(|(k, _)| *k != key) {
+    if let Some((other, ..)) = was.filter(|(k, ..)| *k != key) {
         panic!("{key} and {other} both answer at {at}");
     }
 }
@@ -515,8 +517,12 @@ impl Asked {
             body: Vec::new(),
         }
     }
-    pub fn bearer_auth(self, token: impl std::fmt::Display) -> Self {
-        self.header("authorization", format!("Bearer {token}"))
+    /// Asked as a program on its computer asks svrngs as its person,
+    /// never with the token: [`svrngs_node::node::AS_YOU`] in its
+    /// `Authorization`, which [`Asked::sent`] puts the code for its
+    /// connection in place of.
+    pub fn asked_as_you(self) -> Self {
+        self.header("authorization", svrngs_node::node::AS_YOU_VALUE)
     }
     pub fn header(mut self, name: &str, value: impl AsRef<str>) -> Self {
         let name = axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap();
@@ -551,9 +557,13 @@ impl Asked {
         let body = serde_json::to_vec(value).unwrap();
         self.header("content-type", "application/json").body(body)
     }
-    /// Asked of the node's routes, from a program on its computer; or, at
-    /// a [`bridge_as`] address, of the computer it reaches, as its key.
-    /// Refused at the acceptor, it is the error a closed connection is.
+    /// Asked of the node's routes, from a program on its computer, on a
+    /// connection of its own (`svrngs_node::api::Line`), and as you where
+    /// it says [`svrngs_node::node::AS_YOU`]: svrngs proved on that
+    /// connection first, then asked with the code for it
+    /// ([`svrngs_node::node::as_you`]). Or, at a [`bridge_as`] address, of
+    /// the computer it reaches, as its key. Refused at the acceptor, it is
+    /// the error a closed connection is.
     pub async fn send(self) -> Result<Answer, Unsent> {
         let (head, body) = self.sent().await?.into_parts();
         let body = axum::body::to_bytes(body, usize::MAX).await.unwrap();
@@ -576,8 +586,8 @@ impl Asked {
             let wire = WIRE.with(Clone::clone);
             return wire.ask_as(&key, &to, alpn, req).await;
         }
-        let routes = APIS.with(|a| a.borrow().get(&self.at).map(|(k, r)| (*k, r.clone())));
-        let (key, routes) = routes.unwrap_or_else(|| panic!("no node's API at {}", self.at));
+        let routes = APIS.with(|a| a.borrow().get(&self.at).cloned());
+        let (key, routes, token) = routes.unwrap_or_else(|| panic!("no node's API at {}", self.at));
         // A node over QUIC reads whose its caller is from this computer's
         // sockets (svrngs-node uid.rs): it is asked from one of this
         // process's, connected to its API, held until it answers. One on the
@@ -589,10 +599,48 @@ impl Asked {
             .unwrap_or(SocketAddr::from(([127, 0, 0, 1], 50_000)));
         req.extensions_mut()
             .insert(axum::extract::ConnectInfo(caller));
-        let answer = routes.oneshot(req).await;
+        let as_you = req.headers().get("authorization");
+        let answer = match as_you.is_some_and(|h| h == svrngs_node::node::AS_YOU_VALUE) {
+            true => svrngs_node::node::as_you(&routes, &token, req, (caller, self.at)).await,
+            false => {
+                let line = svrngs_node::api::Line::new(Some(self.at));
+                req.extensions_mut().insert(line);
+                routes
+                    .oneshot(req)
+                    .await
+                    .unwrap_or_else(|never| match never {})
+            }
+        };
         drop(held);
-        Ok(answer.unwrap_or_else(|never| match never {}))
+        Ok(answer)
     }
+}
+
+/// `request` asked of `node`'s routes from `caller`, on a connection of its
+/// own, as you where it says [`svrngs_node::node::AS_YOU`], as
+/// [`Asked::sent`] asks: for a test that builds its request, and names its
+/// caller, off loopback among them, where even the proof is refused.
+pub async fn sent(
+    node: &Node,
+    mut request: axum::extract::Request,
+    caller: SocketAddr,
+) -> axum::response::Response {
+    let (routes, server) = (node.api_routes(), node.api_addr());
+    let as_you = request.headers().get("authorization");
+    let on_loopback = caller.ip().to_canonical().is_loopback();
+    if as_you.is_some_and(|h| h == svrngs_node::node::AS_YOU_VALUE) && on_loopback {
+        return svrngs_node::node::as_you(&routes, &node.token(), request, (caller, server)).await;
+    }
+    request
+        .extensions_mut()
+        .insert(axum::extract::ConnectInfo(caller));
+    request
+        .extensions_mut()
+        .insert(svrngs_node::api::Line::new(Some(server)));
+    routes
+        .oneshot(request)
+        .await
+        .unwrap_or_else(|never| match never {})
 }
 
 /// `text` percent-encoded as a form's value, as reqwest encodes it.

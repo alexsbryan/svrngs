@@ -631,7 +631,7 @@ pub async fn tried(to: Bound, port: NonZeroU16, how: Key<'_>, key: &str) -> Opti
 /// `asked`, with `body`, sent on `to` as HTTP/1 to the service at `port`:
 /// its answer's status and body; none when it doesn't answer.
 async fn asked_on(to: Bound, port: NonZeroU16, asked: Builder, body: String) -> Answered {
-    sent(&mut http_on(to.stream()).await?, port.get(), asked, body).await
+    sent::<ANSWERED_WITHIN>(&mut http_on(to.stream()).await?, port.get(), asked, body).await
 }
 
 /// HTTP/1 on the one connection `to`, each request [`sent`] on it in turn:
@@ -645,28 +645,37 @@ pub(crate) async fn http_on(to: impl crate::iroh::Duplex + 'static) -> Option<On
 }
 
 /// `asked`, with `body`, sent on `on` to the service at `port`: its
-/// answer's status and body, none past [`ANSWERED_WITHIN`] or once the
-/// connection drops; none when it doesn't answer.
-pub(crate) async fn sent(on: &mut On, port: u16, asked: Builder, body: String) -> Answered {
+/// answer's status and body; or none when it doesn't answer. A body past
+/// `MOST`, or one the connection drops in, is none of it, its status
+/// alone; but where `MOST` is unbounded, as svrngs's proved answer to its
+/// own command is read (`crate::api::asked`), no answer at all, so it is
+/// never cut short in silence.
+pub(crate) async fn sent<const MOST: usize>(
+    on: &mut On,
+    port: u16,
+    asked: Builder,
+    body: String,
+) -> Answered {
     let asked = asked
         .header("host", format!("127.0.0.1:{port}"))
         .body(body)
         .ok()?;
     let answer = on.send_request(asked).await.ok()?;
     let status = answer.status().as_u16();
-    let body = http_body_util::Limited::new(answer.into_body(), ANSWERED_WITHIN);
+    let body = http_body_util::Limited::new(answer.into_body(), MOST);
     let body = http_body_util::BodyExt::collect(body)
         .await
         .map(|b| b.to_bytes());
-    Some((status, body.unwrap_or_default().to_vec()))
+    let body = body.ok().or((MOST < usize::MAX).then(Default::default))?;
+    Some((status, body.to_vec()))
 }
 
-/// The most of an answer [`sent`] reads: far past any svrngs gives its
-/// command or a share's port gives a key or a sign-in, and short of
-/// what a program holding svrngs's address could fill memory with before
-/// it proves itself (the 1.13.3 proof review, finding 7). Past it, the
-/// answer is its status alone.
-const ANSWERED_WITHIN: usize = 1 << 20;
+/// The most of an answer [`sent`] reads from what hasn't proved itself:
+/// far past svrngs's proof or a share's port's answer to a key or a
+/// sign-in, and short of what a program holding svrngs's address could
+/// fill memory with before it proves itself (the 1.13.3 proof review,
+/// finding 7). Past it, the answer is its status alone.
+pub(crate) const ANSWERED_WITHIN: usize = 1 << 20;
 
 /// What a lender is told of the key their `name`, its program's word,
 /// answered `status` to ([`tried`]), and whether it is kept: refused, 401 or 403, it

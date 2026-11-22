@@ -13,7 +13,6 @@ use svrngs::group;
 use svrngs_node::actor_of;
 use svrngs_node::link::{client_link, Link};
 use svrngs_node::node::{Node, Wire};
-use tower::ServiceExt;
 
 use crate::node_common::heard;
 use crate::{computer, name, Computer};
@@ -28,7 +27,8 @@ pub async fn paged(node: &Node, method: &str, path: &str, body: Value) -> (Statu
 }
 
 /// `method` of `path` asked of `node`'s routes at `host`, as a page there
-/// asks it of itself, the token shown: the status and the body.
+/// asks it of itself, as you (svrngs-node's `as_you`): the status and the
+/// body.
 pub async fn asked_at(
     node: &Node,
     host: &str,
@@ -43,13 +43,13 @@ pub async fn asked_at(
         .header("origin", format!("http://{host}"))
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
-        .header("content-type", "application/json")
-        .header("authorization", format!("Bearer {}", node.token().trim()));
-    let mut req = req.body(axum::body::Body::from(body.to_string())).unwrap();
-    let caller = std::net::SocketAddr::from(([127, 0, 0, 1], 50_000));
-    req.extensions_mut()
-        .insert(axum::extract::ConnectInfo(caller));
-    let answer = node.api_routes().oneshot(req).await.unwrap();
+        .header("content-type", "application/json");
+    let req = req.body(axum::body::Body::from(body.to_string())).unwrap();
+    let ends = (
+        std::net::SocketAddr::from(([127, 0, 0, 1], 50_000)),
+        node.api_addr(),
+    );
+    let answer = svrngs_node::node::as_you(&node.api_routes(), &node.token(), req, ends).await;
     let status = answer.status();
     let body = axum::body::to_bytes(answer.into_body(), usize::MAX).await;
     (status, String::from_utf8_lossy(&body.unwrap()).into_owned())

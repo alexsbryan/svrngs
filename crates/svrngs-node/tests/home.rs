@@ -300,8 +300,8 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         format!("/v1/lends?namespace={NS}"),
     ] {
         let shown = ask(browser, "GET", &home, &path, &own, "").await;
-        let program = format!("Authorization: Bearer {}\r\n", alex.token());
-        let answered = ask(browser, "GET", "127.0.0.1", &path, &program, "").await;
+        let program = svrngs_node::node::AS_YOU;
+        let answered = ask(browser, "GET", "127.0.0.1", &path, program, "").await;
         assert_eq!(
             (shown.status, shown.json()),
             (answered.status, answered.json()),
@@ -360,7 +360,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             "its own origin with no Origin",
             "Sec-Fetch-Site: same-origin\r\n".into(),
         ),
-        ("a program, with the token", browser.bearer()),
+        ("a program, as you", browser.as_you()),
     ] {
         let posted = ask(browser, "POST", &home, "/choices", &extra, &yes(&alexs)).await;
         assert_eq!(
@@ -1041,7 +1041,7 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
             format!("Sec-Fetch-Site: same-site\r\nOrigin: http://{home}\r\n"),
         ),
         ("its own origin with no Origin", "Sec-Fetch-Site: same-origin\r\n".into()),
-        ("a program, with the token", browser.bearer()),
+        ("a program, as you", browser.as_you()),
     ] {
         let posted = ask(browser, "POST", &home, "/lent", &extra, everyone).await;
         assert_eq!(

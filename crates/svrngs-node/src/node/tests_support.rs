@@ -78,6 +78,17 @@ impl Node {
         std::fs::read_to_string(file).expect("a started node keeps its token")
     }
 
+    /// `path` of this node's API at its socket, `body` posted there as JSON
+    /// or `path` got where there is none, asked as you as svrngs's command
+    /// asks it ([`crate::api::asked`]): its status and its body. A node on
+    /// a wire, whose API is asked in this process, is asked by [`as_you`].
+    pub async fn ask_as_you(&self, path: &str, body: Option<serde_json::Value>) -> (u16, String) {
+        let (at, token) = (format!("http://{}", self.api_addr()), self.token());
+        let asked = crate::api::asked(&at, path, &token, body.map(|b| b.to_string()));
+        let (status, said) = asked.await.expect("svrngs proves itself and answers");
+        (status, String::from_utf8_lossy(&said).into_owned())
+    }
+
     /// A read capability for protocol tests, independent of browser enrollment.
     /// The origin still checks the app's declared reads and the person's choice.
     pub fn read_capability(
@@ -1091,4 +1102,165 @@ pub fn approve(lend: &mut crate::lend::Lend) {
 fn real(raw: crate::lend::Raw, port: u16) -> Option<(binding::Read, binding::Took)> {
     let read = crate::uid::port(raw, port, None).ok()?;
     (!read.0.sockets.is_empty()).then_some(read)
+}
+
+/// The line a test writes where a program asks svrngs as its person ("Never
+/// send the key", V1.13.3): a stand-in for the code its connection's proof
+/// makes, which a test's transport puts in its place once it has proved
+/// svrngs on the connection it sends on ([`as_you`] in this process,
+/// [`as_you_on`] on a socket). It is never a code: svrngs refuses it as
+/// one made for another connection.
+pub const AS_YOU: &str = "Authorization: Svrngs as-you\r\n";
+
+/// [`AS_YOU`]'s value, as a header holds it.
+pub const AS_YOU_VALUE: &str = "Svrngs as-you";
+
+/// `request` asked of `routes` in this process as a program on this
+/// computer asks svrngs as its person (apps/client/svrngs.mjs, `svrngs
+/// ask`): on a connection of its own from `caller` to `server`
+/// ([`crate::api::Line`]), on which svrngs is first asked its proof
+/// (`POST /v1/proof`), which is checked, then `request` with the code made
+/// for the nonce it gave ([`crate::api::ask`]), never the token. The one
+/// way a test asks svrngs as you in this process; a socket's is
+/// [`as_you_on`].
+pub async fn as_you(
+    routes: &axum::Router,
+    token: &str,
+    mut request: axum::extract::Request,
+    (caller, server): (SocketAddr, SocketAddr),
+) -> axum::response::Response {
+    use tower::ServiceExt as _;
+    let line = crate::api::Line::new(Some(server));
+    let challenge = "5a".repeat(32);
+    let proving = axum::http::Request::post("/v1/proof")
+        .header("host", server.to_string())
+        .header("content-type", "application/json")
+        .extension(axum::extract::ConnectInfo(caller))
+        .extension(line.clone());
+    let proving = proving.body(axum::body::Body::from(format!(
+        r#"{{"challenge":"{challenge}"}}"#
+    )));
+    let proved = routes.clone().oneshot(proving.unwrap()).await;
+    let Ok(proved) = proved;
+    let said = axum::body::to_bytes(proved.into_body(), 4096)
+        .await
+        .unwrap();
+    let (proof, code) = codes(token, &challenge, &said, (caller, server));
+    assert_eq!(proof, "proved", "svrngs's proof on a connection of its own");
+    let headers = request.headers_mut();
+    headers.insert("authorization", code.parse().unwrap());
+    request
+        .extensions_mut()
+        .insert(axum::extract::ConnectInfo(caller));
+    request.extensions_mut().insert(line);
+    let Ok(answer) = routes.clone().oneshot(request).await;
+    answer
+}
+
+/// The `Authorization` line for `stream`, a socket connected to svrngs's
+/// API, once svrngs has proved on it that it holds `token`: `POST
+/// /v1/proof` asked on it as raw HTTP/1, its answer read whole, the proof
+/// checked against the socket's own two ends and the code made for the
+/// nonce it gave. What a test's socket sends in [`AS_YOU`]'s place, its
+/// next request on the same socket.
+pub async fn as_you_on(stream: &mut tokio::net::TcpStream, token: &str) -> String {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let ends = (stream.local_addr().unwrap(), stream.peer_addr().unwrap());
+    let challenge = "5a".repeat(32);
+    let body = format!(r#"{{"challenge":"{challenge}"}}"#);
+    let asked = format!("POST /v1/proof HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}", ends.1, body.len());
+    stream.write_all(asked.as_bytes()).await.unwrap();
+    let mut head = Vec::new();
+    while !head.ends_with(b"\r\n\r\n") {
+        head.push(stream.read_u8().await.expect("svrngs answers its proof"));
+    }
+    let head = String::from_utf8(head).unwrap().to_ascii_lowercase();
+    let length = (head.lines().find_map(|l| l.strip_prefix("content-length:")))
+        .and_then(|n| n.trim().parse().ok())
+        .expect("a proof's answer says its length");
+    let mut said = vec![0; length];
+    stream.read_exact(&mut said).await.unwrap();
+    let (proof, code) = codes(token, &challenge, &said, ends);
+    assert_eq!(proof, "proved", "svrngs's proof on this socket: {head}");
+    format!("Authorization: {code}\r\n")
+}
+
+/// `request` asked of svrngs's API at `api` on a connection of its own, as
+/// you, once svrngs has proved itself on it ([`as_you_on`]): its answer,
+/// its body read whole, as a program asking a lend's address, or a page's
+/// host, as you reads it, its own `Host` and headers sent as they are.
+#[expect(
+    clippy::disallowed_methods,
+    reason = "a test's dial of svrngs's own API"
+)]
+pub async fn as_you_at(
+    api: SocketAddr,
+    token: &str,
+    mut request: axum::http::Request<String>,
+) -> axum::http::Response<axum::body::Bytes> {
+    let mut stream = tokio::net::TcpStream::connect(api).await.unwrap();
+    let line = as_you_on(&mut stream, token).await;
+    let code = line.trim_end().trim_start_matches("Authorization: ");
+    request
+        .headers_mut()
+        .insert("authorization", code.parse().unwrap());
+    let mut on = crate::share::http_on(stream).await.unwrap();
+    let (head, body) = on.send_request(request).await.unwrap().into_parts();
+    let body = http_body_util::BodyExt::collect(body)
+        .await
+        .unwrap()
+        .to_bytes();
+    axum::http::Response::from_parts(head, body)
+}
+
+/// [`as_you_on`] on a blocking socket, for a test whose svrngs answers on
+/// another thread or in another process.
+pub fn as_you_on_std(stream: &mut std::net::TcpStream, token: &str) -> String {
+    use std::io::{Read as _, Write as _};
+    let ends = (stream.local_addr().unwrap(), stream.peer_addr().unwrap());
+    let challenge = "5a".repeat(32);
+    let body = format!(r#"{{"challenge":"{challenge}"}}"#);
+    let asked = format!("POST /v1/proof HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}", ends.1, body.len());
+    stream.write_all(asked.as_bytes()).unwrap();
+    let (mut head, mut byte) = (Vec::new(), [0u8]);
+    while !head.ends_with(b"\r\n\r\n") {
+        stream
+            .read_exact(&mut byte)
+            .expect("svrngs answers its proof");
+        head.push(byte[0]);
+    }
+    let head = String::from_utf8(head).unwrap().to_ascii_lowercase();
+    let length = (head.lines().find_map(|l| l.strip_prefix("content-length:")))
+        .and_then(|n| n.trim().parse().ok())
+        .expect("a proof's answer says its length");
+    let mut said = vec![0; length];
+    stream.read_exact(&mut said).unwrap();
+    let (proof, code) = codes(token, &challenge, &said, ends);
+    assert_eq!(proof, "proved", "svrngs's proof on this socket: {head}");
+    format!("Authorization: {code}\r\n")
+}
+
+/// What `said`, svrngs's answer to `challenge` on the connection from
+/// `client` to `server`, proves, and the `Authorization` value its nonce
+/// makes for that connection.
+fn codes(
+    token: &str,
+    challenge: &str,
+    said: &[u8],
+    (client, server): (SocketAddr, SocketAddr),
+) -> (&'static str, String) {
+    let said: serde_json::Value = serde_json::from_slice(said).unwrap_or_default();
+    let challenge = crate::api::Challenge::try_from(challenge.to_string()).unwrap();
+    let wanted = crate::api::proof(token, &challenge, client, server);
+    let proof = if said["proof"] == wanted.as_str() {
+        "proved"
+    } else {
+        "unproven"
+    };
+    let nonce = said["nonce"].as_str().unwrap_or_default().to_string();
+    let nonce = crate::api::Challenge::try_from(nonce).expect("a nonce for this connection");
+    (
+        proof,
+        format!("Svrngs {}", crate::api::ask(token, &nonce, client, server)),
+    )
 }

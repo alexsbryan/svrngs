@@ -34,6 +34,7 @@
 //!                                          or everyone ([`crate::relay`])
 //! svrngs guide                             print the guide to building an app
 //! svrngs check <folder>                    what in an app's page the policy refuses
+//! svrngs ask <route> [<json>]              svrngs's answer to a route, asked as you
 //! ```
 //!
 //! `remove` and `handover` ask the node running here, as `share --folder`
@@ -252,6 +253,10 @@ pub enum Verb {
     Guide,
     /// `check`: what in the app at that folder the policy refuses.
     Check(PathBuf),
+    /// `ask` ("Never send the key", V1.13.3): svrngs's answer to a route,
+    /// the JSON given posted there, else got, asked as the person, so any
+    /// language asks svrngs by running it.
+    Ask(String, Option<String>),
 }
 
 /// What `--program` (and its older spelling, `--kind`) and `--reads` want,
@@ -382,7 +387,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
-            other if verb == "room" => more.push(other.to_string()),
+            other if verb == "room" || verb == "ask" => more.push(other.to_string()),
             other => return Err(format!("unexpected argument `{other}`")),
         }
     }
@@ -531,6 +536,16 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             let dir = positional.ok_or("check wants an app's folder: `svrngs check <folder>`")?;
             Ok(Verb::Check(dir.into()))
         }
+        "ask" => {
+            let usage = "ask wants a route on svrngs, then one JSON body or none: `svrngs ask /v1/groups`, or `svrngs ask <route> '<json>'` to post it there";
+            let route = positional.filter(|r| r.starts_with('/')).ok_or(usage)?;
+            let json = |b: &String| serde_json::from_str::<serde_json::Value>(b).is_ok();
+            match &more[..] {
+                [] => Ok(Verb::Ask(route, None)),
+                [body] if json(body) => Ok(Verb::Ask(route, Some(body.clone()))),
+                _ => Err(usage.into()),
+            }
+        }
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -636,6 +651,9 @@ pub enum Refused {
     /// older than this command.
     #[error("svrngs restarted the svrngs your login service runs, and what answers at {0} is still older than this command, so svrngs sent it none of your token: your login service runs an older svrngs than this one, so update that one, or use it")]
     Unrestarted(String),
+    /// `ask`'s route refused by svrngs running here: its status and words.
+    #[error("svrngs refused {0}: {1} {2}")]
+    Asked(String, u16, String),
 }
 
 /// A precondition of the run is absent, so nothing is claimed: exit 3.
@@ -666,6 +684,10 @@ pub enum Unjudged {
     SignIn(#[from] KeyFailure),
     #[error("svrngs is not running on this computer: start it, then run this again")]
     NotRunning,
+    /// What answers at svrngs's address has no proof to give, and its data
+    /// dir's lock can't be looked at, so nothing is restarted.
+    #[error("what answers at svrngs's address is older than this command or isn't svrngs, and svrngs can't tell whether an older svrngs holds {lock} ({1}), so it restarted nothing and sent none of your token: run `svrngs restart` if svrngs runs here, then try again", lock = .0.display())]
+    Unlooked(PathBuf, std::io::Error),
     #[error("svrngs running here did not open your home page: {0}")]
     Unopened(String),
     #[error("Nothing at {0}, where svrngs listens, proved it is your svrngs within {within} seconds, so svrngs sent it none of your token. Try again in a moment; if this keeps happening, run `svrngs restart`",
@@ -743,10 +765,11 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
             tracing::debug!(target: "cli", lock = %path.display(), "cli: data dir claimed");
             Ok(file)
         }
-        Err(e) => {
-            tracing::debug!(target: "cli", lock = %path.display(), error = %e, "cli: refused — another svrngs holds the data dir");
+        Err(std::fs::TryLockError::WouldBlock) => {
+            tracing::debug!(target: "cli", lock = %path.display(), "cli: refused — another svrngs holds the data dir");
             Err(Refused::Busy(path).into())
         }
+        Err(std::fs::TryLockError::Error(e)) => Err(Unjudged::DataDir(path, e).into()),
     }
 }
 
@@ -799,6 +822,17 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Approve(name, pid, token) => approve(here, &name, pid, token)?,
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
+        Verb::Ask(route, body) => {
+            let (status, text) = here.asked(&route, body).await?;
+            tracing::debug!(target: "cli", route, status, "cli: ask — svrngs's answer printed, or its refusal said");
+            if !(200..300).contains(&status) {
+                let said: Option<serde_json::Value> = serde_json::from_str(&text).ok();
+                let said = said.and_then(|s| Some(s["error"].as_str()?.to_string()));
+                return Err(Refused::Asked(route, status, said.unwrap_or(text)).into());
+            }
+            let end = if text.ends_with('\n') { "" } else { "\n" };
+            text + end
+        }
         Verb::Update => match update::apply(&root).await? {
             update::Outcome::Current => "This computer has the latest svrngs.\n".into(),
             update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n".into(),
@@ -1071,7 +1105,18 @@ fn kept_over(root: &Path) -> bool {
 /// boundary between the command and the process it asks (RUST_ARCH 7).
 pub trait Here {
     fn root(&self) -> &Path;
-    fn ask(&self, route: &str, body: &impl serde::Serialize) -> impl Future<Output = Asked>;
+    /// `body` posted to `route` as JSON, or `route` got where there is
+    /// none: svrngs's status and its body.
+    fn asked(&self, route: &str, body: Option<String>) -> impl Future<Output = Answered>;
+    /// `body` posted to `route` ([`Here::asked`]): whether it answered
+    /// success, and its body.
+    fn ask(&self, route: &str, body: &impl serde::Serialize) -> impl Future<Output = Asked> {
+        let body = serde_json::to_string(body).expect("an ask is JSON");
+        async move {
+            let (status, text) = self.asked(route, Some(body)).await?;
+            Ok(((200..300).contains(&status), text))
+        }
+    }
     /// What answers on `port`, as `raw`, to approve, and the start now of
     /// `pid` ([`svrngs_node::uid::answering`]).
     fn answering(&self, raw: Raw, port: NonZeroU16, pid: Option<u32>) -> Result<Answering, Unread>;
@@ -1090,6 +1135,7 @@ pub trait Here {
 }
 
 pub type Asked = Result<(bool, String), Refusal>;
+pub type Answered = Result<(u16, String), Refusal>;
 pub type Prompted = Result<Option<String>, Refusal>;
 
 /// The product's: POST `body` to `route` of svrngs running here, at the
@@ -1138,17 +1184,17 @@ impl Here for PathBuf {
         tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
         Ok((!secret.is_empty()).then_some(secret))
     }
-    /// Asked of svrngs at the address it wrote, the token sent only once
-    /// svrngs proves on that connection that it holds it
-    /// ([`svrngs_node::api::asked`]): anything else there is sent none of
-    /// it, and the person is told what to do.
-    async fn ask(&self, route: &str, body: &impl serde::Serialize) -> Asked {
+    /// Asked of svrngs at the address it wrote, as the person, only once
+    /// svrngs proves on that connection that it holds the token, with a
+    /// code for that connection alone ([`svrngs_node::api::asked`]):
+    /// anything else there is sent none of the token, nor a code, and the
+    /// person is told what to do.
+    async fn asked(&self, route: &str, body: Option<String>) -> Answered {
         let read =
             |file| std::fs::read_to_string(self.join(file)).map_err(|e| (self.join(file), e));
         let api = read(API_FILE).unwrap_or_default();
         let token = read(svrngs_node::api::TOKEN_FILE);
         let token = token.map_err(|(at, e)| Unjudged::Api(ApiError::TokenFile(at, e)))?;
-        let body = serde_json::to_string(body).expect("an ask is JSON");
         let ask = || svrngs_node::api::asked(&api, route, token.trim(), body.clone());
         let mut asked = ask().await;
         // An older svrngs over this data dir, its lock held, as an update
@@ -1157,7 +1203,13 @@ impl Here for PathBuf {
         // operator, 2026-11-21: "Restart automatically"), and asked again
         // 100 ms apart while it stops and starts, for as long as its proof
         // is waited for. Nothing else answering 404 is restarted for.
-        let older = asked == Err(Withheld::Older) && claim(self).is_err();
+        // Held is an older svrngs; a lock it can't look at, nothing it can tell.
+        let looked = (asked == Err(Withheld::Older)).then(|| claim(self).err());
+        let older = match looked.flatten() {
+            Some(Refusal::Refused(Refused::Busy(_))) => true,
+            Some(Refusal::Unjudged(Unjudged::DataDir(at, e))) => Err(Unjudged::Unlooked(at, e))?,
+            _ => false,
+        };
         let restarted = older && kept_over(self) && restart(self).is_ok();
         if restarted {
             let mut tries = PROVE_WITHIN.as_millis() / 100;
@@ -1170,7 +1222,7 @@ impl Here for PathBuf {
                 eprintln!("svrngs was updated, so it restarted to use the new one.");
             }
         }
-        tracing::debug!(target: "cli", api, route, older, restarted, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs running here answered, or what answers there was sent none of the token, and why");
+        tracing::debug!(target: "cli", api, route, older, restarted, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs running here answered, or what answers there was sent none of the token nor a code, and why");
         // Nothing there, as before; an older svrngs here still, restarted
         // or not; something else there, refused; or nothing proved in
         // time, so the person tries again.
@@ -1181,8 +1233,7 @@ impl Here for PathBuf {
             Withheld::Older | Withheld::Unproven => Refused::Unproven(api.trim().into()).into(),
             Withheld::Unanswered => Unjudged::Unanswered(api.trim().into()).into(),
         })?;
-        let ok = (200..300).contains(&status);
-        Ok((ok, String::from_utf8_lossy(&text).into()))
+        Ok((status, String::from_utf8_lossy(&text).into()))
     }
 }
 

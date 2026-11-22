@@ -49,7 +49,7 @@ async fn synced_at(who: &Node, dir: PathBuf, group: &str) -> PathBuf {
     std::fs::create_dir_all(&dir).unwrap();
     let said = http()
         .post(format!("http://{}/v1/folders", who.api_addr()))
-        .bearer_auth(who.token())
+        .asked_as_you()
         .json(&json!({ "dir": dir, "group": group }))
         .send()
         .await
@@ -72,12 +72,7 @@ fn carry(dir: &Path, name: &str) {
 /// What `node` lends its browser in `group` now (`GET /v1/lends`).
 async fn lends(node: &Node, group: &str) -> Value {
     let url = format!("http://{}/v1/lends?namespace={group}", node.api_addr());
-    let answer = http()
-        .get(url)
-        .bearer_auth(node.token())
-        .send()
-        .await
-        .unwrap();
+    let answer = http().get(url).asked_as_you().send().await.unwrap();
     assert!(answer.status().is_success(), "{:?}", answer.text().await);
     answer.json().await.unwrap()
 }
@@ -96,7 +91,7 @@ async fn at(node: &Node, origin: &str, method: &str, path: &str, body: Option<Va
     let ask = http()
         .request(method.parse().unwrap(), url)
         .header("host", host)
-        .bearer_auth(node.token().trim());
+        .asked_as_you();
     let ask = match body {
         Some(b) => ask.json(&b),
         None => ask,
@@ -273,7 +268,7 @@ async fn a_carried_app_opens_one_lend_of_its_group_and_no_more() {
             ana.api_addr(),
             svrngs_node::removal::REMOVALS_ROUTE
         ))
-        .bearer_auth(ana.token())
+        .asked_as_you()
         .json(&json!({ "group": group, "person": "cy" }))
         .send()
         .await
@@ -962,7 +957,7 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
     carry(&synced_in(ana, root.path(), &group).await, "Money");
     let leave = http()
         .post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()))
-        .bearer_auth(cy.token());
+        .asked_as_you();
     let ask = leave
         .json(&LeaveAsk {
             group: group.clone(),
@@ -1557,7 +1552,7 @@ async fn holds(node: &Node, group: &str, prefix: &str) -> usize {
     let url = format!("http://{}/v1/rail/log?namespace={group}", node.api_addr());
     let log: Value = http()
         .get(url)
-        .bearer_auth(node.token().trim())
+        .asked_as_you()
         .send()
         .await
         .unwrap()
@@ -2062,7 +2057,7 @@ async fn reading_loop(
         let (mut read, mut refused, mut last) = (0, 0, None);
         while std::time::Instant::now() < until_at {
             let ask = client.get(&url).header("host", host);
-            let answer = ask.bearer_auth(node.token().trim()).send().await.unwrap();
+            let answer = ask.asked_as_you().send().await.unwrap();
             if answer.status().is_success() {
                 read += 1;
                 // Never refused, a paused clock would never end the loop.
@@ -2275,7 +2270,7 @@ async fn sent(
     let url = format!("http://{}/svrngs-lend/{label}{path}", node.api_addr());
     let mut ask = (http().request(method.parse().unwrap(), url))
         .header("host", host)
-        .bearer_auth(node.token().trim());
+        .asked_as_you();
     if let Some((kind, body)) = body {
         ask = ask.header("content-type", kind).body(body);
     }
@@ -2905,7 +2900,7 @@ async fn reaching(node: &Node, form: String) {
         .header("host", &home)
         .header("sec-fetch-site", "same-origin")
         .header("origin", format!("http://{home}"))
-        .bearer_auth(node.token().trim())
+        .asked_as_you()
         .header("content-type", "application/x-www-form-urlencoded")
         .body(form)
         .send()

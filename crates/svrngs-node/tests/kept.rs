@@ -146,17 +146,14 @@ async fn tell(addrs: &[&Addr], dirs: &[&Path], cy: &Node) {
 /// `who` asked to sync `dir` in the group, up to 30 s, until it stands
 /// there.
 async fn sync(who: &Addr, dir: &Path, group: &str) {
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let body = serde_json::json!({ "dir": dir, "group": group }).to_string();
+    let (at, body) = (
+        format!("http://{}", who.api),
+        serde_json::json!({ "dir": dir, "group": group }),
+    );
     for _ in 0..60 {
-        let asked = http
-            .post(format!("http://{}/v1/folders", who.api))
-            .bearer_auth(&who.token)
-            .header("content-type", "application/json")
-            .body(body.clone())
-            .send()
-            .await;
-        if asked.is_ok_and(|a| a.status().is_success()) {
+        let asked =
+            svrngs_node::api::asked(&at, "/v1/folders", &who.token, Some(body.to_string())).await;
+        if asked.is_ok_and(|(status, _)| (200..300).contains(&status)) {
             return;
         }
         tokio::time::sleep(Duration::from_millis(500)).await;
@@ -388,7 +385,7 @@ async fn synced(who: &Node, dir: &Path, group: &str) {
     for _ in 0..60 {
         let asked = on_wire::http()
             .post(format!("http://{}/v1/folders", who.api_addr()))
-            .bearer_auth(who.token())
+            .asked_as_you()
             .header("content-type", "application/json")
             .body(body.clone())
             .send()

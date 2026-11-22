@@ -314,10 +314,12 @@ same (`from_this_computer`), so a caller elsewhere, or one whose address is
 unknown, is refused 403 `not_loopback`, naming it. Then it changed
 (give-token): loopback is not proof of the person, since a container on a
 Mac running podman reaches it, so every record route also asks a program
-for the token in `<data dir>/token` (`api::TOKEN_FILE`), minted once,
-owner-only, and kept across restarts, shown as `Authorization: Bearer`,
-and refuses one without it 401 `no_token`, naming the file
-(`holds_the_token`). Its edits: the doors read the journals from a `RailApi`
+for a code that the token in `<data dir>/token` (`api::TOKEN_FILE`),
+minted once, owner-only and kept across restarts, makes for one
+connection once svrngs has proved itself on it (`api::proof`,
+`api::ask`), and refuses one without it 401, saying how to ask
+(`holds_the_token`). Then it changed ("Never send the key", V1.13.3): the
+token itself is refused wherever a program shows it (`as_whom`). Its edits: the doors read the journals from a `RailApi`
 where upstream's read `RailsDaemon`; the roster they read is the group's
 seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the

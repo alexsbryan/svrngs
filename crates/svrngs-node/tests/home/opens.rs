@@ -71,9 +71,7 @@ fn declare(dir: &Path, name: &str, port: u16, kind: &str, group: &str) {
 /// What `node`'s `/v1/lends` lists of `group`.
 async fn lends(node: &Node, group: &str) -> Value {
     let url = format!("http://{}/v1/lends?namespace={group}", node.api_addr());
-    let answer = (http().get(url).bearer_auth(node.token().trim()).send())
-        .await
-        .unwrap();
+    let answer = (http().get(url).asked_as_you().send()).await.unwrap();
     answer.json().await.unwrap()
 }
 
@@ -90,7 +88,7 @@ async fn read(
     let answer = (http().request(method.parse().unwrap(), url))
         .header("host", host)
         .header("x-page", "the page's own")
-        .bearer_auth(node.token().trim())
+        .asked_as_you()
         .send()
         .await
         .unwrap();
@@ -151,7 +149,7 @@ async fn a_carried_app_reads_the_lends_it_declares_and_holds_no_secret() {
     std::fs::create_dir_all(shared.join("apps/Probe")).unwrap();
     let kept = http()
         .post(format!("http://{}/v1/folders", ana.api_addr()))
-        .bearer_auth(ana.token())
+        .asked_as_you()
         .json(&json!({ "dir": shared, "group": group }))
         .send()
         .await

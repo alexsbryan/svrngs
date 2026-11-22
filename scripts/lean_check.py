@@ -919,10 +919,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # before anything is dialled, and for each answer to be bounded (cli.rs 25,
 # api.rs 4, share.rs 2: 31), after a pass cut 20 from the same files
 # (8ebd995c): 24,402. The operator, 2026-11-21: "Raise by 11".
+# Then 117 for svrngs to take its token from no program, each asking with a
+# code for its own connection, and for `svrngs ask` (api.rs 79, cli.rs 36,
+# share.rs 6, node.rs and session.rs -4), after a pass cut what the files
+# touched left unused (Sessions' token, `Bearer::file`, `Reached`): 24,519.
+# The operator, 2026-11-21: "Raise up to 117", lowered to where it lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24403,
+    ".": 24520,
 
     "js": 8694,
 

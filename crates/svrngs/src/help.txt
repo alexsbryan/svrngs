@@ -111,6 +111,14 @@ an app's page svrngs won't load, and what to change.
       focuses that part of the home page. --print shows an address to open
       in another browser within a minute, once, and opens nothing.
 
+  svrngs ask <route> [<json>]
+      Print svrngs's answer to <route> as a program of yours gets it, as
+      `svrngs ask /v1/groups` does; with <json>, post that there. It never
+      sends svrngs's token: it checks first that what answers is your
+      svrngs, then asks with a code good for that one connection. A script
+      in any language can run it instead of reading the token. It exits 1,
+      saying why, when svrngs refuses, and 3 when svrngs isn't running.
+
   svrngs update
       Get the newest svrngs from the page this computer was installed
       from, if this computer's is not it. `svrngs restart` then uses it.

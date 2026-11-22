@@ -145,20 +145,9 @@ fn kept(lend: &str) -> SocketAddr {
 }
 
 /// `/v1/play` on `node`, as the home page asks it: `ask` posted, or the
-/// Plays read; its status and its answer.
+/// Plays read, as you; its status and its answer.
 async fn play(node: &Node, ask: Option<Value>) -> (u16, Value) {
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let url = format!("http://{}/v1/play", node.api_addr());
-    let asked = match &ask {
-        Some(ask) => http
-            .post(url)
-            .header("content-type", "application/json")
-            .body(ask.to_string()),
-        None => http.get(url),
-    };
-    let answer = asked.bearer_auth(node.token().trim()).send().await.unwrap();
-    let status = answer.status().as_u16();
-    let body = answer.text().await.unwrap();
+    let (status, body) = node.ask_as_you("/v1/play", ask).await;
     (
         status,
         serde_json::from_str(&body).unwrap_or(Value::String(body)),
@@ -330,16 +319,9 @@ async fn a_member_who_stops_standing_loses_the_listener() {
     let to = kept("xtcp");
     assert!(tcp_asks(to, b"in").await.is_some(), "Play is on: {on}");
 
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let removed = http
-        .post(format!("http://{}/v1/removals", sam.api_addr()))
-        .bearer_auth(sam.token().trim())
-        .header("content-type", "application/json")
-        .body(json!({ "group": seed.id(), "person": "Alex" }).to_string())
-        .send()
-        .await
-        .unwrap();
-    assert!(removed.status().is_success(), "{:?}", removed.text().await);
+    let removal = json!({ "group": seed.id(), "person": "Alex" });
+    let (status, removed) = sam.ask_as_you("/v1/removals", Some(removal)).await;
+    assert!((200..300).contains(&status), "{removed}");
     let told = within(|| async {
         let register = alex.rail().register(&seed.id());
         register.is_ok_and(|r| r.removed.contains_key(&actor_of(&signing(2))))

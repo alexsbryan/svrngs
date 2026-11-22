@@ -4,7 +4,6 @@ use axum::body::Body;
 use axum::http::Request;
 use serde_json::json;
 use svrngs_core::tests_support::let_in;
-use tower::ServiceExt;
 
 /// What [`write_fixture`] gives a test: the state its routers ask, its
 /// record API's routes, its group's seed, its data dir, and the wire it is
@@ -189,14 +188,14 @@ async fn stopping_a_visit_wakes_sync() {
             format!("http://svrngs.localhost:{}", at.host.api_port),
         )
         .header("sec-fetch-site", "same-origin")
-        .header("authorization", format!("Bearer {}", token.trim()))
         .header("content-type", "application/json")
-        .extension(axum::extract::ConnectInfo(
-            "127.0.0.1:1234".parse::<SocketAddr>().unwrap(),
-        ))
         .body(Body::from(json!([seed.id(), visit]).to_string()))
         .unwrap();
-    let response = routes.oneshot(req).await.unwrap();
+    let ends = (
+        "127.0.0.1:1234".parse().unwrap(),
+        SocketAddr::from(([127, 0, 0, 1], at.host.api_port)),
+    );
+    let response = crate::node::as_you(&routes, &token, req, ends).await;
     assert_eq!(response.status(), StatusCode::OK);
     assert!(
         takes_wake(&at),

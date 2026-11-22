@@ -33,7 +33,6 @@ pub type Answered = Result<Answering, Unread>;
 /// What a test's `Here` checks of a lend's port.
 pub type Checked = Result<Bound, Unsent>;
 use svrngs_node::SigningKey;
-use tower::ServiceExt;
 
 #[path = "../common/made.rs"]
 mod made;
@@ -80,7 +79,8 @@ pub fn name(s: &str) -> Name {
 }
 
 /// `method` of `path` asked of `node`'s record API, as the command asks svrngs
-/// running here (cli.rs `ask_running`): its token shown, the caller on
+/// running here (cli.rs `Here::asked`): as you, on a connection svrngs
+/// proved itself on first (svrngs-node's `as_you`), the caller on
 /// loopback, the routes asked by `oneshot`. The status and the body.
 pub async fn ask(
     node: &Node,
@@ -92,13 +92,10 @@ pub async fn ask(
         .method(method)
         .uri(path)
         .header("host", node.api_addr().to_string())
-        .header("content-type", "application/json")
-        .header("authorization", format!("Bearer {}", node.token().trim()));
-    let mut req = req.body(axum::body::Body::from(body.to_string())).unwrap();
-    let caller = SocketAddr::from(([127, 0, 0, 1], 50_000));
-    req.extensions_mut()
-        .insert(axum::extract::ConnectInfo(caller));
-    let answer = node.api_routes().oneshot(req).await.unwrap();
+        .header("content-type", "application/json");
+    let req = req.body(axum::body::Body::from(body.to_string())).unwrap();
+    let ends = (SocketAddr::from(([127, 0, 0, 1], 50_000)), node.api_addr());
+    let answer = svrngs_node::node::as_you(&node.api_routes(), &node.token(), req, ends).await;
     let status = answer.status();
     let body = axum::body::to_bytes(answer.into_body(), usize::MAX).await;
     (status, String::from_utf8(body.unwrap().to_vec()).unwrap())
@@ -114,10 +111,13 @@ impl cli::Here for Running<'_> {
     fn root(&self) -> &std::path::Path {
         self.0.dir.path()
     }
-    async fn ask(&self, route: &str, body: &impl serde::Serialize) -> cli::Asked {
-        let body = serde_json::to_value(body).unwrap();
-        let (status, text) = ask(&self.0.node, "POST", route, &body).await;
-        Ok((status.is_success(), text))
+    async fn asked(&self, route: &str, body: Option<String>) -> cli::Answered {
+        let method = if body.is_some() { "POST" } else { "GET" };
+        let body = body.map_or(serde_json::Value::Null, |b| {
+            serde_json::from_str(&b).unwrap()
+        });
+        let (status, text) = ask(&self.0.node, method, route, &body).await;
+        Ok((status.as_u16(), text))
     }
     /// What answers on every port is the wire's test socket, as svrngs-node's
     /// on-wire computers read it (`node::answering`): a test of a lend says

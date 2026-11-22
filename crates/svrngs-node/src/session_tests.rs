@@ -232,13 +232,16 @@ async fn a_browser_never_opened_is_told_to_open_svrngs_from_its_computer() {
 }
 
 /// **No MAC the token keys can be another's** (the 1.13.3 proof review,
-/// finding 11): the token keys a browser's key at an origin,
-/// `browser/<name>/<port>`, and a read's capability, `<app>/<read>`, each
-/// holding a `/`; and svrngs's proof, `svrngs proof v1\n<challenge>\n<client>\n<server>`,
-/// which any program here may ask for, holds none, its challenge in hex and
-/// its two ends however a `SocketAddr` prints. Each is pinned to its
-/// message, so no proof is a key or a capability. Planted, watched failing:
-/// a `/` in the proof's version.
+/// finding 11; NEVER_SEND_THE_KEY point 7): the token keys a browser's key
+/// at an origin, `browser/<name>/<port>`, and a read's capability,
+/// `<app>/<read>`, each holding a `/`; and svrngs's proof, `svrngs proof
+/// v1\n<challenge>\n<client>\n<server>`, which any program here may ask
+/// for, and a program's code, `svrngs ask v1\n<nonce>\n<client>\n<server>`,
+/// hold none, each hex and its two ends however a `SocketAddr` prints, and
+/// differ in their first line. Each is pinned to its message, so no proof
+/// is a code, a key or a capability, nor a code any of them. Planted,
+/// watched failing: a `/` in the proof's version; the proof's first line in
+/// the code's.
 #[test]
 fn no_mac_the_token_keys_can_be_another_s() {
     let dir = tempfile::tempdir().unwrap();
@@ -260,5 +263,10 @@ fn no_mac_the_token_keys_can_be_another_s() {
         assert!(!message.contains('/'), "{message}");
         let proved = crate::api::proof(token.secret(), &challenge, *client, *server);
         assert_eq!(proved, hex::encode(mac(&message)), "{message}");
+        let asked = message.replacen("svrngs proof v1\n", "svrngs ask v1\n", 1);
+        assert!(!asked.contains('/') && asked != message, "{asked}");
+        let code = crate::api::ask(token.secret(), &challenge, *client, *server);
+        assert_eq!(code, hex::encode(mac(&asked)), "{asked}");
+        assert_ne!(code, proved);
     }
 }

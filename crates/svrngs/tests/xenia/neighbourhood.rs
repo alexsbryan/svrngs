@@ -74,29 +74,16 @@ fn pod(who: &str) -> Value {
 /// report that a note survived. The fixture itself answers from its volume.
 async fn notebook(who: &Person, at: &str) -> Value {
     let url = reqwest::Url::parse(at).unwrap();
-    let host = url.host_str().unwrap();
+    let host = format!("{}:{}", url.host_str().unwrap(), url.port().unwrap());
     let socket = ([127, 0, 0, 1], url.port().unwrap()).into();
-    let client = reqwest::Client::builder()
-        .no_proxy()
-        .resolve(host, socket)
-        .timeout(Duration::from_secs(5))
-        .build()
-        .unwrap();
     let token = std::fs::read_to_string(who.home.join(".svrngs/token")).unwrap();
-    let answer = client
-        .get(format!("{}/cgi-bin/book", at.trim_end_matches('/')))
-        .bearer_auth(token.trim())
-        .send()
-        .await;
+    let asked = axum::http::Request::get("/cgi-bin/book").header("host", host);
+    let asked = svrngs_node::node::as_you_at(socket, &token, asked.body(String::new()).unwrap());
+    let answer = tokio::time::timeout(Duration::from_secs(5), asked).await;
     match answer {
         Ok(r) => {
-            let status = r.status().as_u16();
-            match r.text().await {
-                Ok(text) => {
-                    json!({ "status": status, "contains_ren_note": text.contains(NOTE), "body": text })
-                }
-                Err(e) => json!({ "status": status, "could_not_read": e.to_string() }),
-            }
+            let (status, text) = (r.status().as_u16(), String::from_utf8_lossy(r.body()));
+            json!({ "status": status, "contains_ren_note": text.contains(NOTE), "body": text })
         }
         Err(e) => json!({ "could_not_observe": e.to_string() }),
     }

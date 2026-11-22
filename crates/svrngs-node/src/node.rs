@@ -1259,9 +1259,7 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
 #[cfg(any(test, feature = "test-support"))]
 mod tests_support;
 #[cfg(any(test, feature = "test-support"))]
-pub use tests_support::{
-    answering, approval, approve, approved, approving, splice, Relaying, Wire,
-};
+pub use tests_support::*;
 
 #[cfg(test)]
 mod tests;

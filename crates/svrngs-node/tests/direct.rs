@@ -35,35 +35,17 @@ async fn start(dir: &Path) -> Node {
     .expect("a node starts")
 }
 
-fn http() -> reqwest::Client {
-    reqwest::Client::builder().no_proxy().build().unwrap()
-}
-
 /// The setting on `node`, as `GET /v1/direct` says it, as the home page
 /// reads it.
 async fn on(node: &Node) -> Value {
-    let answer = http()
-        .get(format!("http://{}/v1/direct", node.api_addr()))
-        .bearer_auth(node.token())
-        .send()
-        .await
-        .unwrap();
-    let text = answer.text().await.unwrap();
+    let (_, text) = node.ask_as_you("/v1/direct", None).await;
     serde_json::from_str(&text).unwrap_or_else(|_| panic!("the setting said {text:?}"))
 }
 
 /// The setting on `node` after `body`, as `POST /v1/direct`: its status
 /// and its answer, as the home page's button posts it.
 async fn asked(node: &Node, body: Value) -> (u16, Value) {
-    let answer = http()
-        .post(format!("http://{}/v1/direct", node.api_addr()))
-        .bearer_auth(node.token())
-        .json(&body)
-        .send()
-        .await
-        .unwrap();
-    let status = answer.status().as_u16();
-    let text = answer.text().await.unwrap();
+    let (status, text) = node.ask_as_you("/v1/direct", Some(body)).await;
     let body = serde_json::from_str(&text)
         .unwrap_or_else(|_| panic!("the setting answered {status}, not JSON: {text:?}"));
     (status, body)

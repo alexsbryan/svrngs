@@ -77,23 +77,26 @@ async fn entry(who: &Person, group: &str, when: &str) -> Value {
 
 async fn app_request(who: &Person, origin: &str, body: Option<Value>) -> (u16, Value) {
     let url = reqwest::Url::parse(origin).unwrap();
-    let client = reqwest::Client::builder()
-        .no_proxy()
-        .resolve(
-            url.host_str().unwrap(),
-            ([127, 0, 0, 1], url.port().unwrap()).into(),
-        )
-        .build()
-        .unwrap();
-    let token = std::fs::read_to_string(who.home.join(".svrngs/token")).unwrap();
-    let url = url.join("svrngs/acts").unwrap();
+    let (port, token) = (
+        url.port().unwrap(),
+        std::fs::read_to_string(who.home.join(".svrngs/token")).unwrap(),
+    );
+    let host = format!("{}:{port}", url.host_str().unwrap());
+    let ask = axum::http::Request::builder().uri(url.join("svrngs/acts").unwrap().path());
     let ask = match body {
-        Some(body) => client.post(url).json(&body),
-        None => client.get(url),
+        Some(body) => ask
+            .method("POST")
+            .header("content-type", "application/json")
+            .header("host", host)
+            .body(body.to_string()),
+        None => ask.header("host", host).body(String::new()),
     };
-    let reply = ask.bearer_auth(token.trim()).send().await.unwrap();
-    let status = reply.status().as_u16();
-    (status, reply.json().await.unwrap())
+    let reply =
+        svrngs_node::node::as_you_at(([127, 0, 0, 1], port).into(), &token, ask.unwrap()).await;
+    (
+        reply.status().as_u16(),
+        serde_json::from_slice(reply.body()).unwrap(),
+    )
 }
 
 scene!(creator);

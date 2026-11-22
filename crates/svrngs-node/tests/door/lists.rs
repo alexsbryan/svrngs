@@ -162,7 +162,7 @@ async fn what_is_lent_is_asked_of_each_computer_now() {
     // resolved to B's API, in this process.
     let reply = on_wire::http()
         .get(format!("{}whoami", lent.address))
-        .bearer_auth(pair.b.token().trim())
+        .asked_as_you()
         .send()
         .await
         .unwrap();

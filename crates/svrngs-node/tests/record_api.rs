@@ -165,7 +165,7 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
             "http://{}/v1/rail/append?namespace={NS}",
             a.api_addr()
         ))
-        .bearer_auth(a.token())
+        .asked_as_you()
         .json(&serde_json::json!({ "op": "record", "payload": { "n": 1 } }))
         .send()
         .await
@@ -205,7 +205,7 @@ async fn an_append_naming_a_group_not_held_is_refused() {
             "http://{}/v1/rail/append?namespace=elsewhere",
             a.api_addr()
         ))
-        .bearer_auth(a.token())
+        .asked_as_you()
         .json(&serde_json::json!({ "op": "record", "payload": { "n": 1 } }))
         .send()
         .await
@@ -238,7 +238,7 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
             "http://{}/v1/rail/people?namespace={NS}",
             a.api_addr()
         ))
-        .bearer_auth(a.token())
+        .asked_as_you()
         .send()
         .await
         .unwrap()
@@ -305,16 +305,24 @@ async fn ask_as(
     token: &str,
 ) -> (u16, serde_json::Value) {
     use tower::ServiceExt;
-    let mut request = axum::http::Request::get(format!("/v1/rail/people?namespace={NS}"))
-        .header("authorization", format!("Bearer {token}"))
+    let request = axum::http::Request::get(format!("/v1/rail/people?namespace={NS}"))
         .body(axum::body::Body::empty())
         .unwrap();
-    if let Some(addr) = caller {
-        request
-            .extensions_mut()
-            .insert(axum::extract::ConnectInfo(addr));
-    }
-    let answer = router.oneshot(request).await.unwrap();
+    // As you on loopback; elsewhere, or from no known address, refused
+    // before anything is asked of the connection, its proof included.
+    let server = SocketAddr::from(([127, 0, 0, 1], 1));
+    let answer = match caller.filter(|c| c.ip().to_canonical().is_loopback()) {
+        Some(addr) => svrngs_node::node::as_you(&router, token, request, (addr, server)).await,
+        None => {
+            let mut request = request;
+            if let Some(addr) = caller {
+                request
+                    .extensions_mut()
+                    .insert(axum::extract::ConnectInfo(addr));
+            }
+            router.oneshot(request).await.unwrap()
+        }
+    };
     let status = answer.status().as_u16();
     let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
         .await
@@ -366,7 +374,7 @@ async fn push(node: &Node, ns: &str, payload: Vec<u8>) -> (u16, serde_json::Valu
             "http://{}/v1/rail/live?namespace={ns}",
             node.api_addr()
         ))
-        .bearer_auth(node.token())
+        .asked_as_you()
         .body(payload)
         .send()
         .await
@@ -381,7 +389,7 @@ async fn drain(node: &Node, ns: &str) -> serde_json::Value {
             "http://{}/v1/rail/live?namespace={ns}",
             node.api_addr()
         ))
-        .bearer_auth(node.token())
+        .asked_as_you()
         .send()
         .await
         .unwrap()
@@ -597,7 +605,7 @@ async fn an_app_has_this_computers_key_sign_its_bytes() {
     let sign = |name: &str| {
         app()
             .post(format!("http://{}/v1/sign?app={name}", node.api_addr()))
-            .bearer_auth(node.token())
+            .asked_as_you()
             .body("line 812")
     };
     let answer = sign("notes").send().await.unwrap();
@@ -648,21 +656,22 @@ const RECORD_ROUTES: [(&str, &str); 16] = [
     ("POST", "/v1/room"),
 ];
 
-/// `node`'s answer to `method` `path`, showing `token` if any: its status
-/// and its JSON, or `null` for a body that is not.
+/// `node`'s answer to `method` `path`, with `shown` as its
+/// `Authorization` if any, [`svrngs_node::node::AS_YOU_VALUE`] asking as
+/// you: its status and its JSON, or `null` for a body that is not.
 async fn asked_with(
     node: &Node,
     method: &str,
     path: &str,
-    token: Option<&str>,
+    shown: Option<&str>,
 ) -> (u16, serde_json::Value) {
     let method = axum::http::Method::from_bytes(method.as_bytes()).unwrap();
     let mut ask = app()
         .request(method, format!("http://{}{path}", node.api_addr()))
         .header("content-type", "application/json")
         .body("{}");
-    if let Some(token) = token {
-        ask = ask.bearer_auth(token);
+    if let Some(shown) = shown {
+        ask = ask.header("authorization", shown);
     }
     let answer = ask.send().await.unwrap();
     let status = answer.status().as_u16();
@@ -678,47 +687,64 @@ fn token_in(dir: &std::path::Path) -> String {
     std::fs::read_to_string(dir.join("token")).expect("the node keeps a token beside its api file")
 }
 
-/// **A program asks with the token** (give-token; svrn-docs GIVE.md §5): a
-/// container on a Mac running podman reaches the Mac's `127.0.0.1` through
-/// gvproxy, so loopback is no proof that the person's own program is
-/// asking. Every route of the record refuses a caller on loopback that
-/// shows no token, or one that is not this computer's, 401 `no_token`,
-/// naming the file that holds it; the same request with the token is
-/// answered as before. Sign-in's routes keep their own client secret and
-/// are not asked for it. The failing input: the check skipped in
-/// `api::router`, every caller on loopback served.
+/// **A program asks as you, never with the token** (give-token; svrn-docs
+/// GIVE.md §5; "Never send the key", V1.13.3): a container on a Mac
+/// running podman reaches the Mac's `127.0.0.1` through gvproxy, so
+/// loopback is no proof that the person's own program is asking. Every
+/// route of the record refuses a caller on loopback that asks with no
+/// code, 401 `unasked`, and one that shows a Bearer, this computer's token
+/// itself among them, 401 `no_bearer`, each saying how to ask; the same
+/// request asked as you, with the code for its connection, is answered as
+/// before. Sign-in's routes keep their own client secret and are not asked
+/// for it. The failing input: the check skipped in `api::router`, every
+/// caller on loopback served; and, for the token itself, 96ea3da7, which
+/// took it.
 #[tokio::test]
-async fn a_program_without_the_token_is_refused_on_every_record_route() {
+async fn a_program_not_asking_as_you_is_refused_on_every_record_route() {
     let dir = tempfile::tempdir().unwrap();
     let node = start(1, &dir).await;
     hold(&node, NS, 1);
-    let file = dir.path().join("token").display().to_string();
+    let token = token_in(dir.path());
+    let bearer = format!("Bearer {}", token.trim());
     for (method, path) in RECORD_ROUTES {
-        for shown in [None, Some("not-this-computers-token")] {
+        for (shown, kind) in [
+            (None, "unasked"),
+            (Some("Bearer not-this-computers-token"), "no_bearer"),
+            (Some(bearer.as_str()), "no_bearer"),
+        ] {
             let (status, out) = asked_with(&node, method, path, shown).await;
             assert_eq!(
                 (status, &out["kind"]),
-                (401, &serde_json::json!("no_token")),
+                (401, &serde_json::json!(kind)),
                 "{method} {path} showing {shown:?} is refused: {out}"
             );
             let said = out["error"].as_str().unwrap();
-            assert!(said.contains(&file), "the refusal names {file}: {said}");
+            assert!(
+                said.contains("`svrngs ask <route>`"),
+                "the refusal says how to ask: {said}"
+            );
         }
     }
-    let token = token_in(dir.path());
     for (method, path) in RECORD_ROUTES {
-        let (status, out) = asked_with(&node, method, path, Some(&token)).await;
+        let (status, out) =
+            asked_with(&node, method, path, Some(svrngs_node::node::AS_YOU_VALUE)).await;
         assert!(
-            status != 401 && out["kind"] != "no_token",
-            "{method} {path} with the token is answered as before: {status} {out}"
+            status != 401 && out["kind"] != "unasked",
+            "{method} {path} asked as you is answered as before: {status} {out}"
         );
     }
-    let (status, _) = asked_with(&node, "GET", "/v1/groups", Some(&token)).await;
-    assert_eq!(status, 200, "the groups are read with the token");
+    let (status, _) = asked_with(
+        &node,
+        "GET",
+        "/v1/groups",
+        Some(svrngs_node::node::AS_YOU_VALUE),
+    )
+    .await;
+    assert_eq!(status, 200, "the groups are read as you");
     let signin = "/oidc/doc/.well-known/openid-configuration";
     let (status, out) = asked_with(&node, "GET", signin, None).await;
     assert!(
-        status != 401 && out["kind"] != "no_token",
+        status != 401 && out["kind"] != "unasked",
         "sign-in's routes keep their own secret: {status} {out}"
     );
     node.net().close().await;

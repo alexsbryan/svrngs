@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 #![allow(clippy::disallowed_methods, reason = "a test dials what it runs")]
 use super::*;
+use axum::routing::{any, get};
 
 /// **svrngs starts without ::1 only where this computer has no IPv6 at
 /// all** (V1.13.3's second practice review, finding 5): the family refused
@@ -81,8 +82,42 @@ const VECTORS: [(&str, &str, &str, &str); 2] = [
     ),
 ];
 
+/// The ask's vectors, which every maker and checker of its code asserts:
+/// this one decider, svrngs's command through it, Give's copy, the
+/// Omarchy plugin's and apps/client/svrngs.mjs. The nonce, then the ends.
+const ASKED: [(&str, &str, &str, &str); 2] = [
+    (
+        "11",
+        "127.0.0.1:50000",
+        "127.0.0.1:40000",
+        "12948174292b9641bc74ea49e12918bd39931f81cddef77ae9c04d46e6585245",
+    ),
+    (
+        "cd",
+        "[::1]:50001",
+        "[::1]:40000",
+        "d806666da2d6c78fa07dc51fe301f57596fed866e930680a54e5bbc9de104f1c",
+    ),
+];
+
 fn challenged(byte: &str) -> Challenge {
     Challenge::try_from(byte.repeat(32)).unwrap()
+}
+
+/// **The ask's code is the one decider's, to its vectors** (`ask`): the
+/// token `test-token`, a nonce of 32 repeated bytes and a connection's two
+/// ends; never the proof's for the same bytes. Planted, watched failing:
+/// the proof's message in the ask's place.
+#[test]
+fn the_ask_meets_its_vectors() {
+    for (byte, client, server, want) in ASKED {
+        let (client, server): (SocketAddr, SocketAddr) =
+            (client.parse().unwrap(), server.parse().unwrap());
+        assert_eq!(ask("test-token", &challenged(byte), client, server), want);
+        assert_eq!(ask("test-token\n", &challenged(byte), client, server), want);
+        let proved = proof("test-token", &challenged(byte), client, server);
+        assert_ne!(proved, want, "the proof's");
+    }
 }
 
 /// **The proof is the one decider's, to its vectors** (`proof`): the
@@ -103,23 +138,25 @@ fn the_proof_meets_its_vectors() {
     }
 }
 
-/// **The command sends the token only on a connection whose own ends the
-/// proof was made for** (`proven`, as `asked` checks svrngs's answer): a
-/// vector's proof proves its connection, and no other, such as the one a
-/// relay opened to svrngs (planted: a proof over the challenge alone,
-/// which a relay's connection proved too); 404 is a svrngs older than the
-/// command; no answer is svrngs away, and none in time is unanswered;
-/// anything else is not svrngs proving itself.
+/// **The command asks only on a connection whose own ends the proof was
+/// made for, with the nonce it gave** (`proven`, as `asked` checks
+/// svrngs's answer): a vector's proof proves its connection, and no other,
+/// such as the one a relay opened to svrngs (planted: a proof over the
+/// challenge alone, which a relay's connection proved too), and gives its
+/// nonce; a proof with no nonce, or one that isn't 64 lowercase hex, and
+/// 404 are a svrngs older than the command; no answer is svrngs away, and
+/// none in time is unanswered; anything else is not svrngs proving itself.
 #[test]
-fn the_command_sends_the_token_only_where_svrngs_proved_this_connection() {
+fn the_command_asks_only_where_svrngs_proved_this_connection() {
     let said =
         |status, body: serde_json::Value| Some(Some((status, body.to_string().into_bytes())));
+    let nonce = "1f".repeat(32);
     for (byte, client, server, shown) in VECTORS {
         let (client, server): (SocketAddr, SocketAddr) =
             (client.parse().unwrap(), server.parse().unwrap());
         let wanted = proof("test-token", &challenged(byte), client, server);
-        let proved = said(200, serde_json::json!({ "proof": shown }));
-        assert_eq!(proven(proved.clone(), &wanted), Ok(()));
+        let proved = said(200, serde_json::json!({ "proof": shown, "nonce": nonce }));
+        assert_eq!(proven(proved.clone(), &wanted), Ok(challenged("1f")));
         let relayed = SocketAddr::new(client.ip(), client.port() + 2);
         let elsewhere = proof("test-token", &challenged(byte), relayed, server);
         assert_eq!(
@@ -133,8 +170,17 @@ fn the_command_sends_the_token_only_where_svrngs_proved_this_connection() {
             Err(Withheld::Unproven),
             "another svrngs"
         );
-        let shouted = said(200, serde_json::json!({ "proof": shown.to_uppercase() }));
+        let shouted = said(
+            200,
+            serde_json::json!({ "proof": shown.to_uppercase(), "nonce": nonce }),
+        );
         assert_eq!(proven(shouted, &wanted), Err(Withheld::Unproven));
+        for older in [
+            serde_json::json!({ "proof": shown }),
+            serde_json::json!({ "proof": shown, "nonce": nonce.to_uppercase() }),
+        ] {
+            assert_eq!(proven(said(200, older), &wanted), Err(Withheld::Older));
+        }
         assert_eq!(
             proven(said(404, serde_json::json!({})), &wanted),
             Err(Withheld::Older)
@@ -167,8 +213,8 @@ fn a_challenge_is_64_lowercase_hex_characters() {
     }
 }
 
-/// The proof's route and one route that asks for `token`, as [`router`]
-/// layers them, served by [`serve`] on 127.0.0.1 and ::1 once `after` has
+/// The proof's route and one route that asks for a code `token` makes,
+/// as [`router`] layers them, served by [`serve`] on 127.0.0.1 and ::1 once `after` has
 /// passed since they were bound, as svrngs serves after it binds. Without
 /// the proof's route, a route it doesn't serve is 404 without the token,
 /// as svrngs 1.13.2 answers `POST /v1/proof` (9be0fcc7, asked 2026-11-21).
@@ -177,16 +223,15 @@ async fn proving(
     proves: bool,
     after: std::time::Duration,
 ) -> (SocketAddr, tokio::task::JoinHandle<Serving>) {
-    let asked = Router::new().route("/v1/asked", post(|| async { "asked, with the token" }));
-    let asked = asked.route_layer(axum::middleware::from_fn_with_state(
-        token.clone(),
-        holds_the_token,
-    ));
+    let asked = Router::new().route("/v1/asked", any(|| async { "asked, as you" }));
+    let asked = asked.route("/v1/long", get(|| async { "x".repeat(3 << 20) }));
+    let asked = asked.route_layer(axum::middleware::from_fn(holds_the_token));
     let routes = match proves {
         true => asked.route("/v1/proof", post(proved).with_state(token.clone())),
         false => asked,
     };
     let routes = routes.layer(axum::middleware::from_fn(not_from_a_page));
+    let routes = routes.layer(axum::middleware::from_fn_with_state(token.clone(), as_whom));
     let bound = bind("127.0.0.1:0".parse().unwrap()).await.unwrap();
     let addr = bound.addr;
     let served = tokio::spawn(async move {
@@ -223,7 +268,7 @@ async fn relay(to: SocketAddr) -> (SocketAddr, tokio::task::JoinHandle<Vec<u8>>)
 }
 
 /// **svrngs proves it holds the token on a connection, and only then is
-/// sent it, on that connection** (`asked` against `POST /v1/proof` served
+/// asked on it, with the code for it** (`asked` against `POST /v1/proof` served
 /// as svrngs serves it): on 127.0.0.1 and on ::1, svrngs is asked and
 /// answers; serving 300 ms after it binds, as a starting svrngs does,
 /// waited for and asked, never refused (V1.13.3's fix review, findings 1
@@ -234,7 +279,7 @@ async fn relay(to: SocketAddr) -> (SocketAddr, tokio::task::JoinHandle<Vec<u8>>)
 /// proof route is older; a page in a browser and a challenge that isn't
 /// one are refused.
 #[tokio::test(flavor = "multi_thread")]
-async fn svrngs_proves_it_holds_the_token_before_it_is_sent_it() {
+async fn svrngs_proves_it_holds_the_token_before_it_is_asked() {
     let dir = tempfile::tempdir().unwrap();
     let token = kept_token(dir.path()).unwrap();
     let secret = token.secret().to_string();
@@ -244,22 +289,14 @@ async fn svrngs_proves_it_holds_the_token_before_it_is_sent_it() {
         &format!("http://{addr}\n"),
         "/v1/asked",
         &secret,
-        "{}".into(),
+        Some("{}".into()),
     )
     .await;
     let _served = served.await.unwrap();
-    assert_eq!(
-        asked,
-        Ok((200, b"asked, with the token".to_vec())),
-        "served late"
-    );
+    assert_eq!(asked, Ok((200, b"asked, as you".to_vec())), "served late");
     let six = SocketAddr::from((Ipv6Addr::LOCALHOST, addr.port()));
     let asked = asked_at(six, &secret).await;
-    assert_eq!(
-        asked,
-        Ok((200, b"asked, with the token".to_vec())),
-        "on ::1"
-    );
+    assert_eq!(asked, Ok((200, b"asked, as you".to_vec())), "on ::1");
 
     let (through, carried) = relay(addr).await;
     assert_eq!(
@@ -311,5 +348,237 @@ async fn svrngs_proves_it_holds_the_token_before_it_is_sent_it() {
 
 /// [`asked`] of svrngs at `at`, as its `api` file names it.
 async fn asked_at(at: SocketAddr, token: &str) -> Asked {
-    asked(&format!("http://{at}"), "/v1/asked", token, "{}".into()).await
+    asked(
+        &format!("http://{at}"),
+        "/v1/asked",
+        token,
+        Some("{}".into()),
+    )
+    .await
+}
+
+/// `text`, a raw HTTP/1 request's head, and `body` sent on `on`: the
+/// answer's status and body, read by its length, the connection kept.
+async fn said(on: &mut tokio::net::TcpStream, text: &str, body: &str) -> (u16, String) {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let asked = format!("{text}Content-Length: {}\r\n\r\n{body}", body.len());
+    on.write_all(asked.as_bytes()).await.unwrap();
+    let mut head = Vec::new();
+    while !head.ends_with(b"\r\n\r\n") {
+        head.push(on.read_u8().await.unwrap());
+    }
+    let head = String::from_utf8(head).unwrap().to_ascii_lowercase();
+    let length = (head.lines().find_map(|l| l.strip_prefix("content-length:")))
+        .map_or(0, |n| n.trim().parse().unwrap());
+    let mut said = vec![0; length];
+    on.read_exact(&mut said).await.unwrap();
+    let status = head.split(' ').nth(1).unwrap().parse().unwrap();
+    (status, String::from_utf8(said).unwrap())
+}
+
+/// The nonce svrngs's proof gives `on`, asked on it.
+async fn nonce_of(on: &mut tokio::net::TcpStream) -> Challenge {
+    let head = "POST /v1/proof HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n";
+    let (status, answer) = said(
+        on,
+        head,
+        &format!(r#"{{"challenge":"{}"}}"#, "0a".repeat(32)),
+    )
+    .await;
+    assert_eq!(status, 200, "{answer}");
+    let answer: serde_json::Value = serde_json::from_str(&answer).unwrap();
+    Challenge::try_from(answer["nonce"].as_str().unwrap().to_string()).unwrap()
+}
+
+/// **A code asks only on the connection, and after the proof, it was made
+/// for; and svrngs's token itself is refused** (`Bearer::asked`, `as_whom`,
+/// `holds_the_token`, served as svrngs serves them): each answered 401 in
+/// words that say what to do. Planted, each watched failing: a code with
+/// none of its connection's ends in it (the relay's, made for the asker's
+/// own ends, was taken); one nonce for every connection, the last proof's
+/// (a code for an unproved connection was taken); every nonce svrngs gave
+/// kept, not this connection's alone (another connection's was taken); a
+/// second proof keeping the first's nonce (the code before it was taken);
+/// the first `Authorization` alone read (its code, then the token, taken).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_code_asks_only_on_the_connection_and_after_the_proof_it_was_made_for() {
+    let dir = tempfile::tempdir().unwrap();
+    let token = kept_token(dir.path()).unwrap();
+    let secret = token.secret().to_string();
+    let (addr, served) = proving(&token, true, std::time::Duration::ZERO).await;
+    let _served = served.await.unwrap();
+    let open = || async { tokio::net::TcpStream::connect(addr).await.unwrap() };
+    let code = |nonce: &Challenge, on: &tokio::net::TcpStream| {
+        let (client, server) = (on.local_addr().unwrap(), on.peer_addr().unwrap());
+        format!("Svrngs {}", ask(&secret, nonce, client, server))
+    };
+    let asking =
+        |code: &str| format!("GET /v1/asked HTTP/1.1\r\nHost: {addr}\r\nAuthorization: {code}\r\n");
+    let refused = |answer: (u16, String), why: Unasked, row: &str| {
+        let words = serde_json::json!({ "error": why.to_string(), "kind": if why == Unasked::Bearer { "no_bearer" } else { "unasked" } });
+        let said = serde_json::from_str(&answer.1).unwrap_or(serde_json::Value::String(answer.1));
+        assert_eq!((answer.0, said), (401, words), "{row}");
+    };
+
+    let mut a = open().await;
+    let first = nonce_of(&mut a).await;
+    let mine = code(&first, &a);
+    assert_eq!(
+        said(&mut a, &asking(&mine), "").await,
+        (200, "asked, as you".into())
+    );
+    assert_eq!(
+        said(&mut a, &asking(&mine), "").await,
+        (200, "asked, as you".into()),
+        "the same code, again on its connection"
+    );
+
+    let mut b = open().await;
+    let pooled = code(&first, &b);
+    refused(
+        said(&mut b, &asking(&pooled), "").await,
+        Unasked::Unproved,
+        "a connection nothing was proved on, its code made for another's nonce",
+    );
+    refused(
+        said(&mut b, &asking(&mine), "").await,
+        Unasked::Unproved,
+        "another connection's code",
+    );
+    let second = nonce_of(&mut b).await;
+    assert_ne!(first, second, "a nonce for each connection");
+    refused(
+        said(&mut b, &asking(&pooled), "").await,
+        Unasked::Elsewhere,
+        "another connection's nonce",
+    );
+    let theirs = code(&second, &b);
+    assert_eq!(said(&mut b, &asking(&theirs), "").await.0, 200);
+
+    let again = nonce_of(&mut a).await;
+    refused(
+        said(&mut a, &asking(&mine), "").await,
+        Unasked::Elsewhere,
+        "the code from before a second proof",
+    );
+    let now = code(&again, &a);
+    assert_eq!(said(&mut a, &asking(&now), "").await.0, 200);
+
+    let (through, _carried) = relay(addr).await;
+    let mut relayed = tokio::net::TcpStream::connect(through).await.unwrap();
+    let theirs = nonce_of(&mut relayed).await;
+    let own_ends = code(&theirs, &relayed);
+    refused(
+        said(&mut relayed, &asking(&own_ends), "").await,
+        Unasked::Elsewhere,
+        "a relay's connection's nonce, the code made for the asker's own ends",
+    );
+
+    let bearer = format!("Bearer {secret}");
+    refused(
+        said(&mut a, &asking(&bearer), "").await,
+        Unasked::Bearer,
+        "the token itself",
+    );
+    refused(
+        said(&mut a, &asking("Bearer another"), "").await,
+        Unasked::Bearer,
+        "another Bearer",
+    );
+    let none = format!("GET /v1/asked HTTP/1.1\r\nHost: {addr}\r\n");
+    refused(said(&mut a, &none, "").await, Unasked::Nothing, "nothing");
+    refused(
+        said(&mut a, &asking("Svrngs as-you"), "").await,
+        Unasked::Elsewhere,
+        "not a code",
+    );
+
+    let twice = |one: &str, two: &str| {
+        format!("GET /v1/asked HTTP/1.1\r\nHost: {addr}\r\nAuthorization: {one}\r\nAuthorization: {two}\r\n")
+    };
+    for (one, two, why, row) in [
+        (
+            now.as_str(),
+            bearer.as_str(),
+            Unasked::Bearer,
+            "its code, then the token",
+        ),
+        (&bearer, &now, Unasked::Bearer, "the token, then its code"),
+        (&now, &now, Unasked::Twice, "its code twice"),
+        (
+            &now,
+            "Bearer another",
+            Unasked::Twice,
+            "its code, then another Bearer",
+        ),
+    ] {
+        refused(said(&mut a, &twice(one, two), "").await, why, row);
+    }
+    assert_eq!(
+        said(&mut a, &asking(&now), "").await.0,
+        200,
+        "its code alone, after"
+    );
+}
+
+/// **svrngs's answer to its command is never cut short in silence** (the
+/// never-send-the-key review, finding 6): an answer of 3 MiB, past what is
+/// read of anything before it proves itself, is read whole once svrngs has
+/// proved itself, as `svrngs ask` prints it. Planted, watched failing: the
+/// proved answer read as an unproved one is, its status alone, 200 and
+/// nothing, which `svrngs ask` printed as an empty success.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_long_answer_is_read_whole_once_svrngs_proved_itself() {
+    let dir = tempfile::tempdir().unwrap();
+    let token = kept_token(dir.path()).unwrap();
+    let (addr, served) = proving(&token, true, std::time::Duration::ZERO).await;
+    let _served = served.await.unwrap();
+    let asked = asked(&format!("http://{addr}"), "/v1/long", token.secret(), None).await;
+    let (status, said) = asked.expect("svrngs proves itself and answers");
+    assert_eq!((status, said.len()), (200, 3 << 20));
+}
+
+/// **A svrngs proving itself with no nonce is older than the command, told
+/// apart from what never proves itself, and neither is asked anything
+/// more** (the never-send-the-key review's gate): on real sockets, a right
+/// proof and no nonce, as dd2efe63's svrngs answers, is `Older`, which the
+/// command restarts for or says to update; a proof under another token is
+/// `Unproven`; and nothing past the proof is sent to either. Planted,
+/// watched failing: a proof with no nonce taken (the ask sent, with a code
+/// for no nonce).
+#[tokio::test(flavor = "multi_thread")]
+async fn an_older_proof_and_none_are_told_apart_and_neither_is_asked_more() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let dir = tempfile::tempdir().unwrap();
+    let secret = kept_token(dir.path()).unwrap().secret().to_string();
+    for (with, want) in [
+        (secret.clone(), Withheld::Older),
+        ("another".into(), Withheld::Unproven),
+    ] {
+        let more = std::sync::Arc::new(AtomicUsize::new(0));
+        let counted = more.clone();
+        let proves = move |request: Request| async move {
+            let client = crate::session::peer(&request).unwrap();
+            let server = request.extensions().get::<Line>().unwrap().server.unwrap();
+            let body = axum::body::to_bytes(request.into_body(), 1024)
+                .await
+                .unwrap();
+            let Challenged { challenge } = serde_json::from_slice(&body).unwrap();
+            Json(serde_json::json!({ "proof": proof(&with, &challenge, client, server) }))
+        };
+        let routes = Router::new().route("/v1/proof", post(proves));
+        let routes = routes.fallback(move || {
+            counted.fetch_add(1, Ordering::SeqCst);
+            async {}
+        });
+        let bound = bind("127.0.0.1:0".parse().unwrap()).await.unwrap();
+        let addr = bound.addr;
+        let _served = serve(routes, bound);
+        assert_eq!(asked_at(addr, &secret).await, Err(want));
+        assert_eq!(
+            more.load(Ordering::SeqCst),
+            0,
+            "{want:?}: asked more than the proof"
+        );
+    }
 }

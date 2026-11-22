@@ -23,7 +23,8 @@ key signs only when the person who releases svrngs types its passphrase
 ## V1.13.3, 21 November 2026
 
 V1.13.3 lets your own apps use what a friend lends at an address, with no
-key, and only ever updates svrngs forward.
+key, never sends svrngs's token anywhere, and only ever updates svrngs
+forward.
 
 **Use a friend's model from your apps.** When a friend lends a model, or
 anything else you open at an address, press **Play** on it on your home
@@ -44,14 +45,24 @@ on Linux svrngs holds it even while IPv6 is turned off, and a computer with
 no IPv6 at all runs svrngs on `127.0.0.1` alone. Nothing svrngs shows asks you to give an app svrngs's own
 token any more.
 
-**svrngs proves itself before it gets your token.** The `svrngs` command,
-the svrngs entry in your applications menu, and Give send svrngs's token
-only after svrngs proves, on that same connection, that it holds it. A
+**svrngs never sends your token.** svrngs's token, in `~/.svrngs/token`,
+acts as you in every group, so it no longer goes over any connection. The
+`svrngs` command, the svrngs entry in your applications menu, Give and the
+Omarchy plugin check first, on each connection, that what answers is your
+svrngs, then ask with a code that works on that one connection only. A
 program holding svrngs's address while svrngs is down gets none of your
 token, whatever account it runs as and wherever it runs, and they say how
 to start svrngs again. If svrngs hasn't restarted since you updated it,
 the `svrngs` command and the menu entry restart it, and Give says to run
 `svrngs restart`.
+
+**Your own programs ask with `svrngs ask`.** svrngs now refuses a program
+that sends its token, and says what to do instead. From a script in any
+language, run `svrngs ask /v1/groups` to read svrngs, or `svrngs ask
+<route> '<json>'` to post to it: it prints svrngs's answer, and exits 1,
+saying why, when svrngs refuses. A JavaScript program can copy
+`apps/client/svrngs.mjs` beside its code instead. To use a friend's model
+from a program such as an OpenAI library, press **Play**, as above.
 
 **Updates only go forward.** svrngs installs only a release signed after
 its own, whatever page it updates from, so no page can move a computer to an

@@ -95,7 +95,6 @@ async fn at_origin(
     path: &str,
     from: Option<&str>,
 ) -> (u16, serde_json::Value) {
-    use tower::ServiceExt;
     let port = node.api_addr().port();
     // An address a page already holds, capability and all, is asked as it is.
     let path = match from.and_then(svrngs_core::pass::Label::parse) {
@@ -117,17 +116,14 @@ async fn at_origin(
             .header("sec-fetch-mode", "cors")
             .header("origin", format!("http://{page}.localhost:{port}"));
     } else {
-        request = request.header("authorization", format!("Bearer {}", node.token().trim()));
+        request = request.header("authorization", svrngs_node::node::AS_YOU_VALUE);
     }
-    let mut request = request.body(axum::body::Body::empty()).unwrap();
+    let request = request.body(axum::body::Body::empty()).unwrap();
     let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
-    request
-        .extensions_mut()
-        .insert(axum::extract::ConnectInfo(caller));
-    let answer = tokio::time::timeout(Duration::from_secs(30), node.api_routes().oneshot(request))
+    let asked = on_wire::sent(node, request, caller);
+    let answer = tokio::time::timeout(Duration::from_secs(30), asked)
         .await
-        .expect("the ask finishes")
-        .unwrap();
+        .expect("the ask finishes");
     let status = answer.status().as_u16();
     let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
         .await
@@ -234,16 +230,13 @@ impl House {
         let url = format!("http://{}{path}", self.alex.api_addr());
         let within = Duration::from_secs(30);
         if self.quic {
-            let http = reqwest::Client::builder().no_proxy().build().unwrap();
-            let asked = http.get(url).bearer_auth(self.alex.token()).send();
-            let answer = tokio::time::timeout(within, asked).await;
-            let answer = answer.expect("the ask finishes").unwrap();
-            return (answer.status().as_u16(), answer.json().await.unwrap());
+            let asked = self.alex.ask_as_you(path, None);
+            let (status, said) = tokio::time::timeout(within, asked)
+                .await
+                .expect("the ask finishes");
+            return (status, serde_json::from_str(&said).unwrap());
         }
-        let asked = on_wire::http()
-            .get(url)
-            .bearer_auth(self.alex.token())
-            .send();
+        let asked = on_wire::http().get(url).asked_as_you().send();
         let answer = tokio::time::timeout(within, asked).await;
         let answer = answer.expect("the ask finishes").unwrap();
         (answer.status().as_u16(), answer.json().await.unwrap())
@@ -416,26 +409,32 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
 /// getaddrinfo, in Python and Node, so a program given a lend's address
 /// asks there first, and one that asks the first alone reaches nothing
 /// else. Asked at 127.0.0.1 and at [::1], each at the port the `api` file
-/// names, the one router answers both: the record to the token, and a
+/// names, the one router answers both: the record asked as you, and a
 /// page's `Origin` refused (api.rs `not_from_a_page`). Planted, watched
 /// failing: nothing listening on ::1, the ask refused its connection.
 #[tokio::test]
 async fn the_api_answers_on_both_loopbacks_at_its_one_port() {
     let house = House::over_quic().await;
     let port = house.alex.api_addr().port();
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let (token, route) = (house.alex.token(), svrngs_node::surface::GROUPS_ROUTE);
     for at in [format!("127.0.0.1:{port}"), format!("[::1]:{port}")] {
-        let url = format!("http://{at}{}", svrngs_node::surface::GROUPS_ROUTE);
-        let asked = http.get(&url).bearer_auth(house.alex.token()).send().await;
-        let answer = asked.unwrap_or_else(|e| panic!("nothing answers at {at}: {e}"));
-        assert_eq!(answer.status(), 200, "the record at {at}");
-        let page = http.get(&url).bearer_auth(house.alex.token());
-        let page = page
-            .header("origin", "http://example.com")
-            .send()
+        let asked = svrngs_node::api::asked(&format!("http://{at}"), route, &token, None).await;
+        let (status, _) = asked.unwrap_or_else(|e| panic!("nothing answers at {at}: {e:?}"));
+        assert_eq!(status, 200, "the record at {at}");
+        let mut on = tokio::net::TcpStream::connect(&at).await.unwrap();
+        let page = format!("GET {route} HTTP/1.1\r\nHost: {at}\r\nOrigin: http://example.com\r\n{}Connection: close\r\n\r\n", svrngs_node::node::AS_YOU);
+        let page = common::as_you_in(&mut on, &token, &page).await;
+        tokio::io::AsyncWriteExt::write_all(&mut on, page.as_bytes())
             .await
             .unwrap();
-        assert_eq!(page.status(), 403, "a page refused at {at}");
+        let mut answer = String::new();
+        tokio::io::AsyncReadExt::read_to_string(&mut on, &mut answer)
+            .await
+            .unwrap();
+        assert!(
+            answer.starts_with("HTTP/1.1 403"),
+            "a page refused at {at}: {answer}"
+        );
     }
     house.close().await;
 }
@@ -512,22 +511,18 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
 /// merged after the check, so it does not cover them.
 #[tokio::test]
 async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
-    use tower::ServiceExt;
     let house = House::new().await;
     for path in [
         svrngs_node::surface::GROUPS_ROUTE.to_string(),
         format!("/v1/lends?namespace={}", house.id),
     ] {
         for (caller, want) in [("192.168.1.5:50000", 403), ("127.0.0.1:50000", 200)] {
-            let mut request = axum::http::Request::get(&path)
-                .header("authorization", format!("Bearer {}", house.alex.token()))
+            let request = axum::http::Request::get(&path)
+                .header("authorization", svrngs_node::node::AS_YOU_VALUE)
                 .body(axum::body::Body::empty())
                 .unwrap();
             let caller: SocketAddr = caller.parse().unwrap();
-            request
-                .extensions_mut()
-                .insert(axum::extract::ConnectInfo(caller));
-            let answer = house.alex.api_routes().oneshot(request).await.unwrap();
+            let answer = on_wire::sent(&house.alex, request, caller).await;
             let status = answer.status().as_u16();
             let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
                 .await
@@ -615,21 +610,17 @@ async fn says_yes(node: &Node, app: &str, reads: &[&str], left: &[&str]) -> u16 
 /// yes ([`says_yes`]), or `said=stop`, the Stop under "What acts as you"
 /// (home/page/reach.js `Reach`).
 async fn says(node: &Node, form: String) -> u16 {
-    use tower::ServiceExt;
     let own = format!("svrngs.localhost:{}", node.api_addr().port());
-    let mut request = axum::http::Request::post("/reaching")
+    let request = axum::http::Request::post("/reaching")
         .header("host", own.clone())
         .header("sec-fetch-site", "same-origin")
         .header("origin", format!("http://{own}"))
-        .header("authorization", format!("Bearer {}", node.token().trim()))
+        .header("authorization", svrngs_node::node::AS_YOU_VALUE)
         .header("content-type", "application/x-www-form-urlencoded")
         .body(axum::body::Body::from(form))
         .unwrap();
     let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
-    request
-        .extensions_mut()
-        .insert(axum::extract::ConnectInfo(caller));
-    let answer = node.api_routes().oneshot(request).await.unwrap();
+    let answer = on_wire::sent(node, request, caller).await;
     answer.status().as_u16()
 }
 
@@ -927,7 +918,7 @@ async fn a_visit_is_listed_on_every_computer_and_its_host_s_stop_ends_it_on_each
     };
     let visiting = |node: &Node| {
         let url = format!("http://{}/v1/groups", node.api_addr());
-        let asked = on_wire::http().get(url).bearer_auth(node.token()).send();
+        let asked = on_wire::http().get(url).asked_as_you().send();
         async move {
             let body: serde_json::Value = asked.await.unwrap().json().await.unwrap();
             body["groups"][0]["visiting"].clone()
@@ -986,7 +977,7 @@ async fn a_visit_is_listed_on_every_computer_and_its_host_s_stop_ends_it_on_each
         .header("host", &own)
         .header("origin", format!("http://{own}"))
         .header("sec-fetch-site", "same-origin")
-        .bearer_auth(alex.token().trim())
+        .asked_as_you()
         .json(&[id.as_str(), visit_id.as_str()])
         .send()
         .await
@@ -1226,10 +1217,11 @@ fn exchanged(
 /// asked and `Content-Type: application/json`, is answered
 /// `application/json` with the proof made for this connection's ends as
 /// the asker reads them, its peer printed as it is (`127.0.0.1:<port>`,
-/// never `[::ffff:127.0.0.1]:<port>`); the connection stays open; the
-/// record is then asked with the token on it, and a lend's address too,
-/// `Host: <label>.localhost:<port>`, which its origin answers, not the
-/// record. Its sockets block, so the node serves on the runtime's others.
+/// never `[::ffff:127.0.0.1]:<port>`), and a nonce; the connection stays
+/// open; the record is then asked on it with the code for that nonce and
+/// those ends, as the Omarchy plugin and apps/client/svrngs.mjs make it,
+/// and a lend's address too, `Host: <label>.localhost:<port>`, which its
+/// origin answers, not the record. Its sockets block, so the node serves on the runtime's others.
 #[tokio::test(flavor = "multi_thread")]
 async fn svrngs_proves_itself_and_routes_each_request_on_that_connection_by_its_host() {
     let dir = tempfile::tempdir().unwrap();
@@ -1253,24 +1245,25 @@ async fn svrngs_proves_itself_and_routes_each_request_on_that_connection_by_its_
             "{headers}"
         );
         let proof = svrngs_node::api::proof(&token, &challenge, client, server);
-        assert_eq!(
-            said,
-            format!(r#"{{"proof":"{proof}"}}"#),
-            "{at}, from {client}"
-        );
+        let said: serde_json::Value = serde_json::from_str(&said).unwrap();
+        assert_eq!(said["proof"], proof.as_str(), "{at}, from {client}");
+        let nonce = said["nonce"].as_str().unwrap_or_default().to_string();
+        let nonce =
+            svrngs_node::api::Challenge::try_from(nonce).expect("a nonce, 64 lowercase hex");
+        let code = svrngs_node::api::ask(&token, &nonce, client, server);
         assert!(client.to_string().starts_with(if at.starts_with('[') {
             "[::1]:"
         } else {
             "127.0.0.1:"
         }));
         let record =
-            format!("GET /v1/groups HTTP/1.1\r\nHost: {at}\r\nAuthorization: Bearer {token}\r\n");
+            format!("GET /v1/groups HTTP/1.1\r\nHost: {at}\r\nAuthorization: Svrngs {code}\r\n");
         let (status, _, said) = exchanged(&mut on, &record, "");
         assert_eq!(
             status, 200,
             "{at}: the record, on the proved connection: {said}"
         );
-        let lend = format!("GET /v1/groups HTTP/1.1\r\nHost: {label}.localhost:{port}\r\nAuthorization: Bearer {token}\r\n");
+        let lend = format!("GET /v1/groups HTTP/1.1\r\nHost: {label}.localhost:{port}\r\nAuthorization: Svrngs {code}\r\n");
         let (status, _, said) = exchanged(&mut on, &lend, "");
         assert_eq!(
             status, 404,
@@ -1282,4 +1275,84 @@ async fn svrngs_proves_itself_and_routes_each_request_on_that_connection_by_its_
         );
     }
     node.net().close().await;
+}
+
+/// **svrngs takes its token from no program, at its API, its home page or
+/// a lend's address, on either loopback, and logs none of it, nor any code**
+/// ("Never send the key", V1.13.3; the never-send-the-key review's gate):
+/// on a node's real socket, at 127.0.0.1 and ::1, `Authorization: Bearer
+/// <its token>` is refused 401 with words that say what to use instead,
+/// leading to Play at a lend's address, on the record, the proof's route,
+/// sign-in's, the home page's and a lend's page and their public bootstrap
+/// alike; a code asked as you on each loopback is answered; and nothing
+/// the node traces at debug, every target's, holds the token or a code.
+/// Planted, watched failing: 96ea3da7 answered the token at the record 200
+/// and took it at a lend's address on to the lend (404 "nothing is lent
+/// here by that name").
+#[tokio::test]
+async fn svrngs_takes_its_token_from_no_program_and_logs_none_of_it() {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let (said, _heard) = common::heard("debug");
+    let dir = tempfile::tempdir().unwrap();
+    let node = start_quic(1, dir.path()).await;
+    let (token, port) = (node.token().trim().to_string(), node.api_addr().port());
+    let label = svrngs_core::pass::Label::of(signing(1).verifying_key().as_bytes(), "nothing");
+    let (api, home) = (
+        format!("127.0.0.1:{port}"),
+        format!("svrngs.localhost:{port}"),
+    );
+    let lend = format!("{label}.localhost:{port}");
+    let mut codes = Vec::new();
+    for ip in ["127.0.0.1", "::1"] {
+        let at = SocketAddr::new(ip.parse().unwrap(), port);
+        for (host, path, words) in [
+            (&api, "/v1/groups", "`svrngs ask"),
+            (&api, "/v1/proof", "`svrngs ask"),
+            (
+                &api,
+                "/oidc/nothing/.well-known/openid-configuration",
+                "`svrngs ask",
+            ),
+            (&home, "/", "`svrngs ask"),
+            (&home, "/svrngs-session-epoch", "`svrngs ask"),
+            (&lend, "/", "press Play on it"),
+            (&lend, "/svrngs-session-epoch", "press Play on it"),
+        ] {
+            let mut on = tokio::net::TcpStream::connect(at).await.unwrap();
+            let asked = format!("GET {path} HTTP/1.1\r\nHost: {host}\r\nAuthorization: Bearer {token}\r\nConnection: close\r\n\r\n");
+            on.write_all(asked.as_bytes()).await.unwrap();
+            let mut answer = String::new();
+            on.read_to_string(&mut answer).await.unwrap();
+            let row = format!("{at} {host}{path}");
+            assert!(answer.starts_with("HTTP/1.1 401"), "{row}: {answer}");
+            let body: serde_json::Value =
+                serde_json::from_str(answer.split("\r\n\r\n").nth(1).unwrap()).unwrap();
+            let error = body["error"].as_str().unwrap_or_default();
+            assert!(
+                error.starts_with("svrngs doesn't take its token from a program any more")
+                    && error.contains(words),
+                "{row}: {body}"
+            );
+        }
+        let mut on = tokio::net::TcpStream::connect(at).await.unwrap();
+        let code = svrngs_node::node::as_you_on(&mut on, &token).await;
+        let asked =
+            format!("GET /v1/groups HTTP/1.1\r\nHost: {api}\r\n{code}Connection: close\r\n\r\n");
+        on.write_all(asked.as_bytes()).await.unwrap();
+        let mut answer = String::new();
+        on.read_to_string(&mut answer).await.unwrap();
+        assert!(answer.starts_with("HTTP/1.1 200"), "{at}, as you: {answer}");
+        codes.push(
+            code.trim_end()
+                .trim_start_matches("Authorization: Svrngs ")
+                .to_string(),
+        );
+    }
+    node.net().close().await;
+    let said = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    assert!(said.contains("api: a caller on this computer"), "{said}");
+    assert!(!said.contains(&token), "the token reached a log: {said}");
+    for code in codes {
+        assert!(!said.contains(&code), "a code reached a log: {said}");
+    }
 }

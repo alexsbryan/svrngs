@@ -78,13 +78,14 @@ fn last(heads: &std::sync::Mutex<Vec<String>>) -> String {
         .expect("the service was asked")
 }
 
-/// One raw request to `api` naming `host`; the reply's head, and the
-/// socket for what follows when it answered 101.
-async fn ask(api: SocketAddr, host: &str, rest: &str) -> (String, tokio::net::TcpStream) {
-    let mut sock = tokio::net::TcpStream::connect(api).await.unwrap();
-    sock.write_all(format!("{rest}Host: {host}\r\n\r\n").as_bytes())
-        .await
-        .unwrap();
+/// One raw request to `on`'s API naming `host`, asked as you where it says
+/// [`svrngs_node::node::AS_YOU`]; the reply's head, and the socket for what
+/// follows when it answered 101.
+async fn ask(on: &Browser<'_>, host: &str, rest: &str) -> (String, tokio::net::TcpStream) {
+    let mut sock = tokio::net::TcpStream::connect(on.api()).await.unwrap();
+    let asked = format!("{rest}Host: {host}\r\n\r\n");
+    let asked = common::as_you_in(&mut sock, on.token(), &asked).await;
+    sock.write_all(asked.as_bytes()).await.unwrap();
     let mut reply = Vec::new();
     let mut byte = [0u8; 1];
     while !reply.ends_with(b"\r\n\r\n") {
@@ -113,7 +114,7 @@ async fn asked(on: &Browser<'_>, host: &str, rest: &str) -> (String, tokio::net:
     let path = on.path(host, path, headers);
     let shown = on.shown(method, host, &path, headers, "").await;
     ask(
-        on.api(),
+        on,
         host,
         &format!("{method} {path} HTTP/1.1\r\n{headers}{shown}"),
     )
@@ -157,16 +158,10 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
     let label = |node: &Node, name: &str| Label::of(node.endpoint().id().as_bytes(), name);
     let host = |l: &Label| format!("{l}.localhost:{port}");
 
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let listed: serde_json::Value = http
-        .get(format!("http://{api}/v1/lends?namespace={NS}"))
-        .bearer_auth(alex.token())
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap();
+    let (_, listed) = alex
+        .ask_as_you(&format!("/v1/lends?namespace={NS}"), None)
+        .await;
+    let listed: serde_json::Value = serde_json::from_str(&listed).unwrap();
     let origin_of = |name: &str| {
         listed["lent"]
             .as_array()
@@ -215,6 +210,11 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
         "{seen}"
     );
     assert_eq!(header_values(&seen, "authorization"), vec![SAMS], "{seen}");
+    // Alex's program asked as Alex: Sam's service sees neither its code nor the token.
+    assert!(
+        !seen.contains(alex.token().trim()) && !seen.contains("Svrngs "),
+        "{seen}"
+    );
     assert_eq!(
         header_values(&seen, "host"),
         vec![format!("localhost:{}", pad.port())],
@@ -1253,7 +1253,7 @@ async fn a_lent_app_named_for_a_folder_writes_nothing_in_its_part() {
 async fn play(node: &Node, turn: &str, name: &str) -> String {
     let ask = serde_json::json!({ turn: { "key": actor_of(&signing(2)), "name": name } });
     let (api, ask) = (node.api_addr(), ask.to_string());
-    let text = format!("POST /v1/play HTTP/1.1\r\nHost: {api}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{ask}", node.token().trim(), ask.len());
+    let text = format!("POST /v1/play HTTP/1.1\r\nHost: {api}\r\n{}Content-Type: application/json\r\nContent-Length: {}\r\n\r\n{ask}", svrngs_node::node::AS_YOU, ask.len());
     let (head, body) = on_wire::raw(api, &text).await;
     assert!(
         head.starts_with("HTTP/1.1 200"),
@@ -1268,7 +1268,9 @@ async fn play(node: &Node, turn: &str, name: &str) -> String {
 /// token). Sam lends a llama-server at an address, and a program on Alex's
 /// computer asks it as an OpenAI client does, `Authorization: Bearer` and
 /// any text. Play off, it is refused as before, the service never asked.
-/// Play on: answered, Node's `fetch`, which sends `Sec-Fetch-Mode` alone,
+/// svrngs's own token as that key is refused, Play off or on, saying to
+/// use Play ("Never send the key", V1.13.3; 96ea3da7 took it as the
+/// token, Play off, and on to the lend). Play on: answered, Node's `fetch`, which sends `Sec-Fetch-Mode` alone,
 /// too, and the key it sent never reaches Sam's computer; a page's
 /// request, by `Origin` or by `Sec-Fetch-Site`, is refused as before; a program of another account (the socket's owner read as
 /// another uid, or, as a Mac reads it, as none of this account's), or one
@@ -1309,10 +1311,28 @@ async fn play_lets_a_program_of_this_account_in_at_a_lend_s_address() {
     let off = asked("/v1/models", "").await;
     assert!(off.starts_with("HTTP/1.1 401"), "Play off: {off}");
     assert_eq!(reached(), 0, "Play off: the service was asked");
+    // svrngs's own token, sent as a key, is refused, Play on or off,
+    // saying to use Play, and reaches nothing.
+    let token = format!("Bearer {}", alex.token().trim());
+    let own = |at: &'static str| {
+        let rest =
+            format!("GET /v1/models HTTP/1.1\r\nConnection: close\r\nAuthorization: {token}\r\n");
+        let host = host.clone();
+        async move {
+            let (head, body) = ask_on(api, &host, &rest).await;
+            assert!(
+                head.starts_with("HTTP/1.1 401") && body.contains("press Play on it"),
+                "{at}: {head}{body}"
+            );
+        }
+    };
+    own("Play off").await;
 
     let on = play(&alex, "on", "model").await;
     let address = format!("Connect to http://{host}/.");
     assert!(on.contains(&address), "{on}");
+    own("Play on").await;
+    assert_eq!(reached(), 0, "svrngs's token reached the service");
     let answered = asked("/v1/models", "").await;
     assert!(answered.starts_with("HTTP/1.1 200"), "Play on: {answered}");
     assert!(answered.ends_with("ok"), "{answered}");
