@@ -1002,10 +1002,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-22) The review's fixes land at 26,147 (2b3bd031..14ea09b3), +430
 # over 25,717, the self-heal not built, and the cap comes down to it. The
 # second pool: +197 drawn, +503 and +60 left.
+# (2026-11-22) Slice B's second half (every computer whose person said yes
+# keeps an app's database, prune, the push before sleep, WAL truncation and
+# vacuum, the write refill, the lid) draws +250 before its build, so its
+# commits land as it goes, to come down to where it lands. The cap to
+# 26,398. The second pool: +447 drawn, +253 and +60 left.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26148,
+    ".": 26398,
 
     "js": 8671,
 
