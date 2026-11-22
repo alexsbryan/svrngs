@@ -186,13 +186,9 @@ const undone = (/** @type {AppsAccount | undefined} */ account, /** @type {Lend}
 
 /** @param {LentProps} props */
 export function Lent({ l: lend, signs, account, headers, groups, home }) {
-  const [state, send] = useMachine(() =>
-    machine('CHANGE', CHANGE(lend.name, home), {
-      at: { change: 'idle' },
-      said: '',
-      groups: lend.groups ?? [],
-    }),
-  );
+  /** @type {() => State} */
+  const first = () => ({ at: { change: 'idle' }, said: '', groups: lend.groups ?? [] });
+  const [state, send] = useMachine(() => machine('CHANGE', CHANGE(lend.name, home), first()));
   const limit = lend.limit;
   const limited = (limit ?? 0) > 0;
   const people = limit === 1 ? 'person' : 'people';
@@ -220,14 +216,6 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
           send=${send}
         />
       `;
-  const saveAudience = html`
-    <${Act}
-      words="Save who can open this"
-      doing=${doing}
-      on=${{ type: 'audience' }}
-      send=${send}
-    />
-  `;
   return html`
     <li>
       <details open=${undone(account, lend)} aria-label=${lend.name}>
@@ -248,7 +236,12 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
         waiting=${state.at.change === 'changing'}
         send=${send}
       />
-      ${saveAudience}
+      <${Act}
+        words="Save who can open this"
+        doing=${doing}
+        on=${{ type: 'audience' }}
+        send=${send}
+      />
       <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
       <${Headers} name=${lend.name} kept=${headers} state=${state} doing=${doing} send=${send} />
       ${signIn}
