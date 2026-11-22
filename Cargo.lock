@@ -1594,6 +1594,7 @@ dependencies = [
  "ring",
  "serde_json",
  "serde_yaml",
+ "svrngs-keeper",
  "tar",
  "thiserror 2.0.21",
  "tracing",
@@ -4629,6 +4630,18 @@ dependencies = [
  "thiserror 2.0.21",
  "tracing",
  "url",
+]
+
+[[package]]
+name = "svrngs-keeper"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "serde_json",
+ "serde_yaml",
+ "tar",
+ "thiserror 2.0.21",
+ "tracing",
 ]
 
 [[package]]

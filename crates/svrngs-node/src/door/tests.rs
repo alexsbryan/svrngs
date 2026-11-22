@@ -1171,9 +1171,9 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         ("crates/svrngs/src/cli.rs", "dial: a group's page"),
         // The clock and randomness, at their adapters (clippy.toml).
         ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),
-        ("apps/give/src/runtime.rs", "a snapshot is named for when it was taken"),
-        ("apps/give/src/runtime.rs", "a snapshot times its pause"),
-        ("apps/give/src/runtime.rs", "the runtime is podman's adapter: it waits on the clock"),
+        ("apps/svrngs-keeper/src/runtime.rs", "a snapshot is named for when it was taken"),
+        ("apps/svrngs-keeper/src/runtime.rs", "a snapshot times its pause"),
+        ("apps/svrngs-keeper/src/runtime.rs", "the runtime is podman's adapter: it waits on the clock"),
         ("crates/svrngs-node/src/api.rs", "draws the record's token"),
         ("crates/svrngs-node/src/api.rs", "a challenge or a nonce drawn"),
         ("apps/give/src/record.rs", "draws a proof's challenge"),
@@ -1212,6 +1212,7 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         .map(|c| root.join("crates").join(c).join("src"))
         .collect();
     dirs.push(root.join("apps/give/src"));
+    dirs.push(root.join("apps/svrngs-keeper/src"));
     while let Some(dir) = dirs.pop() {
         for entry in std::fs::read_dir(&dir).unwrap().flatten() {
             let (path, name) = (

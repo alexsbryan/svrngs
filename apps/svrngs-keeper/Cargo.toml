@@ -1,0 +1,26 @@
+# svrngs-keeper: a card kept running on this computer (svrn-docs
+# rings/current/HOSTING_AND_GIVE_BOUNDARY.md). It is Give's local runtime as a
+# package of its own: the card an app is written as, the runtime that keeps one
+# in rootless podman (and, on a Mac, its machine), and the author's check of a
+# card. Give depends on it for its keeper; svrngs calls its program.
+#
+# It links no svrngs crate and no Give, and takes nothing from the workspace's
+# tables (tests/surface.rs holds that). It is a member of the svrngs workspace
+# only so the gate's rustfmt, clippy and tests reach it.
+[package]
+name = "svrngs-keeper"
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[dependencies]
+blake3 = "1.8"
+serde_json = "1"
+# The card is the app's own compose.yaml. serde_yaml 0.9 is marked
+# deprecated by its author and still the YAML reader the registry here
+# already holds; the card reads it into a Value and walks it itself (card.rs).
+serde_yaml = "0.9"
+tar = "0.4"
+thiserror = "2"
+tracing = "0.1"

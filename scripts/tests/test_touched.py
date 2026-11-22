@@ -89,7 +89,7 @@ class Plans(unittest.TestCase):
             with self.subTest(path=path):
                 steps, tests = plan(path)
                 self.assertEqual(steps, EVERY)
-                self.assertTrue(tests.startswith("-p give -p give-fold -p svrngs -p svrngs-core -p svrngs-node -p svrngs-runtime --lib --bins"))
+                self.assertTrue(tests.startswith("-p give -p give-fold -p svrngs -p svrngs-core -p svrngs-keeper -p svrngs-node -p svrngs-runtime --lib --bins"))
                 self.assertLessEqual(SITE | {"canaries", "scale", "internet", "cases"}, binaries(tests))
                 self.assertNotIn("xenia", binaries(tests))  # no step of the gate runs it
         self.assertLessEqual(SITE, binaries(plan("web/tests/nothing-names-this.mjs")[1]))
