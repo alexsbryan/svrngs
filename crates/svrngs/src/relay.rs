@@ -207,19 +207,18 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
         Admits(Some((root.to_path_buf(), Arc::new(key))))
     };
     let any = |port| SocketAddr::from((Ipv6Addr::UNSPECIFIED, port));
-    let (http, tls, quic) = match &relay.at {
+    let (http, tls, quic, metrics) = match &relay.at {
         At::Here(addr) => {
             tracing::debug!(target: "relay", %addr, "relay: plain HTTP at the address given, with no certificate");
-            (*addr, None, None)
+            (*addr, None, None, None)
         }
         At::Name { name, staging } => {
             tracing::debug!(target: "relay", name, staging, "relay: HTTPS at the name, its certificate Let's Encrypt's");
-            let builder = rustls::ServerConfig::builder_with_provider(Arc::new(
-                rustls::crypto::ring::default_provider(),
-            ))
-            .with_safe_default_protocol_versions()
-            .expect("ring's protocols")
-            .with_no_client_auth();
+            let ring = Arc::new(rustls::crypto::ring::default_provider());
+            let builder = rustls::ServerConfig::builder_with_provider(ring)
+                .with_safe_default_protocol_versions()
+                .expect("ring's protocols")
+                .with_no_client_auth();
             let acme = AcmeConfig::letsencrypt(!staging)
                 .domains(vec![name.clone()])
                 .cache_path(root.join("relay"));
@@ -227,10 +226,15 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
                 acme_config: acme,
                 server_config_builder: builder,
             };
+            // The counters an operator watches, on loopback, where the box
+            // alone reads them: two `--at` relays on one computer (the tests',
+            // a local network's) would collide on the one port.
+            let metrics = SocketAddr::from((Ipv4Addr::LOCALHOST, DEFAULT_METRICS_PORT));
             (
                 any(DEFAULT_HTTP_PORT),
                 Some(TlsConfig::new(any(DEFAULT_HTTPS_PORT), cert)),
                 Some(QuicConfig::new(any(DEFAULT_RELAY_QUIC_PORT))),
+                Some(metrics),
             )
         }
     };
@@ -246,13 +250,7 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
     let mut server = ServerConfig::default();
     server.relay = Some(config);
     server.quic = quic;
-    if matches!(relay.at, At::Name { .. }) {
-        // The counters an operator watches, on loopback, where the box
-        // alone reads them: two `--at` relays on one computer (the tests',
-        // a local network's) would collide on the one port.
-        let metrics = SocketAddr::from((Ipv4Addr::LOCALHOST, DEFAULT_METRICS_PORT));
-        server.metrics_addr = Some(metrics);
-    }
+    server.metrics_addr = metrics;
     Server::spawn(server).await.map_err(|e| {
         tracing::debug!(target: "relay", error = %e, "relay: refused — it did not start");
         Unjudged::RelayStart(e.to_string()).into()
