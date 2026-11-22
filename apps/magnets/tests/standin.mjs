@@ -6,15 +6,18 @@
 //
 // The shape it pins, as svrn-docs rings/current/APP_STATE.md §4 ("What a
 // page can do") draws it. The real route answers the same, or Magnets
-// changes with it:
+// changes with it: Magnets' tests run against it too, through
+// web/tests/route.mjs, in the scene crates/svrngs/tests/scenes/magnets.rs.
 //
 //   POST svrngs/sql, a JSON body, one of:
 //     {sql, params}       one read; `params` an array bound to its `?` in
 //                         order, none when left out. Answers 200
 //                         {rows: [{<column>: <value>, ...}]}, with
 //                         `syncing: true` beside `rows` while this copy
-//                         hasn't synced yet. A statement that writes is
-//                         refused, its words naming the write form.
+//                         hasn't synced yet; the real route says `more`
+//                         too, true past the most rows it gives. A
+//                         statement that writes is refused, its words
+//                         naming the write form.
 //     {write: [op, ...]}  one transaction. Answers 200 {count: <n>}, the
 //                         rows changed in all. A refusal keeps nothing of
 //                         the list. Each op is one of:

@@ -65,8 +65,11 @@ beside the authority replacement, ahead of the economizing:
   lean ceiling for the whole build, +1,450 of all code but JavaScript and
   +80 of JavaScript (2026-11-22). It's a pool, drawn slice by slice after
   each slice's pass, with the caps lowered to where each lands. The judge of the copies came first, a reference model and a
-  seeded simulator of deliveries in `crates/svrngs-db/tests/w1/`. Next is
-  Magnets on one laptop;
+  seeded simulator of deliveries in `crates/svrngs-db/tests/w1/`. Then
+  Magnets on one laptop, on the real route: the scene
+  `crates/svrngs/tests/scenes/magnets.rs`, whose first beat is a sentence
+  kept across a restart with no line in the record. Next is the lid
+  closing, on computers;
 - to the warranty in svrn-docs `APP_STATE.md` §11. Each promise has its proof in the
   gate: copies that agree under a seeded simulator of every delivery, no
   acknowledged write lost, only the right device writing, every call

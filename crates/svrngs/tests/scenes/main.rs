@@ -88,6 +88,8 @@ mod give;
 mod give_move;
 // Give, scenes 4 and 5: Bo's computer gone, Dee keeps it; Bo's back.
 mod give_gone;
+// Magnets (apps/magnets): a sentence in a group of one, kept across a restart.
+mod magnets;
 
 /// svrngs itself, as each person's computer runs it ([`svrngs`]).
 #[test]

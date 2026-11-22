@@ -5,18 +5,25 @@
 // A computer and a phone on one board see each other's moves, pushed. And
 // the page says still syncing, unreachable and a refused move in board.js's
 // words, drawing no fresh fridge meanwhile. The board's order, SQL and words
-// are board.test.mjs's laws. Without Playwright or its browser this fails
-// naming the install (`launch` exits 3); it never skips.
+// are board.test.mjs's laws. Where SVRNGS_ROUTE names one, each runs against
+// the real route on a computer's svrngs (web/tests/route.mjs), opened there
+// first, as the scene crates/svrngs/tests/scenes/magnets.rs runs them, but
+// the states', whose switches are the stand-in's alone. Without Playwright
+// or its browser this fails naming the install (`launch` exits 3); it never
+// skips.
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { launch } from '../../../web/tests/page.mjs';
+import * as route from '../../../web/tests/route.mjs';
 import { refused, SAID } from '../board.js';
-import { serve } from './standin.mjs';
+import { serve as standinAt } from './standin.mjs';
 
 const WAIT = { timeout: 15_000 };
-const OPEN = { unopened: true, b: true };
+// The real route's origin is opened by svrngs first, as a person's browser is.
+const OPEN = { unopened: !route.real, b: true };
+const serve = route.real ? route.serve : standinAt;
 
 /** The board opened in `context`: its page errors and debug traces kept, and what it shows read. */
 async function open(context, at) {
@@ -153,52 +160,59 @@ test('a computer and a phone on one board each see the other’s moves', async (
   }
 });
 
-test('still syncing, unreachable and a refused move are said, and no fresh fridge drawn (chromium)', async () => {
-  const standin = await serve();
-  const { context, close } = await launch('chromium', OPEN);
-  const words =
-    'You’re moving words faster than your group takes them. Wait a moment, then try again.';
-  try {
-    await standin.set({ syncing: true });
-    const p = await open(context, standin.at);
-    await p.says(SAID.syncing);
-    assert.equal(await p.page.getByRole('button').count(), 0, 'no word to tap while syncing');
-    await standin.set({ syncing: false });
-    await p.shown();
-    await p.says('');
+const ON_STANDIN = {
+  skip: route.real ? 'its switches are the stand-in’s: the real route has none' : false,
+};
+test(
+  'still syncing, unreachable and a refused move are said, and no fresh fridge drawn (chromium)',
+  ON_STANDIN,
+  async () => {
+    const standin = await serve();
+    const { context, close } = await launch('chromium', OPEN);
+    const words =
+      'You’re moving words faster than your group takes them. Wait a moment, then try again.';
+    try {
+      await standin.set({ syncing: true });
+      const p = await open(context, standin.at);
+      await p.says(SAID.syncing);
+      assert.equal(await p.page.getByRole('button').count(), 0, 'no word to tap while syncing');
+      await standin.set({ syncing: false });
+      await p.shown();
+      await p.says('');
 
-    await standin.set({ refusing: { status: 429, refused: 'too-fast', words } });
-    await p.word('tray', 'goose').click();
-    await p.says(refused('goose', words));
-    assert.equal(await p.page.getAttribute('#said', 'data-state'), 'refused');
-    assert.ok((await p.tray()).includes('goose'), 'the refused word stays in the tray');
-    await standin.set({ refusing: null });
-    await p.word('tray', 'goose').click();
-    await p.reads(['goose']);
-    await p.says('');
+      await standin.set({ refusing: { status: 429, refused: 'too-fast', words } });
+      await p.word('tray', 'goose').click();
+      await p.says(refused('goose', words));
+      assert.equal(await p.page.getAttribute('#said', 'data-state'), 'refused');
+      assert.ok((await p.tray()).includes('goose'), 'the refused word stays in the tray');
+      await standin.set({ refusing: null });
+      await p.word('tray', 'goose').click();
+      await p.reads(['goose']);
+      await p.says('');
 
-    // Unreachable: the open stream cut, then the board asked again and
-    // answered 503, and only then the switch lifted.
-    await standin.set({ unreachable: true });
-    await p.says(SAID.unreachable);
-    assert.equal(await p.page.getByRole('button').count(), 0, 'no word to tap while unreachable');
-    for (let waited = 0; !p.traced.some((l) => l.includes('status: 503')); waited += 100) {
-      assert.ok(waited < WAIT.timeout, `no 503 asked: ${p.traced.join(' | ')}`);
-      await new Promise((done) => setTimeout(done, 100));
+      // Unreachable: the open stream cut, then the board asked again and
+      // answered 503, and only then the switch lifted.
+      await standin.set({ unreachable: true });
+      await p.says(SAID.unreachable);
+      assert.equal(await p.page.getByRole('button').count(), 0, 'no word to tap while unreachable');
+      for (let waited = 0; !p.traced.some((l) => l.includes('status: 503')); waited += 100) {
+        assert.ok(waited < WAIT.timeout, `no 503 asked: ${p.traced.join(' | ')}`);
+        await new Promise((done) => setTimeout(done, 100));
+      }
+      await p.says(SAID.unreachable);
+      await standin.set({ unreachable: false });
+      await p.shown();
+      await p.reads(['goose']);
+      traced(p, [
+        'the board is still syncing',
+        'svrngs/sql refused',
+        'the move was refused',
+        'the board could not be read',
+      ]);
+      assert.deepEqual(p.errors, []);
+    } finally {
+      await close();
+      standin.stop();
     }
-    await p.says(SAID.unreachable);
-    await standin.set({ unreachable: false });
-    await p.shown();
-    await p.reads(['goose']);
-    traced(p, [
-      'the board is still syncing',
-      'svrngs/sql refused',
-      'the move was refused',
-      'the board could not be read',
-    ]);
-    assert.deepEqual(p.errors, []);
-  } finally {
-    await close();
-    standin.stop();
-  }
-});
+  },
+);
