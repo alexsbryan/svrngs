@@ -50,7 +50,8 @@ only after svrngs proves, on that same connection, that it holds it. A
 program holding svrngs's address while svrngs is down gets none of your
 token, whatever account it runs as and wherever it runs, and they say how
 to start svrngs again. If svrngs hasn't restarted since you updated it,
-they say to run `svrngs restart`.
+the `svrngs` command and the menu entry restart it and say so, and Give
+says to run `svrngs restart`.
 
 **Updates only go forward.** svrngs installs only a release signed after
 its own, whatever page it updates from, so no page can move a computer to an

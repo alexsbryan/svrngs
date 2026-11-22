@@ -467,12 +467,20 @@ fn another_program_holding_the_address_is_said_and_svrngs_stops() {
 /// The token each data dir [`data_dir_at`] makes keeps.
 const TOKEN: &str = "the-token-svrngs-keeps";
 
+/// What [`not_svrngs`] answers as svrngs's `/v1/open` would.
+const OPENED: &str = "HTTP/1.1 200 OK\r\nContent-Length: 19\r\n\r\n{\"open\": \"http://\"}";
+
+/// What [`not_svrngs`] answers as an older svrngs answers `POST
+/// /v1/proof`, which it has no route for (1.13.2, 9be0fcc7, asked
+/// 2026-11-21).
+const OLDER: &str = "HTTP/1.1 404 Not Found\r\ncontent-length: 0\r\n\r\n";
+
 /// A program on 127.0.0.1 that is not svrngs, run as `argv` before Python:
-/// it says its port, then for each connection answers its first request as
-/// svrngs's `/v1/open` would, reads what else it is sent until the
-/// connection closes, and writes how many bytes it was sent and what.
-fn not_svrngs(before: &[&str]) -> (Child, u16, BufReader<std::process::ChildStdout>) {
-    let script = "import socket\ns = socket.socket()\ns.bind(('127.0.0.1', 0))\ns.listen()\nprint(s.getsockname()[1], flush=True)\nwhile True:\n    c, _ = s.accept()\n    c.settimeout(2)\n    got = b''\n    try:\n        while b'\\r\\n\\r\\n' not in got:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n        c.sendall(b'HTTP/1.1 200 OK\\r\\nContent-Length: 19\\r\\n\\r\\n{\"open\": \"http://\"}')\n        while True:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n    except OSError: pass\n    print(len(got), got, flush=True)\n    c.close()";
+/// it says its port, then for each connection answers its first request
+/// `answer`, reads what else it is sent until the connection closes, and
+/// writes how many bytes it was sent and what.
+fn not_svrngs(before: &[&str], answer: &str) -> (Child, u16, BufReader<std::process::ChildStdout>) {
+    let script = "import os, socket\ns = socket.socket()\ns.bind(('127.0.0.1', 0))\ns.listen()\nprint(s.getsockname()[1], flush=True)\nwhile True:\n    c, _ = s.accept()\n    c.settimeout(2)\n    got = b''\n    try:\n        while b'\\r\\n\\r\\n' not in got:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n        c.sendall(os.environ['ANSWER'].encode())\n        while True:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n    except OSError: pass\n    print(len(got), got, flush=True)\n    c.close()";
     let (program, rest) = before.split_first().unwrap_or((&"python3", &[]));
     let mut child = Process::new(program)
         .args(rest)
@@ -482,6 +490,7 @@ fn not_svrngs(before: &[&str]) -> (Child, u16, BufReader<std::process::ChildStdo
             &["python3"][..]
         })
         .args(["-I", "-c", script])
+        .env("ANSWER", answer)
         .current_dir("/")
         .stdout(Stdio::piped())
         .spawn()
@@ -586,7 +595,7 @@ async fn only_svrngs_proving_it_holds_your_token_is_sent_it() {
     sent_none_of_the_token(&heard.join().unwrap());
     unproven(port, refused.expect_err("refused"));
 
-    let (mut python, port, mut sent) = not_svrngs(&[]);
+    let (mut python, port, mut sent) = not_svrngs(&[], OPENED);
     let refused = opened(data_dir_at(port).path()).await;
     let seen = told(&mut python, &mut sent);
     sent_none_of_the_token(&seen);
@@ -673,10 +682,158 @@ async fn another_account_s_program_at_svrngs_s_address_is_sent_none_of_the_token
         "--regid=1",
         "--clear-groups",
     ];
-    let (mut python, port, mut sent) = not_svrngs(&theirs);
+    let (mut python, port, mut sent) = not_svrngs(&theirs, OPENED);
     let refused = opened(data_dir_at(port).path()).await;
     let seen = told(&mut python, &mut sent);
     sent_none_of_the_token(&seen);
     eprintln!("RESULT: sent {seen:?}, then {refused:?}");
     unproven(port, refused.expect_err("refused"));
+}
+
+/// `launchctl` and `systemctl` in a folder of their own, the one `PATH` a
+/// command run with [`restarted`] has, so no real one is reached: each
+/// writes what it was asked to `said`, and to a restart of svrngs, as
+/// `svrngs restart` asks it, runs `then`.
+fn restarting(stubs: &Path, then: &str) {
+    use std::os::unix::fs::PermissionsExt;
+    let said = stubs.join("said");
+    let body = format!("#!/bin/sh\necho \"$*\" >>'{}'\ncase \"$*\" in\n  \"kickstart -k \"*|\"--user restart svrngs.service\") {then} ;;\nesac\n", said.display());
+    for name in ["launchctl", "systemctl"] {
+        std::fs::write(stubs.join(name), &body).unwrap();
+        std::fs::set_permissions(stubs.join(name), std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+}
+
+/// `svrngs open --print` over `dir`, the shipped program, with `PATH` the
+/// stubs alone ([`restarting`]): its output, and the restarts it asked for.
+fn restarted(dir: &Path, stubs: &Path) -> (std::process::Output, Vec<String>) {
+    let out = Process::new(env!("CARGO_BIN_EXE_svrngs"))
+        .args(["open", "--print"])
+        .env("SVRNGS_DIR", dir)
+        .env("HOME", dir)
+        .env("PATH", stubs)
+        .output()
+        .unwrap();
+    let said = std::fs::read_to_string(stubs.join("said")).unwrap_or_default();
+    (out, said.lines().map(String::from).collect())
+}
+
+/// svrngs's token for a data dir it runs over, its 32 bytes as svrngs
+/// writes them (api.rs `kept_token`), and `api` naming 127.0.0.1:`port`.
+fn kept_at(dir: &Path, port: u16) {
+    std::fs::write(dir.join("api"), format!("http://127.0.0.1:{port}\n")).unwrap();
+    std::fs::write(dir.join("token"), "A".repeat(43)).unwrap();
+}
+
+/// What svrngs's command asks to restart svrngs, as `svrngs restart` does
+/// (cli.rs `restart`): launchd's kickstart of its agent for this account,
+/// or systemd's restart of its unit.
+fn restart_asked() -> String {
+    let id = Process::new("id").arg("-u").output().unwrap();
+    let uid = String::from_utf8_lossy(&id.stdout).trim().to_string();
+    match cfg!(target_os = "macos") {
+        true => format!("kickstart -k gui/{uid}/sh.svrnme.svrngs"),
+        false => "--user restart svrngs.service".into(),
+    }
+}
+
+/// **An older svrngs is restarted once into this one, and then asked**
+/// (the operator, 2026-11-21: "Restart automatically"): after an update
+/// put a new svrngs in place and the old one runs on, as pacman leaves it
+/// until `svrngs restart`, `svrngs open`, as the applications menu runs it,
+/// is answered 404 at `POST /v1/proof` by the old one (1.13.2's answer),
+/// sends it none of the token, restarts svrngs as `svrngs restart` does,
+/// once, and once the new svrngs proves itself, opens the home page and
+/// says it restarted. Here the old one is Python answering 404, and the
+/// restart stops it and starts this svrngs over the data dir, at its
+/// address. Planted, watched failing: dd2efe63 refused, "the svrngs running
+/// here is older than this command: run `svrngs restart`", and asked for
+/// no restart.
+#[test]
+fn an_older_svrngs_is_restarted_once_then_asked() {
+    let (dir, stubs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (mut old, port, mut sent) = not_svrngs(&[], OLDER);
+    kept_at(dir.path(), port);
+    let svrngs = as_main::installed(stubs.path());
+    let (pid, log) = (stubs.path().join("pid"), stubs.path().join("log"));
+    // Python stopped, and gone or a zombie, its socket closed either way;
+    // then this svrngs started over the data dir, at its address.
+    let then = format!(
+        "/bin/kill {old}; while /bin/ps -o stat= -p {old} | /usr/bin/grep -qv Z; do /bin/sleep 0.05; done; SVRNGS_DIR='{dir}' HOME='{dir}' '{svrngs}' >'{log}' 2>&1 & echo $! >'{pid}'",
+        old = old.id(),
+        dir = dir.path().display(),
+        svrngs = svrngs.display(),
+        log = log.display(),
+        pid = pid.display()
+    );
+    restarting(stubs.path(), &then);
+    let (out, asked) = restarted(dir.path(), stubs.path());
+    let _ = old.kill();
+    let mut seen = String::new();
+    sent.read_to_string(&mut seen).unwrap();
+    let started = std::fs::read_to_string(&pid).unwrap_or_default();
+    let _ = Process::new("/bin/kill").arg(started.trim()).status();
+    sent_none_of_the_token(&seen);
+    assert!(seen.contains("POST /v1/proof HTTP/1.1"), "{seen}");
+    assert_eq!(
+        asked,
+        [restart_asked()],
+        "one restart, as `svrngs restart` asks it"
+    );
+    let (said, told) = (
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr),
+    );
+    assert!(out.status.success(), "{said}\n{told}");
+    assert!(said.contains("svrngs-open?code="), "{said}");
+    assert!(
+        told.contains("svrngs was updated, so it restarted to use the new one."),
+        "{told}"
+    );
+}
+
+/// **A program at svrngs's address that answers as an older svrngs is
+/// sent none of the token, and svrngs is restarted once**: Python holding
+/// the address answers 404 at `POST /v1/proof`; the command restarts
+/// svrngs once, as `svrngs restart` does, and svrngs can't start, since
+/// Python holds its address; the command, having asked again for its
+/// proof's while and been answered 404 alone, says something other than
+/// svrngs answers there and what to do (exit 1), never restarting again.
+/// Planted, watched failing: dd2efe63 asked for no restart and said the
+/// svrngs there is older.
+#[test]
+fn a_program_answering_as_an_older_svrngs_is_sent_none_of_the_token_and_svrngs_restarted_once() {
+    let (dir, stubs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (mut squatter, port, mut sent) = not_svrngs(&[], OLDER);
+    kept_at(dir.path(), port);
+    let svrngs = as_main::installed(stubs.path());
+    let log = stubs.path().join("log");
+    let then = format!(
+        "SVRNGS_DIR='{dir}' HOME='{dir}' '{svrngs}' >'{log}' 2>&1 &",
+        dir = dir.path().display(),
+        svrngs = svrngs.display(),
+        log = log.display()
+    );
+    restarting(stubs.path(), &then);
+    let (out, asked) = restarted(dir.path(), stubs.path());
+    squatter.kill().unwrap();
+    let mut seen = String::new();
+    sent.read_to_string(&mut seen).unwrap();
+    sent_none_of_the_token(&seen);
+    let asks = seen.lines().filter(|l| !l.is_empty());
+    assert!(
+        asks.clone().all(|l| l.contains("POST /v1/proof HTTP/1.1")),
+        "{seen}"
+    );
+    assert!(asks.count() > 1, "asked again after the restart: {seen}");
+    assert_eq!(asked, [restart_asked()], "one restart, never another");
+    let started = std::fs::read_to_string(&log).unwrap_or_default();
+    let held = format!("Another program on this computer holds 127.0.0.1:{port}");
+    assert!(
+        started.contains(&held),
+        "svrngs couldn't start there: {started}"
+    );
+    let told = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{told}");
+    unproven(port, (1, told.trim().trim_start_matches("svrngs: ").into()));
 }

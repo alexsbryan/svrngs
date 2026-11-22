@@ -1115,15 +1115,31 @@ impl Here for PathBuf {
         let read = |file| std::fs::read_to_string(self.join(file)).unwrap_or_default();
         let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
         let body = serde_json::to_string(body).expect("an ask is JSON");
-        let asked = svrngs_node::api::asked(&api, route, token.trim(), body).await;
+        let ask = || svrngs_node::api::asked(&api, route, token.trim(), body.clone());
+        let mut asked = ask().await;
+        // An older svrngs, as an update leaves one running: restarted once,
+        // as `svrngs restart` restarts it (the operator, 2026-11-21:
+        // "Restart automatically"), and asked again 100 ms apart while it
+        // stops and starts, for as long as its proof is waited for.
+        if asked == Err(Withheld::Older) && restart(self).is_ok() {
+            let mut tries = PROVE_WITHIN.as_millis() / 100;
+            while tries > 0 && matches!(asked, Err(Withheld::Away | Withheld::Older)) {
+                tries -= 1;
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                asked = ask().await;
+            }
+            if asked.is_ok() {
+                eprintln!("svrngs was updated, so it restarted to use the new one.");
+            }
+        }
         tracing::debug!(target: "cli", api, route, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs running here answered, or what answers there was sent none of the token, and why");
-        // Nothing there, as before; svrngs too old to prove itself; or
-        // something else there, refused; or nothing proved in time, so
-        // the person tries again.
+        // Nothing there, as before; an older svrngs still, holding its data
+        // dir, or else something else there, refused; or nothing proved in
+        // time, so the person tries again.
         let (status, text) = asked.map_err(|why| match why {
             Withheld::Away => Refusal::from(Unjudged::NotRunning),
-            Withheld::Older => Refused::Behind.into(),
-            Withheld::Unproven => Refused::Unproven(api.trim().into()).into(),
+            Withheld::Older if claim(self).is_err() => Refused::Behind.into(),
+            Withheld::Older | Withheld::Unproven => Refused::Unproven(api.trim().into()).into(),
             Withheld::Unanswered => Unjudged::Unanswered(api.trim().into()).into(),
         })?;
         let ok = (200..300).contains(&status);

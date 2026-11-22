@@ -909,10 +909,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 7 out), after a pass cut 22 from the files it touches (89501745: uid.rs
 # `read`, `diag::socket`, `mac::Scan`, `linux::procs`, `waited`,
 # `record::start`; cli.rs `parse`). Lowered to where it lands.
+# Then 8 for an older svrngs, as an update leaves one running, to be
+# restarted once by the command that finds it, as `svrngs restart` does
+# (cli.rs `Here::ask`, 12), after a pass cut 4 there (6ce73f42: cli.rs
+# `share_readers`): 24,391. The operator, 2026-11-21: "Restart
+# automatically", approved as about 10 lines.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24384,
+    ".": 24392,
 
     "js": 8694,
 

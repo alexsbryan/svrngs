@@ -423,8 +423,13 @@ vectors). The route answers without the token and tells nothing of it. So
 a program holding svrngs's address while svrngs is down, of any account,
 in a container or not, running svrngs's own file or not, or carrying the
 challenge to svrngs on a connection of its own, is sent none of the token,
-and the person is told what to do; a svrngs that answers 404 there is
-older than the command, and the person is told to restart it. The asker
+and the person is told what to do. A svrngs that answers 404 there is
+older than the command, as an update leaves it running: the command
+restarts it once, as `svrngs restart` does, and asks it again as it
+comes back (the operator, 2026-11-21: "Restart automatically"); what
+still answers 404 is an older svrngs if it holds the data directory, and
+otherwise something else at svrngs's address, refused as one. Give says
+to restart it. The asker
 waits up to 10 s for the proof (`PROVE_WITHIN`), since svrngs holds its
 address before it takes a connection there, so a svrngs starting is
 waited for, never refused. Any process on the lender's computer
@@ -937,6 +942,8 @@ A browser with none is refused with what that is and how to let it in:
 is not the default one. An open is single-use and each browser keeps its own.
 `svrngs restart` asks launchd or systemd to stop and start it, so it works on
 any running build and closes as a logout does; one kept by neither is refused.
+A command that finds an older svrngs running, as pacman's update leaves it,
+restarts it that way itself, once, before it asks (§3).
 
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for
