@@ -10,6 +10,7 @@
 //! other target stops the build, saying so. The build asks no network: a
 //! fresh checkout or worktree runs [`FETCH`] once.
 
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -110,10 +111,18 @@ fn main() {
     // Archived by the target's archiver, which cargo-zigbuild names, as
     // Apple's writes an ELF archive no index (b1-targets.md, failure 3); and
     // linked whole, as nothing in Rust names the shim: only SQLite does.
+    // Named by its object's hash, so rustc's command for svrngs-db changes
+    // whenever the object does: sccache keys a crate on that command and
+    // hashes a static library only of the plain kind `static`, never one
+    // linked whole (sccache 0.15.0, src/compiler/rust.rs:1099-1102), so a
+    // fork bump got back the library linked with the engine before it.
+    // DefaultHasher::new is the same hash on every run of one toolchain.
+    let mut hash = DefaultHasher::new();
+    std::fs::read(&all).expect("the object is read").hash(&mut hash);
     cc::Build::new()
         .object(&all)
         .link_lib_modifier("+whole-archive")
-        .compile("crsqlite_svrngs");
+        .compile(&format!("crsqlite_svrngs_{:016x}", hash.finish()));
 }
 
 /// What `cmd` printed, or the build stopped with what it said, and [`FETCH`].
