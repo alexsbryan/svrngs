@@ -56,6 +56,9 @@ pub struct Native {
     /// The program and its arguments, as words that no shell splits. A word
     /// may begin `~/`, for the home folder of whoever keeps it.
     pub command: Vec<String>,
+    /// The name it is started under, its first argument, when that is not
+    /// the program's path: a copy of a renamed process keeps it (`exec -a`).
+    pub argv0: Option<String>,
     /// The folder it runs in: absolute, `~`, or under `~/`.
     pub folder: String,
     /// The settings it reads from the environment of whoever keeps it, by
@@ -240,17 +243,18 @@ const NETWORK: &str = "give runs each app on a network of its own, so a custom n
 const NATIVE_ALONE: &str =
     "a native card runs its own program in its own folder, so it has no services, volumes or asks";
 
-/// `x-svrngs.native`: `command`, `folder`, and `environment` if it reads any.
+/// `x-svrngs.native`: `command`, `folder`, and `argv0` and `environment` if
+/// it has them.
 /// Each value becomes a line of a systemd unit, so a control character, which
 /// could begin another line, is refused in all of them.
 fn read_native(v: &Value) -> Result<Native, Refused> {
     let at = "x-svrngs.native";
     let m = mapping(v, at)?;
     for key in keys(m, at)? {
-        if !matches!(key, "command" | "folder" | "environment") {
+        if !matches!(key, "command" | "argv0" | "folder" | "environment") {
             return refuse(
                 &format!("{at}.{key}"),
-                "a native program has a command, a folder and the names of its environment",
+                "a native program has a command, the name it starts under (argv0), a folder and the names of its environment",
             );
         }
     }
@@ -272,6 +276,14 @@ fn read_native(v: &Value) -> Result<Native, Refused> {
     for word in &command {
         plain(word, "command")?;
     }
+    let argv0 = match m.get("argv0") {
+        None => None,
+        Some(v) => {
+            let argv0 = string(v, &format!("{at}.argv0"))?;
+            plain(&argv0, "argv0")?;
+            Some(argv0)
+        }
+    };
     let folder = string(get(m, "folder", at)?, &format!("{at}.folder"))?;
     plain(&folder, "folder")?;
     if !(folder.starts_with('/') || folder == "~" || folder.starts_with("~/")) {
@@ -301,6 +313,7 @@ fn read_native(v: &Value) -> Result<Native, Refused> {
     };
     Ok(Native {
         command,
+        argv0,
         folder,
         environment,
     })

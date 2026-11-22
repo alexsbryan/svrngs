@@ -146,6 +146,24 @@ fn keep_stores_the_card_writes_its_unit_and_enables_it_now() {
     );
 }
 
+/// A renamed process's copy starts under its own name: systemd's `@` gives
+/// the word after the program as its first argument.
+#[test]
+fn an_argv0_is_the_word_after_the_program() {
+    let here = Here::new();
+    let card = CODER.replace("    folder: ~/models\n", "    argv0: coder-py\n    folder: ~/models\n");
+    here.keep(&card).unwrap();
+    let exec = body(&here.unit())
+        .lines()
+        .find(|l| l.starts_with("ExecStart="))
+        .unwrap()
+        .to_string();
+    assert!(
+        exec.starts_with(r#"ExecStart=@"/usr/bin/llama-server" "coder-py" "-m" "%h/models/q.gguf""#),
+        "{exec}"
+    );
+}
+
 #[test]
 fn keep_twice_resets_nothing() {
     let here = Here::new();

@@ -20,7 +20,14 @@ pub fn unit_name(name: &Name) -> String {
 /// The unit file for `card`, kept under `name`.
 pub fn native(name: &Name, card: &Card, native: &Native) -> String {
     let name = name.as_str();
-    let exec = native.command.iter().map(|w| word(w)).collect::<Vec<_>>().join(" ");
+    let mut words: Vec<String> = native.command.iter().map(|w| word(w)).collect();
+    // `@`: the word after the program is the first argument it is given,
+    // the name it was started under (systemd.service(5), ExecStart=).
+    if let Some(argv0) = &native.argv0 {
+        words[0] = format!("@{}", words[0]);
+        words.insert(1, word(argv0));
+    }
+    let exec = words.join(" ");
     let mut text = format!(
         "# svrngs-keeper keeps {name} from its card, version {version}.\n\
          # svrngs-keeper keep writes this file again: change the card, not this file.\n\

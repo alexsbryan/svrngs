@@ -45,6 +45,7 @@ fn a_native_card_is_read_whole() {
             ]
             .map(String::from)
             .to_vec(),
+            argv0: None,
             folder: "~/models".into(),
             environment: vec!["HIP_VISIBLE_DEVICES".into(), "_X1".into()],
         })
@@ -66,6 +67,28 @@ fn its_environment_is_optional_and_its_folder_may_be_absolute() {
     .unwrap();
     let native = card.native.unwrap();
     assert_eq!((native.folder.as_str(), native.environment.len()), ("/srv/models", 0));
+}
+
+/// A copy of a renamed process keeps the name it was started under.
+#[test]
+fn its_argv0_is_read_and_held_to_one_plain_line() {
+    let card = Card::parse(&with(
+        "    folder: ~/models\n",
+        "    argv0: coder-py\n    folder: ~/models\n",
+    ))
+    .unwrap();
+    assert_eq!(card.native.unwrap().argv0.as_deref(), Some("coder-py"));
+    let (field, why) = refused(&with(
+        "    folder: ~/models\n",
+        "    argv0: \"a\\nb\"\n    folder: ~/models\n",
+    ));
+    assert_eq!(field, "x-svrngs.native.argv0");
+    assert!(why.contains("control character"), "{why}");
+    let (field, _) = refused(&with(
+        "    folder: ~/models\n",
+        "    argv0: [a]\n    folder: ~/models\n",
+    ));
+    assert_eq!(field, "x-svrngs.native.argv0");
 }
 
 #[test]
