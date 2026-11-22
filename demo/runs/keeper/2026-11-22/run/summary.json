@@ -1,0 +1,205 @@
+{
+ "head": "1a7de2a0",
+ "cases": {
+  "lent from the terminal": {
+   "verdict": "passed",
+   "answered": {
+    "uptime": 19.92,
+    "t": 1795386415.015727,
+    "what": "answered",
+    "ms": 5.7,
+    "said": "{\"status\":\"ok\"}"
+   }
+  },
+  "promoted": {
+   "verdict": "passed",
+   "exit": 0,
+   "unit": [
+    "ActiveState=active",
+    "SubState=running",
+    "UnitFileState=enabled",
+    "ActiveEnterTimestampMonotonic=22122245",
+    "NRestarts=0"
+   ]
+  },
+  "lent after the promotion, nothing approved again": {
+   "verdict": "passed",
+   "answered": {
+    "uptime": 23.76,
+    "t": 1795386418.8611202,
+    "what": "answered",
+    "ms": 6.2,
+    "said": "{\"status\":\"ok\"}"
+   }
+  },
+  "boot 1: Alex's link opens, Sam typed nothing": {
+   "verdict": "passed",
+   "answered_at_uptime": 7.5,
+   "request_ms": 7.9,
+   "chat": {
+    "uptime": 8.89,
+    "t": 1795386440.9567149,
+    "what": "chat",
+    "status": 200,
+    "ms": 1391.4,
+    "said": "Hello! How can I assist you today"
+   },
+   "sessions_at_boot": [
+    "1 1000 sam  - 822 manager - no -",
+    "2 1001 alex - 823 manager - no -"
+   ],
+   "boot": "Startup finished in 662ms (kernel) + 2.374s (initrd) + 3.888s (userspace) = 6.925s",
+   "unit": [
+    "ActiveState=active",
+    "SubState=running",
+    "UnitFileState=enabled",
+    "ActiveEnterTimestampMonotonic=6922586",
+    "NRestarts=0"
+   ]
+  },
+  "boot 2: Alex's link opens, Sam typed nothing": {
+   "verdict": "passed",
+   "answered_at_uptime": 7.4,
+   "request_ms": 8.8,
+   "chat": {
+    "uptime": 8.85,
+    "t": 1795386455.945384,
+    "what": "chat",
+    "status": 200,
+    "ms": 1441.4,
+    "said": "Hello! How can I assist you today"
+   },
+   "sessions_at_boot": [
+    "1 1000 sam  - 823 manager - no -",
+    "2 1001 alex - 824 manager - no -"
+   ],
+   "boot": "Startup finished in 619ms (kernel) + 2.342s (initrd) + 3.862s (userspace) = 6.824s",
+   "unit": [
+    "ActiveState=active",
+    "SubState=running",
+    "UnitFileState=enabled",
+    "ActiveEnterTimestampMonotonic=6821926",
+    "NRestarts=0"
+   ]
+  },
+  "boot 3: Alex's link opens, Sam typed nothing": {
+   "verdict": "passed",
+   "answered_at_uptime": 7.55,
+   "request_ms": 8.6,
+   "chat": {
+    "uptime": 9.0,
+    "t": 1795386471.0992494,
+    "what": "chat",
+    "status": 200,
+    "ms": 1446.7,
+    "said": "Hello! How can I assist you today"
+   },
+   "sessions_at_boot": [
+    "1 1000 sam  - 827 manager - no -",
+    "2 1001 alex - 828 manager - no -"
+   ],
+   "boot": "Startup finished in 612ms (kernel) + 2.343s (initrd) + 3.837s (userspace) = 6.793s",
+   "unit": [
+    "ActiveState=active",
+    "SubState=running",
+    "UnitFileState=enabled",
+    "ActiveEnterTimestampMonotonic=6788059",
+    "NRestarts=0"
+   ]
+  },
+  "kill -9: restarted and renewed": {
+   "verdict": "passed",
+   "killed_at_uptime": 12.21,
+   "pid": "867",
+   "answered_after_s": 2.82,
+   "request_ms": 4.1,
+   "unit": [
+    "ActiveState=active",
+    "SubState=running",
+    "UnitFileState=enabled",
+    "ActiveEnterTimestampMonotonic=14468621",
+    "NRestarts=1"
+   ]
+  },
+  "unshare: Alex is answered nothing, coder runs for Sam": {
+   "verdict": "passed",
+   "last": {
+    "uptime": 47.9,
+    "t": 1795386510.0020044,
+    "what": "nothing answered",
+    "last": {
+     "state": "no coder listed",
+     "lent": {
+      "changed": [],
+      "lent": [],
+      "namespace": "15f224f0f7c5895688f9dcdf347ec84f21837e6cca0d6aff930f9ed9bc7c4b98",
+      "older": [],
+      "refused": [],
+      "shelf": [
+       {
+        "name": "Money",
+        "words": "who owes whom, and for what."
+       },
+       {
+        "name": "Events",
+        "words": "the get-togethers people post, and who\u2019s coming."
+       },
+       {
+        "name": "House-rules",
+        "words": "the rules your house agrees, and how you agree them."
+       },
+       {
+        "name": "Movie-Night",
+        "words": "the films your friends lend, and who has each."
+       }
+      ],
+      "unanswered": [],
+      "unheard": []
+     }
+    }
+   },
+   "straight": "200"
+  },
+  "boot 4 after unshare: still not lent, still running": {
+   "verdict": "passed",
+   "last": {
+    "uptime": 6.99,
+    "t": 1795386521.0514107,
+    "what": "start",
+    "boot_id": "abc978a5-4006-4168-aead-123350df285f",
+    "sessions": [
+     "1 1001 alex - 819 manager - no -",
+     "2 1000 sam  - 818 manager - no -"
+    ],
+    "bound": 300
+   },
+   "straight": "200",
+   "unit": [
+    "ActiveState=active",
+    "SubState=running",
+    "UnitFileState=enabled",
+    "ActiveEnterTimestampMonotonic=6953750",
+    "NRestarts=0"
+   ]
+  },
+  "stop stays stopped at boot": {
+   "verdict": "passed",
+   "unit": [
+    "ActiveState=inactive",
+    "SubState=dead",
+    "UnitFileState=disabled",
+    "ActiveEnterTimestampMonotonic=0",
+    "NRestarts=0"
+   ],
+   "straight": "000"
+  }
+ },
+ "typed_as_sam": [
+  "systemctl --user enable --now svrngs.service; sleep 3; svrngs new house --as Sam --relay http://127.0.0.1:7900",
+  "llama-server -m ~/models/qwen2.5-0.5b.gguf --port 8101 -c 4096",
+  "svrngs share 8101 --program llama-server --name coder --group house",
+  "svrngs-keeper keep 8101 --lend coder",
+  "svrngs unshare coder",
+  "svrngs-keeper stop coder"
+ ]
+}

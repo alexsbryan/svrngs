@@ -20,12 +20,11 @@ PORT = 2223
 SSH = ["-i", str(W / "key"), "-p", str(PORT), "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
        "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=5"]
 SCP = ["-P" if a == "-p" else a for a in SSH]
-hidden, cases, typed = [], {}, []
+cases, typed = {}, []
 
 
 def say(event, **kw):
-    line = json.dumps({"t": round(time.time(), 3), "event": event, **kw})
-    for h in hidden: line = line.replace(h, "<the link>")
+    line = re.sub(r"svrngs://join/[A-Za-z0-9_-]+", "<the link>", json.dumps({"t": round(time.time(), 3), "event": event, **kw}))
     print(line, flush=True)
     with open(OUT / "events.jsonl", "a") as f: f.write(line + "\n")
 
@@ -167,7 +166,6 @@ def main():
         code, said = terminal("systemctl --user enable --now svrngs.service; sleep 3; svrngs new house --as Sam --relay http://127.0.0.1:7900")
         link = re.search(r"svrngs://join/\S+", said)
         if not link: sys.exit("no link")
-        hidden.append(link[0])
         say("join", said=alex(f"/usr/local/bin/svrngs join {link[0]} --as Alex", 120).strip()[-400:].replace(link[0], "<the link>"))
         llama = subprocess.Popen(["ssh", *SSH, "-tt", "sam@127.0.0.1", "llama-server -m ~/models/qwen2.5-0.5b.gguf --port 8101 -c 4096"],
                                  stdin=subprocess.PIPE, stdout=open(OUT / "terminal-llama.log", "w"), stderr=subprocess.STDOUT)
