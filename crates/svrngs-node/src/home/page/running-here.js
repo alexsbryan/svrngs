@@ -163,12 +163,10 @@ function Running({ groups, home }) {
   `;
 }
 
+// Drawn once the person is in a group (home-page.js `MEMBERS`).
 /** @param {HOME.PlaceProps} props */
 function RunningPlace({ s: state, home }) {
-  // HOME draws its places once the groups are read (home-page.js `Home`).
-  const groups = /** @type {Choice[]} */ (state.groups);
-  if (groups.length === 0) return false;
-  return html`<${Running} groups=${groups} home=${home} />`;
+  return html`<${Running} groups=${/** @type {Choice[]} */ (state.groups)} home=${home} />`;
 }
 
 /** @type {{ running: (props: HOME.PlaceProps) => Drawn }} */
