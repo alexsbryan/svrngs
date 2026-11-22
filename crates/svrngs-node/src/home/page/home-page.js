@@ -159,7 +159,6 @@ export function Home({ store, flows, places }) {
           me=${state.key}
           round=${state.round}
           places=${places}
-          flows=${flows}
           home=${home}
           grouped=${grouped}
           hidden=${grouped && query.group !== group.id}
