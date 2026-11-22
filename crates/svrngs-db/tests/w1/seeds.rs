@@ -8,7 +8,7 @@ use crate::sim::{self, TABLES};
 
 /// The gate's seeds, which run in under ten seconds: 1,000 runs took 2.9 s
 /// in a debug build on an M-series Mac.
-const GATE: std::ops::Range<u64> = 0..1000;
+pub const GATE: std::ops::Range<u64> = 0..1000;
 
 fn model(site: Site) -> ModelCopy {
     ModelCopy::new(site, TABLES)

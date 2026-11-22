@@ -16,19 +16,19 @@ use crate::change::{ChangeSet, Rng, SetId, Site, State, Val};
 use crate::reference;
 use crate::replica::{Op, Replica, Table};
 
-/// The simulator's schema, as SQL:
-///
-/// ```sql
-/// CREATE TABLE magnets (id TEXT PRIMARY KEY NOT NULL, pos INTEGER, word TEXT, x);
-/// CREATE TABLE votes (person_key TEXT NOT NULL, item INTEGER NOT NULL,
-///   n INTEGER, note TEXT, PRIMARY KEY (person_key, item)) STRICT;
-/// ```
-///
-/// `votes` is owned (APP_STATE §4, "Who may write which row"), and each
-/// device writes it only under its own person's key, as an honest one does.
-/// `x` has no type, so SQLite converts no value put in it (its affinity is
-/// BLOB), and it takes every kind of value; every other column takes only
-/// its own type, its text never a number's.
+/// The simulator's schema, as SQL. `votes` is owned (APP_STATE §4, "Who may
+/// write which row"), and each device writes it only under its own person's
+/// key, as an honest one does. `x` has no type, so SQLite converts no value
+/// put in it (its affinity is BLOB), and it takes every kind of value; every
+/// other column takes only its own type, its text never a number's.
+pub const SCHEMA: &str = "
+    CREATE TABLE magnets (id TEXT PRIMARY KEY NOT NULL, pos INTEGER, word TEXT, x);
+    CREATE TABLE votes (person_key TEXT NOT NULL, item INTEGER NOT NULL,
+      n INTEGER, note TEXT, PRIMARY KEY (person_key, item)) STRICT;";
+
+/// `SCHEMA`'s tables as the model copy reads them, each with its non-key
+/// columns in schema order. The live copy holds these to the columns the
+/// engine reads from `SCHEMA` (`live.rs`, `LiveCopy::new`).
 pub const TABLES: &[Table] = &[
     Table {
         name: "magnets",
@@ -346,7 +346,7 @@ impl<R: Replica> Sim<R> {
 }
 
 /// The first row two states differ in.
-fn diff(got: &State, want: &State) -> String {
+pub fn diff(got: &State, want: &State) -> String {
     let keys: BTreeSet<_> = got.keys().chain(want.keys()).collect();
     for key in keys {
         let (g, w) = (got.get(key), want.get(key));
