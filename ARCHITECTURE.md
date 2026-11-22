@@ -692,9 +692,13 @@ Elsewhere `Owner::NoReader`. `uid::mine` is this process's own uid.
 sockets, a late accept among them.
 
 **`crates/svrngs-db`**: an app's database in a group, beside the record and
-never in it (PLAN §1, "Persistence for carried apps"). None of it is built
-yet: `src/lib.rs` is its doc and the crate root's `deny(unsafe_code)`, and
-its dependencies are none. Its tests come first. `tests/w1/` holds the
+never in it (PLAN §1, "Persistence for carried apps"). `build.rs` builds
+cr-sqlite from its source, the submodule `vendor/cr-sqlite`, into one object
+whose one global symbol is `shim.c`'s, checked by `nm`; SQLite, as rusqlite
+bundles it, calls that shim as it starts (`SQLITE_EXTRA_INIT`,
+`.cargo/config.toml`), so cr-sqlite is on every connection and no Rust calls
+it (`tests/crsqlite.rs`). The database's own code is not built yet. Its
+tests came first. `tests/w1/` holds the
 reference model every copy of a database is checked against (`reference.rs`,
 the join of every admissible change set); the model copy, cr-sqlite's
 merge as Fly's fork does it (`replica.rs`), behind the trait the database's

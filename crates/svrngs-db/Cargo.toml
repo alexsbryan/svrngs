@@ -3,6 +3,15 @@ name = "svrngs-db"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "An app's database in a group: SQLite tables beside the group's record, a copy on every member's computer, merged by cr-sqlite. So far only its tests: the reference model every copy is checked against, and the seeded simulator of deliveries."
+description = "An app's database in a group: SQLite tables beside the group's record, a copy on every member's computer, merged by cr-sqlite, which build.rs builds from its source in the submodule vendor/cr-sqlite and SQLite registers as it starts. Its tests hold the reference model every copy is checked against, and the seeded simulator of deliveries."
 
-# No dependencies yet: the crate's code is its tests, which need none.
+[dependencies]
+# SQLite 3.54.1, bundled, its build told the shim by /.cargo/config.toml;
+# `hooks` for the authorizer and the progress handler (svrn-docs APP_STATE §4,
+# "What SQL may do"). 0.41, not the spike's 0.35, which RUSTSEC-2026-0459
+# flags (APP_STATE §8 q8).
+rusqlite = { version = "=0.41.0", features = ["bundled", "hooks"] }
+
+[build-dependencies]
+# cr-sqlite's four C files and the shim, by the target's C compiler.
+cc = "1"

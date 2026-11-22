@@ -147,7 +147,11 @@ and every raise gives its reason.
 
 You need:
 - Rust 1.91 or later, with rustfmt and clippy;
-- Node.js 24 or later, then `npm ci --prefix web`.
+- Node.js 24 or later, then `npm ci --prefix web`;
+- cr-sqlite's source, once in each checkout or worktree:
+  `git submodule update --init`, then `cargo fetch --manifest-path
+  vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml`, since the build itself
+  asks no network.
 
 Then run:
 

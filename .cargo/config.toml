@@ -1,0 +1,8 @@
+# SQLite, as rusqlite bundles it in svrngs-db, calls svrngs-db's shim once
+# as it starts (SQLITE_EXTRA_INIT), and the shim has cr-sqlite loaded on every
+# connection opened after: so no Rust in svrngs calls cr-sqlite, and nothing
+# is `unsafe` (crates/svrngs-db/shim.c, build.rs). A build that names no shim
+# here opens no database: svrngs-db refuses one without cr-sqlite, out loud.
+# Set in the environment, the variable wins, as a plant does.
+[env]
+LIBSQLITE3_FLAGS = "-DSQLITE_EXTRA_INIT=svrngs_crsqlite"
