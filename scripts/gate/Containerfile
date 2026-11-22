@@ -107,8 +107,11 @@ RUN cargo install cargo-deny --locked --version 0.20.2 \
  && rm -rf "$CARGO_HOME/registry"/* "$CARGO_HOME/git"/*
 WORKDIR /work
 # What the image runs, in the checkout mounted at /work: Linux builds of
-# oxlint and Playwright first, and check.sh either way, which fails its lint
-# and browser steps naming this install when it did not take.
+# oxlint and Playwright first; cr-sqlite's source, the submodule, and its
+# crates, into the registry volume, which svrngs-db's build.rs takes with no
+# network (README.md, "Work on svrngs"); and check.sh either way, which
+# fails its lint and browser steps naming the install, and its build naming
+# the fetch, when either did not take.
 # CARGO_INCREMENTAL=0 as the loops run, so target/ stays smaller; USER as
 # a login sets it and podman does not (crates/svrngs/tests/name.rs reads it).
 ENV CARGO_INCREMENTAL=0 USER=gate
@@ -117,4 +120,4 @@ ENV CARGO_INCREMENTAL=0 USER=gate
 COPY delegate.sh /usr/local/bin/delegate
 USER root
 ENTRYPOINT ["/usr/local/bin/delegate"]
-CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; exec scripts/check.sh"]
+CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; git submodule update --init && cargo fetch --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml || echo 'note       the cr-sqlite source or its crates did not fetch'; exec scripts/check.sh"]

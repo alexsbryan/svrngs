@@ -3,6 +3,12 @@ resolver = "3"
 # apps/give and its fold are here so the gate's rustfmt, clippy and tests reach
 # them; neither links a svrngs crate (apps/give/Cargo.toml).
 members = ["crates/svrngs-core", "crates/svrngs-runtime", "crates/svrngs-node", "crates/svrngs-db", "crates/svrngs", "apps/give", "apps/give/fold"]
+# Kept out, so cr-sqlite's bundle in vendor/cr-sqlite is a workspace of its
+# own and README.md's `cargo fetch --manifest-path` reaches it ("Work on
+# svrngs"). A worktree under .claude/worktrees is kept out too: cargo walks
+# past the worktree's own `exclude` to this checkout's workspace, and takes
+# the worktree's bundle for a stray of it.
+exclude = ["vendor", ".claude/worktrees"]
 
 [workspace.package]
 version = "1.13.3"

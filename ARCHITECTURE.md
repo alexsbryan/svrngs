@@ -694,7 +694,8 @@ sockets, a late accept among them.
 **`crates/svrngs-db`**: an app's database in a group, beside the record and
 never in it (PLAN §1, "Persistence for carried apps"). `build.rs` builds
 cr-sqlite from its source, the submodule `vendor/cr-sqlite`, into one object
-whose one global symbol is `shim.c`'s, checked by `nm`; SQLite, as rusqlite
+whose one global symbol is `shim.c`'s, checked by `nm`, for the release's
+four targets and the Linux gate's; SQLite, as rusqlite
 bundles it, calls that shim as it starts (`SQLITE_EXTRA_INIT`,
 `.cargo/config.toml`), so cr-sqlite is on every connection and no Rust calls
 it (`tests/crsqlite.rs`). The database's own code is not built yet. Its
