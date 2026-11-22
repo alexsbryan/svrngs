@@ -270,7 +270,7 @@ pub(crate) enum Unplayed {
     /// place (`crate::surface::AppRoute`), or by a read's address: the
     /// lends its page reads, whose read addresses outlive Play, its stop,
     /// its opener, its reads through svrngs.
-    #[error("Play lets a program on this computer use the lend itself, and this asked svrngs’s own address there, which answers only your browser, or a program with your token")]
+    #[error("Play lets a program on this computer use the lend itself, and this asked svrngs’s own address there, which answers only your browser, or a program asking as you through apps/client/svrngs.mjs")]
     Svrngs,
 }
 
@@ -278,9 +278,11 @@ pub(crate) enum Unplayed {
 /// sends it (read 2026-11-21): `Authorization`, OpenAI's and Anthropic's
 /// and most; `x-api-key`, as Anthropic's pages spell a request;
 /// `api-key`, Azure OpenAI's; `x-goog-api-key`, Google's. Taken off a
-/// request Play lets in, unread, in any case, as a header's name is one. A
-/// key in its address or a cookie is not one svrngs can tell from the rest.
-const KEYS: [&str; 4] = ["authorization", "x-api-key", "api-key", "x-goog-api-key"];
+/// request Play lets in, unread, in any case, as a header's name is one;
+/// and where svrngs refuses its own token, at any address
+/// (`crate::api::Bearer`). A key in its address or a cookie is not one
+/// svrngs can tell from the rest.
+pub(crate) const KEYS: [&str; 4] = ["authorization", "x-api-key", "api-key", "x-goog-api-key"];
 
 /// Whether the socket a program asked from, as `owner`, is of this
 /// process's account, `me`: Play's rule of whose program it lets in.

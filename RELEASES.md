@@ -57,7 +57,8 @@ the `svrngs` command and the menu entry restart it, and Give says to run
 `svrngs restart`.
 
 **Your own programs ask with `svrngs ask`.** svrngs now refuses a program
-that sends its token, and says what to do instead. From a script in any
+that sends its token as a key, in any of the headers above and however
+it writes it, and says what to do instead. From a script in any
 language, run `svrngs ask /v1/groups` to read svrngs, or `svrngs ask
 <route> '<json>'` to post to it: it prints svrngs's answer, and exits 1,
 saying why, when svrngs refuses. A JavaScript program can copy

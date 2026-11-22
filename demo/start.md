@@ -208,8 +208,8 @@ do.
   more"***. It was given svrngs's token as its key. Give it any text
   instead, with Play on (step 9).
 - **A program gets `{"error":"this page answers only itself"}`.** It was
-  given the home page's address. Give it the address **Copy its address
-  for a program** copies instead (step 9).
+  given the home page's address. Give it the address **Play** copies
+  instead (step 9).
 - **"llama-server is lent to 2 people at once, and 2 are using it now: try
   again when one stops. …"** Sam chose how many people may use it at
   once, on Sam's home page. Try again in a minute, or ask Sam to let more

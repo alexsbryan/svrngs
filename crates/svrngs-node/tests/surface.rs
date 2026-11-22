@@ -1280,15 +1280,19 @@ async fn svrngs_proves_itself_and_routes_each_request_on_that_connection_by_its_
 /// **svrngs takes its token from no program, at its API, its home page or
 /// a lend's address, on either loopback, and logs none of it, nor any code**
 /// ("Never send the key", V1.13.3; the never-send-the-key review's gate):
-/// on a node's real socket, at 127.0.0.1 and ::1, `Authorization: Bearer
-/// <its token>` is refused 401 with words that say what to use instead,
-/// leading to Play at a lend's address, on the record, the proof's route,
-/// sign-in's, the home page's and a lend's page and their public bootstrap
-/// alike; a code asked as you on each loopback is answered; and nothing
-/// the node traces at debug, every target's, holds the token or a code.
-/// Planted, watched failing: 96ea3da7 answered the token at the record 200
-/// and took it at a lend's address on to the lend (404 "nothing is lent
-/// here by that name").
+/// on a node's real socket, at 127.0.0.1 and ::1, its token sent as a key
+/// in each way a program may send one (`common::keyed`: `Authorization`
+/// with its scheme in any case or none, more whitespace, words after it;
+/// `X-Api-Key`, `Api-Key`, `X-Goog-Api-Key`) is refused 401 with words
+/// that say what to use instead, leading to Play at a lend's address, on
+/// the record, the proof's route, sign-in's, the home page's and a lend's
+/// page and their public bootstrap alike; a code asked as you on each
+/// loopback is answered; and nothing the node traces at debug, every
+/// target's, holds the token or a code. Planted, watched failing: 96ea3da7
+/// answered the token at the record 200 and took it at a lend's address on
+/// to the lend (404 "nothing is lent here by that name"); the token read
+/// as `Authorization: Bearer <token>` alone, 126 of these 140 rows not
+/// refused so; and a lend's words naming `svrngs ask`.
 #[tokio::test]
 async fn svrngs_takes_its_token_from_no_program_and_logs_none_of_it() {
     use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
@@ -1302,7 +1306,7 @@ async fn svrngs_takes_its_token_from_no_program_and_logs_none_of_it() {
         format!("svrngs.localhost:{port}"),
     );
     let lend = format!("{label}.localhost:{port}");
-    let mut codes = Vec::new();
+    let (mut codes, mut wrong) = (Vec::new(), Vec::new());
     for ip in ["127.0.0.1", "::1"] {
         let at = SocketAddr::new(ip.parse().unwrap(), port);
         for (host, path, words) in [
@@ -1318,21 +1322,29 @@ async fn svrngs_takes_its_token_from_no_program_and_logs_none_of_it() {
             (&lend, "/", "press Play on it"),
             (&lend, "/svrngs-session-epoch", "press Play on it"),
         ] {
-            let mut on = tokio::net::TcpStream::connect(at).await.unwrap();
-            let asked = format!("GET {path} HTTP/1.1\r\nHost: {host}\r\nAuthorization: Bearer {token}\r\nConnection: close\r\n\r\n");
-            on.write_all(asked.as_bytes()).await.unwrap();
-            let mut answer = String::new();
-            on.read_to_string(&mut answer).await.unwrap();
-            let row = format!("{at} {host}{path}");
-            assert!(answer.starts_with("HTTP/1.1 401"), "{row}: {answer}");
-            let body: serde_json::Value =
-                serde_json::from_str(answer.split("\r\n\r\n").nth(1).unwrap()).unwrap();
-            let error = body["error"].as_str().unwrap_or_default();
-            assert!(
-                error.starts_with("svrngs doesn't take its token from a program any more")
-                    && error.contains(words),
-                "{row}: {body}"
-            );
+            for shown in common::keyed(&token) {
+                let mut on = tokio::net::TcpStream::connect(at).await.unwrap();
+                let asked = format!(
+                    "GET {path} HTTP/1.1\r\nHost: {host}\r\n{shown}\r\nConnection: close\r\n\r\n"
+                );
+                on.write_all(asked.as_bytes()).await.unwrap();
+                let mut answer = String::new();
+                on.read_to_string(&mut answer).await.unwrap();
+                let (head, said) = answer.split_once("\r\n\r\n").unwrap_or_default();
+                let body: serde_json::Value = serde_json::from_str(said).unwrap_or_default();
+                let error = body["error"].as_str().unwrap_or_default();
+                // At a lend, never `svrngs ask`, which asks svrngs's API alone.
+                let refused = head.starts_with("HTTP/1.1 401")
+                    && error.starts_with("svrngs doesn't take its token from a program any more")
+                    && error.contains(words)
+                    && !(host == &lend && error.contains("svrngs ask"));
+                if !refused {
+                    let status = head.lines().next().unwrap_or_default();
+                    let said: String = said.chars().take(70).collect();
+                    let shown = shown.replace(&token, "<token>");
+                    wrong.push(format!("{at} {host}{path} {shown:?}: {status} {said}"));
+                }
+            }
         }
         let mut on = tokio::net::TcpStream::connect(at).await.unwrap();
         let code = svrngs_node::node::as_you_on(&mut on, &token).await;
@@ -1349,6 +1361,7 @@ async fn svrngs_takes_its_token_from_no_program_and_logs_none_of_it() {
         );
     }
     node.net().close().await;
+    assert!(wrong.is_empty(), "not refused: {wrong:#?}");
     let said = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
     assert!(said.contains("api: a caller on this computer"), "{said}");
     assert!(!said.contains(&token), "the token reached a log: {said}");

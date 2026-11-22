@@ -461,9 +461,11 @@ async fn play_lets_a_program_in_at_a_lend_s_address_on_either_loopback() {
 /// address for what svrngs answers there in the lend's place — the lends
 /// its page reads (`/svrngs-reads`, whose read addresses outlive Play),
 /// its stop, its opener, its reads through svrngs and by a read's address
-/// — is refused in words that say so, and Sam's program is sent nothing;
-/// the lend's own path, beside them, answers. Planted, watched failing:
-/// V1.13.3's candidate answered `/svrngs-reads` 200 with the lends it reads.
+/// — is refused in words that say so, and what does answer there, and Sam's
+/// program is sent nothing; the lend's own path, beside them, answers.
+/// Planted, watched failing: V1.13.3's candidate answered `/svrngs-reads`
+/// 200 with the lends it reads; the words sending a program to the token,
+/// which svrngs no longer takes.
 #[tokio::test(flavor = "multi_thread")]
 async fn play_reaches_the_lend_and_none_of_svrngs_s_own_addresses_at_it() {
     let (address, heads, [_sam, alex], _dirs) = played_at_an_address("own").await;
@@ -491,7 +493,10 @@ async fn play_reaches_the_lend_and_none_of_svrngs_s_own_addresses_at_it() {
         let answer = asked.send().await.unwrap();
         let (status, said) = (answer.status().as_u16(), answer.text().await.unwrap());
         assert_eq!(status, 403, "{path}: {said}");
+        // What does answer there, never the token it no longer takes.
+        let answers = "or a program asking as you through apps/client/svrngs.mjs";
         assert!(said.contains("svrngs’s own address"), "{path}: {said}");
+        assert!(said.contains(answers), "{path}: {said}");
     }
     assert!(
         heads.lock().unwrap().is_empty(),

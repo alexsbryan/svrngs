@@ -393,7 +393,9 @@ async fn nonce_of(on: &mut tokio::net::TcpStream) -> Challenge {
 /// **A code asks only on the connection, and after the proof, it was made
 /// for; and svrngs's token itself is refused** (`Bearer::asked`, `as_whom`,
 /// `holds_the_token`, served as svrngs serves them): each answered 401 in
-/// words that say what to do. Planted, each watched failing: a code with
+/// words that say what to do, a Bearer that isn't the token as no code.
+/// Planted, each watched failing: another Bearer said to be the token; a
+/// code with
 /// none of its connection's ends in it (the relay's, made for the asker's
 /// own ends, was taken); one nonce for every connection, the last proof's
 /// (a code for an unproved connection was taken); every nonce svrngs gave
@@ -482,8 +484,8 @@ async fn a_code_asks_only_on_the_connection_and_after_the_proof_it_was_made_for(
     );
     refused(
         said(&mut a, &asking("Bearer another"), "").await,
-        Unasked::Bearer,
-        "another Bearer",
+        Unasked::Nothing,
+        "another Bearer, not the token",
     );
     let none = format!("GET /v1/asked HTTP/1.1\r\nHost: {addr}\r\n");
     refused(said(&mut a, &none, "").await, Unasked::Nothing, "nothing");

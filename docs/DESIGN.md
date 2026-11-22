@@ -416,9 +416,12 @@ vectors). svrngs takes a code only on the connection, and after the
 proof, it was made for, at the record and at a lend's address alike, and
 refuses one sent twice (`as_whom`, `Bearer::asked`); with none, every
 record route refuses 401, saying how to ask (`holds_the_token`,
-`Unasked`). The token itself, `Authorization: Bearer <token>`, is refused
-401 wherever it is shown, before any route runs, so its bytes reach no
-handler and no log; at a lend's address the words lead to Play. Any
+`Unasked`). The token itself, sent as a key, is refused 401 wherever it
+is shown, before any route runs: anywhere in `Authorization`, with a
+scheme in any case or none, or in any other header Play takes a key off
+(`X-Api-Key`, `Api-Key`, `X-Goog-Api-Key`; play.rs `KEYS`), compared in
+constant time; so its bytes reach no route and no log. At a lend's
+address the words lead to Play, and to the client the guide shows. Any
 language asks through `svrngs ask <route> [<json>]`, which prints
 svrngs's answer whole, or through the client the guide shows. Loopback
 alone was the boundary until give-token, and it is not one: a container
@@ -435,16 +438,20 @@ svrngs's own file or not, or carrying the challenge to svrngs on a
 connection of its own, is sent a challenge, and at most a code good for
 no other connection, never the token, and the person is told what to do.
 This guards who holds svrngs's address; it is no private channel against
-a program that can watch or change the connection itself. What answers
-404 there while a svrngs holds the data directory's lock is a svrngs
-older than the command, as an update leaves one running: where the login service runs
-svrngs over that data directory, the command restarts it once, as
-`svrngs restart` does, and asks it again as it comes back (the operator,
+a program that can watch or change the connection itself. When what
+answers there has no proof to give (404) while a svrngs holds the data
+directory's lock, the command takes it for a svrngs older than itself,
+as an update leaves one running: where the login service runs svrngs
+over that data directory, it restarts that svrngs once, as `svrngs
+restart` does, and asks again as it comes back (the operator,
 2026-11-21: "Restart automatically"); elsewhere, or if it is still older,
-the person is told what runs there and what to do. A 404 where no svrngs
-holds the lock is something else at svrngs's address, refused as one,
-and nothing is restarted for it; nor where the lock can't be looked at,
-which the command says. Give says to restart it. The asker waits up to
+the person is told what runs there and what to do. That is a judgment
+of when to restart, not a proof of who answers: a held lock says a
+svrngs runs over the data directory, not that it is what answers at the
+address, and either way what answers is sent the challenge alone. A 404
+where no svrngs holds the lock is refused as something else at svrngs's
+address, and nothing is restarted for it; nor where the lock can't be
+looked at, which the command says. Give says to restart it. The asker waits up to
 10 s for the whole proof, its head and its body (`PROVE_WITHIN`), since svrngs holds its
 address before it takes a connection there, so a svrngs starting is
 waited for, never refused. Any process on the lender's computer

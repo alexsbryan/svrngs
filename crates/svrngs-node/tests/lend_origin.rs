@@ -1268,9 +1268,11 @@ async fn play(node: &Node, turn: &str, name: &str) -> String {
 /// token). Sam lends a llama-server at an address, and a program on Alex's
 /// computer asks it as an OpenAI client does, `Authorization: Bearer` and
 /// any text. Play off, it is refused as before, the service never asked.
-/// svrngs's own token as that key is refused, Play off or on, saying to
-/// use Play ("Never send the key", V1.13.3; 96ea3da7 took it as the
-/// token, Play off, and on to the lend). Play on: answered, Node's `fetch`, which sends `Sec-Fetch-Mode` alone,
+/// svrngs's own token as that key, in each way a program may send one, is
+/// refused, Play off or on, saying to use Play ("Never send the key",
+/// V1.13.3; 96ea3da7 took it as the token, Play off, and on to the lend;
+/// planted, the token read as `Authorization: Bearer <token>` alone, each
+/// other way was given the generic page, and with Play on reached Sam's). Play on: answered, Node's `fetch`, which sends `Sec-Fetch-Mode` alone,
 /// too, and the key it sent never reaches Sam's computer; a page's
 /// request, by `Origin` or by `Sec-Fetch-Site`, is refused as before; a program of another account (the socket's owner read as
 /// another uid, or, as a Mac reads it, as none of this account's), or one
@@ -1311,19 +1313,27 @@ async fn play_lets_a_program_of_this_account_in_at_a_lend_s_address() {
     let off = asked("/v1/models", "").await;
     assert!(off.starts_with("HTTP/1.1 401"), "Play off: {off}");
     assert_eq!(reached(), 0, "Play off: the service was asked");
-    // svrngs's own token, sent as a key, is refused, Play on or off,
-    // saying to use Play, and reaches nothing.
-    let token = format!("Bearer {}", alex.token().trim());
+    // svrngs's own token, sent as a key in each way a program may send one
+    // (common::keyed), is refused, Play on or off, saying to use Play, and
+    // reaches nothing.
+    let token = alex.token().trim().to_string();
     let own = |at: &'static str| {
-        let rest =
-            format!("GET /v1/models HTTP/1.1\r\nConnection: close\r\nAuthorization: {token}\r\n");
-        let host = host.clone();
+        let (host, token) = (host.clone(), token.clone());
         async move {
-            let (head, body) = ask_on(api, &host, &rest).await;
-            assert!(
-                head.starts_with("HTTP/1.1 401") && body.contains("press Play on it"),
-                "{at}: {head}{body}"
-            );
+            let mut wrong = Vec::new();
+            for shown in common::keyed(&token) {
+                let rest = format!("GET /v1/models HTTP/1.1\r\nConnection: close\r\n{shown}\r\n");
+                let (head, body) = ask_on(api, &host, &rest).await;
+                if !(head.starts_with("HTTP/1.1 401") && body.contains("press Play on it")) {
+                    let status = head.lines().next().unwrap_or_default().to_string();
+                    let said: String = body.chars().take(70).collect();
+                    wrong.push(format!(
+                        "{:?}: {status} {said}",
+                        shown.replace(&token, "<token>")
+                    ));
+                }
+            }
+            assert!(wrong.is_empty(), "{at}, not refused: {wrong:#?}");
         }
     };
     own("Play off").await;

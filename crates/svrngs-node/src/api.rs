@@ -68,18 +68,24 @@ pub struct Bearer(std::sync::Arc<str>);
 
 impl Bearer {
     /// What `request` asks with, compared in constant time by the sign-in
-    /// provider's `same`: the token itself, `Authorization: Bearer
-    /// <token>`, refused as [`Unasked::Bearer`]; a code, `Authorization:
-    /// Svrngs <code>`, taken only where it is [`ask`]'s for the nonce its
-    /// connection's last proof gave ([`Line`]) and that connection's two
-    /// ends, else refused saying why; or none of these.
+    /// provider's `same`: the token itself, sent as a key, refused as
+    /// [`Unasked::Bearer`]: a word of its own anywhere in a header a
+    /// program sends a key in (`crate::play::KEYS`), so with a scheme in
+    /// any case or none, any whitespace, and anything after it; a code,
+    /// `Authorization: Svrngs <code>`, taken only where it is [`ask`]'s for
+    /// the nonce its connection's last proof gave ([`Line`]) and that
+    /// connection's two ends, else refused saying why; or none of these.
     fn asked(&self, request: &Request) -> Option<Result<(), Unasked>> {
         let (same, secret) = (crate::oidc::provider::same, self.secret().as_bytes());
-        let shown = request.headers().get_all(axum::http::header::AUTHORIZATION);
+        let headers = request.headers();
+        let shown = headers.get_all(axum::http::header::AUTHORIZATION);
         let shown: Vec<_> = shown.iter().map(|h| h.as_bytes()).collect();
-        let token = |t: &&[u8]| t.strip_prefix(b"Bearer ").is_some_and(|t| same(t, secret));
+        // Split at each byte the token, URL-safe base64 (`kept_token`), never holds.
+        let apart = |b: &u8| !b.is_ascii_alphanumeric() && !b"-_".contains(b);
+        let keys = crate::play::KEYS.iter().flat_map(|k| headers.get_all(*k));
+        let mut words = keys.flat_map(|key| key.as_bytes().split(apart));
         match shown[..] {
-            _ if shown.iter().any(token) => return Some(Err(Unasked::Bearer)),
+            _ if words.any(|word| same(word, secret)) => return Some(Err(Unasked::Bearer)),
             [_, _, ..] => return Some(Err(Unasked::Twice)),
             _ => {}
         }
@@ -236,13 +242,13 @@ pub enum Withheld {
 /// say what to do instead.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum Unasked {
-    /// svrngs's token itself, `Authorization: Bearer <token>`, or another
-    /// Bearer at the record.
+    /// svrngs's token itself, sent as a key ([`Bearer::asked`]).
     #[error("svrngs doesn't take its token from a program any more: ask through `svrngs ask <route>`, or apps/client/svrngs.mjs, as `svrngs guide` shows")]
     Bearer,
     /// svrngs's token itself at a lend's address, where a program that
-    /// can't ask with a code uses the lend by Play (`crate::play`).
-    #[error("svrngs doesn't take its token from a program any more. To use what's lent here from a program, press Play on it on your home page, and give the program any text as its key; or ask through `svrngs ask <route>`, or apps/client/svrngs.mjs")]
+    /// can't ask with a code uses the lend by Play (`crate::play`), and
+    /// svrngs.mjs asks with one; `svrngs ask` asks svrngs's API alone.
+    #[error("svrngs doesn't take its token from a program any more. To use what's lent here from a program, press Play on it on your home page, and give the program any text as its key; or, from JavaScript, ask through apps/client/svrngs.mjs, which asks as you at a lend's address too")]
     BearerAtALend,
     /// More than one `Authorization`, so none of them is taken.
     #[error("this request sends more than one Authorization header, so svrngs takes none of them: send one, the code for this connection, as `svrngs ask` and apps/client/svrngs.mjs do")]
@@ -522,11 +528,12 @@ pub(crate) fn refuse(status: StatusCode, kind: &str, error: impl ToString) -> Re
 
 /// What a program asks svrngs with, decided once, before any route runs
 /// ([`Bearer::asked`]; "Never send the key", V1.13.3): svrngs's token
-/// itself, wherever it is shown, and a code not made for this connection's
-/// last proof, are refused 401 saying what to do, so the token's bytes
-/// reach no handler and no log, the words at a lend's address leading to
-/// Play, which a program that insists on a key uses with any text as its
-/// key; its own connection's code is marked [`AsYou`]; and anything else
+/// itself, at any host, in any header a program sends a key in, however
+/// it is written, and a code not made for this connection's last proof,
+/// are refused 401 saying what to do, so the token's bytes reach no route
+/// and no log, the words at a lend's address leading to Play, which a
+/// program that insists on a key uses with any text as its key, and to
+/// svrngs.mjs; its own connection's code is marked [`AsYou`]; and anything else
 /// goes on as it came, another program's key that Play takes off among it
 /// (`crate::play::shown`).
 async fn as_whom(State(token): State<Bearer>, mut request: Request, next: Next) -> Response {
@@ -545,16 +552,15 @@ async fn as_whom(State(token): State<Bearer>, mut request: Request, next: Next) 
 
 /// Serve the record only to a program asking as the person (give-token):
 /// with the code for its own connection ([`as_whom`]). Any other is
-/// refused 401, saying how to ask, before any door runs.
+/// refused 401, saying how to ask, before any door runs: a Bearer too,
+/// which isn't svrngs's token, or [`as_whom`] would have refused it so.
 async fn holds_the_token(request: Request, next: Next) -> Response {
     let asked = request.extensions().get::<AsYou>().is_some();
-    let bearer = crate::oidc::provider::bearer(request.headers()).is_ok();
-    tracing::debug!(target: "rails", asked, bearer, path = %request.uri().path(), "api: whether the caller asked as you, with its own connection's code");
-    match (asked, bearer) {
-        (true, _) => next.run(request).await,
-        (false, true) => Unasked::Bearer.refused(),
-        (false, false) => Unasked::Nothing.refused(),
+    tracing::debug!(target: "rails", asked, path = %request.uri().path(), "api: whether the caller asked as you, with its own connection's code");
+    if !asked {
+        return Unasked::Nothing.refused();
     }
+    next.run(request).await
 }
 
 /// Serve a request only from a caller on this computer: the bind guard's

@@ -692,13 +692,14 @@ fn token_in(dir: &std::path::Path) -> String {
 /// running podman reaches the Mac's `127.0.0.1` through gvproxy, so
 /// loopback is no proof that the person's own program is asking. Every
 /// route of the record refuses a caller on loopback that asks with no
-/// code, 401 `unasked`, and one that shows a Bearer, this computer's token
-/// itself among them, 401 `no_bearer`, each saying how to ask; the same
-/// request asked as you, with the code for its connection, is answered as
-/// before. Sign-in's routes keep their own client secret and are not asked
-/// for it. The failing input: the check skipped in `api::router`, every
-/// caller on loopback served; and, for the token itself, 96ea3da7, which
-/// took it.
+/// code, or with a Bearer that isn't this computer's token, 401 `unasked`,
+/// and one that shows the token itself, 401 `no_bearer`, each saying how
+/// to ask; the same request asked as you, with the code for its
+/// connection, is answered as before. Sign-in's routes keep their own
+/// client secret and are not asked for it. The failing input: the check
+/// skipped in `api::router`, every caller on loopback served; for the
+/// token itself, 96ea3da7, which took it; and for another Bearer, one
+/// said to be the token.
 #[tokio::test]
 async fn a_program_not_asking_as_you_is_refused_on_every_record_route() {
     let dir = tempfile::tempdir().unwrap();
@@ -709,7 +710,7 @@ async fn a_program_not_asking_as_you_is_refused_on_every_record_route() {
     for (method, path) in RECORD_ROUTES {
         for (shown, kind) in [
             (None, "unasked"),
-            (Some("Bearer not-this-computers-token"), "no_bearer"),
+            (Some("Bearer not-this-computers-token"), "unasked"),
             (Some(bearer.as_str()), "no_bearer"),
         ] {
             let (status, out) = asked_with(&node, method, path, shown).await;

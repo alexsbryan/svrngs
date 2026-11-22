@@ -150,6 +150,32 @@ pub fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing
     (said, (guard, two))
 }
 
+/// svrngs's `token` as each way a program may send it as its key, a
+/// header's line each: `Authorization` with its scheme in any case, or
+/// none, more whitespace, or words after it; and each other header a
+/// program sends a key in, as Play takes them off (play.rs `KEYS`). One
+/// copy, for the record, the home page and a lend's address alike
+/// ("Never send the key", V1.13.3; its review's finding 1).
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some send the token"
+)]
+pub fn keyed(token: &str) -> Vec<String> {
+    let shown = [
+        "Authorization: Bearer @",
+        "Authorization: bearer @",
+        "Authorization: BEARER @",
+        "Authorization: Bearer  @",
+        "Authorization: Bearer\t@",
+        "Authorization: Bearer @, x",
+        "Authorization: @",
+        "X-Api-Key: @",
+        "Api-Key: @",
+        "X-Goog-Api-Key: @",
+    ];
+    shown.iter().map(|s| s.replace('@', token)).collect()
+}
+
 /// Protocol fixture: enroll an origin key and prove each request, or use an
 /// independent read capability when another app is named. Browser-client
 /// eligibility is tested in JavaScript; these tests exercise the node's checks.

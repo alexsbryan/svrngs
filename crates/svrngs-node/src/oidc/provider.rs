@@ -388,7 +388,9 @@ async fn userinfo(
 ) -> Result<Response, Response> {
     let (name, _declared, config) = p.declared(&lend).ok_or_else(|| missing(&lend))?;
     let invalid = |why| refuse(StatusCode::UNAUTHORIZED, "invalid_token", why);
-    let token = bearer(&headers).map_err(invalid)?;
+    let shown = headers.get(header::AUTHORIZATION).map(|v| v.to_str());
+    let token = shown.and_then(|v| v.ok()?.strip_prefix("Bearer "));
+    let token = token.ok_or_else(|| invalid("no Bearer access token was sent"))?;
     let issuer = issuer(p.port, name.as_str());
     let verified = p.key.verified(token, &issuer, &config.client_id, now());
     let mut claims = verified.map_err(invalid)?;
@@ -437,17 +439,6 @@ fn secret_ok(declared: Option<&str>, presented: Option<&str>) -> bool {
 /// ([`crate::api`]).
 pub(crate) fn same(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && a.iter().zip(b).fold(0, |acc, (x, y)| acc | (x ^ y)) == 0
-}
-
-/// The Bearer token from a request's `Authorization`, or why none: a
-/// userinfo request's, and one the record refuses, saying how to ask
-/// instead ([`crate::api`]).
-pub(crate) fn bearer(headers: &HeaderMap) -> Result<&str, &'static str> {
-    headers
-        .get(header::AUTHORIZATION)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.strip_prefix("Bearer "))
-        .ok_or("no Bearer access token was sent")
 }
 
 /// `lend` is not one this computer signs people in to, or not one at all.
