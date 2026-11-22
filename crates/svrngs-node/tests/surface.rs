@@ -1187,3 +1187,99 @@ async fn a_silent_lender_is_could_not_judge_on_the_page_s_reads_and_at_the_origi
     }
     house.close().await;
 }
+
+/// One HTTP/1.1 exchange on the connection `on` holds: `head` sent, ending
+/// its headers, with `body`; the answer's status, headers and body, read by
+/// its length, the connection kept for the next.
+fn exchanged(
+    on: &mut std::io::BufReader<std::net::TcpStream>,
+    head: &str,
+    body: &str,
+) -> (u16, String, String) {
+    use std::io::{BufRead as _, Read as _, Write as _};
+    let asked = format!("{head}Content-Length: {}\r\n\r\n{body}", body.len());
+    on.get_mut().write_all(asked.as_bytes()).unwrap();
+    let mut headers = String::new();
+    while !headers.ends_with("\r\n\r\n") {
+        assert!(
+            on.read_line(&mut headers).unwrap() > 0,
+            "the connection closed: {headers}"
+        );
+    }
+    let length = (headers.lines())
+        .find_map(|l| {
+            l.to_ascii_lowercase()
+                .strip_prefix("content-length:")
+                .map(|n| n.trim().parse().unwrap())
+        })
+        .unwrap_or(0);
+    let mut said = vec![0; length];
+    on.read_exact(&mut said).unwrap();
+    let status = headers.split(' ').nth(1).unwrap().parse().unwrap();
+    (status, headers, String::from_utf8(said).unwrap())
+}
+
+/// **svrngs proves it holds the token on its API, and each request on that
+/// connection after is routed by its own `Host`**, as svrngs's command,
+/// Give and the Omarchy plugin ask it (api.rs `proved`, `to_a_lend`): on
+/// 127.0.0.1 and ::1, `POST /v1/proof` with no token, `Host` the address
+/// asked and `Content-Type: application/json`, is answered
+/// `application/json` with the proof made for this connection's ends as
+/// the asker reads them, its peer printed as it is (`127.0.0.1:<port>`,
+/// never `[::ffff:127.0.0.1]:<port>`); the connection stays open; the
+/// record is then asked with the token on it, and a lend's address too,
+/// `Host: <label>.localhost:<port>`, which its origin answers, not the
+/// record. Its sockets block, so the node serves on the runtime's others.
+#[tokio::test(flavor = "multi_thread")]
+async fn svrngs_proves_itself_and_routes_each_request_on_that_connection_by_its_host() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start_quic(1, dir.path()).await;
+    let (token, port) = (node.token(), node.api_addr().port());
+    let challenge = svrngs_node::api::Challenge::try_from("5a".repeat(32)).unwrap();
+    let label = svrngs_core::pass::Label::of(signing(1).verifying_key().as_bytes(), "nothing");
+    for at in [format!("127.0.0.1:{port}"), format!("[::1]:{port}")] {
+        let stream = std::net::TcpStream::connect(&at).unwrap();
+        let (client, server) = (stream.local_addr().unwrap(), stream.peer_addr().unwrap());
+        let mut on = std::io::BufReader::new(stream);
+        let proving =
+            format!("POST /v1/proof HTTP/1.1\r\nHost: {at}\r\nContent-Type: application/json\r\n");
+        let asked = format!(r#"{{"challenge":"{}"}}"#, "5a".repeat(32));
+        let (status, headers, said) = exchanged(&mut on, &proving, &asked);
+        assert_eq!(status, 200, "{at}: {said}");
+        assert!(
+            headers
+                .to_ascii_lowercase()
+                .contains("content-type: application/json"),
+            "{headers}"
+        );
+        let proof = svrngs_node::api::proof(&token, &challenge, client, server);
+        assert_eq!(
+            said,
+            format!(r#"{{"proof":"{proof}"}}"#),
+            "{at}, from {client}"
+        );
+        assert!(client.to_string().starts_with(if at.starts_with('[') {
+            "[::1]:"
+        } else {
+            "127.0.0.1:"
+        }));
+        let record =
+            format!("GET /v1/groups HTTP/1.1\r\nHost: {at}\r\nAuthorization: Bearer {token}\r\n");
+        let (status, _, said) = exchanged(&mut on, &record, "");
+        assert_eq!(
+            status, 200,
+            "{at}: the record, on the proved connection: {said}"
+        );
+        let lend = format!("GET /v1/groups HTTP/1.1\r\nHost: {label}.localhost:{port}\r\nAuthorization: Bearer {token}\r\n");
+        let (status, _, said) = exchanged(&mut on, &lend, "");
+        assert_eq!(
+            status, 404,
+            "{at}: a lend's address, on the proved connection: {said}"
+        );
+        assert!(
+            said.contains("nothing is lent here"),
+            "{at}: its origin answered: {said}"
+        );
+    }
+    node.net().close().await;
+}

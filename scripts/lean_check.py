@@ -903,10 +903,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # way to show a process, 19), after dbd9b24c and d30025b4 had cut 52 from
 # the same files that day; the rest is the two readers themselves. The
 # operator: "Raise by 62".
+# Then 3 back, to 24,383: svrngs proves it holds the token before its
+# command, its menu opener or Give sends it (api.rs 66, share.rs 5, cli.rs
+# 5), in place of that command's process check (uid.rs 50, door/bound.rs
+# 7 out), after a pass cut 22 from the files it touches (89501745: uid.rs
+# `read`, `diag::socket`, `mac::Scan`, `linux::procs`, `waited`,
+# `record::start`; cli.rs `parse`). Lowered to where it lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24387,
+    ".": 24384,
 
     "js": 8694,
 

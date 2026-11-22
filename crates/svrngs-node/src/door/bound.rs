@@ -23,7 +23,7 @@ use crate::door::Using;
 use crate::iroh::{Duplex, Net};
 use crate::lend::LendName;
 use crate::lend::{Hold, Lend, Raw};
-use crate::uid::{Conn, Unread, Withheld};
+use crate::uid::{Conn, Unread};
 use eudoxia_community::binding::{self, Held, Read, Took};
 
 /// How long a share's port has to take a connection; once connected, a
@@ -90,18 +90,6 @@ pub async fn here(dir: &Path, lend: &Lend) -> Result<Bound, Unsent> {
         .await
         .unwrap_or(Err(Unread::Failed("the read stopped")));
     decided(dir, lend, read).map(|()| Bound(stream))
-}
-
-/// svrngs's own API at `at`, connected and checked: a [`Bound`] only where
-/// svrngs itself, as this account, holds the far end of the connection
-/// ([`crate::uid::itself`]), so nothing else there is ever written to; else
-/// why not.
-pub(crate) async fn itself(at: SocketAddr) -> Result<Bound, Withheld> {
-    let Unchecked(stream, conn) = dial(at).await.map_err(|_| Withheld::Away)?;
-    let judged = tokio::task::spawn_blocking(move || crate::uid::itself(conn)).await;
-    judged
-        .unwrap_or(Err(Withheld::Unread("the read stopped")))
-        .map(|()| Bound(stream))
 }
 
 /// Where `lend`'s TCP service is dialled: its port, at the address its

@@ -566,7 +566,7 @@ pub struct Computer {
 }
 
 impl give::record::Answers for Computer {
-    fn call(&self, route: &str, body: Option<&Value>) -> Result<(u16, String), String> {
+    fn call(&self, route: &str, body: Option<&Value>) -> Result<(u16, String), give::record::RecordError> {
         let (actor, person, key) = self.who;
         let mut log = self.record.0.lock().unwrap();
         let answer = match (route, body) {

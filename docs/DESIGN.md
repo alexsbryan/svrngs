@@ -410,15 +410,24 @@ person: the record API writes a body naming this computer's person as its
 own act, and refuses one naming anyone else (`not_yours`), whose entries
 are signed on their own devices. Sign-in's routes keep their client's own
 secret. A lend's address lets a program in without it only while its
-person has Play on there (above). svrngs's own command shows the token
-only to svrngs itself, as this account: before a byte is sent, it reads
-which process holds the far end of its connection to the address svrngs
-wrote, that it is this account's, and that it runs the command's own
-executable, the same file or, an update having renamed a new one over it,
-the file at the command's path in its mount namespace (`uid.rs` `itself`,
-`api.rs` `asked`). Anything else there, another account's program or one
-of this account's in a container, is sent nothing, and the person is told
-what answers there. Any process on the lender's computer
+person has Play on there (above). svrngs proves it holds the token before
+any program of svrngs's sends it there (the operator, 2026-11-21: "svrngs
+proves it first"): the command, the applications menu's opener and Give
+open one connection to the address svrngs wrote and post a fresh 32-byte
+challenge to `POST /v1/proof` with no token; svrngs answers HMAC-SHA256
+under the token over the challenge and that connection's two ends, and
+only an answer equal to what the asker makes for its own connection lets
+the token go, on that same connection (`api.rs` `proof`, `asked`,
+`proved`; Give's copy in `apps/give/src/record.rs`, held to the same
+vectors). The route answers without the token and tells nothing of it. So
+a program holding svrngs's address while svrngs is down, of any account,
+in a container or not, running svrngs's own file or not, or carrying the
+challenge to svrngs on a connection of its own, is sent none of the token,
+and the person is told what to do; a svrngs that answers 404 there is
+older than the command, and the person is told to restart it. The asker
+waits up to 10 s for the proof (`PROVE_WITHIN`), since svrngs holds its
+address before it takes a connection there, so a svrngs starting is
+waited for, never refused. Any process on the lender's computer
 can still reach a lent port and type an identity header, as it can
 reach any localhost service. A tie between the node and each process it
 lends to waits in PLAN §2.

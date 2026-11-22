@@ -185,7 +185,7 @@ fn program(
         folder: folder.to_path_buf(),
     };
     let shelf = Shelf::with(&[cards.join("standin"), cards.join("other")]).unwrap();
-    let record = Record::by("the test's record", Arc::new(answers));
+    let record = Record::by(Arc::new(answers));
     let mut k = Keeper::new(record, shelf, format!("{}-", who.0), dir.to_path_buf(), EVERY);
     k.podman = Podman::by(podman.clone());
     k.svrngs = Svrngs::by(lends.clone());

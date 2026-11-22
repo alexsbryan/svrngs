@@ -44,11 +44,13 @@ on Linux svrngs holds it even while IPv6 is turned off, and a computer with
 no IPv6 at all runs svrngs on `127.0.0.1` alone. Nothing svrngs shows asks you to give an app svrngs's own
 token any more.
 
-**Your token goes only to svrngs.** The `svrngs` command, and the svrngs
-entry in your applications menu, send svrngs's token only to svrngs itself,
-running as you. If another program holds svrngs's address while svrngs is
-down, they send it nothing, and say what answers there and how to start
-svrngs again.
+**svrngs proves itself before it gets your token.** The `svrngs` command,
+the svrngs entry in your applications menu, and Give send svrngs's token
+only after svrngs proves, on that same connection, that it holds it. A
+program holding svrngs's address while svrngs is down gets none of your
+token, whatever account it runs as and wherever it runs, and they say how
+to start svrngs again. If svrngs hasn't restarted since you updated it,
+they say to run `svrngs restart`.
 
 **Updates only go forward.** svrngs installs only a release signed after
 its own, whatever page it updates from, so no page can move a computer to an

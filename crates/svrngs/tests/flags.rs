@@ -2,7 +2,6 @@
 //! value, and nothing else does.
 
 use svrngs::cli;
-use svrngs_node::uid::Withheld;
 
 fn argv(args: &[&str]) -> Vec<String> {
     std::iter::once("svrngs")
@@ -109,7 +108,8 @@ fn every_refusal_keeps_its_exit_code() {
         R::Readers(lend(), "no".into()),
         R::Terms("no".into()),
         R::Busy(path()),
-        R::Withheld("http://127.0.0.1:1".into(), Withheld::Theirs(Some(1001))),
+        R::Unproven("http://127.0.0.1:1".into()),
+        R::Behind,
     ];
     let unjudged = [
         U::NoDataDir,
@@ -124,7 +124,7 @@ fn every_refusal_keeps_its_exit_code() {
         U::CannotCheck("https://svrnme.sh".into()),
         U::NotRunning,
         U::Unopened("no".into()),
-        U::Unread("http://127.0.0.1:1".into(), "no"),
+        U::Unanswered("http://127.0.0.1:1".into()),
         U::Unchanged(name()),
         U::RelayStart("no".into()),
         U::GroupsUnread("no".into()),

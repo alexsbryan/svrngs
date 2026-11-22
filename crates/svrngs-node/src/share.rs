@@ -37,6 +37,15 @@ use std::num::NonZeroU16;
 use std::path::Path;
 use std::time::Duration;
 
+use axum::http::request::Builder;
+use hyper::client::conn::http1::SendRequest;
+
+/// What a service answered an ask, its status and body; none when it didn't.
+type Answered = Option<(u16, Vec<u8>)>;
+
+/// HTTP/1 on one connection, each request sent on it in turn ([`sent`]).
+pub(crate) type On = SendRequest<String>;
+
 use crate::door::bound::{Bound, Unsent};
 use crate::lend::SendRow;
 use crate::lend::{
@@ -615,7 +624,7 @@ pub fn keep_key(dir: &Path, name: &LendName, how: Key<'_>, key: &str) -> Result<
 pub async fn tried(to: Bound, port: NonZeroU16, how: Key<'_>, key: &str) -> Option<u16> {
     let (header, sent, path) = how.filter(|(.., path)| !path.is_empty())?;
     let asked = axum::http::Request::get(path).header(header, sent.replace("{}", key));
-    let status = asked_on(to, port.get(), asked, String::new())
+    let status = asked_on(to, port, asked, String::new())
         .await
         .map(|(s, _)| s);
     tracing::debug!(target: "share", port, path, ?status, "share: a pasted key tried once on its own service, or none answered");
@@ -623,22 +632,29 @@ pub async fn tried(to: Bound, port: NonZeroU16, how: Key<'_>, key: &str) -> Opti
 }
 
 /// `asked`, with `body`, sent on `to` as HTTP/1 to the service at `port`:
-/// its answer's status and body; none when it doesn't answer. A share's
-/// port's, and svrngs's own API's (`crate::api::asked`).
-pub(crate) async fn asked_on(
-    to: Bound,
-    port: u16,
-    asked: axum::http::request::Builder,
-    body: String,
-) -> Option<(u16, Vec<u8>)> {
+/// its answer's status and body; none when it doesn't answer.
+async fn asked_on(to: Bound, port: NonZeroU16, asked: Builder, body: String) -> Answered {
+    sent(&mut http_on(to.stream()).await?, port.get(), asked, body).await
+}
+
+/// HTTP/1 on the one connection `to`, each request [`sent`] on it in turn:
+/// a share's port's, and svrngs's own API's, whose ask follows its proof
+/// on the same connection (`crate::api::asked`).
+pub(crate) async fn http_on(to: impl crate::iroh::Duplex + 'static) -> Option<On> {
+    let io = hyper_util::rt::TokioIo::new(to);
+    let (sender, conn) = hyper::client::conn::http1::handshake(io).await.ok()?;
+    tokio::spawn(conn);
+    Some(sender)
+}
+
+/// `asked`, with `body`, sent on `on` to the service at `port`: its
+/// answer's status and body; none when it doesn't answer.
+pub(crate) async fn sent(on: &mut On, port: u16, asked: Builder, body: String) -> Answered {
     let asked = asked
         .header("host", format!("127.0.0.1:{port}"))
         .body(body)
         .ok()?;
-    let io = hyper_util::rt::TokioIo::new(to.stream());
-    let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await.ok()?;
-    tokio::spawn(conn);
-    let answer = sender.send_request(asked).await.ok()?;
+    let answer = on.send_request(asked).await.ok()?;
     let status = answer.status().as_u16();
     let body = http_body_util::BodyExt::collect(answer.into_body())
         .await
@@ -674,7 +690,7 @@ pub async fn sign_in_readers(
     if let Some(asked) = how.asked {
         ask = ask.header("authorization", asked);
     }
-    let answered = asked_on(to, port.get(), ask, body.to_string()).await;
+    let answered = asked_on(to, port, ask, body.to_string()).await;
     let (status, answer) = answered.ok_or_else(|| "it did not answer".to_string())?;
     tracing::debug!(target: "share", port, path = how.path, status, "share: the readers' account asked to sign in");
     if !(200..300).contains(&status) {
