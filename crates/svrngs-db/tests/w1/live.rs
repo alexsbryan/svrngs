@@ -37,7 +37,8 @@ struct Shape {
 /// own.
 pub struct LiveCopy {
     site: Site,
-    conn: Connection,
+    /// Open until the copy drops, which closes it (`close`).
+    conn: Option<Connection>,
     shapes: Vec<Shape>,
     kept: BTreeMap<SetId, ChangeSet>,
     plant: Plant,
@@ -138,8 +139,7 @@ impl LiveCopy {
         let set = first.execute("UPDATE crsql_site_id SET site_id = ? WHERE ordinal = 0", [&site.0[..]]);
         assert_eq!(ok(set, "sets its site"), 1, "one site row at ordinal 0");
         let conn = ok(Connection::open_with_flags(&name, flags), "opens again");
-        finalize(&first);
-        drop(first);
+        close(first);
         let read = conn.query_row("SELECT crsql_site_id()", [], |r| r.get::<_, Vec<u8>>(0));
         assert_eq!(
             site_of(ok(read, "reads its site")),
@@ -191,11 +191,15 @@ impl LiveCopy {
         ok(config, "sets merge-equal-values");
         LiveCopy {
             site,
-            conn,
+            conn: Some(conn),
             shapes,
             kept: BTreeMap::new(),
             plant,
         }
+    }
+
+    fn conn(&self) -> &Connection {
+        self.conn.as_ref().expect("a copy's connection is open until it drops")
     }
 
     fn shape(&self, table: &str) -> &Shape {
@@ -257,7 +261,7 @@ impl LiveCopy {
     /// Every row of crsql_changes, one per clock row, as the engine reads
     /// them: what this copy would send if it sent its clocks.
     pub fn rows(&self) -> Vec<Change> {
-        let mut stmt = ok(self.conn.prepare_cached(CHANGES), "reads its changes");
+        let mut stmt = ok(self.conn().prepare_cached(CHANGES), "reads its changes");
         let rows = ok(stmt.query_map([], change), "reads its changes");
         rows.map(|r| ok(r, "reads a change")).collect()
     }
@@ -281,18 +285,29 @@ impl LiveCopy {
     }
 }
 
-/// cr-sqlite's statements, finalized so SQLite can close the connection:
-/// only libSQL's build closes them itself (src/crsqlite.c:31-36, :80-83,
-/// under `#ifdef LIBSQL`). Without it, a dropped copy's tables were still
-/// there to the next connection opened on its name.
-fn finalize(conn: &Connection) {
+/// The connection closed, or the run stopped saying why. cr-sqlite's
+/// statements are finalized first, so SQLite can close it: only libSQL's
+/// build closes them itself (src/crsqlite.c:31-36, :80-83, under `#ifdef
+/// LIBSQL`). A statement left open makes `sqlite3_close` refuse, and
+/// rusqlite drops a connection without a word when it does
+/// (`inner_connection.rs:401-406`), so the connection and its database stay
+/// for the process's life: a dropped copy's tables were still there to the
+/// next connection on its name, and before the fork's fix of
+/// `TableInfo::clear_stmts` (rs/core/src/tableinfo.rs:708-755), each copy
+/// that broke a tie on site kept its connection: 4,140 in 600 seeds.
+fn close(conn: Connection) {
+    conn.flush_prepared_statement_cache();
     ok(conn.query_row("SELECT crsql_finalize()", [], |_| Ok(())), "finalizes");
+    if let Err((_, e)) = conn.close()
+        && !std::thread::panicking()
+    {
+        panic!("the live copy closes: {e}");
+    }
 }
 
 impl Drop for LiveCopy {
     fn drop(&mut self) {
-        self.conn.flush_prepared_statement_cache();
-        finalize(&self.conn);
+        close(self.conn.take().expect("a copy's connection is open until it drops"));
     }
 }
 
@@ -305,7 +320,7 @@ impl Replica for LiveCopy {
     /// its rows at the version it writes, which cr-sqlite fixes at its first
     /// change (rs/core/src/db_version.rs:51-81).
     fn write(&mut self, ops: &[Op]) -> Option<ChangeSet> {
-        let tx = ok(self.conn.unchecked_transaction(), "begins a write");
+        let tx = ok(self.conn().unchecked_transaction(), "begins a write");
         for op in ops {
             if let Some((sql, values)) = self.sql(op) {
                 ok(tx.execute(&sql, params_from_iter(values)), &format!("runs {sql}"));
@@ -333,7 +348,7 @@ impl Replica for LiveCopy {
     /// The set's rows into crsql_changes, in one transaction, `ts` as text
     /// (rs/core/src/changes_vtab_write.rs:471): svrngs merges by no clock.
     fn take(&mut self, set: &ChangeSet) {
-        let tx = ok(self.conn.unchecked_transaction(), "begins a take");
+        let tx = ok(self.conn().unchecked_transaction(), "begins a take");
         {
             let mut stmt = ok(
                 tx.prepare_cached(
@@ -368,7 +383,7 @@ impl Replica for LiveCopy {
 
     fn standing(&self) -> BTreeSet<SetId> {
         let mut stmt = ok(
-            self.conn
+            self.conn()
                 .prepare_cached("SELECT DISTINCT site_id, db_version FROM crsql_changes"),
             "reads what stands",
         );
@@ -388,7 +403,7 @@ impl Replica for LiveCopy {
                 quoted(shape.cols),
                 shape.name
             );
-            let mut stmt = ok(self.conn.prepare_cached(&sql), "reads its rows");
+            let mut stmt = ok(self.conn().prepare_cached(&sql), "reads its rows");
             let mut rows = ok(stmt.query([]), "reads its rows");
             while let Some(r) = ok(rows.next(), "reads a row") {
                 let mut values = BTreeMap::new();
