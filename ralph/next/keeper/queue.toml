@@ -1,6 +1,11 @@
 # Serial loop. Launched by the operator, 2026-11-22: "let's kick off work"
-# (CHARTER.md, "Direction and authorization"):
-# python3 ~/dev/commonwealth-ai/scripts/ralph.py run \
+# (CHARTER.md, "Direction and authorization"). The loop runs in the toolbox,
+# as development does here (the operator: "the toolbox is where development
+# happens"), so its own commits meet the hook there. Its user job, from
+# `ralph.py run --install-job`, has its argv prefixed with
+# `/usr/bin/toolbox run -c sovereign-vulkan`
+# (~/.config/ralph/jobs/dev.ralph.svrngs-keeper-svrngs-keeper.json):
+# toolbox run -c sovereign-vulkan python3 ~/dev/commonwealth-ai/scripts/ralph.py run \
 #   --workdir ~/dev/svrngs-keeper --queue keeper --max-stall 3
 label = "svrngs-keeper"
 session_timeout = 7200
