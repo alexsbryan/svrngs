@@ -125,7 +125,7 @@ use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
 };
 use svrngs_node::room;
-use svrngs_node::uid::{Answering, Unread};
+use svrngs_node::uid::{Answering, Unread, Withheld};
 use svrngs_node::update;
 use svrngs_node::{Joined, Person};
 
@@ -627,6 +627,9 @@ pub enum Refused {
     RelayForNobody,
     #[error("svrngs approve shows you what answers on {0}'s port before it keeps sharing {0}, and there's no terminal here to ask you: run it in a terminal, or press Keep sharing it on your home page")]
     Unshown(LendName),
+    /// Not svrngs itself, as this account, at the address svrngs wrote.
+    #[error("{1} answers at {0}, where svrngs listens, so svrngs sent it nothing, not your token. Stop that program, then start svrngs again with `svrngs restart`; or, if it's another svrngs of yours, use that one")]
+    Withheld(String, Withheld),
 }
 
 /// A precondition of the run is absent, so nothing is claimed: exit 3.
@@ -659,8 +662,8 @@ pub enum Unjudged {
     NotRunning,
     #[error("svrngs running here did not open your home page: {0}")]
     Unopened(String),
-    #[error("cannot ask svrngs running here: no HTTP client ({0})")]
-    NoClient(String),
+    #[error("svrngs can't tell which program answers at {0}, where svrngs listens ({1}), so it sent it nothing: try again in a moment")]
+    Unread(String, &'static str),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
     CannotCheck(String),
     #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
@@ -1099,26 +1102,24 @@ impl Here for PathBuf {
         tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
         Ok((!secret.is_empty()).then_some(secret))
     }
-    #[expect(clippy::disallowed_methods, reason = "dial: svrngs's own API")]
+    /// Asked only of svrngs itself, as this account, at the address it
+    /// wrote ([`svrngs_node::api::asked`]): anything else there is sent
+    /// nothing, and the person is told what answers there.
     async fn ask(&self, route: &str, body: &impl serde::Serialize) -> Asked {
         let read = |file| std::fs::read_to_string(self.join(file)).unwrap_or_default();
         let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
         let body = serde_json::to_string(body).expect("an ask is JSON");
-        let to = format!("{}{route}", api.trim());
-        let client = svrngs_node::http::client().map_err(|error| {
-            tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
-            Unjudged::NoClient(error)
+        let asked = svrngs_node::api::asked(&api, route, token.trim(), body).await;
+        tracing::debug!(target: "cli", api, route, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs running here answered, or what answers there was sent nothing, and why");
+        // Nothing there, as before; what answers there, refused; or that
+        // it can't be told, so the person tries again.
+        let (status, text) = asked.map_err(|why| match why {
+            Withheld::Away => Refusal::from(Unjudged::NotRunning),
+            Withheld::Unread(why) => Unjudged::Unread(api.trim().into(), why).into(),
+            theirs => Refused::Withheld(api.trim().into(), theirs).into(),
         })?;
-        let sent = client.post(to).header("content-type", "application/json");
-        let sent = sent.bearer_auth(token.trim());
-        let answer = sent.body(body).send().await.map_err(|e| {
-        tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
-        Unjudged::NotRunning
-    })?;
-        let ok = answer.status().is_success();
-        let text = answer.text().await.unwrap_or_default();
-        tracing::debug!(target: "cli", route, ok, "cli: svrngs running here answered");
-        Ok((ok, text))
+        let ok = (200..300).contains(&status);
+        Ok((ok, String::from_utf8_lossy(&text).into()))
     }
 }
 

@@ -111,6 +111,9 @@ libc = "0.2"
 # netdev 0.45.0 (iroh 1.4.2's netwatch holds 0.9.0 beside it).
 [target.'cfg(target_os = "linux")'.dependencies]
 netlink-sys = "=0.8.8"
+# ::1 held at the API's port even while it is off (api.rs `listening`):
+# `IPV6_FREEBIND`, through the socket2 tokio already builds, with its `all`.
+socket2 = { version = "0.6", features = ["all"] }
 
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a

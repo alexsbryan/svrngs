@@ -21,8 +21,10 @@ use svrngs_node::lend::Program as LentProgram;
 #[path = "common/as_main.rs"]
 mod as_main;
 
-/// svrngs itself, as [`Program`] runs it (common/as_main.rs). `open` and a
-/// second bare command, which start no node, are the shipped binary's.
+/// svrngs itself, as [`Program`] runs it (common/as_main.rs). A second bare
+/// command, which starts no node, is the shipped binary's; `open` is this
+/// one, as the svrngs it asks is, since it shows the token only to svrngs
+/// itself (svrngs-node uid.rs `itself`).
 #[test]
 #[ignore = "run by Program, in a process of its own, as svrngs"]
 fn svrngs_here() {
@@ -121,14 +123,20 @@ fn an_opener_that_stays_does_not_hold_svrngs_open() {
         std::fs::write(&fake, format!("#!/bin/sh\n{body}\n")).unwrap();
         std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o700)).unwrap();
     };
+    // The program the running svrngs is ([`svrngs_here`]): `open` sends
+    // its ask only to svrngs itself, the same executable, as this account.
     let invoke = || {
-        Process::new(env!("CARGO_BIN_EXE_svrngs"))
+        let mut out = as_main::svrngs()
             .arg("open")
             .env("SVRNGS_DIR", dir.path())
             .env("HOME", dir.path())
             .env("PATH", logs.path())
             .output()
-            .unwrap()
+            .unwrap();
+        let mut said = &out.stdout[..];
+        as_main::past_header(&mut said);
+        out.stdout = said.to_vec();
+        out
     };
     let mut running = Program::start(dir.path(), &logs.path().join("first"), &[]);
     running.until("//svrngs.localhost:");
@@ -462,4 +470,152 @@ fn another_program_holding_the_address_is_said_and_svrngs_stops() {
     );
     assert!(refusal.contains(&home), "{refusal}");
     drop(held);
+}
+
+/// A program on 127.0.0.1 that is not svrngs, run as `argv` before Python:
+/// it says its port, then for each connection writes how many bytes it was
+/// sent and what, and answers as svrngs's `/v1/open` would.
+fn not_svrngs(before: &[&str]) -> (Child, u16, BufReader<std::process::ChildStdout>) {
+    let script = "import socket\ns = socket.socket()\ns.bind(('127.0.0.1', 0))\ns.listen()\nprint(s.getsockname()[1], flush=True)\nwhile True:\n    c, _ = s.accept()\n    c.settimeout(2)\n    got = b''\n    try:\n        while b'\\r\\n\\r\\n' not in got:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n    except OSError: pass\n    print(len(got), got, flush=True)\n    c.sendall(b'HTTP/1.1 200 OK\\r\\nContent-Length: 18\\r\\n\\r\\n{\"open\": \"http://\"}')\n    c.close()";
+    let (program, rest) = before.split_first().unwrap_or((&"python3", &[]));
+    let mut child = Process::new(program)
+        .args(rest)
+        .args(if before.is_empty() {
+            &[][..]
+        } else {
+            &["python3"][..]
+        })
+        .args(["-I", "-c", script])
+        .current_dir("/")
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("python3 runs");
+    let mut out = BufReader::new(child.stdout.take().unwrap());
+    let mut port = String::new();
+    out.read_line(&mut port).unwrap();
+    let port = port
+        .trim()
+        .parse()
+        .unwrap_or_else(|_| panic!("no port: {port:?}"));
+    (child, port, out)
+}
+
+/// A data dir whose `api` names 127.0.0.1:`port` and whose token is known.
+fn data_dir_at(port: u16) -> tempfile::TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("api"), format!("http://127.0.0.1:{port}\n")).unwrap();
+    std::fs::write(dir.path().join("token"), "the-token-svrngs-keeps\n").unwrap();
+    dir
+}
+
+/// `svrngs open --print` over `dir`, as the applications menu's opener runs
+/// it, but with no browser: its words, or its refusal's, and exit code.
+async fn opened(dir: &Path) -> Result<String, (u8, String)> {
+    let relay = svrngs_node::iroh::RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: true,
+    };
+    let said = cli::answer(cli::Verb::Open(None, true), &dir.to_path_buf(), &relay).await;
+    said.map_err(|r| (r.exit_code(), r.to_string()))
+}
+
+/// **Only svrngs itself, as you, is shown your token** (V1.13.3's second
+/// practice review, finding 1): while svrngs is down, a program that isn't
+/// svrngs holds its address — Python, a program of yours — and `svrngs
+/// open`, as the applications menu and install.sh run it, sends it
+/// nothing, not one byte, and says what answers there and what to do
+/// (exit 1); svrngs's own program at that address, this test's, which runs
+/// svrngs's code here, is sent the ask with the token. Planted, watched
+/// failing: V1.13.3's candidate sent Python `POST /v1/open` with
+/// `authorization: Bearer the-token-svrngs-keeps`.
+#[tokio::test(flavor = "multi_thread")]
+async fn only_svrngs_itself_as_you_is_shown_the_token() {
+    let (mut python, port, mut sent) = not_svrngs(&[]);
+    let dir = data_dir_at(port);
+    let refused = opened(dir.path()).await.expect_err("refused");
+    python.kill().unwrap();
+    let mut seen = String::new();
+    sent.read_to_string(&mut seen).unwrap();
+    assert!(
+        seen.lines().all(|l| l.starts_with("0 ")),
+        "Python was sent: {seen}"
+    );
+    assert_eq!(refused.0, 1, "{}", refused.1);
+    let at = format!("http://127.0.0.1:{port}");
+    assert!(
+        refused.1.contains("a program of yours that isn't "),
+        "{}",
+        refused.1
+    );
+    assert!(
+        refused.1.contains(&format!(
+            "answers at {at}, where svrngs listens, so svrngs sent it nothing"
+        )),
+        "{}",
+        refused.1
+    );
+    assert!(refused.1.contains("svrngs restart"), "{}", refused.1);
+
+    let ours = TcpListener::bind("127.0.0.1:0").unwrap();
+    let dir = data_dir_at(ours.local_addr().unwrap().port());
+    let asked = std::thread::spawn(move || {
+        let (mut c, _) = ours.accept().unwrap();
+        let mut head = vec![0; 4096];
+        let n = c.read(&mut head).unwrap();
+        let body = r#"{"open": "http://svrngs.localhost:1/svrngs-open?code=c"}"#;
+        let answer = format!(
+            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{body}",
+            body.len()
+        );
+        c.write_all(answer.as_bytes()).unwrap();
+        String::from_utf8_lossy(&head[..n]).into_owned()
+    });
+    let said = opened(dir.path())
+        .await
+        .unwrap_or_else(|(_, r)| panic!("{r}"));
+    assert!(said.contains("svrngs-open?code=c"), "{said}");
+    let head = asked.join().unwrap();
+    assert!(
+        head.contains("authorization: Bearer the-token-svrngs-keeps"),
+        "{head}"
+    );
+}
+
+/// **Another account's program at svrngs's address is sent nothing**, on a
+/// real socket of another uid: a uid of this account's own subordinate
+/// range (/etc/subuid), as `unshare --map-auto` gives it without root,
+/// read by sock_diag. By hand on Linux: it needs newuidmap and a range in
+/// /etc/subuid. Planted, watched failing: V1.13.3's candidate sent it `POST
+/// /v1/open` with the token.
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "by hand on Linux: unshare --map-auto and a range in /etc/subuid"]
+async fn another_account_s_program_at_svrngs_s_address_is_sent_nothing() {
+    let theirs = [
+        "unshare",
+        "--map-auto",
+        "--map-root-user",
+        "setpriv",
+        "--reuid=1",
+        "--regid=1",
+        "--clear-groups",
+    ];
+    let (mut python, port, mut sent) = not_svrngs(&theirs);
+    let dir = data_dir_at(port);
+    let refused = opened(dir.path()).await.expect_err("refused");
+    python.kill().unwrap();
+    let mut seen = String::new();
+    sent.read_to_string(&mut seen).unwrap();
+    assert!(
+        seen.lines().all(|l| l.starts_with("0 ")),
+        "their program was sent: {seen}"
+    );
+    assert_eq!(refused.0, 1, "{}", refused.1);
+    assert!(
+        refused.1.starts_with("A program of the account "),
+        "{}",
+        refused.1
+    );
+    eprintln!("RESULT: {}", refused.1);
 }

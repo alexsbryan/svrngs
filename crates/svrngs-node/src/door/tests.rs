@@ -1165,7 +1165,6 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         ("crates/svrngs-node/src/publication.rs", "dial: a group's page"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
-        ("crates/svrngs/src/cli.rs", "dial: svrngs's own API"),
         ("crates/svrngs/src/cli.rs", "dial: a group's page"),
         // The clock and randomness, at their adapters (clippy.toml).
         ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),

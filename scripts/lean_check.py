@@ -896,10 +896,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then 14 for a socket connected to nothing to be unjudged only while a new
 # flow awaits it, and a flow opened while its port is unjudged to carry once
 # it is (door.rs, door/udp.rs): 24,324. Its pass cut 4; the operator: "Yes".
+# Then 62 for svrngs's command to show its token only to svrngs itself, as
+# this account (uid.rs, api.rs, door/bound.rs, share.rs, cli.rs: 51), and
+# for ::1 at its port to be svrngs's while it runs, held on Linux while off
+# (api.rs: 15): 24,386. Its pass cut 26 (uid/Net `owner`'s `Side`, 7; one
+# way to show a process, 19), after dbd9b24c and d30025b4 had cut 52 from
+# the same files that day; the rest is the two readers themselves. The
+# operator: "Raise by 62".
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24325,
+    ".": 24387,
 
     "js": 8694,
 

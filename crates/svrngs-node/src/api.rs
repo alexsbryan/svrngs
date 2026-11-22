@@ -29,6 +29,7 @@ use axum::{Json, Router};
 use n0_future::task::AbortOnDropHandle;
 
 use crate::rail::RailApi;
+use crate::uid::Withheld;
 
 /// Why the API did not start. (Upstream's were two variants of the daemon's
 /// `Refusal`, `lib.rs:122-123`, which did not come over; named here as the
@@ -143,6 +144,28 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
     tracing::debug!(target: "rails", path = %path.display(), %addr, "api: wrote where it listens, for apps it did not start");
     Ok(())
 }
+
+/// `body` posted to `route` of svrngs at `api`, as [`API_FILE`] names it,
+/// showing `token`: its answer's status and body. Asked only on a
+/// connection whose far end is first read to be svrngs itself, as this
+/// account (`crate::door::bound::itself`), so a program holding svrngs's
+/// address while svrngs is down, or one of this account's in a container
+/// or a sandbox that can't read the token, is sent nothing, not one byte;
+/// else why not. The one way svrngs's command shows the token (cli.rs
+/// `Here::ask`).
+pub async fn asked(api: &str, route: &str, token: &str, body: String) -> Asked {
+    let at = api.trim().trim_start_matches("http://");
+    let at: SocketAddr = at.parse().map_err(|_| Withheld::Away)?;
+    let to = crate::door::bound::itself(at).await?;
+    let asked = axum::http::Request::post(route).header("content-type", "application/json");
+    let asked = asked.header("authorization", format!("Bearer {token}"));
+    let answer = crate::share::asked_on(to, at.port(), asked, body).await;
+    answer.ok_or(Withheld::Away)
+}
+
+/// What svrngs answered an ask ([`asked`]), its status and body, or why
+/// it was sent nothing.
+pub type Asked = Result<(u16, Vec<u8>), Withheld>;
 
 /// The routes this API serves: the rail's, and `apps` — the routes an app
 /// asks beside the record ([`crate::surface::router`]) — each asked for
@@ -303,34 +326,64 @@ pub struct Bound {
 /// Mac and Linux both name `<label>.localhost` ::1 first, then 127.0.0.1
 /// (getaddrinfo, in Python and in Node, 2026-11-21), so a program given a
 /// lend's address asks ::1 first, and one that asks the first address
-/// alone reaches nothing else. Another program holding it there is refused
-/// as on 127.0.0.1, since it would answer a lend's address; a computer
-/// with no ::1 listens on 127.0.0.1 alone, and says so.
+/// alone reaches nothing else. So ::1 at the port is svrngs's for as long
+/// as it runs, and no other account answers there: another program
+/// holding it is refused as on 127.0.0.1; Linux holds it even while ::1 is
+/// off ([`listening`]), so it is svrngs's as it comes on; and svrngs
+/// starts without it only where this computer has no IPv6 at all
+/// ([`alone`]), on 127.0.0.1 alone, and says so.
 pub async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
     check_loopback(listen)?;
-    let mut listeners = vec![listening(listen).await?];
+    let mut listeners = vec![listening(listen)?];
     let addr = (listeners[0].local_addr()).map_err(|e| ApiError::Listen(listen, e))?;
     let six = SocketAddr::from((Ipv6Addr::LOCALHOST, addr.port()));
     if listen.is_ipv4() {
-        match listening(six).await {
+        match listening(six) {
             Ok(listener) => listeners.push(listener),
-            Err(ApiError::Listen(_, e)) => {
-                tracing::warn!(target: "rails", %six, error = %e, "api: not on ::1, so a program that asks `<label>.localhost`'s first address alone reaches no lend here")
+            Err(ApiError::Listen(_, e)) if alone(&e) => {
+                tracing::warn!(target: "rails", %six, error = %e, "api: this computer has no IPv6, so svrngs listens on 127.0.0.1 alone, and no program here can listen at ::1")
             }
-            Err(taken) => return Err(taken),
+            Err(refused) => return Err(refused),
         }
     }
     Ok(Bound { listeners, addr })
 }
 
-/// `listen` bound alone, or refused by name.
-async fn listening(listen: SocketAddr) -> Result<tokio::net::TcpListener, ApiError> {
-    tokio::net::TcpListener::bind(listen)
-        .await
-        .map_err(|e| match e.kind() {
-            std::io::ErrorKind::AddrInUse => ApiError::Taken(listen),
-            _ => ApiError::Listen(listen, e),
-        })
+/// Whether svrngs starts on 127.0.0.1 alone, ::1 refused with `e`: only
+/// where this computer has no IPv6 at all, the family refused
+/// (`EAFNOSUPPORT`, Linux's 97 and a Mac's 47, errno.h), so no program here
+/// can listen at ::1 either. Any other refusal stops it starting, ::1 off
+/// on a Mac among them: another account could take ::1 at svrngs's port
+/// once it is on, and answer every `<label>.localhost` first.
+pub(crate) fn alone(e: &std::io::Error) -> bool {
+    e.raw_os_error() == Some(if cfg!(target_os = "macos") { 47 } else { 97 })
+}
+
+/// `listen` bound alone, as tokio's `TcpListener::bind` binds one
+/// (`SO_REUSEADDR`, a backlog of 1024), or refused by name. On Linux an
+/// IPv6 address is bound even while this computer has it off
+/// (`IPV6_FREEBIND`, Linux 4.15), as `sysctl net.ipv6.conf.lo.disable_ipv6`
+/// turns ::1 off, so svrngs holds ::1 at its port from the start and no
+/// other account can take it there once it comes on.
+fn listening(listen: SocketAddr) -> Result<tokio::net::TcpListener, ApiError> {
+    let refused = |e: std::io::Error| match e.kind() {
+        std::io::ErrorKind::AddrInUse => ApiError::Taken(listen),
+        _ => ApiError::Listen(listen, e),
+    };
+    let socket = match listen {
+        SocketAddr::V4(_) => tokio::net::TcpSocket::new_v4(),
+        SocketAddr::V6(_) => tokio::net::TcpSocket::new_v6(),
+    };
+    let socket = socket.map_err(refused)?;
+    socket.set_reuseaddr(true).map_err(refused)?;
+    #[cfg(target_os = "linux")]
+    if listen.is_ipv6() {
+        socket2::SockRef::from(&socket)
+            .set_freebind_v6(true)
+            .map_err(refused)?;
+    }
+    socket.bind(listen).map_err(refused)?;
+    socket.listen(1024).map_err(refused)
 }
 
 /// Serve `router` ([`router`]'s) on what [`bind`] bound, each listener.
@@ -349,3 +402,7 @@ pub fn serve(router: Router, bound: Bound) -> Serving {
     let _tasks = listeners.into_iter().map(serving).collect();
     Serving { addr, _tasks }
 }
+
+#[cfg(test)]
+#[path = "api_tests.rs"]
+mod tests;

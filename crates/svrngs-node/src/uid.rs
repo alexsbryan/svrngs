@@ -73,6 +73,56 @@ pub enum Unread {
     Failed(&'static str),
 }
 
+/// Why svrngs's command sends its token to nothing at the address svrngs
+/// wrote ([`crate::api::asked`]): a closed set (AGENTS 9).
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum Withheld {
+    /// Nothing takes a connection there: svrngs isn't running.
+    #[error("nothing")]
+    Away,
+    /// A program of another account holds it: that account's uid, as Linux
+    /// shows it; none on a Mac, which shows svrngs no other account's.
+    #[error("A program of {}", .0.map_or("another account".into(), |uid| format!("the account {uid}")))]
+    Theirs(Option<u32>),
+    /// A program of this account running another executable than this
+    /// command's: its path, then this command's.
+    #[error("{0}, a program of yours that isn't {1},")]
+    Other(String, String),
+    /// Which program holds it can't be read here: why.
+    #[error("{0}")]
+    Unread(&'static str),
+}
+
+/// What [`itself`] says where what holds svrngs's address can't be read.
+const HOLDER: &str = "the program holding svrngs's address can't be read";
+
+/// Whether the far end of `conn`, svrngs's command's connection to the
+/// address svrngs wrote, is svrngs itself, as this account: held by a
+/// process of this account ([`serving`]) that runs this command's own
+/// executable ([`exe`]): the very file, or the file at this command's path
+/// as this command names it. Read once that end is accepted, before a byte
+/// is sent; blocking, and it may wait up to [`ACCEPT_WITHIN`]. The one
+/// decider of where the command shows the token: it showed it to whatever
+/// held svrngs's port (V1.13.3's second practice review, finding 1).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub fn itself(conn: Conn) -> Result<(), Withheld> {
+    let judged = (|| {
+        let pid = serving(mine().map_err(Withheld::Unread)?, conn)?;
+        let both = exe(pid).zip(exe(std::process::id()));
+        let (theirs, ours) = both.ok_or(Withheld::Unread(HOLDER))?;
+        let same = theirs.1 == ours.1 || theirs.2 == ours.2;
+        same.then_some(()).ok_or(Withheld::Other(theirs.0, ours.0))
+    })();
+    tracing::debug!(target: "uid", ?conn, ?judged, "uid: whether svrngs itself, as this account, holds the far end of the command's connection, before the token is sent");
+    judged
+}
+
+/// No reader here, so nothing is ever shown the token.
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
+pub fn itself(_: Conn) -> Result<(), Withheld> {
+    Err(Withheld::Unread("this system has no reader of sockets"))
+}
+
 /// A share's port read for an approval ([`answering`]): what
 /// [`binding::approve`] reads, each process's parent among those read, the
 /// start now of the process asked for, and what to show the person of each
@@ -224,6 +274,49 @@ pub fn mine() -> Result<u32, &'static str> {
     me.map_err(|_| "this process's own account can't be read")
 }
 
+/// Linux's [`itself`]: the far end of `conn` as sock_diag lists it once
+/// accepted, so a process holds it, or at once where another account's,
+/// and the process holding it, found by its inode among `/proc`'s.
+#[cfg(target_os = "linux")]
+fn serving(me: u32, conn: Conn) -> Result<u32, Withheld> {
+    let end = |d: &diag::Diag| {
+        same(d.local, conn.peer) && same(d.peer, conn.local) && (d.inode != 0 || d.uid != me)
+    };
+    let listed = || diag::dump(Raw::Tcp, diag::ESTABLISHED, conn.peer.port());
+    let found = waited(|| Ok(listed()?.into_iter().find(end))).map_err(Withheld::Unread)?;
+    let d = found.ok_or(Withheld::Unread(HOLDER))?;
+    let inode = (d.uid == me)
+        .then_some(d.inode)
+        .ok_or(Withheld::Theirs(Some(d.uid)))?;
+    let procs = linux::procs(&BTreeSet::from([inode]));
+    let held = procs.into_iter().find(|(_, p)| p.2.contains(&inode));
+    held.map(|(pid, _)| pid).ok_or(Withheld::Unread(HOLDER))
+}
+
+/// A path, and the mount namespace in which it names one place.
+#[cfg(target_os = "linux")]
+type Placed = (String, std::path::PathBuf);
+
+/// Linux's: process `pid`'s executable as `/proc` names it, an update's
+/// rename over it since it started aside (` (deleted)`), and two ways it
+/// is one with another's ([`itself`]): that path in its mount namespace,
+/// where the path names one place, so an update that renamed a new svrngs
+/// over the one running keeps it svrngs; and the file itself, by device
+/// and inode, wherever it runs. A program in a container or a sandbox of
+/// its own, which names its own files as it likes, is neither.
+#[cfg(target_os = "linux")]
+fn exe(pid: u32) -> Option<(String, Placed, (u64, u64))> {
+    use std::os::unix::fs::MetadataExt as _;
+    let at = |f: &str| std::fs::read_link(format!("/proc/{pid}/{f}")).ok();
+    let file = std::fs::metadata(format!("/proc/{pid}/exe")).ok()?;
+    let path = at("exe")?.display().to_string();
+    let (path, id) = (
+        path.trim_end_matches(" (deleted)"),
+        (file.dev(), file.ino()),
+    );
+    Some((path.into(), (path.into(), at("ns/mnt")?), id))
+}
+
 /// Linux's share port ([`linux::read`]), and what took the connection: the
 /// cgroup its server end carries, looked for until its handshake ends; or,
 /// for a server end that waits on the door's first bytes (`TCP_DEFER_ACCEPT`,
@@ -305,9 +398,7 @@ fn lists_bound(release: &str) -> bool {
 #[cfg(target_os = "linux")]
 fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
     let (read, procs, listed) = linux::read(raw, port, true)?;
-    let mut shown: Vec<_> = holding(&read)
-        .map(|(id, h)| (id, linux::shown(&h)))
-        .collect();
+    let mut shown: Vec<_> = holding(&read).map(|(id, h)| (id, shown(h))).collect();
     let others = (listed.iter().zip(&read.sockets))
         .filter(|(d, s)| s.holders.is_empty() && mine() != Ok(d.uid));
     shown.extend(others.map(|(d, s)| {
@@ -384,7 +475,7 @@ mod linux {
 
     /// Every process whose stat reads, with the sockets of `inodes` among
     /// its files, those it can read: another account's are that account's.
-    fn procs(inodes: &BTreeSet<u64>) -> Procs {
+    pub(super) fn procs(inodes: &BTreeSet<u64>) -> Procs {
         let listed = |dir: String| std::fs::read_dir(dir).into_iter().flatten().flatten();
         let socket = |l: std::path::PathBuf| {
             let inode = l
@@ -409,26 +500,25 @@ mod linux {
         };
         pids.filter_map(read).collect()
     }
+}
 
-    /// What a process is shown as: its executable's file name and its
-    /// folder, each read only to be shown.
-    pub(super) fn shown(&(pid, start): &Process) -> Answer {
-        let at = |f: &str| std::fs::read_link(format!("/proc/{pid}/{f}")).ok();
-        let exe = at("exe")
-            .map(|e| e.display().to_string())
-            .unwrap_or_default();
-        let program = exe
-            .trim_end_matches(" (deleted)")
-            .rsplit('/')
-            .next()
-            .unwrap_or_default()
-            .into();
-        Answer::Program {
-            pid,
-            start,
-            program,
-            folder: at("cwd").map(|c| folder(&c)),
-        }
+/// What a process is shown as: its executable's file name ([`exe`]) and
+/// its folder (Linux's `/proc/<pid>/cwd`, a Mac's `PROC_PIDVNODEPATHINFO`),
+/// each read only to be shown.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn shown((pid, start): Process) -> Answer {
+    let path = exe(pid).map(|e| e.0).unwrap_or_default();
+    let program = path.rsplit('/').next().unwrap_or_default().into();
+    #[cfg(target_os = "linux")]
+    let cwd = std::fs::read_link(format!("/proc/{pid}/cwd")).ok();
+    #[cfg(target_os = "macos")]
+    let cwd = (mac::kernel(mac::Ask::Cwd(pid as i32)).ok()).and_then(|v| record::cwd(&v));
+    let folder = cwd.map(|c| folder(&c));
+    Answer::Program {
+        pid,
+        start,
+        program,
+        folder,
     }
 }
 
@@ -636,6 +726,29 @@ pub fn mine() -> Result<u32, &'static str> {
     (bsd.ok().and_then(|b| record::uid(&b))).ok_or("this process's own account can't be read")
 }
 
+/// A Mac's [`itself`]: the process of this account holding the far end of
+/// `conn`, looked for until [`ACCEPT_WITHIN`] has passed; none is another
+/// account's, which a Mac doesn't name.
+#[cfg(target_os = "macos")]
+fn serving(me: u32, conn: Conn) -> Result<u32, Withheld> {
+    let scan = mac::scan(me, Raw::Tcp, None, Some((conn.peer, conn.local)));
+    let scan = scan.map_err(|_| Withheld::Unread("this account's programs can't be read"))?;
+    let pid = scan.took.map(i32::unsigned_abs);
+    pid.ok_or(Withheld::Theirs(None))
+}
+
+/// A Mac's: process `pid`'s executable by `proc_pidpath`, and the same path
+/// twice as the way it is one with another's ([`itself`]): a Mac's
+/// processes name their files in one namespace, and it keeps the path of a
+/// process whose file an update renamed another over (seen 2026-11-21,
+/// macOS 27.2).
+#[cfg(target_os = "macos")]
+fn exe(pid: u32) -> Option<(String, String, String)> {
+    let path = mac::kernel(mac::Ask::Path(i32::try_from(pid).ok()?)).ok()?;
+    let path = String::from_utf8_lossy(&path).into_owned();
+    Some((path.clone(), path.clone(), path))
+}
+
 /// A Mac's share port: this account's `raw` sockets on it by their
 /// generation counts in this boot, each with the processes holding it, and
 /// for a TCP connection the process holding its server end and its parents
@@ -773,7 +886,7 @@ fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
     let holders = holding(&read);
     let up = holders.clone().flat_map(|(_, (pid, _))| mac::up(pid));
     let parents = up.map(|(pid, _, parent)| (pid, parent)).collect();
-    let shown = holders.map(|(id, p)| (id, mac::shown(p))).collect();
+    let shown = holders.map(|(id, p)| (id, shown(p))).collect();
     Ok((read, parents, shown, beside))
 }
 
@@ -1198,23 +1311,6 @@ mod mac {
             record::start(&bsd)?,
             record::unique(&bsd)?,
         ))
-    }
-
-    /// What process `pid` is shown as: its executable's file name, by
-    /// `proc_pidpath`, and its folder, by `PROC_PIDVNODEPATHINFO`, each read
-    /// only to be shown.
-    pub(super) fn shown((pid, start): Process) -> Answer {
-        let at = |ask: fn(i32) -> Ask| kernel(ask(pid as i32)).ok();
-        let path = String::from_utf8_lossy(&at(Ask::Path).unwrap_or_default()).into_owned();
-        let program: String = path.rsplit('/').next().unwrap_or_default().into();
-        let folder = at(Ask::Cwd).and_then(|v| record::cwd(&v));
-        let folder = folder.map(|c| super::folder(&c));
-        Answer::Program {
-            pid,
-            start,
-            program,
-            folder,
-        }
     }
 
     /// What this Mac's kernel is asked, one libproc call each ([`kernel`]).

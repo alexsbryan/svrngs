@@ -39,8 +39,16 @@ there. Web pages in your browser and other accounts on this computer still
 can't use it, and your friend's rules for what they lent still apply. **Stop** closes
 it, and **What acts as you** lists it while it's on. svrngs now answers on
 `::1` as well as `127.0.0.1`, since some programs look up a `.localhost`
-name there first. Nothing svrngs shows asks you to give an app svrngs's own
+name there first. No other account can take `::1` there while svrngs runs:
+on Linux svrngs holds it even while IPv6 is turned off, and a computer with
+no IPv6 at all runs svrngs on `127.0.0.1` alone. Nothing svrngs shows asks you to give an app svrngs's own
 token any more.
+
+**Your token goes only to svrngs.** The `svrngs` command, and the svrngs
+entry in your applications menu, send svrngs's token only to svrngs itself,
+running as you. If another program holds svrngs's address while svrngs is
+down, they send it nothing, and say what answers there and how to start
+svrngs again.
 
 **Updates only go forward.** svrngs installs only a release signed after
 its own, whatever page it updates from, so no page can move a computer to an

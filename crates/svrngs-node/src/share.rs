@@ -615,7 +615,7 @@ pub fn keep_key(dir: &Path, name: &LendName, how: Key<'_>, key: &str) -> Result<
 pub async fn tried(to: Bound, port: NonZeroU16, how: Key<'_>, key: &str) -> Option<u16> {
     let (header, sent, path) = how.filter(|(.., path)| !path.is_empty())?;
     let asked = axum::http::Request::get(path).header(header, sent.replace("{}", key));
-    let status = asked_on(to, port, asked, String::new())
+    let status = asked_on(to, port.get(), asked, String::new())
         .await
         .map(|(s, _)| s);
     tracing::debug!(target: "share", port, path, ?status, "share: a pasted key tried once on its own service, or none answered");
@@ -623,10 +623,11 @@ pub async fn tried(to: Bound, port: NonZeroU16, how: Key<'_>, key: &str) -> Opti
 }
 
 /// `asked`, with `body`, sent on `to` as HTTP/1 to the service at `port`:
-/// its answer's status and body; none when it doesn't answer.
-async fn asked_on(
+/// its answer's status and body; none when it doesn't answer. A share's
+/// port's, and svrngs's own API's (`crate::api::asked`).
+pub(crate) async fn asked_on(
     to: Bound,
-    port: NonZeroU16,
+    port: u16,
     asked: axum::http::request::Builder,
     body: String,
 ) -> Option<(u16, Vec<u8>)> {
@@ -673,7 +674,7 @@ pub async fn sign_in_readers(
     if let Some(asked) = how.asked {
         ask = ask.header("authorization", asked);
     }
-    let answered = asked_on(to, port, ask, body.to_string()).await;
+    let answered = asked_on(to, port.get(), ask, body.to_string()).await;
     let (status, answer) = answered.ok_or_else(|| "it did not answer".to_string())?;
     tracing::debug!(target: "share", port, path = how.path, status, "share: the readers' account asked to sign in");
     if !(200..300).contains(&status) {

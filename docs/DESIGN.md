@@ -410,7 +410,15 @@ person: the record API writes a body naming this computer's person as its
 own act, and refuses one naming anyone else (`not_yours`), whose entries
 are signed on their own devices. Sign-in's routes keep their client's own
 secret. A lend's address lets a program in without it only while its
-person has Play on there (above). Any process on the lender's computer
+person has Play on there (above). svrngs's own command shows the token
+only to svrngs itself, as this account: before a byte is sent, it reads
+which process holds the far end of its connection to the address svrngs
+wrote, that it is this account's, and that it runs the command's own
+executable, the same file or, an update having renamed a new one over it,
+the file at the command's path in its mount namespace (`uid.rs` `itself`,
+`api.rs` `asked`). Anything else there, another account's program or one
+of this account's in a container, is sent nothing, and the person is told
+what answers there. Any process on the lender's computer
 can still reach a lent port and type an identity header, as it can
 reach any localhost service. A tie between the node and each process it
 lends to waits in PLAN §2.
@@ -2843,8 +2851,12 @@ survive a restart; another program holding it is said by the command, exit
 Mac and Linux (systemd's `myhostname`) name `<label>.localhost` ::1 first,
 then 127.0.0.1, to a program's lookup, in Python and in Node, and a
 program that asks the first address alone reaches nothing else; another program
-holding either is refused as above, and a computer with no ::1 listens on
-127.0.0.1 alone and says so at warn. The command,
+holding either is refused as above. ::1 at that port is svrngs's while it
+runs, so no other account answers a `<label>.localhost` there: Linux binds
+it even while ::1 is off (`IPV6_FREEBIND`), so it is svrngs's as it comes
+on; svrngs starts without it only on a computer with no IPv6 at all, on
+127.0.0.1 alone, said at warn; any other refusal of ::1 stops it starting
+(`api.rs` `listening`, `alone`). The command,
 `install.sh` and the home page say the page's address in one sentence
 (`svrngs_node::home::address`). The home page, at
 `http://svrngs.localhost:<port>/`, answers only itself — reads from its own
