@@ -961,10 +961,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # tables made CRRs in one transaction, so a refused schema keeps nothing and
 # stays refused (lib.rs, `new_tables`). Its pass over svrngs-db found no
 # unused item. Drawn so far: +691 (A +654, B +37). Left: +759 and +80.
+# (2026-11-22) Slice B's sync and apply draw +485, to the top of their
+# worker's estimate (+375 to +483 by file, the core's +30 to +38 inside its
+# own free lines), before the build, so its commits land as it goes; the cap
+# comes down to where it lands. Its pass over form.rs, ring_routes.rs,
+# ring_sync.rs, the core's sig.rs, lib.rs, carried.rs and node.rs cut
+# form.rs's one-line `refused` wrapper (-3, 58573586) and found no unused
+# item else. From 25,205: the cap to 25,691. Drawn so far: +1,173 (A +654,
+# B +519). Left: +277 and +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25209,
+    ".": 25691,
 
     "js": 8694,
 
