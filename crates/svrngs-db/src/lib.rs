@@ -28,8 +28,11 @@
 //!
 //! Moved from the app-state spike's `state.rs` (svrn-docs
 //! `rings/current/app-state-spike/spike.patch`), the half that keeps a
-//! database on one computer: change sets, their signing and their sync come
-//! with the next slice (`MAGNETS_BUILD.md` §3, slice B).
+//! database on one computer. Each write is sealed as a change set in its own
+//! transaction, signed by this computer, and travels to the group's other
+//! computers, which take it by the four outcomes (`sync.rs`). A database is
+//! made with a nonce of its own, so its site, which names its writes, is
+//! derived from its device's key and that nonce (`svrngs_core::set::site`).
 //!
 //! Its tests came first, in `tests/w1/`: the reference model every copy of a
 //! database is checked against, and the seeded simulator of deliveries that
@@ -54,8 +57,11 @@ use serde_json::{Value, json};
 use tokio::sync::watch;
 
 mod form;
+mod sync;
 pub use form::FORM;
 use form::Table;
+pub use svrngs_core::SigningKey;
+pub use sync::{Ask, Call, Place, Set, Took};
 
 /// The app's schema, beside its `index.html`.
 pub const SCHEMA: &str = "schema.sql";
@@ -93,6 +99,9 @@ pub enum Refused {
     /// This computer could not: its words.
     #[error("This computer couldn't: {0}.")]
     Fault(String),
+    /// This computer keeps no such database.
+    #[error("This computer keeps no database of this app in this group.")]
+    NotHere,
 }
 
 impl Refused {
@@ -106,6 +115,7 @@ impl Refused {
             Self::Malformed(_) => (400, "sql"),
             Self::Unbuilt => (500, "unbuilt"),
             Self::Fault(_) => (500, "fault"),
+            Self::NotHere => (404, "not-here"),
         }
     }
 }
@@ -134,52 +144,90 @@ pub fn asked(body: &Value) -> Result<Asked<'_>, Refused> {
     }
 }
 
-/// This computer's app databases, by group and app.
-#[derive(Default)]
+/// This computer's app databases, by group and app, and the key that signs
+/// their sets.
 pub struct States {
     dir: PathBuf,
+    key: SigningKey,
     #[expect(clippy::disallowed_types, reason = "the databases opened, each once")]
     dbs: std::sync::Mutex<BTreeMap<(String, String), Arc<Db>>>,
 }
 
 impl States {
-    pub fn new(data_dir: &Path) -> Self {
+    pub fn new(data_dir: &Path, key: SigningKey) -> Self {
         Self {
             dir: data_dir.join("state"),
+            key,
             dbs: Default::default(),
         }
     }
 
-    /// `app`'s database in `group`, opened with `schema` the first time;
-    /// refused, it keeps none of it, and the next open tries it again.
-    pub fn open(&self, group: &str, app: &str, schema: &str) -> Result<Arc<Db>, Refused> {
+    /// `app`'s database in `group`, made with `schema` the first time, or,
+    /// with none, only one already on this computer's disk; refused, a new
+    /// one keeps none of it, and the next open tries it again.
+    pub fn open(&self, group: &str, app: &str, schema: Option<&str>) -> Result<Arc<Db>, Refused> {
         let mut dbs = self.dbs.lock().expect("the databases' lock");
         if let Some(db) = dbs.get(&(group.into(), app.into())) {
             return Ok(db.clone());
         }
-        let dir = self.dir.join(group);
-        std::fs::create_dir_all(&dir).map_err(|e| Refused::Fault(e.to_string()))?;
-        let db = Arc::new(Db::open(&dir.join(format!("{app}.db")), (group, app), schema)?);
+        let (dir, key) = (self.dir.join(group), self.key.clone());
+        let path = dir.join(format!("{app}.db"));
+        tracing::debug!(target: "state", group, app, made = schema.is_some(), on_disk = path.exists(), "state: an app's database asked, made from its schema if new, or only one on disk");
+        if schema.is_none() && !path.exists() {
+            return Err(Refused::NotHere);
+        }
+        std::fs::create_dir_all(&dir).map_err(fault)?;
+        let db = Arc::new(Db::open(&path, (group, app), schema, key)?);
         tracing::debug!(target: "state", group, app, tables = ?db.tables, "state: an app's database opened, its schema applied and its tables made CRRs");
         dbs.insert((group.into(), app.into()), db.clone());
         Ok(db)
     }
+
+    /// Every database this computer keeps in `group`, as it syncs them:
+    /// each one on its disk, opened if it isn't yet. One that won't open
+    /// is left out, said at warn.
+    pub fn held(&self, group: &str) -> Vec<Arc<Db>> {
+        let files = std::fs::read_dir(self.dir.join(group)).into_iter().flatten().flatten();
+        let apps = files.filter_map(|f| Some(f.file_name().to_str()?.strip_suffix(".db")?.to_owned()));
+        let opened = apps.map(|app| (self.open(group, &app, None), app));
+        let said = |(db, app): (Result<_, _>, String)| {
+            db.inspect_err(|e| tracing::warn!(target: "state", group, app, %e, "state: a database on this disk won't open, so it isn't synced")).ok()
+        };
+        opened.filter_map(said).collect()
+    }
 }
 
-/// One app's database in one group on this computer.
+/// One app's database in one group on this computer: its device, the key
+/// that signs its sets, the nonce it was made with and its site, and the
+/// hash of the schema it was made from.
 pub struct Db {
     pub group: String,
     pub app: String,
+    device: String,
+    key: SigningKey,
+    nonce: svrngs_core::set::Nonce,
+    site: svrngs_core::set::Site,
+    schema: [u8; 32],
     #[expect(clippy::disallowed_types, reason = "one connection, one statement at a time")]
     conn: std::sync::Mutex<Open>,
     tables: BTreeMap<String, Table>,
     gate: Arc<Gate>,
     changed: watch::Sender<u64>,
+    /// Whether it has synced in full once, and whether a set faulted since.
+    synced: AtomicBool,
+    faulted: AtomicBool,
 }
 
 /// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
 /// whether its database opened or was refused.
 struct Open(Option<Connection>);
+
+impl std::ops::Deref for Open {
+    type Target = Connection;
+    fn deref(&self) -> &Connection {
+        self.0.as_ref().expect("a connection is open until it drops")
+    }
+}
 
 impl Drop for Open {
     fn drop(&mut self) {
@@ -309,7 +357,7 @@ fn page_rule(
 }
 
 impl Db {
-    fn open(path: &Path, (group, app): (&str, &str), schema: &str) -> Result<Self, Refused> {
+    fn open(path: &Path, (group, app): (&str, &str), schema: Option<&str>, key: SigningKey) -> Result<Self, Refused> {
         let conn = Connection::open(path).map_err(fault)?;
         // cr-sqlite, loaded on each connection by SQLite itself (shim.c): a
         // build without the shim holds none of its functions, and a database
@@ -328,16 +376,20 @@ impl Db {
         let conn = open.0.as_mut().expect("just opened");
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;")
             .map_err(fault)?;
-        // A database with no table of the app's is new: its schema applied,
-        // then its tables made cr-sqlite's, in one transaction, begun and
-        // ended with no authorizer, as `schema_rule` refuses one in
-        // `schema.sql`. Refused at any step, none of it is kept, so the next
-        // open finds the database new again, and refuses it in the same words.
-        let mut tables = tables_of(conn)?;
-        tracing::debug!(target: "state", group, app, fresh = tables.is_empty(), "state: a database opened; its schema applied only when new");
-        if tables.is_empty() {
+        // A database without svrngs's own tables is new: its schema applied,
+        // its tables made cr-sqlite's, and svrngs's made, its nonce and site
+        // with them, in one transaction, begun and ended with no authorizer,
+        // as `schema_rule` refuses one in `schema.sql`. Refused at any step,
+        // none of it is kept, so the next open finds the database new again,
+        // and refuses it in the same words.
+        let device = svrngs_core::actor_of(&key);
+        let new = "SELECT count(*) = 0 FROM sqlite_master WHERE name = 'svrngs_db'";
+        let fresh: bool = conn.query_row(new, [], |r| r.get(0)).map_err(fault)?;
+        tracing::debug!(target: "state", group, app, fresh, "state: a database opened; its schema applied only when new");
+        if fresh {
+            let schema = schema.ok_or(Refused::NotHere)?;
             conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
-            let made = new_tables(conn, schema);
+            let made = new_tables(conn, schema, (group, app, &device));
             // `crsql_as_crr` refusing a table rolls back the whole transaction
             // itself (`vendor/cr-sqlite/core/rs/core/src/lib.rs:783`), so
             // only one still open is rolled back here.
@@ -350,8 +402,29 @@ impl Db {
             tracing::debug!(target: "state", group, app, refused = ?made.as_ref().err(), still_open, ?ended, "state: a new database's schema applied and its tables made CRRs in one transaction, committed; or refused and rolled back whole, here if still open, else by cr-sqlite as it refused");
             // A COMMIT or ROLLBACK that fails is this computer's fault.
             ended.map_err(fault)?;
-            tables = made?;
+            made?;
+            // cr-sqlite reads its site as a connection opens
+            // (`vendor/cr-sqlite/core/rs/core/src/bootstrap.rs:101-120`), so
+            // the new database is opened again, with its own.
+            drop(open);
+            return Self::open(path, (group, app), None, key);
         }
+        let tables = tables_of(conn)?;
+        let own = "SELECT nonce, schema, synced, crsql_site_id() FROM svrngs_db";
+        let own = conn.query_row(own, [], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get::<_, Vec<u8>>(3)?))
+        });
+        let (nonce, hash, synced, site): ([u8; 16], [u8; 32], bool, _) = own.map_err(fault)?;
+        let derived = svrngs_core::set::site(group, app, &device, &nonce);
+        tracing::debug!(target: "state", group, app, own = site == derived, "state: a database's site is its own, derived from this computer's key and the nonce it was made with, or it was made under another key");
+        if site != derived {
+            return Err(Refused::Fault(
+                "this app's database here was made under another key".into(),
+            ));
+        }
+        // Equal values tie on site (APP_STATE §4, "How it merges").
+        conn.query_row("SELECT crsql_config_set('merge-equal-values', 1)", [], |_| Ok(()))
+            .map_err(fault)?;
         let (page, until) = (AtomicBool::new(false), AtomicU64::new(u64::MAX));
         #[expect(clippy::disallowed_methods, reason = "a page's query is timed where SQLite runs it")]
         let gate = Arc::new(Gate {
@@ -367,11 +440,28 @@ impl Db {
         Ok(Self {
             group: group.into(),
             app: app.into(),
+            device,
+            key,
+            nonce,
+            site: derived,
+            schema: hash,
             conn: open.into(),
             tables,
             gate,
             changed: watch::Sender::new(0),
+            synced: synced.into(),
+            faulted: false.into(),
         })
+    }
+
+    fn conn(&self) -> std::sync::MutexGuard<'_, Open> {
+        self.conn.lock().expect("the database's lock")
+    }
+
+    /// Whether this copy is still to be said syncing: it has never synced in
+    /// full with a member, or a set faulted here since its last full call.
+    pub fn syncing(&self) -> bool {
+        !self.synced.load(Relaxed) || self.faulted.load(Relaxed)
     }
 
     /// Told each time this database changes, by a write here.
@@ -385,8 +475,7 @@ impl Db {
     pub fn read(&self, sql: &str, params: &[Value]) -> Result<Value, Refused> {
         let params = (params.iter().enumerate()).map(|(i, v)| form::value(v, &format!("params[{i}]")));
         let params = params.collect::<Result<Vec<_>, _>>()?;
-        let conn = self.conn.lock().expect("the database's lock");
-        let conn = conn.0.as_ref().expect("a connection is open until it drops");
+        let conn = self.conn();
         self.gate.page.store(true, Relaxed);
         let prepared = conn.prepare(sql);
         self.gate.page.store(false, Relaxed);
@@ -414,8 +503,7 @@ impl Db {
         let statements = listed.iter().enumerate().map(made).collect::<Result<Vec<_>, _>>();
         tracing::debug!(target: "state", group = self.group, app = self.app, ops = listed.len(), refused = ?statements.as_ref().err(), "state: a write's ops made statements by key, or refused");
         let statements = statements?;
-        let conn = self.conn.lock().expect("the database's lock");
-        let conn = conn.0.as_ref().expect("a connection is open until it drops");
+        let conn = self.conn();
         conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
         let ran = (statements.iter()).map(|(sql, values)| conn.execute(sql, rusqlite::params_from_iter(values)));
         let ran = ran.sum::<Result<usize, _>>();
@@ -423,6 +511,9 @@ impl Db {
         // Rolled back, SQLite's refusal of the list is said; a rollback that
         // fails is this computer's fault, said as one.
         let count = ran.map_err(|e| conn.execute_batch("ROLLBACK").map_or_else(fault, |()| said(e)))?;
+        // Its set sealed in its own transaction (APP_STATE §4): refused, the
+        // write is rolled back with it.
+        self.seal(&conn).inspect_err(|_| drop(conn.execute_batch("ROLLBACK")))?;
         conn.execute_batch("COMMIT").map_err(fault)?;
         if count > 0 {
             self.changed.send_modify(|n| *n += 1);
@@ -431,9 +522,23 @@ impl Db {
     }
 }
 
+/// svrngs's own tables in a database, made with it: the nonce it was made
+/// with, its schema's hash and whether it has synced in full once; the sets
+/// it keeps, as postcard's bytes (APP_STATE §4, "Sealed and signed"), named
+/// by site, seq and signature so two at one seq are both kept, `held` while
+/// one waits; each site's mark, and the sets counted above a mark
+/// (`sync.rs`).
+const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL);
+    CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, held INTEGER NOT NULL,
+      bytes BLOB NOT NULL, PRIMARY KEY (site, seq, sig));
+    CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
+    CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));";
+
 /// A new database's tables: `schema` applied under [`schema_rule`], then
-/// each table it made made a CRR; or the first refusal.
-fn new_tables(conn: &mut Connection, schema: &str) -> Result<BTreeMap<String, Table>, Refused> {
+/// each table it made made a CRR, and svrngs's own made ([`OWN`]), with a
+/// nonce drawn for it and its site, `device`'s with that nonce; or the
+/// first refusal.
+fn new_tables(conn: &mut Connection, schema: &str, (group, app, device): (&str, &str, &str)) -> Result<(), Refused> {
     conn.authorizer(Some(schema_rule)).map_err(fault)?;
     let applied = conn.execute_batch(schema);
     conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
@@ -444,7 +549,21 @@ fn new_tables(conn: &mut Connection, schema: &str) -> Result<BTreeMap<String, Ta
         conn.query_row("SELECT crsql_as_crr(?1)", [t], |_| Ok(()))
             .map_err(|e| Refused::Malformed(format!("{t}: {e}")))?;
     }
-    Ok(tables)
+    let mut nonce = [0; 16];
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "a new database's nonce is drawn where it is made"
+    )]
+    let drawn = getrandom::fill(&mut nonce);
+    drawn.map_err(fault)?;
+    let site = svrngs_core::set::site(group, app, device, &nonce);
+    conn.execute_batch(OWN).map_err(fault)?;
+    let own = "INSERT INTO svrngs_db (nonce, schema, synced) VALUES (?1, ?2, 0)";
+    conn.execute(own, rusqlite::params![nonce, svrngs_core::set::schema(schema)])
+        .map_err(fault)?;
+    conn.execute("UPDATE crsql_site_id SET site_id = ?1 WHERE ordinal = 0", [site])
+        .map_err(fault)
+        .map(drop)
 }
 
 /// Each of the app's tables in `conn`, with its columns and key, as the

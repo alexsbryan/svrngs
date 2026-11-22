@@ -11,16 +11,21 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
-use svrngs_db::{Db, Refused, States};
+use svrngs_db::{Db, Refused, SigningKey, States};
 
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, col TEXT DEFAULT 'todo');\n\
     CREATE TABLE seats (row INTEGER NOT NULL, seat INTEGER NOT NULL, who TEXT, PRIMARY KEY (seat, row));\n";
+
+/// This computer's databases under `dir`, its key Ana's.
+fn states(dir: &Path) -> States {
+    States::new(dir, SigningKey::from_bytes(&[1; 32]))
+}
 
 /// The board's database, `cards(id, title, col)` and `seats`, a key of two
 /// columns, in a directory of its own.
 fn board() -> (tempfile::TempDir, Arc<Db>) {
     let dir = tempfile::tempdir().unwrap();
-    let db = States::new(dir.path()).open("g", "board", SCHEMA);
+    let db = states(dir.path()).open("g", "board", Some(SCHEMA));
     // Plant: a build without the shim, `LIBSQLITE3_FLAGS= cargo test -p
     // svrngs-db --test db`: every test here fails at this line, refused
     // `Unbuilt` in its words, and none is served a database.
@@ -364,11 +369,11 @@ fn a_schema_s_transaction_is_refused() {
 /// table made a CRR: the tables made before the refusal stay, so the second
 /// open takes the file for a database made, and opens it.
 fn refused_twice(dir: &Path, app: &str, schema: &str) -> Refused {
-    let first = States::new(dir)
-        .open("g", app, schema)
+    let first = states(dir)
+        .open("g", app, Some(schema))
         .err()
         .expect("the schema is refused");
-    let again = States::new(dir).open("g", app, schema).err();
+    let again = states(dir).open("g", app, Some(schema)).err();
     assert_eq!(again.as_ref(), Some(&first), "refused again, in the same words");
     let plain = rusqlite::Connection::open(dir.join(format!("state/g/{app}.db"))).unwrap();
     let mut stmt = plain
