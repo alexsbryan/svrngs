@@ -3257,3 +3257,91 @@ async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
         node.net().close().await;
     }
 }
+
+/// Board's origin on `node`, once it lends it in `group`.
+async fn board_on(node: &Node, group: &str) -> String {
+    for _ in 0..30 {
+        if let Some(board) = of_kind(&lends(node, group).await, "Board").first() {
+            return board["origin"].as_str().unwrap().to_string();
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    panic!("Board is never listed");
+}
+
+/// **An app's database syncs between the group's computers** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "What travels"; invariant 8): Board,
+/// carried on Ana's computer, reaches Ben's folder, and each computer keeps
+/// its own copy. Ana writes a card; her copy, and Ben's once he opens Board,
+/// are said syncing until they first sync in full, and none shows a fresh
+/// board as the group's. A round later Ben's copy has her card and is said
+/// syncing no more; his card reaches hers the same way. Plants, each watched
+/// failing: the round leaving the databases out (Ben never has Ana's card);
+/// a copy's first full sync never kept (Ben's still said syncing).
+#[tokio::test]
+async fn an_app_s_database_syncs_between_the_group_s_computers() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 72, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    drop(folder);
+    let origin_b = board_on(ben, &group).await;
+
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let (_, ben_first) = sql(ben, &origin_b, read.clone()).await;
+    assert_eq!(
+        ben_first,
+        json!({ "rows": [], "more": false, "syncing": true }),
+        "a new copy, not the group's yet"
+    );
+    let milk_row = json!([{ "id": "c1", "title": "milk" }]);
+    let synced = || async {
+        let (_, b) = sql(ben, &origin_b, read.clone()).await;
+        b["rows"] == milk_row && b.get("syncing").is_none()
+    };
+    let mut took = false;
+    for _ in 0..10 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        if synced().await {
+            took = true;
+            break;
+        }
+    }
+    let (_, ben_now) = sql(ben, &origin_b, read.clone()).await;
+    assert!(took, "Ben's copy has Ana's card, synced: {ben_now}");
+
+    let eggs = json!({ "write": [{ "insert": "cards", "row": { "id": "c2", "title": "eggs" } }] });
+    assert_eq!(
+        sql(ben, &origin_b, eggs).await,
+        (200, json!({ "count": 1 }))
+    );
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let both = json!({ "rows": [{ "id": "c1", "title": "milk" }, { "id": "c2", "title": "eggs" }], "more": false });
+    assert_eq!(
+        sql(ana, &origin_a, read).await,
+        (200, both),
+        "Ben's card on Ana's copy, synced"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
