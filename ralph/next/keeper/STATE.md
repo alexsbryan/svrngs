@@ -276,7 +276,9 @@ These are the figures the launch approved, in code lines as
 
 ## After the demo, not now
 
-- The page: **Running here for good**, and promoting from a row.
+- The page: the keep in each line under What you lend, beside Give's, as
+  svrn-docs `rings/current/PLAY_LEND_GIVE_UX.md` §3.2 and §3.4 give it.
+  Two strangers' scenes go first (§5.10).
 - Give's image cards rendered to Quadlets, so a kept Give app survives
   its keeper's reboot.
 - The Mac, forking commonwealth-ai `sovereign-service`'s LaunchAgent half,

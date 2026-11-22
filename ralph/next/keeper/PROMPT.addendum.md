@@ -15,6 +15,12 @@ envelope, not a reason for a workaround.
 - Builds, tests and commits go in the toolbox:
   `toolbox run -c sovereign-vulkan bash -c "cd ~/dev/svrngs-keeper && …"`,
   and commits with `git commit -F <file>`.
+- Thread-heavy suites (`-p svrngs`'s `verbs` and `scenes`, svrngs-node's
+  door and ring tests) run with `TOKIO_WORKER_THREADS=4`. Each node in a test
+  starts runtimes sized to this computer's 32 cores. svrngs-renew's `verbs`
+  run held 1,880 threads and panicked with "OS can't spawn worker thread …
+  os error 11". The toolbox's task limit is 8,192 since then (it was
+  2,048).
 - Tests that need Podman go in the `svrngs-gate` container, exactly as
   `scripts/gate/README.md` gives it, under `flock /tmp/svrngs-gate.lock`.
 - `systemctl --user`, `loginctl` and real units need the host. A unit's
