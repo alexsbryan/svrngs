@@ -5,7 +5,10 @@ GET /health there, every 0.5 s, until llama-server answers 200 through the
 lend, then one chat completion. Each change of what Alex sees is a line,
 with the VM's uptime. `--boot` is the boot unit's run, its file named by the
 boot's number; `--out <file>` is a run the driver starts (kill -9, unshare).
-`--bound <s>` is how long it asks before it says nothing answered."""
+`--bound <s>` is how long it asks before it says nothing answered.
+`--play` is Alex's Play on coder, once: a program here reaches a friend's
+lend at its address only while Play is on for it (svrngs-node play.rs
+`shown`), and Play stays on across restarts (play.rs PLAY_FILE)."""
 import http.client, json, subprocess, sys, time
 
 args = sys.argv[1:]
@@ -25,8 +28,9 @@ def say(what, **kw):
     with open(out, "a") as f: f.write(json.dumps({"uptime": up(), "t": time.time(), "what": what, **kw}) + "\n")
 
 
-def svrngs(route):
-    r = subprocess.run(["/usr/local/bin/svrngs", "ask", route], capture_output=True, text=True, timeout=10)
+def svrngs(route, body=None):
+    r = subprocess.run(["/usr/local/bin/svrngs", "ask", route, *([json.dumps(body)] if body else [])],
+                       capture_output=True, text=True, timeout=10)
     return json.loads(r.stdout) if r.returncode == 0 else ("not-running" if r.returncode == 3 else f"exit {r.returncode}: {r.stderr.strip()[:160]}")
 
 
@@ -39,34 +43,42 @@ def get(origin, method, path, body=None):
     return r.status, round((time.perf_counter() - t0) * 1000, 1), text
 
 
+def coder():
+    groups = svrngs("/v1/groups")
+    if not isinstance(groups, dict): return None, {"state": "alex's svrngs", "said": groups}
+    lends = svrngs(f"/v1/lends?namespace={groups['groups'][0]['id']}")
+    lent = lends.get("lent", []) if isinstance(lends, dict) else []
+    found = next((l for l in lent if l.get("name") == "coder"), None)
+    return found, None if found else {"state": "no coder listed", "lent": [l.get("name") for l in lent] if lent else lends}
+
+
+if "--play" in args:
+    for _ in range(int(bound * 2)):
+        found, seen = coder()
+        if found: break
+        time.sleep(0.5)
+    said = svrngs("/v1/play", {"on": {"key": found["key"], "name": "coder"}}) if found else seen
+    say("play", said=said); sys.exit(0 if found else 1)
+
 sessions = subprocess.run(["loginctl", "list-sessions", "--no-legend"], capture_output=True, text=True).stdout
 boot_id = open("/proc/sys/kernel/random/boot_id").read().strip()
 say("start", boot_id=boot_id, sessions=sessions.strip().splitlines(), bound=bound)
 last, t0 = None, time.time()
 while time.time() - t0 < bound:
-    seen = {}
-    groups = svrngs("/v1/groups")
-    if not isinstance(groups, dict):
-        seen = {"state": "alex's svrngs", "said": groups}
-    else:
-        gid = groups["groups"][0]["id"]
-        lends = svrngs(f"/v1/lends?namespace={gid}")
-        coder = next((l for l in (lends.get("lent", []) if isinstance(lends, dict) else []) if l.get("name") == "coder"), None)
-        if not coder:
-            seen = {"state": "no coder listed", "lent": [l.get("name") for l in lends.get("lent", [])] if isinstance(lends, dict) else lends}
-        else:
-            try:
-                status, ms, text = get(coder["origin"], "GET", "/health")
-                seen = {"state": f"health {status}", "said": text[:200]}
-                if status == 200:
-                    say("answered", ms=ms, said=text[:200])
-                    s, ms, text = get(coder["origin"], "POST", "/v1/chat/completions",
-                                      {"messages": [{"role": "user", "content": "Say hi."}], "max_tokens": 8, "temperature": 0})
-                    words = json.loads(text)["choices"][0]["message"]["content"] if s == 200 else text[:200]
-                    say("chat", status=s, ms=ms, said=words)
-                    break
-            except Exception as e:
-                seen = {"state": "no answer", "said": f"{type(e).__name__}: {e}"[:200]}
+    lend, seen = coder()
+    if lend:
+        try:
+            status, ms, text = get(lend["origin"], "GET", "/health")
+            seen = {"state": f"health {status}", "said": text[:200]}
+            if status == 200:
+                say("answered", ms=ms, said=text[:200])
+                s, ms, text = get(lend["origin"], "POST", "/v1/chat/completions",
+                                  {"messages": [{"role": "user", "content": "Say hi."}], "max_tokens": 8, "temperature": 0})
+                words = json.loads(text)["choices"][0]["message"]["content"] if s == 200 else text[:200]
+                say("chat", status=s, ms=ms, said=words)
+                break
+        except Exception as e:
+            seen = {"state": "no answer", "said": f"{type(e).__name__}: {e}"[:200]}
     if seen != last: say("sees", **seen); last = seen
     time.sleep(0.5)
 else:

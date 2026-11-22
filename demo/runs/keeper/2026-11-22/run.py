@@ -176,13 +176,15 @@ def main():
             if root("curl -s -m 2 http://127.0.0.1:8101/health").strip().startswith('{"status":"ok"'): break
             time.sleep(1)
         code, said = terminal("svrngs share 8101 --program llama-server --name coder --group house")
+        say("alex's play", said=alex("/usr/bin/python3 /home/alex/ask.py --play --out /home/alex/asks/play.jsonl --bound 60", 120),
+            lines=asked("play.jsonl"))
         got = answered(ask("terminal.jsonl", 90))
         verdict("lent from the terminal", "passed" if got else "failed", answered=got)
 
         # The promotion: one command, Sam's yes to each question.
         code, said = terminal("svrngs-keeper keep 8101 --lend coder")
         unit = collect("promoted")
-        ok = code == 0 and "ActiveState=active" in unit["unit"] and "stays lent" in said
+        ok = code == 0 and "ActiveState=active" in unit["unit"] and "each time it starts again" in said
         verdict("promoted", "passed" if ok else "failed", exit=code, unit=unit["unit"])
         try: llama.wait(30); say("terminal llama-server ended", exit=llama.returncode)
         except subprocess.TimeoutExpired: say("terminal llama-server still running"); llama.kill()
