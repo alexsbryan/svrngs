@@ -31,9 +31,3 @@ debug = "line-tables-only"
 # crates stay unoptimised.
 [profile.dev.package."*"]
 opt-level = 2
-
-# eudoxia's `binding::Chosen::Cgroups`, on its branch `keeper-cgroups`
-# (ralph/next/keeper/CHARTER.md, "Eudoxia"), until the operator pushes it
-# and svrngs re-pins to that rev.
-[patch."https://github.com/alexsbryan/eudoxia"]
-eudoxia-community = { path = "../eudoxia/community" }

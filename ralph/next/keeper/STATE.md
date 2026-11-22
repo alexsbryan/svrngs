@@ -261,7 +261,7 @@ These are the figures the launch approved, in code lines as
   check: every case passed, failed, could-not-judge or never-ran, named
   in its run.
 
-- [ ] HUMAN-eudoxia-push — depends [svrngs-renew] — the operator:
+- [x] HUMAN-eudoxia-push 80c38bd — depends [svrngs-renew] — the operator:
   - Push eudoxia's `keeper-cgroups` commit, then say its rev.
   - A worker then re-pins `eudoxia-community` in
     crates/svrngs-node/Cargo.toml to that rev and removes the `[patch]`,

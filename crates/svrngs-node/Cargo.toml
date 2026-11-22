@@ -9,7 +9,7 @@ description = "A group's journal on disk: one append-only JSONL log per group, t
 [dependencies]
 svrngs-core = { workspace = true }
 # The community profile decides who may use a lend and what an app may write.
-eudoxia-community = { git = "https://github.com/alexsbryan/eudoxia", rev = "a0d3b0e5049f2dd84bdd7322d63518264704447d" }
+eudoxia-community = { git = "https://github.com/alexsbryan/eudoxia", rev = "80c38bd4f38d2352d55f1c3191324c0a72b13644" }
 svrngs-runtime = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
