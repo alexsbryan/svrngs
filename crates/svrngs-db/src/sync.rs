@@ -19,6 +19,9 @@
 //!   sets it holds above its marks (`haves`) and its twins, and after a full
 //!   call the copy adopts the member's marks. The spike's stop, which fetched
 //!   a refused set every round, is now the four outcomes ([`Took`]).
+//! - Kept, as the spike's `prune` (1268-1289): a set dropped once none of
+//!   its values stands on this copy ([`Db::prune`]), in the transaction of
+//!   the write or the call that outranked it.
 //! - Dropped: its refusal of a device that doesn't stand now, which split
 //!   copies (the operator's "A) No undoing"); its binding of a site to the
 //!   first device a copy saw claim it, since a site is derived from its
@@ -386,6 +389,34 @@ fn headed(conn: &Connection, site: Site, head: &Head) -> rusqlite::Result<()> {
 }
 
 impl Db {
+    /// Each set this copy took dropped once none of its values stands here:
+    /// no clock row of any of its tables names its site and seq (svrn-docs
+    /// APP_STATE §4, "What is kept"; the spike's `prune`, spike.patch:1268-1289).
+    /// Sound because nothing is undone: what it drops is outranked by what
+    /// stands (§4, "A removed device", "Why"). Copies may keep different
+    /// sets, so each prunes by its own clocks (§7, invariant 3), and two
+    /// sets at one place stay while either's values stand. Its place stays
+    /// counted, and its site's head stays, so a copy that never took it is
+    /// vouched past it by its site's own computer. A set that waits, or was
+    /// refused, holds no value here and is kept as it is. How many it dropped.
+    fn prune(&self, conn: &Connection) -> rusqlite::Result<usize> {
+        let clock = |t: &String| format!("\"{}__crsql_clock\"", t.replace('"', "\"\""));
+        let stands = self.tables.keys().map(|t| {
+            format!(
+                "SELECT 1 FROM {} c WHERE c.site_id = o.ordinal AND c.db_version = s.seq",
+                clock(t)
+            )
+        });
+        let stands = stands.collect::<Vec<_>>().join(" UNION ALL ");
+        let sql = format!(
+            "DELETE FROM svrngs_sets WHERE rowid IN (SELECT s.rowid FROM svrngs_sets s \
+            LEFT JOIN crsql_site_id o ON o.site_id = s.site WHERE s.kept = ?1 AND NOT EXISTS ({stands}))"
+        );
+        let dropped = conn.execute(&sql, [Kept::Taken])?;
+        tracing::debug!(target: "state", group = self.group, app = self.app, dropped, "state: the sets none of whose values stands on this copy, dropped");
+        Ok(dropped)
+    }
+
     /// What a set of this database's group and app, written by `device` in
     /// its database of `nonce` at `seq` under `schema`, is signed as.
     fn at<'s>(&'s self, (device, nonce, seq, schema): (&'s Device, &'s Nonce, Seq, &'s [u8; 32])) -> At<'s> {
@@ -475,6 +506,7 @@ impl Db {
             sig,
         };
         keep(conn, (&Set { head, changes }, self.site), None, Kept::Taken).map_err(fault)?;
+        self.prune(conn).map_err(fault)?;
         Ok(Some(seq))
     }
 
@@ -608,6 +640,10 @@ impl Db {
         for (s, m) in adopting {
             self.claimed(&tx, (*s, *m), (call, from, &mut room)).map_err(fault)?;
         }
+        let took = out.iter().any(|(_, t)| matches!(t, Took::Taken | Took::Twin));
+        if took {
+            self.prune(&tx).map_err(fault)?;
+        }
         tx.commit().map_err(fault)?;
         let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
         let first = call.full && call.synced && !faulted && !self.synced.swap(true, Relaxed);
@@ -618,7 +654,7 @@ impl Db {
         if call.full || faulted {
             self.faulted.store(faulted, Relaxed);
         }
-        if first || out.iter().any(|(_, t)| matches!(t, Took::Taken | Took::Twin)) {
+        if first || took {
             self.changed.send_modify(|n| *n += 1);
         }
         Ok(out)
@@ -799,6 +835,7 @@ impl Db {
             taken += usize::from(applied);
         }
         if taken > 0 {
+            self.prune(&conn).map_err(fault)?;
             self.changed.send_modify(|n| *n += 1);
         }
         Ok(Some(taken))

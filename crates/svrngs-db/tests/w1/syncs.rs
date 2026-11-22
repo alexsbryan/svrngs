@@ -63,7 +63,7 @@ impl<R: Replica> Net<R> {
         Net {
             sync,
             copies: (1..=n).map(|i| make(Site::of(i))).collect(),
-            books: vec![Book::default(); usize::from(n)],
+            books: (1..=n).map(|i| Book::of(Site::of(i))).collect(),
             took: vec![BTreeSet::new(); usize::from(n)],
             refused: vec![BTreeSet::new(); usize::from(n)],
             gone: BTreeSet::new(),
@@ -742,7 +742,10 @@ fn held(tallies: Vec<(Variant, Tally)>) {
             "{}: copies agree off the reference",
             variant.name()
         );
-        if matches!(variant, Variant::Base | Variant::Marks | Variant::Haves) {
+        if matches!(
+            variant,
+            Variant::Base | Variant::Marks | Variant::Haves | Variant::Vouched
+        ) {
             assert!(tally.failed.is_empty(), "{} fails", variant.name());
         }
     }

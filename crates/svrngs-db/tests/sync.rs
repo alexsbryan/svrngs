@@ -147,6 +147,36 @@ fn a_write_s_set_is_its_computer_s_and_is_taken_once() {
     assert_eq!(took(&b, &sent), [Took::Held], "and passed by if sent again");
 }
 
+/// **Cost follows what is live, on each copy** (APP_STATE §7, invariant 3;
+/// §4, "What is kept"): Ana inserts a card and moves it 100 times, and Ben's
+/// copy takes each move as it comes. Each copy keeps the one set whose value
+/// stands, the last move. A newcomer synced from Ben's copy ends equal to
+/// it, and Ana's next write still reaches Ben. The spike kept 2 of 10,001
+/// (`app-state-spike/README.md`), its insert holding a sentinel; a row with
+/// a column of its own has none (cr-sqlite writes a sentinel only for a
+/// key-only row, a delete or a row brought back). Plant, watched failing:
+/// no prune (101 kept on each).
+#[test]
+fn cost_follows_what_is_live_on_each_copy() {
+    let dir = tempfile::tempdir().unwrap();
+    let (a, b) = (root(dir.path(), 1), board(dir.path(), 2));
+    write(&a, "c1", "milk");
+    took(&b, &call(&a, &b));
+    for n in 0..100 {
+        write(&a, "c1", &format!("move {n}"));
+        took(&b, &call(&a, &b));
+    }
+    let kept = |db: &Db| db.missing(&Ask::default(), BUDGET).unwrap().sets.len();
+    assert_eq!((kept(&a), kept(&b)), (1, 1), "each copy keeps the set that stands");
+    assert_eq!(cards(&b), json!([{ "id": "c1", "title": "move 99" }]));
+    let newcomer = board(dir.path(), 3);
+    took(&newcomer, &call(&b, &newcomer));
+    assert_eq!(cards(&newcomer), cards(&b), "a newcomer synced from Ben's copy");
+    write(&a, "c2", "eggs");
+    took(&b, &call(&a, &b));
+    assert_eq!(cards(&b).as_array().unwrap().len(), 2, "Ana's next write reaches Ben");
+}
+
 /// **A refused set is fetched once and stalls nothing after it**
 /// (invariant 12, its case in W's `syncs.rs`, `refused`): H, a hostile
 /// computer, keeps four sets, the second of a `col_version` past 2^53. B
@@ -159,7 +189,7 @@ fn a_write_s_set_is_its_computer_s_and_is_taken_once() {
 fn a_refused_set_is_fetched_once_and_stalls_nothing_after_it() {
     let dir = tempfile::tempdir().unwrap();
     let (h, b) = (board(dir.path(), 1), board(dir.path(), 2));
-    for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c3", "jam"), ("c1", "salt")] {
+    for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c3", "jam"), ("c4", "salt")] {
         write(&h, id, title);
     }
     let all = call(&h, &b);
@@ -177,7 +207,7 @@ fn a_refused_set_is_fetched_once_and_stalls_nothing_after_it() {
     assert_eq!(took(&b, &sent), [Took::Taken, Took::Refused, Took::Taken, Took::Taken]);
     assert_eq!(
         cards(&b),
-        json!([{ "id": "c1", "title": "salt" }, { "id": "c3", "title": "jam" }])
+        json!([{ "id": "c1", "title": "milk" }, { "id": "c3", "title": "jam" }, { "id": "c4", "title": "salt" }])
     );
     assert_eq!(marks(&b.ask().unwrap()), [4], "the refusal counted in the mark");
     for _ in 0..10 {
@@ -353,11 +383,13 @@ fn a_database_made_again_under_its_key_reaches_the_group() {
     for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c1", "jam")] {
         write(&a, id, title);
     }
-    assert_eq!(took(&b, &call(&a, &b)), [Took::Taken; 3]);
+    // Her first set, its one value outranked by her third, is pruned
+    // where it was written, so two of the three travel.
+    assert_eq!(took(&b, &call(&a, &b)), [Took::Taken; 2]);
     drop(a);
     std::fs::remove_dir_all(dir.path().join("computer-1/state")).unwrap();
     let again = board(dir.path(), 1);
-    assert_eq!(took(&again, &call(&b, &again)), [Took::Taken; 3], "her old sets, back");
+    assert_eq!(took(&again, &call(&b, &again)), [Took::Taken; 2], "her old sets, back");
     write(&again, "c3", "salt");
     let new = call(&again, &b);
     assert_eq!(new.sets.iter().map(|s| s.head.seq.get()).collect::<Vec<_>>(), [1]);

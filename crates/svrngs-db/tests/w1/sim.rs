@@ -240,7 +240,7 @@ impl<R: Replica> Sim<R> {
             removed: BTreeSet::new(),
             counts: Counts::default(),
             synced: None,
-            books: vec![Book::default(); shape.copies],
+            books: (0..shape.copies).map(|c| Book::of(site(c))).collect(),
             refused: vec![BTreeSet::new(); shape.copies],
             calls: Vec::new(),
         }
@@ -631,7 +631,7 @@ impl<R: Replica> Sim<R> {
                         }
                     }
                     Some((sync, _)) => {
-                        let mut book = Book::default();
+                        let mut book = Book::of(Site::of(250));
                         let call = sync.call_from((&self.copies[c], &self.books[c]), (&newcomer, &book));
                         refused += sync.ingest(&mut newcomer, &mut book, &call, &gone).refused.len();
                         if let Some(set) = call.sets.first() {

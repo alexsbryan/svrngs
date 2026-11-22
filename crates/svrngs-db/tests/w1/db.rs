@@ -1,15 +1,18 @@
 //! svrngs-db's own copy behind `Replica`, `DbCopy`: a database as a computer
 //! keeps one (`svrngs_db::States`), written in the write form, its sets
 //! sealed, signed and synced by svrngs-db's own sync, its ask, what it sends
-//! and what it takes. The simulator's sync under `Variant::Haves`, §4's
-//! marks with the ask naming its haves, is the reference for that
+//! and what it takes. The simulator's sync under `Variant::Vouched`, §4's
+//! marks with the ask naming its haves and a mark adopted as svrngs-db
+//! adopts one, is the reference for that
 //! bookkeeping (`sync.rs`, `Book`): at every call a `DbCopy` sends or takes,
 //! it is held to the sets the reference sends and takes, and to its marks
 //! and haves after. Each run says its first disagreement (`watched`), as a
-//! pair does for the engine (`live.rs`). Prune comes with slice B's second
-//! half, so a `DbCopy` keeps every set it took, and invariant 3 holds here
-//! as far as it goes without prune: its kept sets cover its clock rows, and
-//! a newcomer synced from it ends equal to it.
+//! pair does for the engine (`live.rs`). Each copy prunes what stands no
+//! more on it as svrngs-db does, in the write's or the call's own
+//! transaction, so invariant 3 holds here whole: its kept sets cover its
+//! clock rows, it keeps none that doesn't stand (`tests/sync.rs`,
+//! `cost_follows_what_is_live_on_each_copy`),
+//! and a newcomer synced from it ends equal to it.
 
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
@@ -49,8 +52,6 @@ pub struct Run {
     devices: BTreeMap<String, Site>,
     sites: BTreeMap<[u8; 16], Site>,
     sets: BTreeMap<SetId, svrngs_db::Set>,
-    /// Whether the copy whose call is on its way had synced, as its call says.
-    synced: bool,
 }
 
 /// svrngs-db's database, as one computer keeps it.
@@ -360,16 +361,19 @@ impl Replica for DbCopy {
                 sets,
                 full: call.marks.is_some(),
                 heads: heads.map(|set| set.head.clone()).collect(),
-                synced: call.marks.is_some() && run.synced,
+                synced: call.marks.is_some() && call.synced,
             }
         };
+        // The caller's own device, which vouches for its own site's mark.
+        let from = {
+            let run = self.run.borrow();
+            let from = run.devices.iter().find(|(_, s)| Some(**s) == call.from);
+            from.and_then(|(d, _)| svrngs_db::Device::parse(d))
+        };
+        let binds = svrngs_db::Binds::new(self.run.borrow().devices.keys().cloned(), 4 << 20);
         let got = self
             .db
-            .ingest(
-                &real,
-                &svrngs_db::Binds::new(self.run.borrow().devices.keys().cloned(), 4 << 20),
-                None,
-            )
+            .ingest(&real, &binds, from.as_ref())
             .expect("svrngs-db takes the call");
         let run = self.run.borrow();
         let of = |t: Took| -> BTreeSet<SetId> {
@@ -417,9 +421,18 @@ impl Replica for DbCopy {
     }
 
     /// What svrngs-db sends `to` by `to`'s own ask must be what the
-    /// reference sends.
+    /// reference sends, and whether it has synced what the reference's book
+    /// says, as the call carries it.
     fn sent(&self, to: &DbCopy, call: &Call) {
-        self.run.borrow_mut().synced = !self.db.syncing();
+        if call.synced == self.db.syncing() {
+            let said = format!(
+                "sending {}: svrngs-db synced {}, the reference's book {}",
+                to.site.0[0],
+                !self.db.syncing(),
+                call.synced
+            );
+            self.parted(said);
+        }
         let real = self
             .db
             .missing(&to.db.ask().expect("its ask"), usize::MAX)
@@ -448,7 +461,7 @@ impl Replica for DbCopy {
 /// each copy's first disagreement with the reference's bookkeeping.
 fn seeded(seed: u64, carry: Carry) -> (Verdict, Vec<String>) {
     watched(format!("seed {seed}, {}", carry.name()), || {
-        sim::one_synced(seed, Rule::default(), Variant::Haves, carry, &maker())
+        sim::one_synced(seed, Rule::default(), Variant::Vouched, carry, &maker())
     })
 }
 
@@ -517,7 +530,7 @@ fn svrngs_db_s_sync_soak() {
 /// refusal is `tests/sync.rs`'s invariant 12.
 #[test]
 fn w_s_sync_cases_hold_on_svrngs_db_s_copies() {
-    let sync = Variant::Haves.sync().expect("§4's marks");
+    let sync = Variant::Vouched.sync().expect("§4's marks, as svrngs-db adopts them");
     let cases: [(&str, CaseOf); 3] = [
         ("two sets carried", syncs::carried::<DbCopy>),
         ("a removed device's set", syncs::cut::<DbCopy>),
@@ -544,12 +557,13 @@ type CaseOf = fn(crate::sync::Sync, &dyn Fn(Site) -> DbCopy) -> (String, Result<
 /// (`the_state_route_serves_a_standing_member_alone`), so it neither calls
 /// nor is called, and his sets stay bound in the record, as every device's
 /// that was ever admitted. The offline computer returns, and Jo's, Mia's and
-/// it meet by full calls. Every copy ends on Sam's 3, the reference over
-/// the three sets, and none on 1, the value before Jo's move. Prune comes
-/// with slice B's second half, so here Jo's overwritten set is still kept,
-/// and the case's pruned half waits for it. Plant: the spike's standing-now
-/// rule, the record binding Sam's key no more once he is removed (the
-/// offline computer holds his move as waiting, and shows Jo's 2).
+/// it meet by full calls. Sam's move outranks Jo's, so the online copies
+/// prune Jo's set before the offline one returns, and it never sees it.
+/// Every copy ends on Sam's 3, the reference over the three sets, and none
+/// on 1, the value before Jo's move. Plants, each watched failing: the
+/// spike's standing-now rule, the record binding Sam's key no more once he
+/// is removed (the offline computer holds his move as waiting, and shows
+/// Jo's 2); no prune (Jo's copy still keeps Jo's set).
 #[test]
 fn the_review_s_case_between_computers() {
     let make = maker();
@@ -593,6 +607,13 @@ fn the_review_s_case_between_computers() {
     meet(&copies, &[jo, sam, mia]);
     let sam_set = copies[sam].write(&moved(3)).expect("Sam's move");
     meet(&copies, &[jo, sam, mia]);
+    for (c, name) in [(jo, "Jo's"), (sam, "Sam's"), (mia, "Mia's")] {
+        let kept = ids(&copies[c].kept());
+        assert!(
+            !kept.contains(&jo_s.id()),
+            "{name} copy still keeps Jo's set: the case needs it pruned"
+        );
+    }
     removed.set(true);
     println!(
         "Sam ({}) removed: {}; Jo's, Mia's and the offline computer meet",

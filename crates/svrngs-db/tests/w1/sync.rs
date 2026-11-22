@@ -60,6 +60,13 @@ pub struct Sync {
     /// The ask names the sets above its marks this copy holds, so a member
     /// sends none of those again. Neither §4 nor the spike asks so.
     pub haves: bool,
+    /// svrngs-db's adoption: a member's mark for a device is taken only on
+    /// the word of that device's own copy, or into a copy not yet synced
+    /// from one that has, as a newcomer trusts its source (svrn-docs
+    /// `app-state-diligence/b-sync-fixes-2026-11-22/`, D1; svrngs-db
+    /// sync.rs `claimed`). With sets pruned, a gap a pruned set leaves at an
+    /// established copy closes only on its own device's word.
+    pub vouched: bool,
 }
 
 /// The syncs the simulator runs, each by its name in the report.
@@ -83,6 +90,9 @@ pub enum Variant {
     Stops,
     /// `Marks` adopting no member's marks.
     NoAdopt,
+    /// `Haves`, a member's mark adopted only as svrngs-db adopts one
+    /// ([`Sync::vouched`]): the sync svrngs-db's copies are held to.
+    Vouched,
     /// Every rule of the spike's at once: the highest-taken mark, a refusal
     /// of a device that doesn't stand now, which stops it and holds its
     /// mark, and no adoption.
@@ -90,7 +100,7 @@ pub enum Variant {
 }
 
 impl Variant {
-    pub const ALL: [Variant; 8] = [
+    pub const ALL: [Variant; 9] = [
         Variant::Base,
         Variant::Marks,
         Variant::Haves,
@@ -98,6 +108,7 @@ impl Variant {
         Variant::Standing,
         Variant::Stops,
         Variant::NoAdopt,
+        Variant::Vouched,
         Variant::Spike,
     ];
 
@@ -110,6 +121,7 @@ impl Variant {
             Variant::Standing => "standing",
             Variant::Stops => "stops",
             Variant::NoAdopt => "no-adopt",
+            Variant::Vouched => "vouched",
             Variant::Spike => "spike",
         }
     }
@@ -130,6 +142,7 @@ impl Variant {
             standing_now: false,
             adopts: true,
             haves: false,
+            vouched: false,
         };
         Some(match self {
             Variant::Base => return None,
@@ -149,12 +162,18 @@ impl Variant {
                 ..marks
             },
             Variant::NoAdopt => Sync { adopts: false, ..marks },
+            Variant::Vouched => Sync {
+                haves: true,
+                vouched: true,
+                ..marks
+            },
             Variant::Spike => Sync {
                 mark: Mark::Highest,
                 refusal: Refusal::Stops,
                 standing_now: true,
                 adopts: false,
                 haves: false,
+                vouched: false,
             },
         })
     }
@@ -187,14 +206,27 @@ impl Carry {
     }
 }
 
-/// A copy's marks, and under §4's the sets above them it has counted.
+/// A copy's marks, and under §4's the sets above them it has counted; and
+/// whether it has synced in full with a copy that had, as svrngs-db says
+/// (`Db::syncing`).
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Book {
     marks: Marks,
     above: BTreeSet<SetId>,
+    synced: bool,
 }
 
 impl Book {
+    /// The book of the copy at `site`: copy 1's synced from the start, as
+    /// the root the computer that carries the app makes (svrngs-db
+    /// `States::carry`), every other's not.
+    pub fn of(site: Site) -> Book {
+        Book {
+            synced: site == Site::of(1),
+            ..Book::default()
+        }
+    }
+
     pub fn marks(&self) -> &Marks {
         &self.marks
     }
@@ -257,11 +289,14 @@ impl Book {
     }
 }
 
-/// What a member sends a copy: sets, and with a call, the member's marks.
+/// What a member sends a copy: sets, and with a call, the member's marks,
+/// which copy it is, and whether its copy has synced.
 #[derive(Clone, Debug)]
 pub struct Call {
     pub sets: Vec<ChangeSet>,
     pub marks: Option<Marks>,
+    pub from: Option<Site>,
+    pub synced: bool,
 }
 
 impl Call {
@@ -270,6 +305,8 @@ impl Call {
         Call {
             sets: vec![set.clone()],
             marks: None,
+            from: None,
+            synced: false,
         }
     }
 }
@@ -315,7 +352,7 @@ impl Sync {
     /// above the copy's mark for its device, an absent mark asking all
     /// (1099-1103), less those it holds above its mark where the ask names
     /// them; and the member's marks.
-    pub fn call(self, kept: Vec<ChangeSet>, from: &Book, to: &Book) -> Call {
+    pub fn call(self, kept: Vec<ChangeSet>, (site, from): (Site, &Book), to: &Book) -> Call {
         let mut sets: Vec<ChangeSet> = kept
             .into_iter()
             .filter(|s| {
@@ -327,6 +364,8 @@ impl Sync {
         Call {
             sets,
             marks: Some(from.marks.clone()),
+            from: Some(site),
+            synced: from.synced,
         }
     }
 
@@ -334,7 +373,7 @@ impl Sync {
     /// ([`Sync::call`]), to which a copy that keeps its own marks is held
     /// (`Replica::sent`).
     pub fn call_from<R: Replica>(self, (from, fb): (&R, &Book), (to, tb): (&R, &Book)) -> Call {
-        let call = self.call(from.kept(), fb, tb);
+        let call = self.call(from.kept(), (from.site(), fb), tb);
         from.sent(to, &call);
         call
     }
@@ -386,11 +425,14 @@ impl Sync {
         if self.adopts
             && let Some(theirs) = &call.marks
         {
+            let newcomer = call.synced && !book.synced;
             for (site, m) in theirs {
-                if !stopped.contains(site) {
+                let vouched = !self.vouched || newcomer || call.from == Some(*site);
+                if !stopped.contains(site) && vouched {
                     book.adopt(self.mark, *site, *m);
                 }
             }
+            book.synced |= call.synced;
         }
         copy.called(call, &out, book);
         out
