@@ -977,10 +977,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # undo a design choice: waiting sets refetched each round, or a page's reads
 # kept on the runtime's threads. The cap to 25,741. Drawn so far: +1,223
 # (A +654, B +569). Left: +227 and +80.
+# (2026-11-22) Slice B's first half, sets, sync and apply, lands at 25,734
+# (5ed069a8..200d0ad3), and the cap comes down to it. B so far: +563 from
+# slice A's 25,171. Drawn so far: +1,217 (A +654, B +563). Left: +233 and
+# +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25741,
+    ".": 25735,
 
     "js": 8694,
 
