@@ -1,0 +1,36 @@
+release: v1.13.3, its sums signed by the release key, to svrngs-page (svrnmesh)
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+
+  Directory       ~/dev/svrngs-release/target/release-site
+
+Searching for existing projects…
+
+✓ Linked          svrnmesh/svrngs-page
+
+Retrieving project…
+> Downloading a fresh `VERCEL_OIDC_TOKEN` for svrnmesh/svrngs-page
+Downloading
+
+✓ Created         .env.local file and added it to .gitignore
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+Deploying svrngs-page
+Uploading [--------------------] (0.0B/81.1MB)
+Uploading [=====---------------] (20.3MB/81.1MB)
+Uploading [==========----------] (40.5MB/81.1MB)
+Uploading [===============-----] (60.8MB/81.1MB)
+Uploading [====================] (81.1MB/81.1MB)
+  Inspect         https://vercel.com/svrnmesh/svrngs-page/9XCbJ86a92YJY7JNLVZNCvN3tEuU
+  Production      https://svrngs-page-63glqfgst-svrnmesh.vercel.app
+Building…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+Previous build caches not available.
+Downloading 92 deployment files...
+[2K[1A[2K[G  Production      https://svrngs-page-63glqfgst-svrnmesh.vercel.app
+Completing…
+▲ Aliased         https://group.svrnme.sh
+release: v1.13.3's page is published. Next, read it back, then make its Arch package: python3 -I scripts/arch-package.py 1.13.3

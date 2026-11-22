@@ -1,0 +1,64 @@
+
+added 11 packages, and audited 12 packages in 694ms
+
+2 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+building web for wasm32-unknown-unknown (release)…
+macOS: using /opt/homebrew/opt/llvm/bin/clang for the wasm C sources (Apple clang cannot target wasm32)
+   Compiling svrngs-core v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-core)
+   Compiling svrngs-web v0.1.0 (/Users/alexsbryan/dev/svrngs-release/web)
+    Finished `release` profile [optimized] target(s) in 15.19s
+wasm-opt: -Oz applied
+
+built: /Users/alexsbryan/dev/svrngs-release/target/release-site  (version f8386cead4a6)
+  size: 4.7M wasm
+  scripts/release.sh publishes it where a group's link opens it
+  Serve it with gzip/brotli on (the wasm compresses well) and, if the
+  host allows, the headers index.html's meta tags ask for — a CDN gives
+  both; nothing here depends on them.
+build-release: darwin-aarch64 (aarch64-apple-darwin) by cargo build…
+   Compiling svrngs-core v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-core)
+   Compiling svrngs-node v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-node)
+   Compiling give v0.2.0 (/Users/alexsbryan/dev/svrngs-release/apps/give)
+   Compiling svrngs-runtime v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-runtime)
+   Compiling svrngs v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 06s
+build-release: darwin-x86_64 (x86_64-apple-darwin) by cargo build…
+   Compiling svrngs-core v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-core)
+   Compiling svrngs-node v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-node)
+   Compiling give v0.2.0 (/Users/alexsbryan/dev/svrngs-release/apps/give)
+   Compiling svrngs-runtime v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-runtime)
+   Compiling svrngs v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 05s
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+   Compiling svrngs-core v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-core)
+   Compiling svrngs-node v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-node)
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+   Compiling give v0.2.0 (/Users/alexsbryan/dev/svrngs-release/apps/give)
+   Compiling svrngs-runtime v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-runtime)
+   Compiling svrngs v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 08s
+build-release: linux-aarch64 (aarch64-unknown-linux-musl) by cargo zigbuild…
+   Compiling svrngs-core v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-core)
+   Compiling svrngs-node v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-node)
+warning: dropping unsupported crate type `cdylib` for target `aarch64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+   Compiling give v0.2.0 (/Users/alexsbryan/dev/svrngs-release/apps/give)
+   Compiling svrngs-runtime v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs-runtime)
+   Compiling svrngs v1.13.3 (/Users/alexsbryan/dev/svrngs-release/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 02s
+
+built: /Users/alexsbryan/dev/svrngs-release/target/release-site/get
+1b240c933c52f4269bb937206d201c29bc72e11d6b944b30b31b9b7c9ac27d95  svrngs-darwin-aarch64.tar.gz
+a98cecb489b5707344a6eb778be4bf295aa17ca923bf8ff6ae1e298309e08b70  svrngs-darwin-x86_64.tar.gz
+9e812dc019a51a39fdece659202f7b99775005078e67dbb5837bd069aa005937  svrngs-linux-aarch64.tar.gz
+5f85f0176c1c4c384d396c2514e4938371f1dc549ec6f5f86050afad6cca5d2e  svrngs-linux-x86_64.tar.gz
+a3dad19ad87bbdc47034eb88c31713a1a2f16aa466511fbfde4e3c0d5f4f1532  give-darwin-aarch64.tar.gz
+081a72fb1019702bff622176acce68ef9247a8cbaf5df9962db49d78889f6160  give-darwin-x86_64.tar.gz
+e1d75f74f46cd40e36d61fb0bd94b193d48b0dccb25a930d237b0632749de183  give-linux-aarch64.tar.gz
+d0867f7fb9f7767a8e2509d8398917e07e7613a8ff691cac721940bddc28c5c5  give-linux-x86_64.tar.gz
