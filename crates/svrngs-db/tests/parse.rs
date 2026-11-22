@@ -30,14 +30,22 @@ fn key(n: u8) -> SigningKey {
     SigningKey::from_bytes(&[n; 32])
 }
 
+/// Every key these tests sign with, bound, in the room a request has
+/// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
+fn bound() -> svrngs_db::Binds {
+    let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
+    svrngs_db::Binds::new(keys, 4 << 20)
+}
+
+/// No key bound, in the same room.
+fn unbound() -> svrngs_db::Binds {
+    svrngs_db::Binds::new([], 4 << 20)
+}
+
 /// Computer `n`'s database of `app` in `g`, made from `schema`.
 fn db(dir: &Path, n: u8, (app, schema): (&str, &str)) -> Arc<Db> {
     let states = States::new(&dir.join(format!("computer-{n}")), key(n));
     states.open("g", app, Some(schema)).unwrap()
-}
-
-fn all(_: &str) -> bool {
-    true
 }
 
 fn took(to: &Db, sets: &[Set]) -> Vec<Took> {
@@ -45,7 +53,7 @@ fn took(to: &Db, sets: &[Set]) -> Vec<Took> {
         sets: sets.to_vec(),
         ..Default::default()
     };
-    to.ingest(&call, &all, None)
+    to.ingest(&call, &bound(), None)
         .unwrap()
         .into_iter()
         .map(|(_, t)| t)
@@ -184,11 +192,11 @@ fn a_waiting_set_whose_key_cr_sqlite_cannot_unpack_is_refused_once_its_device_is
         sets: vec![bad],
         ..Default::default()
     };
-    let got = b.ingest(&call, &|_| false, None).unwrap();
+    let got = b.ingest(&call, &unbound(), None).unwrap();
     assert_eq!(got[0].1, Took::Waits);
-    assert_eq!(b.rejudge(&all).unwrap(), 0, "judged again, and refused");
+    assert_eq!(b.rejudge(&bound()).unwrap(), Some(0), "judged again, and refused");
     assert_eq!(rows(&b, "SELECT * FROM cards"), json!([]));
-    assert_eq!(b.rejudge(&all).unwrap(), 0, "and held no more");
+    assert_eq!(b.rejudge(&bound()).unwrap(), None, "and held no more");
 }
 
 /// **A key of the wrong shape for its table is refused for good, on every
@@ -296,11 +304,11 @@ fn a_change_its_table_cannot_hold_is_refused_for_good_and_fetched_once() {
         .unwrap();
     let b = db(&dir.path().join("fetched"), 2, ("board", CARDS));
     let sent = h.missing(&b.ask().unwrap(), BUDGET).unwrap();
-    assert_eq!(b.ingest(&sent, &all, None).unwrap()[0].1, Took::Refused);
+    assert_eq!(b.ingest(&sent, &bound(), None).unwrap()[0].1, Took::Refused);
     for round in 0..10 {
         let again = h.missing(&b.ask().unwrap(), BUDGET).unwrap();
         assert!(again.sets.is_empty(), "round {round}: fetched again");
-        b.ingest(&again, &all, None).unwrap();
+        b.ingest(&again, &bound(), None).unwrap();
     }
     assert!(!b.syncing(), "refused for good is no fault");
 }
@@ -326,7 +334,7 @@ fn a_set_under_a_schema_this_copy_does_not_hold_waits() {
         synced: true,
         ..Default::default()
     };
-    assert_eq!(b.ingest(&call, &all, None).unwrap()[0].1, Took::Waits);
+    assert_eq!(b.ingest(&call, &bound(), None).unwrap()[0].1, Took::Waits);
     assert!(!b.syncing(), "a set that waits is no fault");
     assert_eq!(rows(&b, "SELECT * FROM cards"), json!([]));
 }
@@ -378,7 +386,7 @@ fn every_key_cr_sqlite_packs_from_a_write_is_taken() {
         h.write(&json!([op])).unwrap();
     }
     let sent = h.missing(&to.ask().unwrap(), BUDGET).unwrap();
-    let got = to.ingest(&sent, &all, None).unwrap();
+    let got = to.ingest(&sent, &bound(), None).unwrap();
     assert!(got.iter().all(|(_, t)| *t == Took::Taken), "{got:?}");
     for t in ["i", "s", "b", "f"] {
         let all = format!("SELECT * FROM {t} ORDER BY id");
@@ -417,7 +425,7 @@ fn a_write_past_the_bound_is_refused_at_the_write_in_words() {
     a.write(&card("c2", "eggs")).unwrap();
     let sent = a.missing(&b.ask().unwrap(), BUDGET).unwrap();
     assert_eq!(
-        b.ingest(&sent, &all, None)
+        b.ingest(&sent, &bound(), None)
             .unwrap()
             .into_iter()
             .map(|(_, t)| t)

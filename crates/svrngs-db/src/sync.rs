@@ -158,12 +158,15 @@ pub type Place = (Site, Seq);
 /// What a copy holds, as it asks a member: each site's mark, every set of
 /// the site up to it taken here, refused here for good, or vouched for by a
 /// member pulled from in full; the sets counted above a mark, `haves`; and
-/// each set it keeps at a place where it keeps two, `twins`, by signature.
+/// each set it keeps at a place where it keeps two, `twins`, by signature;
+/// and each device past its share here, `muted`, which no member sends more
+/// of ([`Binds::share`]).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ask {
     pub marks: BTreeMap<Site, Seq>,
     pub haves: BTreeSet<Place>,
     pub twins: BTreeSet<(Place, Sig)>,
+    pub muted: BTreeSet<Device>,
 }
 
 /// What a member sends a copy: the sets the copy's ask says it lacks, the
@@ -204,10 +207,88 @@ pub enum Took {
     /// This copy couldn't apply it: its mark holds, and the next call
     /// fetches it again.
     Fault,
+    /// Its device is past its share of what this copy's ask may carry
+    /// ([`Binds::share`]): dropped as if it never came, its mark unmoved.
+    Over,
 }
 
-/// Whether the record binds a device's key, as [`Db::ingest`] is told.
-type Bound<'b> = &'b dyn Fn(&str) -> bool;
+/// The most bytes one row of a copy's ask costs in a call, with the head
+/// beside it: a site's mark, its 16 bytes and a seq of up to 9 (postcard's
+/// varint of `i64::MAX`), beside that site's head, a 65-byte device, a
+/// 16-byte nonce, a seq, two 32-byte hashes and a 130-byte signature. A
+/// have, a twin's place and signature, or a muted device costs less.
+/// `tests/bounds.rs` holds it to postcard's encoding of the largest of each.
+pub const ROW_MOST: usize = 309;
+
+/// The keys a group's record binds, standing or cut, as a set's device is
+/// judged by them (APP_STATE §4, "A removed device"); and the room a call's
+/// ask may fill beside its sets. Every key the record binds has an equal
+/// share of the room, and the keys it doesn't, together, one more
+/// ([`Self::share`]), so no one device can fill what every copy's ask may
+/// carry and stall the app's sync for everyone.
+pub struct Binds {
+    keys: BTreeSet<String>,
+    room: usize,
+}
+
+impl Binds {
+    pub fn new(keys: impl IntoIterator<Item = String>, room: usize) -> Self {
+        Self {
+            keys: keys.into_iter().collect(),
+            room,
+        }
+    }
+
+    /// Whether the record binds `device`.
+    fn binds(&self, device: &Device) -> bool {
+        self.keys.contains(device.as_str())
+    }
+
+    /// Each one's share of the room, in rows of at most [`ROW_MOST`] bytes:
+    /// so however full, the ask is at most the room.
+    fn share(&self) -> u64 {
+        (self.room / ROW_MOST / (self.keys.len() + 1)) as u64
+    }
+
+    /// A digest of the keys, so [`Db::rejudge`] reads nothing again while
+    /// the record binds the same ones.
+    fn digest(&self) -> u64 {
+        let mut hasher = std::hash::DefaultHasher::new();
+        std::hash::Hash::hash(&self.keys, &mut hasher);
+        std::hash::Hasher::finish(&hasher)
+    }
+}
+
+/// What a call may still add to this copy's ask as it is taken, by the
+/// keys the record binds: the rows each device holds ([`Db::room`]), the
+/// sets that wait for a key it doesn't, and the devices muted here.
+struct Room<'b> {
+    binds: &'b Binds,
+    rows: BTreeMap<Device, u64>,
+    unbound: u64,
+    muted: BTreeSet<Device>,
+}
+
+impl Room<'_> {
+    /// Whether a set of `device`'s has room for the `adds` rows it brings:
+    /// for a device the record binds, unmuted, in its share with one row
+    /// left for its name should it be muted; for one it doesn't, a row in
+    /// their one share.
+    fn fits(&self, device: &Device, adds: u64) -> bool {
+        let (held, share) = (self.rows.get(device).copied().unwrap_or(0), self.binds.share());
+        match self.binds.binds(device) {
+            true => !self.muted.contains(device) && (adds == 0 || held + adds < share),
+            false => self.unbound < share,
+        }
+    }
+
+    fn add(&mut self, device: &Device, adds: u64) {
+        match self.binds.binds(device) {
+            true => *self.rows.entry(device.clone()).or_default() += adds,
+            false => self.unbound += 1,
+        }
+    }
+}
 
 /// How a set is kept here, as `svrngs_sets.kept` says.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -287,15 +368,16 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     let bytes = (kept != Kept::Refused).then(|| postcard::to_allocvec(set).expect("a set is written in memory"));
     let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
     conn.execute(sql, params![site, seq, set.head.sig, kept, bytes])?;
-    if !WAITING.contains(&kept) {
+    if kept != Kept::Unbound {
         headed(conn, site, &set.head)?;
     }
     count(conn, (site, seq))
 }
 
 /// `head`, of `site`, kept as the highest of it this copy has checked, where
-/// it is higher: a set taken or refused here, or a head a mark was adopted
-/// by. A set that waits leaves none, so a key no record binds adds no row.
+/// it is higher: a set taken, refused or waiting for its schema here, or a
+/// head a mark was adopted by. A set waiting for its key leaves none, so a
+/// key no record binds adds no row but the ones its share holds.
 fn headed(conn: &Connection, site: Site, head: &Head) -> rusqlite::Result<()> {
     let sql = "INSERT INTO svrngs_heads (site, device, seq, head) VALUES (?1, ?2, ?3, ?4) \
         ON CONFLICT (site) DO UPDATE SET seq = excluded.seq, head = excluded.head WHERE excluded.seq > seq";
@@ -405,30 +487,43 @@ impl Db {
         let twins = "SELECT site, seq, sig FROM svrngs_sets WHERE (site, seq) IN \
             (SELECT site, seq FROM svrngs_sets GROUP BY site, seq HAVING count(*) > 1)";
         let twins = rows(&conn, twins, [], |r| Ok((place(r)?, r.get(2)?))).map_err(fault)?;
+        let muted = rows(&conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0)).map_err(fault)?;
         let (marks, haves, twins) = (
             marks.into_iter().collect(),
             haves.into_iter().collect(),
             twins.into_iter().collect(),
         );
-        Ok(Ask { marks, haves, twins })
+        let muted = muted.into_iter().collect();
+        Ok(Ask {
+            marks,
+            haves,
+            twins,
+            muted,
+        })
     }
 
     /// What a member whose ask is `theirs` lacks of the sets this copy
     /// keeps, in (site, seq) order, stopped at `budget` bytes of changes:
     /// each above the member's mark for its site that it doesn't name among
     /// its haves, and each at a place where either keeps two that the
-    /// member's ask doesn't name; with this copy's ask, and whether it is all
-    /// of them.
+    /// member's ask doesn't name; none that waits here or was refused, nor
+    /// any of a device the member's ask names muted; with this copy's ask,
+    /// and whether it is all of them. A set that waits is sent by its own
+    /// device's copy, or one that took it, never by one where it waits.
     pub fn missing(&self, theirs: &Ask, budget: usize) -> Result<Call, Refused> {
         let ask = self.ask()?;
         let twins: BTreeSet<&Place> = ask.twins.iter().chain(&theirs.twins).map(|(p, _)| p).collect();
         let named: BTreeSet<&Sig> = theirs.twins.iter().map(|(_, s)| s).collect();
-        let kept = "SELECT site, seq, sig, bytes FROM svrngs_sets WHERE bytes NOT NULL ORDER BY site, seq, sig";
-        let kept = rows(&self.conn(), kept, [], |r| {
-            Ok(((r.get(0)?, r.get(1)?), r.get(2)?, r.get(3)?))
+        let kept = "SELECT s.site, s.seq, s.sig, s.bytes, h.device FROM svrngs_sets s JOIN svrngs_heads h \
+            USING (site) WHERE s.kept = ?1 ORDER BY s.site, s.seq, s.sig";
+        let kept = rows(&self.conn(), kept, [Kept::Taken], |r| {
+            Ok(((r.get(0)?, r.get(1)?), r.get(2)?, r.get(3)?, r.get(4)?))
         });
         let (mut sets, mut spent, mut full) = (Vec::new(), 0, true);
-        for (place, sig, bytes) in kept.map_err(fault)? {
+        for (place, sig, bytes, device) in kept.map_err(fault)? {
+            if theirs.muted.contains::<Device>(&device) {
+                continue;
+            }
             let (site, seq): Place = place;
             let above = theirs.marks.get(&site).is_none_or(|m| seq > *m) && !theirs.haves.contains(&place);
             let (twin, sig): (bool, Sig) = (twins.contains(&place), sig);
@@ -479,22 +574,23 @@ impl Db {
     /// set that faulted here, failed its signature or waits here. Each set's
     /// place and how it ended. `bound` says whether the record binds a
     /// device's key; `from` is the computer the call came from, where known.
-    pub fn ingest(&self, call: &Call, bound: Bound, from: Option<&Device>) -> Result<Vec<(Place, Took)>, Refused> {
+    pub fn ingest(&self, call: &Call, binds: &Binds, from: Option<&Device>) -> Result<Vec<(Place, Took)>, Refused> {
         let mut sets: Vec<&Set> = call.sets.iter().collect();
         sets.sort_by(|a, b| a.head.cmp(&b.head));
         let mut conn = self.conn();
         // Rolled back as it drops on any `?` below, so a call that fails
         // leaves no transaction open (rusqlite 0.41 `transaction.rs:243`).
         let mut tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
+        let mut room = self.room(&tx, binds).map_err(fault)?;
         let (mut out, mut stopped) = (Vec::new(), BTreeSet::new());
         for set in sets {
             let place = (self.site_of(&set.head), set.head.seq);
-            let took = self.take(&mut tx, (set, place.0), bound).unwrap_or_else(|e| {
+            let took = self.take(&mut tx, (set, place.0), &mut room).unwrap_or_else(|e| {
                 tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), %e, "state: a set this copy couldn't apply, its mark held");
                 Took::Fault
             });
             tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), ?took, "state: a set offered, and how it ended");
-            if matches!(took, Took::Waits | Took::NotItsDevice | Took::Fault) {
+            if matches!(took, Took::Waits | Took::NotItsDevice | Took::Fault | Took::Over) {
                 stopped.insert(place.0);
             }
             out.push((place, took));
@@ -510,7 +606,7 @@ impl Db {
         let adopting = marks.filter(|(s, _)| call.full && **s != self.site && !stopped.contains(*s));
         tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature or waits");
         for (s, m) in adopting {
-            self.claimed(&tx, (*s, *m), (call, from, bound)).map_err(fault)?;
+            self.claimed(&tx, (*s, *m), (call, from, &mut room)).map_err(fault)?;
         }
         tx.commit().map_err(fault)?;
         let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
@@ -528,6 +624,42 @@ impl Db {
         Ok(out)
     }
 
+    /// What a call may add to this copy's ask, as it begins ([`Room`]).
+    fn room<'b>(&self, conn: &Connection, binds: &'b Binds) -> rusqlite::Result<Room<'b>> {
+        let shares = "SELECT h.device, count(*) FROM (SELECT site FROM svrngs_heads UNION ALL SELECT site FROM svrngs_above \
+            UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
+            AND t.seq = s.seq AND t.sig <> s.sig)) AS r JOIN svrngs_heads h USING (site) GROUP BY h.device";
+        let held = BTreeMap::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
+        let unbound = "SELECT count(*) FROM svrngs_sets WHERE kept = ?1";
+        let unbound = conn.query_row(unbound, [Kept::Unbound], |r| r.get(0))?;
+        let muted = BTreeSet::from_iter(rows(conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0))?);
+        let rows = held;
+        Ok(Room {
+            binds,
+            rows,
+            unbound,
+            muted,
+        })
+    }
+
+    /// `set`, past its share of what this copy's ask may carry, dropped as if
+    /// it never came; and, where the record binds its device, the device
+    /// muted here from then on, named in this copy's ask so that no member
+    /// sends it more, and no more of its sets taken here. Its sets before
+    /// stand. The seat's decision (svrn-docs APP_STATE Decisions,
+    /// 2026-11-22): no one device can fill what every copy's ask may carry,
+    /// and so stall the app's sync for everyone.
+    fn over(&self, tx: &Transaction, set: &Set, room: &mut Room) -> rusqlite::Result<Took> {
+        let (device, share) = (&set.head.device, room.binds.share());
+        let bound = room.binds.binds(device);
+        tracing::warn!(target: "state", group = self.group, app = self.app, %device, bound, share, "state: a device past its share of what this copy's ask may carry, so its set is dropped, and a device the record binds muted here, named in the ask so no member sends it more; its sets before stand");
+        let muted = "INSERT OR IGNORE INTO svrngs_muted (device) VALUES (?1)";
+        if bound && room.muted.insert(device.clone()) {
+            tx.execute(muted, [device])?;
+        }
+        Ok(Took::Over)
+    }
+
     /// The mark `m` a full call claims for `site`, adopted up to the highest
     /// head of the site this copy has checked, kept here or sent in the call,
     /// and only where the record binds its device and the caller is trusted
@@ -540,7 +672,7 @@ impl Db {
         &self,
         tx: &Transaction,
         (site, m): (Site, Seq),
-        (call, from, bound): (&Call, Option<&Device>, Bound),
+        (call, from, room): (&Call, Option<&Device>, &mut Room),
     ) -> rusqlite::Result<()> {
         let kept = "SELECT head FROM svrngs_heads WHERE site = ?1";
         let kept: Option<Vec<u8>> = tx.query_row(kept, [site], |r| r.get(0)).optional()?;
@@ -551,13 +683,15 @@ impl Db {
             return Ok(());
         };
         let trusted = from == Some(&head.device) || call.synced && !self.synced.load(Relaxed);
-        let bound = bound(head.device.as_str());
-        tracing::debug!(target: "state", group = self.group, app = self.app, device = %head.device, mark = m.get(), head = head.seq.get(), trusted, bound, "state: a full call's mark for a site, adopted up to the head its device signed where the record binds it and its caller is trusted for it");
-        if !trusted || !bound {
+        let (bound, new) = (room.binds.binds(&head.device), u64::from(kept.is_none()));
+        let fits = room.fits(&head.device, new);
+        tracing::debug!(target: "state", group = self.group, app = self.app, device = %head.device, mark = m.get(), head = head.seq.get(), trusted, bound, fits, "state: a full call's mark for a site, adopted up to the head its device signed where the record binds it, its caller is trusted for it, and its device has room for it here");
+        if !trusted || !bound || !fits {
             return Ok(());
         }
         if let Some(h) = sent {
             headed(tx, site, h)?;
+            room.add(&head.device, new);
         }
         adopt(tx, (site, m.0.min(head.seq.0) as i64))
     }
@@ -566,24 +700,36 @@ impl Db {
     /// `tx` (the spike's `take`). Whatever it writes, it writes in a
     /// savepoint of its own, released only once all of it is written, so a
     /// set is kept and counted together or not at all.
-    fn take(&self, tx: &mut Transaction, (set, site): (&Set, Site), bound: Bound) -> rusqlite::Result<Took> {
+    fn take(&self, tx: &mut Transaction, (set, site): (&Set, Site), room: &mut Room) -> rusqlite::Result<Took> {
         // Its signature first, before anything in it is read.
         if !self.signed(set) {
             return Ok(Took::NotItsDevice);
         }
         let sigs = "SELECT sig FROM svrngs_sets WHERE site = ?1 AND seq = ?2";
         let sigs: Vec<Sig> = rows(tx, sigs, params![site, set.head.seq], |r| r.get(0))?;
-        let counted = "SELECT ?2 <= coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0) \
-            OR EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1 AND seq = ?2)";
-        let counted: bool = tx.query_row(counted, params![site, set.head.seq], |r| r.get(0))?;
+        let counted = "SELECT ?2 <= coalesce(mark, 0) OR EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1 AND seq = ?2), \
+            coalesce(mark, 0), EXISTS (SELECT 1 FROM svrngs_heads WHERE site = ?1) \
+            FROM (SELECT (SELECT mark FROM svrngs_marks WHERE site = ?1) AS mark)";
+        let (counted, mark, headed): (bool, u64, bool) = tx.query_row(counted, params![site, set.head.seq], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?))
+        })?;
         if sigs.contains(&set.head.sig) || counted && sigs.is_empty() {
             return Ok(Took::Held);
+        }
+        // What it adds to this copy's ask: a site new here, a set counted
+        // above a gap, a set at a place that keeps one, the first making two
+        // rows of it. Past its device's share, or the share of keys the
+        // record doesn't bind, it is dropped ([`Self::over`]).
+        let device = &set.head.device;
+        let adds = u64::from(!headed) + u64::from(set.head.seq.0 > mark + 1) + [0, 2, 1][sigs.len().min(2)];
+        if !room.fits(device, adds) {
+            return self.over(tx, set, room);
         }
         // One whose device the record doesn't bind, or written under a schema
         // this copy doesn't hold, waits, unparsed: its changes are read only
         // against the tables of its own schema (APP_STATE §4, the four
         // outcomes). Any other is parsed before cr-sqlite sees it.
-        let unbound = (!bound(set.head.device.as_str())).then_some(Kept::Unbound);
+        let unbound = (!room.binds.binds(device)).then_some(Kept::Unbound);
         let waits = unbound.or((set.head.schema != self.schema).then_some(Kept::Unschemed));
         let judged = waits.map_or_else(|| parse(&set.changes, &self.tables).map_err(|_| Kept::Refused), Err);
         if judged.is_ok() && !sigs.is_empty() {
@@ -597,15 +743,22 @@ impl Db {
             Err(waits) => keep(&sp, (set, site), None, waits).map(|()| Took::Waits)?,
         };
         sp.commit()?;
+        room.add(device, adds);
         let twin = took == Took::Taken && !sigs.is_empty();
         Ok(if twin { Took::Twin } else { took })
     }
 
-    /// Each set waiting here whose device the record now binds, as `bound`
-    /// says, and whose schema this copy holds, judged again: parsed, and
+    /// Each set waiting here whose device the record now binds, as `binds`
+    /// says, judged again: one whose schema this copy holds parsed, and
     /// applied and no longer held, or refused for good, kept no more and
-    /// still counted. How many it applied.
-    pub fn rejudge(&self, bound: &dyn Fn(&str) -> bool) -> Result<usize, Refused> {
+    /// still counted; one under another schema waiting for its schema now.
+    /// How many it applied; none read, `None`, while the record binds the
+    /// same keys as when it last judged them.
+    pub fn rejudge(&self, binds: &Binds) -> Result<Option<usize>, Refused> {
+        let digest = binds.digest();
+        if self.judged.swap(digest, Relaxed) == digest {
+            return Ok(None);
+        }
         let mut conn = self.conn();
         let held = rows(
             &conn,
@@ -618,8 +771,14 @@ impl Db {
             .into_iter()
             .filter_map(|b| postcard::from_bytes::<Set>(&b).ok());
         let mut taken = 0;
-        for set in held.filter(|s| bound(s.head.device.as_str()) && s.head.schema == self.schema) {
+        for set in held.filter(|s| binds.binds(&s.head.device)) {
             let place = (self.site_of(&set.head), set.head.seq);
+            if set.head.schema != self.schema {
+                let unschemed = "UPDATE svrngs_sets SET kept = ?4 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
+                let at = params![place.0, place.1, set.head.sig, Kept::Unschemed];
+                conn.execute(unschemed, at).map_err(fault)?;
+                continue;
+            }
             let parsed = parse(&set.changes, &self.tables);
             let unheld = "UPDATE svrngs_sets SET kept = ?4 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
             let gone = "UPDATE svrngs_sets SET kept = ?4, bytes = NULL WHERE site = ?1 AND seq = ?2 AND sig = ?3";
@@ -642,6 +801,6 @@ impl Db {
         if taken > 0 {
             self.changed.send_modify(|n| *n += 1);
         }
-        Ok(taken)
+        Ok(Some(taken))
     }
 }

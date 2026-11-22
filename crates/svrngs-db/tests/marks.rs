@@ -20,6 +20,13 @@ fn key(n: u8) -> SigningKey {
     SigningKey::from_bytes(&[n; 32])
 }
 
+/// Every key these tests sign with, bound, in the room a request has
+/// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
+fn bound() -> svrngs_db::Binds {
+    let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
+    svrngs_db::Binds::new(keys, 4 << 20)
+}
+
 fn board(dir: &Path, n: u8) -> Arc<Db> {
     let states = States::new(&dir.join(format!("computer-{n}")), key(n));
     states.open("g", "board", Some(SCHEMA)).unwrap()
@@ -46,7 +53,7 @@ fn call(from: &Db, to: &Db) -> Call {
 }
 
 fn took(to: &Db, call: &Call) -> Vec<Took> {
-    to.ingest(call, &|_| true, None)
+    to.ingest(call, &bound(), None)
         .unwrap()
         .into_iter()
         .map(|(_, t)| t)
@@ -219,13 +226,13 @@ fn a_full_call_s_marks_pass_no_set_their_device_has_not_signed() {
         ..Default::default()
     };
     claim.ask.marks.insert(a_site, seq(1_000_000_000));
-    b.ingest(&claim, &|_| true, None).unwrap();
+    b.ingest(&claim, &bound(), None).unwrap();
     assert_eq!(
         b.ask().unwrap().marks[&a_site],
         seq(1),
         "no mark past a set its device signed"
     );
-    a.ingest(&claim, &|_| true, None).unwrap();
+    a.ingest(&claim, &bound(), None).unwrap();
     assert_eq!(
         a.ask().unwrap().marks[&a_site],
         seq(1),
@@ -278,11 +285,11 @@ fn a_mark_is_adopted_up_to_the_head_its_device_signed() {
     elsewhere.nonce = [9; 16];
     for (what, h) in [("a head not hers", forged), ("a head of another site", elsewhere)] {
         let d = board(&dir.path().join(what), 4);
-        d.ingest(&claimed(vec![h]), &|_| true, None).unwrap();
+        d.ingest(&claimed(vec![h]), &bound(), None).unwrap();
         assert!(d.ask().unwrap().marks.is_empty(), "{what} adopted");
     }
     let d = board(&dir.path().join("hers"), 4);
-    d.ingest(&claimed(vec![head]), &|_| true, None).unwrap();
+    d.ingest(&claimed(vec![head]), &bound(), None).unwrap();
     assert_eq!(
         d.ask().unwrap().marks[&a_site],
         seq(2),
@@ -312,14 +319,14 @@ fn an_established_copy_adopts_a_mark_only_on_its_site_s_own_computer_s_word() {
     let mut word = call(&b, &c);
     word.sets.clear();
     assert_eq!((word.full, word.heads.len()), (true, 1));
-    c.ingest(&word, &|_| true, devices(2).as_ref()).unwrap();
+    c.ingest(&word, &bound(), devices(2).as_ref()).unwrap();
     assert_eq!(
         c.ask().unwrap().marks[&a_site],
         seq(1),
         "Ben's word moves no established copy's mark"
     );
     assert_eq!(call(&a, &c).sets.len(), 2, "so Cy fetches what he lacks");
-    c.ingest(&word, &|_| true, devices(1).as_ref()).unwrap();
+    c.ingest(&word, &bound(), devices(1).as_ref()).unwrap();
     assert_eq!(c.ask().unwrap().marks[&a_site], seq(3), "her own computer's word does");
 }
 
@@ -346,7 +353,7 @@ fn a_copy_never_adopts_a_mark_for_its_own_site() {
     word.sets.clear();
     assert_eq!(word.heads.len(), 1, "the copy's head at 3");
     let ana = Device::parse(&svrngs_core::actor_of(&key(1))).unwrap();
-    a.ingest(&word, &|_| true, Some(&ana)).unwrap();
+    a.ingest(&word, &bound(), Some(&ana)).unwrap();
     assert_eq!(a.ask().unwrap().marks[&own(&a)], seq(2), "her own site's mark, unmoved");
     assert_eq!(call(&copy, &a).sets.len(), 1, "the set at 3, still sent her");
 }

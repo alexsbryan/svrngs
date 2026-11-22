@@ -19,6 +19,18 @@ fn key(n: u8) -> SigningKey {
     SigningKey::from_bytes(&[n; 32])
 }
 
+/// Every key these tests sign with, bound, in the room a request has
+/// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
+fn bound() -> svrngs_db::Binds {
+    let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
+    svrngs_db::Binds::new(keys, 4 << 20)
+}
+
+/// No key bound, in the same room.
+fn unbound() -> svrngs_db::Binds {
+    svrngs_db::Binds::new([], 4 << 20)
+}
+
 /// Computer `n`'s database of the board in `g`, under `dir`.
 fn board(dir: &Path, n: u8) -> Arc<Db> {
     let states = States::new(&dir.join(format!("computer-{n}")), key(n));
@@ -48,8 +60,7 @@ fn call(from: &Db, to: &Db) -> Call {
 
 /// How each set of a call ended.
 fn took(to: &Db, call: &Call) -> Vec<Took> {
-    let all = |_: &str| true;
-    to.ingest(call, &all, None)
+    to.ingest(call, &bound(), None)
         .unwrap()
         .into_iter()
         .map(|(_, t)| t)
@@ -130,7 +141,7 @@ fn a_write_s_set_is_its_computer_s_and_is_taken_once() {
         [(place.0, set.head.seq)].into(),
         "counted in its own mark"
     );
-    assert_eq!(b.ingest(&sent, &|_| true, None).unwrap(), [(place, Took::Taken)]);
+    assert_eq!(b.ingest(&sent, &bound(), None).unwrap(), [(place, Took::Taken)]);
     assert_eq!(cards(&b), json!([{ "id": "c1", "title": "milk" }]));
     assert!(call(&a, &b).sets.is_empty(), "fetched once");
     assert_eq!(took(&b, &sent), [Took::Held], "and passed by if sent again");
@@ -209,13 +220,12 @@ fn a_set_waits_for_its_device_and_applies_once_the_record_binds_it() {
     let dir = tempfile::tempdir().unwrap();
     let (a, b) = (board(dir.path(), 1), board(dir.path(), 2));
     write(&a, "c1", "milk");
-    let unbound = |_: &str| false;
-    let got = b.ingest(&call(&a, &b), &unbound, None).unwrap();
+    let got = b.ingest(&call(&a, &b), &unbound(), None).unwrap();
     assert_eq!(got[0].1, Took::Waits);
     assert_eq!(cards(&b), json!([]), "held, not applied");
     assert!(call(&a, &b).sets.is_empty(), "counted, so fetched no more");
-    assert_eq!(b.rejudge(&unbound).unwrap(), 0, "still unbound, still held");
-    assert_eq!(b.rejudge(&|_| true).unwrap(), 1);
+    assert_eq!(b.rejudge(&unbound()).unwrap(), Some(0), "still unbound, still held");
+    assert_eq!(b.rejudge(&bound()).unwrap(), Some(1));
     assert_eq!(cards(&b), json!([{ "id": "c1", "title": "milk" }]));
 }
 

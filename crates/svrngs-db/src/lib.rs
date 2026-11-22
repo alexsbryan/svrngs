@@ -63,7 +63,7 @@ pub use form::FORM;
 use form::Table;
 pub use parse::Unfit;
 pub use svrngs_core::SigningKey;
-pub use sync::{Ask, Call, Device, Head, Hex, Place, Seq, Set, Sig, Took};
+pub use sync::{Ask, Binds, Call, Device, Head, Hex, Place, ROW_MOST, Seq, Set, Sig, Took};
 
 /// The app's schema, beside its `index.html`.
 pub const SCHEMA: &str = "schema.sql";
@@ -273,6 +273,8 @@ pub struct Db {
     /// Whether it has synced in full once, and whether a set faulted since.
     synced: AtomicBool,
     faulted: AtomicBool,
+    /// The digest of the keys its waiting sets were last judged by.
+    judged: AtomicU64,
 }
 
 /// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
@@ -522,6 +524,7 @@ impl Db {
             changed: watch::Sender::new(0),
             synced: synced.into(),
             faulted: false.into(),
+            judged: 0.into(),
         })
     }
 
@@ -599,14 +602,17 @@ impl Db {
 /// it keeps, as postcard's bytes (APP_STATE §4, "Sealed and signed"), named
 /// by site, seq and signature so two at one seq are both kept, and how each
 /// is kept (`sync.rs`, `Kept`), a refused one with no bytes; each site's
-/// mark, and the sets counted above a mark; and each site's highest head
-/// this copy has checked, by its device (`sync.rs`, `headed`).
+/// mark, and the sets counted above a mark; each site's highest head this
+/// copy has checked, by its device (`sync.rs`, `headed`); and each device
+/// muted here, past its share (`sync.rs`, `Db::over`).
 const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL);
     CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, kept INTEGER NOT NULL,
       bytes BLOB, PRIMARY KEY (site, seq, sig));
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
     CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));
-    CREATE TABLE svrngs_heads (site BLOB PRIMARY KEY, device TEXT NOT NULL, seq INTEGER NOT NULL, head BLOB NOT NULL);";
+    CREATE TABLE svrngs_heads (site BLOB PRIMARY KEY, device TEXT NOT NULL, seq INTEGER NOT NULL, head BLOB NOT NULL);
+    CREATE INDEX svrngs_heads_device ON svrngs_heads (device);
+    CREATE TABLE svrngs_muted (device TEXT PRIMARY KEY);";
 
 /// A new database's tables: `schema` applied under [`schema_rule`], then
 /// each table it made made a CRR, and svrngs's own made ([`OWN`]), with a

@@ -635,14 +635,16 @@ pub const SYNC_ROUTE: &str = "/internal/ring/sync";
 /// ([`crate::ring_routes::ring_state`]).
 pub const STATE_ROUTE: &str = "/internal/ring/state";
 
-/// Whether `group`'s record binds a key, as a set's device is judged: standing
+/// The keys `group`'s record binds, as a set's device is judged: standing
 /// now, or cut since, as a removed device's sets are taken like any (svrn-docs
-/// APP_STATE §4, "A removed device"). An unreadable record binds none, so
-/// sets wait, said at warn.
-pub(crate) fn bound(rail: &RingRail, group: &str) -> impl Fn(&str) -> bool + use<> {
+/// APP_STATE §4, "A removed device"), each with its share of the room an
+/// app database's ask has ([`crate::peer_wire::ASK_ROOM_BYTES`]). An
+/// unreadable record binds none, so sets wait, said at warn.
+pub(crate) fn bound(rail: &RingRail, group: &str) -> svrngs_db::Binds {
     let read = rail.register(group).inspect_err(|e| warn!(namespace = group, error = %e, "ring state: the record is unreadable, so every set waits"));
     let read = read.unwrap_or_default();
-    move |key| read.members.contains_key(key) || read.removed.contains_key(key)
+    let keys = read.members.into_keys().chain(read.removed.into_keys());
+    svrngs_db::Binds::new(keys, crate::peer_wire::ASK_ROOM_BYTES)
 }
 
 /// Each app database this computer keeps in `group`, exchanged with the
@@ -687,8 +689,12 @@ async fn states(to: To<'_>, host: &Host, group: &str) {
             debug!(namespace = group, app = db.app, chunk, ?again, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
             let moved = took.as_ref().is_some_and(|t| {
                 t.as_ref().is_ok_and(|t| {
-                    t.iter()
-                        .any(|(_, t)| *t != svrngs_db::Took::Held && *t != svrngs_db::Took::Fault)
+                    t.iter().any(|(_, t)| {
+                        !matches!(
+                            t,
+                            svrngs_db::Took::Held | svrngs_db::Took::Fault | svrngs_db::Took::Over
+                        )
+                    })
                 })
             });
             match answer {

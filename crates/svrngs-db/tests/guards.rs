@@ -17,6 +17,18 @@ fn key(n: u8) -> SigningKey {
     SigningKey::from_bytes(&[n; 32])
 }
 
+/// Every key these tests sign with, bound, in the room a request has
+/// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
+fn bound() -> svrngs_db::Binds {
+    let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
+    svrngs_db::Binds::new(keys, 4 << 20)
+}
+
+/// No key bound, in the same room.
+fn unbound() -> svrngs_db::Binds {
+    svrngs_db::Binds::new([], 4 << 20)
+}
+
 fn board(dir: &Path, n: u8) -> Arc<Db> {
     let states = States::new(&dir.join(format!("computer-{n}")), key(n));
     states.open("g", "board", Some(SCHEMA)).unwrap()
@@ -42,7 +54,7 @@ fn a_call_that_fails_leaves_no_transaction_open() {
     side.execute_batch("ALTER TABLE svrngs_sets RENAME COLUMN kept TO aside")
         .unwrap();
     assert!(
-        b.ingest(&Call::default(), &|_| true, None).is_err(),
+        b.ingest(&Call::default(), &bound(), None).is_err(),
         "the plant fails the call"
     );
     let free = side.execute_batch("BEGIN IMMEDIATE; ROLLBACK");
@@ -67,14 +79,14 @@ fn a_waiting_set_is_kept_and_counted_together_or_not_at_all() {
     let side = side(dir.path(), 2);
     let plant = "CREATE TRIGGER aside BEFORE INSERT ON svrngs_above BEGIN SELECT RAISE(ABORT, 'planted'); END";
     side.execute_batch(plant).unwrap();
-    let got = b.ingest(&sent, &|_| false, None).unwrap();
+    let got = b.ingest(&sent, &unbound(), None).unwrap();
     assert_eq!(got[0].1, Took::Fault);
     side.execute_batch("DROP TRIGGER aside").unwrap();
     let kept: i64 = side
         .query_row("SELECT count(*) FROM svrngs_sets", [], |r| r.get(0))
         .unwrap();
     assert_eq!(kept, 0, "a set kept, uncounted");
-    assert_eq!(b.ingest(&sent, &|_| false, None).unwrap()[0].1, Took::Waits);
+    assert_eq!(b.ingest(&sent, &unbound(), None).unwrap()[0].1, Took::Waits);
     svrngs_db::close(side).unwrap();
 }
 

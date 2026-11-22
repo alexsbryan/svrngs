@@ -365,7 +365,11 @@ impl Replica for DbCopy {
         };
         let got = self
             .db
-            .ingest(&real, &|_| true, None)
+            .ingest(
+                &real,
+                &svrngs_db::Binds::new(self.run.borrow().devices.keys().cloned(), 4 << 20),
+                None,
+            )
             .expect("svrngs-db takes the call");
         let run = self.run.borrow();
         let of = |t: Took| -> BTreeSet<SetId> {
@@ -557,7 +561,7 @@ fn the_review_s_case_between_computers() {
     let key = |i: u8| svrngs_core::actor_of(&SigningKey::from_bytes(&[i; 32]));
     let (admitted, sam_s): (BTreeSet<String>, _) = ((1..=4).map(key).collect(), key(2));
     let removed = std::cell::Cell::new(false);
-    let bound = |key: &str| admitted.contains(key);
+    let bound = svrngs_db::Binds::new(admitted.iter().cloned(), 4 << 20);
     let meet = |copies: &[DbCopy], who: &[usize]| {
         for _ in 0..10 {
             let before: Vec<Ask> = who.iter().map(|&c| copies[c].db.ask().unwrap()).collect();
