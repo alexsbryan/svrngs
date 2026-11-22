@@ -643,6 +643,7 @@ impl Folders {
             }
             Err(r) => Err(r),
         };
+        tracing::debug!(target: "folder", group, %app, refused = ?answered.as_ref().err(), "carried: an app's database answered a POST, or refused it and why");
         Ok(answered.map_or_else(|r| refused(&r), |a| Json(a).into_response()))
     }
 }
