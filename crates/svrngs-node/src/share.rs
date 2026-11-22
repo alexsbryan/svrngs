@@ -339,7 +339,7 @@ pub fn approve(
         Unread::NoReader => ShareRefusal::NoReader(port),
         Unread::Failed(why) => ShareRefusal::Unread(port, why),
     })?;
-    let chosen = pid.map(|p| Chosen {
+    let chosen = pid.map(|p| Chosen::Process {
         pid: p.pid,
         start: p.start,
         now: read.start,

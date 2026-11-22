@@ -377,7 +377,7 @@ fn approved(
     pid: Option<(u32, u64)>,
 ) -> Result<binding::Approved, binding::Refused> {
     let read = answering(raw, at.1, pid.map(|p| p.0)).expect("the port reads");
-    let chosen = pid.map(|(pid, start)| binding::Chosen {
+    let chosen = pid.map(|(pid, start)| binding::Chosen::Process {
         pid,
         start,
         now: read.start,
