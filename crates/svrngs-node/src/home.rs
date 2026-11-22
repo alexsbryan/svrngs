@@ -153,7 +153,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) ->
         "/question.js" "text/javascript" "home/question.js"
         "/look.css" "text/css" "home/look.css"
         "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
-        "/page/" "home/page/" ["acting" "acts" "acts-read" "asked" "asking" "direct" "door" "folder" "folders" "group" "group-choice" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "groups-left" "home-page" "home-reading" "index" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lending" "lent-read" "lent-row" "link-box" "link-copy" "make" "make-form" "offered" "on-screen" "open-link" "people" "play" "reach" "routes" "running-here" "running-look" "shelf" "update" "update-line" "visit" "visits" "what-you-lend" "wifi"];
+        "/page/" "home/page/" ["acting" "acts" "acts-read" "asked" "asking" "direct" "door" "folder" "folders" "group" "group-choice" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "groups-left" "home-page" "home-reading" "index" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lending" "lent-read" "lent-row" "link-box" "make" "make-form" "offered" "on-screen" "open-link" "people" "play" "reach" "routes" "running-here" "running-look" "shelf" "update" "update-line" "visit" "visits" "what-you-lend" "wifi"];
         "/page/" "home/page/" ["grouped"];
         "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
         "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]

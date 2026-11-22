@@ -2,8 +2,8 @@
 // copy.js), with no DOM: COPY's every move and refusal, its trace, an io
 // that fails each way it can, and what it draws, held to what v1 draws in
 // its place: the phone's #copy, its word replaced (web/app.js@19b63b2b:611), and
-// the home page's answers appended after the button (home.js@19b63b2b:137, :202),
-// the second " Copied." kept.
+// the home page's answer after the button (home.js@19b63b2b:137, :202), the
+// last press's in place of the one before (link-copy.js, until it was Copy's own).
 
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
@@ -13,7 +13,7 @@ register('./pages/layout.mjs', import.meta.url);
 const { COPY, drawn } = await import('../../crates/svrngs-node/src/home/ui/copy.js?v=__VERSION__');
 const { machine } = await import('../../crates/svrngs-node/src/home/ui/machine.js?v=__VERSION__');
 
-const FIRST = { at: { copy: 'idle' }, said: [] };
+const FIRST = { at: { copy: 'idle' } };
 const settled = () => new Promise((r) => setTimeout(r, 0));
 // A COPY over `write`, each text it was asked kept, its trace kept.
 function copy(write) {
@@ -27,14 +27,14 @@ function copy(write) {
   );
   return { m, lines, texts, at: () => m.get().at.copy };
 }
-const step = (at, m, said = []) => COPY.step({ at: { copy: at }, said }, m);
+const step = (at, m) => COPY.step({ at: { copy: at } }, m);
 
 test('a copy is written, then said copied, and traced as COPY', async () => {
   const { m, lines, texts, at } = copy(async () => ({ type: 'copied' }));
   m.dispatch({ type: 'copy', text: 'curl -fsSL x | sh' });
   assert.equal(at(), 'copying');
   await settled();
-  assert.deepEqual([at(), m.get().said, texts], ['copied', ['copied'], ['curl -fsSL x | sh']]);
+  assert.deepEqual([at(), m.get().said, texts], ['copied', 'copied', ['curl -fsSL x | sh']]);
   assert.deepEqual(lines, [
     'COPY: copy: idle -> copying, running write',
     'COPY: copied: copying -> copied',
@@ -45,7 +45,7 @@ test('a copy the clipboard refuses is unwritten, with why; one whose io answers 
   const refused = copy(() => Promise.reject(new Error('NotAllowedError')));
   refused.m.dispatch({ type: 'copy', text: 'x' });
   await settled();
-  assert.deepEqual([refused.at(), refused.m.get().said], ['unwritten', ['unwritten']]);
+  assert.deepEqual([refused.at(), refused.m.get().said], ['unwritten', 'unwritten']);
   assert.equal(refused.lines[1], 'COPY: unwritten (NotAllowedError): copying -> unwritten');
   const thrown = copy(() => {
     throw new Error('no clipboard');
@@ -59,7 +59,7 @@ test('a copy the clipboard refuses is unwritten, with why; one whose io answers 
   assert.equal(silent.lines[1], 'COPY: unwritten (write answered nothing): copying -> unwritten');
 });
 
-test('a copy while one is copying is refused, and once answered a copy is taken again, each answer kept in turn', async () => {
+test('a copy while one is copying is refused, and once answered a copy is taken again, its answer in place of the last', async () => {
   let answer = { type: 'copied' };
   const { m, lines, texts, at } = copy(async () => answer);
   m.dispatch({ type: 'copy', text: 'a' });
@@ -71,10 +71,7 @@ test('a copy while one is copying is refused, and once answered a copy is taken 
   await settled();
   m.dispatch({ type: 'copy', text: 'a' });
   await settled();
-  assert.deepEqual(
-    [at(), m.get().said, texts],
-    ['unwritten', ['copied', 'unwritten', 'unwritten'], ['a', 'a', 'a']],
-  );
+  assert.deepEqual([at(), m.get().said, texts], ['unwritten', 'unwritten', ['a', 'a', 'a']]);
 });
 
 test('an answer with no copy being written is refused, and so is a message COPY does not take', () => {
@@ -117,12 +114,12 @@ test('without beside, the answer is the button’s word, as the phone’s #copy 
   const sent = [],
     send = (m) => sent.push(m);
   const at = (copy) =>
-    out(drawn({ at: { copy }, said: [] }, send, { id: 'copy', text: 'curl', words: PHONE }));
+    out(drawn({ at: { copy } }, send, { id: 'copy', text: 'curl', words: PHONE }));
   assert.equal(at('idle'), '<button id="copy">Copy</button>', 'web/index.html@19b63b2b:95');
   assert.equal(at('copying'), '<button id="copy">Copy</button>');
   assert.equal(at('copied'), '<button id="copy">Copied</button>', 'web/app.js@19b63b2b:611');
   assert.equal(at('unwritten'), '<button id="copy">Select the line and copy it</button>');
-  drawn({ at: { copy: 'idle' }, said: [] }, send, {
+  drawn({ at: { copy: 'idle' } }, send, {
     id: 'copy',
     text: 'curl',
     words: PHONE,
@@ -130,16 +127,23 @@ test('without beside, the answer is the button’s word, as the phone’s #copy 
   assert.deepEqual(sent, [{ type: 'copy', text: 'curl' }]);
 });
 
-test('with beside, each answer is said after the button and what beside draws, the second " Copied." kept', () => {
-  const s = { at: { copy: 'copied' }, said: ['copied', 'unwritten', 'copied'] };
+test('with beside, the last answer is said after the button and what beside draws, in place of the one before', () => {
+  const s = { at: { copy: 'copied' }, said: 'copied' };
   assert.equal(
     out(drawn(s, () => {}, { text: 'l', words: HOME, beside: true })),
-    '<button>Copy the link</button> Copied. Select it above to copy it. Copied.',
+    '<button>Copy the link</button> Copied.',
+  );
+  assert.equal(
+    out(
+      drawn({ ...s, at: { copy: 'copying' } }, () => {}, { text: 'l', words: HOME, beside: true }),
+    ),
+    '<button>Copy the link</button> Copied.',
+    'while the next press is written, the last answer stays',
   );
   const keep = { type: 'small', props: { children: 'Bookmark this.' } };
   assert.equal(
     out(
-      drawn({ at: { copy: 'idle' }, said: [] }, () => {}, {
+      drawn({ at: { copy: 'idle' } }, () => {}, {
         text: 'l',
         words: HOME,
         beside: [' ', keep],
