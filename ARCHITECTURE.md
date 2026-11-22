@@ -931,13 +931,8 @@ after U3, and is not built: nothing runs it (#196).
 **`apps/give/`**: Give (DESIGN §3, "Give"), a crate of the workspace that
 links no svrngs crate (`tests/surface.rs`) and reaches svrngs by the record
 API, `svrngs share` and `unshare`, the synced folder and its carried page
-alone. `src/card.rs` reads a card once, each refusal naming its field;
-its privately constructed `ContainerPath` rejects mount option/source delimiters
-and path traversal. `runtime.rs` emits explicit `--mount type=volume` and a
-`--` separator before the image, so a target cannot become a host mount.
-`src/runtime.rs` starts, checks, snapshots, restores and stops one on
-Podman's command line (`src/podman.rs`, `src/machine.rs` for a Mac's
-machine), naming no svrngs type; `src/check.rs` is `give check`. `fold/`
+alone. Its runtime is `apps/svrngs-keeper`'s, re-exported under Give's
+names. `fold/`
 is who keeps each app, from give's acts in the record's order, linked by
 the program and built to `page/vendor/fold.js` by `build.sh`, both held to
 `fold/cases.json`. `src/keep.rs` is `give keep`, its `plan` decided apart
@@ -945,6 +940,19 @@ from doing it, over `src/record.rs` and `src/lend.rs`; `src/page.rs` is
 `give page`, which brings `page/` into a group's folder. `web/install.sh
 --give` installs the program, which `scripts/build-release.sh` builds with
 svrngs. Its scenes are svrngs's (`crates/svrngs/tests/scenes/give*.rs`).
+**`apps/svrngs-keeper/`**: a card kept running on this computer, Give's local
+runtime as a package of its own (svrn-docs `HOSTING_AND_GIVE_BOUNDARY.md`); it
+links no svrngs crate and no Give (`tests/surface.rs`). `src/card.rs` reads a
+card once, each refusal naming its field; its privately constructed
+`ContainerPath` rejects mount option/source delimiters and path traversal.
+`src/runtime.rs` starts, checks, snapshots, restores and stops one on Podman's
+command line (`src/podman.rs`, `src/machine.rs` for a Mac's machine), with
+explicit `--mount type=volume` and a `--` before the image, so a target cannot
+become a host mount; `src/check.rs` is `give check`. `src/systemd.rs` writes
+and drives a user unit, and asks for linger: commonwealth-ai host-kit's
+`service.rs` and its tests at `8ed8d99b0`, forked with only its tests' path
+changed, under upstream's stock rustfmt and one clippy allowance
+(`src/lib.rs`).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the
