@@ -930,6 +930,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # another Bearer as no code left unused: `oidc::provider::bearer`, one
 # caller's, read in userinfo (5), and `holds_the_token`'s Bearer arm (2).
 # No raise was available; lowered to where it lands.
+# (2026-11-22) The shared database's ceiling, pre-approved by the operator
+# for its whole build, slices A to E (svrn-docs rings/current/MAGNETS_BUILD.md
+# §3): +1,450 of all code but JavaScript and +80 of JavaScript, the core's
+# +25 to +40 inside its own free lines ("A) +1,450 / +80 JS", over the
+# estimate's middle). 2026-11-19's ceiling was raised whole and other work
+# spent it, so this one is a pool, drawn by the seat. Each slice runs an
+# economizing pass over the files it touches. Then the caps rise by what
+# the slice needs, the caps come down to where it lands, and the pool's
+# balance is written here. Only the database's own commits draw on it; other
+# work asks for its own raise. Drawn so far: none. Left: +1,450 and +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
