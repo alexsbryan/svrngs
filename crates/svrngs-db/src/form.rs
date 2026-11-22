@@ -38,10 +38,6 @@ pub type Statement = (String, Vec<Sql>);
 /// Columns named, each by its table's own name for it, to bound values.
 type Named<'t> = Vec<(&'t String, Sql)>;
 
-fn refused(words: String) -> Refused {
-    Refused::Form(words)
-}
-
 /// `v` as SQLite binds it: null, a number, a string, or `{base64}` for a
 /// BLOB; refused naming `at` for anything else.
 pub fn value(v: &Value, at: &str) -> Result<Sql, Refused> {
@@ -56,7 +52,7 @@ pub fn value(v: &Value, at: &str) -> Result<Sql, Refused> {
             .as_i64()
             .map_or_else(|| Sql::Real(n.as_f64().unwrap_or_default()), Sql::Integer)),
         (_, Some(Ok(bytes))) => Ok(Sql::Blob(bytes)),
-        _ => Err(refused(format!(
+        _ => Err(Refused::Form(format!(
             "{at} is {v}: a value is null, a number, a string, or {{base64: \"...\"}} for a BLOB."
         ))),
     }
@@ -66,12 +62,12 @@ pub fn value(v: &Value, at: &str) -> Result<Sql, Refused> {
 /// the table lacks.
 fn columns<'t>(named: &Value, (name, table): (&str, &'t Table), at: &str) -> Result<Named<'t>, Refused> {
     let named = named.as_object();
-    let named = named.ok_or_else(|| refused(format!("{at} is not an object of columns to values.")))?;
+    let named = named.ok_or_else(|| Refused::Form(format!("{at} is not an object of columns to values.")))?;
     let mut out = Vec::new();
     for (c, v) in named {
         let Some(c) = table.columns.iter().find(|t| *t == c) else {
             let all = table.columns.join(", ");
-            return Err(refused(format!(
+            return Err(Refused::Form(format!(
                 "{at} names {c:?}, but {name} has no such column; its columns are {all}."
             )));
         };
@@ -101,7 +97,7 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
         _ => &["delete", "key"],
     };
     if kind.is_none() || o.len() != fields.len() || !fields.iter().all(|f| o.contains_key(*f)) {
-        return Err(refused(format!("{at} is {op}. {FORM}")));
+        return Err(Refused::Form(format!("{at} is {op}. {FORM}")));
     }
     let name = o[fields[0]].as_str().unwrap_or_default();
     let Some(table) = tables.get(name) else {
@@ -110,7 +106,7 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
             "{at} names the table {}, but there is no such table; the tables are {all}.",
             o[fields[0]]
         );
-        return Err(refused(words));
+        return Err(Refused::Form(words));
     };
     let (it, keyed) = ((name, table), |c: &String| table.key.contains(c));
     let into = quoted(name);
@@ -119,7 +115,7 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
         let given = |c: &String| row.iter().find(|(n, _)| *n == c).map(|(_, v)| v.clone());
         if let Some(k) = table.key.iter().find(|k| given(k).is_none()) {
             let key = table.key.join(", ");
-            return Err(refused(format!(
+            return Err(Refused::Form(format!(
                 "{at}'s row leaves out {k}: an insert names every key column of {name}, {key}."
             )));
         }
@@ -155,7 +151,7 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
             key.iter().map(|(c, _)| c.as_str()).collect::<Vec<_>>().join(", "),
             table.key.join(", "),
         );
-        return Err(refused(format!(
+        return Err(Refused::Form(format!(
             "{at}'s key names {named}: a key of {name} names every key column, {all}, and no other."
         )));
     }
@@ -171,10 +167,10 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
         let words = format!(
             "{at}'s set changes {c}, a key column of {name}: to give a row another key, delete it and insert it."
         );
-        return Err(refused(words));
+        return Err(Refused::Form(words));
     }
     if set.is_empty() {
-        return Err(refused(format!(
+        return Err(Refused::Form(format!(
             "{at}'s set names no column: an update sets one or more of the other columns of {name}."
         )));
     }
