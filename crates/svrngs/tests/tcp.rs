@@ -156,7 +156,7 @@ fn share_tcp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
     ];
     let argv = argv.iter().chain(args).map(|s| s.to_string());
     let groups = ["--group", "house"].iter().map(|s| s.to_string());
-    let Ok(Verb::Share(mut asked, named)) = cli::parse(argv.chain(groups)) else {
+    let Ok(Verb::Share(mut asked, named, _)) = cli::parse(argv.chain(groups)) else {
         panic!("share --tcp parses");
     };
     asked.audience = cli::audience_of(sam.dir.path(), asked.port, &named).unwrap();

@@ -29,7 +29,7 @@
  * @property {number} [using] how many have it open now
  * @property {boolean} [answering] whether its program took a connection as
  *   its lender listed it; absent from an svrngs from before (door.rs)
- * @property {'another' | 'unjudged' | 'unapproved'} [held] why nobody can
+ * @property {'another' | 'unjudged' | 'unapproved' | 'changed'} [held] why nobody can
  *   open it, in its lender's own `/lent` (door.rs `answering`)
  * @property {import('./page/running-look.js').Answer[]} [answers] what
  *   answers on its port now, there too, when it is held (door.rs `offered`):

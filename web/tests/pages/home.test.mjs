@@ -960,6 +960,34 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
   );
 });
 
+// A lend kept to a systemd unit whose files changed while it restarted
+// says so on its lender's line, with the unit answering now named as lend.rs
+// `Answer` says it, and offers Keep sharing it by its token (door.rs
+// `answering`, bound.rs `renewed`; svrn-docs KEEP_SHARING_ON_RESTART §4).
+// Planted, each watched failing: lent-row.js with no `changed` (the line
+// threw on the unknown hold); `answered` not reading `unit` (the job said
+// as "undefined").
+test('a kept lend whose unit changed says so, and names the unit', async () => {
+  const unit = 'svrngs-keeper-coder.service';
+  const answers = [
+    { unit, description: 'coder, kept by svrngs-keeper' },
+    { unit: 'recipes.service' },
+  ];
+  const page = await home(
+    ada({
+      lent: [lend('coder', { answering: true, held: 'changed', answers, token: '00c0ffee' })],
+    }),
+  );
+  const line = page.text('#lent li details summary')[0];
+  assert.ok(
+    line.includes(
+      `What runs coder changed since you chose to keep sharing it when it starts again, so coder is closed for now. Now answering: the systemd unit ${unit} (coder, kept by svrngs-keeper) and the systemd unit recipes.service.`,
+    ),
+    line,
+  );
+  assert.ok(page.text('#lent li button').includes('Keep sharing it'));
+});
+
 // Keep sharing it is offered by the token alone, which svrngs lists only
 // where approving it would be taken (share.rs `approve`): a lend held
 // unjudged, listed with one, offers it; another account's program first,

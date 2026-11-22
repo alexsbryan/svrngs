@@ -797,7 +797,7 @@ async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
         Raw::Udp => bound::udp_port(net, port.get(), (&door.using, &lend.name)).await,
         Raw::Tcp => net.read_port(Raw::Tcp, port.get(), None).await,
     };
-    let held = match bound::decided(&door.data_dir, lend, read) {
+    let held = match bound::judged((net, &door.data_dir, lend), read).await {
         Err(Unsent::Held(held)) => Some(held),
         _ => lend.terms.approved.is_none().then_some(Hold::Unapproved),
     };
@@ -1882,6 +1882,7 @@ pub(crate) fn held_words(lender: Option<&str>, name: &LendName, held: Hold) -> S
         Hold::Another => format!("{opens} {name} is closed for now: a program {who} didn’t choose was on its port on {lends} computer. {fix}"),
         Hold::Unjudged => format!("{opens} {name} is closed for now: {lends} computer can’t tell which program is answering for it. Try again later."),
         Hold::Unapproved => format!("{opens} {name} is closed for now: {who} hasn’t chosen which program it shares. {fix}"),
+        Hold::Changed => format!("{opens} {name} is closed for now: what runs it changed since {who} chose it. {fix}"),
     }
 }
 

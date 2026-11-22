@@ -386,12 +386,17 @@ mod linux {
     }
 }
 
-/// What a process is shown as: its executable's file name, an update's
+/// What a process is shown as: on Linux the unit of this account's user
+/// manager it runs in, when one does ([`crate::job::of`]); else its executable's file name, an update's
 /// rename over it aside (Linux's ` (deleted)`), and its folder: Linux's
 /// `/proc/<pid>/exe` and `cwd`, a Mac's `proc_pidpath` and
 /// `PROC_PIDVNODEPATHINFO`, each read only to be shown.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 fn shown((pid, start): Process) -> Answer {
+    #[cfg(target_os = "linux")]
+    if let Some(job) = crate::job::of(pid, mine().ok()) {
+        return job;
+    }
     #[cfg(target_os = "linux")]
     let (path, cwd) = {
         let at = |f: &str| std::fs::read_link(format!("/proc/{pid}/{f}")).ok();

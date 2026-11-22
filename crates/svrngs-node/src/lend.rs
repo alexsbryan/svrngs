@@ -416,6 +416,12 @@ pub struct Terms {
     /// downgrade lends nothing unbound.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub approved: Option<Approved>,
+    /// The unit its lender approved, renewed through the unit's restarts
+    /// (svrn-docs KEEP_SHARING_ON_RESTART §2, door/bound.rs `renewed`):
+    /// none when what they approved runs in no unit of theirs, or they
+    /// asked to choose again after each. An svrngs from before refuses it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub keep: Option<crate::job::Keep>,
 }
 
 /// What a declaration says beside a lend's [`Terms`]: the port it is
@@ -659,6 +665,8 @@ pub enum Hold {
     Unjudged,
     /// Its lender approved nothing on its port yet.
     Unapproved,
+    /// The unit its lender kept it to restarted with its files changed.
+    Changed,
 }
 
 /// What holds a lend's port, as read to show its lender, never compared
@@ -679,10 +687,17 @@ pub enum Answer {
     Account {
         account: String,
     },
+    /// A unit of this account's user manager ([`crate::job`]).
+    Job {
+        unit: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+    },
 }
 
 impl std::fmt::Display for Answer {
-    /// "python3 in ~/dev/garden", or "a program of the account _resolve".
+    /// "python3 in ~/dev/garden", "a program of the account _resolve", or
+    /// "the systemd unit svrngs-keeper-coder.service (coder, kept by svrngs-keeper)".
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Answer::Program {
@@ -692,6 +707,12 @@ impl std::fmt::Display for Answer {
             } => write!(f, "{program} in {folder}"),
             Answer::Program { program, .. } => f.write_str(program),
             Answer::Account { account } => write!(f, "a program of the account {account}"),
+            Answer::Job { unit, description } => {
+                let about = description
+                    .as_ref()
+                    .map_or(String::new(), |d| format!(" ({d})"));
+                write!(f, "the systemd unit {unit}{about}")
+            }
         }
     }
 }

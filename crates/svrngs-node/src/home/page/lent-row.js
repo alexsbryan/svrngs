@@ -153,6 +153,8 @@ const HELD = {
     ` Something you didn’t approve was on ${name}’s port, so ${name} is closed for now.`,
   unjudged: (/** @type {string} */ name) =>
     ` svrngs can’t tell what answers on ${name}’s port, so nobody can open ${name}. Start it again.`,
+  changed: (/** @type {string} */ name) =>
+    ` What runs ${name} changed since you chose to keep sharing it when it starts again, so ${name} is closed for now.`,
 };
 // What svrngs read answering on a held lend's port now: nothing answering
 // said apart from a read that failed, which the row names in `unread`

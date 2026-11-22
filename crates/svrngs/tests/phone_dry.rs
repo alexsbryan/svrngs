@@ -90,6 +90,7 @@ async fn sam_through_a_relay_on_this_computer() {
             asks: None,
             sends: Vec::new(),
             approved: None,
+            keep: None,
         },
     };
     lend::declare(&sam_dir, &film, None).unwrap();

@@ -139,6 +139,7 @@ fn lend(name: &str, port: u16) -> Lend {
             asks: None,
             sends: Vec::new(),
             approved: None,
+            keep: None,
         },
     }
 }

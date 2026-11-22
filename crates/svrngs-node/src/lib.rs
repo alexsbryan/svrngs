@@ -88,6 +88,9 @@ pub mod network;
 // rings/current/LEND_OWNER.md §2); and a share's port as read for its
 // binding (svrn-docs SHARE_BINDING).
 pub mod uid;
+// The systemd user unit a lend's program runs in: named, granted and
+// renewed through its restarts (svrn-docs KEEP_SHARING_ON_RESTART).
+pub mod job;
 // Which program may receive a share's traffic: the lender's decisions,
 // Eudoxia's, over what `uid` read. Named here because `iroh::PortRead` and
 // `lend::Approved` carry its types to the crates that use this one.

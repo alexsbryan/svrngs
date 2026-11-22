@@ -691,6 +691,17 @@ Elsewhere `Owner::NoReader`. `uid::mine` is this process's own uid.
 `socket_fdinfo` and `proc_bsdinfo` records, and this computer's own
 sockets, a late accept among them.
 
+The systemd user unit a lend's program runs in is `job.rs` (svrn-docs
+KEEP_SHARING_ON_RESTART §2), Linux's alone: `job::of` names a holder by
+its `/proc/<pid>/cgroup` when it lies in a service of this account's user
+manager (`lend::Answer::Job`, with its `Description`), and `job::now`
+reads a unit through `/usr/bin/systemctl --user show`: refused when
+transient, without a file under `~/.config` or not running, else the grant
+(`job::Keep`, a hash of those files) and its subtree's cgroup ids, the
+inodes under `/sys/fs/cgroup`. `Net::job` reads it off the runtime, kept
+for the cgroup that took the door's connection. `share::kept` makes the
+grant at an approval; `door::bound::renewed` renews with it.
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its

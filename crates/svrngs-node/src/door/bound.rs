@@ -20,10 +20,10 @@ use std::time::Duration;
 use tokio::net::UdpSocket;
 
 use crate::door::Using;
-use crate::iroh::{Duplex, Net};
+use crate::iroh::{Duplex, Net, PortRead};
 use crate::lend::{Hold, Lend, LendName, Raw};
 use crate::uid::{Conn, Unread};
-use eudoxia_community::binding::{self, Held, Read, Took};
+use eudoxia_community::binding::{self, Chosen, Held, Read, Took};
 
 /// How long a share's port has to take a connection; once connected, a
 /// body takes as long as it takes, as upstream's `forward_stream` bounded
@@ -76,7 +76,72 @@ pub(crate) async fn bound((net, dir, lend): Judged<'_>) -> Result<Bound, Unsent>
     let taken = taken.unwrap_or_else(|e| Err(e.into()));
     let Unchecked(stream, conn) = taken.map_err(away(lend))?;
     let read = net.read_port(Raw::Tcp, at.port(), Some(conn)).await;
-    decided(dir, lend, read).map(|()| Bound(stream))
+    judged((net, dir, lend), read).await.map(|()| Bound(stream))
+}
+
+/// [`decided`], and a TCP lend its lender kept to a unit renewed where it
+/// is held [`Hold::Another`], with the unit read now ([`Net::job`],
+/// [`renewed`]); never where it is unjudged or away.
+pub(crate) async fn judged((net, dir, lend): Judged<'_>, read: PortRead) -> Result<(), Unsent> {
+    let checked = decided(dir, lend, read.clone());
+    let keep = lend.terms.keep.as_ref().filter(|_| lend.raw() == Raw::Tcp);
+    match (checked, keep, read) {
+        (Err(Unsent::Held(Hold::Another)), Some(keep), Ok(read)) => {
+            let took = match read.1 {
+                Took::Cgroup(c) => Some(c),
+                _ => None,
+            };
+            let job = net.job(keep.unit.clone(), took).await;
+            renewed(dir, lend, (keep, took), (&read, job))
+        }
+        (checked, ..) => checked,
+    }
+}
+
+/// `lend`, kept to `keep`'s unit and held [`Hold::Another`] on `now`,
+/// approved afresh from that read, as the unit is now (svrn-docs
+/// KEEP_SHARING_ON_RESTART §2): never over a hold, and only with its files
+/// as granted, else [`Hold::Changed`]; only on a connection whose taker was
+/// read; with every socket on its address and what took the connection in
+/// the unit's subtree now, at the address approved before; and only while
+/// its approval is still the one judged, or carried by the one made since.
+/// Every branch traced.
+pub(crate) fn renewed(
+    dir: &Path,
+    lend: &Lend,
+    (keep, cgroup): (&crate::job::Keep, Option<u64>),
+    ((now, took), job): (&(Read, Took), Result<crate::job::Now, &'static str>),
+) -> Result<(), Unsent> {
+    let fresh = || {
+        let another = |why| (Hold::Another, why);
+        let before = lend.terms.approved.as_ref().filter(|a| !a.held);
+        let before = before.ok_or(another("held: only its lender approves again"))?;
+        let job = Some(job.map_err(another)?).filter(|job| job.keep == *keep);
+        let job = job.ok_or((Hold::Changed, "its files changed since its lender kept it"))?;
+        cgroup.ok_or(another("no connection's taker was read"))?;
+        let new = binding::approve(now, Some(&Chosen::Cgroups(job.cgroups))).ok();
+        let checked = |n: &_| binding::check(Some(n), now, took).is_ok();
+        let new = new.filter(|n| n.at == before.at && checked(n));
+        new.ok_or(another("not all the unit's, or moved"))
+    };
+    let (mut carried, mut kept) = (false, None);
+    let (hold, why) = match fresh() {
+        Err(not) => not,
+        Ok(new) => {
+            kept = Some(mutated(dir, &lend.name, |l| {
+                let judged = l.terms == lend.terms;
+                if judged {
+                    l.terms.approved = Some(new.clone());
+                }
+                carried = judged || binding::check(l.terms.approved.as_ref(), now, took).is_ok();
+            }));
+            (Hold::Another, "written, unless it changed meanwhile")
+        }
+    };
+    let stands = carried && matches!(kept, Some(Ok(true)));
+    let renewed = stands.then_some(()).ok_or(Unsent::Held(hold));
+    tracing::debug!(target: "door", lend = %lend.name, ?keep, why, ?kept, ?renewed, "door: a kept lend's unit renewed after a restart, or why not");
+    renewed
 }
 
 /// [`bound`] with this computer's own readers, `lend` kept in `dir`: for a

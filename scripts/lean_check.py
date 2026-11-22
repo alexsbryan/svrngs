@@ -938,13 +938,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then svrngs-renew, within the operator's envelope for it (2026-11-22,
 # "Those resources work for me": at most +180 and +30 JavaScript over the
 # pass's counts, ralph/next/keeper/CHARTER.md "Budget"), each step raised
-# to one past where it lands: bound.rs's wait moved into `mutated`, 24,483.
+# to one past where it lands: bound.rs's wait moved into `mutated`, 24,483;
+# the job named and the kept lend renewed (job.rs, bound.rs `renewed`,
+# `Net::job`, `share::kept`, `Terms::keep`, `Hold::Changed`, `Answer::Job`),
+# 24,655, the envelope's whole +180; JavaScript, the row's words, 8,688.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24484,
+    ".": 24656,
 
-    "js": 8683,
+    "js": 8689,
 
     "swift": 1,
 }

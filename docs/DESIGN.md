@@ -327,6 +327,22 @@ listens anew after it starts again, and a share made before this, wait on
 that approval; a share of a name already shared from another port or
 protocol is refused unless it is given `--replace`; a lend file from
 V1.12.2 written again keeps what V1.12.2 wrote.
+**A lend kept to a unit is renewed through its restarts** (svrn-docs
+`rings/current/KEEP_SHARING_ON_RESTART.md` §2). On Linux a holder that runs
+in a service of this account's user manager is shown as that unit (its
+name and `Description`, `job.rs`), not its program. Approving one unit's
+job alone, by `svrngs share`, `svrngs approve` or Keep sharing it, grants
+it (`Terms::keep`: the unit and a hash of its files under `~/.config`),
+unless `--ask-after-restart`; a transient unit, or one with no file there,
+is never granted. Where a kept TCP lend's request is held as another's,
+the door reads the unit now (`/usr/bin/systemctl`, never `PATH`) and
+approves afresh from that same read with `Chosen::Cgroups`, its subtree's
+cgroups this boot: only when the lend isn't held, the unit's files hash to
+the grant (else `Hold::Changed`, and its lender is asked again), a
+connection's taker was read, every socket there and that taker are the
+unit's, at the address approved before, and only over the approval it
+judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
+stopped lend stays stopped.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.
 

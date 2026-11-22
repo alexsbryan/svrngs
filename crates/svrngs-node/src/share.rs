@@ -47,6 +47,7 @@ type Answered = Option<(u16, Vec<u8>)>;
 pub(crate) type On = SendRequest<String>;
 
 use crate::door::bound::{Bound, Unsent};
+use crate::job::Keep;
 use crate::lend::{
     self, Answer, Approved, Audience, Lend, LendError, LendName, Program, Raw, RefusedPath,
     SendRow, Source, Upload,
@@ -300,6 +301,9 @@ pub enum ShareRefusal {
     Unkept(LendName, String),
 }
 
+/// An approval, and the grant it makes ([`kept`]).
+pub type Granted = (Approved, Option<Keep>);
+
 /// The lend `name` declared in `data_dir`, and its port, as an approval
 /// asks them (SHARE_BINDING §5.4); none for a carried app's.
 pub fn shared(data_dir: &Path, name: &LendName) -> Result<(Lend, NonZeroU16), ShareRefusal> {
@@ -310,11 +314,14 @@ pub fn shared(data_dir: &Path, name: &LendName) -> Result<(Lend, NonZeroU16), Sh
         .ok_or_else(|| ShareRefusal::NotShared(name.clone()))
 }
 
-/// `approved` kept as the lend `name`'s, nothing else of it changed
-/// (SHARE_BINDING §5.4).
-pub fn reapproved(dir: &Path, name: &LendName, approved: Approved) -> Result<(), ShareRefusal> {
-    let kept = crate::lend::mutate(dir, name, |l| l.terms.approved = Some(approved));
-    tracing::debug!(target: "share", lend = %name, ?kept, "share: what answers on its port approved, only its approval changed");
+/// `approved` kept as the lend `name`'s, with the grant `keep` its
+/// approval makes ([`kept`]), nothing else of it changed (SHARE_BINDING
+/// §5.4).
+pub fn reapproved(dir: &Path, name: &LendName, (a, keep): Granted) -> Result<(), ShareRefusal> {
+    let kept = lend::mutate(dir, name, |l| {
+        (l.terms.approved, l.terms.keep) = (Some(a), keep)
+    });
+    tracing::debug!(target: "share", lend = %name, ?kept, "share: what answers on its port approved, only its approval and its grant changed");
     match kept {
         Ok(true) => Ok(()),
         Ok(false) => Err(ShareRefusal::NotShared(name.clone())),
@@ -379,6 +386,20 @@ pub fn approve(
     };
     tracing::debug!(target: "share", port, ?raw, ?pid, ?shown, read = ?read.read, answers = ?read.shown, ?approved, "share: what answers on the port, approved with what each socket it covers is shown as, or why not");
     approved
+}
+
+/// The grant an approval of what `answers` names makes, unless its lender
+/// asks to choose again after each restart (`ask`; svrn-docs
+/// KEEP_SHARING_ON_RESTART §2): when they are one unit's job (`approve`
+/// says each socket's holders once, in order), not transient and with a
+/// file of theirs ([`crate::job::now`]), that unit; else none.
+pub fn kept(answers: &[Answer], ask: bool) -> Option<Keep> {
+    let keep = match answers {
+        [Answer::Job { unit, .. }] if !ask => Some(crate::job::now(unit).map(|now| now.keep)),
+        _ => None,
+    };
+    tracing::debug!(target: "share", ?answers, ask, ?keep, "share: the grant an approval makes, one unit's job renewed through its restarts, or none");
+    keep.and_then(Result::ok)
 }
 
 /// An opaque name for what `approved` approves, the same for the same

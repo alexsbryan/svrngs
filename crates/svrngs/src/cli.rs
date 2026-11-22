@@ -12,10 +12,10 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> --group G... [--name N] [--program P] [--pid I@S] [--replace] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+//! svrngs share <port> --group G... [--name N] [--program P] [--pid I@S] [--replace] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp] [--ask-after-restart]
 //!                                          lend a service on this computer
 //! svrngs unshare <name> [--group G]...     stop lending it, or to G only
-//! svrngs approve <name> [--pid I@S] [--token T]
+//! svrngs approve <name> [--pid I@S] [--token T] [--ask-after-restart]
 //!                                          say what answers now, and keep lending it
 //!                                          to that on a y, or to what a list showed
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -206,15 +206,17 @@ pub enum Verb {
         relays: Vec<RelayUrl>,
     },
     /// No secret: it is read from a prompt (the module docs). Each
-    /// `--group`, a name or the start of an id, as typed: who can open it.
-    Share(Share, Vec<String>),
+    /// `--group`, a name or the start of an id, as typed: who can open it;
+    /// and `--ask-after-restart` ([`share::kept`]).
+    Share(Share, Vec<String>, bool),
     /// Each `--group` as typed: only those taken from its audience; none
     /// withdraws it.
     Unshare(LendName, Vec<String>),
     /// `approve`: what answers on the lend's port approved, with `--pid`
     /// the process its lender chose (svrn-docs SHARE_BINDING §5.4), and
-    /// `--token` what a lend's list showed of it (`Offered::token`).
-    Approve(LendName, Option<share::Pid>, Option<String>),
+    /// `--token` what a lend's list showed of it (`Offered::token`), and
+    /// `--ask-after-restart` ([`share::kept`]).
+    Approve(LendName, Option<share::Pid>, Option<String>, bool),
     /// `share --folder --group`, asked of svrngs running here: the
     /// directory, absolute, and the group as typed.
     Folder {
@@ -291,7 +293,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut pid, mut token) = (None, None);
     let mut replace = false;
     let mut sign_in = false;
-    let mut readers = false;
+    let (mut readers, mut ask) = (false, false);
     let mut carries = None;
     let mut run = true;
     let mut device = false;
@@ -368,6 +370,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--print" if verb == "open" => print = true,
             "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
             "--readers" if verb == "share" => readers = true,
+            "--ask-after-restart" if matches!(verb.as_str(), "share" | "approve") => ask = true,
             "--replace" if verb == "share" => replace = true,
             "--udp" | "--tcp" if verb == "share" => {
                 let said = if arg == "--udp" { lend::Raw::Udp } else { lend::Raw::Tcp };
@@ -492,6 +495,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     replace,
                 },
                 groups,
+                ask,
             ))
         }
         "leave" => Ok(Verb::Leave(
@@ -506,7 +510,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "approve" => {
             let raw = positional.ok_or("approve wants a name: `svrngs approve <name>`")?;
-            Ok(Verb::Approve(lend_name(&raw)?, pid, token))
+            Ok(Verb::Approve(lend_name(&raw)?, pid, token, ask))
         }
         "room" => {
             let first = positional.ok_or("room wants what to serve: `svrngs room <name>...`")?;
@@ -824,7 +828,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         Verb::Check(dir) => checked(&dir)?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
-        Verb::Approve(name, pid, token) => approve(here, &name, pid, token)?,
+        Verb::Approve(name, pid, token, ask) => approve(here, &name, (pid, token), ask)?,
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
         Verb::Ask(route, body) => {
             let (status, text) = here.asked(&route, body).await?;
@@ -881,7 +885,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let group = seed.name().clone();
             said(&seed, answer, |outcome| Said::Left { group, outcome })?.to_string()
         }
-        Verb::Share(mut asked, groups) => {
+        Verb::Share(mut asked, groups, ask) => {
             asked.audience = audience_of(&root, asked.port, &groups)?;
             let known = share::well_known_kind(asked.port);
             let claimed = claim(&root);
@@ -901,6 +905,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let (approved, answers) =
                 share::approve((asked.port, lend.raw()), read, asked.pid, None)?;
             lend.terms.approved = Some(approved);
+            lend.terms.keep = share::kept(&answers, ask);
             if !lend.terms.sends.is_empty() && !sends_said(here, &lend)? {
                 lend.terms.sends.clear();
             }
@@ -1863,13 +1868,13 @@ type Read = (Terms, String);
 /// (svrn-docs SHARE_BINDING §5.4), only as its lender was shown it: by
 /// `token`, what a lend's list showed; else at a terminal, what answers now
 /// said first, approved on a y by that read's token, so what changed before
-/// the y is refused; else refused, nothing approved unseen. What it approved,
-/// said.
+/// the y is refused; else refused, nothing approved unseen; with the grant
+/// it makes, unless `ask` ([`share::kept`]). What it approved, said.
 pub fn approve(
     here: &impl Here,
     name: &LendName,
-    pid: Option<share::Pid>,
-    token: Option<String>,
+    (pid, token): (Option<share::Pid>, Option<String>),
+    ask: bool,
 ) -> Result<String, Refusal> {
     let (lend, port) = share::shared(here.root(), name)?;
     let read = || here.answering(lend.raw(), port, pid.map(|p| p.pid));
@@ -1888,9 +1893,13 @@ pub fn approve(
         }
     };
     let (approved, answers) = share::approve((port, lend.raw()), read(), pid, Some(&token))?;
-    share::reapproved(here.root(), name, approved)?;
+    let keep = share::kept(&answers, ask);
+    let again = keep
+        .as_ref()
+        .map_or("", |_| ", and each time it starts again");
+    share::reapproved(here.root(), name, (approved, keep))?;
     let kept = what_answers(&answers);
-    Ok(format!("{name} is kept to {kept} now.\n"))
+    Ok(format!("{name} is kept to {kept} now{again}.\n"))
 }
 
 /// What answers on a port, as its lender is told it: each program in its
