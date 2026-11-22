@@ -1082,7 +1082,9 @@ The home page's layout, **B**, at `/`, gives the capabilities three places:
 an overview of groups, one group's workspace, and **This computer**. Each
 group is linked by its stable id, with maker and joining date still saying
 which namesake it is. Ordinary links, Back and refresh keep the selected
-destination; no browser preference or membership is changed. The overview is
+destination; a join, a make or a leave lands on the overview, and the
+address with it, replaced in place, not added (`home.js`), so refresh keeps
+that too. No browser preference or membership is changed. The overview is
 the heading, the one privacy line, the group cards and one row of actions:
 Join a group, Make a group, Open a link and Groups you left. Who the person
 is in their groups is said once above the cards when it is the same in

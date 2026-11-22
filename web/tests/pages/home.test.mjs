@@ -99,6 +99,29 @@ const ada = ({
 
 const home = (answers, path = '/?ui=a') => open(`${AT}${path}`, answers);
 
+// What a person reads of the page: its words less what B hides (`hidden`,
+// grouped.js), each run of space one.
+const read = (page) => {
+  const seen = (at) =>
+    at.attributes?.hidden === undefined ? (at.data ?? at.childNodes.map(seen).join(' ')) : '';
+  return seen(page.root).replace(/\s+/g, ' ').trim();
+};
+// The page reloaded after a write: opened again at the address it holds,
+// the last it put in place of the one it was opened at (`replaceState`),
+// else that one. It reads as the page did, less what was done, which is
+// said once (home.js `kept`).
+const reloaded = async (page, opened, answers) => {
+  const said = page.text('#home > p').find((p) => p.startsWith('You')) ?? '';
+  const was = read(page).replace(said, '').replace(/\s+/g, ' ').trim();
+  const to = page.went.filter(([how]) => how === 'replace').at(-1)?.[1] ?? opened;
+  const again = await home(answers, to);
+  assert.equal(read(again), was, `reloaded at ${to}`);
+  return again;
+};
+// Where layout A keeps the address after a write there: `/?ui=a`, the
+// whole page (home.js `kept`).
+const KEPT_A = ['replace', '/?ui=a'];
+
 // Where a thing runs, so when it opens, said before what opening it lets it
 // do: of an app the group carries, and of what a person lends. The same
 // words for one thing and for many. Planted, watched failing: index.js
@@ -1226,11 +1249,13 @@ const join = async (page) => {
 
 // pages::join::a_group_made_is_drawn_with_no_reload, on layout B's make
 // page: Ada makes Lab; the page says so and draws Lab, its links, having
-// loaded once (home.js@19b63b2b:364 opened the page again).
+// loaded once (home.js@19b63b2b:364 opened the page again); its address is
+// All your groups, `/`, so a reload lands where the page is, not the form.
 test('a group made is said and drawn with its links, with no reload', async () => {
   const house = group({ name: 'house', made: mine });
   const [answers, add] = growing([house], [lab, trip]);
-  const page = await home({ ...answers, ...making(add) }, '/?view=make');
+  const asked = { ...answers, ...making(add) };
+  const page = await home(asked, '/?view=make');
   await make(page);
   assert.ok(page.text('#home > p').join().includes('You made Lab.'), page.text('#home > p').join());
   assert.ok(page.text('#home section button').includes('Invite people'));
@@ -1242,17 +1267,20 @@ test('a group made is said and drawn with its links, with no reload', async () =
     page.lines().some((line) => line.startsWith('MAKE: made')),
     page.lines().join('\n'),
   );
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  await reloaded(page, '/?view=make', asked);
+  assert.deepEqual([page.went, page.unanswered], [[['replace', '/']], []]);
 });
 
 // pages::join::a_group_joined_is_drawn_with_no_reload, on layout B's join
 // page: Ada pastes Sam's link to Trip and joins as Dee; the page says so
 // and draws Trip, its shelf folded as just joined, having loaded once
-// (home.js@19b63b2b:409 opened the page again).
+// (home.js@19b63b2b:409 opened the page again); its address is All your
+// groups, `/`, so a reload lands where the page is, not the form.
 test('a group joined is said and drawn, its shelf folded, with no reload', async () => {
   const house = group({ name: 'house', made: mine });
   const [answers, add] = growing([house], [lab, trip]);
-  const page = await home({ ...answers, ...making(add) }, '/?view=join');
+  const asked = { ...answers, ...making(add) };
+  const page = await home(asked, '/?view=join');
   await join(page);
   const said = page.text('#home > p').join();
   assert.ok(said.includes('You’re in Trip, as Dee.'), said);
@@ -1268,7 +1296,8 @@ test('a group joined is said and drawn, its shelf folded, with no reload', async
     page.lines().some((line) => line.startsWith('JOIN: joined')),
     page.lines().join('\n'),
   );
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  await reloaded(page, '/?view=join', asked);
+  assert.deepEqual([page.went, page.unanswered], [[['replace', '/']], []]);
 });
 
 // pages::join::a_group_made_or_joined_says_it_is_being_read_until_it_is
@@ -1301,7 +1330,7 @@ test('a group made or joined says it is being read until it is, and house keeps 
   assert.ok(!page.text('#home section[data-colour]').join().includes('Reading '));
   assert.ok(section('Lab (yours').includes('Lab’s folder is on this computer'), section('Lab'));
   assert.ok(section('Trip (Sam’s').includes('Trip’s folder is on this computer'), section('Trip'));
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  assert.deepEqual([page.went, page.unanswered], [[KEPT_A, KEPT_A], []]);
 });
 
 // home_group::the_home_page_makes_a_group_another_computer_joins_with_no_restart,
@@ -1367,7 +1396,7 @@ test('a group made says where its folder is and links on the page svrngs came fr
     ),
     said(),
   );
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  assert.deepEqual([page.went, page.unanswered], [[KEPT_A, KEPT_A], []]);
 });
 
 // home_group::the_home_page_joins_another_group_from_its_link_while_svrngs_runs,
@@ -1396,7 +1425,7 @@ test('a group joined beside one held is headed by whose, its shelf alone folded'
   assert.deepEqual(folded, ['Bring more to Trip']);
   const section = page.text('#home section[data-colour]').find((w) => w.startsWith('Trip (Sam’s'));
   assert.ok(section.includes('Trip’s folder is on this computer at /h/Trip'), section);
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  assert.deepEqual([page.went, page.unanswered], [[KEPT_A], []]);
 });
 
 // leave_page::leaving_on_the_home_page_is_said_as_a_leave_everywhere, the
@@ -1466,7 +1495,7 @@ test('a leave is said as a leave on both pages, and a link to it again is refuse
   const again = [...anas.text('#join p'), ...anas.text('#join button')].join('\n');
   assert.ok(again.includes(refusal), again);
   assert.ok(!again.includes('Join Trip'), again);
-  assert.deepEqual([anas.went, anas.unanswered], [[], []]);
+  assert.deepEqual([anas.went, anas.unanswered], [[KEPT_A], []]);
 });
 
 // Leaving from the group's own page in layout B, the one people get
@@ -1474,9 +1503,9 @@ test('a leave is said as a leave on both pages, and a link to it again is refuse
 // page is at `?group=trip` when it is pressed. Left, the page is All your
 // groups: the leave said once, the groups still yours, and the way to
 // Groups you left, never "This group is not available here" over a page
-// with every place hidden. What a person reads is the page less what B
-// hides (`hidden`, grouped.js). The plant is the fault this law was
-// written for: watched failing with leave.js keeping `?group=` on a leave.
+// with every place hidden; and its address, so a reload lands there too.
+// The plant is the fault this law was written for: watched failing with
+// leave.js keeping `?group=` on a leave.
 test('leaving a group from its page in layout B lands on All your groups', async () => {
   const trip = (left) => group({ id: 'trip', name: 'Trip', keeps: false, left });
   const state = { left: false };
@@ -1490,15 +1519,15 @@ test('leaving a group from its page in layout B lands on All your groups', async
   });
   const page = await home(answers, '/?group=trip');
   await page.press('#group-trip button', 'Leave Trip');
-  const seen = (at) =>
-    at.attributes?.hidden === undefined ? (at.data ?? at.childNodes.map(seen).join(' ')) : '';
-  const read = seen(page.root).replace(/\s+/g, ' ');
-  assert.ok(read.includes('You left Trip.'), read);
-  assert.ok(!read.includes('not available'), read);
+  const drawn = read(page);
+  assert.ok(drawn.includes('You left Trip.'), drawn);
+  assert.ok(!drawn.includes('not available'), drawn);
   assert.deepEqual(page.text('nav a[aria-current=page]'), ['All your groups']);
   assert.deepEqual(page.text('.group-list a'), ['House']);
-  assert.ok(read.includes('Groups you left'), read);
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  assert.ok(drawn.includes('Groups you left'), drawn);
+  const again = await reloaded(page, '/?group=trip', answers);
+  assert.deepEqual(again.text('nav a[aria-current=page]'), ['All your groups']);
+  assert.deepEqual([page.went, page.unanswered], [[['replace', '/']], []]);
 });
 
 // leave_page::a_leave_reaches_the_leavers_other_computer, the page's
