@@ -957,10 +957,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # build.rs cut the w1 harness's flush of rusqlite's statement cache, which
 # `Connection::close` already does, and found nothing else to cut. Drawn so
 # far: +677 (A +654, B +23). Left: +773 and +80.
+# (2026-11-22) Slice B draws +14 more: a new database's schema and its
+# tables made CRRs in one transaction, so a refused schema keeps nothing and
+# stays refused (lib.rs, `new_tables`). Its pass over svrngs-db found no
+# unused item. Drawn so far: +691 (A +654, B +37). Left: +759 and +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25195,
+    ".": 25209,
 
     "js": 8694,
 
