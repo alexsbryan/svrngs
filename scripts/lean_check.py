@@ -930,10 +930,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # another Bearer as no code left unused: `oidc::provider::bearer`, one
 # caller's, read in userinfo (5), and `holds_the_token`'s Bearer arm (2).
 # No raise was available; lowered to where it lands.
+# Then 55, to 24,572: a lend withdrawn by any path is turned off for the
+# room first, so one lent again under its name starts off the WiFi
+# (room/owner.rs 23, cli.rs 27, home.rs 3, lend.rs 1, room.rs 1), after a
+# pass over those files cut 1 (cli.rs `withdrawn`'s lock read as a
+# `matches!`). The operator, 2026-11-22: "56 lines seems like a lot for
+# this, but approved what comes back".
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24518,
+    ".": 24573,
 
     "js": 8694,
 
