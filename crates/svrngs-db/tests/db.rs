@@ -319,7 +319,8 @@ fn a_post_asks_one_read_or_one_write() {
 
 /// **No app's trigger sees a merge**: `schema.sql` makes tables and indexes
 /// and nothing else (APP_STATE §4, "Its schema"; `schema_rule`), so a
-/// trigger is refused and the database not opened. cr-sqlite's merge
+/// trigger is refused and the database not opened, on any open, the table
+/// before it not kept (`refused_twice`). cr-sqlite's merge
 /// deletes and inserts an app's rows under its sync bit, which only its own
 /// triggers heed: since the fork's patch, a column change that brings back
 /// a row standing in an earlier life deletes it and makes it again
@@ -332,11 +333,57 @@ fn a_schema_s_trigger_is_refused() {
     let schema = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\n\
         CREATE TABLE seen (n INTEGER PRIMARY KEY NOT NULL);\n\
         CREATE TRIGGER gone AFTER DELETE ON cards BEGIN INSERT INTO seen VALUES (1); END;\n";
-    let opened = States::new(dir.path()).open("g", "board", schema);
-    let refused = opened.err().expect("a schema with a trigger is refused");
+    let refused = refused_twice(dir.path(), "board", schema);
     println!("MEASURE a schema's trigger: {refused}");
     assert!(matches!(refused, Refused::Malformed(_)), "{refused:?}");
     assert!(refused.to_string().contains("not authorized"), "{refused}");
+}
+
+/// **`schema.sql` neither begins nor ends a transaction**: svrngs applies
+/// it, and makes its tables cr-sqlite's, in one of its own, begun and ended
+/// with no authorizer, so a COMMIT in it would keep the tables before it
+/// whatever came after. `schema_rule` refuses it, as it refuses all but
+/// tables and indexes. Plant: `schema_rule` allowing `Transaction`: the
+/// COMMIT ends svrngs's transaction, so the first open is refused as this
+/// computer's fault, "cannot commit - no transaction is active", and the
+/// second opens, `cards` kept.
+#[test]
+fn a_schema_s_transaction_is_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    let schema = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\nCOMMIT;\n";
+    let refused = refused_twice(dir.path(), "board", schema);
+    println!("MEASURE a schema's COMMIT: {refused}");
+    assert!(refused.to_string().contains("not authorized"), "{refused}");
+}
+
+/// `schema` refused as svrngs opens its database, and refused again, in the
+/// same words, as svrngs opens it again, with nothing of it kept in the
+/// file: no table, index or trigger but cr-sqlite's own, which it makes in
+/// every database it loads on. Plant: `Db::open` with no transaction of its
+/// own, so SQLite keeps each statement of the schema as it runs, and each
+/// table made a CRR: the tables made before the refusal stay, so the second
+/// open takes the file for a database made, and opens it.
+fn refused_twice(dir: &Path, app: &str, schema: &str) -> Refused {
+    let first = States::new(dir)
+        .open("g", app, schema)
+        .err()
+        .expect("the schema is refused");
+    let again = States::new(dir).open("g", app, schema).err();
+    assert_eq!(again.as_ref(), Some(&first), "refused again, in the same words");
+    let plain = rusqlite::Connection::open(dir.join(format!("state/g/{app}.db"))).unwrap();
+    let mut stmt = plain
+        .prepare("SELECT type, name FROM sqlite_master ORDER BY name")
+        .unwrap();
+    let each = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+    let each: Vec<(String, String)> = each.map(Result::unwrap).collect();
+    drop(stmt);
+    svrngs_db::close(plain).unwrap();
+    println!("MEASURE {app}'s file, refused twice: {each:?}");
+    let kept: Vec<_> = (each.iter())
+        .filter(|(_, name)| !name.starts_with("crsql_") && !name.starts_with("sqlite_autoindex_crsql_"))
+        .collect();
+    assert_eq!(kept, Vec::<&(String, String)>::new(), "nothing of {app}'s schema kept");
+    first
 }
 
 /// **A database closes as it drops**, and so does one refused at open:
@@ -344,9 +391,12 @@ fn a_schema_s_trigger_is_refused() {
 /// file, and the last connection to a database in WAL mode checkpoints it
 /// and removes its log as it closes (libsqlite3-sys 0.39.1
 /// `sqlite3/sqlite3.c:69474-69500`, `sqlite3WalClose`). A table with no key
-/// is refused by `crsql_as_crr`, after `schema.sql` made it. Plant: `close`
+/// is refused by `crsql_as_crr`, after `schema.sql` made it, and cr-sqlite
+/// rolls back the open's transaction as it refuses. Plants: `close`
 /// without `crsql_finalize`: SQLite refuses to close each connection, and
-/// each log stays, as does its database's file handle.
+/// each log stays, as does its database's file handle; `Db::open` rolling
+/// back on any refusal, still open or not: the table with no key is refused
+/// as this computer's fault, "cannot rollback - no transaction is active".
 #[test]
 fn a_database_closes_as_it_drops() {
     let (dir, db) = board();
@@ -359,8 +409,7 @@ fn a_database_closes_as_it_drops() {
     assert!(log.exists(), "open, the database keeps its log");
     drop(db);
     assert!(!log.exists(), "dropped, the database closed and left no log");
-    let keyless = States::new(dir.path()).open("g", "notes", "CREATE TABLE notes (body TEXT);\n");
-    let refused = keyless.err().expect("a table with no key is refused");
+    let refused = refused_twice(dir.path(), "notes", "CREATE TABLE notes (body TEXT);\n");
     println!("MEASURE a table with no key: {refused}");
     assert!(matches!(refused, Refused::Malformed(_)), "{refused:?}");
     let log = dir.path().join("state/g/notes.db-wal");

@@ -14,8 +14,9 @@
 //!
 //! Each carried app in each group gets a SQLite file on this computer
 //! ([`States`]), opened from the `schema.sql` beside its `index.html`, its
-//! tables made CRDTs by cr-sqlite ([`Db::open`]). A page asks it at its own
-//! origin ([`asked`]): SQL to read ([`Db::read`]), and a write in the write
+//! tables made CRDTs by cr-sqlite, all in one transaction or none of it
+//! ([`Db::open`]). A page asks it at its own origin
+//! ([`asked`]): SQL to read ([`Db::read`]), and a write in the write
 //! form, by key ([`Db::write`], `form.rs`). What SQL may do has one decider,
 //! SQLite's authorizer ([`page_rule`]), asked as the page's statement is
 //! prepared, and a statement that writes is refused, its words naming the
@@ -149,7 +150,8 @@ impl States {
         }
     }
 
-    /// `app`'s database in `group`, opened with `schema` the first time.
+    /// `app`'s database in `group`, opened with `schema` the first time;
+    /// refused, it keeps none of it, and the next open tries it again.
     pub fn open(&self, group: &str, app: &str, schema: &str) -> Result<Arc<Db>, Refused> {
         let mut dbs = self.dbs.lock().expect("the databases' lock");
         if let Some(db) = dbs.get(&(group.into(), app.into())) {
@@ -327,20 +329,28 @@ impl Db {
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;")
             .map_err(fault)?;
         // A database with no table of the app's is new: its schema applied,
-        // then its tables made cr-sqlite's.
+        // then its tables made cr-sqlite's, in one transaction, begun and
+        // ended with no authorizer, as `schema_rule` refuses one in
+        // `schema.sql`. Refused at any step, none of it is kept, so the next
+        // open finds the database new again, and refuses it in the same words.
         let mut tables = tables_of(conn)?;
         tracing::debug!(target: "state", group, app, fresh = tables.is_empty(), "state: a database opened; its schema applied only when new");
         if tables.is_empty() {
-            conn.authorizer(Some(schema_rule)).map_err(fault)?;
-            let applied = conn.execute_batch(schema);
-            conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
-                .map_err(fault)?;
-            applied.map_err(|e| Refused::Malformed(format!("schema.sql: {e}")))?;
-            tables = tables_of(conn)?;
-            for t in tables.keys() {
-                conn.query_row("SELECT crsql_as_crr(?1)", [t], |_| Ok(()))
-                    .map_err(|e| Refused::Malformed(format!("{t}: {e}")))?;
-            }
+            conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
+            let made = new_tables(conn, schema);
+            // `crsql_as_crr` refusing a table rolls back the whole transaction
+            // itself (`vendor/cr-sqlite/core/rs/core/src/lib.rs:783`), so
+            // only one still open is rolled back here.
+            let still_open = !conn.is_autocommit();
+            let ended = match &made {
+                Ok(_) => conn.execute_batch("COMMIT"),
+                Err(_) if still_open => conn.execute_batch("ROLLBACK"),
+                Err(_) => Ok(()),
+            };
+            tracing::debug!(target: "state", group, app, refused = ?made.as_ref().err(), still_open, ?ended, "state: a new database's schema applied and its tables made CRRs in one transaction, committed; or refused and rolled back whole, here if still open, else by cr-sqlite as it refused");
+            // A COMMIT or ROLLBACK that fails is this computer's fault.
+            ended.map_err(fault)?;
+            tables = made?;
         }
         let (page, until) = (AtomicBool::new(false), AtomicU64::new(u64::MAX));
         #[expect(clippy::disallowed_methods, reason = "a page's query is timed where SQLite runs it")]
@@ -419,6 +429,22 @@ impl Db {
         }
         Ok(json!({ "count": count }))
     }
+}
+
+/// A new database's tables: `schema` applied under [`schema_rule`], then
+/// each table it made made a CRR; or the first refusal.
+fn new_tables(conn: &mut Connection, schema: &str) -> Result<BTreeMap<String, Table>, Refused> {
+    conn.authorizer(Some(schema_rule)).map_err(fault)?;
+    let applied = conn.execute_batch(schema);
+    conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
+        .map_err(fault)?;
+    applied.map_err(|e| Refused::Malformed(format!("schema.sql: {e}")))?;
+    let tables = tables_of(conn)?;
+    for t in tables.keys() {
+        conn.query_row("SELECT crsql_as_crr(?1)", [t], |_| Ok(()))
+            .map_err(|e| Refused::Malformed(format!("{t}: {e}")))?;
+    }
+    Ok(tables)
 }
 
 /// Each of the app's tables in `conn`, with its columns and key, as the
