@@ -950,10 +950,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # builds for Linux too (8ff2a8fd, 21985308): 25,178. A landed at 25,171,
 # from 24,517: +654 of all code but JavaScript and none of JavaScript, and
 # the cap comes down to it. Drawn so far: +654 (slice A). Left: +796 and +80.
+# (2026-11-22) Slice B draws +23 for two fixes in svrngs-db: build.rs names
+# cr-sqlite's archive by its object's hash, so a cache never links the engine
+# before a fork bump (+3); a Db's connection closes as it drops, cr-sqlite's
+# statements finalized first (+20). Their pass over svrngs-db's src/ and
+# build.rs cut the w1 harness's flush of rusqlite's statement cache, which
+# `Connection::close` already does, and found nothing else to cut. Drawn so
+# far: +677 (A +654, B +23). Left: +773 and +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25172,
+    ".": 25195,
 
     "js": 8694,
 
