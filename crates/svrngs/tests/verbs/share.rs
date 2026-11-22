@@ -328,10 +328,13 @@ fn holding(dir: &std::path::Path, needle: &[u8], except: &std::path::Path) -> Ve
     found
 }
 
-/// Nothing a person reads says a word DESIGN §1 keeps from them.
+/// Nothing a person reads says a word DESIGN §1 keeps from them, in
+/// svrngs's own words: a path a line reports is the person's own, so it is
+/// not judged (tests/share.rs `plain`).
 fn plain(said: &str) {
     for line in said.lines() {
-        let lower = line.to_lowercase();
+        let words = line.split_whitespace().filter(|w| !w.starts_with('/'));
+        let lower = words.collect::<Vec<_>>().join(" ").to_lowercase();
         for word in svrngs_node::link::KEPT_WORDS {
             assert!(!lower.contains(word), "{line:?} says {word}");
         }
