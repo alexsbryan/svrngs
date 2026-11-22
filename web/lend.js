@@ -342,21 +342,24 @@ function bound() {
 // This run's endpoint (DESIGN §3): a key of this run's alone, which the
 // holder, a key no page can copy, names in a link the door checks beside
 // the pass (`linked`); or, when a lend of the open is at a door taking no
-// link, the holder's own bytes, as a door before links took.
+// link, the holder's own bytes, as a door before links took. Every reader
+// of `linked` waits for this first (`passed`), so none reads it between.
 async function opened() {
   await (loaded ??= init({ module_or_path: store.runtime() }));
   const seed = handed.seed;
   const own = !seed;
   const bytes = seed ? fromHex(seed) : crypto.getRandomValues(new Uint8Array(32));
-  linked = null;
-  if (own) linked = await linkTo(actor(bytes));
+  linked = own ? await linkTo(actor(bytes)) : null;
   const as = own
     ? 'of this run, named by the holder’s link'
     : 'as the pass’s holder, for an older door';
   trace(`RUNTIME: opening the endpoint ${as}`);
   // A pass kept before relay fallbacks names its one relay, and no `relays`.
   if (!handed.relays) trace('RUNTIME: the pass names one relay, as one kept before fallbacks');
-  return holder_endpoint(bytes, handed.relays ?? (handed.relay ? [handed.relay] : []), handed.pass);
+  const relays = handed.relays ?? (handed.relay ? [handed.relay] : []);
+  // The pass and this run's link go to the relays too: a group's own
+  // admits this run's key by them, as the door does (self-host).
+  return holder_endpoint(bytes, relays, handed.pass, linked);
 }
 
 // The link naming the endpoint whose key is `to`, signed by the holder.

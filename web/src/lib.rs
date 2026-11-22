@@ -46,7 +46,7 @@ mod version;
 use iroh::RelayUrl;
 use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
-use svrngs_core::pass::{Label, Pass};
+use svrngs_core::pass::{presenting, Label, Pass};
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -221,11 +221,13 @@ async fn bind_for(key: Vec<u8>, token: &str, meets: &[String]) -> Result<Bound, 
 /// token's, the fragment of `<origin>#<token>`, parsed by svrngs-core as
 /// the command parses it (call 5), each the page's policy takes; iroh
 /// chooses among them the fastest that answers, and a dial may be tried at
-/// every one. A pass's holder (self-host) presents `token` — the pass
-/// itself — as the token a group's own relay admits it by, since the fresh
-/// key a lend's page dials from stands in no group; the group's page's own
-/// endpoint presents none. No bearer rides a request to a lend: the node
-/// knows the person by the key that dialled, or the pass its holder shows.
+/// every one. A lend's worker (self-host) presents `token` — its pass and
+/// the holder's link naming the key it dials from, or the pass alone when
+/// it dials as the holder (svrngs-core's `presenting`) — as the token a
+/// group's own relay admits it by, since the key a lend's worker dials
+/// from stands in no group; the group's page's own endpoint presents none.
+/// No bearer rides a request to a lend: the node knows the person by the
+/// key that dialled, or the pass and link its worker shows.
 async fn bind(
     key: Vec<u8>,
     issuer: Option<iroh::PublicKey>,
@@ -505,23 +507,28 @@ pub async fn endpoint(key: Vec<u8>, token: String, meets: Option<Vec<String>>) -
     })
 }
 
-/// Bind one endpoint as a pass's holder, whose key is `key`, reaching the
-/// group through `relays` — every relay the group's link carries that this
-/// page's policy takes, its public fallback among them — refused with
-/// none: a lend's origin's worker (u5-2; DESIGN §3, "Lent apps", call 6).
-/// It is handed no link's token, which would let it join the group, and
-/// `pass` is presented at the relays it is handed, since a group's own
-/// relay admits the holder by it, the fresh key standing in no group
-/// (self-host).
+/// Bind one endpoint for a pass's holder, whose key is `key` — this run's,
+/// which `link`, the holder's, names, or with none the holder's own —
+/// reaching the group through `relays` — every relay the group's link
+/// carries that this page's policy takes, its public fallback among them —
+/// refused with none: a lend's origin's worker (u5-2; DESIGN §3, "Lent
+/// apps", call 6). It is handed no group link's token, which would let it
+/// join the group, and `pass` and `link` are presented at the relays it is
+/// handed, since a group's own relay admits the key by them as the door
+/// does, the key standing in no group (self-host).
 #[wasm_bindgen]
-pub async fn holder_endpoint(key: Vec<u8>, relays: Vec<String>, pass: String) -> Result<Endpoint, JsError> {
+pub async fn holder_endpoint(
+    key: Vec<u8>,
+    relays: Vec<String>,
+    pass: String,
+    link: Option<String>,
+) -> Result<Endpoint, JsError> {
     let parsed = handed(&relays)?;
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
-    Ok(Endpoint {
-        bound: bind(key, None, parsed, Some(pass)).await?,
-    })
+    let bound = bind(key, None, parsed, Some(presenting(&pass, link.as_deref()))).await?;
+    Ok(Endpoint { bound })
 }
 
 /// The first relay a link's `token` carries, dotless, or none: whether a

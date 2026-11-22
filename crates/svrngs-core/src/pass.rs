@@ -322,6 +322,25 @@ impl Pass {
     }
 }
 
+/// The token a lend's worker presents at the relays it is handed, which a
+/// group's own relay admits it by (`svrngs relay`; self-host): the pass, as
+/// [`Pass::encode`] spells it, and, when the worker dials from a key the
+/// holder's link names, a `.` and that link — the pair the door takes
+/// beside a request ([`crate::authority::resolve`]). Base64url spells no
+/// `.`, so a relay that reads its token as one pass reads none in a pair.
+pub fn presenting(pass: &str, link: Option<&str>) -> String {
+    link.map_or_else(|| pass.into(), |link| alloc::format!("{pass}.{link}"))
+}
+
+/// The pass, and the link when it carries one, of a token [`presenting`]
+/// made; `None` when either does not read.
+pub fn presented(token: &str) -> Option<(Pass, Option<Pass>)> {
+    match token.split_once('.') {
+        None => Some((Pass::decode(token)?, None)),
+        Some((pass, link)) => Some((Pass::decode(pass)?, Some(Pass::decode(link)?))),
+    }
+}
+
 #[cfg(test)]
 #[path = "pass_tests.rs"]
 mod tests;
