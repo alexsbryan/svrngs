@@ -4,10 +4,12 @@
 //! listener on this computer's network, bound by the lend's label alone
 //! and dropped as [`super::serves`] decides; and the listener's two
 //! layers, the caller on this network ([`from_this_network`]) and the
-//! lend's body ([`in_room`], [`crate::origin::reach`]).
+//! lend's body ([`in_room`], [`crate::origin::reach`]). And a lend's
+//! withdrawal ([`withdraw`]), which turns it off here first.
 
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
+use std::path::Path;
 
 use axum::extract::{Request, State};
 use axum::middleware::Next;
@@ -18,7 +20,7 @@ use svrngs_core::pass::Label;
 
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
 use crate::folder::carried::Handled;
-use crate::lend::LendName;
+use crate::lend::{LendError, LendName};
 use crate::network::{guess, Whereabouts};
 use crate::node::Asking;
 use crate::origin::{Appending, Unconsented};
@@ -36,14 +38,61 @@ type Listening = BTreeMap<Label, (SocketAddr, AbortOnDropHandle<()>)>;
 /// The room's owner's handle ([`spawn`]), held by the node's routers.
 pub(crate) type Room = kept::Owner<Turn, InRoom>;
 
+/// How the room's store tells its lends apart: by the lender's key and the
+/// lend's name.
+const ID: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
+
 /// The room's one owner, for as long as the node runs: the lends on, read
 /// from [`ROOM_FILE`] as it starts and written there at each turn, each
 /// served as [`serve`] decides every [`LOOK_EVERY`] and at each ask.
 pub(crate) fn spawn(at: Asking, asked: kept::Asks<Turn, InRoom>) -> AbortOnDropHandle<()> {
     let (file, mut listening) = (at.door.data_dir.join(ROOM_FILE), Listening::new());
     let served = async move |on: &[On]| serve(&at, on, &mut listening).await;
-    let id: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
-    AbortOnDropHandle::new(tokio::spawn(kept::run(file, asked, id, served)))
+    AbortOnDropHandle::new(tokio::spawn(kept::run(file, asked, ID, served)))
+}
+
+/// This computer's lend `name`, `key` its key, turned off for the room by
+/// `off`, which tells the room's owner, then withdrawn
+/// ([`crate::lend::withdraw`]): so a lend shared again under that name
+/// starts off this computer's network, and its person opens it there again
+/// if they want it. The one way svrngs takes a lend back, by every path:
+/// the home page's Stop and its API's (home.rs), its owner told here
+/// ([`off`]); `svrngs unshare` (cli.rs), svrngs running here told at
+/// [`super::ROUTE`] as the home page tells it ([`super::RoomAsk::Off`]),
+/// else [`withdraw_stopped`]. Nothing is withdrawn while the room's owner
+/// can't be told, `off`'s words saying why.
+pub async fn withdraw(
+    dir: &Path,
+    key: &str,
+    name: &LendName,
+    off: impl AsyncFnOnce(String, LendName) -> Result<(), String>,
+) -> Result<bool, LendError> {
+    let told = off(key.to_string(), name.clone()).await;
+    tracing::debug!(target: "room", lend = %name, ?told, "room: a lend withdrawn is turned off for the room first, so one lent again under its name starts off this network; refused, nothing withdrawn, while the room's owner can't be told");
+    told.map_err(|why| LendError::Unclosed(name.clone(), why))?;
+    crate::lend::withdraw(dir, name)
+}
+
+/// `room`, the room's owner, told to turn the lend `name` of the computer
+/// whose key is `key` off ([`Turn::Off`]); or why not: it has stopped.
+pub(crate) async fn off(room: &Room, key: String, name: LendName) -> Result<(), String> {
+    let made = room.turn(Turn::Off(key, name)).await;
+    made.map(drop)
+        .ok_or_else(|| "the room's owner has stopped".into())
+}
+
+/// [`withdraw`] with svrngs stopped here, while `svrngs unshare` holds the
+/// data dir `dir`: the room's store told by its own owner ([`kept::run`]),
+/// run for that one turn and serving nothing, as nothing listens while
+/// svrngs is stopped. So the store is changed as it always is, by its
+/// owner's turn, never written behind it, and svrngs started again opens
+/// none of it.
+pub async fn withdraw_stopped(dir: &Path, key: &str, name: &LendName) -> Result<bool, LendError> {
+    let (room, asked) = Room::new();
+    // Its turn is answered after it is written, so it is let go then.
+    let owner = kept::run(dir.join(ROOM_FILE), asked, ID, async |_: &[On]| Vec::new());
+    let _owner = AbortOnDropHandle::new(tokio::spawn(owner));
+    withdraw(dir, key, name, async |k, n| off(&room, k, n).await).await
 }
 
 /// Each lend `on` served or not, as [`serves`] decides at the network read

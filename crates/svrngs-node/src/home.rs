@@ -492,7 +492,10 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Res
                 return Err(refused);
             }
         },
-        LendChange::Stop => lend::withdraw(dir, &c.lend),
+        LendChange::Stop => {
+            let off = async |key, name| crate::room::owner::off(&at.room, key, name).await;
+            crate::room::withdraw(dir, &at.host.actor, &c.lend, off).await
+        }
         LendChange::SignIn => return sign_in(&at, &c.lend).await,
         LendChange::Readers { name, password } => {
             return readers(&at, &c.lend, &name, &password).await

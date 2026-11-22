@@ -4,7 +4,8 @@
 //! declaration file the member door reads on every request, so a running
 //! node sees a lend declared or withdrawn with no restart. `svrngs share`
 //! writes it through [`declare`], and `svrngs unshare` takes it back
-//! through [`withdraw`], whether or not svrngs is running (u3-5). Or an
+//! through [`withdraw`], whether or not svrngs is running (u3-5), turning
+//! it off for the room first ([`crate::room::withdraw`]). Or an
 //! app's folder the group carries, found where the group's folder places it
 //! and never declared ([`Source::Carried`], v1ui-shelf (a)).
 //!
@@ -765,6 +766,10 @@ pub enum LendError {
         path: PathBuf,
         source: std::io::Error,
     },
+    /// Not withdrawn, as the room could not be told to turn it off first
+    /// ([`crate::room::withdraw`]): why.
+    #[error("{0} is still lent: this computer could not close it to its WiFi first ({1})")]
+    Unclosed(LendName, String),
 }
 
 /// Where a computer keeps its lends' declarations.
@@ -1085,7 +1090,8 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
 /// secret, so a lend shared again asks again. `false`
 /// when this computer lends nothing by that name. Held under its lock like
 /// every change ([`mutate`]), so a change read before it cannot write the
-/// lend back; busy while another holds it.
+/// lend back; busy while another holds it. svrngs takes a lend back through
+/// [`crate::room::withdraw`], which turns it off for the room first.
 pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
     let _held = lock_lend(data_dir, name)?;
     let path = lends_dir(data_dir).join(format!("{name}.json"));

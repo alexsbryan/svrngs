@@ -1914,7 +1914,11 @@ assume no screen, a TV one device among others.
    address. A lend is kept on across restarts, by its lender's key and its
    name, with the network it was turned on at, told apart by that
    network's router's hardware address; it is served only while this
-   computer is on that network, read again every few seconds. The network
+   computer is on that network, read again every few seconds. A lend of
+   this computer's own that it stops lending, by the home page's Stop or
+   `svrngs unshare`, svrngs running or not, is turned off here first, by
+   the room's owner (`room::withdraw`), so one lent again under its name
+   starts off this WiFi until its person opens it again. The network
    is the one the devices beside this computer stand on: when a VPN
    carries its traffic, the one interface beside the VPN's tunnel that has
    a router, never the tunnel, so a café still reads as the café; two such,

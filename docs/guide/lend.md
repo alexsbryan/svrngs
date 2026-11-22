@@ -148,7 +148,7 @@ For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those t
 svrngs unshare films
 ```
 
-It says *"You no longer lend films."* Or press its line under **What you lend** on your home page, then **Stop lending**.
+It says *"You no longer lend films."* Or press its line under **What you lend** on your home page, then **Stop lending**. If you opened films to your WiFi ([tv.md](tv.md)), that closes too: lend it again and it starts closed, until you open it there again.
 
 ## How your friends open it
 

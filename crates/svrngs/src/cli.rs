@@ -48,7 +48,10 @@
 //!
 //! `share` and `unshare` write a lend's declaration and its secret into the
 //! data dir (`svrngs_node::lend`), which the door reads on every request,
-//! so each works whether or not svrngs is running here (u3-5). `share`
+//! so each works whether or not svrngs is running here (u3-5); `unshare`
+//! turns the lend off for the room first, as the home page's Stop does,
+//! asking svrngs running here, else the room's own owner here
+//! (`svrngs_node::room::withdraw`). `share`
 //! then runs, as the other verbs do, unless svrngs already is. The secret
 //! is read from a prompt, never from the command line, where any program on
 //! this computer may read it (`ps`); a service that keeps its own accounts
@@ -823,7 +826,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
         Verb::Check(dir) => checked(&dir)?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
-        Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
+        Verb::Unshare(name, groups) => unshare(here, &name, &groups).await?.to_string(),
         Verb::Approve(name, pid, token) => approve(here, &name, pid, token)?,
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
         Verb::Ask(route, body) => {
@@ -1910,8 +1913,15 @@ pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), 
     })
 }
 
-/// `svrngs unshare`: withdraw the lend `name` from the data dir at `root`.
-pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, Refusal> {
+/// `svrngs unshare`: withdraw the lend `name` from the data dir `here`
+/// names, as the home page's Stop withdraws it ([`withdrawn`]), or take
+/// `groups` from who can open it.
+pub async fn unshare(
+    here: &impl Here,
+    name: &LendName,
+    groups: &[String],
+) -> Result<Said, Refusal> {
+    let root = here.root();
     let keep = |e: lend::LendError| {
         tracing::debug!(target: "cli", lend = %name, error = %e, "cli: unshare — the lend cannot be withdrawn");
         Unjudged::Keep(name.to_string())
@@ -1925,7 +1935,7 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     };
     tracing::debug!(target: "cli", lend = %name, groups = ids.len(), "cli: unshare — those groups only, or none named and it is withdrawn");
     let (done, said): (_, fn(LendName) -> Said) = match ids.is_empty() {
-        true => (lend::withdraw(root, name), Said::Unshared),
+        true => (withdrawn(here, name).await?, Said::Unshared),
         false => (lend::mutate(root, name, narrowed), Said::Narrowed),
     };
     if done.map_err(keep)? {
@@ -1937,6 +1947,35 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     tracing::debug!(target: "cli", lend = %name, "cli: unshare — refused, nothing lent by that name");
     let name = name.clone();
     Err(Refused::NotLent { name, lent }.into())
+}
+
+/// The lend `name` withdrawn as svrngs withdraws every lend
+/// ([`room::withdraw`]), turned off for the room first: by svrngs running
+/// here, asked at its route as the home page asks it; else, svrngs
+/// stopped, by the room's own owner here, this command holding the data dir
+/// ([`room::withdraw_stopped`]).
+async fn withdrawn(
+    here: &impl Here,
+    name: &LendName,
+) -> Result<Result<bool, lend::LendError>, Refusal> {
+    let root = here.root();
+    let key = svrngs_node::actor_of(&identity::load_or_generate_node_key(root)?);
+    let claimed = claim(root);
+    let running = matches!(claimed, Err(Refusal::Refused(Refused::Busy(_))));
+    tracing::debug!(target: "cli", lend = %name, running, "cli: unshare — the room told by svrngs running here, else by its own owner here");
+    if running {
+        // svrngs's refusal in its words, or why it was not asked.
+        let off = async |key, name| {
+            let asked = here
+                .ask(room::ROUTE, &room::RoomAsk::Off { key, name })
+                .await;
+            let (ok, said) = asked.map_err(|refused| refused.to_string())?;
+            ok.then_some(()).ok_or(said)
+        };
+        return Ok(room::withdraw(root, &key, name, off).await);
+    }
+    let _held = claimed?;
+    Ok(room::withdraw_stopped(root, &key, name).await)
 }
 
 /// What the bare command prints: the groups held, where apps reach them,

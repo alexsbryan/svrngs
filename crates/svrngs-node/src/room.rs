@@ -25,6 +25,11 @@
 //! on that network, read again every [`owner::LOOK_EVERY`]. On another network, or
 //! one that cannot be read, it is not served, and the room says why.
 //!
+//! **A lend withdrawn is off** ([`withdraw`], by every path that withdraws
+//! one): this computer's lend is turned off here by the room's owner before
+//! it is withdrawn, so a lend shared again under its name starts off this
+//! network, and its person opens it again if they want it.
+//!
 //! New, in the shape of upstream's LAN door and address picker, not their
 //! code (PLAN §4, U6's inventory): "the door names the PORT, this machine
 //! names the ADDRESS" (`sovereign-cli-mesh/src/mesh_guest_link.rs:10-12`
@@ -34,8 +39,8 @@
 //! Its parts: this module, the room as a person turns it, pure (each lend
 //! on with its network, and [`serves`], whether it is served and the words
 //! for it); and its edges, each a module of its own: [`kept`], room.json;
-//! [`owner`], the task that owns the room and its listeners; [`route`],
-//! `/v1/room`, which translates, deciding nothing.
+//! [`owner`], the task that owns the room and its listeners, and a lend's
+//! withdrawal; [`route`], `/v1/room`, which translates, deciding nothing.
 
 use std::net::{Ipv4Addr, SocketAddr};
 
@@ -49,6 +54,8 @@ use crate::Person;
 pub(crate) mod kept;
 pub(crate) mod owner;
 pub(crate) mod route;
+
+pub use owner::{withdraw, withdraw_stopped};
 
 /// Where the room is read and turned on and off: the home page's button
 /// and `svrngs room` (cli.rs) ask here.

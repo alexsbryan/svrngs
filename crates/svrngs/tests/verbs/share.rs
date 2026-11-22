@@ -76,7 +76,10 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     let mut pad = share::lend_of(&asked, None, "").unwrap();
     svrngs_node::node::approve(&mut pad);
     cli::share_lend(dir, &pad, Some(SECRET)).unwrap();
-    let narrowed = cli::unshare(dir, &pad.name, &named(&["trip"])).unwrap();
+    let here = dir.to_path_buf();
+    let narrowed = cli::unshare(&here, &pad.name, &named(&["trip"]))
+        .await
+        .unwrap();
     assert_eq!(narrowed, Said::Narrowed(pad.name.clone()));
     let kept = lend::read(dir, &pad.name).unwrap().unwrap();
     assert_eq!(
@@ -85,7 +88,7 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     );
     let secret = svrngs_node::declared::read_declared_in(&lend::secret_dir(dir, &pad.name));
     assert!(secret.iter().any(|(_, v)| v == SECRET), "{secret:?}");
-    let gone = cli::unshare(dir, &pad.name, &[]).unwrap();
+    let gone = cli::unshare(&here, &pad.name, &[]).await.unwrap();
     assert_eq!(gone, Said::Unshared(pad.name.clone()));
 }
 
@@ -129,10 +132,137 @@ async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     let mut pad = share::lend_of(&share_of(PAD, "pad"), None, "").unwrap();
     svrngs_node::node::approve(&mut pad);
     cli::share_lend(sam.dir.path(), &pad, None).unwrap();
-    let said = cli::unshare(sam.dir.path(), &pad.name, &["house".to_string()]);
+    let house = ["house".to_string()];
+    let said = cli::unshare(&sam.dir.path().to_path_buf(), &pad.name, &house).await;
     said.expect("true already: a legacy lend reaches no group");
     let kept = lend::read(sam.dir.path(), &pad.name).unwrap().unwrap();
     assert_eq!(kept.terms.audience, Audience::Legacy);
+}
+
+/// **A lend stopped is closed to this WiFi, so one lent again under its
+/// name is not served there** (DESIGN §3, "The room", call 3), by each way
+/// to stop it. As Sam's svrngs starts, his room.json has his pad on, and
+/// Ana's pad, which he opened to his WiFi too, each at a network whose
+/// router is 02:00:5e:00:53:01, so nothing binds here whatever this host's
+/// network reads. With svrngs running, the home page's Stop, then `svrngs
+/// unshare pad`, which asks it, each turn his pad off at the room's owner
+/// before withdrawing it, and Sam lends pad again: `/v1/room`, as the home
+/// page and `svrngs room` read it, has Ana's pad alone, so his is served on
+/// no network, and so has room.json, which a restart reads. With svrngs
+/// stopped, `unshare` turns it off through the room's own owner, run for
+/// that one turn, and svrngs started again has none of Sam's either.
+/// Planted, watched failing in each part, Sam's pad lent again still on:
+/// the home page's Stop as `lend::withdraw` alone (home.rs `change`);
+/// `unshare` with svrngs running asking it nothing (cli.rs `withdrawn`);
+/// and with svrngs stopped telling no owner (room/owner.rs
+/// `withdraw_stopped`).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_lend_stopped_is_closed_to_this_wifi_and_lent_again_is_not_served_there() {
+    use serde_json::{json, Value};
+    use svrngs_node::{actor_of, node::Node, room, SigningKey};
+    let key = SigningKey::from_bytes(&[7; 32]);
+    let (sams, anas) = (actor_of(&key), actor_of(&SigningKey::from_bytes(&[8; 32])));
+    let dir = tempfile::tempdir().unwrap();
+    // This computer's key, where the command reads it.
+    std::fs::write(
+        dir.path().join(svrngs::identity::NODE_KEY_FILE),
+        key.to_bytes(),
+    )
+    .unwrap();
+    let kept = dir.path().join(room::ROOM_FILE);
+    let both_on = || {
+        let on = [&sams, &anas]
+            .map(|k| json!({ "key": k, "name": "pad", "network": "02:00:5e:00:53:01" }));
+        std::fs::write(&kept, json!(on).to_string()).unwrap();
+    };
+    let keys = |room: &str| -> Vec<String> {
+        let room: Vec<Value> = serde_json::from_str(room).unwrap_or_else(|_| panic!("{room}"));
+        room.iter()
+            .map(|r| format!("{}/{}", r["key"].as_str().unwrap(), r["name"]))
+            .collect()
+    };
+    let (sam_pad, ana_pad) = (format!("{sams}/\"pad\""), format!("{anas}/\"pad\""));
+    let start = async |wire: &Wire, dir: tempfile::TempDir| {
+        let node = Node::on_wire(
+            wire,
+            dir.path().to_path_buf(),
+            key.clone(),
+            svrngs::group::seed_text,
+        );
+        let node = node.await.expect("Sam's svrngs starts over the data dir");
+        crate::Computer {
+            node,
+            key: key.clone(),
+            dir,
+        }
+    };
+    let room_of = async |node: &Node| {
+        let (status, room) = crate::ask(node, "GET", room::ROUTE, &Value::Null).await;
+        assert_eq!(status, 200, "{room}");
+        keys(&room)
+    };
+    let mut pad = share::lend_of(&share_of(PAD, "pad"), None, "").unwrap();
+    svrngs_node::node::approve(&mut pad);
+    let lent_again = async |sam: &crate::Computer, how: &str| {
+        cli::share_lend(sam.dir.path(), &pad, None).unwrap();
+        assert_eq!(
+            room_of(&sam.node).await,
+            [ana_pad.clone()],
+            "{how}: Sam's lent again is on"
+        );
+        let on = keys(&std::fs::read_to_string(&kept).unwrap());
+        assert_eq!(on, [ana_pad.clone()], "{how}: Sam's lent again is kept on");
+    };
+
+    // ── The home page's Stop, svrngs running.
+    both_on();
+    let wire = Wire::default();
+    let sam = start(&wire, dir).await;
+    cli::share_lend(sam.dir.path(), &pad, None).unwrap();
+    assert_eq!(
+        room_of(&sam.node).await,
+        [sam_pad.clone(), ana_pad.clone()],
+        "both on"
+    );
+    let stop = json!({ "lend": "pad", "to": "stop" });
+    let (stopped, said) = crate::home::paged(&sam.node, "POST", "/lent", stop).await;
+    assert_eq!(stopped, axum::http::StatusCode::NO_CONTENT, "{said}");
+    lent_again(&sam, "the home page's Stop").await;
+
+    // ── `svrngs unshare`, svrngs running: its lock held, as `svrngs` holds it.
+    let crate::Computer { node, dir, .. } = sam;
+    drop(node);
+    both_on();
+    let wire = Wire::default();
+    let sam = start(&wire, dir).await;
+    let held = cli::claim(sam.dir.path()).expect("svrngs holds the data dir");
+    assert_eq!(
+        room_of(&sam.node).await,
+        [sam_pad.clone(), ana_pad.clone()],
+        "both on again"
+    );
+    let stopped = cli::unshare(&crate::Running(&sam), &pad.name, &[]).await;
+    assert_eq!(stopped.unwrap(), Said::Unshared(pad.name.clone()));
+    lent_again(&sam, "`svrngs unshare`, svrngs running").await;
+
+    // ── `svrngs unshare`, svrngs stopped: nothing holds the data dir or owns its room.
+    let crate::Computer { node, dir, .. } = sam;
+    drop((node, held));
+    both_on();
+    let stopped = cli::unshare(&dir.path().to_path_buf(), &pad.name, &[]).await;
+    assert_eq!(stopped.unwrap(), Said::Unshared(pad.name.clone()));
+    cli::share_lend(dir.path(), &pad, None).unwrap();
+    let wire = Wire::default();
+    let sam = start(&wire, dir).await;
+    let on = (
+        room_of(&sam.node).await,
+        keys(&std::fs::read_to_string(&kept).unwrap()),
+    );
+    assert_eq!(
+        on,
+        (vec![ana_pad.clone()], vec![ana_pad]),
+        "`svrngs unshare`, svrngs stopped"
+    );
 }
 
 /// **A folder is synced by asking svrngs running here, in one group**
