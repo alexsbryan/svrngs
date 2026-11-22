@@ -420,3 +420,50 @@ fn a_database_closes_as_it_drops() {
     let log = dir.path().join("state/g/notes.db-wal");
     assert!(!log.exists(), "refused at open, the database closed and left no log");
 }
+
+/// **A database gives back what pruning frees, past Corrosion's bound**
+/// (APP_STATE §4, "What is kept"; `tidy.rs`): it is made with
+/// `auto_vacuum=INCREMENTAL`, though cr-sqlite's own tables come first. Ana
+/// writes 150 cards of 640 KiB each, then writes each again with one word,
+/// so every first set is pruned and the pages its text held are freed: over
+/// 12,000 of them. `tidy` gives them back until 10,000 or fewer are
+/// free, and asked again gives back nothing. A WAL past 5 GiB, Corrosion's
+/// bound for a truncation, isn't made here. Plant, watched failing: a new
+/// database made without `VACUUM` after its `auto_vacuum` (none given back).
+#[test]
+fn a_database_gives_back_what_pruning_frees() {
+    let (dir, db) = board();
+    let side = rusqlite::Connection::open(dir.path().join("state/g/board.db")).unwrap();
+    let count = |p: &str| side.pragma_query_value(None, p, |r| r.get::<_, u64>(0)).unwrap();
+    assert_eq!(count("auto_vacuum"), 2, "made to give pages back");
+    let long = "x".repeat(640 << 10);
+    for n in 0..150 {
+        write(
+            &db,
+            json!([{ "insert": "cards", "row": { "id": format!("c{n}"), "title": long } }]),
+        )
+        .unwrap();
+    }
+    for n in 0..150 {
+        write(
+            &db,
+            json!([{ "insert": "cards", "row": { "id": format!("c{n}"), "title": "short" } }]),
+        )
+        .unwrap();
+    }
+    let free = count("freelist_count");
+    assert!(
+        free > 12_000,
+        "pruned sets and overwritten text free their pages: {free}"
+    );
+    let (gave, truncated) = db.tidy().unwrap();
+    let left = count("freelist_count");
+    assert!(
+        left <= 10_000 && gave >= free - 10_000,
+        "gave {gave} of {free}, {left} free"
+    );
+    assert!(!truncated, "no WAL near 5 GiB");
+    assert_eq!(db.tidy().unwrap(), (0, false), "nothing more to give");
+    assert_eq!(cards(&db).as_array().unwrap().len(), 150);
+    svrngs_db::close(side).unwrap();
+}

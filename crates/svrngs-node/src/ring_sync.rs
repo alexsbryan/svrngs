@@ -362,6 +362,10 @@ pub async fn run_one_round(
         // The app databases this computer keeps, opened before any member is
         // dialled, so a member's call this round finds each one here too.
         let kept = Arc::new(folders.kept(namespace).await);
+        for db in kept.iter() {
+            let tidied = self::off(db, |db| db.tidy()).await;
+            debug!(namespace, app = db.app, ?tidied, "ring state: an app database's free pages given back and its WAL truncated, each past its bound, before the round's exchanges");
+        }
         for OnlinePeer { contact, .. } in offered_to {
             let kept = kept.clone();
             dials.push(async move {

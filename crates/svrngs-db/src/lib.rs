@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// `journal_size_limit`: ported from superfly/corrosion crates/corro-types/src/sqlite.rs@e7295ff0 (`setup_conn`)
 //! An app's database in a group: SQLite tables beside the group's record, a
 //! copy on every member's computer, merged by cr-sqlite (svrn-docs
 //! `rings/current/APP_STATE.md` §4).
@@ -59,6 +60,7 @@ use tokio::sync::watch;
 mod form;
 mod parse;
 mod sync;
+mod tidy;
 pub use form::FORM;
 use form::Table;
 pub use parse::Unfit;
@@ -461,7 +463,8 @@ impl Db {
         // [`close`] finalizes. Without cr-sqlite, above, it has none.
         let mut open = Open(Some(conn));
         let conn = open.0.as_mut().expect("just opened");
-        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;")
+        // Corrosion's: a WAL folded in is cut back to 1 GiB (`tidy.rs`).
+        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA journal_size_limit=1073741824;")
             .map_err(fault)?;
         // A database without svrngs's own tables is new: its schema applied,
         // its tables made cr-sqlite's, and svrngs's made, its nonce and site
@@ -475,6 +478,12 @@ impl Db {
         tracing::debug!(target: "state", group, app, fresh, "state: a database opened; its schema applied only when new");
         if fresh {
             let schema = schema.ok_or(Refused::NotHere)?;
+            // Its pages given back as sets are pruned (`tidy.rs`): set before
+            // the first table, as Corrosion sets it (corro-agent
+            // `setup.rs:89-91`), but cr-sqlite made its own as the connection
+            // opened, so the file is made again under it.
+            conn.execute_batch("PRAGMA auto_vacuum=INCREMENTAL; VACUUM;")
+                .map_err(fault)?;
             conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
             let made = new_tables(conn, (schema, root), (group, app, &device));
             // `crsql_as_crr` refusing a table rolls back the whole transaction

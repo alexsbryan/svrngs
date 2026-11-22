@@ -2180,6 +2180,7 @@ Cellular is never direct, and meets the share.
 | **apps (rngapps)** | anything served on localhost; app-specific code lives only in `apps/<app>/` | the surface in §3, and nothing else |
 | **sovereign (svrn)** | local AI on a member's computer | its OpenAI-compatible endpoint on loopback |
 | **commonwealth-ai** | the mesh for one owner's machines, and the ring code svrngs forked | nothing at runtime; `scripts/ports.py` pairs each forked file with its original |
+| **Corrosion** (superfly/corrosion) | Fly's CRDT SQLite, which an app's database learns from | nothing at runtime; each function forked carries `ported from superfly/corrosion <path>@<commit>`, which `scripts/ports.py` pairs with its original beside commonwealth-ai's |
 
 **The fork.** svrngs owns the group's code, forked from commonwealth-ai's
 ring slice at `e1a43bcd2`: the record (`commonwealth-rail-core`), the
