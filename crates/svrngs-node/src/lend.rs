@@ -865,39 +865,26 @@ fn parse(
     Ok((head, serde_json::from_value(file.into())?, before))
 }
 
-/// Lend each declaration from before groups, one with no `groups` key or
-/// the `"groups": null` a first 5 left, to `groups`, those this computer
-/// stands in now, under its lock before it lends anything: it opens for
-/// the people it opened for, a snapshot, so a group joined later is never
-/// added and its lender can pare it down (LENDING_SCOPE §"Updates, migration
-/// and mixed versions"). No group to name leaves `null`, read as needing
-/// selection. Either way an svrngs before 5 refuses the file
-/// (`deny_unknown_fields`) rather than lend it to every group. One that
-/// cannot be written is traced and left legacy, which no group reaches.
+/// Lend each declaration from before groups, [`Audience::Legacy`] as
+/// [`all`] reads it (no `groups` key, or the `"groups": null` a first 5
+/// left), to `groups`, those this computer stands in now, under its lock
+/// before it lends anything: it opens for the people it opened for, a
+/// snapshot, so a group joined later is never added and its lender can pare
+/// it down (LENDING_SCOPE §"Updates, migration and mixed versions"). No
+/// group to name leaves `null`, read as needing selection. Either way an
+/// svrngs before 5 refuses the file (`deny_unknown_fields`) rather than
+/// lend it to every group. One that cannot be written is traced and left
+/// legacy, which no group reaches.
 pub fn stamp(data_dir: &Path, groups: &[String]) {
-    let dir = lends_dir(data_dir);
-    let Ok(entries) = std::fs::read_dir(&dir).inspect_err(|e| if e.kind() != std::io::ErrorKind::NotFound { tracing::warn!(target: "lend", dir = %dir.display(), error = %e, "lend: refused — the declarations cannot be listed, so none is stamped; each stays as it is, lent to no group") }) else {
-        return;
-    };
-    let entries = entries.filter_map(|e| {
-        e.inspect_err(|e| tracing::warn!(target: "lend", dir = %dir.display(), error = %e, "lend: a declaration cannot be listed, so it is not stamped")).ok()
-    });
-    for path in entries.map(|e| e.path()) {
-        let name = path
-            .file_name()
-            .and_then(|f| f.to_str()?.strip_suffix(".json"));
-        let Some(Ok(name)) = name.map(LendName::parse) else {
+    let listed = all(data_dir).inspect_err(|e| tracing::warn!(target: "lend", error = %e, "lend: refused — the declarations cannot be listed, so none is stamped; each stays as it is, lent to no group"));
+    for read in listed.into_iter().flatten() {
+        let Ok(lend) = read.inspect_err(|e| tracing::warn!(target: "lend", error = %e, "lend: refused — a declaration cannot be read, so it is not stamped; read refuses it too, so nothing is lent from it")) else {
             continue;
         };
-        let read = std::fs::read_to_string(&path).map_err(|e| e.to_string());
-        let value = read
-            .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).map_err(|e| e.to_string()));
-        let Ok(value) = value.inspect_err(|e| tracing::warn!(target: "lend", file = %path.display(), error = e, "lend: refused — a declaration cannot be read, so it is not stamped; read refuses it too, so nothing is lent from it")) else {
-            continue;
-        };
-        if value.get("groups").is_some_and(|g| !g.is_null()) {
+        if lend.terms.audience != Audience::Legacy {
             continue;
         }
+        let name = lend.name;
         let lent = mutate(data_dir, &name, |lend| {
             tracing::info!(target: "lend", lend = %name, groups = groups.len(), "lend: a declaration from before groups goes to the groups this computer stands in now; in none, it needs selection");
             if lend.terms.audience == Audience::Legacy && !groups.is_empty() {
@@ -912,7 +899,8 @@ pub fn stamp(data_dir: &Path, groups: &[String]) {
 
 /// Every lend this computer declares, by name: each declaration read as
 /// [`read`] reads one. A file under `lends/` whose name is not a lend's is
-/// not one, and is passed over at debug.
+/// not one, and is passed over at debug; an entry the listing can't read is
+/// passed over at warn.
 pub fn all(data_dir: &Path) -> Result<Vec<Result<Lend, LendError>>, LendError> {
     let dir = lends_dir(data_dir);
     let entries = match std::fs::read_dir(&dir) {
@@ -921,7 +909,10 @@ pub fn all(data_dir: &Path) -> Result<Vec<Result<Lend, LendError>>, LendError> {
         Err(source) => return Err(LendError::Unreadable { path: dir, source }),
     };
     let mut names: Vec<LendName> = Vec::new();
-    for entry in entries.flatten() {
+    let listed = entries.filter_map(|e| {
+        e.inspect_err(|e| tracing::warn!(target: "lend", dir = %dir.display(), error = %e, "lend: a declaration cannot be listed, so it is passed over")).ok()
+    });
+    for entry in listed {
         let file = entry.file_name().to_string_lossy().into_owned();
         match file.strip_suffix(".json").map(LendName::parse) {
             Some(Ok(name)) => names.push(name),
