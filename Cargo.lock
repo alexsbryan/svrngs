@@ -4744,6 +4744,7 @@ dependencies = [
  "netlink-sys 0.8.8",
  "noq-udp",
  "notify",
+ "postcard",
  "qrcodegen",
  "rand 0.9.4",
  "rcgen",

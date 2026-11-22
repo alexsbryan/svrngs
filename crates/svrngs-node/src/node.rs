@@ -335,7 +335,7 @@ pub struct Host {
     pub(crate) stopping: tokio_util::sync::CancellationToken,
     /// Each carried app's database here, by group and app, at its origin's
     /// `/svrngs/sql` (`crate::folder::carried`).
-    pub(crate) states: svrngs_db::States,
+    pub(crate) states: Arc<svrngs_db::States>,
 }
 
 impl Node {
@@ -467,7 +467,7 @@ impl Node {
             minting: Default::default(),
             meeting: Default::default(),
             stopping: Default::default(),
-            states: svrngs_db::States::new(&data_dir),
+            states: Arc::new(svrngs_db::States::new(&data_dir, rail.signer().clone())),
         });
         let (folders, blobs, store) =
             crate::folder::Folders::start((&data_dir, places), host.clone(), nudge.clone())
@@ -575,6 +575,7 @@ impl Node {
             rail: rail.clone(),
             live,
             wake: nudge.clone(),
+            states: host.states.clone(),
         };
         let members = ring_routes::router(inbound.clone())
             .merge(crate::door::router(asking.door.clone()))

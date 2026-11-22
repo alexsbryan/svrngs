@@ -359,6 +359,7 @@ pub async fn run_one_round(
                 let ended = exchange_with((transport, contact), rail, namespace).await;
                 if ended.stop.is_none() {
                     answered();
+                    states((transport, contact), host, namespace).await;
                 }
                 ended
             });
@@ -629,6 +630,66 @@ pub(crate) async fn post(
 
 /// Where a member's exchange is asked, and served (`ring_routes.rs`).
 pub const SYNC_ROUTE: &str = "/internal/ring/sync";
+
+/// Where a member's app databases are exchanged, and served
+/// ([`crate::ring_routes::ring_state`]).
+pub const STATE_ROUTE: &str = "/internal/ring/state";
+
+/// Whether `group`'s record binds a key, as a set's device is judged: standing
+/// now, or cut since, as a removed device's sets are taken like any (svrn-docs
+/// APP_STATE §4, "A removed device"). An unreadable record binds none, so
+/// sets wait, said at warn.
+pub(crate) fn bound(rail: &RingRail, group: &str) -> impl Fn(&str) -> bool + use<> {
+    let read = rail.register(group).inspect_err(|e| warn!(namespace = group, error = %e, "ring state: the record is unreadable, so every set waits"));
+    let read = read.unwrap_or_default();
+    move |key| read.members.contains_key(key) || read.removed.contains_key(key)
+}
+
+/// Each app database this computer keeps in `group`, exchanged with the
+/// member at `to`, after the record's in the same round (the app-state
+/// spike's `exchange`, svrn-docs `rings/current/app-state-spike/spike.patch:1355-1401`):
+/// its waiting sets judged again by the record, then a call a chunk, each
+/// giving what the member's last ask lacks and taking what the member's
+/// answer gives, until neither moves or the chunks are spent.
+async fn states(to: To<'_>, host: &Host, group: &str) {
+    let bound = bound(&host.rail, group);
+    for db in host.states.held(group) {
+        let again = db.rejudge(&bound);
+        let mut theirs: Option<svrngs_db::Ask> = None;
+        for chunk in 1..=MAX_CHUNKS_PER_EXCHANGE {
+            let ours = match &theirs {
+                Some(ask) => db.missing(ask, RING_SYNC_OPS_BUDGET_BYTES),
+                None => db.ask().map(|ask| svrngs_db::Call {
+                    ask,
+                    ..Default::default()
+                }),
+            };
+            let Ok(ours) = ours else { break };
+            let body = postcard::to_allocvec(&((group, &db.app), &ours))
+                .expect("a call is written in memory");
+            let answer =
+                to.0.fetch(to.1, crate::iroh::posted(STATE_ROUTE, body))
+                    .await;
+            let answer = answer.ok().filter(|a| a.status().is_success());
+            let answer =
+                answer.and_then(|a| postcard::from_bytes::<svrngs_db::Call>(a.body()).ok());
+            let took = answer.as_ref().map(|a| db.ingest(a, &bound));
+            debug!(namespace = group, app = db.app, chunk, ?again, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
+            let moved = took.as_ref().is_some_and(|t| {
+                t.as_ref().is_ok_and(|t| {
+                    t.iter()
+                        .any(|(_, t)| *t != svrngs_db::Took::Held && *t != svrngs_db::Took::Fault)
+                })
+            });
+            match answer {
+                Some(answer) if chunk == 1 || moved || !ours.sets.is_empty() => {
+                    theirs = Some(answer.ask)
+                }
+                _ => break,
+            }
+        }
+    }
+}
 
 /// The responder's half of one exchange: ingest what the caller offered,
 /// then answer with this node's digest and one budget of what the caller's

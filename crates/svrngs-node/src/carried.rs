@@ -34,7 +34,8 @@
 //! - [`SQL`], the app's own database in its group (svrngs-db), opened from
 //!   the `schema.sql` that runs as the person asking: `POST {sql, params}`
 //!   one read, answered `{rows, more}`, with `syncing: true` while another
-//!   computer of the group stands; `POST {write: [op, ...]}` a write by
+//!   computer of the group stands and this copy hasn't synced with one in
+//!   full, or a set faulted here since; `POST {write: [op, ...]}` a write by
 //!   key, answered `{count}`, as this computer's person alone and never as
 //!   an app that reads others' lends; `GET ?q=` the read's rows as an event
 //!   stream, now and again each time they change. A refusal is
@@ -606,28 +607,29 @@ impl Folders {
         tracing::debug!(target: "folder", group, %app, schema = schema.is_some(), "carried: an app's database asked; none without a schema.sql");
         let schema = schema.ok_or(NO_SCHEMA)?;
         let schema = String::from_utf8_lossy(&schema);
-        let db = match self.host.states.open(group, app.as_str(), &schema) {
+        let db = match self.host.states.open(group, app.as_str(), Some(&schema)) {
             Ok(db) => db,
             Err(r) => return Ok(refused(&r)),
         };
-        // A copy is the group's once it has met the group's other computers
-        // (svrn-docs APP_STATE §7, invariant 8). No copy syncs yet (slice B),
-        // so with another computer standing, its reads are said syncing.
-        let syncing =
+        // A copy is the group's once it has synced in full with one of the
+        // group's other computers (svrn-docs APP_STATE §7, invariant 8).
+        let others =
             (people.iter()).any(|(k, m)| *k != self.host.actor && m.device == Device::Computer);
-        tracing::debug!(target: "folder", group, %app, syncing, "carried: an app's database, said syncing while another computer of the group stands and none syncs");
+        tracing::debug!(target: "folder", group, %app, others, "carried: an app's database, said syncing while another computer of the group stands and this copy isn’t the group’s yet");
         if req.method() == Method::GET {
             let query = form_urlencoded::parse(req.uri().query().unwrap_or_default().as_bytes());
             let q = query
                 .into_iter()
                 .find_map(|(k, q)| (k == "q").then(|| q.into_owned()));
             let q = q.ok_or((Malformed, 422, "a subscription asks ?q=<a SELECT>"))?;
-            return Ok(subscribed(db, q, syncing));
+            return Ok(subscribed(db, q, others).await);
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
         let body = serde_json::from_slice(&body).unwrap_or_default();
         let answered = match svrngs_db::asked(&body) {
-            Ok(svrngs_db::Asked::Read(sql, params)) => read(&db, sql, params, syncing),
+            Ok(svrngs_db::Asked::Read(sql, params)) => {
+                read(&db, sql.into(), params.to_vec(), others).await
+            }
             Ok(svrngs_db::Asked::Write(ops)) => {
                 let elsewhere = key != self.host.actor;
                 tracing::debug!(target: "folder", group, %app, elsewhere, ?wrote, "carried: a write to an app's database, refused for an app that reads others' lends, and from any device but this computer");
@@ -639,7 +641,9 @@ impl Folders {
                     let words = format!("{app} writes only from your own computer for now, so this isn’t kept. Open {app} from your computer’s home page to write in it.");
                     return Ok(told(403, "elsewhere", words));
                 }
-                db.write(ops)
+                let (db, ops) = (db.clone(), ops.clone());
+                let wrote = tokio::task::spawn_blocking(move || db.write(&ops)).await;
+                wrote.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())))
             }
             Err(r) => Err(r),
         };
@@ -655,11 +659,20 @@ fn told(status: u16, refused: &str, words: String) -> Response {
     (status, Json(json!({ "refused": refused, "words": words }))).into_response()
 }
 
-/// `sql` read on `db`, and `syncing: true` beside its rows while this copy
-/// is not the group's yet, so a page shows no fresh board for one.
-fn read(db: &Db, sql: &str, params: &[Value], syncing: bool) -> Result<Value, Refused> {
-    let mut read = db.read(sql, params)?;
-    if syncing {
+/// `sql` read on `db`, off the runtime's threads, and `syncing: true` beside
+/// its rows while `others`, the group's other computers, stand and this copy
+/// isn't the group's yet, so a page shows no fresh board for one.
+async fn read(
+    db: &Arc<Db>,
+    sql: String,
+    params: Vec<Value>,
+    others: bool,
+) -> Result<Value, Refused> {
+    let db = db.clone();
+    let read =
+        tokio::task::spawn_blocking(move || db.read(&sql, &params).map(|r| (r, db.syncing())));
+    let (mut read, syncing) = read.await.map_err(|e| Refused::Fault(e.to_string()))??;
+    if others && syncing {
         read["syncing"] = true.into();
     }
     Ok(read)
@@ -676,8 +689,8 @@ fn refused(r: &Refused) -> Response {
 /// changes. Refused once, the query is answered as any refusal, in place of
 /// the stream; refused later, the stream ends, and the page's next ask is
 /// told why.
-fn subscribed(db: Arc<Db>, q: String, syncing: bool) -> Response {
-    let first = match read(&db, &q, &[], syncing) {
+async fn subscribed(db: Arc<Db>, q: String, others: bool) -> Response {
+    let first = match read(&db, q.clone(), Vec::new(), others).await {
         Ok(first) => first,
         Err(r) => return refused(&r),
     };
@@ -692,7 +705,7 @@ fn subscribed(db: Arc<Db>, q: String, syncing: bool) -> Response {
                     return Some((event, (changed, None, Some(rows))));
                 }
                 changed.changed().await.ok()?;
-                let again = read(&db, &q, &[], syncing);
+                let again = read(&db, q.clone(), Vec::new(), others).await;
                 tracing::debug!(target: "folder", group = db.group, app = db.app, refused = ?again.as_ref().err(), "carried: a subscription read again as its database changed, its rows pushed if they differ, or it ends");
                 now = Some(again.ok()?);
             }

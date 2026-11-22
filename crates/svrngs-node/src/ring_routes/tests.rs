@@ -83,6 +83,8 @@ fn inbound(rail: Arc<RingRail>, live: Arc<LiveBuffer>) -> RingInbound {
         rail,
         live,
         wake: Default::default(),
+
+        states: no_states(),
     }
 }
 
@@ -331,6 +333,8 @@ async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
             rail: issuer,
             live: Default::default(),
             wake: wake.clone(),
+
+            states: no_states(),
         },
         Some(key()),
     );
@@ -378,4 +382,107 @@ fn the_routes_serve_the_keys_the_register_names() {
             );
         }
     }
+}
+
+/// No app database here: the record's routes' tests reach none.
+fn no_states() -> Arc<svrngs_db::States> {
+    let key = svrngs_core::SigningKey::from_bytes(&[0; 32]);
+    Arc::new(svrngs_db::States::new(
+        std::path::Path::new("/nonexistent"),
+        key,
+    ))
+}
+
+/// `call` for `app`'s database in `group`, posted to the state route as
+/// `dialer`'s stream reaches it, `None` off the stream: its status, and the
+/// member's call back where it answered one.
+async fn state(
+    inbound: RingInbound,
+    dialer: Option<&SigningKey>,
+    (group, app): (&str, &str),
+    call: &svrngs_db::Call,
+) -> (u16, Option<svrngs_db::Call>) {
+    let body = postcard::to_allocvec(&((group, app), call)).unwrap();
+    let mut req = axum::http::Request::post(crate::ring_sync::STATE_ROUTE)
+        .body(axum::body::Body::from(body))
+        .unwrap();
+    if let Some(key) = dialer {
+        req.extensions_mut().insert(crate::iroh::tests::dialer(key));
+    }
+    let answer = router(inbound).oneshot(req).await.unwrap();
+    let status = answer.status().as_u16();
+    let bytes = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    (status, postcard::from_bytes(&bytes).ok())
+}
+
+/// **The state route serves an app's database to a computer standing in
+/// its group, and to no other** (svrn-docs APP_STATE §7, invariants 6 and
+/// 2): Ada's computer keeps the board's one set; asked by a dialer standing
+/// in the group, it answers that set, signed by its own key; asked by Bo,
+/// who stands in another group only, or off the stream, it refuses, and
+/// takes nothing Bo offered; a database it keeps none of is 404; and a set
+/// that names Ada's device, signed by Bo's key, is dropped, her marks
+/// unmoved, while Bo's own set, carried by a standing member, is taken. Plants, each watched failing: the standing check skipped (Bo
+/// served); the set's signature unchecked (the forged set counted).
+#[tokio::test]
+async fn the_state_route_serves_a_standing_member_alone() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
+    let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    db.write(&card).unwrap();
+    let asked = svrngs_db::Call::default();
+    let (status, answer) = state(inbound.clone(), Some(&key()), (NS, "board"), &asked).await;
+    let answer = answer.expect("a call back");
+    assert_eq!((status, answer.sets.len(), answer.full), (200, 1, true));
+    assert_eq!(
+        answer.sets[0].device,
+        crate::actor_of(&key()),
+        "signed by its own computer"
+    );
+
+    let bo = SigningKey::from_bytes(&[12u8; 32]);
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Bo").unwrap(), vec![crate::actor_of(&bo)]);
+    rail.set_seed("bo-only", &Roster::new(members)).unwrap();
+    let bo_states = svrngs_db::States::new(&dir.path().join("bo"), bo.clone());
+    let bo_db = bo_states.open(NS, "board", Some(SCHEMA)).unwrap();
+    bo_db.write(&card).unwrap();
+    let offered = bo_db.missing(&Default::default(), 1 << 20).unwrap();
+    let marks = db.ask().unwrap().marks;
+    for dialer in [Some(&bo), None] {
+        let (status, _) = state(inbound.clone(), dialer, (NS, "board"), &offered).await;
+        assert_eq!(status, 403, "{:?} refused", dialer.map(crate::actor_of));
+    }
+    assert_eq!(
+        db.ask().unwrap().marks,
+        marks,
+        "nothing taken from a refused dialer"
+    );
+    let unkept = state(inbound.clone(), Some(&key()), (NS, "notes"), &asked).await;
+    assert_eq!(unkept.0, 404, "a database this computer keeps none of");
+
+    // Carried on its own, vouching for nothing: a full call's marks are
+    // its source's word for completeness (APP_STATE §4, "What travels").
+    let mut forged = offered.clone();
+    (forged.sets[0].device, forged.full) = (crate::actor_of(&key()), false);
+    let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &forged).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        db.ask().unwrap().marks,
+        marks,
+        "a set not its device's, dropped"
+    );
+    let (status, _) = state(inbound, Some(&key()), (NS, "board"), &offered).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        db.ask().unwrap().marks.len(),
+        2,
+        "Bo's own set, from a standing member"
+    );
 }

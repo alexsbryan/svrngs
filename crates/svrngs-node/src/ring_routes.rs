@@ -62,6 +62,8 @@ pub struct RingInbound {
     pub rail: Arc<RingRail>,
     pub live: Arc<LiveBuffer>,
     pub wake: Arc<tokio::sync::Notify>,
+    /// This computer's app databases, whose sets [`ring_state`] exchanges.
+    pub states: Arc<svrngs_db::States>,
 }
 
 /// The sync and live routes, as a router (upstream's was a `RouteBundle`
@@ -74,6 +76,10 @@ pub fn router(state: RingInbound) -> axum::Router {
             post(ring_sync).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
         .route("/internal/ring/live", post(ring_live))
+        .route(
+            crate::ring_sync::STATE_ROUTE,
+            post(ring_state).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+        )
         .with_state(state)
 }
 
@@ -229,6 +235,42 @@ pub async fn ring_sync(
         [(axum::http::header::CONTENT_TYPE, "application/json")],
         bytes,
     )
+        .into_response())
+}
+
+/// `POST /internal/ring/state`: a member's call for one app's database in a
+/// group, taken, and answered with this copy's call of what the member lacks
+/// (the app-state spike's `answer`, svrn-docs
+/// `rings/current/app-state-spike/spike.patch:1410-1455`); only to a dialer
+/// standing in the group, as the record's sync is, so a removed device's
+/// computer is refused. A database this computer keeps none of is 404.
+pub async fn ring_state(
+    State(state): State<RingInbound>,
+    dialer: Option<Extension<Dialer>>,
+    body: axum::body::Bytes,
+) -> Result<Response, Response> {
+    let malformed =
+        |e: postcard::Error| err(StatusCode::BAD_REQUEST, format!("malformed body: {e}"));
+    let ((group, app), call): ((String, String), svrngs_db::Call) =
+        postcard::from_bytes(&body).map_err(malformed)?;
+    let dialer = dialer.map(|Extension(d)| d);
+    standing_asker(&state.rail, dialer, "state", &group)
+        .map_err(|why| err(StatusCode::FORBIDDEN, why))?;
+    let bound = crate::ring_sync::bound(&state.rail, &group);
+    let db = state.states.open(&group, &app, None);
+    let answer = db.and_then(|db| {
+        db.ingest(&call, &bound)
+            .and(db.missing(&call.ask, RING_SYNC_OPS_BUDGET_BYTES))
+    });
+    tracing::debug!(target: "rails", group, app, offered = call.sets.len(), refused = ?answer.as_ref().err(), "ring state: a member's call taken and answered, or refused");
+    let refused = |r: svrngs_db::Refused| {
+        err(
+            StatusCode::from_u16(r.said().0).expect("a status"),
+            r.to_string(),
+        )
+    };
+    Ok(postcard::to_allocvec(&answer.map_err(refused)?)
+        .expect("a call is written in memory")
         .into_response())
 }
 

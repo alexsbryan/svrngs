@@ -159,6 +159,8 @@ pub(super) fn ring_router(rail: Arc<RingRail>) -> axum::Router {
         rail,
         live: Default::default(),
         wake: Default::default(),
+
+        states: no_states(),
     })
 }
 
@@ -258,3 +260,12 @@ fn the_answer_from_the_kept_digest_is_the_whole_logs_byte_for_byte() {
 }
 
 mod in_process;
+
+/// No app database here: the record's routes' tests reach none.
+fn no_states() -> Arc<svrngs_db::States> {
+    let key = svrngs_core::SigningKey::from_bytes(&[0; 32]);
+    Arc::new(svrngs_db::States::new(
+        std::path::Path::new("/nonexistent"),
+        key,
+    ))
+}

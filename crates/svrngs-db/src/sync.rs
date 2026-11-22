@@ -339,14 +339,15 @@ impl Db {
             return Err(fault(e));
         }
         let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
-        if call.full && !faulted && !self.synced.swap(true, Relaxed) {
+        let first = call.full && !faulted && !self.synced.swap(true, Relaxed);
+        if first {
             let kept = conn.execute("UPDATE svrngs_db SET synced = 1", []);
-            tracing::debug!(target: "state", group = self.group, app = self.app, kept = kept.is_ok(), "state: a copy's first full sync, so it is said syncing no more");
+            tracing::debug!(target: "state", group = self.group, app = self.app, kept = kept.is_ok(), "state: a copy's first full sync, so it is said syncing no more, and its pages told");
         }
         if call.full || faulted {
             self.faulted.store(faulted, Relaxed);
         }
-        if out.iter().any(|(_, t)| matches!(t, Took::Taken | Took::Twin)) {
+        if first || out.iter().any(|(_, t)| matches!(t, Took::Taken | Took::Twin)) {
             self.changed.send_modify(|n| *n += 1);
         }
         Ok(out)
