@@ -947,12 +947,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # door.rs:1847), the pass decode (door.rs:1360, :1434), "nothing is lent
 # here" (surface.rs:502, :515, :725). All code but JavaScript 24,518 ->
 # 25,138. Then +40 more, to the +660 its worker projects once cr-sqlite
-# builds for Linux too (8ff2a8fd, 21985308): 25,178. Left in the pool: +790
-# and +80, until A lands and its caps come down to where it lands.
+# builds for Linux too (8ff2a8fd, 21985308): 25,178. A landed at 25,171,
+# from 24,517: +654 of all code but JavaScript and none of JavaScript, and
+# the cap comes down to it. Drawn so far: +654 (slice A). Left: +796 and +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25178,
+    ".": 25172,
 
     "js": 8694,
 
