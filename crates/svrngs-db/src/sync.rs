@@ -170,13 +170,16 @@ pub struct Ask {
 /// member's own ask, and whether those are all it keeps that the copy lacks,
 /// so the copy may adopt its marks; and, for each site whose mark the
 /// member's ask has past the copy's, the highest head of it the member has
-/// checked, which the copy adopts the mark up to and no further.
+/// checked, which the copy adopts the mark up to and no further; and whether
+/// the member's own copy has synced, as only a full call from one that has
+/// makes a copy synced (APP_STATE §7, invariant 8).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Call {
     pub ask: Ask,
     pub sets: Vec<Set>,
     pub full: bool,
     pub heads: Vec<Head>,
+    pub synced: bool,
 }
 
 /// How a set offered to a copy ends (APP_STATE §4, the four outcomes, with
@@ -445,7 +448,14 @@ impl Db {
         } else {
             Vec::new()
         };
-        Ok(Call { ask, sets, full, heads })
+        let synced = self.synced.load(Relaxed);
+        Ok(Call {
+            ask,
+            sets,
+            full,
+            heads,
+            synced,
+        })
     }
 
     /// The heads a member whose ask is `theirs` may adopt marks up to: for
@@ -504,7 +514,7 @@ impl Db {
         }
         tx.commit().map_err(fault)?;
         let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
-        let first = call.full && !faulted && !self.synced.swap(true, Relaxed);
+        let first = call.full && call.synced && !faulted && !self.synced.swap(true, Relaxed);
         if first {
             let kept = conn.execute("UPDATE svrngs_db SET synced = 1", []);
             tracing::debug!(target: "state", group = self.group, app = self.app, kept = kept.is_ok(), "state: a copy's first full sync, so it is said syncing no more, and its pages told");
@@ -521,8 +531,8 @@ impl Db {
     /// The mark `m` a full call claims for `site`, adopted up to the highest
     /// head of the site this copy has checked, kept here or sent in the call,
     /// and only where the record binds its device and the caller is trusted
-    /// for it: the site's own computer, which vouches for its own sets, or any
-    /// caller into a copy not yet synced, as a newcomer trusts its source
+    /// for it: the site's own computer, which vouches for its own sets, or a
+    /// synced caller into a copy not yet synced, as a newcomer trusts its source
     /// (APP_STATE §4, "What travels"). So a member's word takes no mark past
     /// a set its device signed, and makes no established copy skip a set it
     /// hasn't fetched yet.
@@ -540,7 +550,7 @@ impl Db {
         let Some(head) = sent.or(kept.as_ref()) else {
             return Ok(());
         };
-        let trusted = from == Some(&head.device) || !self.synced.load(Relaxed);
+        let trusted = from == Some(&head.device) || call.synced && !self.synced.load(Relaxed);
         let bound = bound(head.device.as_str());
         tracing::debug!(target: "state", group = self.group, app = self.app, device = %head.device, mark = m.get(), head = head.seq.get(), trusted, bound, "state: a full call's mark for a site, adopted up to the head its device signed where the record binds it and its caller is trusted for it");
         if !trusted || !bound {

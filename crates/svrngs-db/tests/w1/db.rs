@@ -49,6 +49,8 @@ pub struct Run {
     devices: BTreeMap<String, Site>,
     sites: BTreeMap<[u8; 16], Site>,
     sets: BTreeMap<SetId, svrngs_db::Set>,
+    /// Whether the copy whose call is on its way had synced, as its call says.
+    synced: bool,
 }
 
 /// svrngs-db's database, as one computer keeps it.
@@ -161,9 +163,15 @@ impl DbCopy {
         let dir = tempfile::tempdir().expect("a directory for the copy");
         let key = SigningKey::from_bytes(&[site.0[0]; 32]);
         let device = svrngs_core::actor_of(&key);
-        let db = States::new(dir.path(), key)
-            .open(GROUP, APP, Some(SCHEMA))
-            .expect("the database opens");
+        // Copy 1 carries the board, so its copy is the root every other is
+        // synced from (APP_STATE §7, invariant 8).
+        let states = States::new(dir.path(), key);
+        let db = if site == Site::of(1) {
+            states.carry(GROUP, APP, SCHEMA)
+        } else {
+            states.open(GROUP, APP, Some(SCHEMA))
+        };
+        let db = db.expect("the database opens");
         let side = Connection::open(dir.path().join(format!("state/{GROUP}/{APP}.db"))).expect("a second connection");
         let nonce: [u8; 16] = side
             .query_row("SELECT nonce FROM svrngs_db", [], |r| r.get(0))
@@ -352,6 +360,7 @@ impl Replica for DbCopy {
                 sets,
                 full: call.marks.is_some(),
                 heads: heads.map(|set| set.head.clone()).collect(),
+                synced: call.marks.is_some() && run.synced,
             }
         };
         let got = self
@@ -406,6 +415,7 @@ impl Replica for DbCopy {
     /// What svrngs-db sends `to` by `to`'s own ask must be what the
     /// reference sends.
     fn sent(&self, to: &DbCopy, call: &Call) {
+        self.run.borrow_mut().synced = !self.db.syncing();
         let real = self
             .db
             .missing(&to.db.ask().expect("its ask"), usize::MAX)

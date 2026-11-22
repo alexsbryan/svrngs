@@ -1,8 +1,9 @@
 //! What a copy counts, and on whose word (svrn-docs
 //! `rings/current/APP_STATE.md` §4, "What travels" and the four outcomes; §7,
 //! invariants 8, 11 and 12): what the wire says is parsed before anything in
-//! it is used, and a set's signature is checked first; and a second set at a
-//! place this copy refused is judged.
+//! it is used, and a set's signature is checked first; a second set at a
+//! place this copy refused is judged; a mark moves only past a set its
+//! device signed; and a copy is synced only by a copy that is.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -22,6 +23,13 @@ fn key(n: u8) -> SigningKey {
 fn board(dir: &Path, n: u8) -> Arc<Db> {
     let states = States::new(&dir.join(format!("computer-{n}")), key(n));
     states.open("g", "board", Some(SCHEMA)).unwrap()
+}
+
+/// Computer `n`'s board made as the root, as the computer that carries the
+/// app makes it, synced from the start.
+fn root(dir: &Path, n: u8) -> Arc<Db> {
+    let states = States::new(&dir.join(format!("computer-{n}")), key(n));
+    states.carry("g", "board", SCHEMA).unwrap()
 }
 
 fn write(db: &Db, id: &str, title: &str) {
@@ -99,16 +107,15 @@ fn remade(set: &Set, by: &SigningKey, f: impl Fn(&mut Vec<Change>)) -> Set {
 #[test]
 fn a_set_is_judged_by_its_signature_first() {
     let dir = tempfile::tempdir().unwrap();
-    let (h, b, c) = (board(dir.path(), 9), board(dir.path(), 2), board(dir.path(), 3));
+    let (h, b, c) = (root(dir.path(), 9), board(dir.path(), 2), board(dir.path(), 3));
     for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c3", "jam")] {
         write(&h, id, title);
     }
     let mut sets = h.missing(&Ask::default(), BUDGET).unwrap().sets;
     sets[1] = remade(&sets[1], &key(9), |c| c[0].col_version = (1 << 53) + 1);
-    assert_eq!(
-        took(&b, &alone(sets.clone())),
-        [Took::Taken, Took::Refused, Took::Taken]
-    );
+    let mut handed = alone(sets.clone());
+    (handed.full, handed.synced) = (true, true);
+    assert_eq!(took(&b, &handed), [Took::Taken, Took::Refused, Took::Taken]);
     took(&c, &call(&b, &c));
     let mut forged = sets[1].clone();
     forged.head.sig = Sig::parse(&"00".repeat(64)).unwrap();
@@ -238,7 +245,7 @@ fn a_full_call_s_marks_pass_no_set_their_device_has_not_signed() {
 #[test]
 fn a_mark_is_adopted_up_to_the_head_its_device_signed() {
     let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (board(dir.path(), 1), board(dir.path(), 2));
+    let (a, b) = (root(dir.path(), 1), board(dir.path(), 2));
     write(&a, "c1", "milk");
     write(&a, "c2", "eggs");
     took(&b, &call(&a, &b));
@@ -258,6 +265,7 @@ fn a_mark_is_adopted_up_to_the_head_its_device_signed() {
     let claimed = |heads: Vec<svrngs_db::Head>| {
         let mut claim = Call {
             full: true,
+            synced: true,
             heads,
             ..Default::default()
         };
@@ -292,7 +300,7 @@ fn a_mark_is_adopted_up_to_the_head_its_device_signed() {
 #[test]
 fn an_established_copy_adopts_a_mark_only_on_its_site_s_own_computer_s_word() {
     let dir = tempfile::tempdir().unwrap();
-    let (a, b, c) = (board(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
+    let (a, b, c) = (root(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
     write(&a, "c1", "milk");
     took(&c, &call(&a, &c));
     assert!(!c.syncing(), "Cy has synced");
@@ -341,4 +349,44 @@ fn a_copy_never_adopts_a_mark_for_its_own_site() {
     a.ingest(&word, &|_| true, Some(&ana)).unwrap();
     assert_eq!(a.ask().unwrap().marks[&own(&a)], seq(2), "her own site's mark, unmoved");
     assert_eq!(call(&copy, &a).sets.len(), 1, "the set at 3, still sent her");
+}
+
+/// **A copy is synced only by a copy that is** (invariant 8): Ana holds the
+/// only card, and her computer is away. Ben's and Cy's new copies each
+/// answer the other in full with nothing, and both are still said syncing.
+/// Plant: the caller's synced flag unread (both said synced, an empty board
+/// shown as the group's).
+#[test]
+fn a_full_call_from_a_copy_never_synced_makes_no_copy_synced() {
+    let dir = tempfile::tempdir().unwrap();
+    let (a, b, c) = (root(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
+    write(&a, "c1", "milk");
+    let answer = c.missing(&b.ask().unwrap(), BUDGET).unwrap();
+    assert!(answer.full && answer.sets.is_empty() && !answer.synced);
+    took(&b, &answer);
+    took(&c, &b.missing(&c.ask().unwrap(), BUDGET).unwrap());
+    assert!(b.syncing() && c.syncing(), "neither has synced with a copy that has");
+}
+
+/// **The copy made as its app is carried is synced from the start; one
+/// made again on that computer is not**: Ana's root says nothing syncing,
+/// and Ben's copy syncs from it. Her database deleted and made again, as a
+/// page opens it, is syncing until a synced copy, Ben's, answers it in
+/// full, and then it holds her card again. Plant: a root made unsynced (Ana
+/// said syncing, and so Ben, for good).
+#[test]
+fn the_root_is_synced_from_the_start_and_a_copy_made_again_is_not() {
+    let dir = tempfile::tempdir().unwrap();
+    let (a, b) = (root(dir.path(), 1), board(dir.path(), 2));
+    assert!(!a.syncing(), "the root is synced from the start");
+    write(&a, "c1", "milk");
+    took(&b, &call(&a, &b));
+    assert!(!b.syncing(), "a full call from the root syncs Ben");
+    drop(a);
+    std::fs::remove_dir_all(dir.path().join("computer-1/state")).unwrap();
+    let again = board(dir.path(), 1);
+    assert!(again.syncing(), "made again, it is no root");
+    took(&again, &call(&b, &again));
+    assert!(!again.syncing(), "synced by Ben's full call");
+    assert_eq!(cards(&again), json!([{ "id": "c1", "title": "milk" }]));
 }

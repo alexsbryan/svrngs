@@ -104,9 +104,12 @@ fn remade(set: &Set, by: &SigningKey, app: &str, f: impl Fn(&mut Vec<Change>)) -
     signed(set, by, app)
 }
 
-/// Computer 9's one set of `app`, its write `op`.
+/// Computer 9's one set of `app`, its write `op`, computer 9 the app's
+/// root, synced from the start, as the computer that carries it.
 fn written(dir: &Path, app: (&str, &str), op: Value) -> Set {
-    let h = db(dir, 9, app);
+    let h = States::new(&dir.join("computer-9"), key(9))
+        .carry("g", app.0, app.1)
+        .unwrap();
     h.write(&op).unwrap();
     h.missing(&Ask::default(), BUDGET).unwrap().sets.remove(0)
 }
@@ -320,6 +323,7 @@ fn a_set_under_a_schema_this_copy_does_not_hold_waits() {
     let call = Call {
         sets: vec![noted],
         full: true,
+        synced: true,
         ..Default::default()
     };
     assert_eq!(b.ingest(&call, &all, None).unwrap()[0].1, Took::Waits);

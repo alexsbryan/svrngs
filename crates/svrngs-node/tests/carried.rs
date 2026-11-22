@@ -3198,12 +3198,12 @@ async fn an_app_keeps_its_own_database_at_its_origin() {
 /// act is (capability-signed; DESIGN §6, "An entry's author is its
 /// signer"): Ben's write reaching Ana's door is refused, saying where to
 /// write, and his read is answered. A phone's write waits for slice C
-/// (svrn-docs `MAGNETS_BUILD.md` §3). **And a copy with another computer
-/// in its group says it is syncing** (APP_STATE §7, invariant 8), to Ana
-/// and to Ben, since no copy syncs yet, as Ana's alone never does
-/// ([`an_app_keeps_its_own_database_at_its_origin`]). Plants, each watched
+/// (svrn-docs `MAGNETS_BUILD.md` §3). **And the copy made as the app is
+/// carried is the root, synced from the start** (APP_STATE §7, invariant
+/// 8): Ana carried Board, so her copy says nothing syncing, to her or to
+/// Ben, though another computer stands in the group. Plants, each watched
 /// failing: the route's `elsewhere` taken out (Ben's write answered 200);
-/// `syncing` never said (Ana's read answered with none).
+/// the carry step making no root (both reads said syncing).
 #[tokio::test]
 async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
     let (nodes, _dirs) = computers().await;
@@ -3236,11 +3236,11 @@ async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
     let read = json!({ "sql": "SELECT count(*) AS n FROM cards" });
     let read = http().post(&route).json(&read).send().await.unwrap();
     assert_eq!(read.status(), 200, "Ana's copy answers Ben's reads");
-    let synced = json!({ "rows": [{ "n": 0 }], "more": false, "syncing": true });
+    let synced = json!({ "rows": [{ "n": 0 }], "more": false });
     assert_eq!(
         read.json::<Value>().await.unwrap(),
         synced,
-        "nothing written, and said syncing"
+        "nothing written, from the root, said synced"
     );
     let (status, read) = sql(
         ana,
@@ -3251,7 +3251,7 @@ async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
     assert_eq!(
         (status, read),
         (200, synced),
-        "Ana's own read, said syncing"
+        "Ana's own read, from the root she carried"
     );
     for node in &nodes {
         node.net().close().await;

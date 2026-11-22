@@ -25,6 +25,13 @@ fn board(dir: &Path, n: u8) -> Arc<Db> {
     states.open("g", "board", Some(SCHEMA)).unwrap()
 }
 
+/// Computer `n`'s board made as the root, as the computer that carries the
+/// app makes it, synced from the start; the copy others are synced from.
+fn root(dir: &Path, n: u8) -> Arc<Db> {
+    let states = States::new(&dir.join(format!("computer-{n}")), key(n));
+    states.carry("g", "board", SCHEMA).unwrap()
+}
+
 fn write(db: &Db, id: &str, title: &str) {
     let op = json!([{ "insert": "cards", "row": { "id": id, "title": title } }]);
     db.write(&op).unwrap();
@@ -223,8 +230,11 @@ fn a_set_waits_for_its_device_and_applies_once_the_record_binds_it() {
 fn a_fault_holds_its_mark_and_is_said_syncing() {
     const CHECKED: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT CHECK (title <> 'gone'));";
     let dir = tempfile::tempdir().unwrap();
-    let open = |n: u8| States::new(&dir.path().join(format!("computer-{n}")), key(n)).open("g", "board", Some(CHECKED));
-    let (a, b) = (open(1).unwrap(), open(2).unwrap());
+    let states = |n: u8| States::new(&dir.path().join(format!("computer-{n}")), key(n));
+    let (a, b) = (
+        states(1).carry("g", "board", CHECKED).unwrap(),
+        states(2).open("g", "board", Some(CHECKED)).unwrap(),
+    );
     write(&a, "c1", "milk");
     assert!(b.syncing(), "a new copy is syncing until its first full sync");
     let mut sent = call(&a, &b);
@@ -249,7 +259,7 @@ fn a_fault_holds_its_mark_and_is_said_syncing() {
 #[test]
 fn a_copy_s_first_full_sync_is_kept() {
     let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (board(dir.path(), 1), board(dir.path(), 2));
+    let (a, b) = (root(dir.path(), 1), board(dir.path(), 2));
     took(&b, &call(&a, &b));
     assert!(!b.syncing());
     drop(b);
@@ -264,7 +274,7 @@ fn a_copy_s_first_full_sync_is_kept() {
 #[test]
 fn a_newcomer_adopts_marks_after_a_full_pull_alone() {
     let dir = tempfile::tempdir().unwrap();
-    let (a, b, c) = (board(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
+    let (a, b, c) = (root(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
     write(&a, "c1", "milk");
     write(&a, "c2", "eggs");
     took(&b, &call(&a, &b));

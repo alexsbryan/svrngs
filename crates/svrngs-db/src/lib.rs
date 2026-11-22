@@ -170,8 +170,22 @@ impl States {
 
     /// `app`'s database in `group`, made with `schema` the first time, or,
     /// with none, only one already on this computer's disk; refused, a new
-    /// one keeps none of it, and the next open tries it again.
+    /// one keeps none of it, and the next open tries it again. One made here
+    /// is synced only by a synced copy's full call.
     pub fn open(&self, group: &str, app: &str, schema: Option<&str>) -> Result<Arc<Db>, Refused> {
+        self.made(group, app, (schema, false))
+    }
+
+    /// `app`'s database in `group` made from `schema` synced from the start,
+    /// as the computer that carries its schema first makes it, as it carries
+    /// it: the root every other copy is synced from (APP_STATE §7, invariant
+    /// 8). One already on this disk is opened as it is.
+    pub fn carry(&self, group: &str, app: &str, schema: &str) -> Result<Arc<Db>, Refused> {
+        self.made(group, app, (Some(schema), true))
+    }
+
+    /// [`Self::open`] and [`Self::carry`]: a new one made `root` or not.
+    fn made(&self, group: &str, app: &str, (schema, root): (Option<&str>, bool)) -> Result<Arc<Db>, Refused> {
         let mut dbs = self.dbs.lock().expect("the databases' lock");
         if let Some(db) = dbs.get(&(group.into(), app.into())) {
             return Ok(db.clone());
@@ -183,7 +197,7 @@ impl States {
             return Err(Refused::NotHere);
         }
         std::fs::create_dir_all(&dir).map_err(fault)?;
-        let db = Arc::new(Db::open(&path, (group, app), schema, key)?);
+        let db = Arc::new(Db::open(&path, (group, app), (schema, root), key)?);
         tracing::debug!(target: "state", group, app, tables = ?db.tables, "state: an app's database opened, its schema applied and its tables made CRRs");
         dbs.insert((group.into(), app.into()), db.clone());
         Ok(db)
@@ -371,7 +385,13 @@ fn page_rule(
 }
 
 impl Db {
-    fn open(path: &Path, (group, app): (&str, &str), schema: Option<&str>, key: SigningKey) -> Result<Self, Refused> {
+    fn open(
+        path: &Path,
+        names: (&str, &str),
+        (schema, root): (Option<&str>, bool),
+        key: SigningKey,
+    ) -> Result<Self, Refused> {
+        let (group, app) = names;
         let conn = Connection::open(path).map_err(fault)?;
         // cr-sqlite, loaded on each connection by SQLite itself (shim.c): a
         // build without the shim holds none of its functions, and a database
@@ -403,7 +423,7 @@ impl Db {
         if fresh {
             let schema = schema.ok_or(Refused::NotHere)?;
             conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
-            let made = new_tables(conn, schema, (group, app, &device));
+            let made = new_tables(conn, (schema, root), (group, app, &device));
             // `crsql_as_crr` refusing a table rolls back the whole transaction
             // itself (`vendor/cr-sqlite/core/rs/core/src/lib.rs:783`), so
             // only one still open is rolled back here.
@@ -421,7 +441,7 @@ impl Db {
             // (`vendor/cr-sqlite/core/rs/core/src/bootstrap.rs:101-120`), so
             // the new database is opened again, with its own.
             drop(open);
-            return Self::open(path, (group, app), None, key);
+            return Self::open(path, names, (None, false), key);
         }
         let tables = tables_of(conn)?;
         let own = "SELECT nonce, schema, synced, crsql_site_id() FROM svrngs_db";
@@ -553,9 +573,10 @@ const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT 
 
 /// A new database's tables: `schema` applied under [`schema_rule`], then
 /// each table it made made a CRR, and svrngs's own made ([`OWN`]), with a
-/// nonce drawn for it and its site, `device`'s with that nonce; or the
-/// first refusal.
-fn new_tables(conn: &mut Connection, schema: &str, (group, app, device): (&str, &str, &str)) -> Result<(), Refused> {
+/// nonce drawn for it and its site, `device`'s with that nonce, and synced
+/// from the start where it is the `root`; or the first refusal.
+fn new_tables(conn: &mut Connection, (schema, root): (&str, bool), names: (&str, &str, &str)) -> Result<(), Refused> {
+    let (group, app, device) = names;
     conn.authorizer(Some(schema_rule)).map_err(fault)?;
     let applied = conn.execute_batch(schema);
     conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
@@ -575,8 +596,8 @@ fn new_tables(conn: &mut Connection, schema: &str, (group, app, device): (&str, 
     drawn.map_err(fault)?;
     let site = svrngs_core::set::site(group, app, device, &nonce);
     conn.execute_batch(OWN).map_err(fault)?;
-    let own = "INSERT INTO svrngs_db (nonce, schema, synced) VALUES (?1, ?2, 0)";
-    conn.execute(own, rusqlite::params![nonce, svrngs_core::set::schema(schema)])
+    let own = "INSERT INTO svrngs_db (nonce, schema, synced) VALUES (?1, ?2, ?3)";
+    conn.execute(own, rusqlite::params![nonce, svrngs_core::set::schema(schema), root])
         .map_err(fault)?;
     conn.execute("UPDATE crsql_site_id SET site_id = ?1 WHERE ordinal = 0", [site])
         .map_err(fault)

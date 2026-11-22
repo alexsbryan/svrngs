@@ -157,6 +157,34 @@ fn io(path: &Path) -> impl Fn(std::io::Error) -> FolderError + '_ {
 }
 
 impl Folders {
+    /// The app's database made in `group`, synced from the start, from the
+    /// `schema.sql` this step takes at `rel`, by its `hash` in the store,
+    /// where the record has never placed that schema (`Runs::brought`): this
+    /// computer carries the app's database first, so its copy is the root
+    /// every other copy is synced from (svrn-docs APP_STATE §7, invariant
+    /// 8). Made before the act that places it, so no page can open an
+    /// unsynced copy first. One that can't be made is said at warn, and the
+    /// app's copies say syncing until one is.
+    async fn root(&self, group: &str, read: &super::Layout, (rel, hash): (&SyncPath, ContentHash)) {
+        let parts: Vec<&str> = rel.as_str().split('/').collect();
+        let ["apps", app, svrngs_db::SCHEMA] = parts[..] else {
+            return;
+        };
+        let brought = read.runs.brought.get(app);
+        if brought.is_some_and(|files| files.contains_key(rel)) {
+            return;
+        }
+        let held = self.store.get_bytes(Hash::from(*hash.as_bytes())).await;
+        let text = held.map_err(|e| e.to_string());
+        let text = text.and_then(|b| String::from_utf8(b.to_vec()).map_err(|e| e.to_string()));
+        let states = &self.host.states;
+        let made = text.and_then(|t| states.carry(group, app, &t).map_err(|r| r.to_string()));
+        tracing::debug!(target: "folder", group, app, root = made.is_ok(), "synced: an app's schema carried here first, its database made the root every other copy is synced from");
+        if let Err(why) = made {
+            tracing::warn!(target: "folder", group, app, why, "synced: an app's schema carried here first, but its database couldn't be made, so its copies say syncing until one is");
+        }
+    }
+
     /// Keep `dir` in step with the folder of its name in `group`, once a
     /// second while the node runs and after each start; its name, or why
     /// not: this computer does not stand in the group, the directories it
@@ -489,6 +517,9 @@ impl Folders {
                 }
                 before => {
                     let base = before.map(|h| h.p.entry.clone());
+                    if base.is_none() {
+                        self.root(group, &placed, (&rel, hash)).await;
+                    }
                     let now = Some((hash, meta.len()));
                     changes.push(Change {
                         path: rel.clone(),
