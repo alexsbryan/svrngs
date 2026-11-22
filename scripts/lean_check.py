@@ -940,10 +940,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the slice needs, the caps come down to where it lands, and the pool's
 # balance is written here. Only the database's own commits draw on it; other
 # work asks for its own raise. Drawn so far: none. Left: +1,450 and +80.
+# (2026-11-22) Slice A, Magnets on one laptop, draws +620 of all code but
+# JavaScript. Its pass, over carried.rs, surface.rs, node.rs, lib.rs and
+# door.rs, found nothing to cut. No item is unused, and each repeat costs as
+# many lines to fold as it saves: the Retry-After refusal (carried.rs:635,
+# door.rs:1847), the pass decode (door.rs:1360, :1434), "nothing is lent
+# here" (surface.rs:502, :515, :725). All code but JavaScript 24,518 ->
+# 25,138. Left in the pool: +830 and +80, until A lands and its caps come
+# down to where it lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24518,
+    ".": 25138,
 
     "js": 8694,
 
