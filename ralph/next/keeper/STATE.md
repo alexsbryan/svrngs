@@ -269,7 +269,7 @@ These are the figures the launch approved, in code lines as
     (scripts/gate/README.md), so the audit needs it pushed.
   - No worker ticks this row or pushes.
 
-- [ ] keeper-linger-ask — depends [keeper-demo] — ONE UNIT: `keep` asks
+- [x] keeper-linger-ask b7fdb8493 — depends [keeper-demo] — ONE UNIT: `keep` asks
   before it lets this account run with nobody logged in, as "The user flow"
   above has it. keeper-demo found it doesn't
   (demo/runs/keeper/2026-11-22/README.md, "Found on the way"). `keep` turned
