@@ -652,22 +652,24 @@ pub(crate) fn bound(rail: &RingRail, group: &str) -> impl Fn(&str) -> bool + use
 /// giving what the member's last ask lacks and taking what the member's
 /// answer gives, until neither moves or the chunks are spent.
 async fn states(to: To<'_>, host: &Host, group: &str) {
-    let bound = bound(&host.rail, group);
+    let bound = Arc::new(bound(&host.rail, group));
     // The member called, the computer its sets are signed by, which a full
     // answer's marks for its own sites are taken on the word of.
     let from = svrngs_db::Device::parse(&key_actor(&to.1.key));
     for db in host.states.held(group) {
-        let again = db.rejudge(&bound);
+        let judge = bound.clone();
+        let again = off(&db, move |db| db.rejudge(&*judge)).await;
         let mut theirs: Option<svrngs_db::Ask> = None;
         for chunk in 1..=MAX_CHUNKS_PER_EXCHANGE {
-            let ours = match &theirs {
-                Some(ask) => db.missing(ask, RING_SYNC_OPS_BUDGET_BYTES),
+            let asked = theirs.take();
+            let ours = off(&db, move |db| match asked {
+                Some(ask) => db.missing(&ask, RING_SYNC_OPS_BUDGET_BYTES),
                 None => db.ask().map(|ask| svrngs_db::Call {
                     ask,
                     ..Default::default()
                 }),
-            };
-            let Ok(ours) = ours else { break };
+            });
+            let Some(Ok(ours)) = ours.await else { break };
             let body = postcard::to_allocvec(&((group, &db.app), &ours))
                 .expect("a call is written in memory");
             let answer =
@@ -676,7 +678,12 @@ async fn states(to: To<'_>, host: &Host, group: &str) {
             let answer = answer.ok().filter(|a| a.status().is_success());
             let answer =
                 answer.and_then(|a| postcard::from_bytes::<svrngs_db::Call>(a.body()).ok());
-            let took = answer.as_ref().map(|a| db.ingest(a, &bound, from.as_ref()));
+            let (judge, from) = (bound.clone(), from.clone());
+            let ingested = match answer {
+                Some(a) => off(&db, move |db| (db.ingest(&a, &*judge, from.as_ref()), a)).await,
+                None => None,
+            };
+            let (took, answer) = ingested.unzip();
             debug!(namespace = group, app = db.app, chunk, ?again, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
             let moved = took.as_ref().is_some_and(|t| {
                 t.as_ref().is_ok_and(|t| {
@@ -692,6 +699,18 @@ async fn states(to: To<'_>, host: &Host, group: &str) {
             }
         }
     }
+}
+
+/// `f` on `db`, off the runtime's threads, as a database's work is SQLite's
+/// and its signature checks', the page's reads' too (`carried.rs`), so one
+/// member's exchange holds no thread every group's round needs; none where
+/// its task didn't end.
+async fn off<T: Send + 'static>(
+    db: &Arc<svrngs_db::Db>,
+    f: impl FnOnce(&svrngs_db::Db) -> T + Send + 'static,
+) -> Option<T> {
+    let db = db.clone();
+    tokio::task::spawn_blocking(move || f(&db)).await.ok()
 }
 
 /// The responder's half of one exchange: ingest what the caller offered,
