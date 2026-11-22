@@ -122,7 +122,7 @@ These are the figures the launch approved, in code lines as
   `cargo test -p svrngs-keeper`; clippy; fmt. Both surface tests watched
   red on a planted `svrngs-node` dependency.
 
-- [ ] keeper-units — depends [keeper-move] — ONE UNIT:
+- [x] keeper-units 0f02ef741 — depends [keeper-move] — ONE UNIT:
   - **Fork** commonwealth-ai `shared/crates/host-kit/src/service.rs` and
     its tests @8ed8d99b0 as `systemd.rs`, with the ported-from line. That
     gives `SystemdUser`: install, uninstall, state, `ensure_linger`, and
