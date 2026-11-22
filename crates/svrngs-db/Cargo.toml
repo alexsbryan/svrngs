@@ -1,0 +1,8 @@
+[package]
+name = "svrngs-db"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "An app's database in a group: SQLite tables beside the group's record, a copy on every member's computer, merged by cr-sqlite. So far only its tests: the reference model every copy is checked against, and the seeded simulator of deliveries."
+
+# No dependencies yet: the crate's code is its tests, which need none.

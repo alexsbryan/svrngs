@@ -4632,6 +4632,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "svrngs-db"
+version = "1.13.2"
+
+[[package]]
 name = "svrngs-node"
 version = "1.13.3"
 dependencies = [

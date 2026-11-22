@@ -691,6 +691,11 @@ Elsewhere `Owner::NoReader`. `uid::mine` is this process's own uid.
 `socket_fdinfo` and `proc_bsdinfo` records, and this computer's own
 sockets, a late accept among them.
 
+**`crates/svrngs-db`**: an app's database in a group, beside the record and
+never in it (PLAN §1, "Persistence for carried apps"). None of it is built
+yet: `src/lib.rs` is its doc and the crate root's `deny(unsafe_code)`, and
+its dependencies are none.
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its
