@@ -15,6 +15,15 @@
 folder and a program is a word, and no beginner's bug does lasting harm to anyone
 else. Its queue is svrn-docs `rings/current/EXTENSION_POINT.md` §10, in order.
 
+**svrngs-keeper, on its own branch** (operator, 2026-11-22: "Let's make a
+branch and start the work … lean and scrappy"): try a program however you
+like, then keep it running here with one step. It is kept alive and started
+at boot by the OS, and its lend survives its restarts. The queue is
+`ralph/next/keeper/` on `keeper`. svrngs-keeper is Give's local runtime as a
+package of its own in `apps/`; svrngs's half is naming the job and renewing
+its lend. The design is in svrn-docs `rings/current/LOCAL_HOSTING.md` and
+`KEEP_SHARING_BUILD.md`.
+
 **Our own relay, on its own branch** (operator, 2026-11-18: "Let's start a
 branch off main and ralph this Plan up"): the queue `ralph/next/relay-commons/`
 on `ralph/relay-commons`. It is the six units of svrn-docs
