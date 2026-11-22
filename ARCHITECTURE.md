@@ -952,7 +952,11 @@ become a host mount; `src/check.rs` is `give check`. `src/systemd.rs` writes
 and drives a user unit, and asks for linger: commonwealth-ai host-kit's
 `service.rs` and its tests at `8ed8d99b0`, forked with only its tests' path
 changed, under upstream's stock rustfmt and one clippy allowance
-(`src/lib.rs`).
+(`src/lib.rs`). A native card (`x-svrngs.native`, refused by the runtime)
+renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
+`src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
+starts and removes one, and supervises nothing. `tests/host.sh` proves it
+under a real user manager.
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

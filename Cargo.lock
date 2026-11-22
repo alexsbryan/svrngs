@@ -4636,6 +4636,7 @@ dependencies = [
 name = "svrngs-keeper"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "blake3",
  "serde_json",
  "serde_yaml",
@@ -4643,6 +4644,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.21",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

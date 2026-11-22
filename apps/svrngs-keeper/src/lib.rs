@@ -8,9 +8,11 @@
 
 pub mod card;
 pub mod check;
+pub mod kept;
 pub mod machine;
 pub mod podman;
 pub mod runtime;
+pub mod unit;
 // Forked from commonwealth-ai's host-kit, whose rustfmt policy is stock and
 // whose edition is 2021 (DESIGN §4: a fork keeps upstream's format and lint
 // allowances). The one allowance: edition 2024's let-chains make clippy ask
