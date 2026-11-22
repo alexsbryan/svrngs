@@ -20,10 +20,14 @@
 //! `app-state-diligence/b-sync-build-2026-11-22/`, step 0). A phone's worker
 //! derives its site here too, its nonce kept beside its count.
 //!
-//! The changes are bytes the database chose. The rest is framed by length
-//! ([`crate::field`]) under a domain of its own, so a set's signature is
-//! never an act's, an app's or a pass's, and one lifted into another group,
-//! app, database or seq fails. Pure: the key is an argument.
+//! The changes are bytes the database chose, signed by their hash
+//! ([`changes`]), so a set's head, all it signs, checks without them: a copy
+//! keeps the highest head it has checked for each site and a member vouches
+//! for a mark by one (svrn-docs `rings/current/APP_STATE.md` §4, "What
+//! travels"). The rest is framed by length ([`crate::field`]) under a domain
+//! of its own, so a set's signature is never an act's, an app's or a pass's,
+//! and one lifted into another group, app, database or seq fails. Pure: the
+//! key is an argument.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -53,8 +57,9 @@ pub struct At<'a> {
 }
 
 impl At<'_> {
-    /// What is signed: the domain, then each part, the variable ones framed.
-    pub fn message(&self, changes: &[u8]) -> Vec<u8> {
+    /// What is signed: the domain, then each part, the variable ones
+    /// framed, and last the hash of the set's changes ([`changes`]).
+    pub fn message(&self, changes: &[u8; 32]) -> Vec<u8> {
         let mut msg = SET_DOMAIN.to_vec();
         for part in [self.group, self.app, self.device] {
             field(&mut msg, part.as_bytes());
@@ -62,18 +67,18 @@ impl At<'_> {
         msg.extend_from_slice(self.nonce);
         msg.extend_from_slice(&self.seq.to_be_bytes());
         msg.extend_from_slice(self.schema);
-        field(&mut msg, changes);
+        msg.extend_from_slice(changes);
         msg
     }
 
-    /// `key`'s signature over the set and its `changes`, in hex: the set's
-    /// own device's, where `device` is `key`'s.
-    pub fn sign(&self, key: &SigningKey, changes: &[u8]) -> String {
+    /// `key`'s signature over the set and its `changes`' hash, in hex: the
+    /// set's own device's, where `device` is `key`'s.
+    pub fn sign(&self, key: &SigningKey, changes: &[u8; 32]) -> String {
         sign_message(key, &self.message(changes))
     }
 
-    /// Whether `sig` is the set's device's over it and its `changes`.
-    pub fn check(&self, changes: &[u8], sig: &str) -> bool {
+    /// Whether `sig` is the set's device's over it and its `changes`' hash.
+    pub fn check(&self, changes: &[u8; 32], sig: &str) -> bool {
         verify_hex(self.device, &self.message(changes), sig)
     }
 }
@@ -87,6 +92,11 @@ pub fn site(group: &str, app: &str, device: &str, nonce: &Nonce) -> Site {
     }
     let hash = ContentHash::of(&bytes);
     hash.as_bytes()[..16].try_into().expect("a hash is longer")
+}
+
+/// The hash of a set's changes, as its head signs them.
+pub fn changes(bytes: &[u8]) -> [u8; 32] {
+    *ContentHash::of(bytes).as_bytes()
 }
 
 /// The hash of a `schema.sql`'s text, as each set written under it carries it.

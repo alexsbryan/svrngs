@@ -189,7 +189,7 @@ impl DbCopy {
     /// A real set as the simulator names it: its rows at its device's site
     /// and its seq; and it noted, as the run's.
     fn change_set(&self, set: &svrngs_db::Set) -> ChangeSet {
-        let site = self.run.borrow().devices[set.device.as_str()];
+        let site = self.run.borrow().devices[set.head.device.as_str()];
         let rows: Vec<Row> = postcard::from_bytes(&set.changes).expect("a set's rows");
         let each = rows.into_iter().map(|r| Change {
             table: r.table,
@@ -203,7 +203,7 @@ impl DbCopy {
                 Kept::Blob(b) => Val::Blob(b),
             },
             col_version: r.col_version,
-            db_version: set.seq.get() as i64,
+            db_version: set.head.seq.get() as i64,
             site,
             cl: r.cl,
             seq: r.seq,
@@ -344,13 +344,20 @@ impl Replica for DbCopy {
                 marks,
                 ..Ask::default()
             };
+            // Each mark's head, as the member sends one: the head of the run's
+            // set at the mark, which every set of the run is.
+            let heads = call.marks.iter().flatten().filter_map(|(s, m)| run.sets.get(&(*s, *m)));
             svrngs_db::Call {
                 ask,
                 sets,
                 full: call.marks.is_some(),
+                heads: heads.map(|set| set.head.clone()).collect(),
             }
         };
-        let got = self.db.ingest(&real, &|_| true).expect("svrngs-db takes the call");
+        let got = self
+            .db
+            .ingest(&real, &|_| true, None)
+            .expect("svrngs-db takes the call");
         let run = self.run.borrow();
         let of = |t: Took| -> BTreeSet<SetId> {
             got.iter()
@@ -407,7 +414,7 @@ impl Replica for DbCopy {
         let real: BTreeSet<SetId> = real
             .sets
             .iter()
-            .map(|s| (run.devices[s.device.as_str()], s.seq.get() as i64))
+            .map(|s| (run.devices[s.head.device.as_str()], s.head.seq.get() as i64))
             .collect();
         let want: BTreeSet<SetId> = ids(&call.sets).into_iter().collect();
         drop(run);
@@ -550,7 +557,7 @@ fn the_review_s_case_between_computers() {
                         .db
                         .missing(&copies[to].db.ask().unwrap(), usize::MAX)
                         .unwrap();
-                    copies[to].db.ingest(&call, &bound).unwrap();
+                    copies[to].db.ingest(&call, &bound, None).unwrap();
                 }
             }
             if who.iter().map(|&c| copies[c].db.ask().unwrap()).collect::<Vec<_>>() == before {

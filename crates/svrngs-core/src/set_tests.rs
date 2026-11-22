@@ -23,9 +23,9 @@ fn a_set_s_signature_checks_for_that_set_alone() {
         seq: 3,
         schema: &schema,
     };
-    let sig = at.sign(&k, b"rows");
-    assert!(at.check(b"rows", &sig));
-    assert!(!at.check(b"rowz", &sig), "another change");
+    let sig = at.sign(&k, &changes(b"rows"));
+    assert!(at.check(&changes(b"rows"), &sig));
+    assert!(!at.check(&changes(b"rowz"), &sig), "another change");
     let (n2, s2) = (
         [8; 16],
         self::schema("CREATE TABLE u (id TEXT PRIMARY KEY);"),
@@ -42,10 +42,10 @@ fn a_set_s_signature_checks_for_that_set_alone() {
         At { schema: &s2, ..at },
     ];
     for at in lifted {
-        assert!(!at.check(b"rows", &sig), "{at:?}");
+        assert!(!at.check(&changes(b"rows"), &sig), "{at:?}");
     }
     assert!(
-        !at.check(b"rows", &at.sign(&other, b"rows")),
+        !at.check(&changes(b"rows"), &at.sign(&other, &changes(b"rows"))),
         "another key's"
     );
 }

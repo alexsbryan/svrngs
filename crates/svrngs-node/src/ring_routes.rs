@@ -254,12 +254,15 @@ pub async fn ring_state(
     let ((group, app), call): ((String, String), svrngs_db::Call) =
         postcard::from_bytes(&body).map_err(malformed)?;
     let dialer = dialer.map(|Extension(d)| d);
-    standing_asker(&state.rail, dialer, "state", &group)
+    let (asker, _) = standing_asker(&state.rail, dialer, "state", &group)
         .map_err(|why| err(StatusCode::FORBIDDEN, why))?;
-    let bound = crate::ring_sync::bound(&state.rail, &group);
+    let (bound, from) = (
+        crate::ring_sync::bound(&state.rail, &group),
+        svrngs_db::Device::parse(&asker),
+    );
     let db = state.states.open(&group, &app, None);
     let answer = db.and_then(|db| {
-        db.ingest(&call, &bound)
+        db.ingest(&call, &bound, from.as_ref())
             .and(db.missing(&call.ask, RING_SYNC_OPS_BUDGET_BYTES))
     });
     tracing::debug!(target: "rails", group, app, offered = call.sets.len(), refused = ?answer.as_ref().err(), "ring state: a member's call taken and answered, or refused");

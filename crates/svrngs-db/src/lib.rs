@@ -63,7 +63,7 @@ pub use form::FORM;
 use form::Table;
 pub use parse::Unfit;
 pub use svrngs_core::SigningKey;
-pub use sync::{Ask, Call, Device, Hex, Place, Seq, Set, Sig, Took};
+pub use sync::{Ask, Call, Device, Head, Hex, Place, Seq, Set, Sig, Took};
 
 /// The app's schema, beside its `index.html`.
 pub const SCHEMA: &str = "schema.sql";
@@ -542,12 +542,14 @@ impl Db {
 /// it keeps, as postcard's bytes (APP_STATE §4, "Sealed and signed"), named
 /// by site, seq and signature so two at one seq are both kept, and how each
 /// is kept (`sync.rs`, `Kept`), a refused one with no bytes; each site's
-/// mark, and the sets counted above a mark (`sync.rs`).
+/// mark, and the sets counted above a mark; and each site's highest head
+/// this copy has checked, by its device (`sync.rs`, `headed`).
 const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL);
     CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, kept INTEGER NOT NULL,
       bytes BLOB, PRIMARY KEY (site, seq, sig));
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
-    CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));";
+    CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));
+    CREATE TABLE svrngs_heads (site BLOB PRIMARY KEY, device TEXT NOT NULL, seq INTEGER NOT NULL, head BLOB NOT NULL);";
 
 /// A new database's tables: `schema` applied under [`schema_rule`], then
 /// each table it made made a CRR, and svrngs's own made ([`OWN`]), with a

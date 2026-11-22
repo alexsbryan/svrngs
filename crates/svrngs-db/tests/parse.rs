@@ -45,7 +45,11 @@ fn took(to: &Db, sets: &[Set]) -> Vec<Took> {
         sets: sets.to_vec(),
         ..Default::default()
     };
-    to.ingest(&call, &all).unwrap().into_iter().map(|(_, t)| t).collect()
+    to.ingest(&call, &all, None)
+        .unwrap()
+        .into_iter()
+        .map(|(_, t)| t)
+        .collect()
 }
 
 fn rows(db: &Db, sql: &str) -> Value {
@@ -78,15 +82,16 @@ enum Val {
 
 /// `set` signed again by `by`, its own device's key, for `app`.
 fn signed(mut set: Set, by: &SigningKey, app: &str) -> Set {
+    set.head.changes = svrngs_core::set::changes(&set.changes);
     let at = At {
         group: "g",
         app,
-        device: set.device.as_str(),
-        nonce: &set.nonce,
-        seq: set.seq.get(),
-        schema: &set.schema,
+        device: set.head.device.as_str(),
+        nonce: &set.head.nonce,
+        seq: set.head.seq.get(),
+        schema: &set.head.schema,
     };
-    set.sig = Sig::parse(&at.sign(by, &set.changes)).unwrap();
+    set.head.sig = Sig::parse(&at.sign(by, &set.head.changes)).unwrap();
     set
 }
 
@@ -176,7 +181,7 @@ fn a_waiting_set_whose_key_cr_sqlite_cannot_unpack_is_refused_once_its_device_is
         sets: vec![bad],
         ..Default::default()
     };
-    let got = b.ingest(&call, &|_| false).unwrap();
+    let got = b.ingest(&call, &|_| false, None).unwrap();
     assert_eq!(got[0].1, Took::Waits);
     assert_eq!(b.rejudge(&all).unwrap(), 0, "judged again, and refused");
     assert_eq!(rows(&b, "SELECT * FROM cards"), json!([]));
@@ -280,7 +285,7 @@ fn a_change_its_table_cannot_hold_is_refused_for_good_and_fetched_once() {
     });
     let held = rusqlite::Connection::open(dir.path().join("computer-9/state/g/board.db")).unwrap();
     let sql = "UPDATE svrngs_sets SET sig = ?1, bytes = ?2";
-    held.execute(sql, (bad.sig.as_str(), postcard::to_allocvec(&bad).unwrap()))
+    held.execute(sql, (bad.head.sig.as_str(), postcard::to_allocvec(&bad).unwrap()))
         .unwrap();
     svrngs_db::close(held).unwrap();
     let h = States::new(&dir.path().join("computer-9"), key(9))
@@ -288,11 +293,11 @@ fn a_change_its_table_cannot_hold_is_refused_for_good_and_fetched_once() {
         .unwrap();
     let b = db(&dir.path().join("fetched"), 2, ("board", CARDS));
     let sent = h.missing(&b.ask().unwrap(), BUDGET).unwrap();
-    assert_eq!(b.ingest(&sent, &all).unwrap()[0].1, Took::Refused);
+    assert_eq!(b.ingest(&sent, &all, None).unwrap()[0].1, Took::Refused);
     for round in 0..10 {
         let again = h.missing(&b.ask().unwrap(), BUDGET).unwrap();
         assert!(again.sets.is_empty(), "round {round}: fetched again");
-        b.ingest(&again, &all).unwrap();
+        b.ingest(&again, &all, None).unwrap();
     }
     assert!(!b.syncing(), "refused for good is no fault");
 }
@@ -305,7 +310,7 @@ fn a_set_under_a_schema_this_copy_does_not_hold_waits() {
     const WIDER: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT);";
     let dir = tempfile::tempdir().unwrap();
     let base = written(dir.path(), ("board", WIDER), card("c1", "milk"));
-    assert_eq!(base.schema, svrngs_core::set::schema(WIDER));
+    assert_eq!(base.head.schema, svrngs_core::set::schema(WIDER));
     let noted = remade(&base, &key(9), "board", |c| {
         let mut note = c[c.len() - 1].clone();
         (note.cid, note.val, note.seq) = ("note".into(), Val::Text("buy two".into()), note.seq + 1);
@@ -317,7 +322,7 @@ fn a_set_under_a_schema_this_copy_does_not_hold_waits() {
         full: true,
         ..Default::default()
     };
-    assert_eq!(b.ingest(&call, &all).unwrap()[0].1, Took::Waits);
+    assert_eq!(b.ingest(&call, &all, None).unwrap()[0].1, Took::Waits);
     assert!(!b.syncing(), "a set that waits is no fault");
     assert_eq!(rows(&b, "SELECT * FROM cards"), json!([]));
 }
@@ -369,7 +374,7 @@ fn every_key_cr_sqlite_packs_from_a_write_is_taken() {
         h.write(&json!([op])).unwrap();
     }
     let sent = h.missing(&to.ask().unwrap(), BUDGET).unwrap();
-    let got = to.ingest(&sent, &all).unwrap();
+    let got = to.ingest(&sent, &all, None).unwrap();
     assert!(got.iter().all(|(_, t)| *t == Took::Taken), "{got:?}");
     for t in ["i", "s", "b", "f"] {
         let all = format!("SELECT * FROM {t} ORDER BY id");
@@ -408,7 +413,7 @@ fn a_write_past_the_bound_is_refused_at_the_write_in_words() {
     a.write(&card("c2", "eggs")).unwrap();
     let sent = a.missing(&b.ask().unwrap(), BUDGET).unwrap();
     assert_eq!(
-        b.ingest(&sent, &all)
+        b.ingest(&sent, &all, None)
             .unwrap()
             .into_iter()
             .map(|(_, t)| t)

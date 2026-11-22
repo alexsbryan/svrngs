@@ -653,6 +653,9 @@ pub(crate) fn bound(rail: &RingRail, group: &str) -> impl Fn(&str) -> bool + use
 /// answer gives, until neither moves or the chunks are spent.
 async fn states(to: To<'_>, host: &Host, group: &str) {
     let bound = bound(&host.rail, group);
+    // The member called, the computer its sets are signed by, which a full
+    // answer's marks for its own sites are taken on the word of.
+    let from = svrngs_db::Device::parse(&key_actor(&to.1.key));
     for db in host.states.held(group) {
         let again = db.rejudge(&bound);
         let mut theirs: Option<svrngs_db::Ask> = None;
@@ -673,7 +676,7 @@ async fn states(to: To<'_>, host: &Host, group: &str) {
             let answer = answer.ok().filter(|a| a.status().is_success());
             let answer =
                 answer.and_then(|a| postcard::from_bytes::<svrngs_db::Call>(a.body()).ok());
-            let took = answer.as_ref().map(|a| db.ingest(a, &bound));
+            let took = answer.as_ref().map(|a| db.ingest(a, &bound, from.as_ref()));
             debug!(namespace = group, app = db.app, chunk, ?again, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
             let moved = took.as_ref().is_some_and(|t| {
                 t.as_ref().is_ok_and(|t| {

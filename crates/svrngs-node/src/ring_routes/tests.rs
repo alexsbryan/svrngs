@@ -441,7 +441,7 @@ async fn the_state_route_serves_a_standing_member_alone() {
     let answer = answer.expect("a call back");
     assert_eq!((status, answer.sets.len(), answer.full), (200, 1, true));
     assert_eq!(
-        answer.sets[0].device.as_str(),
+        answer.sets[0].head.device.as_str(),
         crate::actor_of(&key()),
         "signed by its own computer"
     );
@@ -471,7 +471,7 @@ async fn the_state_route_serves_a_standing_member_alone() {
     // its source's word for completeness (APP_STATE §4, "What travels").
     let mut forged = offered.clone();
     let ada = svrngs_db::Device::parse(&crate::actor_of(&key())).unwrap();
-    (forged.sets[0].device, forged.full) = (ada, false);
+    (forged.sets[0].head.device, forged.full) = (ada, false);
     let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &forged).await;
     assert_eq!(status, 200);
     assert_eq!(
@@ -539,15 +539,16 @@ async fn a_call_with_a_key_cr_sqlite_cannot_unpack_is_answered_and_its_set_refus
     let mut changes: Vec<Row> = postcard::from_bytes(&set.changes).unwrap();
     changes.iter_mut().for_each(|c| c.pk = vec![]);
     set.changes = postcard::to_allocvec(&changes).unwrap();
+    set.head.changes = svrngs_core::set::changes(&set.changes);
     let at = svrngs_core::set::At {
         group: NS,
         app: "board",
-        device: set.device.as_str(),
-        nonce: &set.nonce,
-        seq: set.seq.get(),
-        schema: &set.schema,
+        device: set.head.device.as_str(),
+        nonce: &set.head.nonce,
+        seq: set.head.seq.get(),
+        schema: &set.head.schema,
     };
-    set.sig = svrngs_db::Sig::parse(&at.sign(&bo, &set.changes)).unwrap();
+    set.head.sig = svrngs_db::Sig::parse(&at.sign(&bo, &set.head.changes)).unwrap();
     let call = svrngs_db::Call {
         sets: vec![set],
         ..Default::default()
