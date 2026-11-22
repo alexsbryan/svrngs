@@ -52,7 +52,7 @@ use std::time::{Duration, Instant};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use rusqlite::hooks::{AuthAction, AuthContext, Authorization};
 use rusqlite::types::{Value as Sql, ValueRef};
-use rusqlite::{Connection, ErrorCode};
+use rusqlite::{Connection, ErrorCode, TransactionBehavior::Immediate};
 use serde_json::{Value, json};
 use tokio::sync::watch;
 
@@ -226,6 +226,14 @@ impl std::ops::Deref for Open {
     type Target = Connection;
     fn deref(&self) -> &Connection {
         self.0.as_ref().expect("a connection is open until it drops")
+    }
+}
+
+/// Mutably, so a transaction or savepoint borrows it as a guard that rolls
+/// back as it drops, on every path that doesn't commit it.
+impl std::ops::DerefMut for Open {
+    fn deref_mut(&mut self) -> &mut Connection {
+        self.0.as_mut().expect("a connection is open until it drops")
     }
 }
 
@@ -503,18 +511,19 @@ impl Db {
         let statements = listed.iter().enumerate().map(made).collect::<Result<Vec<_>, _>>();
         tracing::debug!(target: "state", group = self.group, app = self.app, ops = listed.len(), refused = ?statements.as_ref().err(), "state: a write's ops made statements by key, or refused");
         let statements = statements?;
-        let conn = self.conn();
-        conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
-        let ran = (statements.iter()).map(|(sql, values)| conn.execute(sql, rusqlite::params_from_iter(values)));
+        let mut conn = self.conn();
+        // Rolled back as it drops, on any refusal below or a COMMIT that
+        // fails (rusqlite 0.41 `transaction.rs:220-229`), so no write leaves
+        // its transaction open.
+        let tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
+        let ran = (statements.iter()).map(|(sql, values)| tx.execute(sql, rusqlite::params_from_iter(values)));
         let ran = ran.sum::<Result<usize, _>>();
         tracing::debug!(target: "state", group = self.group, app = self.app, ?ran, "state: a write run whole and committed, or rolled back whole as SQLite refused it");
-        // Rolled back, SQLite's refusal of the list is said; a rollback that
-        // fails is this computer's fault, said as one.
-        let count = ran.map_err(|e| conn.execute_batch("ROLLBACK").map_or_else(fault, |()| said(e)))?;
+        let count = ran.map_err(said)?;
         // Its set sealed in its own transaction (APP_STATE §4): refused, the
         // write is rolled back with it.
-        self.seal(&conn).inspect_err(|_| drop(conn.execute_batch("ROLLBACK")))?;
-        conn.execute_batch("COMMIT").map_err(fault)?;
+        self.seal(&tx)?;
+        tx.commit().map_err(fault)?;
         if count > 0 {
             self.changed.send_modify(|n| *n += 1);
         }

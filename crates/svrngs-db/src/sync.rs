@@ -34,7 +34,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::Ordering::Relaxed;
 
 use rusqlite::types::Value as Sql;
-use rusqlite::{Connection, OptionalExtension as _, Row, params};
+use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, TransactionBehavior::Immediate, params};
 use serde::{Deserialize, Serialize};
 use svrngs_core::set::{At, Nonce, Site, site};
 
@@ -131,6 +131,9 @@ enum Value {
     Text(String),
     Blob(Vec<u8>),
 }
+
+/// Whether the record binds a device's key, as [`Db::ingest`] is told.
+type Bound<'b> = &'b dyn Fn(&str) -> bool;
 
 /// `sql`'s rows on `conn`, each read by `f`.
 fn rows<T>(
@@ -308,12 +311,14 @@ impl Db {
     pub fn ingest(&self, call: &Call, bound: &dyn Fn(&str) -> bool) -> Result<Vec<(Place, Took)>, Refused> {
         let mut sets: Vec<&Set> = call.sets.iter().collect();
         sets.sort_by(|a, b| (&a.device, a.nonce, a.seq).cmp(&(&b.device, b.nonce, b.seq)));
-        let conn = self.conn();
-        conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
+        let mut conn = self.conn();
+        // Rolled back as it drops on any `?` below, so a call that fails
+        // leaves no transaction open (rusqlite 0.41 `transaction.rs:243`).
+        let mut tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
         let (mut out, mut stopped) = (Vec::new(), BTreeSet::new());
         for set in sets {
             let place = (site(&self.group, &self.app, &set.device, &set.nonce), set.seq);
-            let took = self.take(&conn, set, place.0, bound).unwrap_or_else(|e| {
+            let took = self.take(&mut tx, (set, place.0), bound).unwrap_or_else(|e| {
                 tracing::warn!(target: "state", group = self.group, app = self.app, device = set.device, seq = set.seq, %e, "state: a set this copy couldn't apply, its mark held");
                 Took::Fault
             });
@@ -323,7 +328,7 @@ impl Db {
             }
             out.push((place, took));
         }
-        let waiting = rows(&conn, "SELECT site FROM svrngs_sets WHERE held", [], |r| {
+        let waiting = rows(&tx, "SELECT site FROM svrngs_sets WHERE held", [], |r| {
             r.get::<_, Site>(0)
         });
         stopped.extend(waiting.map_err(fault)?);
@@ -333,11 +338,8 @@ impl Db {
             .iter()
             .filter(|(s, _)| call.full && !stopped.contains(*s));
         tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted, but each site's with a set that faulted here, failed its signature or waits");
-        let adopted = adopting.into_iter().try_for_each(|(s, m)| adopt(&conn, (*s, *m)));
-        if let Err(e) = adopted.and_then(|()| conn.execute_batch("COMMIT")) {
-            conn.execute_batch("ROLLBACK").ok();
-            return Err(fault(e));
-        }
+        let adopted = adopting.into_iter().try_for_each(|(s, m)| adopt(&tx, (*s, *m)));
+        adopted.and_then(|()| tx.commit()).map_err(fault)?;
         let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
         let first = call.full && !faulted && !self.synced.swap(true, Relaxed);
         if first {
@@ -354,13 +356,15 @@ impl Db {
     }
 
     /// `set`, at `site`, offered to this copy within the call's transaction
-    /// on `conn` (the spike's `take`).
-    fn take(&self, conn: &Connection, set: &Set, site: Site, bound: &dyn Fn(&str) -> bool) -> rusqlite::Result<Took> {
+    /// `tx` (the spike's `take`). Whatever it writes, it writes in a
+    /// savepoint of its own, released only once all of it is written, so a
+    /// set is kept and counted together or not at all.
+    fn take(&self, tx: &mut Transaction, (set, site): (&Set, Site), bound: Bound) -> rusqlite::Result<Took> {
         let sigs = "SELECT sig FROM svrngs_sets WHERE site = ?1 AND seq = ?2";
-        let sigs: Vec<String> = rows(conn, sigs, params![site, set.seq], |r| r.get(0))?;
+        let sigs: Vec<String> = rows(tx, sigs, params![site, set.seq], |r| r.get(0))?;
         let counted = "SELECT ?2 <= coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0) \
             OR EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1 AND seq = ?2)";
-        let counted: bool = conn.query_row(counted, params![site, set.seq], |r| r.get(0))?;
+        let counted: bool = tx.query_row(counted, params![site, set.seq], |r| r.get(0))?;
         if sigs.contains(&set.sig) || counted && sigs.is_empty() {
             return Ok(Took::Held);
         }
@@ -368,31 +372,27 @@ impl Db {
             return Ok(Took::NotItsDevice);
         }
         let bounded = |c: &Vec<Change>| c.iter().all(|c| c.col_version <= BOUND && c.cl <= BOUND);
-        let Some(rows) = postcard::from_bytes(&set.changes).ok().filter(bounded) else {
-            count(conn, (site, set.seq))?;
-            return Ok(Took::Refused);
-        };
-        if !sigs.is_empty() {
+        let parsed: Option<Vec<Change>> = postcard::from_bytes(&set.changes).ok().filter(bounded);
+        if parsed.is_some() && !sigs.is_empty() {
             tracing::warn!(target: "state", group = self.group, app = self.app, device = set.device, seq = set.seq, "state: a second set at one site and seq, both taken: a copied or restored database runs beside its original");
         }
-        if !bound(&set.device) {
-            keep(conn, (set, site), None, true)?;
-            return Ok(Took::Waits);
-        }
-        conn.execute_batch("SAVEPOINT svrngs_set")?;
-        if let Err(e) = keep(conn, (set, site), Some(&rows), false) {
-            conn.execute_batch("ROLLBACK TO svrngs_set; RELEASE svrngs_set")?;
-            return Err(e);
-        }
-        conn.execute_batch("RELEASE svrngs_set")?;
-        Ok(if sigs.is_empty() { Took::Taken } else { Took::Twin })
+        // Rolled back and released as it drops on any `?`.
+        let sp = tx.savepoint()?;
+        let took = match parsed {
+            None => count(&sp, (site, set.seq)).map(|()| Took::Refused)?,
+            Some(_) if !bound(&set.device) => keep(&sp, (set, site), None, true).map(|()| Took::Waits)?,
+            Some(rows) => keep(&sp, (set, site), Some(&rows), false).map(|()| Took::Taken)?,
+        };
+        sp.commit()?;
+        let twin = took == Took::Taken && !sigs.is_empty();
+        Ok(if twin { Took::Twin } else { took })
     }
 
     /// Each set waiting here whose device the record now binds, as `bound`
     /// says, applied and no longer held: judged again on each change to the
     /// record. How many.
     pub fn rejudge(&self, bound: &dyn Fn(&str) -> bool) -> Result<usize, Refused> {
-        let conn = self.conn();
+        let mut conn = self.conn();
         let held = rows(&conn, "SELECT bytes FROM svrngs_sets WHERE held", [], |r| {
             r.get::<_, Vec<u8>>(0)
         });
@@ -405,16 +405,11 @@ impl Db {
             let place = (site(&self.group, &self.app, &set.device, &set.nonce), set.seq);
             let rows: Vec<Change> = postcard::from_bytes(&set.changes).unwrap_or_default();
             let unheld = "UPDATE svrngs_sets SET held = 0 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
-            let applied = conn
-                .execute_batch("SAVEPOINT svrngs_set")
-                .and_then(|()| keep(&conn, (&set, place.0), Some(&rows), false));
-            let applied = applied.and_then(|()| conn.execute(unheld, params![place.0, place.1, set.sig]));
-            let ended = if applied.is_ok() {
-                "RELEASE svrngs_set"
-            } else {
-                "ROLLBACK TO svrngs_set; RELEASE svrngs_set"
-            };
-            conn.execute_batch(ended).map_err(fault)?;
+            // Rolled back and released as it drops, unless all of it applied.
+            let sp = conn.savepoint().map_err(fault)?;
+            let applied = keep(&sp, (&set, place.0), Some(&rows), false);
+            let applied = applied.and_then(|()| sp.execute(unheld, params![place.0, place.1, set.sig]));
+            let applied = applied.and_then(|_| sp.commit());
             tracing::debug!(target: "state", group = self.group, app = self.app, device = set.device, seq = set.seq, applied = applied.is_ok(), "state: a set that waited for its device, now bound, applied; or held still, as this copy couldn't");
             taken += usize::from(applied.is_ok());
         }
