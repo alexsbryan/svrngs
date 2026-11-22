@@ -235,6 +235,20 @@ impl States {
         Ok(db)
     }
 
+    /// Each database of `group` this computer has open closed, as it drops,
+    /// and its file left on disk: a group this computer left, or was removed
+    /// from, keeps its other files held and readable here, none of it live
+    /// (svrngs-node removal.rs `leave`). One a page's subscription still
+    /// holds closes as that ends. How many it let go.
+    pub fn close(&self, group: &str) -> usize {
+        let mut dbs = self.dbs.lock().expect("the databases' lock");
+        let open = dbs.len();
+        dbs.retain(|(g, _), _| g != group);
+        let closed = open - dbs.len();
+        tracing::debug!(target: "state", group, closed, "state: a group's databases closed, as this computer stands in it no more, their files kept");
+        closed
+    }
+
     /// Every database this computer keeps in `group`, as it syncs them:
     /// each one on its disk, opened if it isn't yet. One that won't open
     /// is left out, said at warn.

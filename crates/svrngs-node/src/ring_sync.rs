@@ -329,6 +329,9 @@ pub async fn run_one_round(
         // this namespace. Under-share, never over-share.
         let standing = match rail.standing(namespace) {
             Ok(crate::register::Standing::Left(stands)) => {
+                // Its app databases closed, their files kept, as the group's
+                // other files are: nothing of a group left is live here.
+                host.states.close(namespace);
                 leaves.extend(leave_told(host, namespace, stands, told));
                 continue;
             }

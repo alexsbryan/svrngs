@@ -3347,6 +3347,60 @@ async fn an_app_s_database_syncs_between_the_group_s_computers() {
     }
 }
 
+/// **Leaving a group closes its app databases and keeps their files,** as
+/// leaving keeps the group's other files: held here, none of it live
+/// (removal.rs `leave`). Ben's computer keeps Board's database from its
+/// round, open with its WAL beside it. Ben leaves, and after his next round
+/// the database is closed, its WAL folded in and gone as SQLite's last
+/// connection closes, and its file is still on his disk. Plant, watched
+/// failing: the round leaving a left group's databases open (Ben's WAL
+/// still there).
+#[tokio::test]
+async fn leaving_a_group_closes_its_app_databases_and_keeps_their_files() {
+    use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
+    let (nodes, dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 75, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, _folder) = board(ana, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let kept = dirs[1].path().join("state").join(&group).join("Board.db");
+    let wal = kept.with_extension("db-wal");
+    for node in [ben, ana, ben] {
+        round(node).await;
+    }
+    assert!(
+        wal.exists(),
+        "Ben's copy open, its WAL beside it: {}",
+        wal.display()
+    );
+    let left = http()
+        .post(format!("http://{}{LEAVES_ROUTE}", ben.api_addr()))
+        .asked_as_you()
+        .json(&LeaveAsk {
+            group: group.clone(),
+        })
+        .send();
+    let left = left.await.unwrap().json::<Outcome>().await.unwrap();
+    assert_eq!(left, Outcome::Left);
+    round(ben).await;
+    assert!(
+        kept.exists() && !wal.exists(),
+        "Ben's copy closed and kept: file {}, WAL {}",
+        kept.exists(),
+        wal.exists()
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
 /// **Every computer whose person said yes to an app keeps its database,
 /// a page opened there or not** (svrn-docs `rings/current/APP_STATE.md`,
 /// Decisions, 2026-11-22): the yes is the consent to its schema. Ana brings
