@@ -671,8 +671,10 @@ fn svrngs_ask_sends_a_squatter_none_of_the_token() {
 /// got, its JSON printed whole on a line of its own, exit 0; JSON posted to
 /// a route, its answer printed; a route svrngs refuses, nothing printed,
 /// exit 1, svrngs's status said; and what isn't a route or JSON refused
-/// before anything is asked, saying how to ask. As apps/jellyfin/folders
-/// runs it.
+/// before anything is asked, saying how to ask, a route http can't send
+/// among them. As apps/jellyfin/folders runs it. Planted, watched failing:
+/// a route with a space in it asked unparsed, and said as svrngs not
+/// running, exit 3.
 #[test]
 fn svrngs_ask_prints_svrngs_s_answer_and_says_its_refusal() {
     let dir = tempfile::tempdir().unwrap();
@@ -698,11 +700,16 @@ fn svrngs_ask_prints_svrngs_s_answer_and_says_its_refusal() {
         &["/v1/open", "{at"],
         &["/v1/open", "{}", "{}"],
         &[],
+        &["/v1/rail/log?namespace=my group"],
     ] {
         let (code, printed, said) = ask(dir.path(), wrong);
         assert_eq!((code, printed.as_str()), (Some(1), ""), "{wrong:?}: {said}");
         assert!(said.contains("svrngs ask"), "{wrong:?}: {said}");
     }
+    // A route http can't send is said as one, with how to write it, never
+    // as svrngs not running.
+    let (_, _, said) = ask(dir.path(), &["/v1/rail/log?namespace=my group"]);
+    assert!(said.contains("as %20"), "{said}");
 }
 
 /// `svrngs open` over `dir`, asked every 50 ms until svrngs answers it:

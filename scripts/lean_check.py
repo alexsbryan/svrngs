@@ -924,10 +924,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # share.rs 6, node.rs and session.rs -4), after a pass cut what the files
 # touched left unused (Sessions' token, `Bearer::file`, `Reached`): 24,519.
 # The operator, 2026-11-21: "Raise up to 117", lowered to where it lands.
+# Then 2 back, to 24,517: the token refused however a program sends it as a
+# key (api.rs `Bearer::asked`, 3) and `svrngs ask` refusing a route http
+# can't send (cli.rs `parse`, 2), paid for by what the record's refusal of
+# another Bearer as no code left unused: `oidc::provider::bearer`, one
+# caller's, read in userinfo (5), and `holds_the_token`'s Bearer arm (2).
+# No raise was available; lowered to where it lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24520,
+    ".": 24518,
 
     "js": 8694,
 

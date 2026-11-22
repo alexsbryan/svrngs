@@ -539,6 +539,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "ask" => {
             let usage = "ask wants a route on svrngs, then one JSON body or none: `svrngs ask /v1/groups`, or `svrngs ask <route> '<json>'` to post it there";
             let route = positional.filter(|r| r.starts_with('/')).ok_or(usage)?;
+            // As http parses the request `api::asked` sends, so a route it
+            // can't send is said here, never as svrngs not running.
+            let unsent = "svrngs can't send this route as it's written: write each space in it as %20, and any other character a web address can't hold as % and its hex code, as in `svrngs ask '/v1/rail/log?namespace=my%20group'`";
+            route.parse::<http::Uri>().map_err(|_| unsent)?;
             let json = |b: &String| serde_json::from_str::<serde_json::Value>(b).is_ok();
             match &more[..] {
                 [] => Ok(Verb::Ask(route, None)),
