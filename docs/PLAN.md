@@ -61,9 +61,10 @@ beside the authority replacement, ahead of the economizing:
   is svrn-docs `APP_STATE.md` §10;
 - in slices, each ending in a demo of Magnets (svrn-docs `MAGNETS_BUILD.md`
   §3, 2026-11-19). The ceiling's room has since been spent: the caps sit at
-  the count (`scripts/lean_check.py`). So each slice asks for its own lines
-  after a pass over the files it touches (operator, 2026-11-21: "Raise per
-  slice"). The judge of the copies came first, a reference model and a
+  the count (`scripts/lean_check.py`). So the operator pre-approved one
+  lean ceiling for the whole build, +1,450 of all code but JavaScript and
+  +80 of JavaScript (2026-11-22). It's a pool, drawn slice by slice after
+  each slice's pass, with the caps lowered to where each lands. The judge of the copies came first, a reference model and a
   seeded simulator of deliveries in `crates/svrngs-db/tests/w1/`. Next is
   Magnets on one laptop;
 - to the warranty in svrn-docs `APP_STATE.md` §11. Each promise has its proof in the
