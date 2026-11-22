@@ -294,7 +294,7 @@ These are the figures the launch approved, in code lines as
   - no terminal doesn't;
   - an account that already lingers isn't asked.
 
-- [ ] REVIEW-audit-keeper — depends [keeper-demo, HUMAN-eudoxia-push, keeper-linger-ask] — the unchanged full
+- [x] REVIEW-audit-keeper 2bca25e65 — depends [keeper-demo, HUMAN-eudoxia-push, keeper-linger-ask] — the unchanged full
   `scripts/check.sh` in the svrngs-gate container, exit 0. The ported-from
   lines are listed by `scripts/ports.py`. CSP and the trust floor are
   unchanged, and the counts are within each allowance.
