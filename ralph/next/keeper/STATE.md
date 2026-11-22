@@ -196,7 +196,7 @@ These are the figures the launch approved, in code lines as
   check: each cut's focused tests (`cargo test -p svrngs-node --lib door`,
   `share`, `uid`; `node web/tests/run.mjs unit`); fresh lean counts.
 
-- [ ] eudoxia-cgroups — depends [] — ONE UNIT, in `~/dev/eudoxia` on
+- [x] eudoxia-cgroups 2d97a99e9 — depends [] — ONE UNIT, in `~/dev/eudoxia` on
   branch `keeper-cgroups`, under eudoxia's own AGENTS.md:
   - `binding::Chosen` gains a cgroup form, every socket on the address
     made in one of a set of cgroups, beside the process form, with the
