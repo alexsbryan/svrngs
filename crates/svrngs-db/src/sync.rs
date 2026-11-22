@@ -33,7 +33,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::Ordering::Relaxed;
 
-use rusqlite::types::Value as Sql;
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, Value as Sql, ValueRef};
 use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, TransactionBehavior::Immediate, params};
 use serde::{Deserialize, Serialize};
 use svrngs_core::set::{At, Nonce, Site, site};
@@ -46,21 +46,107 @@ use crate::{Db, Refused, fault};
 /// bound alike from the set.
 const BOUND: i64 = 1 << 53;
 
+/// A set's seq at its database, and a mark, a have or a twin's place: from 1
+/// to `i64::MAX`, what SQLite holds. Parsed as the wire is read, so a call
+/// naming one past it doesn't decode, and no seq reaches a bind that rusqlite
+/// would refuse (a `u64` past `i64::MAX`), or an add past it. Written as
+/// its number, as postcard writes a newtype.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(try_from = "u64")]
+pub struct Seq(u64);
+
+impl Seq {
+    /// `n` as a seq, if it is one.
+    pub fn new(n: u64) -> Option<Self> {
+        (1..=i64::MAX as u64).contains(&n).then_some(Self(n))
+    }
+
+    pub fn get(self) -> u64 {
+        self.0
+    }
+}
+
+impl TryFrom<u64> for Seq {
+    type Error = String;
+    fn try_from(n: u64) -> Result<Self, String> {
+        Self::new(n).ok_or_else(|| format!("{n} is no seq: one is from 1 to {}", i64::MAX))
+    }
+}
+
+impl ToSql for Seq {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok((self.0 as i64).into())
+    }
+}
+
+impl FromSql for Seq {
+    fn column_result(v: ValueRef<'_>) -> FromSqlResult<Self> {
+        let n = i64::column_result(v)?;
+        u64::try_from(n)
+            .ok()
+            .and_then(Self::new)
+            .ok_or(FromSqlError::OutOfRange(n))
+    }
+}
+
+/// `N` bytes in lower-case hex, as the record spells a key (`actor_of`) and
+/// a signature: parsed as the wire is read, so a device is spelled as the
+/// record spells it, and one signature never has two spellings. Written as
+/// its text, as postcard writes a newtype.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(try_from = "String")]
+pub struct Hex<const N: usize>(String);
+
+/// A device's key, as the record spells it.
+pub type Device = Hex<32>;
+
+/// A device's signature over a set.
+pub type Sig = Hex<64>;
+
+impl<const N: usize> Hex<N> {
+    /// `text` as `N` bytes of lower-case hex, if it is.
+    pub fn parse(text: &str) -> Option<Self> {
+        let hex = text.len() == 2 * N && text.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+        hex.then(|| Self(text.into()))
+    }
+}
+
+svrngs_core::text_newtype!(Device, Sig);
+
+impl<const N: usize> TryFrom<String> for Hex<N> {
+    type Error = String;
+    fn try_from(text: String) -> Result<Self, String> {
+        Self::parse(&text).ok_or_else(|| format!("not {N} bytes of lower-case hex"))
+    }
+}
+
+impl<const N: usize> ToSql for Hex<N> {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        self.0.to_sql()
+    }
+}
+
+impl<const N: usize> FromSql for Hex<N> {
+    fn column_result(v: ValueRef<'_>) -> FromSqlResult<Self> {
+        Self::parse(v.as_str()?).ok_or(FromSqlError::InvalidType)
+    }
+}
+
 /// One change set as it travels and is kept: its device, the nonce of the
 /// database it was written in, its seq there, its schema's hash, its
 /// changes, and the device's signature over them all (`At::message`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Set {
-    pub device: String,
+    pub device: Device,
     pub nonce: Nonce,
-    pub seq: u64,
+    pub seq: Seq,
     pub schema: [u8; 32],
     pub changes: Vec<u8>,
-    pub sig: String,
+    pub sig: Sig,
 }
 
 /// A set's place: its site and its seq.
-pub type Place = (Site, u64);
+pub type Place = (Site, Seq);
 
 /// What a copy holds, as it asks a member: each site's mark, every set of
 /// the site up to it taken here, refused here for good, or vouched for by a
@@ -68,9 +154,9 @@ pub type Place = (Site, u64);
 /// each set it keeps at a place where it keeps two, `twins`, by signature.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ask {
-    pub marks: BTreeMap<Site, u64>,
+    pub marks: BTreeMap<Site, Seq>,
     pub haves: BTreeSet<Place>,
-    pub twins: BTreeSet<(Place, String)>,
+    pub twins: BTreeSet<(Place, Sig)>,
 }
 
 /// What a member sends a copy: the sets the copy's ask says it lacks, the
@@ -155,13 +241,16 @@ fn count(conn: &Connection, (site, seq): Place) -> rusqlite::Result<()> {
 }
 
 /// `site`'s mark taken to `theirs` where that is higher, then past every
-/// set counted just above it; those at or below it no longer kept apart.
-fn adopt(conn: &Connection, (site, theirs): Place) -> rusqlite::Result<()> {
+/// set counted just above it, stopping at the last seq there is; those at
+/// or below it no longer kept apart.
+fn adopt(conn: &Connection, (site, theirs): (Site, i64)) -> rusqlite::Result<()> {
     let mark = conn.query_row("SELECT mark FROM svrngs_marks WHERE site = ?1", [site], |r| r.get(0));
-    let mut m = mark.optional()?.unwrap_or(0).max(theirs);
+    let mut m: i64 = mark.optional()?.unwrap_or(0).max(theirs);
     let next = "DELETE FROM svrngs_above WHERE site = ?1 AND seq = ?2";
-    while conn.execute(next, params![site, m + 1])? == 1 {
-        m += 1;
+    while let Some(n) = m.checked_add(1)
+        && conn.execute(next, params![site, n])? == 1
+    {
+        m = n;
     }
     let below = "DELETE FROM svrngs_above WHERE site = ?1 AND seq <= ?2";
     conn.execute(below, params![site, m])?;
@@ -189,15 +278,16 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&[Change]>, h
 }
 
 impl Db {
-    /// What `set`, of this database's group and app, is signed as.
-    fn at<'s>(&'s self, set: &'s Set) -> At<'s> {
+    /// What a set of this database's group and app, written by `device` in
+    /// its database of `nonce` at `seq` under `schema`, is signed as.
+    fn at<'s>(&'s self, (device, nonce, seq, schema): (&'s Device, &'s Nonce, Seq, &'s [u8; 32])) -> At<'s> {
         At {
             group: &self.group,
             app: &self.app,
-            device: &set.device,
-            nonce: &set.nonce,
-            seq: set.seq,
-            schema: &set.schema,
+            device: device.as_str(),
+            nonce,
+            seq: seq.get(),
+            schema,
         }
     }
 
@@ -205,8 +295,8 @@ impl Db {
     /// this database's site, sealed as one set at the transaction's version,
     /// signed by this computer's key, kept and counted; none when it changed
     /// nothing. Refused, loudly, at a version this site's sets already hold.
-    pub(crate) fn seal(&self, conn: &Connection) -> Result<Option<u64>, Refused> {
-        let seq: u64 = conn
+    pub(crate) fn seal(&self, conn: &Connection) -> Result<Option<Seq>, Refused> {
+        let seq: Seq = conn
             .query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0))
             .map_err(fault)?;
         let changes = "SELECT \"table\", pk, cid, val, col_version, cl, seq FROM crsql_changes \
@@ -229,19 +319,24 @@ impl Db {
         let reused: bool = conn
             .query_row(reused, params![self.site, seq], |r| r.get(0))
             .map_err(fault)?;
-        tracing::debug!(target: "state", group = self.group, app = self.app, seq, rows = made.len(), reused, "state: a write's rows sealed as one set at its version, none when it changed nothing, or refused at a version this site's sets hold");
+        tracing::debug!(target: "state", group = self.group, app = self.app, seq = seq.get(), rows = made.len(), reused, "state: a write's rows sealed as one set at its version, none when it changed nothing, or refused at a version this site's sets hold");
         if reused {
-            tracing::error!(target: "state", group = self.group, app = self.app, seq, "state: cr-sqlite gave a write a version this database's own sets already hold, so the write is refused");
+            tracing::error!(target: "state", group = self.group, app = self.app, seq = seq.get(), "state: cr-sqlite gave a write a version this database's own sets already hold, so the write is refused");
             return Err(Refused::Fault(format!(
-                "this database gave a write the version {seq} again"
+                "this database gave a write the version {} again",
+                seq.get()
             )));
         }
         if made.is_empty() {
             return Ok(None);
         }
         let changes = postcard::to_allocvec(&made).expect("changes are written in memory");
-        let (device, nonce, schema, sig) = (self.device.clone(), self.nonce, self.schema, String::new());
-        let mut set = Set {
+        let sig = self
+            .at((&self.device, &self.nonce, seq, &self.schema))
+            .sign(&self.key, &changes);
+        let sig = Sig::parse(&sig).expect("a signature is written in lower-case hex");
+        let (device, nonce, schema) = (self.device.clone(), self.nonce, self.schema);
+        let set = Set {
             device,
             nonce,
             seq,
@@ -249,7 +344,6 @@ impl Db {
             changes,
             sig,
         };
-        set.sig = self.at(&set).sign(&self.key, &set.changes);
         keep(conn, (&set, self.site), None, false).map_err(fault)?;
         Ok(Some(seq))
     }
@@ -280,7 +374,7 @@ impl Db {
     pub fn missing(&self, theirs: &Ask, budget: usize) -> Result<Call, Refused> {
         let ask = self.ask()?;
         let twins: BTreeSet<&Place> = ask.twins.iter().chain(&theirs.twins).map(|(p, _)| p).collect();
-        let named: BTreeSet<&String> = theirs.twins.iter().map(|(_, s)| s).collect();
+        let named: BTreeSet<&Sig> = theirs.twins.iter().map(|(_, s)| s).collect();
         let kept = "SELECT site, seq, sig, bytes FROM svrngs_sets ORDER BY site, seq, sig";
         let kept = rows(&self.conn(), kept, [], |r| {
             Ok(((r.get(0)?, r.get(1)?), r.get(2)?, r.get(3)?))
@@ -288,8 +382,8 @@ impl Db {
         let (mut sets, mut spent) = (Vec::new(), 0);
         for (place, sig, bytes) in kept.map_err(fault)? {
             let (site, seq): Place = place;
-            let above = seq > theirs.marks.get(&site).copied().unwrap_or(0) && !theirs.haves.contains(&place);
-            let (twin, sig): (bool, String) = (twins.contains(&place), sig);
+            let above = theirs.marks.get(&site).is_none_or(|m| seq > *m) && !theirs.haves.contains(&place);
+            let (twin, sig): (bool, Sig) = (twins.contains(&place), sig);
             if !above && (!twin || named.contains(&sig)) {
                 continue;
             }
@@ -317,12 +411,12 @@ impl Db {
         let mut tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
         let (mut out, mut stopped) = (Vec::new(), BTreeSet::new());
         for set in sets {
-            let place = (site(&self.group, &self.app, &set.device, &set.nonce), set.seq);
+            let place = (site(&self.group, &self.app, set.device.as_str(), &set.nonce), set.seq);
             let took = self.take(&mut tx, (set, place.0), bound).unwrap_or_else(|e| {
-                tracing::warn!(target: "state", group = self.group, app = self.app, device = set.device, seq = set.seq, %e, "state: a set this copy couldn't apply, its mark held");
+                tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), %e, "state: a set this copy couldn't apply, its mark held");
                 Took::Fault
             });
-            tracing::debug!(target: "state", group = self.group, app = self.app, device = set.device, seq = set.seq, ?took, "state: a set offered, and how it ended");
+            tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), ?took, "state: a set offered, and how it ended");
             if matches!(took, Took::Waits | Took::NotItsDevice | Took::Fault) {
                 stopped.insert(place.0);
             }
@@ -338,7 +432,7 @@ impl Db {
             .iter()
             .filter(|(s, _)| call.full && !stopped.contains(*s));
         tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted, but each site's with a set that faulted here, failed its signature or waits");
-        let adopted = adopting.into_iter().try_for_each(|(s, m)| adopt(&tx, (*s, *m)));
+        let adopted = adopting.into_iter().try_for_each(|(s, m)| adopt(&tx, (*s, m.0 as i64)));
         adopted.and_then(|()| tx.commit()).map_err(fault)?;
         let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
         let first = call.full && !faulted && !self.synced.swap(true, Relaxed);
@@ -360,27 +454,29 @@ impl Db {
     /// savepoint of its own, released only once all of it is written, so a
     /// set is kept and counted together or not at all.
     fn take(&self, tx: &mut Transaction, (set, site): (&Set, Site), bound: Bound) -> rusqlite::Result<Took> {
+        // Its signature first, before anything in it is read.
+        let at = self.at((&set.device, &set.nonce, set.seq, &set.schema));
+        if !at.check(&set.changes, set.sig.as_str()) {
+            return Ok(Took::NotItsDevice);
+        }
         let sigs = "SELECT sig FROM svrngs_sets WHERE site = ?1 AND seq = ?2";
-        let sigs: Vec<String> = rows(tx, sigs, params![site, set.seq], |r| r.get(0))?;
+        let sigs: Vec<Sig> = rows(tx, sigs, params![site, set.seq], |r| r.get(0))?;
         let counted = "SELECT ?2 <= coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0) \
             OR EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1 AND seq = ?2)";
         let counted: bool = tx.query_row(counted, params![site, set.seq], |r| r.get(0))?;
         if sigs.contains(&set.sig) || counted && sigs.is_empty() {
             return Ok(Took::Held);
         }
-        if !self.at(set).check(&set.changes, &set.sig) {
-            return Ok(Took::NotItsDevice);
-        }
         let bounded = |c: &Vec<Change>| c.iter().all(|c| c.col_version <= BOUND && c.cl <= BOUND);
         let parsed: Option<Vec<Change>> = postcard::from_bytes(&set.changes).ok().filter(bounded);
         if parsed.is_some() && !sigs.is_empty() {
-            tracing::warn!(target: "state", group = self.group, app = self.app, device = set.device, seq = set.seq, "state: a second set at one site and seq, both taken: a copied or restored database runs beside its original");
+            tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), "state: a second set at one site and seq, both taken: a copied or restored database runs beside its original");
         }
         // Rolled back and released as it drops on any `?`.
         let sp = tx.savepoint()?;
         let took = match parsed {
             None => count(&sp, (site, set.seq)).map(|()| Took::Refused)?,
-            Some(_) if !bound(&set.device) => keep(&sp, (set, site), None, true).map(|()| Took::Waits)?,
+            Some(_) if !bound(set.device.as_str()) => keep(&sp, (set, site), None, true).map(|()| Took::Waits)?,
             Some(rows) => keep(&sp, (set, site), Some(&rows), false).map(|()| Took::Taken)?,
         };
         sp.commit()?;
@@ -401,8 +497,8 @@ impl Db {
             .into_iter()
             .filter_map(|b| postcard::from_bytes::<Set>(&b).ok());
         let mut taken = 0;
-        for set in held.filter(|s| bound(&s.device)) {
-            let place = (site(&self.group, &self.app, &set.device, &set.nonce), set.seq);
+        for set in held.filter(|s| bound(s.device.as_str())) {
+            let place = (site(&self.group, &self.app, set.device.as_str(), &set.nonce), set.seq);
             let rows: Vec<Change> = postcard::from_bytes(&set.changes).unwrap_or_default();
             let unheld = "UPDATE svrngs_sets SET held = 0 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
             // Rolled back and released as it drops, unless all of it applied.
@@ -410,7 +506,7 @@ impl Db {
             let applied = keep(&sp, (&set, place.0), Some(&rows), false);
             let applied = applied.and_then(|()| sp.execute(unheld, params![place.0, place.1, set.sig]));
             let applied = applied.and_then(|_| sp.commit());
-            tracing::debug!(target: "state", group = self.group, app = self.app, device = set.device, seq = set.seq, applied = applied.is_ok(), "state: a set that waited for its device, now bound, applied; or held still, as this copy couldn't");
+            tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), applied = applied.is_ok(), "state: a set that waited for its device, now bound, applied; or held still, as this copy couldn't");
             taken += usize::from(applied.is_ok());
         }
         if taken > 0 {

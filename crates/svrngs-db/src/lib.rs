@@ -61,7 +61,7 @@ mod sync;
 pub use form::FORM;
 use form::Table;
 pub use svrngs_core::SigningKey;
-pub use sync::{Ask, Call, Place, Set, Took};
+pub use sync::{Ask, Call, Device, Hex, Place, Seq, Set, Sig, Took};
 
 /// The app's schema, beside its `index.html`.
 pub const SCHEMA: &str = "schema.sql";
@@ -203,7 +203,7 @@ impl States {
 pub struct Db {
     pub group: String,
     pub app: String,
-    device: String,
+    device: Device,
     key: SigningKey,
     nonce: svrngs_core::set::Nonce,
     site: svrngs_core::set::Site,
@@ -448,7 +448,7 @@ impl Db {
         Ok(Self {
             group: group.into(),
             app: app.into(),
-            device,
+            device: Device::parse(&device).expect("a key is written in lower-case hex"),
             key,
             nonce,
             site: derived,

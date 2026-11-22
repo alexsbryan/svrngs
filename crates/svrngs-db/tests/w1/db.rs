@@ -189,7 +189,7 @@ impl DbCopy {
     /// A real set as the simulator names it: its rows at its device's site
     /// and its seq; and it noted, as the run's.
     fn change_set(&self, set: &svrngs_db::Set) -> ChangeSet {
-        let site = self.run.borrow().devices[&set.device];
+        let site = self.run.borrow().devices[set.device.as_str()];
         let rows: Vec<Row> = postcard::from_bytes(&set.changes).expect("a set's rows");
         let each = rows.into_iter().map(|r| Change {
             table: r.table,
@@ -203,7 +203,7 @@ impl DbCopy {
                 Kept::Blob(b) => Val::Blob(b),
             },
             col_version: r.col_version,
-            db_version: set.seq as i64,
+            db_version: set.seq.get() as i64,
             site,
             cl: r.cl,
             seq: r.seq,
@@ -222,8 +222,8 @@ impl DbCopy {
     fn book(&self) -> (BTreeMap<Site, i64>, BTreeSet<SetId>) {
         let ask = self.db.ask().expect("its ask");
         let run = self.run.borrow();
-        let marks = ask.marks.iter().map(|(s, m)| (run.sites[s], *m as i64)).collect();
-        let haves = ask.haves.iter().map(|(s, q)| (run.sites[s], *q as i64)).collect();
+        let marks = ask.marks.iter().map(|(s, m)| (run.sites[s], m.get() as i64)).collect();
+        let haves = ask.haves.iter().map(|(s, q)| (run.sites[s], q.get() as i64)).collect();
         (marks, haves)
     }
 
@@ -338,7 +338,7 @@ impl Replica for DbCopy {
                 .marks
                 .iter()
                 .flatten()
-                .map(|(s, m)| (to_real[s], *m as u64))
+                .map(|(s, m)| (to_real[s], svrngs_db::Seq::new(*m as u64).expect("a mark is a seq")))
                 .collect();
             let ask = Ask {
                 marks,
@@ -355,7 +355,7 @@ impl Replica for DbCopy {
         let of = |t: Took| -> BTreeSet<SetId> {
             got.iter()
                 .filter(|(_, k)| *k == t)
-                .map(|((s, q), _)| (run.sites[s], *q as i64))
+                .map(|((s, q), _)| (run.sites[s], q.get() as i64))
                 .collect()
         };
         let set = |v: &[SetId]| v.iter().copied().collect::<BTreeSet<_>>();
@@ -376,7 +376,7 @@ impl Replica for DbCopy {
         let other = got
             .iter()
             .filter(|(_, t)| !matches!(t, Took::Taken | Took::Refused | Took::Held));
-        wrong.extend(other.map(|((_, q), t)| format!("svrngs-db's set at seq {q} ended {t:?}")));
+        wrong.extend(other.map(|((_, q), t)| format!("svrngs-db's set at seq {} ended {t:?}", q.get())));
         drop(run);
         let (marks, haves) = self.book();
         if marks != *book.marks() || haves != *book.above() {
@@ -407,7 +407,7 @@ impl Replica for DbCopy {
         let real: BTreeSet<SetId> = real
             .sets
             .iter()
-            .map(|s| (run.devices[&s.device], s.seq as i64))
+            .map(|s| (run.devices[s.device.as_str()], s.seq.get() as i64))
             .collect();
         let want: BTreeSet<SetId> = ids(&call.sets).into_iter().collect();
         drop(run);

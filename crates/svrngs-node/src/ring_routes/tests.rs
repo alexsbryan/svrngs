@@ -441,7 +441,7 @@ async fn the_state_route_serves_a_standing_member_alone() {
     let answer = answer.expect("a call back");
     assert_eq!((status, answer.sets.len(), answer.full), (200, 1, true));
     assert_eq!(
-        answer.sets[0].device,
+        answer.sets[0].device.as_str(),
         crate::actor_of(&key()),
         "signed by its own computer"
     );
@@ -470,7 +470,8 @@ async fn the_state_route_serves_a_standing_member_alone() {
     // Carried on its own, vouching for nothing: a full call's marks are
     // its source's word for completeness (APP_STATE §4, "What travels").
     let mut forged = offered.clone();
-    (forged.sets[0].device, forged.full) = (crate::actor_of(&key()), false);
+    let ada = svrngs_db::Device::parse(&crate::actor_of(&key())).unwrap();
+    (forged.sets[0].device, forged.full) = (ada, false);
     let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &forged).await;
     assert_eq!(status, 200);
     assert_eq!(

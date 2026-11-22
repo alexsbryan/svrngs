@@ -47,7 +47,7 @@ fn took(to: &Db, call: &Call) -> Vec<Took> {
 
 /// A device's mark for its one site, in `ask`.
 fn marks(ask: &Ask) -> Vec<u64> {
-    ask.marks.values().copied().collect()
+    ask.marks.values().map(|m| m.get()).collect()
 }
 
 /// A change row as svrngs-db writes one, for a set a test makes.
@@ -80,12 +80,12 @@ fn remade(set: &svrngs_db::Set, by: &SigningKey, f: impl Fn(&mut Vec<Change>)) -
     let at = At {
         group: "g",
         app: "board",
-        device: &set.device,
+        device: set.device.as_str(),
         nonce: &set.nonce,
-        seq: set.seq,
+        seq: set.seq.get(),
         schema: &set.schema,
     };
-    set.sig = at.sign(by, &set.changes);
+    set.sig = svrngs_db::Sig::parse(&at.sign(by, &set.changes)).unwrap();
     set
 }
 
@@ -110,10 +110,14 @@ fn a_write_s_set_is_its_computer_s_and_is_taken_once() {
     );
     let set = &sent.sets[0];
     let device = svrngs_core::actor_of(&key(1));
-    assert_eq!((set.device.as_str(), set.seq), (device.as_str(), 1));
+    assert_eq!((set.device.as_str(), set.seq.get()), (device.as_str(), 1));
     assert_eq!(set.schema, svrngs_core::set::schema(SCHEMA));
-    let place = (site("g", "board", &device, &set.nonce), 1);
-    assert_eq!(a.ask().unwrap().marks, [(place.0, 1)].into(), "counted in its own mark");
+    let place = (site("g", "board", &device, &set.nonce), set.seq);
+    assert_eq!(
+        a.ask().unwrap().marks,
+        [(place.0, set.seq)].into(),
+        "counted in its own mark"
+    );
     assert_eq!(b.ingest(&sent, &|_| true).unwrap(), [(place, Took::Taken)]);
     assert_eq!(cards(&b), json!([{ "id": "c1", "title": "milk" }]));
     assert!(call(&a, &b).sets.is_empty(), "fetched once");
@@ -290,7 +294,7 @@ fn two_sets_at_one_seq_are_both_taken_and_named() {
         "by marks alone, the copy's is never sent"
     );
     let mut carried = copy.missing(&Ask::default(), BUDGET).unwrap();
-    carried.sets.retain(|s| s.seq == 2);
+    carried.sets.retain(|s| s.seq.get() == 2);
     carried.full = false;
     assert_eq!(took(&c, &carried), [Took::Twin]);
     assert_eq!(c.ask().unwrap().twins.len(), 2, "both named in its ask");
@@ -324,7 +328,7 @@ fn a_database_made_again_under_its_key_reaches_the_group() {
     assert_eq!(took(&again, &call(&b, &again)), [Took::Taken; 3], "her old sets, back");
     write(&again, "c3", "salt");
     let new = call(&again, &b);
-    assert_eq!(new.sets.iter().map(|s| s.seq).collect::<Vec<_>>(), [1]);
+    assert_eq!(new.sets.iter().map(|s| s.seq.get()).collect::<Vec<_>>(), [1]);
     assert_eq!(took(&b, &new), [Took::Taken], "her new write reaches Ben");
     assert_eq!(cards(&b), cards(&again));
     assert_eq!(cards(&b).as_array().unwrap().len(), 3);
