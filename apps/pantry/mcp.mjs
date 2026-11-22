@@ -4,16 +4,14 @@
 
 const PROTOCOL = '2025-06-18';
 
-async function post(url, message, { session, version, timeout, token, ask }) {
+async function post(url, message, { session, version, timeout, ask }) {
   const headers = {
     accept: 'application/json, text/event-stream',
     'content-type': 'application/json',
   };
-  if (token) headers.authorization = `Bearer ${token}`;
   if (session) headers['mcp-session-id'] = session;
   if (version) headers['mcp-protocol-version'] = version;
   const res = await ask(url, {
-    redirect: 'error',
     method: 'POST',
     headers,
     body: JSON.stringify(message),
@@ -51,11 +49,10 @@ function parse(text, contentType) {
 
 /// The tools a Streamable HTTP MCP server at `origin` answers `tools/list`
 /// with, annotations included as the server sent them. Each ask waits up to
-/// `timeout` ms, the caller's one probe time. A lend's origin on this
-/// computer answers a program only with this computer's `token`, which
-/// svrngs takes off before the lend's service is asked (give-session).
-/// `ask` is the fetch it asks with.
-export async function toolsAt(origin, timeout, token, ask = fetch) {
+/// `timeout` ms, the caller's one probe time. A lend's address on this
+/// computer answers a program only asked as this computer's person: `ask`,
+/// svrngs.mjs's `fetch`, which never sends svrngs's token.
+export async function toolsAt(origin, timeout, ask) {
   const url = `${origin.replace(/\/+$/, '')}/mcp`;
   const init = await post(
     url,
@@ -69,7 +66,7 @@ export async function toolsAt(origin, timeout, token, ask = fetch) {
         clientInfo: { name: 'pantry', version: '0' },
       },
     },
-    { timeout, token, ask },
+    { timeout, ask },
   );
   const version = init.message?.result?.protocolVersion || PROTOCOL;
   await post(
@@ -79,7 +76,6 @@ export async function toolsAt(origin, timeout, token, ask = fetch) {
       session: init.session,
       version,
       timeout,
-      token,
       ask,
     },
   );
@@ -90,7 +86,6 @@ export async function toolsAt(origin, timeout, token, ask = fetch) {
       session: init.session,
       version,
       timeout,
-      token,
       ask,
     },
   );

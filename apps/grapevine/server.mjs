@@ -8,8 +8,8 @@
 // Listens on 127.0.0.1 and prints `{"port": N, "at": "http://127.0.0.1:N/"}`.
 // No dependency but the vendored tweetnacl. The config:
 //
-//   {"record": "http://127.0.0.1:<port>"}   the groups' records, through this
-//                                           computer's loopback API: one person,
+//   {"record": "<svrngs's data dir>"}       the groups' records, through this
+//                                           computer's svrngs (~/.svrngs): one person,
 //                                           this computer's, "me" read per group
 //                                           from what svrngs answers (§13.3); or
 //   {"file": "<path>", "acting": [names]}   a file of its own (store.mjs): a
@@ -51,27 +51,19 @@ import { fileURLToPath } from 'node:url';
 import { MAX_NAME, MAX_TEXT, typeOf } from './grapevine.js';
 import { KINDS } from './kinds.mjs';
 import { Refused, debug as trace, heldBy, heldIn, loop, person, stateFile } from './relay.mjs';
-import { file, record } from './store.mjs';
+import { file, record, svrngsOf } from './store.mjs';
 
-/** The token svrngs's record asks of this app, from the file the config names
- * (`token`, beside svrngs's `api` file; give-token). */
-function tokenOf(config) {
-  if (typeof config.token !== 'string')
-    throw new Error(
-      "the config names no `token`, the file beside svrngs's api file that its record asks for",
-    );
-  return readFileSync(config.token, 'utf8').trim();
-}
 /**
  * Grapevine on `config`: its request handler, its people (whose loop the
- * caller runs) and its store. `fetch` reaches svrngs's record API in record
- * mode; `address` is this server's own `host:port`, the only Host it answers.
+ * caller runs) and its store. `svrngs` asks svrngs's record in record mode
+ * (svrngs.mjs; a stand-in's in a test); `address` is this server's own
+ * `host:port`, the only Host it answers.
  */
-export function grapevine(config, { fetch: ask = fetch, address }) {
+export function grapevine(config, { svrngs, address }) {
   if (typeof config.data !== 'string')
     throw new Error("the config names no `data`, the folder each person's state file is kept in");
-  const token = config.file ? null : tokenOf(config);
-  const store = config.file ? file(config.file) : record(config.record, token, ask);
+  const here = config.file ? null : (svrngs ?? svrngsOf(config));
+  const store = config.file ? file(config.file) : record(here);
   const SIM = store.kind === 'file';
   if (
     SIM &&
@@ -99,7 +91,7 @@ export function grapevine(config, { fetch: ask = fetch, address }) {
         person({
           id: 'me',
           store,
-          held: heldBy(config.record, token, store, trace, ask),
+          held: heldBy(here, store, trace),
           kinds: KINDS,
           state: stateFile(join(config.data, 'state.json')),
         }),

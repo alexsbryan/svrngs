@@ -1,10 +1,11 @@
 // The pantry's tests' stand-in for a socket: each origin a request handler
 // in this process, asked as node's `http.request` asks a server (the
-// pantry's and the bridge's relay) or as `fetch` does (discovery, the
-// record, a client). A handler is the one http.createServer is given, so
-// a stand-in lend is written as it would be served. The pantry keeps what
-// it found by origin (pantry.mjs `discovered`, `keptLends`), so every
-// origin here is new in this process.
+// bridge's and the whisper wrapper's relay, and a stand-in svrngs's to a
+// lend's door) or as `fetch` does (a client of the pantry). The pantry
+// asks svrngs itself through apps/client/standin.mjs. A handler is the one
+// http.createServer is given, so a stand-in lend is written as it would be
+// served. The pantry keeps what it found by origin (pantry.mjs
+// `discovered`, `keptLends`), so every origin here is new in this process.
 
 import { EventEmitter } from 'node:events';
 import { PassThrough, Readable } from 'node:stream';

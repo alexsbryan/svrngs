@@ -5,9 +5,9 @@
 //   node apps/pantry/pantry.mjs list
 //   node apps/pantry/pantry.mjs serve [--port N]
 //
-// Both read this computer's record through its data dir's `api` file
-// (`$SVRNGS_DIR/api`, else `~/.svrngs/api`), asking with the token in the
-// `token` file beside it (give-token). `--record URL` names another.
+// Both ask this computer's svrngs, at its data dir (`$SVRNGS_DIR`, else
+// `~/.svrngs`), through svrngs.mjs, which never sends svrngs's token: not
+// to svrngs, and not to a lend. `--record DIR` names another data dir.
 // The pantry knows a lend by asking it: OpenAI's `/v1/models` is a model;
 // MCP's initialize and tools/list over Streamable HTTP is a tool. It keeps
 // no kind list, no card and no matcher.
@@ -15,11 +15,12 @@
 import http from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 
 import { toolsAt } from './mcp.mjs';
 import { authorized, destination } from './boundary.mjs';
+import { dataDir as svrngsDir, svrngs } from './svrngs.mjs';
 
 /// How long what discovery found is kept in this process: a friend's computer
 /// that did not answer is not dialled again on every message, and what it said
@@ -38,30 +39,13 @@ export const LENDS_FOR = 30000;
 /// host times 3. Its own constant, not how long an answer is kept.
 const DISCOVERY_TIMEOUT = 4000;
 
-/// This computer's data dir: where its record answers and where the pantry
-/// keeps the address a person pasted into their interface.
+/// Where the pantry keeps the address a person pasted into their interface,
+/// and its key: `--state`, else this computer's svrngs data dir.
 function dataDir(option) {
-  return option || process.env.SVRNGS_DIR || join(homedir(), '.svrngs');
+  return option || svrngsDir();
 }
 
-/// Where this computer's record answers, from the data dir's `api` file.
-export function recordAt() {
-  if (process.env.SVRNGS_API) return process.env.SVRNGS_API.replace(/\/+$/, '');
-  return readFileSync(join(dataDir(), 'api'), 'utf8').trim().replace(/\/+$/, '');
-}
-
-/// The token this computer's record asks of a program, from the data dir's
-/// `token` file; none where there is no such file, which the record refuses
-/// naming the file.
-function tokenAt() {
-  try {
-    return readFileSync(join(dataDir(), 'token'), 'utf8').trim();
-  } catch {
-    return '';
-  }
-}
-
-// The interface's key is separate from the record's token and never forwarded.
+// The interface's key is the pantry's own, and never forwarded.
 function accessAt(state) {
   const dir = dataDir(state);
   const path = join(dir, 'pantry-token');
@@ -102,14 +86,12 @@ function secondsAgo(at, now) {
   return Math.max(0, Math.round((now() - at) / 1000));
 }
 
-async function get(url, token, ask) {
-  const headers = token === undefined ? {} : { authorization: `Bearer ${token}` };
-  const res = await ask(url, {
-    headers,
-    redirect: 'error',
-    signal: AbortSignal.timeout(DISCOVERY_TIMEOUT),
-  });
-  if (!res.ok) throw new Error(`${url} answered ${res.status}`);
+async function get(record, route) {
+  const res = await record.fetch(route, { signal: AbortSignal.timeout(DISCOVERY_TIMEOUT) });
+  if (!res.ok) {
+    await res.body?.cancel();
+    throw new Error(`${route} answered ${res.status}`);
+  }
   return res.json();
 }
 
@@ -118,31 +100,25 @@ async function get(url, token, ask) {
 /// key their computer is dialled by, so two people of one name keep two ids.
 /// The record's answer is kept for [`LENDS_FOR`] in this process, so a friend
 /// asleep is not dialled on every message; `refresh` asks it again before
-/// that time. `record` is where it answers (`at`), the `token` it asks
-/// with, and the `fetch` that asks it, the global one by default.
+/// that time. `record` is this computer's svrngs (svrngs.mjs `svrngs`).
 const keptLends = new Map();
 
 export async function lendsNow(record, { clock = Date.now, refresh = false } = {}) {
-  const base = record.at.replace(/\/+$/, '');
+  const base = record.dir;
   const now = clock();
   const kept = keptLends.get(base);
   if (!refresh && kept && now - kept.at < LENDS_FOR) {
     note('kept lends', base, `looked ${secondsAgo(kept.at, clock)}s ago`);
     return { ...kept.seen, at: kept.at, asked: false };
   }
-  const ask = record.fetch ?? fetch;
-  const held = await get(`${base}/v1/groups`, record.token, ask);
+  const held = await get(record, '/v1/groups');
   const groups = Array.isArray(held.groups) ? held.groups : [];
   const lends = [];
   const unlisted = [];
   const seen = new Set();
   for (const group of groups) {
     const id = group.id;
-    const body = await get(
-      `${base}/v1/lends?namespace=${encodeURIComponent(id)}`,
-      record.token,
-      ask,
-    );
+    const body = await get(record, `/v1/lends?namespace=${encodeURIComponent(id)}`);
     for (const lend of body.lent || []) {
       const key = `${lend.person}\u0000${lend.key}\u0000${lend.name}\u0000${lend.origin}`;
       if (seen.has(key)) continue;
@@ -180,7 +156,7 @@ function namesLender({ lends, unlisted }, prefix) {
 async function lendsFor(record, clock, prefix) {
   const seen = await lendsNow(record, { clock });
   if (prefix === undefined || seen.asked || namesLender(seen, prefix)) return seen;
-  note('asked lends again', record.at, `does not name ${prefix}`);
+  note('asked lends again', record.dir, `does not name ${prefix}`);
   return lendsNow(record, { clock, refresh: true });
 }
 
@@ -213,10 +189,10 @@ function handles(lends) {
 }
 
 /// What a lend answers when it is asked by protocol: a model, a tool, or
-/// neither, with the reasons kept. Its origin on this computer answers a
-/// program only with this computer's `token`, which svrngs takes off before
-/// the lend's service is asked (give-session).
-async function probe(origin, token, ask) {
+/// neither, with the reasons kept. Its address on this computer answers a
+/// program only asked as this computer's person, `ask` (svrngs.mjs's
+/// `fetch`), which svrngs takes off before the lend's service is asked.
+async function probe(origin, ask) {
   const base = origin.replace(/\/+$/, '');
   const why = [];
   let couldNotJudge = false;
@@ -226,8 +202,7 @@ async function probe(origin, token, ask) {
     /abort|timeout/i.test(e?.message || '');
   try {
     const res = await ask(`${base}/v1/models`, {
-      redirect: 'error',
-      headers: { accept: 'application/json', ...(token && { authorization: `Bearer ${token}` }) },
+      headers: { accept: 'application/json' },
       signal: AbortSignal.timeout(DISCOVERY_TIMEOUT),
     });
     if (res.ok) {
@@ -242,6 +217,7 @@ async function probe(origin, token, ask) {
         why.push('/v1/models answered no model list');
       }
     } else {
+      await res.body?.cancel();
       why.push(`/v1/models answered ${res.status}`);
     }
   } catch (e) {
@@ -249,7 +225,7 @@ async function probe(origin, token, ask) {
     couldNotJudge = couldNotJudge || timedOut(e);
   }
   try {
-    const tools = await toolsAt(base, DISCOVERY_TIMEOUT, token, ask);
+    const tools = await toolsAt(base, DISCOVERY_TIMEOUT, ask);
     return { protocol: 'tool', tools };
   } catch (e) {
     why.push(`MCP did not answer (${e.message})`);
@@ -263,14 +239,14 @@ async function probe(origin, token, ask) {
 /// and in each refusal.
 const discovered = new Map();
 
-export async function discover(origin, clock = Date.now, token = undefined, ask = fetch) {
+export async function discover(origin, clock, ask) {
   const now = clock();
   const kept = discovered.get(origin);
   if (kept && now - kept.at < FOUND_FOR) {
     note('kept', origin, `looked ${secondsAgo(kept.at, clock)}s ago`, kept.seen.protocol);
     return { ...kept.seen, at: kept.at };
   }
-  const seen = await probe(origin, token, ask);
+  const seen = await probe(origin, ask);
   discovered.set(origin, { at: now, seen });
   note(
     'probed',
@@ -296,17 +272,12 @@ function modelId(lend, model, taken) {
 }
 
 /// What your groups lend now, each lend asked by its protocol.
-export async function list({
-  record = recordAt(),
-  token = tokenAt(),
-  clock = Date.now,
-  fetch: ask = fetch,
-} = {}) {
-  const { lends, unlisted, at } = await lendsNow({ at: record, token, fetch: ask }, { clock });
+export async function list({ record = svrngs(), clock = Date.now } = {}) {
+  const { lends, unlisted, at } = await lendsNow(record, { clock });
   const found = [];
   const used = new Set();
   for (const lend of lends) {
-    const seen = await discover(lend.origin, clock, token, ask);
+    const seen = await discover(lend.origin, clock, record.fetch);
     if (seen.protocol === 'model') {
       seen.models = seen.models.map((m) => {
         const id = modelId(lend, m.id, used);
@@ -371,7 +342,7 @@ async function modelsNow(record, clock, prefix) {
   const unjudged = new Map();
   for (const lend of lends) {
     if (prefix !== undefined && lend.handle !== prefix) continue;
-    const seen = await discover(lend.origin, clock, record.token, record.fetch);
+    const seen = await discover(lend.origin, clock, record.fetch);
     if (seen.protocol !== 'model') {
       if (seen.protocol === 'neither') {
         if (!unjudged.has(lend.handle)) unjudged.set(lend.handle, []);
@@ -452,11 +423,10 @@ function rewriteModel(raw, contentType, model) {
   return { body: Buffer.from(JSON.stringify({ ...asked, model })), model: asked.model };
 }
 
-/// The pantry's answer to one request on its address: `record` is where
-/// this computer's record answers, its token and the fetch that asks it;
-/// `access` the key a caller shows; `request` how a lend is asked, node's
-/// `http.request` when it listens.
-export function handler({ record, access, clock = Date.now, request = http.request }) {
+/// The pantry's answer to one request on its address: `record` is this
+/// computer's svrngs (svrngs.mjs `svrngs`), which asks each lend at its
+/// address; `access` the key a caller shows.
+export function handler({ record, access, clock = Date.now }) {
   return async (req, res) => {
     try {
       if (!authorized(req.headers, access)) {
@@ -464,7 +434,7 @@ export function handler({ record, access, clock = Date.now, request = http.reque
         return fault(res, 401, 'send the key in pantry-token as Authorization: Bearer <key>');
       }
       try {
-        destination(record.at, req.url);
+        destination('http://pantry.localhost', req.url);
       } catch (error) {
         note('refused target', error.message);
         return fault(res, 400, error.message);
@@ -523,46 +493,47 @@ export function handler({ record, access, clock = Date.now, request = http.reque
       delete headers.host;
       delete headers.connection;
       delete headers['content-length'];
-      // A friend's lend never receives the person's own credentials. This
-      // computer's token lets pantry in at the lend's origin, and svrngs
-      // takes it off before the lend's service is asked (give-session).
+      // A friend's lend never receives the person's own credentials:
+      // svrngs.mjs asks as this computer's person with a code of its own,
+      // never svrngs's token, and svrngs takes the code off before the
+      // lend's service is asked.
       delete headers.authorization;
       delete headers.cookie;
       // Caller-controlled headers cannot opt this forwarding program into signing.
       for (const name of Object.keys(headers))
         if (name.startsWith('x-svrngs-')) delete headers[name];
-      if (record.token) headers.authorization = `Bearer ${record.token}`;
       headers['content-length'] = String(written.body.length);
       note('routed', asked.model, '→', lend.handle, lend.name, lend.origin);
-      const target = request(
-        {
-          hostname: upstream.hostname,
-          port: upstream.port,
-          path: `${upstream.pathname}${upstream.search}`,
+      let answer;
+      try {
+        answer = await record.fetch(upstream.href, {
           method: req.method,
           headers,
-        },
-        (answer) => {
-          res.writeHead(answer.statusCode, {
-            ...answer.headers,
-            'x-pantry-person': lend.handle,
-            'x-pantry-lend': lend.name,
-            'x-pantry-looked': `${secondsAgo(at, clock)}s`,
-            'x-pantry-probed': `${secondsAgo(probed, clock)}s`,
-          });
-          answer.pipe(res);
-        },
-      );
-      target.on('error', (e) => {
-        if (res.headersSent) return res.destroy(e);
-        fault(
+          body: written.body,
+        });
+      } catch (e) {
+        return fault(
           res,
           502,
           `${lend.person}'s lend ${lend.name} did not answer, so ${asked.model} cannot be answered`,
           { model: asked.model, lend: lend.name, why: e.message },
         );
+      }
+      // Each header as the lend sent it, a repeated set-cookie included.
+      const head = {};
+      for (const [name, value] of answer.headers)
+        head[name] = name in head ? [head[name], value].flat() : value;
+      res.writeHead(answer.status, {
+        ...head,
+        'x-pantry-person': lend.handle,
+        'x-pantry-lend': lend.name,
+        'x-pantry-looked': `${secondsAgo(at, clock)}s`,
+        'x-pantry-probed': `${secondsAgo(probed, clock)}s`,
       });
-      target.end(written.body);
+      if (!answer.body) return res.end();
+      Readable.fromWeb(answer.body)
+        .on('error', (e) => res.destroy(e))
+        .pipe(res);
       return undefined;
     } catch (e) {
       if (!res.headersSent) fault(res, 500, `the pantry could not answer: ${e.message}`);
@@ -577,23 +548,18 @@ export function handler({ record, access, clock = Date.now, request = http.reque
 /// `pantry-port`, so the address a person pasted into their interface stays;
 /// another program holding it is said by name, never moved past in silence.
 export async function serve({
-  record: at = recordAt(),
-  token = tokenAt(),
+  record = svrngs(),
   port,
   host = '127.0.0.1',
   state,
   access = accessAt(state),
   clock = Date.now,
-  fetch: ask = fetch,
-  request = http.request,
 } = {}) {
   if (!access || !['127.0.0.1', '::1'].includes(host))
     throw new Error('the pantry needs a caller key and a loopback listener');
   const dir = dataDir(state);
   const wanted = port === undefined ? (keptPort(dir) ?? 0) : port;
-  const server = http.createServer(
-    handler({ record: { at, token, fetch: ask }, access, clock, request }),
-  );
+  const server = http.createServer(handler({ record, access, clock }));
   await new Promise((resolve, reject) => {
     server.once('error', (e) => {
       if (e.code === 'EADDRINUSE') {
@@ -625,7 +591,7 @@ async function main(argv) {
   const [verb, ...rest] = argv;
   const options = {};
   for (let i = 0; i < rest.length; i += 1) {
-    if (rest[i] === '--record') options.record = rest[++i];
+    if (rest[i] === '--record') options.record = svrngs(rest[++i]);
     else if (rest[i] === '--port') options.port = Number(rest[++i]);
     else if (rest[i] === '--state') options.state = rest[++i];
     else throw new Error(`unknown option ${rest[i]}`);
@@ -642,7 +608,7 @@ async function main(argv) {
     );
     return;
   }
-  console.error('usage: pantry list | pantry serve [--port N] [--record URL] [--state DIR]');
+  console.error('usage: pantry list | pantry serve [--port N] [--record DIR] [--state DIR]');
   process.exitCode = 2;
 }
 

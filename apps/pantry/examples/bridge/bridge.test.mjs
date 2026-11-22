@@ -7,14 +7,17 @@
 // streams, and both hops are named. A request with no image is untouched.
 // The friend's door counts the person running the bridge, never another.
 // Every server is a handler in this process (../../in-process.mjs), the
-// bridge's, the pantry's, the door's and each lend's, with no listener; a
-// held chunk is a promise the test releases, never a wait.
+// bridge's, the pantry's, the door's and each lend's, with no listener, and
+// the pantry asks the record and each door through a stand-in svrngs
+// (apps/client/standin.mjs); a held chunk is a promise the test releases,
+// never a wait.
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
+import { PORT, standin as svrngsWith } from '../../../client/standin.mjs';
 import { fetch, request, serveAt } from '../../in-process.mjs';
 import { handler } from '../../pantry.mjs';
 import { PROMPT, bridge } from './server.mjs';
@@ -141,14 +144,25 @@ function hash(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
-/** The person's pantry on a record of `lends`, at an origin of its own, as `serve` gives it its listener. */
+/** The person's pantry on a record of `lends`, at an origin of its own, as
+ * `serve` gives it its listener: svrngs answering the record at its API and
+ * each lend's door at the lend's address on it, `lend<n>.localhost`. */
 function place(t, lends) {
-  const held = record(lends);
-  const pantry = serveAt(
-    handler({ record: { at: held.origin, token: '', fetch }, access: KEY, request }),
+  const doors = new Map(lends.map((l, i) => [`lend${i + 1}`, l.origin]));
+  const held = record(
+    lends.map((l, i) => ({ ...l, origin: `http://lend${i + 1}.localhost:${PORT}/` })),
   );
+  const svrngs = svrngsWith(async (req, res) => {
+    const api = req.headers.host === `127.0.0.1:${PORT}`;
+    const to = api ? held.origin : doors.get(req.headers.host.split('.localhost')[0]);
+    const headers = { ...req.headers };
+    delete headers.host;
+    forward(req, res, new URL(req.url, to), await body(req), headers);
+  });
+  const pantry = serveAt(handler({ record: svrngs.client, access: KEY }));
   t.after(() => {
     held.close();
+    svrngs.close();
     pantry.close();
   });
   return { url: pantry.origin.replace(/\/$/, '') };

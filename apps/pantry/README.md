@@ -29,8 +29,10 @@ each lend its protocol.
 annotation, and each person whose computer did not answer. `serve` prints
 one address and the path of its API-key file; keep it running.
 
-The pantry reads this computer's record at `$SVRNGS_DIR/api`, else
-`~/.svrngs/api`, with the token in `token` beside it. `--record URL` names another record, and `--port N` names
+The pantry asks this computer's svrngs, at its data dir `$SVRNGS_DIR`,
+else `~/.svrngs`, through `svrngs.mjs` beside it (a copy of
+`apps/client/svrngs.mjs`), which never sends svrngs's token, to svrngs or
+to a lend. `--record DIR` names another data dir, and `--port N` names
 another port. Without one, `serve` takes the address it took last time,
 kept in your data dir's `pantry-port`, so the address you pasted into your
 interface keeps working after a restart. If another program holds that
@@ -38,7 +40,7 @@ address, `serve` names it and stops; it never moves in silence. It listens
 on 127.0.0.1 only and requires the interface's bearer key on every request:
 loopback alone does not distinguish your program from a contained program.
 The key is made once, owner-only, in `pantry-token` beside `api`; it is
-separate from the record's token and is never sent to a lend. Browser requests
+the pantry's own, not svrngs's token, and is never sent to a lend. Browser requests
 are refused. Requests stay at the selected lend's origin, and credential-bearing
 discovery never follows redirects.
 

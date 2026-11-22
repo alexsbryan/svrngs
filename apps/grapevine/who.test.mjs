@@ -6,7 +6,9 @@
 // "me" is each group's own, as svrngs's GET /v1/groups answers it, never
 // one name for every group. Each law's plant is one line of a copy of
 // server.mjs or relay.mjs, its handler asked in this process (no listener)
-// and svrngs's API a function; a plant that no longer applies fails by name.
+// and svrngs a stand-in in it (apps/client/standin.mjs), which refuses
+// Bearer and lets in only the code made for the connection it comes on; a
+// plant that no longer applies fails by name.
 
 import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -16,6 +18,7 @@ import { Readable } from 'node:stream';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 
+import { standin } from '../client/standin.mjs';
 import { askAct } from './grapevine.js';
 import { keyPair } from './seal.mjs';
 
@@ -31,11 +34,10 @@ const ASK = {
 const OWN = '127.0.0.1:4100';
 
 /** The server in `dir` (this one, or a planted copy) on `config`, its handler in this process. */
-async function serve(dir, config, fetch) {
+async function serve(dir, config, svrngs) {
   const data = mkdtempSync(join(tmpdir(), 'grapevine-who-'));
-  writeFileSync(join(data, 'token'), 'the-token');
   const { grapevine } = await import(pathToFileURL(join(dir, 'server.mjs')).href);
-  return grapevine({ data, token: join(data, 'token'), ...config }, { fetch, address: () => OWN });
+  return grapevine({ data, ...config }, { svrngs, address: () => OWN });
 }
 
 /** A request as any program could send it, its Host and Origin its own to choose. */
@@ -75,9 +77,9 @@ function town() {
 }
 
 /**
- * svrngs's loopback API as a computer standing as Jo in 1400 Page and as
- * Joanna in Waller block, and in The yard as no one: what it answers, and
- * each append it is sent.
+ * svrngs as a computer standing as Jo in 1400 Page and as Joanna in Waller
+ * block, and in The yard as no one: a stand-in answering what it lets in,
+ * and each append it is sent.
  */
 function svrngs() {
   const sam = keyPair();
@@ -108,25 +110,24 @@ function svrngs() {
     yard: [],
   };
   const appended = [];
-  /** svrngs's record API, as a function: an ask without the token refused (give-token). */
-  async function fetch(url, init = {}) {
-    if (init.headers?.authorization !== 'Bearer the-token')
-      return new Response('{"kind":"no_token"}', { status: 401 });
-    const at = new URL(url).searchParams.get('namespace');
-    const path = new URL(url).pathname;
-    if (path === '/v1/groups') return Response.json({ groups });
-    if (path === '/v1/rail/people')
-      return Response.json({
-        people: people[at].map((p) => ({ person: p, person_key: `key-${p}` })),
-      });
-    if (path === '/v1/rail/log') return Response.json({ ops: logs[at], complete: true });
-    if (path === '/v1/rail/append') {
-      appended.push({ group: at, ...JSON.parse(init.body) });
-      return Response.json({ id: `w${appended.length}` });
-    }
-    return new Response('{}', { status: 404 });
-  }
-  return { fetch, appended };
+  const json = (res, value, status = 200) =>
+    res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(value));
+  const record = standin((req, res) => {
+    const url = new URL(req.url, 'http://127.0.0.1');
+    const at = url.searchParams.get('namespace');
+    if (url.pathname === '/v1/groups') return json(res, { groups });
+    if (url.pathname === '/v1/rail/people')
+      return json(res, { people: people[at].map((p) => ({ person: p, person_key: `key-${p}` })) });
+    if (url.pathname === '/v1/rail/log') return json(res, { ops: logs[at], complete: true });
+    if (url.pathname !== '/v1/rail/append') return json(res, {}, 404);
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      appended.push({ group: at, ...JSON.parse(Buffer.concat(chunks).toString()) });
+      json(res, { id: `w${appended.length}` });
+    });
+  });
+  return { record, appended };
 }
 
 const LAWS = {
@@ -195,7 +196,7 @@ const LAWS = {
   /** In record mode "me" is each group's own, as svrngs answers it; never ?as, never one name for all. */
   async '"me" is read per group from svrngs'(dir) {
     const api = svrngs();
-    const s = await serve(dir, { record: 'http://127.0.0.1:4200' }, api.fetch);
+    const s = await serve(dir, { record: api.record.dir }, api.record.client);
     const other = await ask(s, { path: '/?as=Kim' });
     if (other.status !== 400) return `?as=Kim in record mode answered ${other.status}`;
     const home = await ask(s, { path: '/' });

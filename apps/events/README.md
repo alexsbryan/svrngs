@@ -19,8 +19,11 @@ budget (`scripts/lean_check.py`).
   of several groups (`hosted`).
 - `events.test.mjs`, `laws.test.mjs`: what the acts come to, and the laws,
   each caught on a planted fold. Run by `scripts/check.sh`.
-- `store.mjs`: the group's record through this computer's loopback API, or
+- `store.mjs`: the group's record through this computer's svrngs, or
   a file of the app's own for running alone, behind one interface.
+- `svrngs.mjs`: how it asks svrngs as you, never sending svrngs's token: a
+  copy of `apps/client/svrngs.mjs`, byte for byte, as your own app would
+  carry it.
 - `server.mjs`: its own small server and page. The group is the path's,
   checked against who stands in it; the person is the header its config
   names, `x-svrngs-key` under svrngs, or what the proxy in front sets.
@@ -43,6 +46,6 @@ budget (`scripts/lean_check.py`).
 Run alone: `node apps/events/server.mjs config.json`, with
 `{"file": "events.json", "who": "remote-user"}` and `events.json` holding
 `{"groups": {"house": {"name": "The House", "people": ["sam", "bo"]}}}`.
-Under svrngs: `{"record": "<the address the data dir's api file names>",
-"token": "<the data dir's token file>", "who": "x-svrngs-key"}`,
-lent with `svrngs share`.
+Under svrngs: `{"record": "<svrngs's data dir, ~/.svrngs>", "who":
+"x-svrngs-key"}`, lent with `svrngs share`. It reads no token: svrngs.mjs
+asks svrngs as you without ever sending it.

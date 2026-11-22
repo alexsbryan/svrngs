@@ -2,13 +2,16 @@
 // recipe"): an OpenAI-in, OpenAI-out server in front of whisper.cpp's
 // server, so a lend that only knows /inference is still a model by asking.
 // The pantry learns nothing of it. Each server is a handler in this
-// process (../../in-process.mjs), asked with no listener.
+// process (../../in-process.mjs), asked with no listener, and the pantry
+// asks the record and the wrapper's lend through a stand-in svrngs
+// (apps/client/standin.mjs).
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
+import { PORT, standin as svrngsWith } from '../../../client/standin.mjs';
 import { fetch, request, serveAt } from '../../in-process.mjs';
 import { list } from '../../pantry.mjs';
 import { wrapper } from './server.mjs';
@@ -44,14 +47,23 @@ function start({ upstream, model }) {
   return { url: at.origin.replace(/\/$/, ''), close: at.close };
 }
 
+/** svrngs with one group lending `origin` as sam-stt, at its address on it. */
 function record(origin) {
-  return serveAt((req, res) => {
+  const lent = `http://sam-stt.localhost:${PORT}/`;
+  const held = serveAt((req, res) => {
     if (req.url === '/v1/groups') return json(res, 200, { groups: [{ id: 'g', name: 'g' }] });
     if (req.url === '/v1/lends?namespace=g') {
       return json(res, 200, {
         namespace: 'g',
         lent: [
-          { name: 'sam-stt', person: 'sam', origin, kind: 'whisper-server', limit: null, using: 0 },
+          {
+            name: 'sam-stt',
+            person: 'sam',
+            origin: lent,
+            kind: 'whisper-server',
+            limit: null,
+            using: 0,
+          },
         ],
         unanswered: [],
         unheard: [],
@@ -61,6 +73,17 @@ function record(origin) {
     }
     json(res, 404, { error: 'not me' });
   });
+  const svrngs = svrngsWith(async (req, res) => {
+    const to = new URL(req.url, req.headers.host === `127.0.0.1:${PORT}` ? held.origin : origin);
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const { host, ...headers } = req.headers;
+    const sent = chunks.length ? Buffer.concat(chunks) : undefined;
+    const answer = await fetch(to, { method: req.method, headers, body: sent });
+    res.writeHead(answer.status, Object.fromEntries(answer.headers));
+    res.end(Buffer.from(await answer.arrayBuffer()));
+  });
+  return { client: svrngs.client, close: () => (held.close(), svrngs.close()) };
 }
 
 function hash(path) {
@@ -100,7 +123,7 @@ test('a pantry lists and routes the wrapper as it is, and its own files do not c
 
   const files = ['pantry.mjs', 'mcp.mjs'].map((f) => `${PANTRY}${f}`);
   const before = files.map(hash);
-  const found = await list({ record: held.origin, fetch });
+  const found = await list({ record: held.client });
   assert.equal(found.lends[0].protocol, 'model');
   assert.deepEqual(
     found.lends[0].models.map((m) => m.as),

@@ -89,12 +89,15 @@ canary changed.
   computer's svrngs says it is in each group.
 - `store.mjs`: Events' store, unchanged: a group's record through svrngs,
   or a file of the app's own.
+- `svrngs.mjs`: how it asks svrngs as you, never sending svrngs's token: a
+  copy of `apps/client/svrngs.mjs`, byte for byte.
 - `kinds.mjs`, `kinds/`: the kinds there are.
 - The tests, which `scripts/check.sh` runs: `grapevine.test.mjs` and
   `laws.test.mjs` (each law caught on a planted change), `relay.test.mjs`,
   `who.test.mjs`, `page.test.mjs` (Chromium and WebKit), `canary.test.mjs`.
 
 Under svrngs each person runs their own, on their own computer:
-`{"record": "<their svrngs's api>", "token": "<the token file beside it>",
-"data": "<a folder>"}` as its config.
+`{"record": "<their svrngs's data dir, ~/.svrngs>", "data": "<a folder>"}`
+as its config. It reads no token: svrngs.mjs asks svrngs as them without
+ever sending it.
 It isn't lent to the group.

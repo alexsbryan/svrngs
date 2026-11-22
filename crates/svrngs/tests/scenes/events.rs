@@ -154,12 +154,10 @@ async fn events(engine: Engine) {
     // The app on Sam's computer, lent to both.
     let dir = sam.home.parent().unwrap().to_path_buf();
     let config = dir.join("app.json");
-    let record = std::fs::read_to_string(sam.home.join(".svrngs/api")).unwrap();
-    std::fs::write(
-        &config,
-        json!({ "record": record.trim().trim_end_matches('/'), "token": sam.home.join(".svrngs/token"), "who": "x-svrngs-key" }).to_string(),
-    )
-    .unwrap();
+    // svrngs's data dir, where the app asks svrngs as Sam through its
+    // svrngs.mjs, which never sends the token (apps/events/README.md).
+    let said = json!({ "record": sam.home.join(".svrngs"), "who": "x-svrngs-key" });
+    std::fs::write(&config, said.to_string()).unwrap();
     let mut server = tokio::process::Command::new("node")
         .arg(app(&dir).join("server.mjs"))
         .arg(&config)

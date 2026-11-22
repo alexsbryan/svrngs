@@ -27,5 +27,12 @@ group shares, in a database svrngs doesn't give apps yet
 
 **Notes for a program you already run**: `jellyfin/`, `holyarrs/`.
 
+**For your own program**: `client/svrngs.mjs`, the one way a program on
+your computer asks svrngs as you, never sending svrngs's token. Copy it
+beside your code and `import { ask } from './svrngs.mjs'`; pantry, Events
+and Grapevine each carry a copy, byte for byte. A shell or Python script
+asks through `svrngs ask <route> [<json>]` instead.
+
 **For svrngs's own checks**: `web-conformance/`, `on-air/`, `tap/`,
-`pinned.mjs`.
+`pinned.mjs`, and `client/standin.mjs`, a svrngs stand-in for an app's
+tests.

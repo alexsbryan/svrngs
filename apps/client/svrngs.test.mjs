@@ -1,13 +1,13 @@
 // svrngs.mjs, the one way a program asks svrngs ("Never send the key",
 // svrngs V1.13.3): its proof and its code held to svrngs's vectors; the
 // token never sent, to svrngs or to anything squatting svrngs's address;
-// and each request on the connection its code was made for, proved again
-// when that connection is gone.
+// each request on the connection its code was made for, proved again
+// when that connection is gone; and every copy in apps/ this file's bytes.
 // Each against a stand-in svrngs in memory (standin.mjs), and the
 // connection's real ends over a real socket in one test, the seam's own.
 
 import assert from 'node:assert/strict';
-import { rmSync } from 'node:fs';
+import { readFileSync, readdirSync, rmSync } from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
 import { join } from 'node:path';
@@ -16,6 +16,7 @@ import { mock, test } from 'node:test';
 import { PORT, TOKEN, dataDir, standin, wire } from './standin.mjs';
 import { PROVE_WITHIN, code, proof, svrngs } from './svrngs.mjs';
 
+const APPS = new URL('..', import.meta.url).pathname;
 const json = (res, status, value) =>
   res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(value));
 const groups = (req, res) =>
@@ -258,3 +259,19 @@ for (const host of ['127.0.0.1', '::1']) {
     assert.equal(stand.seen.proofs, 1);
   });
 }
+
+// One decider: each app that is copied whole (pantry's template, the
+// scenes' copies of events and grapevine) carries this file beside its
+// code, as a person's own program does, byte for byte.
+test('every svrngs.mjs in apps/ is this one', () => {
+  const home = readFileSync(join(APPS, 'client/svrngs.mjs'));
+  const copies = readdirSync(APPS, { recursive: true })
+    .filter(
+      (f) =>
+        /(^|\/)svrngs\.mjs$/.test(f) && !f.includes('node_modules') && f !== 'client/svrngs.mjs',
+    )
+    .sort();
+  assert.ok(copies.length > 0, 'never-ran: no copy of svrngs.mjs in apps/');
+  const drifted = copies.filter((f) => !readFileSync(join(APPS, f)).equals(home));
+  assert.deepEqual(drifted, [], 'copy apps/client/svrngs.mjs over each');
+});

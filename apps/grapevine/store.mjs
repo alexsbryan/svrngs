@@ -16,39 +16,44 @@
 
 import { randomBytes } from 'node:crypto';
 import { readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
+import { svrngs } from './svrngs.mjs';
 
 /**
- * The group's record, through the loopback API of the computer this app runs
- * on (`api`, `http://127.0.0.1:<port>`, as the data dir's `api` file names
- * it), asked with `token`, what the `token` file beside it holds
- * (give-token). A person is named by their first key, `person_key`, which the door
- * tells the app as `x-svrngs-key` (crates/svrngs-node/src/door.rs:123-127).
+ * svrngs on this computer, as the config's `record` names its data dir
+ * (`~/.svrngs`), asked through svrngs.mjs, which never sends its token.
+ * A config that names svrngs's address or its `token` file, as before
+ * svrngs V1.13.3, is refused, saying what to write instead.
  */
-export function record(api, token, ask = fetch) {
-  const shown = { authorization: `Bearer ${token}` };
+export function svrngsOf(config) {
+  if (config.token !== undefined || /^https?:/.test(String(config.record)))
+    throw new Error(
+      `\`record\` names svrngs's data dir now, as {"record": "${join(homedir(), '.svrngs')}"}, and no \`token\`: svrngs.mjs asks svrngs as you without ever sending its token`,
+    );
+  if (typeof config.record !== 'string')
+    throw new Error("the config names no `record`, svrngs's data dir, and no `file` of its own");
+  return svrngs(config.record.replace(/^~(?=$|\/)/, homedir()));
+}
+
+/**
+ * The group's record, through `here`, svrngs on the computer this app
+ * runs on (svrngs.mjs's, `svrngsOf`). A person is named by their first key,
+ * `person_key`, which the door tells the app as `x-svrngs-key`
+ * (crates/svrngs-node/src/door.rs:123-127).
+ */
+export function record(here) {
   async function call(path, body) {
-    const sent =
-      body === undefined
-        ? { headers: shown }
-        : {
-            method: 'POST',
-            headers: { ...shown, 'content-type': 'application/json' },
-            body: JSON.stringify(body),
-          };
-    let res;
     try {
-      res = await ask(`${api}${path}`, sent);
+      return await here.ask(path, body);
     } catch (e) {
+      if (e.status === undefined)
+        throw new Error(`this computer's svrngs did not answer: ${e.message}`);
       throw new Error(
-        `this computer's svrngs did not answer at ${api}: ${e.cause?.code ?? e.message}`,
+        `this computer's svrngs refused ${path.split('?')[0]}: ${e.status} ${e.answer?.error ?? JSON.stringify(e.answer)}`,
       );
     }
-    const out = await res.json().catch(() => null);
-    if (!res.ok)
-      throw new Error(
-        `this computer's svrngs refused ${path.split('?')[0]}: ${res.status} ${out?.error ?? JSON.stringify(out)}`,
-      );
-    return out;
   }
   const at = (door, group) => `/v1/rail/${door}?namespace=${encodeURIComponent(group)}`;
   return {

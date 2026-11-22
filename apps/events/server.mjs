@@ -8,8 +8,8 @@
 //
 // Listens on 127.0.0.1 and prints `{"port": N}`. No dependency. The config:
 //
-//   {"record": "http://127.0.0.1:<port>"}   the group's record, through this
-//                                           computer's loopback API, or
+//   {"record": "<svrngs's data dir>"}       the group's record, through this
+//                                           computer's svrngs (~/.svrngs), or
 //   {"file": "<path>"}                      a file of its own (store.mjs)
 //   "who": "<header>"                       the header naming the person
 //                                           asking: under svrngs the door's
@@ -60,23 +60,15 @@ import {
   reduce,
   validate,
 } from './events.js';
-import { file, record } from './store.mjs';
+import { file, record, svrngsOf } from './store.mjs';
 
-/** The token svrngs's record asks of this app, from the file the config names
- * (`token`, beside svrngs's `api` file; give-token). */
-function tokenOf(config) {
-  if (typeof config.token !== 'string')
-    throw new Error(
-      "the config names no `token`, the file beside svrngs's api file that its record asks for",
-    );
-  return readFileSync(config.token, 'utf8').trim();
-}
 /**
- * Events on `config`: its request handler and its store. `fetch` reaches
- * svrngs's record API when the config names a `record`.
+ * Events on `config`: its request handler and its store. `svrngs` asks
+ * svrngs's record when the config names a `record` (svrngs.mjs; a
+ * stand-in's in a test).
  */
-export function events(config, { fetch: ask = fetch } = {}) {
-  const store = config.file ? file(config.file) : record(config.record, tokenOf(config), ask);
+export function events(config, { svrngs } = {}) {
+  const store = config.file ? file(config.file) : record(svrngs ?? svrngsOf(config));
   const WHO = (config.who ?? 'x-svrngs-key').toLowerCase();
   // Every decision branch, at debug (AGENTS.md 1), when EVENTS_DEBUG is set.
   const trace = process.env.EVENTS_DEBUG

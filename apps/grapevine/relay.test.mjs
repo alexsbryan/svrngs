@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 
+import { standin } from '../client/standin.mjs';
 import * as relay from './relay.mjs';
 import { KINDS, TILE_SAW } from './scene.mjs';
 import { file } from './store.mjs';
@@ -162,22 +163,22 @@ test("each of the loop's laws catches the change planted to break it", async () 
 });
 
 test("a group whose people can't be read keeps svrngs's answer, and says so", async () => {
-  const asked = [];
-  const svrngs = async (url, init) => {
-    asked.push([url, init.headers.authorization]);
-    return Response.json({ groups: [{ id: 'page', name: '1400 Page', person: 'Jo' }] });
-  };
+  const svrngs = standin((req, res) =>
+    res
+      .writeHead(200, { 'content-type': 'application/json' })
+      .end(JSON.stringify({ groups: [{ id: 'page', name: '1400 Page', person: 'Jo' }] })),
+  );
   const traced = [];
   const store = { people: () => Promise.reject(new Error('the record is away')) };
-  const held = await relay.heldBy(
-    'http://127.0.0.1:4200',
-    'the-token',
-    store,
-    (what, fields) => traced.push({ what, ...fields }),
-    svrngs,
+  const held = await relay.heldBy(svrngs.client, store, (what, fields) =>
+    traced.push({ what, ...fields }),
   )();
   assert.deepEqual(held, [{ id: 'page', name: '1400 Page', me: 'Jo' }]);
-  assert.deepEqual(asked, [['http://127.0.0.1:4200/v1/groups', 'Bearer the-token']]);
+  assert.deepEqual(
+    svrngs.seen.asked.map((a) => a.url),
+    ['/v1/groups'],
+  );
+  assert.deepEqual(svrngs.seen.refused, []);
   assert.ok(
     traced.some((t) => t.group === 'page' && t.error === 'the record is away'),
     JSON.stringify(traced),

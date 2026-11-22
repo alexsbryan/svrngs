@@ -64,12 +64,14 @@ the app's (`apps/events/nouns.txt`, `scripts/vocab_check.py`).
 on Sam's computer, with Node.js installed. In a terminal, in that copy:
 
 ```
-echo "{\"record\": \"$(cat ~/.svrngs/api)\", \"token\": \"$HOME/.svrngs/token\", \"who\": \"x-svrngs-key\"}" > ~/events.json
+echo "{\"record\": \"$HOME/.svrngs\", \"who\": \"x-svrngs-key\"}" > ~/events.json
 node apps/events/server.mjs ~/events.json
 ```
 
-The first writes the app's settings, as the run wrote them (`run.py`
-`app`); the second prints the app's number, `{"port":65216,"store":"record"}`
+The first writes the app's settings: svrngs's data dir, where the app
+asks svrngs as Sam without ever sending its token (the run, before
+V1.13.3, wrote svrngs's address and its token file there instead; `run.py`
+`app`). The second prints the app's number, `{"port":65216,"store":"record"}`
 in the run (`apps/events/server.mjs:316`). Leave that window open: the app
 runs while it is. In a second terminal, with that number:
 

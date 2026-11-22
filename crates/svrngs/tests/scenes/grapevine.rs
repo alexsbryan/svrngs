@@ -62,10 +62,10 @@ fn app(dir: &std::path::Path) -> std::path::PathBuf {
 /// `who`'s grapevine started on their computer, as step 4's two lines
 /// start it: its address, and the program, killed on drop.
 async fn started(app: &std::path::Path, who: &Person) -> (String, tokio::process::Child) {
-    let record = std::fs::read_to_string(who.home.join(".svrngs/api")).unwrap();
+    // svrngs's data dir, where grapevine asks svrngs as them through its
+    // svrngs.mjs, which never sends the token (apps/grapevine/README.md).
     let config = who.home.join("grapevine.json");
-    let token = who.home.join(".svrngs/token");
-    let said = json!({ "record": record.trim(), "token": token, "data": who.home });
+    let said = json!({ "record": who.home.join(".svrngs"), "data": who.home });
     std::fs::write(&config, said.to_string()).unwrap();
     let mut server = tokio::process::Command::new("node")
         .arg(app.join("server.mjs"))

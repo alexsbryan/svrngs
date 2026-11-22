@@ -8,16 +8,15 @@
 // said "Nothing posted yet." and dWeb's answers shown as if all were here.
 // Beside it, against the same stand-in, two people called bo (keys-names).
 
-// The server's handler is asked in this process and svrngs's API is a
-// function: no listener, no process.
+// The server's handler is asked in this process, and svrngs is a stand-in
+// in it (apps/client/standin.mjs): it refuses Bearer and lets in only the
+// code made for the connection it comes on. No listener, no process.
 
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { test } from 'node:test';
 
+import { standin } from '../client/standin.mjs';
 import { events } from './server.mjs';
 
 const E = '0123456789abcdef';
@@ -30,17 +29,11 @@ const PARTIAL = {
 };
 const PARTLY = /may not have reached this computer yet/;
 
-/** The token the stand-in asks for, as svrngs asks for its `token` file's. */
-const TOKEN = 'the-token';
-
-/** svrngs's record API as the store reads it (store.mjs `record`), a
- * function: an ask without the token refused, as svrngs refuses it
- * (give-token). */
+/** svrngs's record API as the store reads it (store.mjs `record`), what
+ * the stand-in answers once it lets a request in. */
 function svrngs(GROUPS = PARTIAL) {
-  return async (url, init = {}) => {
-    if (init.headers?.authorization !== `Bearer ${TOKEN}`)
-      return new Response('{"kind":"no_token"}', { status: 401 });
-    const at = new URL(url);
+  return (req, res) => {
+    const at = new URL(req.url, 'http://127.0.0.1');
     const g = GROUPS[at.searchParams.get('namespace')];
     const answer =
       at.pathname === '/v1/groups'
@@ -54,18 +47,15 @@ function svrngs(GROUPS = PARTIAL) {
           : at.pathname === '/v1/rail/log' && g
             ? { ops: g.ops, complete: g.complete }
             : null;
-    return Response.json(answer ?? { error: 'no such thing here' }, { status: answer ? 200 : 404 });
+    res.writeHead(answer ? 200 : 404, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(answer ?? { error: 'no such thing here' }));
   };
 }
 
 /** The events server on that API, its handler asked as a browser at the door would. */
 function served(api) {
-  const dir = mkdtempSync(join(tmpdir(), 'events-partial-'));
-  writeFileSync(join(dir, 'token'), TOKEN);
-  const app = events(
-    { record: 'http://127.0.0.1:4200', token: join(dir, 'token') },
-    { fetch: api },
-  );
+  const record = standin(api);
+  const app = events({ record: record.dir }, { svrngs: record.client });
   return (path, { method = 'GET', headers = {}, body } = {}) => {
     const req = Readable.from(body === undefined ? [] : [Buffer.from(body)]);
     req.method = method;

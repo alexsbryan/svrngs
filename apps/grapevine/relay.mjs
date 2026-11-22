@@ -9,7 +9,7 @@
 //     ask, carry, reply, yes, no, withdraw, list
 //                     what the page's routes do, each refused in its words
 //   heldIn(store, name)       file mode: the groups `name` stands in
-//   heldBy(api, token, store) record mode: each group's "me" as svrngs answers it
+//   heldBy(here, store)       record mode: each group's "me" as svrngs answers it
 //   loop(people)              each person's pass every RELAY_EVERY
 //
 // **The loop** (§5), every RELAY_EVERY for each person: read each of their
@@ -106,17 +106,13 @@ export function heldIn(store, name) {
  * Record mode: every group this computer holds, with this computer's
  * person in it as svrngs answers it (`GET /v1/groups`'s `person`), checked
  * against the group's people; null where it answers none (§13.3). Never a
- * name from the config.
+ * name from the config. `here` is svrngs on this computer (svrngs.mjs).
  */
-export function heldBy(api, token, store, trace = debug, ask = fetch) {
+export function heldBy(here, store, trace = debug) {
   return async () => {
     let groups;
     try {
-      const res = await ask(`${api}/v1/groups`, {
-        headers: { authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
-      ({ groups } = await res.json());
+      ({ groups } = await here.ask('/v1/groups'));
     } catch (e) {
       trace('refused: svrngs did not say who is here', { error: e.message });
       throw new Refused(

@@ -80,12 +80,13 @@ It says *"You're in Waller block, as Kim."* and keeps running.
 **4. In each window, the same two lines:**
 
 ```
-echo "{\"record\": \"$(cat $HOME/.svrngs/api)\", \"token\": \"$HOME/.svrngs/token\", \"data\": \"$HOME\"}" > $HOME/grapevine.json
+echo "{\"record\": \"$HOME/.svrngs\", \"data\": \"$HOME\"}" > $HOME/grapevine.json
 node apps/grapevine/server.mjs $HOME/grapevine.json
 ```
 
-The first tells grapevine where that person's svrngs answers, and where
-to keep their own file of sealing keys. The second starts it and prints
+The first tells grapevine that person's svrngs data dir, where it asks
+svrngs as them without ever sending its token, and where to keep their
+own file of sealing keys. The second starts it and prints
 its address, `{"port":63219,"at":"http://127.0.0.1:63219/",…}`. Open
 that address in a browser: that person's page. It answers only on this
 computer, and only that person's own page. There's no terminal after

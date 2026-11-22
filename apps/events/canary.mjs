@@ -15,11 +15,10 @@
 // differ, names each and what it says.
 
 import { randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { isDeepStrictEqual as same } from 'node:util';
 
 import { CAME, COMING, EVENT, actsOf, fold } from './events.js';
+import { svrngs } from './svrngs.mjs';
 
 const [group, second, samAt, alexAt, boAt, cyAt] = process.argv.slice(2);
 if (!cyAt) {
@@ -28,14 +27,9 @@ if (!cyAt) {
   );
   process.exit(2);
 }
-/** The record on `name`, whose svrngs data dir is `dir`: the loopback
- * address its `api` file names, asked with the token its `token` file holds
- * (give-token). */
-const on = (name, dir) => ({
-  name,
-  at: readFileSync(join(dir, 'api'), 'utf8').trim(),
-  token: readFileSync(join(dir, 'token'), 'utf8').trim(),
-});
+/** The record on `name`, whose svrngs data dir is `dir`, asked as its
+ * person through svrngs.mjs, which never sends the token. */
+const on = (name, dir) => ({ name, svrngs: svrngs(dir) });
 const SAM = on("Sam's computer", samAt);
 const ALEX = on("Alex's computer", alexAt);
 const BO = on("Bo's computer", boAt);
@@ -46,23 +40,12 @@ const PEOPLE = { [group]: ['alex', 'bo', 'cy', 'sam'], [second]: ['di', 'sam'] }
 const WAIT_MS = 10_000;
 
 async function call(computer, door, at, body) {
-  const url = `${computer.at}/v1/rail/${door}?namespace=${encodeURIComponent(at)}`;
-  const shown = { authorization: `Bearer ${computer.token}` };
-  const sent =
-    body === undefined
-      ? { headers: shown }
-      : {
-          method: 'POST',
-          headers: { ...shown, 'content-type': 'application/json' },
-          body: JSON.stringify(body),
-        };
-  const res = await fetch(url, sent);
-  const out = await res.json();
-  if (!res.ok)
-    throw new Error(
-      `${computer.name} refused ${door} in ${at}: ${res.status} ${JSON.stringify(out)}`,
-    );
-  return out;
+  const route = `/v1/rail/${door}?namespace=${encodeURIComponent(at)}`;
+  try {
+    return await computer.svrngs.ask(route, body);
+  } catch (e) {
+    throw new Error(`${computer.name}, in ${at}: ${e.message}`);
+  }
 }
 
 const written = [];
