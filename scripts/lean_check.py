@@ -981,12 +981,21 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (5ed069a8..200d0ad3), and the cap comes down to it. B so far: +563 from
 # slice A's 25,171. Drawn so far: +1,217 (A +654, B +563). Left: +233 and
 # +80.
+# (2026-11-22) A pass that unwinds complexity, outside the database's files
+# (d5a96cd8..f8135755: who serves a lend decided once a request, our relays'
+# order in one place, legacy declarations found by Audience, the home page's
+# member places named once, a group's section, Copy and UPDATE), lands at
+# 25,717 and 8,670, and the caps come down to it: -17 and -23. Then the
+# outside review's fixes to slice B's sync draw the pool's +233 whole
+# (svrn-docs app-state-diligence/b-sync-fixes-2026-11-22/, estimated +195
+# to +275); a build past it comes back to the operator. From 25,717: the cap
+# to 25,951. Drawn so far: +1,450 (A +654, B +796). Left: none, and +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25735,
+    ".": 25951,
 
-    "js": 8694,
+    "js": 8671,
 
     "swift": 1,
 }
