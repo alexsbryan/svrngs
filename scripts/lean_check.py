@@ -969,10 +969,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # form.rs's one-line `refused` wrapper (-3, 58573586) and found no unused
 # item else. From 25,205: the cap to 25,691. Drawn so far: +1,173 (A +654,
 # B +519). Left: +277 and +80.
+# (2026-11-22) Slice B's sync draws +50 more: the core and svrngs-db landed
+# at +435 (5ed069a8, 7828cb73), the node's route and round at +94 more, so the
+# half lands near +529 against the +483 estimated. rustfmt lays the core's
+# signed message and svrngs-db's struct literals out a field a line, and
+# waiting sets are held and judged again (about 30). The cuts left would
+# undo a design choice: waiting sets refetched each round, or a page's reads
+# kept on the runtime's threads. The cap to 25,741. Drawn so far: +1,223
+# (A +654, B +569). Left: +227 and +80.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25691,
+    ".": 25741,
 
     "js": 8694,
 
