@@ -8,7 +8,10 @@
 //!   device and holds its mark (C4);
 //! - `cut`: a removed device's set relayed after its removal, invariant 6's
 //!   "every set of its that reaches any copy is taken", whose plant is the
-//!   spike's refusal of a device that doesn't stand now (spike README, Q3).
+//!   spike's refusal of a device that doesn't stand now (spike README, Q3);
+//! - `outranked`: a member's marks adopted after a call, which vouch for the
+//!   sets it dropped as outranked, whose plant is a refusal one copy alone
+//!   makes, the same standing-now rule.
 //!
 //! Each case runs under the rule svrngs keeps, on any copy. The seeded runs
 //! are judged by class (`sim::Class`): copies that split, and copies that
@@ -49,8 +52,9 @@ struct Net<R> {
     sync: Sync,
     copies: Vec<R>,
     books: Vec<Book>,
-    /// The sets each copy took.
+    /// The sets each copy took, and those it refused.
     took: Vec<BTreeSet<SetId>>,
+    refused: Vec<BTreeSet<SetId>>,
     gone: BTreeSet<Site>,
 }
 
@@ -61,6 +65,7 @@ impl<R: Replica> Net<R> {
             copies: (1..=n).map(|i| make(Site::of(i))).collect(),
             books: vec![Book::default(); usize::from(n)],
             took: vec![BTreeSet::new(); usize::from(n)],
+            refused: vec![BTreeSet::new(); usize::from(n)],
             gone: BTreeSet::new(),
         }
     }
@@ -78,6 +83,7 @@ impl<R: Replica> Net<R> {
             .sync
             .ingest(&mut self.copies[to], &mut self.books[to], call, &self.gone);
         self.took[to].extend(got.taken);
+        self.refused[to].extend(got.refused);
         call.sets.iter().map(ChangeSet::id).collect()
     }
 
@@ -105,13 +111,23 @@ impl<R: Replica> Net<R> {
         }
     }
 
-    /// Each set of these at or below a copy's mark for its device, or counted
-    /// above it, that the copy never took.
+    /// Each of these sets that a copy's mark counts and the copy neither took
+    /// nor refused, whose values would change what it took (`sets` holds all
+    /// it took).
     fn passed(&self, c: usize, sets: &[&ChangeSet]) -> Vec<String> {
+        let took: Vec<&ChangeSet> = sets
+            .iter()
+            .copied()
+            .filter(|s| self.took[c].contains(&s.id()))
+            .collect();
+        let here = reference::state(TABLES, took.iter().copied());
         sets.iter()
-            .map(|s| s.id())
-            .filter(|id| self.books[c].holds(*id) && !self.took[c].contains(id))
-            .map(named)
+            .filter(|s| {
+                let id = s.id();
+                self.books[c].holds(id) && !self.took[c].contains(&id) && !self.refused[c].contains(&id)
+            })
+            .filter(|s| reference::state(TABLES, took.iter().copied().chain([**s])) != here)
+            .map(|s| named(s.id()))
             .collect()
     }
 }
@@ -302,14 +318,74 @@ pub fn cut<R: Replica>(sync: Sync, make: &dyn Fn(Site) -> R) -> (String, Result<
     (said, verdict(wrong))
 }
 
+/// A set outranked by one a copy refused (seed 772 of the gate's, under the
+/// spike's standing-now rule, cut to its moves): E (site 2) adds the cat at
+/// pos 1 (2/1), which clocks each of its columns. D (site 1) takes it and
+/// sets each of them, the cat to 2 with word milk and x 1 (1/1), outranking
+/// it. X (site 3) takes both, so it keeps 1/1 and drops 2/1, nothing of which
+/// stands there. D is removed. Then Y (site 4) calls X first, then X, Y and E
+/// meet by calls. A member's marks adopted vouch for what it dropped as
+/// outranked by what it sends, so Y must take what X sends: every copy ends on
+/// the reference over both, D's cat, and no copy's marks pass a set whose
+/// values it lacks.
+pub fn outranked<R: Replica>(sync: Sync, make: &dyn Fn(Site) -> R) -> (String, Result<(), String>) {
+    const D: usize = 0;
+    const E: usize = 1;
+    const X: usize = 2;
+    const Y: usize = 3;
+    let mut net = Net::new(sync, 4, make);
+    let e1 = net.write(E, &[add(cat(), 1)], "E adds the cat");
+    net.take(D, &Call::carried(&e1));
+    let every = Op::Update {
+        table: "magnets",
+        key: cat(),
+        set: vec![
+            ("pos", Val::Integer(2)),
+            ("word", Val::text("milk")),
+            ("x", Val::Integer(1)),
+        ],
+    };
+    let d1 = net.write(D, &[every], "D sets each of the cat's columns");
+    net.take(X, &Call::carried(&e1));
+    net.take(X, &Call::carried(&d1));
+    let kept: Vec<String> = net.copies[X].kept().iter().map(|s| named(s.id())).collect();
+    net.gone.insert(net.copies[D].site());
+    net.call(X, Y);
+    let mut said = vec![format!(
+        "  X keeps {kept:?}; after Y's call to X, Y's marks {}",
+        marks(&net.books[Y])
+    )];
+    net.meet(&[X, Y, E]);
+    let want = reference::state(TABLES, [&e1, &d1]);
+    said.push(format!("  the reference over 2/1 and 1/1: {}", board(&want)));
+    let mut wrong = Vec::new();
+    for (c, name) in [(X, "X"), (Y, "Y"), (E, "E")] {
+        let state = net.copies[c].state();
+        let passed = net.passed(c, &[&e1, &d1]);
+        said.push(format!(
+            "  {name}: {}, its marks {}, its mark passing {passed:?}",
+            board(&state),
+            marks(&net.books[c])
+        ));
+        if !passed.is_empty() {
+            wrong.push(format!("{name}'s marks pass {passed:?}, which it lacks"));
+        }
+        if state != want {
+            wrong.push(format!("{name} is not the reference's"));
+        }
+    }
+    (said.join("\n"), verdict(wrong))
+}
+
 type CaseFn<R> = fn(Sync, &dyn Fn(Site) -> R) -> (String, Result<(), String>);
 
 /// A case by its name.
 fn case<R: Replica>(name: &str) -> CaseFn<R> {
-    let cases: [(&str, CaseFn<R>); 3] = [
+    let cases: [(&str, CaseFn<R>); 4] = [
         ("two sets carried", carried::<R>),
         ("a refused set", refused::<R>),
         ("a removed device's set", cut::<R>),
+        ("a set outranked by one refused", outranked::<R>),
     ];
     cases
         .into_iter()
@@ -427,6 +503,28 @@ fn the_spike_s_standing_now_splits_on_a_removed_device_s_set() {
     for (who, v) in &verdicts[..3] {
         let e = v.as_ref().expect_err(who);
         assert!(e.contains("X and Y split"), "{who}: {e}");
+    }
+}
+
+/// A member's marks adopted vouch only for what this copy holds or holds
+/// outranked, under §4's marks, where every copy refuses alike: on model
+/// copies, live copies and pairs. Its plant is the spike's standing-now rule,
+/// which Y alone applies (below).
+#[test]
+fn a_member_s_marks_adopted_pass_no_set_whose_values_this_copy_lacks() {
+    let f = failed(&on_every_copy("a set outranked by one refused", Variant::Marks));
+    assert!(f.is_empty(), "{f:?}");
+}
+
+/// The plant of the test above, kept: Y refuses D's move, adopts X's mark for
+/// E, and so never takes E's add, which X dropped as outranked by the move. E
+/// stands, and its write is lost at Y.
+#[test]
+fn a_refusal_one_copy_alone_makes_lets_adopted_marks_pass_a_standing_device_s_set() {
+    let verdicts = on_every_copy("a set outranked by one refused", Variant::Standing);
+    for (who, v) in &verdicts[..3] {
+        let e = v.as_ref().expect_err(who);
+        assert!(e.contains("Y's marks pass [\"2/1\"], which it lacks"), "{who}: {e}");
     }
 }
 
