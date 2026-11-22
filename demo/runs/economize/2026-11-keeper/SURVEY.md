@@ -72,7 +72,10 @@ Left: the struct literals rustfmt lays out field by field (`Flow::open`,
 
 ## The cuts
 
-Each its own commit, its caps lowered to one past where it lands.
+Each its own commit, named by its file (`git log --oneline --
+demo/runs/economize/2026-11-keeper`), its caps lowered to one past where
+it lands.
 
-| Commit | File | Lines | All but JavaScript | JavaScript |
-|---|---|---:|---:|---:|
+| File | Cut | All but JavaScript | JavaScript |
+|---|---:|---:|---:|
+| door/bound.rs | 6 (`bound` 1 of the 2 thought) | 24,511 | 8,693 |

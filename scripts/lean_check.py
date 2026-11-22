@@ -930,10 +930,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # another Bearer as no code left unused: `oidc::provider::bearer`, one
 # caller's, read in userinfo (5), and `holds_the_token`'s Bearer arm (2).
 # No raise was available; lowered to where it lands.
+# Then the keeper's economizing pass before svrngs-renew, each cut lowering
+# its caps to one past where it lands
+# (demo/runs/economize/2026-11-keeper/SURVEY.md): door/bound.rs 6, 24,511.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24518,
+    ".": 24512,
 
     "js": 8694,
 

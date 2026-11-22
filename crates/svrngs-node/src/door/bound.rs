@@ -21,8 +21,7 @@ use tokio::net::UdpSocket;
 
 use crate::door::Using;
 use crate::iroh::{Duplex, Net};
-use crate::lend::LendName;
-use crate::lend::{Hold, Lend, Raw};
+use crate::lend::{Hold, Lend, LendName, Raw};
 use crate::uid::{Conn, Unread};
 use eudoxia_community::binding::{self, Held, Read, Took};
 
@@ -72,9 +71,10 @@ pub(crate) type Judged<'a> = (&'a dyn Net, &'a Path, &'a Lend);
 pub(crate) async fn bound((net, dir, lend): Judged<'_>) -> Result<Bound, Unsent> {
     let at = reached(lend)?;
     let taken = tokio::time::timeout(CONNECT_WITHIN, net.service(at)).await;
-    let Unchecked(stream, conn) = taken
-        .unwrap_or_else(|_| Err(std::io::ErrorKind::TimedOut.into()))
-        .map_err(away(lend))?;
+    // Past it, `Elapsed` is read as `std::io::ErrorKind::TimedOut` (tokio's
+    // `From<Elapsed> for std::io::Error`).
+    let taken = taken.unwrap_or_else(|e| Err(e.into()));
+    let Unchecked(stream, conn) = taken.map_err(away(lend))?;
     let read = net.read_port(Raw::Tcp, at.port(), Some(conn)).await;
     decided(dir, lend, read).map(|()| Bound(stream))
 }
@@ -86,9 +86,8 @@ pub async fn here(dir: &Path, lend: &Lend) -> Result<Bound, Unsent> {
     let Unchecked(stream, conn) = dial(at).await.map_err(away(lend))?;
     let port = at.port();
     let read = tokio::task::spawn_blocking(move || crate::uid::port(Raw::Tcp, port, Some(conn)));
-    let read = read
-        .await
-        .unwrap_or(Err(Unread::Failed("the read stopped")));
+    let stopped = Err(Unread::Failed("the read stopped"));
+    let read = read.await.unwrap_or(stopped);
     decided(dir, lend, read).map(|()| Bound(stream))
 }
 
@@ -158,13 +157,10 @@ fn hold(dir: &Path, lend: &Lend) {
             }
         })
     };
-    let mut kept = held();
-    for _ in 0..20 {
-        if !matches!(kept, Err(crate::lend::LendError::Busy { .. })) {
-            break;
-        }
+    let (mut kept, mut tries) = (held(), 0);
+    while tries < 20 && matches!(kept, Err(crate::lend::LendError::Busy { .. })) {
         std::thread::sleep(Duration::from_millis(1));
-        kept = held();
+        (kept, tries) = (held(), tries + 1);
     }
     tracing::warn!(target: "door", lend = %lend.name, ?kept, "door: held until its lender approves again — a program not approved was seen where the door reaches it");
 }
