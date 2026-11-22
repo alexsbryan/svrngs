@@ -60,11 +60,12 @@ beside the authority replacement, ahead of the economizing:
   `scripts/lean_check.py`, 0c6276ec). Where each line goes, and its size,
   is svrn-docs `APP_STATE.md` §10;
 - in slices, each ending in a demo of Magnets (svrn-docs `MAGNETS_BUILD.md`
-  §3, 2026-11-19). Other work has since spent 958 of the ceiling's 1,700
-  lines, and the operator kept the room reserved, to be recovered first
-  (2026-11-19). So the first slice, Magnets on one laptop, fits the 742
-  left. The pass that recovers the 958 runs beside it and comes before the
-  second slice, where the lid closes;
+  §3, 2026-11-19). The ceiling's room has since been spent: the caps sit at
+  the count (`scripts/lean_check.py`). So each slice asks for its own lines
+  after a pass over the files it touches (operator, 2026-11-21: "Raise per
+  slice"). The judge of the copies came first, a reference model and a
+  seeded simulator of deliveries in `crates/svrngs-db/tests/w1/`. Next is
+  Magnets on one laptop;
 - to the warranty in svrn-docs `APP_STATE.md` §11. Each promise has its proof in the
   gate: copies that agree under a seeded simulator of every delivery, no
   acknowledged write lost, only the right device writing, every call
