@@ -44,7 +44,8 @@ def alex(cmd, timeout=600): return root(f"systemd-run -M alex@.host --user --wai
 
 
 def terminal(cmd, bound=300):
-    """`cmd` typed in Sam's terminal (ssh -tt, a login), each "Type y" answered y."""
+    """`cmd` typed in Sam's terminal (ssh -tt, a login): each "Type y" answered
+    y, and share's password question Enter alone, for none."""
     typed.append(cmd)
     p = subprocess.Popen(["ssh", *SSH, "-tt", "sam@127.0.0.1", cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
@@ -54,8 +55,11 @@ def terminal(cmd, bound=300):
             chunk = os.read(p.stdout.fileno(), 65536)
             if not chunk: break
             said += chunk
-        if said.count(b"Type y") > answered:
-            answered += 1; time.sleep(0.3); p.stdin.write(b"y\n"); p.stdin.flush()
+        asks = said.count(b"Type y") + said.count(b"(Enter alone for none)")
+        if asks > answered:
+            last = max(said.rfind(b"Type y"), said.rfind(b"(Enter alone for none)"))
+            reply = b"y\n" if said[last:].startswith(b"Type y") else b"\n"
+            answered += 1; time.sleep(0.3); p.stdin.write(reply); p.stdin.flush()
     if p.poll() is None: p.kill()
     code = p.wait(30)
     text = said.decode(errors="replace").replace("\r", "")
@@ -83,8 +87,24 @@ def ssh_up(bound=180):
     return False
 
 
+def qemu():
+    return subprocess.Popen(["qemu-system-x86_64", "-enable-kvm", "-cpu", "host", "-smp", "4", "-m", "4096", "-display", "none",
+                             "-drive", f"file={W / 'disk.qcow2'},if=virtio", "-cdrom", str(W / "seed.iso"),
+                             "-netdev", f"user,id=n0,hostfwd=tcp:127.0.0.1:{PORT}-:22", "-device", "virtio-net-pci,netdev=n0",
+                             "-serial", f"file:{W / 'serial.log'}"], stdin=subprocess.DEVNULL)
+
+
 def vm():
-    for f in ("disk.qcow2", "seed.iso", "key", "key.pub"): (W / f).unlink(missing_ok=True)
+    """The VM, its cloud-init done. The first time, the disk just after
+    cloud-init is kept as prepared.qcow2 (its packages fetched, nothing of
+    the run's yet), and a run again starts from a copy of it."""
+    (W / "disk.qcow2").unlink(missing_ok=True)
+    if (W / "prepared.qcow2").exists():
+        shutil.copy(W / "prepared.qcow2", W / "disk.qcow2"); say("disk", from_="prepared.qcow2")
+        q = qemu()
+        if not ssh_up(300): sys.exit("the VM never answered ssh")
+        return q
+    for f in ("seed.iso", "key", "key.pub"): (W / f).unlink(missing_ok=True)
     subprocess.run(["qemu-img", "create", "-q", "-f", "qcow2", "-F", "qcow2", "-b", os.environ["BASE"], str(W / "disk.qcow2"), "20G"], check=True)
     subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", "keeper-demo-vm", "-f", str(W / "key")], check=True)
     seed = W / "seed"; seed.mkdir(exist_ok=True)
@@ -92,10 +112,15 @@ def vm():
     shutil.copy(HERE / "stage/meta-data", seed / "meta-data")
     subprocess.run(["genisoimage", "-quiet", "-output", str(W / "seed.iso"), "-volid", "cidata", "-joliet", "-rock",
                     str(seed / "user-data"), str(seed / "meta-data")], check=True)
-    return subprocess.Popen(["qemu-system-x86_64", "-enable-kvm", "-cpu", "host", "-smp", "4", "-m", "4096", "-display", "none",
-                             "-drive", f"file={W / 'disk.qcow2'},if=virtio", "-cdrom", str(W / "seed.iso"),
-                             "-netdev", f"user,id=n0,hostfwd=tcp:127.0.0.1:{PORT}-:22", "-device", "virtio-net-pci,netdev=n0",
-                             "-serial", f"file:{W / 'serial.log'}"], stdin=subprocess.DEVNULL)
+    q = qemu()
+    if not ssh_up(300): sys.exit("the VM never answered ssh")
+    said = root("cloud-init status --wait --long", 1200).strip().splitlines()
+    say("cloud-init", said=[l for l in said if not l.startswith(".")])
+    root("systemctl poweroff", 10); q.wait(120)
+    shutil.copy(W / "disk.qcow2", W / "prepared.qcow2"); say("disk", kept="prepared.qcow2")
+    q = qemu()
+    if not ssh_up(300): sys.exit("the VM never answered ssh")
+    return q
 
 
 def collect(tag):
@@ -131,8 +156,6 @@ def main():
     say("start", head=head, base=os.environ["BASE"], model=os.environ["MODEL"])
     q = vm()
     try:
-        if not ssh_up(300): sys.exit("the VM never answered ssh")
-        say("cloud-init", said=root("cloud-init status --wait --long", 900).strip().splitlines()[-3:])
         root("mkdir -p /root/stage")
         files = [BIN / "svrngs", BIN / "svrngs-keeper", *[p for p in (HERE / "stage").iterdir() if p.name != "user-data.in"]]
         subprocess.run(["scp", *SCP, *map(str, files), "root@127.0.0.1:/root/stage/"], check=True)

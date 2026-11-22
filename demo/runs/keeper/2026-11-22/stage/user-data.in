@@ -8,6 +8,6 @@ users:
     ssh_authorized_keys: ["@KEY@"]
   - {name: sam, uid: "1000", lock_passwd: true, shell: /bin/bash, ssh_authorized_keys: ["@KEY@"]}
   - {name: alex, uid: "1001", lock_passwd: true, shell: /bin/bash}
-packages: [llama-cpp, python3]
+packages: [llama-cpp, python3, polkit]
 runcmd:
   - [loginctl, enable-linger, alex]

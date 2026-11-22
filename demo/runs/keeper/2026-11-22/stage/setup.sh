@@ -11,7 +11,7 @@ install -d -o alex -g alex /home/alex/asks /home/alex/.config/systemd/user
 install -o alex -g alex ask.py /home/alex/ask.py
 install -o alex -g alex -m644 alex-asks.service /home/alex/.config/systemd/user/
 systemctl daemon-reload && systemctl enable --now svrngs-relay
-loginctl enable-linger alex; loginctl show-user sam -p Linger; loginctl show-user alex -p Linger
+loginctl enable-linger alex; echo "lingering: $(ls /var/lib/systemd/linger)"
 A="systemd-run -M alex@.host --user --wait --pipe -q"
 $A systemctl --user daemon-reload
 $A systemctl --user enable --now svrngs.service
