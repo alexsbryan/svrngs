@@ -83,9 +83,25 @@ $ svrngs unshare coder            # Stop lending: coder keeps running for you
 Branched from main at `e5d9813b`. Lean: core 3,465/3,539, non-JS
 24,517/24,517, JS 8,693/8,693. `apps/` is uncounted (lean_check.py:973).
 
+## Estimates
+
+These are the figures the launch approved, in code lines as
+`scripts/lean_check.py` counts them:
+
+| Row | Product | Counted in svrngs | Tests | Sessions |
+|---|---|---|---|---|
+| keeper-move | 0 new (1,951 moved) | 0 | 0 new | 1 (done) |
+| keeper-units | ~525 (195 forked) | 0 | ~270 | 1–2 |
+| keeper-promote | ~350 | 0 | ~250 | 2 |
+| svrngs-economize | cuts | ratchets | 0 | 1 |
+| eudoxia-cgroups | ~15 (eudoxia) | 0 | ~60 | 1 |
+| svrngs-renew | ~180 Rust, ~30 JS | the same, less the cuts | ~250 | 2 |
+| keeper-demo | ~150 (run driver) | 0 | — | 1–2 |
+| REVIEW-audit-keeper | repairs | 0 | — | 1 |
+
 ## Rows
 
-- [ ] keeper-move — depends [] — ONE UNIT, behaviour kept:
+- [x] keeper-move 909bd73b — depends [] — ONE UNIT, behaviour kept:
   - `apps/svrngs-keeper`, a library crate in the workspace. Give's
     `card.rs`, `check.rs`, `podman.rs`, `runtime.rs` and `machine.rs` move
     into it unchanged, with only their paths fixed.
@@ -158,13 +174,48 @@ Branched from main at `e5d9813b`. Lean: core 3,465/3,539, non-JS
   - a planted copy that needs an environment variable: rolled back, with
     the original answering again.
 
-- [ ] svrngs-renew — depends [] — ONE UNIT, svrngs's half (K1+K2 of
-  KEEP_SHARING_BUILD):
+- [ ] svrngs-economize — depends [] — ONE UNIT, behaviour kept: the
+  economizing pass over the code svrngs-renew extends:
+  `crates/svrngs-node/src/door/bound.rs`, `share.rs`, `lend.rs`, `uid.rs`,
+  `home/page/lent-row.js` and `lend-change.js`.
+  - Preserving cuts only, each its own commit, each ratcheting the caps
+    in `scripts/lean_check.py` down to one past where it lands.
+  - Record the baseline, the candidates and each cut in
+    `demo/runs/economize/2026-11-keeper/SURVEY.md`.
+
+  read: AGENTS.md "Done"; svrn-docs rings/current/ECONOMIZING.md; the six
+  files.
+  check: each cut's focused tests (`cargo test -p svrngs-node --lib door`,
+  `share`, `lend`, `uid`; `node web/tests/run.mjs unit`); fresh lean
+  counts.
+
+- [ ] eudoxia-cgroups — depends [] — ONE UNIT, in `~/dev/eudoxia` on
+  branch `keeper-cgroups`, under eudoxia's own AGENTS.md:
+  - `binding::Chosen` gains a cgroup form, every socket on the address
+    made in one of a set of cgroups, beside the process form, with the
+    same `Refused::Another` when one isn't.
+  - `check` is unchanged: what took a connection is still judged by the
+    approved cgroups.
+  - Then svrngs on this branch takes it through
+    `[patch."https://github.com/alexsbryan/eudoxia"]` with
+    `eudoxia-community = { path = "../eudoxia/community" }`, in its own
+    commit here. Compile only; nothing uses it yet.
+
+  read: eudoxia community/src/binding.rs and community/tests/binding.rs;
+  svrn-docs local-hosting-spike/probe/src/main.rs `renew`.
+  check: eudoxia's tests, each new case planted:
+  - every socket in the set: approved;
+  - one outside it: `Another`;
+  - none on the address: `Nothing`;
+  - the process form unchanged.
+
+  `cargo check --workspace` here with the patch.
+
+- [ ] svrngs-renew — depends [svrngs-economize, eudoxia-cgroups] — ONE
+  UNIT, svrngs's half (K1+K2 of KEEP_SHARING_BUILD):
   - **Name the job.** `Answer::Job` from the socket's cgroup path and the
     unit's `Description`: the approval says "the systemd unit
     svrngs-keeper-coder.service", not `pasta.avx2`.
-  - **eudoxia.** `Chosen::Cgroups`, every socket in the set, as its own
-    commit on eudoxia, and svrngs pins that rev.
   - **The grant.** `Terms::keep`, written when an approval's holders lie
     in one non-transient user unit (unless `--ask-after-restart`): the
     unit plus a hash of its files under `~/.config`.
@@ -175,10 +226,9 @@ Branched from main at `e5d9813b`. Lean: core 3,465/3,539, non-JS
     traces every branch.
   - **The row.** `Hold::Changed` and its words.
 
-  Allowance: +180 Rust, +30 JS. An economizing pass over door/bound.rs,
-  share.rs, lend.rs, uid.rs and lent-row.js comes first, and its cuts
-  ratchet the caps. Any shortfall is packaged NEEDS_HUMAN for the
-  operator's raise.
+  Allowance: CHARTER's envelope, at most +180 Rust and +30 JS over the
+  post-economize counts, landed with a `Size:` paragraph. Past it, stop
+  with needs-human.
 
   read: door/bound.rs; share.rs approve; lend.rs Terms, Hold, Answer;
   eudoxia binding.rs; the spike's probe renew.
@@ -204,7 +254,15 @@ Branched from main at `e5d9813b`. Lean: core 3,465/3,539, non-JS
   check: every case passed, failed, could-not-judge or never-ran, named
   in its run.
 
-- [ ] REVIEW-audit-keeper — depends [keeper-demo] — the unchanged full
+- [ ] HUMAN-eudoxia-push — depends [svrngs-renew] — the operator:
+  - Push eudoxia's `keeper-cgroups` commit, then say its rev.
+  - A worker then re-pins `eudoxia-community` in
+    crates/svrngs-node/Cargo.toml to that rev and removes the `[patch]`,
+    in its own commit. The gate fetches eudoxia from its public repository
+    (scripts/gate/README.md), so the audit needs it pushed.
+  - No worker ticks this row or pushes.
+
+- [ ] REVIEW-audit-keeper — depends [keeper-demo, HUMAN-eudoxia-push] — the unchanged full
   `scripts/check.sh` in the svrngs-gate container, exit 0. The ported-from
   lines are listed by `scripts/ports.py`. CSP and the trust floor are
   unchanged, and the counts are within each allowance.

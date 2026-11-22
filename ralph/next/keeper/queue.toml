@@ -1,0 +1,20 @@
+# Serial loop. Launched by the operator, 2026-11-22: "let's kick off work"
+# (CHARTER.md, "Direction and authorization"):
+# python3 ~/dev/commonwealth-ai/scripts/ralph.py run \
+#   --workdir ~/dev/svrngs-keeper --queue keeper --max-stall 3
+label = "svrngs-keeper"
+session_timeout = 7200
+worker_bin = "/home/alexbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+# The explicit final audit owns the full gate. No duplicate cadence audits.
+
+[models]
+# As relay-commons, the operator's latest choice for svrngs queues
+# (2026-11-19: "I want claude opus workers to finish out this program"):
+# Opus 5.5 at high in every role.
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"
+review_variant = "high"
+resolve_variant = "high"
