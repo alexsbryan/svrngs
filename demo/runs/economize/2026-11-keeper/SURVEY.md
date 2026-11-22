@@ -79,3 +79,4 @@ it lands.
 | File | Cut | All but JavaScript | JavaScript |
 |---|---:|---:|---:|
 | door/bound.rs | 6 (`bound` 1 of the 2 thought) | 24,511 | 8,693 |
+| share.rs | 16 (`sent` 3, `fits` 1, as thought) | 24,495 | 8,693 |

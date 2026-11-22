@@ -47,10 +47,9 @@ type Answered = Option<(u16, Vec<u8>)>;
 pub(crate) type On = SendRequest<String>;
 
 use crate::door::bound::{Bound, Unsent};
-use crate::lend::SendRow;
 use crate::lend::{
-    self, Answer, Approved, Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source,
-    Upload,
+    self, Answer, Approved, Audience, Lend, LendError, LendName, Program, Raw, RefusedPath,
+    SendRow, Source, Upload,
 };
 use crate::uid::{Answering, Unread};
 use eudoxia_community::binding::{self, Chosen, Held, Refused, Took};
@@ -196,9 +195,8 @@ pub fn fits(word: &Program, text: &str) -> Result<(), String> {
     let door = ["keeps", "readers", "sends"];
     let bytes = said.contains(&"carries") && said.iter().any(|c| door.contains(c));
     let kept = kept_of(word, text);
-    let hidden = sends_of(word, text)
-        .into_iter()
-        .find(|s| kept.iter().any(|k| k.covers(s.path())));
+    let covered = |s: &SendRow| kept.iter().any(|k| k.covers(s.path()));
+    let hidden = sends_of(word, text).into_iter().find(covered);
     tracing::debug!(target: "share", %word, ?said, bytes, ?hidden, "share: a group's programs file, each row in the closed set, or carries: beside a door's term, or a send to a path it keeps");
     if let Some(row) = hidden {
         return Err(format!(
@@ -314,12 +312,8 @@ pub fn shared(data_dir: &Path, name: &LendName) -> Result<(Lend, NonZeroU16), Sh
 
 /// `approved` kept as the lend `name`'s, nothing else of it changed
 /// (SHARE_BINDING §5.4).
-pub fn reapproved(
-    data_dir: &Path,
-    name: &LendName,
-    approved: Approved,
-) -> Result<(), ShareRefusal> {
-    let kept = crate::lend::mutate(data_dir, name, |l| l.terms.approved = Some(approved));
+pub fn reapproved(dir: &Path, name: &LendName, approved: Approved) -> Result<(), ShareRefusal> {
+    let kept = crate::lend::mutate(dir, name, |l| l.terms.approved = Some(approved));
     tracing::debug!(target: "share", lend = %name, ?kept, "share: what answers on its port approved, only its approval changed");
     match kept {
         Ok(true) => Ok(()),
@@ -392,10 +386,8 @@ pub fn approve(
 /// a page shows answering, which approving it sends back, so what changed
 /// since is refused (SHARE_BINDING_REVIEWS §6 #6).
 pub fn token(approved: &Approved) -> String {
-    let shown = Approved {
-        held: false,
-        ..approved.clone()
-    };
+    let mut shown = approved.clone();
+    shown.held = false;
     let bytes = serde_json::to_vec(&shown).expect("an approval serializes");
     hex::encode(ring::digest::digest(&ring::digest::SHA256, &bytes))
 }
@@ -449,9 +441,7 @@ pub fn unrecognized(kind: &Program) -> Option<String> {
     }
     let near = rows().find(|(_, known, _)| slipped(known.as_str(), kind.as_str()));
     tracing::debug!(target: "share", kind = %kind, near = ?near.as_ref().map(|(_, k, _)| k.as_str()), "share: a program the table does not know, its lender told");
-    let mean = near.map_or(String::new(), |(_, known, _)| {
-        format!(" Did you mean {known}?")
-    });
+    let mean = near.map_or(String::new(), |(_, k, _)| format!(" Did you mean {k}?"));
     Some(format!(
         "svrngs doesn't know {kind}, so your friends can reach every part of it that its own sign-in allows.{mean}"
     ))
@@ -496,9 +486,8 @@ pub fn kept_of(kind: &Program, terms: &str) -> Vec<RefusedPath> {
 /// where an app may send to a lend of it once its lender says yes, which
 /// [`lend_of`] keeps and `svrngs share` asks at a terminal.
 pub fn sends_of(kind: &Program, terms: &str) -> Vec<SendRow> {
-    says(kind, "sends", terms)
-        .filter_map(|s| SendRow::parse(s).ok())
-        .collect()
+    let rows = says(kind, "sends", terms);
+    rows.filter_map(|s| SendRow::parse(s).ok()).collect()
 }
 
 /// How a service of `kind` signs each person in, if [`PROGRAMS`] or
@@ -580,9 +569,8 @@ pub fn key_header_fits(header: &str) -> bool {
     let name = header.to_ascii_lowercase();
     let door = name.starts_with(crate::door::IDENTITY_PREFIX)
         || crate::door::HOP_BY_HOP.contains(&name.as_str());
-    crate::declared::valid_header_name(&name)
-        && !door
-        && !matches!(name.as_str(), "cookie" | "host" | "content-length")
+    let never = matches!(name.as_str(), "cookie" | "host" | "content-length");
+    crate::declared::valid_header_name(&name) && !door && !never
 }
 
 /// The header a key its lender pastes goes in, and how (`{}` the key), if
@@ -656,18 +644,15 @@ pub(crate) async fn sent<const MOST: usize>(
     asked: Builder,
     body: String,
 ) -> Answered {
-    let asked = asked
-        .header("host", format!("127.0.0.1:{port}"))
-        .body(body)
-        .ok()?;
+    let host = format!("127.0.0.1:{port}");
+    let asked = asked.header("host", host).body(body).ok()?;
     let answer = on.send_request(asked).await.ok()?;
     let status = answer.status().as_u16();
     let body = http_body_util::Limited::new(answer.into_body(), MOST);
-    let body = http_body_util::BodyExt::collect(body)
-        .await
-        .map(|b| b.to_bytes());
-    let body = body.ok().or((MOST < usize::MAX).then(Default::default))?;
-    Some((status, body.to_vec()))
+    let body = http_body_util::BodyExt::collect(body).await;
+    let body = body.ok().map(|b| b.to_bytes().to_vec());
+    let body = body.or((MOST < usize::MAX).then(Default::default))?;
+    Some((status, body))
 }
 
 /// The most of an answer [`sent`] reads from what hasn't proved itself:
@@ -785,9 +770,8 @@ pub fn lend_of(
         LendName::parse(kind.as_str()).expect("a kind is a lend's name, by one rule")
     });
     // The word as `fits` holds it, one of these two, kept as long as the refusal.
-    let carries = ["tcp", "udp"]
-        .into_iter()
-        .find(|w| says(&kind, "carries", terms).any(|c| c == *w));
+    let said = |w: &&str| says(&kind, "carries", terms).any(|c| c == *w);
+    let carries = ["tcp", "udp"].into_iter().find(said);
     if carries.is_some_and(|c| raw.is_none_or(|r| !r.said().eq_ignore_ascii_case(c))) {
         tracing::debug!(target: "share", kind = %kind, carries, "share: refused — its terms carry it as bytes, and it is lent otherwise");
         return Err(ShareRefusal::Carries(kind, carries.unwrap_or_default()));
