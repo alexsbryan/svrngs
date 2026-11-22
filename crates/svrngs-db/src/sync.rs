@@ -38,7 +38,7 @@ use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, Transaction
 use serde::{Deserialize, Serialize};
 use svrngs_core::set::{At, Nonce, Site, site};
 
-use crate::parse::{Change, Valid, parse};
+use crate::parse::{Change, Valid, fit, parse};
 use crate::{Db, Refused, fault};
 
 /// A set's seq at its database, and a mark, a have or a twin's place: from 1
@@ -265,7 +265,10 @@ impl Db {
     /// Within a write's transaction on `conn`: its `crsql_changes` rows at
     /// this database's site, sealed as one set at the transaction's version,
     /// signed by this computer's key, kept and counted; none when it changed
-    /// nothing. Refused, loudly, at a version this site's sets already hold.
+    /// nothing. Refused, loudly, at a version this site's sets already hold;
+    /// and, in words for the page, where the parse every other copy runs
+    /// would refuse the set, so the writer's copy never takes what no other
+    /// copy would.
     pub(crate) fn seal(&self, conn: &Connection) -> Result<Option<Seq>, Refused> {
         let seq: Seq = conn
             .query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0))
@@ -301,7 +304,8 @@ impl Db {
         if made.is_empty() {
             return Ok(None);
         }
-        let changes = postcard::to_allocvec(&made).expect("changes are written in memory");
+        let made = fit(made, &self.tables).map_err(Refused::Unkept)?;
+        let changes = postcard::to_allocvec(&made.0).expect("changes are written in memory");
         let sig = self
             .at((&self.device, &self.nonce, seq, &self.schema))
             .sign(&self.key, &changes);

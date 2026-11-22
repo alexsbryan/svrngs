@@ -61,6 +61,7 @@ mod parse;
 mod sync;
 pub use form::FORM;
 use form::Table;
+pub use parse::Unfit;
 pub use svrngs_core::SigningKey;
 pub use sync::{Ask, Call, Device, Hex, Place, Seq, Set, Sig, Took};
 
@@ -103,6 +104,9 @@ pub enum Refused {
     /// This computer keeps no such database.
     #[error("This computer keeps no database of this app in this group.")]
     NotHere,
+    /// A write whose set no other computer would take: why, and what to do.
+    #[error("This write isn't kept, since no other computer would take it: {0}.")]
+    Unkept(Unfit),
 }
 
 impl Refused {
@@ -117,6 +121,7 @@ impl Refused {
             Self::Unbuilt => (500, "unbuilt"),
             Self::Fault(_) => (500, "fault"),
             Self::NotHere => (404, "not-here"),
+            Self::Unkept(_) => (422, "unkept"),
         }
     }
 }

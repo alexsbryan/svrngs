@@ -5,6 +5,8 @@
 //! `col_version` and causal length from 1 to 2^53. A set that doesn't parse
 //! is refused for good, the same on every copy, and counted, so it is
 //! fetched once; a set written under a schema this copy doesn't hold waits.
+//! The write's own seal parses its set with the same parser, so the writer's
+//! copy refuses what every other copy would.
 //!
 //! Its own binary: before the parse, the first case here stopped the whole
 //! test process inside cr-sqlite, which is built to abort on a panic.
@@ -22,6 +24,7 @@ const INTS: &str = "CREATE TABLE t (id INTEGER PRIMARY KEY NOT NULL, v TEXT);";
 const PAIRS: &str = "CREATE TABLE p (a TEXT NOT NULL, b INTEGER NOT NULL, v TEXT, PRIMARY KEY (a, b));";
 const KEPT: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT NOT NULL DEFAULT '');";
 const BUDGET: usize = 4 << 20;
+const BOUND: i64 = 1 << 53;
 
 fn key(n: u8) -> SigningKey {
     SigningKey::from_bytes(&[n; 32])
@@ -372,4 +375,55 @@ fn every_key_cr_sqlite_packs_from_a_write_is_taken() {
         let all = format!("SELECT * FROM {t} ORDER BY id");
         assert_eq!(rows(&h, &all), rows(&to, &all), "table {t}");
     }
+}
+
+/// **The write's own seal refuses what every other copy would refuse**, and
+/// tells the page why: a cell whose `col_version` stands at 2^53, the most
+/// any copy takes, can't take another write, so a write to it is refused
+/// whole, with words, and nothing is sealed. The copies stay together, and
+/// a write to another row is kept. A BLOB key cr-sqlite couldn't read back
+/// on another computer is refused at the write too, in words. Plant: the
+/// seal not parsing its set (the write answers `{count: 1}`).
+#[test]
+fn a_write_past_the_bound_is_refused_at_the_write_in_words() {
+    let dir = tempfile::tempdir().unwrap();
+    let base = written(dir.path(), ("board", CARDS), card("c1", "milk"));
+    let at = remade(&base, &key(9), "board", |c| {
+        c.iter_mut()
+            .filter(|c| c.cid == "title")
+            .for_each(|c| c.col_version = BOUND)
+    });
+    let (a, b) = (db(dir.path(), 1, ("board", CARDS)), db(dir.path(), 2, ("board", CARDS)));
+    for to in [&a, &b] {
+        assert_eq!(took(to, std::slice::from_ref(&at)), [Took::Taken]);
+    }
+    let marks = a.ask().unwrap().marks;
+    let refused = a
+        .write(&card("c1", "fixed"))
+        .expect_err("past the bound, refused at the write");
+    let words = refused.to_string();
+    assert!(words.contains("title"), "the words name the column: {words}");
+    assert_eq!(a.ask().unwrap().marks, marks, "nothing sealed");
+    assert_eq!(rows(&a, "SELECT title FROM cards"), json!([{ "title": "milk" }]));
+    a.write(&card("c2", "eggs")).unwrap();
+    let sent = a.missing(&b.ask().unwrap(), BUDGET).unwrap();
+    assert_eq!(
+        b.ingest(&sent, &all)
+            .unwrap()
+            .into_iter()
+            .map(|(_, t)| t)
+            .collect::<Vec<_>>(),
+        [Took::Taken]
+    );
+    let both = "SELECT id, title FROM cards ORDER BY id";
+    assert_eq!(rows(&a, both), rows(&b, both), "the copies agree");
+
+    const BLOBS: &str = "CREATE TABLE b (id BLOB PRIMARY KEY NOT NULL, v TEXT);";
+    let h = db(dir.path(), 9, ("blobs", BLOBS));
+    let blob = |n: usize| base64::Engine::encode(&base64::engine::general_purpose::STANDARD, vec![7u8; n]);
+    let key = |n| json!([{ "insert": "b", "row": { "id": { "base64": blob(n) }, "v": "x" } }]);
+    let refused = h.write(&key(128)).expect_err("a BLOB key cr-sqlite reads back signed");
+    assert!(refused.to_string().contains("BLOB key"), "{refused}");
+    assert_eq!(refused.said(), (422, "unkept"));
+    h.write(&key(127)).unwrap();
 }
