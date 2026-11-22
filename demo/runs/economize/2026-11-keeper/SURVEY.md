@@ -58,7 +58,7 @@ answer, refusal, trace and wait is as before. Counted after `cargo fmt` and
 | uid.rs | `read` (Linux) | the end's test named first | 2 |
 | uid.rs | `sockets` (Linux) | the bound-listing kernel's test named, still read only when reached | 1 |
 | uid.rs | `peer`, `lists_bound` | the line's and the number's reads named first | 2 |
-| uid.rs | `linux::read` | its answer's type named; the states by `match` on `Raw`; `procs` by `bool::then` | 7 |
+| uid.rs | `linux::read` | its answer's type named; the states by `match` on `Raw`; `procs` by `bool::then` (clippy's `obfuscated_if_else` refused it: the inodes named instead, so the `if` fits a line) | 7 |
 | uid.rs | `linux::procs` | a link's inode read in two steps; a file's link named | 7 |
 | uid.rs | `diag::dump` | the kernel's address named | 1 |
 | lend-change.js | `CHANGE` `io` | a change's answer, read again, written once for `change` and `approve` | 4 |
@@ -87,3 +87,17 @@ it lands.
 | uid.rs | 20 (`linux::read` 6, `linux::procs` 7) | 24,475 | 8,693 |
 | lend-change.js | 3 (`again`, 1 short of the 4 thought) | 24,475 | 8,690 |
 | lent-row.js | 8 (as thought) | 24,475 | 8,682 |
+
+## Close
+
+`python3 scripts/lean_check.py` at the last cut, exit 0:
+
+```
+  the core (svrngs-core)     3,465   most   3,539
+  all code but JavaScript   24,475   most  24,475
+  JavaScript                 8,682   most   8,682
+```
+
+All but JavaScript −42 (bound.rs 6, share.rs 16, uid.rs 20), JavaScript
+−11, of the 46 and 12 the candidates thought. svrngs-renew's envelope
+(+180 Rust, +30 JavaScript, CHARTER "Budget") is measured from these.
