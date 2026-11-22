@@ -164,7 +164,7 @@ pub const ACCEPT_WITHIN: std::time::Duration = std::time::Duration::from_millis(
 /// caller reads it off its runtime.
 pub fn owner(conn: Conn) -> Owner {
     let (at, to) = (conn.peer, conn.local);
-    let owner = read(at, to);
+    let owner = read(at, to).unwrap_or_else(Owner::Unjudged);
     tracing::debug!(target: "uid", %at, %to, ?owner, "uid: whose the socket at this end is");
     owner
 }
@@ -226,10 +226,8 @@ fn same(a: SocketAddr, b: SocketAddr) -> bool {
     reason = "the reader's wait for an accept, at the edge"
 )]
 fn waited<T, E>(mut look: impl FnMut() -> Result<Option<T>, E>) -> Result<Option<T>, E> {
-    let (began, mut wait) = (
-        std::time::Instant::now(),
-        std::time::Duration::from_millis(1),
-    );
+    let began = std::time::Instant::now();
+    let mut wait = std::time::Duration::from_millis(1);
     loop {
         if let Some(found) = look()? {
             return Ok(Some(found));
@@ -249,20 +247,17 @@ fn waited<T, E>(mut look: impl FnMut() -> Result<Option<T>, E>) -> Result<Option
 /// whoever held it while a new connection may take its four numbers. None,
 /// or two accounts, could not be judged.
 #[cfg(target_os = "linux")]
-fn read(at: SocketAddr, to: SocketAddr) -> Owner {
+fn read(at: SocketAddr, to: SocketAddr) -> Result<Owner, &'static str> {
     let states = !(1 << 6);
-    let listed = match diag::dump(Raw::Tcp, states, at.port()) {
-        Ok(listed) => listed,
-        Err(why) => return Owner::Unjudged(why),
-    };
+    let listed = diag::dump(Raw::Tcp, states, at.port())?;
     let mut uids = listed
         .iter()
         .filter(|d| same(d.local, at) && same(d.peer, to))
         .map(|d| d.uid);
     match uids.next() {
-        None => Owner::Unjudged("no socket at that end on this computer"),
-        Some(uid) if uids.all(|u| u == uid) => Owner::Uid(uid),
-        Some(_) => Owner::Unjudged("sockets of more than one account at that end"),
+        None => Err("no socket at that end on this computer"),
+        Some(uid) if uids.all(|u| u == uid) => Ok(Owner::Uid(uid)),
+        Some(_) => Err("sockets of more than one account at that end"),
     }
 }
 
@@ -493,10 +488,8 @@ mod linux {
         let pids =
             listed("/proc".into()).filter_map(|d| d.file_name().to_str()?.parse::<u32>().ok());
         let read = |pid| {
-            Some((
-                pid,
-                stat(pid).map(|(parent, start)| (parent, start, holds(pid).collect()))?,
-            ))
+            let (parent, start) = stat(pid)?;
+            Some((pid, (parent, start, holds(pid).collect())))
         };
         pids.filter_map(read).collect()
     }
@@ -677,18 +670,13 @@ mod diag {
             }
             at += (usize::from(u16::from_ne_bytes([attr[0], attr[1]])).max(4) + 3) & !3;
         }
-        let cookie = u64::from(word(m, 44)?) | u64::from(word(m, 48)?) << 32;
-        let (local, peer) = (
-            SocketAddr::new(ip(8)?, port(4)?),
-            SocketAddr::new(ip(24)?, port(6)?),
-        );
         Some(Diag {
             state: *m.get(1)?,
-            local,
-            peer,
+            local: SocketAddr::new(ip(8)?, port(4)?),
+            peer: SocketAddr::new(ip(24)?, port(6)?),
             uid: word(m, 64)?,
             inode: word(m, 68)?.into(),
-            cookie,
+            cookie: u64::from(word(m, 44)?) | u64::from(word(m, 48)?) << 32,
             cgroup,
             v6only,
         })
@@ -702,17 +690,14 @@ mod diag {
 /// The end at `at`, connected to `to`, among this account's processes,
 /// looked for again until [`ACCEPT_WITHIN`] has passed.
 #[cfg(target_os = "macos")]
-fn read(at: SocketAddr, to: SocketAddr) -> Owner {
-    let me = match mine() {
-        Ok(me) => me,
-        Err(why) => return Owner::Unjudged(why),
-    };
+fn read(at: SocketAddr, to: SocketAddr) -> Result<Owner, &'static str> {
+    let me = mine()?;
     match mac::scan(me, Raw::Tcp, None, Some((at, to))) {
-        Ok(scan) if scan.took.is_some() => Owner::Uid(me),
-        Ok(_) => Owner::NotMine,
+        Ok(scan) if scan.took.is_some() => Ok(Owner::Uid(me)),
+        Ok(_) => Ok(Owner::NotMine),
         Err(e) => {
             tracing::debug!(target: "uid", %at, error = %e, "uid: this account's processes can't be read");
-            Owner::Unjudged("this account's programs can't be read")
+            Err("this account's programs can't be read")
         }
     }
 }
@@ -892,8 +877,8 @@ fn held(raw: Raw, port: u16) -> Result<Held, Unread> {
 
 /// No reader here.
 #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-fn read(_: SocketAddr, _: SocketAddr) -> Owner {
-    Owner::NoReader
+fn read(_: SocketAddr, _: SocketAddr) -> Result<Owner, &'static str> {
+    Ok(Owner::NoReader)
 }
 
 /// No reader here.
@@ -1011,9 +996,8 @@ mod record {
     /// A `proc_bsdinfo`'s start, its `pbi_start_tvsec` and `pbi_start_tvusec`
     /// as microseconds: none for a record of another length.
     pub(super) fn start(bsd: &[u8]) -> Option<u64> {
-        let at = |at: usize| Some(u64::from_ne_bytes(bsd.get(at..at + 8)?.try_into().ok()?));
         let micros = |secs: u64, us: u64| secs.wrapping_mul(1_000_000).wrapping_add(us);
-        (bsd.len() == BSD_LEN).then(|| Some(micros(at(START)?, at(START + 8)?)))?
+        (bsd.len() == BSD_LEN).then(|| Some(micros(long(bsd, START)?, long(bsd, START + 8)?)))?
     }
     const START: usize = 120;
 
@@ -1206,7 +1190,9 @@ mod mac {
     /// it.
     pub(super) type On = (IpAddr, bool, bool, BTreeSet<i32>);
 
-    /// One scan of this account's processes ([`scan`]).
+    /// One scan of this account's processes ([`scan`]): none found is
+    /// empty, its default.
+    #[derive(Default)]
     pub(super) struct Scan {
         /// Each socket on the port, by its generation count.
         pub on: BTreeMap<u64, On>,
@@ -1230,10 +1216,7 @@ mod mac {
             return once(me, raw, port, None);
         }
         let found = waited(|| once(me, raw, port, end).map(|s| s.took.is_some().then_some(s)))?;
-        Ok(found.unwrap_or(Scan {
-            on: BTreeMap::new(),
-            took: None,
-        }))
+        Ok(found.unwrap_or_default())
     }
 
     /// [`scan`]'s one look.

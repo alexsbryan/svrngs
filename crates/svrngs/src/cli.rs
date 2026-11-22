@@ -410,13 +410,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         );
     }
     if matches!(verb.as_str(), "remove" | "handover") && folder.is_none() {
-        let raw = positional.ok_or(format!(
-            "{verb} wants a name: `svrngs {verb} <name> --group <group>`"
-        ))?;
+        let usage = format!("`svrngs {verb} <name> --group <group>`");
+        let raw = positional.ok_or(format!("{verb} wants a name: {usage}"))?;
         let person = Name::parse(&raw).map_err(|why| format!("`{raw}` is not a name: {why}"))?;
-        let group = group.ok_or(format!(
-            "{verb} wants --group: `svrngs {verb} <name> --group <group>`"
-        ))?;
+        let group = group.ok_or(format!("{verb} wants --group: {usage}"))?;
         let kind = match verb.as_str() {
             "remove" => RemoveKind::Remove,
             _ => RemoveKind::Handover,
