@@ -41,8 +41,8 @@ fn the_warning_names_the_consequence_and_the_exact_fix() {
         "the consequence must be in plain words: {w}"
     );
     assert!(
-        w.contains("ABSENT"),
-        "and in mesh terms — the node leaves, it does not idle: {w}"
+        w.contains("nothing can reach it"),
+        "and what that means for whoever reaches it: {w}"
     );
     assert!(
         w.contains("Access denied"),

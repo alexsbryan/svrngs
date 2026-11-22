@@ -129,6 +129,46 @@ impl SystemdUser {
         }
     }
 
+    /// `systemctl --user <verb> <name>`, and what it said if it failed:
+    /// `start`, `restart`, and `enable --now` or `disable --now`, which make
+    /// a start or a stop last past the next boot.
+    pub fn ctl(&self, args: &[&str]) -> Result<(), String> {
+        let out = self.systemctl(args)?;
+        if out.status.success() {
+            return Ok(());
+        }
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        Err(format!("systemctl {} failed: {}", args.join(" "), stderr.trim()))
+    }
+
+    /// `systemctl --user show <name> -p <property>,…`: its `KEY=value`
+    /// lines, as it printed them.
+    pub fn show(&self, name: &str, properties: &[&str]) -> Result<String, String> {
+        let properties = properties.join(",");
+        let out = self.systemctl(&["--user", "show", name, "-p", &properties])?;
+        if !out.status.success() {
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            return Err(format!("systemctl --user show {name} failed: {}", stderr.trim()));
+        }
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+
+    /// Whether this user's manager outlives their sessions, so what it
+    /// enables starts at boot: `loginctl show-user`'s `Linger`, or why it
+    /// could not be read.
+    pub fn lingers(&self) -> Result<bool, String> {
+        let user = current_username().ok_or("cannot resolve the current username")?;
+        let out = std::process::Command::new(&self.loginctl)
+            .args(linger_probe_argv(&user))
+            .output()
+            .map_err(|e| format!("spawn loginctl: {e}"))?;
+        if !out.status.success() {
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            return Err(format!("loginctl show-user {user} failed: {}", stderr.trim()));
+        }
+        Ok(linger_is_enabled(&String::from_utf8_lossy(&out.stdout)))
+    }
+
     /// Make this user's systemd manager outlive their sessions, so the unit
     /// stays up across logout and comes back at boot. The probe runs first
     /// and an already-lingering user is left alone (a repeat polkit prompt
@@ -262,8 +302,8 @@ pub fn linger_refusal_warning(prefix: &str, what: &str, user: &str, detail: &str
         "{prefix}: WARNING — could not enable lingering for {user}{because}.\n\
          {prefix}:   The {what} will STOP AT LOGOUT: systemd tears down your user\n\
          {prefix}:   manager when your last session ends, and it does not come back\n\
-         {prefix}:   until you log in again. Peers see this node as ABSENT from the\n\
-         {prefix}:   mesh for that whole window, not as busy.\n\
+         {prefix}:   until you log in again, and nothing can reach it for that\n\
+         {prefix}:   whole window.\n\
          {prefix}:   Fix it with:  loginctl enable-linger {user}\n\
          {prefix}:   (some distros' polkit rules require an administrator to run it)."
     )
