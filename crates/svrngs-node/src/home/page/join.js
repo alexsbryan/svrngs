@@ -6,20 +6,13 @@
 // answer is refused by name (`late`) and a slow answer never names a link
 // typed over. The answer is said on the button before it is pressed, and
 // the name box hidden when the link names whom it joins as. Pressed, a
-// second press is refused while it joins; joined, HOME says so (`take`)
-// and reads the groups again, and the form is empty again; a refusal is
-// said below, in place of the last.
+// second press is refused while it joins; joined, HOME says so and reads
+// the groups again (its `again`, with `?joined=`), and the form is empty
+// again; a refusal is said below, in place of the last.
 import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
-/** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
+/** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
-
-/**
- * HOME's message this file takes: a group joined, by its name, as whom,
- * `null` when it was in already, and why its folder could not be made,
- * `null` when it was (home.rs `join`).
- * @typedef {{ type: 'joined', flow: 'join', q: { joined: string, person: string | null, unplaced: string | null } }} Taken
- */
 
 /**
  * What a link is for, as the computer that sent it says (home.rs
@@ -82,9 +75,10 @@ export const JOIN = (home) => ({
         why: answer[0],
       })),
     join: ({ link, person }) =>
+      // The group joined, as whom, `null` when it was in already, and why
+      // its folder could not be made, `null` when it was (home.rs `join`).
       post('/join', { link, person }).then(([joined, joinedAs, unplaced]) => {
-        home({ type: 'joined', flow: 'join', q: { joined, person: joinedAs, unplaced } });
-        home({ type: 'again' });
+        home({ type: 'again', q: { joined, person: joinedAs, unplaced } });
         return { type: 'joined', why: 'said, the groups read again' };
       }),
   },
@@ -134,10 +128,3 @@ export const JOIN = (home) => ({
     }
   },
 });
-
-/**
- * @param {HOME.State} state
- * @param {Taken} message
- * @returns {Step<HOME.State, HOME.Effect>}
- */
-export const take = (state, message) => go(state, { said: 'joined' }, { q: message.q });

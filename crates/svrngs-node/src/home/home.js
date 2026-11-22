@@ -2,8 +2,8 @@
 // The home page's edge, served at /home.js (home.rs `served`): it imports
 // each feature's file (home-reading.js FILES), starts HOME with the groups'
 // first read, draws the page (home-page.js `Home`) into
-// home/index.html's #home, forgets a notice the address holds, and reads
-// the groups again when the page is shown again.
+// home/index.html's #home, keeps the address to the page drawn, and
+// reads the groups again when the page is shown again.
 import { trace } from './ui/trace.js?v=__VERSION__';
 import { html, render } from './ui/view.js?v=__VERSION__';
 import { machine } from './ui/machine.js?v=__VERSION__';
@@ -30,21 +30,29 @@ Promise.all(FILES.map((file) => import(`./page/${file}.js?v=__VERSION__`)))
       first(location),
       /** @type {Effect[]} */ ([{ run: 'groups', n: 1, round: 'read', failed: 'unread' }]),
     );
-    // What was done here is said once: the address forgets it, so a
-    // reload, or the page opened again, says it no more.
-    const said = store.get().at.said;
-    const query = store.get().q;
     const { grouped } = store.get();
     document.body.classList.toggle('layout-b', grouped);
     trace(`HOME: layout ${grouped ? 'b' : 'a'}`);
-    if (said !== 'none') {
-      trace(`HOME: ${said} said, once`);
-      history.replaceState(
-        null,
-        '',
-        grouped ? address(query.view, query.group) : `${location.pathname}?ui=a`,
-      );
-    }
+    // The address is the page drawn, less what was done here, which is
+    // said once: a reload, or the page opened again, says it no more.
+    // Replaced, never pushed: a write here is no place the person went,
+    // and the page draws nothing anew on Back (it has no `popstate`), so
+    // Back goes where they were before, not to the page the write was
+    // made on, such as the group they left.
+    let shown = store.get().q;
+    const kept = () => {
+      const to = grouped ? address(shown.view, shown.group) : `${location.pathname}?ui=a`;
+      trace(`HOME: ${store.get().at.said} said, once, so the address is ${to}`);
+      history.replaceState(null, '', to);
+    };
+    if (store.get().at.said !== 'none') kept();
+    // A write here moves the page (HOME's `again`, with its `q`), and the
+    // address with it.
+    store.subscribe(() => {
+      if (store.get().q === shown) return;
+      shown = store.get().q;
+      kept();
+    });
     // home/index.html holds #home, as it does where its files fail below.
     render(
       html`<${Home} store=${store} flows=${flows} places=${places} />`,
