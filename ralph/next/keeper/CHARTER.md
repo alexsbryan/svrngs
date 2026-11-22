@@ -54,7 +54,8 @@ are uncounted (lean_check.py:973).
 - **svrngs-keeper lives in `apps/`.** Its rows aren't held to the caps.
   Keep it lean all the same: what Give already does is moved, not
   rewritten, and what commonwealth-ai has is forked.
-- **svrngs's half** (svrngs-renew) is estimated at +180 Rust and +30 JS.
+- **svrngs's half** (svrngs-renew) is estimated at +180 Rust and +30 JS,
+  measured from main's counts (see "Alongside app-state").
   - The operator approved that envelope ("Those resources work for me",
     answering an estimate that named a raise of about +120–150 Rust and
     +25–30 JS after an economizing pass).
@@ -67,6 +68,40 @@ are uncounted (lean_check.py:973).
   - Past that envelope, stop with `needs-human`.
 - **Tests aren't budgeted** (the operator, 2026-11-19). Write what a
   change needs.
+
+## Alongside app-state (PR 7)
+
+`app-state` (https://github.com/alexsbryan/svrngs/pull/7, "A shared SQLite
+database for each carried app") is worked from the other machine in the
+commons (peer `cbc855627108`). It branched from the same `e5d9813b`, and it
+is a draft until all of its parts are done. Whichever branch lands second
+rebases onto main (linear history, never a merge commit). Until then, stay
+out of its way:
+
+- **Its budget is its own.** PLAN §1 on app-state records the operator's
+  pool for its whole build: +1,450 of all code but JavaScript and +80 of
+  JavaScript (2026-11-22). It has already raised the non-JS cap to 25,735
+  (252573fa). Keeper's envelope is a separate approval. When the branches
+  meet, each cap in `scripts/lean_check.py` is main's plus both branches'
+  deltas, and each branch's `Size:` paragraph stands for its own delta.
+- **Its economizing pass is in progress,** in `lend.rs` (`stamp`, through
+  `lend::all`), `door.rs` (`lend_for`) and the home page's JavaScript.
+  svrngs-economize cuts only in files app-state hasn't changed. Read
+  `git fetch origin app-state && git diff --name-only main...origin/app-state`
+  when the row starts, and leave out every file it names.
+- **svrngs-renew's hunks:**
+  - in `lend.rs`, only `Terms`, `Hold` and `Answer`;
+  - the door's branch in `door/bound.rs`, which app-state doesn't touch.
+
+  Anything else it needs in a file app-state changed goes in a hunk of its
+  own, cited in its commit, so the rebase is mechanical.
+- **The shared files, resolved by their meaning:**
+  - `Cargo.toml` members and `scripts/tests/test_touched.py`'s package list
+    take both crates, in sorted order: `-p svrngs-core -p svrngs-db
+    -p svrngs-keeper -p svrngs-node`.
+  - Each `Cargo.lock` is regenerated, not merged by hand. Both branches
+    already moved `url` to 2.5.9.
+  - `docs/PLAN.md` §1 and `ARCHITECTURE.md` keep both entries.
 - **No new trust-floor line, and no CSP change.** The keeper's program
   isn't svrngs's listener and opens none.
 

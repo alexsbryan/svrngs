@@ -176,8 +176,12 @@ These are the figures the launch approved, in code lines as
 
 - [ ] svrngs-economize — depends [] — ONE UNIT, behaviour kept: the
   economizing pass over the code svrngs-renew extends:
-  `crates/svrngs-node/src/door/bound.rs`, `share.rs`, `lend.rs`, `uid.rs`,
-  `home/page/lent-row.js` and `lend-change.js`.
+  `crates/svrngs-node/src/door/bound.rs`, `share.rs`, `uid.rs`,
+  `home/page/lent-row.js` and `lend-change.js`. It cuts in none of the
+  files app-state (PR 7) has changed. Read
+  `git diff --name-only main...origin/app-state` at the start, and leave
+  those files out (CHARTER, "Alongside app-state"). At 2026-11-22 that
+  rules out `lend.rs` and `door.rs`.
   - Preserving cuts only, each its own commit, each ratcheting the caps
     in `scripts/lean_check.py` down to one past where it lands.
   - Record the baseline, the candidates and each cut in
@@ -186,8 +190,7 @@ These are the figures the launch approved, in code lines as
   read: AGENTS.md "Done"; svrn-docs rings/current/ECONOMIZING.md; the six
   files.
   check: each cut's focused tests (`cargo test -p svrngs-node --lib door`,
-  `share`, `lend`, `uid`; `node web/tests/run.mjs unit`); fresh lean
-  counts.
+  `share`, `uid`; `node web/tests/run.mjs unit`); fresh lean counts.
 
 - [ ] eudoxia-cgroups — depends [] — ONE UNIT, in `~/dev/eudoxia` on
   branch `keeper-cgroups`, under eudoxia's own AGENTS.md:
