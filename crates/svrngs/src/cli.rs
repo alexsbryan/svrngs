@@ -1681,16 +1681,13 @@ fn said_yes(here: &impl Here, name: &LendName, words: &str) -> Result<bool, Refu
 async fn share_readers(
     here: &impl Here,
     lend: &Lend,
-    at: (NonZeroU16, Terms),
+    (port, terms): (NonZeroU16, Terms),
 ) -> Result<(), Refusal> {
-    let (port, terms) = at;
     let name = &lend.name;
     let ask = |words: String, shown| here.prompt(name, &words, shown);
     let refused = |why: String| Refused::Readers(name.clone(), why);
-    let checked = || async {
-        let to = here.bound(lend).await;
-        to.map_err(|unsent| Refused::Readers(name.clone(), share::unsent_words(name, unsent)))
-    };
+    let unsent = |why| refused(share::unsent_words(name, why));
+    let checked = || async { here.bound(lend).await.map_err(unsent) };
     if let Some(how) = share::key_of(&lend.kind, terms) {
         let key = ask(format!("Paste the key you made in {name}: "), false)?;
         let key = key.ok_or_else(|| refused("nothing was given".into()))?;
@@ -1698,8 +1695,7 @@ async fn share_readers(
             true => None,
             false => share::tried(checked().await?, port, Some(how), &key).await,
         };
-        let said = share::key_said(&lend.kind, tried);
-        let said = said.map_err(&refused)?;
+        let said = share::key_said(&lend.kind, tried).map_err(&refused)?;
         share::keep_key(here.root(), name, Some(how), &key).map_err(|e| refused(e.to_string()))?;
         eprintln!("{said} Apps that read {name} are let in with that key, to look only; a person opening it still signs in as themselves.");
         return Ok(());
