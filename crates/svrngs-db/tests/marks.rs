@@ -1,13 +1,14 @@
 //! What a copy counts, and on whose word (svrn-docs
 //! `rings/current/APP_STATE.md` §4, "What travels" and the four outcomes; §7,
 //! invariants 8, 11 and 12): what the wire says is parsed before anything in
-//! it is used, and a set's signature is checked first.
+//! it is used, and a set's signature is checked first; and a second set at a
+//! place this copy refused is judged.
 
 use std::path::Path;
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{Value, json};
 use svrngs_core::set::At;
 use svrngs_db::{Ask, Call, Db, Device, Seq, Set, Sig, SigningKey, States, Took};
 
@@ -26,6 +27,10 @@ fn board(dir: &Path, n: u8) -> Arc<Db> {
 fn write(db: &Db, id: &str, title: &str) {
     db.write(&json!([{ "insert": "cards", "row": { "id": id, "title": title } }]))
         .unwrap();
+}
+
+fn cards(db: &Db) -> Value {
+    db.read("SELECT id, title FROM cards ORDER BY id", &[]).unwrap()["rows"].clone()
 }
 
 fn call(from: &Db, to: &Db) -> Call {
@@ -151,4 +156,30 @@ fn what_the_wire_carries_is_parsed_as_it_is_read() {
         [set],
         "a call that fits decodes"
     );
+}
+
+/// **A second set at a place this copy refused is judged, and taken as a
+/// twin**: two sets signed at one seq, one past the 2^53 bound. Ben, handed
+/// the refused one first, takes the other as a twin; Cy, handed them the
+/// other way, takes the same one; both name the place in their asks, and
+/// they agree. Plant: a refused set not kept (Ben passes the other by,
+/// `Held`, and shows no card).
+#[test]
+fn a_second_set_at_a_place_refused_here_is_taken_as_a_twin() {
+    let dir = tempfile::tempdir().unwrap();
+    let h = board(dir.path(), 9);
+    write(&h, "c1", "milk");
+    let y = h.missing(&Ask::default(), BUDGET).unwrap().sets.remove(0);
+    let x = remade(&y, &key(9), |c| {
+        c.iter_mut()
+            .filter(|c| c.cid == "title")
+            .for_each(|c| c.col_version = (1 << 53) + 1)
+    });
+    let (b, c) = (board(dir.path(), 2), board(dir.path(), 3));
+    assert_eq!(took(&b, &alone(vec![x.clone()])), [Took::Refused]);
+    assert_eq!(took(&b, &alone(vec![y.clone()])), [Took::Twin], "judged, not passed by");
+    assert_eq!(took(&c, &alone(vec![y])), [Took::Taken]);
+    assert_eq!(took(&c, &alone(vec![x])), [Took::Refused]);
+    assert_eq!(cards(&b), cards(&c), "the copies agree");
+    assert_eq!(cards(&b), json!([{ "id": "c1", "title": "milk" }]));
 }

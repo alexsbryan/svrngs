@@ -191,6 +191,29 @@ pub enum Took {
 /// Whether the record binds a device's key, as [`Db::ingest`] is told.
 type Bound<'b> = &'b dyn Fn(&str) -> bool;
 
+/// How a set is kept here, as `svrngs_sets.kept` says.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Kept {
+    /// Applied, and sent to a member that lacks it.
+    Taken,
+    /// Refused for good: its place and signature alone, no bytes, so a
+    /// second set at its place is judged, never passed by as held.
+    Refused,
+    /// Waiting for the record to bind its device.
+    Unbound,
+    /// Waiting for this copy to hold the schema it was written under.
+    Unschemed,
+}
+
+impl ToSql for Kept {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok((*self as i64).into())
+    }
+}
+
+/// Where a kept set waits, either way, as SQL binds the two.
+const WAITING: [Kept; 2] = [Kept::Unbound, Kept::Unschemed];
+
 /// `sql`'s rows on `conn`, each read by `f`.
 fn rows<T>(
     conn: &Connection,
@@ -231,20 +254,20 @@ fn adopt(conn: &Connection, (site, theirs): (Site, i64)) -> rusqlite::Result<()>
     Ok(())
 }
 
-/// `set`, at `site`, kept and counted, `held` while it waits; and, `rows`
-/// given, merged into `crsql_changes` first as `site`'s at its seq, where
-/// cr-sqlite decides what wins: only rows the parse made, so nothing it
-/// didn't read reaches cr-sqlite.
-fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, held: bool) -> rusqlite::Result<()> {
+/// `set`, at `site`, kept as `kept` says and counted, its bytes with it but
+/// for a refusal's; and, `rows` given, merged into `crsql_changes` first as
+/// `site`'s at its seq, where cr-sqlite decides what wins: only rows the
+/// parse made, so nothing it didn't read reaches cr-sqlite.
+fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept: Kept) -> rusqlite::Result<()> {
     let put = "INSERT INTO crsql_changes (\"table\", pk, cid, val, col_version, db_version, site_id, cl, seq, ts) \
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '0')";
     for c in rows.map_or(&[][..], |v| &v.0) {
         let p = params![c.table, c.pk, c.cid, c.val, c.col_version, set.seq, site, c.cl, c.seq];
         conn.prepare_cached(put)?.execute(p)?;
     }
-    let bytes = postcard::to_allocvec(set).expect("a set is written in memory");
-    let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, held, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
-    conn.execute(sql, params![site, set.seq, set.sig, held, bytes])?;
+    let bytes = (kept != Kept::Refused).then(|| postcard::to_allocvec(set).expect("a set is written in memory"));
+    let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
+    conn.execute(sql, params![site, set.seq, set.sig, kept, bytes])?;
     count(conn, (site, set.seq))
 }
 
@@ -319,7 +342,7 @@ impl Db {
             changes,
             sig,
         };
-        keep(conn, (&set, self.site), None, false).map_err(fault)?;
+        keep(conn, (&set, self.site), None, Kept::Taken).map_err(fault)?;
         Ok(Some(seq))
     }
 
@@ -350,7 +373,7 @@ impl Db {
         let ask = self.ask()?;
         let twins: BTreeSet<&Place> = ask.twins.iter().chain(&theirs.twins).map(|(p, _)| p).collect();
         let named: BTreeSet<&Sig> = theirs.twins.iter().map(|(_, s)| s).collect();
-        let kept = "SELECT site, seq, sig, bytes FROM svrngs_sets ORDER BY site, seq, sig";
+        let kept = "SELECT site, seq, sig, bytes FROM svrngs_sets WHERE bytes NOT NULL ORDER BY site, seq, sig";
         let kept = rows(&self.conn(), kept, [], |r| {
             Ok(((r.get(0)?, r.get(1)?), r.get(2)?, r.get(3)?))
         });
@@ -397,9 +420,12 @@ impl Db {
             }
             out.push((place, took));
         }
-        let waiting = rows(&tx, "SELECT site FROM svrngs_sets WHERE held", [], |r| {
-            r.get::<_, Site>(0)
-        });
+        let waiting = rows(
+            &tx,
+            "SELECT site FROM svrngs_sets WHERE kept IN (?1, ?2)",
+            WAITING,
+            |r| r.get::<_, Site>(0),
+        );
         stopped.extend(waiting.map_err(fault)?);
         let adopting = call
             .ask
@@ -446,17 +472,18 @@ impl Db {
         // this copy doesn't hold, waits, unparsed: its changes are read only
         // against the tables of its own schema (APP_STATE §4, the four
         // outcomes). Any other is parsed before cr-sqlite sees it.
-        let waits = !bound(set.device.as_str()) || set.schema != self.schema;
-        let parsed = (!waits).then(|| parse(&set.changes, &self.tables));
-        if matches!(parsed, Some(Ok(_))) && !sigs.is_empty() {
+        let unbound = (!bound(set.device.as_str())).then_some(Kept::Unbound);
+        let waits = unbound.or((set.schema != self.schema).then_some(Kept::Unschemed));
+        let judged = waits.map_or_else(|| parse(&set.changes, &self.tables).map_err(|_| Kept::Refused), Err);
+        if judged.is_ok() && !sigs.is_empty() {
             tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), "state: a second set at one site and seq, both taken: a copied or restored database runs beside its original");
         }
         // Rolled back and released as it drops on any `?`.
         let sp = tx.savepoint()?;
-        let took = match parsed {
-            None => keep(&sp, (set, site), None, true).map(|()| Took::Waits)?,
-            Some(Err(_)) => count(&sp, (site, set.seq)).map(|()| Took::Refused)?,
-            Some(Ok(valid)) => keep(&sp, (set, site), Some(&valid), false).map(|()| Took::Taken)?,
+        let took = match judged {
+            Ok(valid) => keep(&sp, (set, site), Some(&valid), Kept::Taken).map(|()| Took::Taken)?,
+            Err(Kept::Refused) => keep(&sp, (set, site), None, Kept::Refused).map(|()| Took::Refused)?,
+            Err(waits) => keep(&sp, (set, site), None, waits).map(|()| Took::Waits)?,
         };
         sp.commit()?;
         let twin = took == Took::Taken && !sigs.is_empty();
@@ -469,9 +496,12 @@ impl Db {
     /// still counted. How many it applied.
     pub fn rejudge(&self, bound: &dyn Fn(&str) -> bool) -> Result<usize, Refused> {
         let mut conn = self.conn();
-        let held = rows(&conn, "SELECT bytes FROM svrngs_sets WHERE held", [], |r| {
-            r.get::<_, Vec<u8>>(0)
-        });
+        let held = rows(
+            &conn,
+            "SELECT bytes FROM svrngs_sets WHERE kept IN (?1, ?2)",
+            WAITING,
+            |r| r.get::<_, Vec<u8>>(0),
+        );
         let held = held
             .map_err(fault)?
             .into_iter()
@@ -480,14 +510,17 @@ impl Db {
         for set in held.filter(|s| bound(s.device.as_str()) && s.schema == self.schema) {
             let place = (site(&self.group, &self.app, set.device.as_str(), &set.nonce), set.seq);
             let parsed = parse(&set.changes, &self.tables);
-            let unheld = "UPDATE svrngs_sets SET held = 0 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
-            let gone = "DELETE FROM svrngs_sets WHERE site = ?1 AND seq = ?2 AND sig = ?3";
-            let at = params![place.0, place.1, set.sig];
+            let unheld = "UPDATE svrngs_sets SET kept = ?4 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
+            let gone = "UPDATE svrngs_sets SET kept = ?4, bytes = NULL WHERE site = ?1 AND seq = ?2 AND sig = ?3";
+            let (at, was) = (
+                params![place.0, place.1, set.sig, Kept::Taken],
+                params![place.0, place.1, set.sig, Kept::Refused],
+            );
             // Rolled back and released as it drops, unless all of it is written.
             let sp = conn.savepoint().map_err(fault)?;
             let judged = match &parsed {
-                Ok(valid) => keep(&sp, (&set, place.0), Some(valid), false).and_then(|()| sp.execute(unheld, at)),
-                Err(_) => sp.execute(gone, at),
+                Ok(valid) => keep(&sp, (&set, place.0), Some(valid), Kept::Taken).and_then(|()| sp.execute(unheld, at)),
+                Err(_) => sp.execute(gone, was),
             };
             let judged = judged.and_then(|_| sp.commit());
             let applied = judged.is_ok() && parsed.is_ok();

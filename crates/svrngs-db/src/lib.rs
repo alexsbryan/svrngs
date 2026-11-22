@@ -540,12 +540,12 @@ impl Db {
 /// svrngs's own tables in a database, made with it: the nonce it was made
 /// with, its schema's hash and whether it has synced in full once; the sets
 /// it keeps, as postcard's bytes (APP_STATE §4, "Sealed and signed"), named
-/// by site, seq and signature so two at one seq are both kept, `held` while
-/// one waits; each site's mark, and the sets counted above a mark
-/// (`sync.rs`).
+/// by site, seq and signature so two at one seq are both kept, and how each
+/// is kept (`sync.rs`, `Kept`), a refused one with no bytes; each site's
+/// mark, and the sets counted above a mark (`sync.rs`).
 const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL);
-    CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, held INTEGER NOT NULL,
-      bytes BLOB NOT NULL, PRIMARY KEY (site, seq, sig));
+    CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, kept INTEGER NOT NULL,
+      bytes BLOB, PRIMARY KEY (site, seq, sig));
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
     CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));";
 
