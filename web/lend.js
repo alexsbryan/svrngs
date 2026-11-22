@@ -1506,12 +1506,16 @@ scope.addEventListener('message', async (event) => {
   }
   // A page's hand-over, each part read as its kind before it is taken: an
   // open (`handsPass`), a cookie by `typeof`, a socket as shim.js asks one,
-  // or its app's worker's realm (session.js `realmKept`).
+  // a window that can hold a direct path's channel (`directAsked`), or its
+  // app's worker's realm (session.js `realmKept`). Each is traced once, as
+  // what it is, and only a message none of them takes as refused.
   /**
    * @type {{
    *   handed?: any,
    *   cookie?: unknown,
    *   socket?: { url: string, protocols?: string[] },
+   *   webrtc?: string,
+   *   label?: string,
    * }}
    */
   const data = event.data ?? {};
@@ -1522,7 +1526,7 @@ scope.addEventListener('message', async (event) => {
     event.waitUntil(cookieKept(cookie, reply));
   } else if (asked && reply) {
     event.waitUntil(socket(asked, reply));
-  } else if (!realmKept(event)) {
+  } else if (!directAsked(data, reply, event) && !realmKept(event)) {
     trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(data).join(',')}`);
   }
 });
@@ -1531,15 +1535,21 @@ scope.addEventListener('message', async (event) => {
 const fromHere = (source) => !!source?.url && new URL(source.url).origin === SCOPE.origin;
 
 // A window that can hold a direct path's channel announces itself
-// (shim.js), and the attempt for its lend runs (webrtc-page).
-scope.addEventListener('message', (event) => {
-  const given = /** @type {{ webrtc?: string, label?: string }} */ (event.data ?? {});
-  const source = /** @type {Client | null} */ (event.source);
-  if (given.webrtc !== 'here' || !event.ports[0] || !fromHere(source)) return;
+// (shim.js), with its end of the channel's port, and the attempt for its
+// lend runs (webrtc-page): whether `data` was one.
+/**
+ * @param {{ webrtc?: string, label?: string }} data
+ * @param {MessagePort | undefined} port
+ * @param {ExtendableMessageEvent} event
+ */
+function directAsked({ webrtc, label }, port, event) {
+  if (webrtc !== 'here' || !port) return false;
+  trace(`RUNTIME: a window can hold the direct path for ${label}`);
   /** @param {unknown} error */
   const lost = (error) => trace(`RUNTIME: the direct path failed: ${String(error)}`);
-  event.waitUntil(direct(/** @type {string} */ (given.label), event.ports[0]).catch(lost));
-});
+  event.waitUntil(direct(String(label), port).catch(lost));
+  return true;
+}
 
 // Whether `given` is an open of this lend's, with its pass.
 /** @param {any} given */
