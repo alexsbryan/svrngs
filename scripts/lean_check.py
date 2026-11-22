@@ -935,10 +935,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (demo/runs/economize/2026-11-keeper/SURVEY.md): door/bound.rs 6, 24,511;
 # share.rs 16, 24,495; uid.rs 20, 24,475. JavaScript: lend-change.js 3, 8,690;
 # lent-row.js 8, 8,682.
+# Then svrngs-renew, within the operator's envelope for it (2026-11-22,
+# "Those resources work for me": at most +180 and +30 JavaScript over the
+# pass's counts, ralph/next/keeper/CHARTER.md "Budget"), each step raised
+# to one past where it lands: bound.rs's wait moved into `mutated`, 24,483.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24476,
+    ".": 24484,
 
     "js": 8683,
 

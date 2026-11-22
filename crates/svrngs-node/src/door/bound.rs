@@ -145,24 +145,34 @@ pub(crate) fn decided(
 /// `lend` held in its file until its lender approves again, so neither the
 /// program going nor svrngs starting again opens it (SHARE_BINDING_REVIEWS
 /// §6 #3): only while its approval is still the one judged, so an approval
-/// made since is never held for what it didn't see. Another change holding
-/// the lend's lock is waited on a moment, up to 20 ms; past that, the check
-/// that saw it has refused its datagram all the same.
+/// made since is never held for what it didn't see ([`mutated`]); past
+/// that wait, the check that saw it has refused its datagram all the same.
 fn hold(dir: &Path, lend: &Lend) {
-    let held = || {
-        crate::lend::mutate(dir, &lend.name, |now| {
-            let judged = now.terms.approved == lend.terms.approved;
-            if let Some(approved) = now.terms.approved.as_mut().filter(|_| judged) {
-                approved.held = true;
-            }
-        })
-    };
-    let (mut kept, mut tries) = (held(), 0);
-    while tries < 20 && matches!(kept, Err(crate::lend::LendError::Busy { .. })) {
-        std::thread::sleep(Duration::from_millis(1));
-        (kept, tries) = (held(), tries + 1);
-    }
+    let kept = mutated(dir, &lend.name, |now| {
+        let judged = now.terms.approved == lend.terms.approved;
+        if let Some(approved) = now.terms.approved.as_mut().filter(|_| judged) {
+            approved.held = true;
+        }
+    });
     tracing::warn!(target: "door", lend = %lend.name, ?kept, "door: held until its lender approves again — a program not approved was seen where the door reaches it");
+}
+
+/// `edit` made to the lend `name`'s file ([`crate::lend::mutate`]): another
+/// change holding its lock is waited on a moment, up to 20 ms.
+fn mutated(
+    dir: &Path,
+    name: &LendName,
+    mut edit: impl FnMut(&mut Lend),
+) -> Result<bool, crate::lend::LendError> {
+    let mut kept = crate::lend::mutate(dir, name, &mut edit);
+    for _ in 0..20 {
+        if !matches!(kept, Err(crate::lend::LendError::Busy { .. })) {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(1));
+        kept = crate::lend::mutate(dir, name, &mut edit);
+    }
+    kept
 }
 
 /// One UDP flow's socket on 127.0.0.1, connected to a share's port alone
