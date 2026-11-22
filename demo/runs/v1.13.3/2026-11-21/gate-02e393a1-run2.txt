@@ -1,0 +1,171 @@
+release gate: clone at 02e393a11fa5b800be1639f19580a8da22e4941b, started 2026-11-21T22:20:57-08:00
+
+added 12 packages in 567ms
+note       open files: 524288, raised to 10240
+passed     principles pinned (1 s)
+[2]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     lean and RUST_ARCH (0 s)
+[3]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     trust floor (0 s)
+[4]   Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     advisories (2 s)
+[6]   Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     app nouns gate (0 s)
+[8]   Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     app nouns (0 s)
+[10]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     lint (0 s)
+[11]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     format (0 s)
+[12]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     page laws (16 s)
+[13]   Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     rustfmt (1 s)
+[15]   Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     script laws (7 s)
+[17]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     page integration (4 s)
+[18]   Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+failed     clippy (1 s)
+           error[E0716]: temporary value dropped while borrowed
+              --> crates/svrngs/tests/xenia/../scenes/people.rs:392:56
+               |
+           392 |         let sent = svrngs_node::api::asked(&at, path, &self.token(), Some(body.to_string()));
+               |                                                        ^^^^^^^^^^^^                         - temporary value is freed at the end of this statement
+               |                                                        |
+               |                                                        creates a temporary value which is freed while still in use
+           393 |         let (status, got) = sent.await.expect("svrngs proves itself and answers");
+               |                             ---- borrow later used here
+               |
+               = note: consider using a `let` binding to create a longer lived value
+           
+           error[E0716]: temporary value dropped while borrowed
+              --> crates/svrngs/tests/scenes/people.rs:392:56
+               |
+           392 |         let sent = svrngs_node::api::asked(&at, path, &self.token(), Some(body.to_string()));
+               |                                                        ^^^^^^^^^^^^                         - temporary value is freed at the end of this statement
+               |                                                        |
+               |                                                        creates a temporary value which is freed while still in use
+           393 |         let (status, got) = sent.await.expect("svrngs proves itself and answers");
+               |                             ---- borrow later used here
+               |
+               = note: consider using a `let` binding to create a longer lived value
+           
+           For more information about this error, try `rustc --explain E0716`.
+           error: could not compile `svrngs` (test "xenia") due to 1 previous error
+           error: could not compile `svrngs` (test "scenes") due to 1 previous error
+[20]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     tests (333 s)
+[21]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     canaries (0 s)
+[22]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     ceiling canary (3 s)
+           CEILING idle round at 25 x 10,000: 0.0089 s of processor, the median of [2.8209990000000005, 0.008900000000000574, 0.007484999999999076], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.007484999999999076,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.008994428}
+[23]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     web rustfmt and clippy (9 s)
+[24]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     browser (86 s)
+passed     types (22 s)
+[26]   Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     typed lint (0 s)
+[28]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     joining in a browser (59 s)
+passed     pages (8 s)
+failed     scenes (1 s)
+              Compiling svrngs v1.13.3 (/work/crates/svrngs)
+           error[E0716]: temporary value dropped while borrowed
+              --> crates/svrngs/tests/scenes/people.rs:392:56
+               |
+           392 |         let sent = svrngs_node::api::asked(&at, path, &self.token(), Some(body.to_string()));
+               |                                                        ^^^^^^^^^^^^                         - temporary value is freed at the end of this statement
+               |                                                        |
+               |                                                        creates a temporary value which is freed while still in use
+           393 |         let (status, got) = sent.await.expect("svrngs proves itself and answers");
+               |                             ---- borrow later used here
+               |
+               = note: consider using a `let` binding to create a longer lived value
+           
+           For more information about this error, try `rustc --explain E0716`.
+           error: could not compile `svrngs` (test "scenes") due to 1 previous error
+[31]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     conformance canary (52 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  a cold navigation, the lend's      passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  its worker answers no page or worker passed
+           computer  its worker, after svrngs's restarts could-not-judge, WebKit stops no worker on ask
+           computer  its worker, after svrngs's restarts passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  svrngs's worker refuses eval       passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  a cold navigation, the lend's      passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  its worker answers no page or worker passed
+           wildcard  its worker, after svrngs's restarts could-not-judge, WebKit stops no worker on ask
+           wildcard  its worker, after svrngs's restarts passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  svrngs's worker refuses eval       passed
+failed     playback (71 s)
+               Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+                Running tests/browser/main.rs (target/debug/deps/browser-076a07394df79456)
+           
+           running 2 tests
+           test playback::a_lent_film_plays_and_seeks_under_its_worker::chromium ... ok
+           test playback::a_lent_film_plays_and_seeks_under_its_worker::webkit ... ok
+           
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 47 filtered out; finished in 12.53s
+           
+               Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+                Running tests/conformance.rs (target/debug/deps/conformance-cad5b07bccd2675e)
+           
+           running 4 tests
+           test seeks_back_to_back::on_a_computer::chromium ... ok
+           test seeks_back_to_back::on_a_phone_with_the_wildcard::chromium ... ok
+           test seeks_back_to_back::on_a_computer::webkit ... ok
+           test seeks_back_to_back::on_a_phone_with_the_wildcard::webkit ... ok
+           
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 56.23s
+           
+              Compiling svrngs v1.13.3 (/work/crates/svrngs)
+           error[E0716]: temporary value dropped while borrowed
+              --> crates/svrngs/tests/scenes/people.rs:392:56
+               |
+           392 |         let sent = svrngs_node::api::asked(&at, path, &self.token(), Some(body.to_string()));
+               |                                                        ^^^^^^^^^^^^                         - temporary value is freed at the end of this statement
+               |                                                        |
+               |                                                        creates a temporary value which is freed while still in use
+           393 |         let (status, got) = sent.await.expect("svrngs proves itself and answers");
+               |                             ---- borrow later used here
+               |
+               = note: consider using a `let` binding to create a longer lived value
+           
+           For more information about this error, try `rustc --explain E0716`.
+           error: could not compile `svrngs` (test "scenes") due to 1 previous error
+[33]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+never-ran  playback: a part ran no test (browser playback::, conformance seeks_back_to_back::, scenes night_played::), or the scene never ran, as above
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	216	passed	2088	passed
+           computer	bo	192	passed	2112	passed
+           wildcard	sam	96	passed	2112	passed
+           wildcard	bo	120	passed	2160	passed
+           of 36 here since 2026-11-15T22:22:02Z: 0 missed 5 s through a lend, 1 straight; 0 ended at a load above 32 cores
+passed     internet (3 s)
+[34]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+passed     app laws (16 s)
+[35]+  Terminated              ( sleep "$limit"; kill -TERM -$running ) 2> /dev/null
+note       took 695 s in all
+finished 2026-11-21T22:32:32-08:00, exit 1
