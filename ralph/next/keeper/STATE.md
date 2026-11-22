@@ -247,7 +247,7 @@ These are the figures the launch approved, in code lines as
   - a stopped lend stays stopped;
   - a transient scope is never granted.
 
-- [ ] keeper-demo — depends [keeper-promote, svrngs-renew] — ONE UNIT,
+- [x] keeper-demo 3cda16539 — depends [keeper-promote, svrngs-renew] — ONE UNIT,
   evidence:
   - Sam's scene, end to end, in the spike's Fedora VM. Sam and Alex are
     two accounts, each with a node, met at a local `svrngs relay`.
