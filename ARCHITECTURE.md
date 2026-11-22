@@ -714,7 +714,8 @@ and serves it at each carried app's origin, `svrngs/sql`
 (`svrngs-node/src/carried.rs`): a POST's read or write, a write as this
 computer's person alone and never as an app that reads others' lends, whose
 verdict the door hands it, and a GET's subscription, the read again each time
-the database changes. Change sets, their signing and their sync are not
+the database changes. A read is said `syncing` while another computer of the
+group stands, since no copy syncs yet. Change sets, their signing and their sync are not
 built yet. Its
 tests came first. `tests/w1/` holds the
 reference model every copy of a database is checked against (`reference.rs`,

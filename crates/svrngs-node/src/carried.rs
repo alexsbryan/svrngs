@@ -33,7 +33,8 @@
 //!
 //! - [`SQL`], the app's own database in its group (svrngs-db), opened from
 //!   the `schema.sql` that runs as the person asking: `POST {sql, params}`
-//!   one read, answered `{rows, more}`; `POST {write: [op, ...]}` a write by
+//!   one read, answered `{rows, more}`, with `syncing: true` while another
+//!   computer of the group stands; `POST {write: [op, ...]}` a write by
 //!   key, answered `{count}`, as this computer's person alone and never as
 //!   an app that reads others' lends; `GET ?q=` the read's rows as an event
 //!   stream, now and again each time they change. A refusal is
@@ -60,7 +61,7 @@ use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Value};
 use svrngs_core::{Admission, Append, AppendRefusal, Command, Files, Op, Placed};
-use svrngs_core::{RailAct, SignedOp, SyncPath};
+use svrngs_core::{Device, RailAct, SignedOp, SyncPath};
 use svrngs_db::{Db, Refused};
 
 use super::{blob::People, dirs_of, Folders};
@@ -609,18 +610,24 @@ impl Folders {
             Ok(db) => db,
             Err(r) => return Ok(refused(&r)),
         };
+        // A copy is the group's once it has met the group's other computers
+        // (svrn-docs APP_STATE §7, invariant 8). No copy syncs yet (slice B),
+        // so with another computer standing, its reads are said syncing.
+        let syncing =
+            (people.iter()).any(|(k, m)| *k != self.host.actor && m.device == Device::Computer);
+        tracing::debug!(target: "folder", group, %app, syncing, "carried: an app's database, said syncing while another computer of the group stands and none syncs");
         if req.method() == Method::GET {
             let query = form_urlencoded::parse(req.uri().query().unwrap_or_default().as_bytes());
             let q = query
                 .into_iter()
                 .find_map(|(k, q)| (k == "q").then(|| q.into_owned()));
             let q = q.ok_or((Malformed, 422, "a subscription asks ?q=<a SELECT>"))?;
-            return Ok(subscribed(db, q));
+            return Ok(subscribed(db, q, syncing));
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
         let body = serde_json::from_slice(&body).unwrap_or_default();
         let answered = match svrngs_db::asked(&body) {
-            Ok(svrngs_db::Asked::Read(sql, params)) => db.read(sql, params),
+            Ok(svrngs_db::Asked::Read(sql, params)) => read(&db, sql, params, syncing),
             Ok(svrngs_db::Asked::Write(ops)) => {
                 let elsewhere = key != self.host.actor;
                 tracing::debug!(target: "folder", group, %app, elsewhere, ?wrote, "carried: a write to an app's database, refused for an app that reads others' lends, and from any device but this computer");
@@ -647,6 +654,16 @@ fn told(status: u16, refused: &str, words: String) -> Response {
     (status, Json(json!({ "refused": refused, "words": words }))).into_response()
 }
 
+/// `sql` read on `db`, and `syncing: true` beside its rows while this copy
+/// is not the group's yet, so a page shows no fresh board for one.
+fn read(db: &Db, sql: &str, params: &[Value], syncing: bool) -> Result<Value, Refused> {
+    let mut read = db.read(sql, params)?;
+    if syncing {
+        read["syncing"] = true.into();
+    }
+    Ok(read)
+}
+
 /// `r`, svrngs-db's refusal, [`told`].
 fn refused(r: &Refused) -> Response {
     let (status, name) = r.said();
@@ -658,8 +675,8 @@ fn refused(r: &Refused) -> Response {
 /// changes. Refused once, the query is answered as any refusal, in place of
 /// the stream; refused later, the stream ends, and the page's next ask is
 /// told why.
-fn subscribed(db: Arc<Db>, q: String) -> Response {
-    let first = match db.read(&q, &[]) {
+fn subscribed(db: Arc<Db>, q: String, syncing: bool) -> Response {
+    let first = match read(&db, &q, &[], syncing) {
         Ok(first) => first,
         Err(r) => return refused(&r),
     };
@@ -674,9 +691,9 @@ fn subscribed(db: Arc<Db>, q: String) -> Response {
                     return Some((event, (changed, None, Some(rows))));
                 }
                 changed.changed().await.ok()?;
-                let read = db.read(&q, &[]);
-                tracing::debug!(target: "folder", group = db.group, app = db.app, refused = ?read.as_ref().err(), "carried: a subscription read again as its database changed, its rows pushed if they differ, or it ends");
-                now = Some(read.ok()?);
+                let again = read(&db, &q, &[], syncing);
+                tracing::debug!(target: "folder", group = db.group, app = db.app, refused = ?again.as_ref().err(), "carried: a subscription read again as its database changed, its rows pushed if they differ, or it ends");
+                now = Some(again.ok()?);
             }
         }
     });

@@ -3078,7 +3078,8 @@ async fn next_event(body: &mut axum::body::Body) -> Value {
 /// naming the write form; its subscription has the rows now and again
 /// after a write; its writes add no line to the group's record; an app with
 /// no schema.sql keeps no database; and once Ana's yes lets Board read
-/// others' lends, its write is refused and its reads still answered.
+/// others' lends, its write is refused and its reads still answered; and
+/// alone in its group, its copy is never said to be syncing.
 /// Plants, each watched failing: the route also writing through the
 /// record's `append_act` (the record gains its lines); the route reading
 /// none of the door's verdict (the reader's write answered 200); no word
@@ -3101,10 +3102,11 @@ async fn an_app_keeps_its_own_database_at_its_origin() {
     let stream = ask.asked_as_you().sent().await.unwrap();
     assert_eq!(stream.status(), 200);
     let mut events = stream.into_body();
+    let fresh = next_event(&mut events).await;
     assert_eq!(
-        next_event(&mut events).await["rows"],
-        json!([]),
-        "a fresh board"
+        fresh,
+        json!({ "rows": [], "more": false }),
+        "a fresh board, not syncing"
     );
 
     let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
@@ -3117,10 +3119,11 @@ async fn an_app_keeps_its_own_database_at_its_origin() {
     );
     let read = json!({ "sql": "SELECT title FROM cards WHERE id = ?", "params": ["c1"] });
     let (status, answer) = sql(ana, &origin, read.clone()).await;
+    let rows = json!({ "rows": [{ "title": "milk" }], "more": false });
     assert_eq!(
-        (status, &answer["rows"]),
-        (200, &json!([{ "title": "milk" }])),
-        "{answer}"
+        (status, &answer),
+        (200, &rows),
+        "no other computer to sync with"
     );
     let as_sql = json!({ "sql": "UPDATE cards SET title = 'eggs'" });
     let (status, refused) = sql(ana, &origin, as_sql).await;
@@ -3195,8 +3198,12 @@ async fn an_app_keeps_its_own_database_at_its_origin() {
 /// act is (capability-signed; DESIGN §6, "An entry's author is its
 /// signer"): Ben's write reaching Ana's door is refused, saying where to
 /// write, and his read is answered. A phone's write waits for slice C
-/// (svrn-docs `MAGNETS_BUILD.md` §3). Planted, watched failing: the route's
-/// `elsewhere` taken out (Ben's write answered 200).
+/// (svrn-docs `MAGNETS_BUILD.md` §3). **And a copy with another computer
+/// in its group says it is syncing** (APP_STATE §7, invariant 8), to Ana
+/// and to Ben, since no copy syncs yet, as Ana's alone never does
+/// ([`an_app_keeps_its_own_database_at_its_origin`]). Plants, each watched
+/// failing: the route's `elsewhere` taken out (Ben's write answered 200);
+/// `syncing` never said (Ana's read answered with none).
 #[tokio::test]
 async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
     let (nodes, _dirs) = computers().await;
@@ -3229,10 +3236,22 @@ async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
     let read = json!({ "sql": "SELECT count(*) AS n FROM cards" });
     let read = http().post(&route).json(&read).send().await.unwrap();
     assert_eq!(read.status(), 200, "Ana's copy answers Ben's reads");
+    let synced = json!({ "rows": [{ "n": 0 }], "more": false, "syncing": true });
     assert_eq!(
-        read.json::<Value>().await.unwrap()["rows"],
-        json!([{ "n": 0 }]),
-        "nothing written"
+        read.json::<Value>().await.unwrap(),
+        synced,
+        "nothing written, and said syncing"
+    );
+    let (status, read) = sql(
+        ana,
+        &origin,
+        json!({ "sql": "SELECT count(*) AS n FROM cards" }),
+    )
+    .await;
+    assert_eq!(
+        (status, read),
+        (200, synced),
+        "Ana's own read, said syncing"
     );
     for node in &nodes {
         node.net().close().await;
