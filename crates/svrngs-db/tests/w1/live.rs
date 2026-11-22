@@ -562,7 +562,7 @@ impl Replica for Pair {
 }
 
 /// What `f` returns, run as `run`, and the pairs' first disagreements in it.
-fn watched<T>(run: String, f: impl FnOnce() -> T) -> (T, Vec<String>) {
+pub fn watched<T>(run: String, f: impl FnOnce() -> T) -> (T, Vec<String>) {
     RUN.set(run);
     PARTED.take();
     let out = f();

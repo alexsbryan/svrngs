@@ -16,6 +16,9 @@
 //!   and today's rule and the two other candidates, kept as variants.
 //! - `cases`: the cases driven by hand, on any copy under any rule: the
 //!   minimal case of the split, two removals, and column defaults.
+//! - `sync`: the sync's bookkeeping above the engine, each copy's marks and
+//!   what it takes by them: APP_STATE §4's, and the spike's rules each in
+//!   its place, kept as variants of the simulator's own.
 //!
 //! The tests, each beside the plant it was watched failing on:
 //! - `laws`: the join's laws over seeded histories;
@@ -26,7 +29,10 @@
 //!   copies agreeing on the fixed cases, and the live soak, which the gate
 //!   doesn't run;
 //! - `rules`: question 9's rules on the fixed cases, and on the gate's seeds
-//!   and the soak's, which the gate doesn't run.
+//!   and the soak's, which the gate doesn't run;
+//! - `syncs`: invariants 11 and 12, and a removed device's set relayed, each
+//!   on every copy beside the spike's rule that fails it, and each variant of
+//!   the sync on the gate's seeds and the soak's, which the gate doesn't run.
 
 mod cases;
 mod change;
@@ -40,3 +46,5 @@ mod rules;
 mod s1;
 mod seeds;
 mod sim;
+mod sync;
+mod syncs;
