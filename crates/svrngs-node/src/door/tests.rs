@@ -664,7 +664,8 @@ fn sams_visit(rail: &RingRail, until: i64, opens: &[(u8, &str)]) -> (crate::OpId
 /// whose key is `me`: who is let in, or the refusal's kind and words.
 fn guest_at(rail: &RingRail, me: u8, lend: &Lend, now: i64) -> Result<String, (String, String)> {
     let visit = rail.visit_anywhere(&actor(9)).expect("the visit is held");
-    match guest_of(&actor(me), visit, &actor(9), lend, now) {
+    let label = lend.label(&key(me).verifying_key().to_bytes());
+    match guest_of(visit, &actor(9), (&label, Some(lend)), now) {
         Ok((group, host, guest)) => Ok(format!("{guest} in {group}, {host}'s")),
         Err(r) => {
             let (_, kind, words) = said(&r);
