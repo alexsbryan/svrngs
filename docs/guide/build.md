@@ -454,7 +454,8 @@ Whenever svrngs answers in your server's place, its answer carries
 Your server's own answers never carry it.
 
 The loopback API answers programs only: a call from a page in a browser is
-refused, and so is one without the token.
+refused, and so is one that doesn't ask as you, through `svrngs ask` or
+svrngs.mjs.
 
 ## Copy one to start
 
