@@ -914,10 +914,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (cli.rs `Here::ask`, 12), after a pass cut 4 there (6ce73f42: cli.rs
 # `share_readers`): 24,391. The operator, 2026-11-21: "Restart
 # automatically", approved as about 10 lines.
+# Then 11 for that restart to come only where an older svrngs holds the data
+# dir the login service runs, for the token's file to be said unreadable
+# before anything is dialled, and for each answer to be bounded (cli.rs 25,
+# api.rs 4, share.rs 2: 31), after a pass cut 20 from the same files
+# (8ebd995c): 24,402. The operator, 2026-11-21: "Raise by 11".
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24392,
+    ".": 24403,
 
     "js": 8694,
 

@@ -162,7 +162,11 @@ pub async fn asked(api: &str, route: &str, token: &str, body: String) -> Asked {
     let away = |_: std::io::Error| Withheld::Away;
     let at = api.trim().trim_start_matches("http://");
     let at: SocketAddr = at.parse().map_err(|_| Withheld::Away)?;
-    let stream = tokio::net::TcpStream::connect(at).await.map_err(away)?;
+    let connected = tokio::time::timeout(PROVE_WITHIN, tokio::net::TcpStream::connect(at));
+    let stream = connected
+        .await
+        .map_err(|_| Withheld::Unanswered)?
+        .map_err(away)?;
     let ends = crate::iroh::ends(&stream).map_err(away)?;
     let mut drawn = [0u8; 32];
     // As kept_token: getrandom failing is a host with no entropy.
@@ -176,6 +180,8 @@ pub async fn asked(api: &str, route: &str, token: &str, body: String) -> Asked {
     let proved = proven(answer, &proof(token, &challenge, ends.local, ends.peer));
     tracing::debug!(target: "rails", %at, client = %ends.local, ?proved, "api: whether svrngs proved it holds the token on this connection, the token sent on it only if so");
     proved?;
+    // hyper takes a second request only once the first has let it go.
+    on.ready().await.map_err(|_| Withheld::Away)?;
     let asked = post(route).header("authorization", format!("Bearer {token}"));
     let answer = crate::share::sent(&mut on, at.port(), asked, body).await;
     answer.ok_or(Withheld::Away)
@@ -202,8 +208,8 @@ pub enum Withheld {
     Unproven,
 }
 
-/// How long svrngs's command waits, on a connection svrngs's address took,
-/// for svrngs to prove itself ([`asked`]): past svrngs's start, which holds
+/// How long svrngs's command waits for svrngs's address to take its
+/// connection, and then for svrngs to prove itself on it ([`asked`]): past svrngs's start, which holds
 /// its address well before it takes a connection there (node.rs
 /// `start_on`: the endpoint and the folders between, some 300 ms on a Mac
 /// with its groups, its log said, 2026-11-21), and past a pause of a loaded

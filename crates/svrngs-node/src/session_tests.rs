@@ -230,3 +230,35 @@ async fn a_browser_never_opened_is_told_to_open_svrngs_from_its_computer() {
         assert!(page.contains(said), "{said}: {page}");
     }
 }
+
+/// **No MAC the token keys can be another's** (the 1.13.3 proof review,
+/// finding 11): the token keys a browser's key at an origin,
+/// `browser/<name>/<port>`, and a read's capability, `<app>/<read>`, each
+/// holding a `/`; and svrngs's proof, `svrngs proof v1\n<challenge>\n<client>\n<server>`,
+/// which any program here may ask for, holds none, its challenge in hex and
+/// its two ends however a `SocketAddr` prints. Each is pinned to its
+/// message, so no proof is a key or a capability. Planted, watched failing:
+/// a `/` in the proof's version.
+#[test]
+fn no_mac_the_token_keys_can_be_another_s() {
+    let dir = tempfile::tempdir().unwrap();
+    let token = crate::api::kept_token(dir.path()).unwrap();
+    let s = Sessions::new(token.clone(), 4321);
+    let mac = |message: &str| ring::hmac::sign(&s.key, message.as_bytes());
+    assert_eq!(
+        s.browser_key("pad").as_ref(),
+        mac("browser/pad/4321").as_ref()
+    );
+    let (app, read) = (Label::of(&[1; 32], "pad"), Label::of(&[2; 32], "telly"));
+    let pair = URL_SAFE_NO_PAD.encode(mac(&format!("{app}/{read}")));
+    assert_eq!(s.cap(&app, &read), pair);
+    let challenge = crate::api::Challenge::try_from("0a".repeat(32)).unwrap();
+    let ends = ["127.0.0.1:65535", "[::1]:1", "[fe80::1%4294967295]:65535"];
+    let ends: Vec<SocketAddr> = ends.iter().map(|e| e.parse().unwrap()).collect();
+    for (client, server) in ends.iter().zip(ends.iter().rev()) {
+        let message = format!("svrngs proof v1\n{}\n{client}\n{server}", "0a".repeat(32));
+        assert!(!message.contains('/'), "{message}");
+        let proved = crate::api::proof(token.secret(), &challenge, *client, *server);
+        assert_eq!(proved, hex::encode(mac(&message)), "{message}");
+    }
+}

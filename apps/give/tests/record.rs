@@ -70,6 +70,43 @@ fn a_program_at_svrngs_s_address_is_sent_none_of_the_token() {
     assert!(seen.starts_with("POST /v1/proof HTTP/1.1\r\n"), "{seen}");
     let refused = asked.expect_err("refused").to_string();
     assert!(refused.contains("Something other than svrngs answers"), "{refused}");
+    assert!(refused.contains("give sent it none of your token"), "{refused}");
+}
+
+/// **What answers at svrngs's address is read no further than a proof**
+/// (the 1.13.3 proof review, finding 7): a program answering Give's
+/// challenge with 64 MiB, and a head of one endless line, is read past
+/// neither's bound, and Give says something other than svrngs answers.
+/// Planted, watched failing: dd2efe63's Give read all 64 MiB.
+#[test]
+fn an_endless_answer_is_read_no_further_than_a_proof() {
+    for head in [
+        "HTTP/1.1 200 OK\r\nContent-Length: 67108864\r\n\r\n",
+        "HTTP/1.1 200 OK\r\nX: ",
+    ] {
+        let held = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = held.local_addr().unwrap().port();
+        let sending = std::thread::spawn(move || {
+            let (mut c, _) = held.accept().unwrap();
+            let _ = c.read(&mut [0; 65536]);
+            let mut sent = c.write(head.as_bytes()).unwrap_or(0);
+            while sent < 64 << 20 {
+                match c.write(&[b'x'; 65536]) {
+                    Ok(n) => sent += n,
+                    Err(_) => break,
+                }
+            }
+            sent
+        });
+        let asked = Record::at(&data_dir_at("endless", port)).unwrap().groups();
+        let sent = sending.join().unwrap();
+        assert!(sent < 16 << 20, "Give read {sent} bytes of it");
+        let refused = asked.expect_err("refused").to_string();
+        assert!(
+            refused.contains("Something other than svrngs answers"),
+            "{head:?}: {refused}"
+        );
+    }
 }
 
 /// **Another account's program at svrngs's address is sent none of the

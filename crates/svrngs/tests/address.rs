@@ -480,7 +480,17 @@ const OLDER: &str = "HTTP/1.1 404 Not Found\r\ncontent-length: 0\r\n\r\n";
 /// `answer`, reads what else it is sent until the connection closes, and
 /// writes how many bytes it was sent and what.
 fn not_svrngs(before: &[&str], answer: &str) -> (Child, u16, BufReader<std::process::ChildStdout>) {
-    let script = "import os, socket\ns = socket.socket()\ns.bind(('127.0.0.1', 0))\ns.listen()\nprint(s.getsockname()[1], flush=True)\nwhile True:\n    c, _ = s.accept()\n    c.settimeout(2)\n    got = b''\n    try:\n        while b'\\r\\n\\r\\n' not in got:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n        c.sendall(os.environ['ANSWER'].encode())\n        while True:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n    except OSError: pass\n    print(len(got), got, flush=True)\n    c.close()";
+    not_svrngs_holding(before, answer, None)
+}
+
+/// [`not_svrngs`], holding the data dir `lock` as a running svrngs holds
+/// its own (`cli::claim`), when one is given.
+fn not_svrngs_holding(
+    before: &[&str],
+    answer: &str,
+    lock: Option<&Path>,
+) -> (Child, u16, BufReader<std::process::ChildStdout>) {
+    let script = "import fcntl, os, socket\nheld = os.environ.get('LOCK') and open(os.environ['LOCK'], 'w')\nheld and fcntl.flock(held, fcntl.LOCK_EX)\ns = socket.socket()\ns.bind(('127.0.0.1', 0))\ns.listen()\nprint(s.getsockname()[1], flush=True)\nwhile True:\n    c, _ = s.accept()\n    c.settimeout(2)\n    got = b''\n    try:\n        while b'\\r\\n\\r\\n' not in got:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n        c.sendall(os.environ['ANSWER'].encode())\n        while True:\n            b = c.recv(65536)\n            if not b: break\n            got += b\n    except OSError: pass\n    print(len(got), got, flush=True)\n    c.close()";
     let (program, rest) = before.split_first().unwrap_or((&"python3", &[]));
     let mut child = Process::new(program)
         .args(rest)
@@ -491,6 +501,7 @@ fn not_svrngs(before: &[&str], answer: &str) -> (Child, u16, BufReader<std::proc
         })
         .args(["-I", "-c", script])
         .env("ANSWER", answer)
+        .envs(lock.map(|l| ("LOCK", l)))
         .current_dir("/")
         .stdout(Stdio::piped())
         .spawn()
@@ -572,7 +583,7 @@ async fn opened(dir: &Path) -> Result<String, (u8, String)> {
 fn unproven(port: u16, (code, said): (u8, String)) {
     assert_eq!(code, 1, "{said}");
     let at = format!("http://127.0.0.1:{port}");
-    let words = format!("Something other than your svrngs answers at {at}, where svrngs listens, so svrngs sent it nothing, not your token.");
+    let words = format!("Something other than your svrngs answers at {at}, where svrngs listens, so svrngs sent it none of your token.");
     assert!(said.contains(&words), "{said}");
     assert!(said.contains("`svrngs restart`"), "{said}");
 }
@@ -737,23 +748,44 @@ fn restart_asked() -> String {
     }
 }
 
+/// What keeps svrngs running at login in `home` runs it over `dir`, as
+/// install.sh writes its LaunchAgent or systemd unit.
+fn kept_by_login(home: &Path, dir: &Path) {
+    let (unit, said) = match cfg!(target_os = "macos") {
+        true => (
+            "Library/LaunchAgents/sh.svrnme.svrngs.plist",
+            format!("<key>SVRNGS_DIR</key><string>{}</string>", dir.display()),
+        ),
+        false => (
+            ".config/systemd/user/svrngs.service",
+            format!("[Service]\nEnvironment=SVRNGS_DIR={}\n", dir.display()),
+        ),
+    };
+    let unit = home.join(unit);
+    std::fs::create_dir_all(unit.parent().unwrap()).unwrap();
+    std::fs::write(unit, said).unwrap();
+}
+
 /// **An older svrngs is restarted once into this one, and then asked**
 /// (the operator, 2026-11-21: "Restart automatically"): after an update
-/// put a new svrngs in place and the old one runs on, as pacman leaves it
-/// until `svrngs restart`, `svrngs open`, as the applications menu runs it,
-/// is answered 404 at `POST /v1/proof` by the old one (1.13.2's answer),
-/// sends it none of the token, restarts svrngs as `svrngs restart` does,
-/// once, and once the new svrngs proves itself, opens the home page and
-/// says it restarted. Here the old one is Python answering 404, and the
-/// restart stops it and starts this svrngs over the data dir, at its
-/// address. Planted, watched failing: dd2efe63 refused, "the svrngs running
-/// here is older than this command: run `svrngs restart`", and asked for
-/// no restart.
+/// put a new svrngs in place and the old one runs on, holding its data dir,
+/// as pacman leaves it until `svrngs restart`, `svrngs open`, as the
+/// applications menu runs it, is answered 404 at `POST /v1/proof` by the
+/// old one (1.13.2's answer), sends it none of the token, restarts svrngs
+/// as `svrngs restart` does, once, as the login service runs it over this
+/// data dir, and once the new svrngs proves itself, opens the home page and
+/// says it restarted. Here the old one is Python answering 404 and holding
+/// the data dir's lock, and the restart stops it and starts this svrngs
+/// over the data dir, at its address. Planted, watched failing: dd2efe63
+/// refused, "the svrngs running here is older than this command: run
+/// `svrngs restart`", and asked for no restart.
 #[test]
 fn an_older_svrngs_is_restarted_once_then_asked() {
     let (dir, stubs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (mut old, port, mut sent) = not_svrngs(&[], OLDER);
+    let lock = dir.path().join("lock");
+    let (mut old, port, mut sent) = not_svrngs_holding(&[], OLDER, Some(&lock));
     kept_at(dir.path(), port);
+    kept_by_login(dir.path(), dir.path());
     let svrngs = as_main::installed(stubs.path());
     let (pid, log) = (stubs.path().join("pid"), stubs.path().join("log"));
     // Python stopped, and gone or a zombie, its socket closed either way;
@@ -792,48 +824,180 @@ fn an_older_svrngs_is_restarted_once_then_asked() {
     );
 }
 
-/// **A program at svrngs's address that answers as an older svrngs is
-/// sent none of the token, and svrngs is restarted once**: Python holding
-/// the address answers 404 at `POST /v1/proof`; the command restarts
-/// svrngs once, as `svrngs restart` does, and svrngs can't start, since
-/// Python holds its address; the command, having asked again for its
-/// proof's while and been answered 404 alone, says something other than
-/// svrngs answers there and what to do (exit 1), never restarting again.
-/// Planted, watched failing: dd2efe63 asked for no restart and said the
-/// svrngs there is older.
+/// **What answers 404 where no svrngs holds the data dir is not svrngs,
+/// and svrngs is not restarted for it** (the 1.13.3 proof review, finding
+/// 3): Python holding svrngs's address answers 404 at `POST /v1/proof`, as
+/// most programs would; the data dir's lock is free, so no svrngs runs
+/// over it, and the command restarts nothing, sends none of the token and
+/// says something other than svrngs answers there (exit 1). Planted,
+/// watched failing: 4ece5ae5 restarted svrngs for it.
 #[test]
-fn a_program_answering_as_an_older_svrngs_is_sent_none_of_the_token_and_svrngs_restarted_once() {
+fn a_program_answering_404_is_sent_none_of_the_token_and_restarts_nothing() {
     let (dir, stubs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (mut squatter, port, mut sent) = not_svrngs(&[], OLDER);
     kept_at(dir.path(), port);
-    let svrngs = as_main::installed(stubs.path());
-    let log = stubs.path().join("log");
-    let then = format!(
-        "SVRNGS_DIR='{dir}' HOME='{dir}' '{svrngs}' >'{log}' 2>&1 &",
-        dir = dir.path().display(),
-        svrngs = svrngs.display(),
-        log = log.display()
-    );
-    restarting(stubs.path(), &then);
+    kept_by_login(dir.path(), dir.path());
+    restarting(stubs.path(), "");
     let (out, asked) = restarted(dir.path(), stubs.path());
     squatter.kill().unwrap();
     let mut seen = String::new();
     sent.read_to_string(&mut seen).unwrap();
     sent_none_of_the_token(&seen);
-    let asks = seen.lines().filter(|l| !l.is_empty());
-    assert!(
-        asks.clone().all(|l| l.contains("POST /v1/proof HTTP/1.1")),
-        "{seen}"
-    );
-    assert!(asks.count() > 1, "asked again after the restart: {seen}");
-    assert_eq!(asked, [restart_asked()], "one restart, never another");
-    let started = std::fs::read_to_string(&log).unwrap_or_default();
-    let held = format!("Another program on this computer holds 127.0.0.1:{port}");
-    assert!(
-        started.contains(&held),
-        "svrngs couldn't start there: {started}"
-    );
+    assert!(seen.contains("POST /v1/proof HTTP/1.1"), "{seen}");
+    assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
     let told = String::from_utf8_lossy(&out.stderr);
     assert_eq!(out.status.code(), Some(1), "{told}");
     unproven(port, (1, told.trim().trim_start_matches("svrngs: ").into()));
+}
+
+/// **An older svrngs over another data dir than the login service's is
+/// not restarted** (the 1.13.3 proof review, finding 9): Python answering
+/// 404 holds this data dir's lock, as an older svrngs started by hand over
+/// it would, and the login service runs svrngs over another; restarting
+/// that would restart someone else's svrngs, so the command restarts
+/// nothing, sends none of the token, and says what runs here and what to
+/// do (exit 1). Planted, watched failing: 4ece5ae5 restarted the login
+/// service's svrngs.
+#[test]
+fn an_older_svrngs_the_login_service_doesn_t_run_is_not_restarted() {
+    let (dir, stubs, other) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let lock = dir.path().join("lock");
+    let (mut old, port, mut sent) = not_svrngs_holding(&[], OLDER, Some(&lock));
+    kept_at(dir.path(), port);
+    kept_by_login(dir.path(), other.path());
+    restarting(stubs.path(), "");
+    let (out, asked) = restarted(dir.path(), stubs.path());
+    old.kill().unwrap();
+    let mut seen = String::new();
+    sent.read_to_string(&mut seen).unwrap();
+    sent_none_of_the_token(&seen);
+    assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
+    let told = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{told}");
+    let older = format!(
+        "the svrngs running over {} is older than this command",
+        dir.path().display()
+    );
+    assert!(
+        told.contains(&older) && told.contains("none of your token"),
+        "{told}"
+    );
+}
+
+/// **svrngs starting waits out a command's look at its data dir's lock**
+/// (the 1.13.3 proof review, finding 10): a command that hears 404 looks
+/// whether a svrngs holds this data dir by taking its lock a moment, so a
+/// svrngs starting then finds it held; it looks again a moment on, and
+/// takes it. Planted, watched failing: 4ece5ae5's `claim` refused at once,
+/// "svrngs is already running on this computer".
+#[test]
+fn a_start_waits_out_a_moment_s_hold_of_its_data_dir() {
+    let dir = tempfile::tempdir().unwrap();
+    let looked = std::fs::File::create(dir.path().join("lock")).unwrap();
+    looked.try_lock().unwrap();
+    let let_go = std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(10));
+        drop(looked);
+    });
+    let claimed = cli::claim(dir.path());
+    let_go.join().unwrap();
+    assert!(
+        claimed.is_ok(),
+        "{:?}",
+        claimed.err().map(|r| r.to_string())
+    );
+}
+
+/// **A token file that can't be read is said so, and nothing is dialled**
+/// (the 1.13.3 proof review, finding 4): with no `token` beside `api`, the
+/// command says svrngs's token can't be read, and where, exit 3, and asks
+/// nothing of what answers at svrngs's address; never that something other
+/// than svrngs answers there. Planted, watched failing: dd2efe63 asked
+/// Python for a proof under no token and said "Something other than your
+/// svrngs answers".
+#[tokio::test(flavor = "multi_thread")]
+async fn an_unreadable_token_is_said_and_nothing_is_asked() {
+    let held = TcpListener::bind("127.0.0.1:0").unwrap();
+    held.set_nonblocking(true).unwrap();
+    let dir = data_dir_at(held.local_addr().unwrap().port());
+    std::fs::remove_file(dir.path().join("token")).unwrap();
+    let refused = opened(dir.path()).await;
+    let asked = held.accept().map(|(_, from)| from);
+    assert!(asked.is_err(), "it was asked, from {asked:?}");
+    let (code, said) = refused.expect_err("refused");
+    assert_eq!(code, 3, "{said}");
+    let token = dir.path().join("token").display().to_string();
+    assert!(said.contains("token") && said.contains(&token), "{said}");
+    assert!(!said.contains("Something other"), "{said}");
+}
+
+/// **What answers at svrngs's address is read no further than an answer
+/// svrngs gives the command** (the 1.13.3 proof review, finding 7): Python
+/// answering the proof with 64 MiB stops being read past the command's
+/// bound, and the command says something other than svrngs answers.
+/// Planted, watched failing: dd2efe63 read all 64 MiB.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_endless_answer_is_read_no_further_than_svrngs_s_own() {
+    let script = "import socket\ns = socket.socket()\ns.bind(('127.0.0.1', 0))\ns.listen()\nprint(s.getsockname()[1], flush=True)\nc, _ = s.accept()\nc.recv(65536)\nsent = 0\ntry:\n    c.sendall(b'HTTP/1.1 200 OK\\r\\nContent-Length: 67108864\\r\\n\\r\\n')\n    while sent < 67108864:\n        sent += c.send(bytes(65536))\nexcept OSError: pass\nprint(sent, flush=True)";
+    let mut python = Process::new("python3")
+        .args(["-I", "-c", script])
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut out = BufReader::new(python.stdout.take().unwrap());
+    let mut port = String::new();
+    out.read_line(&mut port).unwrap();
+    let dir = data_dir_at(port.trim().parse().unwrap());
+    let refused = opened(dir.path()).await;
+    let mut sent = String::new();
+    out.read_line(&mut sent).unwrap();
+    let _ = python.kill();
+    let _ = python.wait();
+    let sent: usize = sent.trim().parse().unwrap();
+    assert!(sent < 16 << 20, "the command read {sent} bytes of it");
+    unproven(port.trim().parse().unwrap(), refused.expect_err("refused"));
+}
+
+/// **A connection svrngs's address doesn't take is waited for no longer
+/// than a proof** (the 1.13.3 proof review, finding 12): on Linux a
+/// listener whose queue is full drops each new connection's handshake, so
+/// a connect waits on it some two minutes; the command gives up within
+/// its proof's wait, 10 s, and says nothing proved itself (exit 3). A Mac
+/// takes the connection, so this is Linux's. Planted, watched failing:
+/// dd2efe63's connect had no bound.
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+async fn a_connection_nothing_takes_is_waited_for_no_longer_than_a_proof() {
+    let script = "import socket, time\ns = socket.socket()\ns.bind(('127.0.0.1', 0))\ns.listen(0)\nprint(s.getsockname()[1], flush=True)\ntime.sleep(60)";
+    let mut python = Process::new("python3")
+        .args(["-I", "-c", script])
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut port = String::new();
+    BufReader::new(python.stdout.take().unwrap())
+        .read_line(&mut port)
+        .unwrap();
+    let port: u16 = port.trim().parse().unwrap();
+    let at = SocketAddr::from(([127, 0, 0, 1], port));
+    let filled: Vec<_> = (0..8)
+        .filter_map(|_| TcpStream::connect_timeout(&at, Duration::from_millis(200)).ok())
+        .collect();
+    let dir = data_dir_at(port);
+    let asked = tokio::time::timeout(Duration::from_secs(30), opened(dir.path())).await;
+    let _ = python.kill();
+    let _ = python.wait();
+    drop(filled);
+    let (code, said) = asked
+        .expect("the command gave up within 30 s")
+        .expect_err("refused");
+    assert_eq!(code, 3, "{said}");
+    assert!(
+        said.contains("proved it is your svrngs within 10 seconds"),
+        "{said}"
+    );
 }

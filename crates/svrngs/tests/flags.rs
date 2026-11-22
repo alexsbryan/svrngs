@@ -109,7 +109,8 @@ fn every_refusal_keeps_its_exit_code() {
         R::Terms("no".into()),
         R::Busy(path()),
         R::Unproven("http://127.0.0.1:1".into()),
-        R::Behind,
+        R::Behind(path()),
+        R::Unrestarted("http://127.0.0.1:1".into()),
     ];
     let unjudged = [
         U::NoDataDir,

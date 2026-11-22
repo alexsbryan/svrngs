@@ -411,9 +411,8 @@ own act, and refuses one naming anyone else (`not_yours`), whose entries
 are signed on their own devices. Sign-in's routes keep their client's own
 secret. A lend's address lets a program in without it only while its
 person has Play on there (above). svrngs proves it holds the token before
-any program of svrngs's sends it there (the operator, 2026-11-21: "svrngs
-proves it first"): the command, the applications menu's opener and Give
-open one connection to the address svrngs wrote and post a fresh 32-byte
+its command, its applications menu's opener or Give sends it there (the
+operator, 2026-11-21: "svrngs proves it first"): each opens one connection to the address svrngs wrote and post a fresh 32-byte
 challenge to `POST /v1/proof` with no token; svrngs answers HMAC-SHA256
 under the token over the challenge and that connection's two ends, and
 only an answer equal to what the asker makes for its own connection lets
@@ -423,13 +422,15 @@ vectors). The route answers without the token and tells nothing of it. So
 a program holding svrngs's address while svrngs is down, of any account,
 in a container or not, running svrngs's own file or not, or carrying the
 challenge to svrngs on a connection of its own, is sent none of the token,
-and the person is told what to do. A svrngs that answers 404 there is
-older than the command, as an update leaves it running: the command
-restarts it once, as `svrngs restart` does, and asks it again as it
-comes back (the operator, 2026-11-21: "Restart automatically"); what
-still answers 404 is an older svrngs if it holds the data directory, and
-otherwise something else at svrngs's address, refused as one. Give says
-to restart it. The asker
+and the person is told what to do. What answers 404 there while a
+svrngs holds the data directory's lock is a svrngs older than the
+command, as an update leaves one running: where the login service runs
+svrngs over that data directory, the command restarts it once, as
+`svrngs restart` does, and asks it again as it comes back (the operator,
+2026-11-21: "Restart automatically"); elsewhere, or if it is still older,
+the person is told what runs there and what to do. A 404 where no svrngs
+holds the lock is something else at svrngs's address, refused as one,
+and nothing is restarted for it. Give says to restart it. The asker
 waits up to 10 s for the proof (`PROVE_WITHIN`), since svrngs holds its
 address before it takes a connection there, so a svrngs starting is
 waited for, never refused. Any process on the lender's computer
@@ -942,8 +943,9 @@ A browser with none is refused with what that is and how to let it in:
 is not the default one. An open is single-use and each browser keeps its own.
 `svrngs restart` asks launchd or systemd to stop and start it, so it works on
 any running build and closes as a logout does; one kept by neither is refused.
-A command that finds an older svrngs running, as pacman's update leaves it,
-restarts it that way itself, once, before it asks (§3).
+A command that finds an older svrngs running over the data directory the
+login service runs it over, as pacman's update leaves it, restarts it that
+way itself, once, before it asks (§3).
 
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for

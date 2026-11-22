@@ -28,7 +28,7 @@ pub enum RecordError {
     #[error("svrngs on this computer did not answer at {api}: {why}. Is it running?")]
     Unanswered { api: String, why: String },
     #[error(
-        "Something other than svrngs answers at {api}, where svrngs listens, so give sent it nothing, not your token. Stop that program, then start svrngs again with `svrngs restart`"
+        "Something other than svrngs answers at {api}, where svrngs listens, so give sent it none of your token. Stop that program (`lsof -nP -iTCP -sTCP:LISTEN` on a Mac, or `ss -ltnp` on Linux, names each program listening), then start svrngs again with `svrngs restart`"
     )]
     Unproven { api: String },
     #[error("the svrngs running here is older than this give: run `svrngs restart`, then try again")]
@@ -102,7 +102,10 @@ impl Answers for Loopback {
         let challenge = challenge().ok_or_else(|| unanswered("no randomness here to challenge it with".into()))?;
         let asked = json!({ "challenge": challenge }).to_string();
         let (status, said) =
-            exchange(&mut on, at, ("POST", "/v1/proof", None), Some(&asked)).map_err(|e| unanswered(e.to_string()))?;
+            exchange(&mut on, at, ("POST", "/v1/proof", None), Some(&asked)).map_err(|e| match e.kind() {
+                std::io::ErrorKind::InvalidData => RecordError::Unproven { api: api.clone() },
+                _ => unanswered(e.to_string()),
+            })?;
         let said: Value = serde_json::from_str(&said).unwrap_or_default();
         let wanted = proof(&self.token, &challenge, client, server);
         let proved = status == 200 && same(said["proof"].as_str().unwrap_or_default().as_bytes(), wanted.as_bytes());
@@ -121,7 +124,12 @@ impl Answers for Loopback {
 
 /// `method` `route` asked on `on`, showing `token` if there is one, `body`
 /// posted if there is one, as HTTP/1.1 to svrngs at `at`: the status and
-/// the text answered, by its length, which svrngs gives every answer.
+/// the text answered, by its length, which svrngs gives every answer. Its
+/// head is read no further than [`HEAD_WITHIN`], and the proof's answer,
+/// asked before anything has proved itself, no further than
+/// [`PROVED_WITHIN`], so what holds svrngs's address can't fill Give's
+/// memory (the 1.13.3 proof review, finding 7): past either, it is
+/// unreadable.
 fn exchange(
     on: &mut BufReader<TcpStream>,
     at: SocketAddr,
@@ -141,13 +149,15 @@ fn exchange(
     );
     on.get_mut().write_all(asked.as_bytes())?;
     let unreadable = |why: &str| std::io::Error::new(std::io::ErrorKind::InvalidData, why.to_string());
+    let mut left = HEAD_WITHIN;
     let mut line = || {
         let mut line = String::new();
-        let read = on.read_line(&mut line)?;
-        if read == 0 {
-            Err(std::io::Error::from(std::io::ErrorKind::UnexpectedEof))
-        } else {
-            Ok(line.trim_end().to_string())
+        let read = on.by_ref().take(left).read_line(&mut line)?;
+        left -= read as u64;
+        match (read, line.ends_with('\n')) {
+            (0, _) => Err(std::io::Error::from(std::io::ErrorKind::UnexpectedEof)),
+            (_, false) => Err(unreadable("its head is longer than svrngs's")),
+            _ => Ok(line.trim_end().to_string()),
         }
     };
     let status = line()?
@@ -171,6 +181,9 @@ fn exchange(
                 .map_err(|_| unreadable(&format!("its {name} is not a number")))?;
         }
     }
+    if token.is_none() && length > PROVED_WITHIN {
+        return Err(unreadable("its answer is longer than a proof"));
+    }
     let mut said = Vec::new();
     on.by_ref().take(length).read_to_end(&mut said)?;
     if said.len() as u64 != length {
@@ -178,6 +191,13 @@ fn exchange(
     }
     Ok((status, String::from_utf8_lossy(&said).into_owned()))
 }
+
+/// The most of an answer's head [`exchange`] reads: far past svrngs's.
+const HEAD_WITHIN: u64 = 16 << 10;
+
+/// The most of the proof's answer [`exchange`] reads, as the Omarchy
+/// helper reads it: far past svrngs's, some 90 bytes.
+const PROVED_WITHIN: u64 = 4 << 10;
 
 /// svrngs's proof that it holds `token`, for `challenge` on the connection
 /// from `client` to `server`: HMAC-SHA256 under the token, trimmed, over

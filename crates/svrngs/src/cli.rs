@@ -626,14 +626,16 @@ pub enum Refused {
     Unshown(LendName),
     /// What answers at the address svrngs wrote didn't prove it is svrngs
     /// (svrngs-node api.rs `asked`).
-    #[error("Something other than your svrngs answers at {0}, where svrngs listens, so svrngs sent it nothing, not your token. Stop that program, then start svrngs again with `svrngs restart`")]
+    #[error("Something other than your svrngs answers at {0}, where svrngs listens, so svrngs sent it none of your token. Stop that program (`lsof -nP -iTCP -sTCP:LISTEN` on a Mac, or `ss -ltnp` on Linux, names each program listening), then start svrngs again with `svrngs restart`")]
     Unproven(String),
-    /// svrngs running at that address has no proof to give: this command
-    /// was updated, and svrngs not yet restarted into it.
-    #[error(
-        "the svrngs running here is older than this command: run `svrngs restart`, then try again"
-    )]
-    Behind,
+    /// An older svrngs holds the data dir there, and svrngs can't restart
+    /// it as the login service runs it (cli.rs `kept_over`, `restart`).
+    #[error("the svrngs running over {} is older than this command, and isn't one svrngs can restart as your login service runs it, so svrngs sent it none of your token: stop that svrngs where it runs (Ctrl-C), then start svrngs again", .0.display())]
+    Behind(PathBuf),
+    /// Restarted as the login service runs it, what answers there is still
+    /// older than this command.
+    #[error("svrngs restarted the svrngs your login service runs, and what answers at {0} is still older than this command, so svrngs sent it none of your token: your login service runs an older svrngs than this one, so update that one, or use it")]
+    Unrestarted(String),
 }
 
 /// A precondition of the run is absent, so nothing is claimed: exit 3.
@@ -666,7 +668,7 @@ pub enum Unjudged {
     NotRunning,
     #[error("svrngs running here did not open your home page: {0}")]
     Unopened(String),
-    #[error("Nothing at {0}, where svrngs listens, proved it is your svrngs within {within} seconds, so svrngs sent it nothing, not your token. Try again in a moment; if this keeps happening, run `svrngs restart`",
+    #[error("Nothing at {0}, where svrngs listens, proved it is your svrngs within {within} seconds, so svrngs sent it none of your token. Try again in a moment; if this keeps happening, run `svrngs restart`",
         within = PROVE_WITHIN.as_secs())]
     Unanswered(String),
     #[error("cannot tell from here whether {0} gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again")]
@@ -730,7 +732,13 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
         .map_err(|e| Unjudged::DataDir(root.to_path_buf(), e))?;
     let path = root.join("lock");
     let file = File::create(&path).map_err(|e| Unjudged::DataDir(path.clone(), e))?;
-    match file.try_lock() {
+    // A command looks whether svrngs holds it by taking it a moment
+    // (`Here::ask`), so a start that finds it held looks once more.
+    let taken = file.try_lock().or_else(|_| {
+        std::thread::sleep(Duration::from_millis(50));
+        file.try_lock()
+    });
+    match taken {
         Ok(()) => {
             tracing::debug!(target: "cli", lock = %path.display(), "cli: data dir claimed");
             Ok(file)
@@ -1035,6 +1043,29 @@ fn restart(root: &Path) -> Result<String, Refusal> {
         .ok_or(Refused::NotKept.into())
 }
 
+/// Whether what keeps svrngs running at login runs it over `root`: the
+/// `SVRNGS_DIR` its LaunchAgent or systemd unit names, as install.sh
+/// writes them, else `~/.svrngs`, as a package's unit runs it; so its
+/// restart ([`restart`]) restarts the svrngs over `root`, and no other.
+fn kept_over(root: &Path) -> bool {
+    let home = home().unwrap_or_default();
+    #[cfg(target_os = "macos")]
+    let kept = home.join("Library/LaunchAgents/sh.svrnme.svrngs.plist");
+    #[cfg(not(target_os = "macos"))]
+    let kept = home.join(".config/systemd/user/svrngs.service");
+    // `<key>SVRNGS_DIR</key><string><dir></string>`, `Environment=SVRNGS_DIR=<dir>`.
+    let kept = std::fs::read_to_string(kept).unwrap_or_default();
+    let named = kept
+        .split_once("SVRNGS_DIR")
+        .map(|(_, d)| d.trim_start_matches("</key><string>"));
+    let named = named.and_then(|d| d.trim_start_matches('=').split(['<', '\n']).next());
+    let kept = named
+        .map_or(home.join(".svrngs"), PathBuf::from)
+        .canonicalize();
+    tracing::debug!(target: "cli", ?kept, root = %root.display(), "cli: the data dir svrngs is kept running over at login, against this command's");
+    kept.is_ok_and(|kept| root.canonicalize().is_ok_and(|here| here == kept))
+}
+
 /// A data dir as a verb reaches it, and what answers an ask of svrngs
 /// running over it: whether it answered success, and its body. The one
 /// boundary between the command and the process it asks (RUST_ARCH 7).
@@ -1112,16 +1143,23 @@ impl Here for PathBuf {
     /// ([`svrngs_node::api::asked`]): anything else there is sent none of
     /// it, and the person is told what to do.
     async fn ask(&self, route: &str, body: &impl serde::Serialize) -> Asked {
-        let read = |file| std::fs::read_to_string(self.join(file)).unwrap_or_default();
-        let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
+        let read =
+            |file| std::fs::read_to_string(self.join(file)).map_err(|e| (self.join(file), e));
+        let api = read(API_FILE).unwrap_or_default();
+        let token = read(svrngs_node::api::TOKEN_FILE);
+        let token = token.map_err(|(at, e)| Unjudged::Api(ApiError::TokenFile(at, e)))?;
         let body = serde_json::to_string(body).expect("an ask is JSON");
         let ask = || svrngs_node::api::asked(&api, route, token.trim(), body.clone());
         let mut asked = ask().await;
-        // An older svrngs, as an update leaves one running: restarted once,
-        // as `svrngs restart` restarts it (the operator, 2026-11-21:
-        // "Restart automatically"), and asked again 100 ms apart while it
-        // stops and starts, for as long as its proof is waited for.
-        if asked == Err(Withheld::Older) && restart(self).is_ok() {
+        // An older svrngs over this data dir, its lock held, as an update
+        // leaves one running: restarted once, as `svrngs restart` restarts
+        // it, where the login service runs it over this data dir (the
+        // operator, 2026-11-21: "Restart automatically"), and asked again
+        // 100 ms apart while it stops and starts, for as long as its proof
+        // is waited for. Nothing else answering 404 is restarted for.
+        let older = asked == Err(Withheld::Older) && claim(self).is_err();
+        let restarted = older && kept_over(self) && restart(self).is_ok();
+        if restarted {
             let mut tries = PROVE_WITHIN.as_millis() / 100;
             while tries > 0 && matches!(asked, Err(Withheld::Away | Withheld::Older)) {
                 tries -= 1;
@@ -1132,13 +1170,14 @@ impl Here for PathBuf {
                 eprintln!("svrngs was updated, so it restarted to use the new one.");
             }
         }
-        tracing::debug!(target: "cli", api, route, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs running here answered, or what answers there was sent none of the token, and why");
-        // Nothing there, as before; an older svrngs still, holding its data
-        // dir, or else something else there, refused; or nothing proved in
+        tracing::debug!(target: "cli", api, route, older, restarted, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs running here answered, or what answers there was sent none of the token, and why");
+        // Nothing there, as before; an older svrngs here still, restarted
+        // or not; something else there, refused; or nothing proved in
         // time, so the person tries again.
         let (status, text) = asked.map_err(|why| match why {
             Withheld::Away => Refusal::from(Unjudged::NotRunning),
-            Withheld::Older if claim(self).is_err() => Refused::Behind.into(),
+            Withheld::Older if restarted => Refused::Unrestarted(api.trim().into()).into(),
+            Withheld::Older if older => Refused::Behind(self.clone()).into(),
             Withheld::Older | Withheld::Unproven => Refused::Unproven(api.trim().into()).into(),
             Withheld::Unanswered => Unjudged::Unanswered(api.trim().into()).into(),
         })?;

@@ -645,7 +645,8 @@ pub(crate) async fn http_on(to: impl crate::iroh::Duplex + 'static) -> Option<On
 }
 
 /// `asked`, with `body`, sent on `on` to the service at `port`: its
-/// answer's status and body; none when it doesn't answer.
+/// answer's status and body, none past [`ANSWERED_WITHIN`] or once the
+/// connection drops; none when it doesn't answer.
 pub(crate) async fn sent(on: &mut On, port: u16, asked: Builder, body: String) -> Answered {
     let asked = asked
         .header("host", format!("127.0.0.1:{port}"))
@@ -653,11 +654,19 @@ pub(crate) async fn sent(on: &mut On, port: u16, asked: Builder, body: String) -
         .ok()?;
     let answer = on.send_request(asked).await.ok()?;
     let status = answer.status().as_u16();
-    let body = http_body_util::BodyExt::collect(answer.into_body())
+    let body = http_body_util::Limited::new(answer.into_body(), ANSWERED_WITHIN);
+    let body = http_body_util::BodyExt::collect(body)
         .await
-        .ok()?;
-    Some((status, body.to_bytes().to_vec()))
+        .map(|b| b.to_bytes());
+    Some((status, body.unwrap_or_default().to_vec()))
 }
+
+/// The most of an answer [`sent`] reads: far past any svrngs gives its
+/// command or a share's port gives a key or a sign-in, and short of
+/// what a program holding svrngs's address could fill memory with before
+/// it proves itself (the 1.13.3 proof review, finding 7). Past it, the
+/// answer is its status alone.
+const ANSWERED_WITHIN: usize = 1 << 20;
 
 /// What a lender is told of the key their `name`, its program's word,
 /// answered `status` to ([`tried`]), and whether it is kept: refused, 401 or 403, it
