@@ -694,7 +694,13 @@ sockets, a late accept among them.
 **`crates/svrngs-db`**: an app's database in a group, beside the record and
 never in it (PLAN §1, "Persistence for carried apps"). None of it is built
 yet: `src/lib.rs` is its doc and the crate root's `deny(unsafe_code)`, and
-its dependencies are none.
+its dependencies are none. Its tests come first. `tests/w1/` holds the
+reference model every copy of a database is checked against (`reference.rs`,
+the join of every admissible change set); the model copy, cr-sqlite's
+merge as Fly's fork does it (`replica.rs`), behind the trait the database's
+own copies will meet; and a seeded simulator of deliveries (`sim.rs`). The
+gate runs 1,000 of its seeds, and `seeds::soak`, ignored, runs as many as
+it is given.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
