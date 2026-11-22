@@ -13,12 +13,15 @@
 //! Each carried app in each group gets a SQLite file on this computer
 //! ([`States`]), opened from the `schema.sql` beside its `index.html`, its
 //! tables made CRDTs by cr-sqlite ([`Db::open`]). A page asks it at its own
-//! origin ([`Db::run`]). What SQL may do has one decider, SQLite's authorizer
-//! ([`page_rule`]), asked as the page's statement is prepared; a query runs
-//! under a progress handler that stops it at [`QUERY_MOST`] and gives at most
-//! [`ROWS_MOST`] rows, saying when there were more. rusqlite takes both by
-//! `&mut`, so each is installed once, at open, and the statement at hand is
-//! told them through a [`Gate`].
+//! origin ([`asked`]): SQL to read ([`Db::read`]), and a write in the write
+//! form, by key ([`Db::write`], `form.rs`). What SQL may do has one decider,
+//! SQLite's authorizer ([`page_rule`]), asked as the page's statement is
+//! prepared, and a statement that writes is refused, its words naming the
+//! form ([`Refused::NotARead`]); a query runs under a progress handler that
+//! stops it at [`QUERY_MOST`] and gives at most [`ROWS_MOST`] rows, saying
+//! when there were more. rusqlite takes both by `&mut`, so each is
+//! installed once, at open, and the statement at hand is told them through
+//! a [`Gate`].
 //!
 //! Moved from the app-state spike's `state.rs` (svrn-docs
 //! `rings/current/app-state-spike/spike.patch`), the half that keeps a
@@ -40,11 +43,16 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering::Relaxed};
 use std::time::{Duration, Instant};
 
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use rusqlite::hooks::{AuthAction, AuthContext, Authorization};
 use rusqlite::types::{Value as Sql, ValueRef};
 use rusqlite::{Connection, ErrorCode};
 use serde_json::{Value, json};
 use tokio::sync::watch;
+
+mod form;
+pub use form::FORM;
+use form::Table;
 
 /// Where a carried app's page asks its database, at its own origin.
 pub const SQL_PATH: &str = "/svrngs/sql";
@@ -55,45 +63,73 @@ pub const QUERY_MOST: Duration = Duration::from_millis(250);
 /// The most rows a page is given at once.
 pub const ROWS_MOST: usize = 1000;
 
-/// Why a page's SQL was not run, said to the page.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Why a page's ask was not run, said to the page in its words: what
+/// stopped it, why, and what to do.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum Refused {
-    /// The authorizer refused it: what it tried.
+    /// A statement sent as SQL that writes.
+    #[error(
+        "svrngs/sql takes SQL only to read, and this statement writes: a write names its rows by key, the same on every device. {FORM}"
+    )]
+    NotARead,
+    /// A body or an op the form doesn't take: what to change.
+    #[error("{0}")]
+    Form(String),
+    /// The authorizer refused it: what it tried, as SQLite says.
+    #[error("An app's SQL reads only the app's own tables, so SQLite refused it: {0}.")]
     NotAllowed(String),
     /// It ran past [`QUERY_MOST`] and was stopped.
+    #[error("The query ran past {} ms and was stopped. Ask for less, or for it in parts.", QUERY_MOST.as_millis())]
     TooLong,
     /// SQLite could not run it: its words.
+    #[error("SQLite couldn't run it: {0}.")]
     Malformed(String),
     /// This svrngs was built without cr-sqlite, so it opens no database.
+    #[error(
+        "This computer's svrngs was built without cr-sqlite, so it keeps no app's database. Build it again from its checkout, as its README says."
+    )]
     Unbuilt,
     /// This computer could not: its words.
+    #[error("This computer couldn't: {0}.")]
     Fault(String),
 }
 
 impl Refused {
-    pub fn status(&self) -> u16 {
+    /// Its status, and its short name, as the route answers `{refused, words}`.
+    pub fn said(&self) -> (u16, &'static str) {
         match self {
-            Self::NotAllowed(_) => 403,
-            Self::TooLong => 422,
-            Self::Malformed(_) => 400,
-            Self::Unbuilt | Self::Fault(_) => 500,
+            Self::NotARead => (400, "not-a-read"),
+            Self::Form(_) => (400, "form"),
+            Self::NotAllowed(_) => (403, "not-allowed"),
+            Self::TooLong => (422, "too-long"),
+            Self::Malformed(_) => (400, "sql"),
+            Self::Unbuilt => (500, "unbuilt"),
+            Self::Fault(_) => (500, "fault"),
         }
     }
-    pub fn words(&self) -> String {
-        match self {
-            Self::NotAllowed(what) => {
-                format!("an app's SQL may only read and write its own tables, so {what} is refused")
-            }
-            Self::TooLong => format!(
-                "the query ran past {} ms and was stopped; ask for less",
-                QUERY_MOST.as_millis()
-            ),
-            Self::Malformed(why) => format!("SQLite could not run it: {why}"),
-            Self::Unbuilt => "this computer's svrngs was built without cr-sqlite, so it keeps no app's \
-                database; build it again from its checkout, as its README says"
-                .into(),
-            Self::Fault(why) => format!("this computer could not: {why}"),
-        }
+}
+
+/// What a page's POST asks: one read, `{sql, params}`, or a write in the
+/// form, `{write: [op, ...]}`.
+pub enum Asked<'a> {
+    Read(&'a str, &'a [Value]),
+    Write(&'a Value),
+}
+
+/// The POST `body` as what it asks; refused naming both, for anything else.
+pub fn asked(body: &Value) -> Result<Asked<'_>, Refused> {
+    let fields = body
+        .as_object()
+        .map(|o| o.keys().map(String::as_str).collect::<Vec<_>>());
+    let params = body
+        .get("params")
+        .map_or(Some(&[][..]), |p| p.as_array().map(Vec::as_slice));
+    match (fields.as_deref(), body["sql"].as_str(), params) {
+        (Some(["write"]), ..) => Ok(Asked::Write(&body["write"])),
+        (Some(["sql"] | ["params", "sql"]), Some(sql), Some(params)) => Ok(Asked::Read(sql, params)),
+        _ => Err(Refused::Form(format!(
+            "svrngs/sql takes {{sql, params}}, one read, its params a list of values, or {{write: [op, ...]}}, not {body}. {FORM}"
+        ))),
     }
 }
 
@@ -132,10 +168,9 @@ impl States {
 pub struct Db {
     pub group: String,
     pub app: String,
-    pub path: PathBuf,
     #[expect(clippy::disallowed_types, reason = "one connection, one statement at a time")]
     conn: std::sync::Mutex<Connection>,
-    tables: BTreeSet<String>,
+    tables: BTreeMap<String, Table>,
     gate: Arc<Gate>,
     changed: watch::Sender<u64>,
 }
@@ -150,16 +185,6 @@ struct Gate {
 }
 
 impl Gate {
-    #[expect(clippy::disallowed_methods, reason = "a page's query is timed where SQLite runs it")]
-    fn new() -> Self {
-        let (page, until) = (AtomicBool::new(false), AtomicU64::new(u64::MAX));
-        Self {
-            page,
-            until,
-            since: Instant::now(),
-        }
-    }
-
     /// µs past `since`, now.
     #[expect(clippy::disallowed_methods, reason = "a page's query is timed where SQLite runs it")]
     fn now(&self) -> u64 {
@@ -265,48 +290,30 @@ impl Db {
         }
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;")
             .map_err(fault)?;
-        let fresh: bool = conn
-            .query_row(
-                "SELECT count(*) = 0 FROM sqlite_master WHERE name = 'svrngs_sets'",
-                [],
-                |r| r.get(0),
-            )
-            .map_err(fault)?;
-        tracing::debug!(target: "state", group, app, fresh, "state: a database opened; its schema applied only when new");
-        if fresh {
+        // A database with no table of the app's is new: its schema applied,
+        // then its tables made cr-sqlite's.
+        let mut tables = tables_of(&conn)?;
+        tracing::debug!(target: "state", group, app, fresh = tables.is_empty(), "state: a database opened; its schema applied only when new");
+        if tables.is_empty() {
             conn.authorizer(Some(schema_rule)).map_err(fault)?;
             let applied = conn.execute_batch(schema);
             conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
                 .map_err(fault)?;
             applied.map_err(|e| Refused::Malformed(format!("schema.sql: {e}")))?;
-        }
-        let mut tables = BTreeSet::new();
-        {
-            let mut stmt = conn
-                .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
-                .map_err(fault)?;
-            let names = stmt.query_map([], |r| r.get::<_, String>(0)).map_err(fault)?;
-            for name in names {
-                let name = name.map_err(fault)?;
-                if !internal(&name) {
-                    tables.insert(name);
-                }
-            }
-        }
-        if fresh {
-            for t in &tables {
+            tables = tables_of(&conn)?;
+            for t in tables.keys() {
                 conn.query_row("SELECT crsql_as_crr(?1)", [t], |_| Ok(()))
                     .map_err(|e| Refused::Malformed(format!("{t}: {e}")))?;
             }
-            conn.execute_batch(
-                "CREATE TABLE svrngs_sets (device TEXT NOT NULL, seq INTEGER NOT NULL, site BLOB NOT NULL, db_version INTEGER NOT NULL, body TEXT NOT NULL, sig TEXT NOT NULL, PRIMARY KEY (device, seq));
-                 CREATE TABLE svrngs_marks (device TEXT PRIMARY KEY, mark INTEGER NOT NULL);
-                 CREATE TABLE svrngs_sites (device TEXT PRIMARY KEY, site BLOB NOT NULL UNIQUE);",
-            )
-            .map_err(fault)?;
         }
-        let gate = Arc::new(Gate::new());
-        conn.authorizer(Some(page_rule(tables.clone(), gate.clone())))
+        let (page, until) = (AtomicBool::new(false), AtomicU64::new(u64::MAX));
+        #[expect(clippy::disallowed_methods, reason = "a page's query is timed where SQLite runs it")]
+        let gate = Arc::new(Gate {
+            page,
+            until,
+            since: Instant::now(),
+        });
+        conn.authorizer(Some(page_rule(tables.keys().cloned().collect(), gate.clone())))
             .map_err(fault)?;
         let timed = gate.clone();
         conn.progress_handler(1000, Some(move || timed.now() > timed.until.load(Relaxed)))
@@ -314,7 +321,6 @@ impl Db {
         Ok(Self {
             group: group.into(),
             app: app.into(),
-            path: path.into(),
             conn: conn.into(),
             tables,
             gate,
@@ -327,65 +333,74 @@ impl Db {
         self.changed.subscribe()
     }
 
-    /// The page's `sql` with `params`: a read's rows, or, when `writes`, a
-    /// write's, one transaction of its own; with no `writes`, a write is
-    /// refused (a read's own route, and a subscription). `{rows, more}`, and
-    /// a write's `changed`.
-    pub fn run(&self, writes: bool, sql: &str, params: &[Value]) -> Result<Value, Refused> {
+    /// The page's `sql` with `params`, one statement that only reads:
+    /// `{rows, more}`. A statement that writes is refused, before it runs,
+    /// in words that name the write form.
+    pub fn read(&self, sql: &str, params: &[Value]) -> Result<Value, Refused> {
+        let params = (params.iter().enumerate()).map(|(i, v)| form::value(v, &format!("params[{i}]")));
+        let params = params.collect::<Result<Vec<_>, _>>()?;
         let conn = self.conn.lock().expect("the database's lock");
-        let params: Vec<Sql> = params.iter().map(param).collect();
         self.gate.page.store(true, Relaxed);
         let prepared = conn.prepare(sql);
         self.gate.page.store(false, Relaxed);
         let mut stmt = prepared.map_err(said)?;
-        let readonly = stmt.readonly();
-        tracing::debug!(target: "state", group = self.group, app = self.app, readonly, writes, "state: a page's statement prepared under the authorizer; a read runs alone, a write in a transaction of its own, refused where no write is asked");
-        if !readonly && !writes {
-            return Err(Refused::NotAllowed("a write here, where only reads are asked".into()));
-        }
-        if !readonly {
-            conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
+        tracing::debug!(target: "state", group = self.group, app = self.app, readonly = stmt.readonly(), "state: a page's statement prepared under the authorizer; it runs only if it only reads");
+        if !stmt.readonly() {
+            return Err(Refused::NotARead);
         }
         let until = self.gate.now().saturating_add(QUERY_MOST.as_micros() as u64);
         self.gate.until.store(until, Relaxed);
         let ran = rows(&mut stmt, &params);
         self.gate.until.store(u64::MAX, Relaxed);
-        drop(stmt);
-        let (rows, more) = match ran {
-            Ok(r) => r,
-            Err(e) => {
-                if !readonly {
-                    conn.execute_batch("ROLLBACK").ok();
-                }
-                tracing::debug!(target: "state", group = self.group, app = self.app, refused = ?e, "state: a page's statement stopped, rolled back");
-                return Err(e);
-            }
-        };
-        if readonly {
-            return Ok(json!({ "rows": rows, "more": more }));
-        }
-        let changed = conn.changes();
+        tracing::debug!(target: "state", group = self.group, app = self.app, refused = ?ran.as_ref().err(), "state: a page's read answered, or stopped");
+        let (rows, more) = ran?;
+        Ok(json!({ "rows": rows, "more": more }))
+    }
+
+    /// The page's write, `ops` in the write form, as one transaction:
+    /// `{count}`, the rows changed in all; or refused, nothing of it kept.
+    pub fn write(&self, ops: &Value) -> Result<Value, Refused> {
+        let listed = ops.as_array().filter(|o| !o.is_empty());
+        let listed =
+            listed.ok_or_else(|| Refused::Form(format!("write takes a list of one or more ops, not {ops}. {FORM}")))?;
+        let made = |(i, op)| form::statement(op, &self.tables, i);
+        let statements = listed.iter().enumerate().map(made).collect::<Result<Vec<_>, _>>();
+        tracing::debug!(target: "state", group = self.group, app = self.app, ops = listed.len(), refused = ?statements.as_ref().err(), "state: a write's ops made statements by key, or refused");
+        let statements = statements?;
+        let conn = self.conn.lock().expect("the database's lock");
+        conn.execute_batch("BEGIN IMMEDIATE").map_err(fault)?;
+        let ran = (statements.iter()).map(|(sql, values)| conn.execute(sql, rusqlite::params_from_iter(values)));
+        let ran = ran.sum::<Result<usize, _>>();
+        tracing::debug!(target: "state", group = self.group, app = self.app, ?ran, "state: a write run whole and committed, or rolled back whole as SQLite refused it");
+        // Rolled back, SQLite's refusal of the list is said; a rollback that
+        // fails is this computer's fault, said as one.
+        let count = ran.map_err(|e| conn.execute_batch("ROLLBACK").map_or_else(fault, |()| said(e)))?;
         conn.execute_batch("COMMIT").map_err(fault)?;
-        drop(conn);
-        tracing::debug!(target: "state", group = self.group, app = self.app, changed, "state: a page's write committed");
-        if changed > 0 {
+        if count > 0 {
             self.changed.send_modify(|n| *n += 1);
         }
-        Ok(json!({ "rows": rows, "more": more, "changed": changed }))
+        Ok(json!({ "count": count }))
     }
 }
 
-/// A page's parameter as SQLite takes it.
-fn param(v: &Value) -> Sql {
-    match v {
-        Value::Null => Sql::Null,
-        Value::Bool(b) => Sql::Integer(i64::from(*b)),
-        Value::Number(n) => n
-            .as_i64()
-            .map_or_else(|| Sql::Real(n.as_f64().unwrap_or_default()), Sql::Integer),
-        Value::String(s) => Sql::Text(s.clone()),
-        other => Sql::Text(other.to_string()),
+/// Each of the app's tables in `conn`, with its columns and key, as the
+/// write form names them.
+fn tables_of(conn: &Connection) -> Result<BTreeMap<String, Table>, Refused> {
+    let each = "SELECT t.name, c.name, c.pk FROM sqlite_master AS t, pragma_table_info(t.name) AS c \
+        WHERE t.type = 'table' ORDER BY t.name, c.pk = 0, c.pk, c.cid";
+    let mut stmt = conn.prepare(each).map_err(fault)?;
+    let columns = stmt.query_map([], |r| {
+        Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, i64>(2)?))
+    });
+    let mut tables = BTreeMap::<String, Table>::new();
+    for column in columns.map_err(fault)? {
+        let (name, column, pk) = column.map_err(fault)?;
+        let table = tables.entry(name).or_default();
+        (pk > 0).then(|| table.key.push(column.clone()));
+        table.columns.push(column);
     }
+    tables.retain(|name, _| !internal(name));
+    Ok(tables)
 }
 
 /// A SQLite error as the page is told it.
@@ -415,7 +430,7 @@ fn rows(stmt: &mut rusqlite::Statement<'_>, params: &[Sql]) -> Result<(Vec<Value
                 ValueRef::Integer(i) => json!(i),
                 ValueRef::Real(r) => json!(r),
                 ValueRef::Text(t) => json!(String::from_utf8_lossy(t)),
-                ValueRef::Blob(b) => json!(hex::encode(b)),
+                ValueRef::Blob(b) => json!({ "base64": STANDARD.encode(b) }),
             };
             cells.insert(name.clone(), cell);
         }

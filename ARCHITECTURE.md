@@ -702,11 +702,15 @@ it (`tests/crsqlite.rs`). `src/lib.rs` is a computer's copy: `States`
 opens one file per group and app under `<data dir>/state/`, from the
 `schema.sql` that runs as the person asking, and makes its tables
 cr-sqlite's, refusing out loud where cr-sqlite's functions are missing
-(`Refused::Unbuilt`); `Db::run` runs a page's statement under SQLite's
+(`Refused::Unbuilt`). `Db::read` runs a page's SQL under SQLite's
 authorizer (`page_rule`, the one decider of what SQL may do) and a progress
 handler that stops it at `QUERY_MOST`, each installed once at open and told
-the statement at hand by a `Gate` (`tests/db.rs`). Change sets, their
-signing and their sync are not built yet. Its
+the statement at hand by a `Gate`, and refuses a statement that writes in
+words that name the write form. `Db::write` takes that form, a list of ops
+each naming its row by key, made statements in `form.rs` from the names
+`pragma_table_info` gives, every value bound, and runs them as one
+transaction (`tests/db.rs`). Change sets, their signing and their sync are
+not built yet. Its
 tests came first. `tests/w1/` holds the
 reference model every copy of a database is checked against (`reference.rs`,
 the join of every admissible change set); the model copy, cr-sqlite's

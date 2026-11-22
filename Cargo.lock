@@ -4701,11 +4701,12 @@ dependencies = [
 name = "svrngs-db"
 version = "1.13.3"
 dependencies = [
+ "base64 0.22.1",
  "cc",
- "hex",
  "rusqlite",
  "serde_json",
  "tempfile",
+ "thiserror 2.0.21",
  "tokio",
  "tracing",
 ]
