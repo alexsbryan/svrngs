@@ -6,17 +6,16 @@
 //
 //   node apps/expenses/canary.mjs <group> <Sam's svrngs data dir> <Alex's> <Bo's> <Cy's>
 //
-// Each record is a member's svrngs data dir: the loopback address its `api`
-// file names, asked with the token its `token` file holds (give-token).
+// Each record is a member's svrngs data dir, asked as that member through
+// apps/client/svrngs.mjs, which never sends the token.
 // The caller (crates/svrngs-node/tests/canaries.rs) stands up one computer
 // for each of Sam, Alex, Bo and Cy, since a computer writes only as its own
 // person (DESIGN §3, `not_yours`). Exit 0 holds; 1 says what broke, and when
 // the copies differ, names each and what it says.
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { isDeepStrictEqual as same } from 'node:util';
 
+import { svrngs } from '../client/svrngs.mjs';
 import { EXPENSE, SETTLE, SHARE, actsOf, init, money, reduce } from './expenses.js';
 
 const [group, samAt, alexAt, boAt, cyAt] = process.argv.slice(2);
@@ -25,11 +24,7 @@ if (!cyAt) {
   process.exit(2);
 }
 /** The record on `name`, whose svrngs data dir is `dir`. */
-const on = (name, dir) => ({
-  name,
-  at: readFileSync(join(dir, 'api'), 'utf8').trim(),
-  token: readFileSync(join(dir, 'token'), 'utf8').trim(),
-});
+const on = (name, dir) => ({ name, svrngs: svrngs(dir) });
 const SAM = on("Sam's computer", samAt);
 const ALEX = on("Alex's computer", alexAt);
 const BO = on("Bo's computer", boAt);
@@ -44,21 +39,12 @@ const OWED = { alex: 0, bo: -1500, cy: 0, sam: 1500 };
 const WAIT_MS = 10_000;
 
 async function call(computer, door, body) {
-  const url = `${computer.at}/v1/rail/${door}?namespace=${encodeURIComponent(group)}`;
-  const shown = { authorization: `Bearer ${computer.token}` };
-  const sent =
-    body === undefined
-      ? { headers: shown }
-      : {
-          method: 'POST',
-          headers: { ...shown, 'content-type': 'application/json' },
-          body: JSON.stringify(body),
-        };
-  const res = await fetch(url, sent);
-  const out = await res.json();
-  if (!res.ok)
-    throw new Error(`${computer.name} refused ${door}: ${res.status} ${JSON.stringify(out)}`);
-  return out;
+  const route = `/v1/rail/${door}?namespace=${encodeURIComponent(group)}`;
+  try {
+    return await computer.svrngs.ask(route, body);
+  } catch (e) {
+    throw new Error(`${computer.name}: ${e.message}`);
+  }
 }
 
 const written = [];

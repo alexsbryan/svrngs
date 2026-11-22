@@ -7,6 +7,7 @@ import { createInterface } from 'node:readline';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { proxied } from '../../../web/tests/page.mjs';
+import { svrngs } from '../../client/svrngs.mjs';
 import { seek } from '../../jellyfin/check/person.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -120,14 +121,10 @@ try {
       report.refusal,
       /ended|stopped|closed|new link|not valid|did not let|lets nobody in.*Ask for a new one/is,
     );
-    const api = (await readFile(resolve(state.owner_data, 'api'), 'utf8')).trim();
-    const token = (await readFile(resolve(state.owner_data, 'token'), 'utf8')).trim();
     const sample = JSON.parse(await readFile(state.evidence, 'utf8')).observations.at(-1).observed;
-    const people = await (
-      await fetch(`${api}/v1/rail/people?namespace=${sample.people.namespace}`, {
-        headers: { authorization: `Bearer ${token}` },
-      })
-    ).json();
+    const people = await svrngs(state.owner_data).ask(
+      `/v1/rail/people?namespace=${sample.people.namespace}`,
+    );
     assert.ok(
       Array.isArray(people.people) && people.people.every((p) => p.person !== 'Bo'),
       'N1: the authoritative record contains no refused newcomer',

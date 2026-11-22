@@ -38,9 +38,8 @@ now() { python3 -c 'import time;print(round(time.time(),3))'; }
 say() { printf '%s %s %s\n' "$(date -u +%H:%M:%S)" "$PHASE" "$*" | tee -a "$OUT/steps.log" >&2; }
 ev() { printf '{"t":%s,"phase":"%s","event":"%s"}\n' "$(now)" "$PHASE" "$1" >>"$OUT/events.jsonl"; say "$1"; }
 field() { python3 -c "import json,sys;print(json.load(sys.stdin)$1)"; }
-api() { cat "$W/$1/api" | tr -d '\n'; }
-# Asked with the token beside the api file, on stdin so `ps` never shows it (give-token).
-listed() { printf 'Authorization: Bearer %s' "$(cat "$W/$1/token")" | curl -sf --max-time 5 -H @- "$(api "$1")/v1/folders"; }
+# Asked through `svrngs ask`, which never sends svrngs's token (svrngs V1.13.3).
+listed() { SVRNGS_DIR="$W/$1" "$B" ask /v1/folders 2>/dev/null; }
 
 # up <who> <plant or -> <svrngs args...>: a computer's node, its log the run's.
 up() {
@@ -126,7 +125,7 @@ SVRNGS_DIR="$W/cy" "$B" share --folder "$W/media/cy/films" >"$OUT/cy-share.json"
 ev "ana and cy shared"
 lists ben 'len(l["folders"]) == 2'
 listed ben >"$OUT/setup-ben-folders.json"
-python3 "$HERE/strm.py" "$(api ben)" "$W/ben/token" "$W/lib/Movies" | tee "$OUT/stubs.jsonl"
+listed ben | python3 "$HERE/strm.py" "$W/lib/Movies" | tee "$OUT/stubs.jsonl"
 MP4="$(grep '"ExpMp4' "$OUT/stubs.jsonl" | field '["hash"]')"
 MKV="$(grep '"ExpMkv' "$OUT/stubs.jsonl" | field '["hash"]')"
 

@@ -13,7 +13,7 @@ could-not-judge, or never-ran (AGENTS.md 6).
 Data in <run dir>/data/. The bars are judged in data/verdicts.json, with
 what each read. The link's token is never written there.
 scripts/check.sh runs none of this."""
-import json, os, re, shutil, signal, subprocess, sys, time, traceback, urllib.error, urllib.request
+import base64, json, os, re, shutil, signal, subprocess, sys, time, traceback
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent; APP = HERE.parent; REPO = APP.parents[1]
@@ -45,17 +45,20 @@ def wait(cond, bound, every=0.2):
     return None
 
 
-def http(method, url, body=None, timeout=20):
-    """{status, said, bytes, ms} of one request as it came, or status None and why."""
+def http(method, who, path, body=None, timeout=20):
+    """{status, said, bytes, ms} of one request to `who`'s svrngs as it came, or status None and why:
+    asked by ask.mjs through apps/client/svrngs.mjs, so the harness never reads a token."""
     data = body if isinstance(body, (bytes, type(None))) else body.encode()
-    shows = {"authorization": f"Bearer {token_for(url)}"} if token_for(url) else {}
-    req = urllib.request.Request(url, method=method, data=data, headers={"content-type": "application/octet-stream", **shows})
     t0 = time.time()
+    ms = lambda: round((time.time() - t0) * 1000)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r: status, blob = r.status, r.read()
-    except urllib.error.HTTPError as e: status, blob = e.code, e.read()
-    except Exception as e: return {"status": None, "said": f"could not ask: {e}", "bytes": b"", "ms": round((time.time() - t0) * 1000)}
-    return {"status": status, "said": blob[:300].decode(errors="replace"), "bytes": blob, "ms": round((time.time() - t0) * 1000)}
+        run = subprocess.run(["node", HERE / "ask.mjs", W / who / ".svrngs", method, path], input=data or b"",
+                             capture_output=True, timeout=timeout)
+        got = json.loads(run.stdout)
+    except Exception as e: return {"status": None, "said": f"could not ask: {e}", "bytes": b"", "ms": ms()}
+    if got["status"] is None: return {"status": None, "said": got["said"], "bytes": b"", "ms": ms()}
+    blob = base64.b64decode(got["body"])
+    return {"status": got["status"], "said": blob[:300].decode(errors="replace"), "bytes": blob, "ms": ms()}
 
 
 def shown(r): return {k: v for k, v in r.items() if k != "bytes"} | {"length": len(r.get("bytes", b""))}
@@ -72,23 +75,14 @@ def base(who):
     except Exception: return None
 
 
-def token(who):
-    """The token `who`'s record asks of a program, beside its api file (give-token)."""
-    return W / who / ".svrngs/token"
-
-
-def token_for(url):
-    """What the token file of the computer whose record `url` asks holds, or None."""
-    for d in W.iterdir() if W.exists() else []:
-        if base(d.name) and url.startswith(base(d.name)) and token(d.name).exists():
-            return token(d.name).read_text().strip()
-    return None
+def data(who):
+    """`who`'s svrngs data dir, which station.mjs, listen.mjs and ask.mjs are given."""
+    return W / who / ".svrngs"
 
 
 def api(who, path):
-    b = base(who)
-    if not b: return None
-    r = http("GET", b + path)
+    if not base(who): return None
+    r = http("GET", who, path)
     return json.loads(r["bytes"]) if r["status"] == 200 else None
 
 
@@ -209,16 +203,16 @@ def main():
     say("group", group=ev["group"], people=keys)
 
     # Bo and Cy listen; the stranger opens the show; Bo says a word on the lane.
-    listeners = {w: node("listen.mjs", "--api", base(w), "--token", token(w), "--group", ev["group"], "--station", "Ana", "--out", W / w,
+    listeners = {w: node("listen.mjs", "--svrngs", data(w), "--group", ev["group"], "--station", "Ana", "--out", W / w,
                          "--for", SECONDS + 40) for w in ("bo", "cy")}
     time.sleep(1)
     tab = strangers([f"{page}#key={ana_key}&show={SHOW}"], SECONDS + 50)
-    ev["bo_note"] = shown(http("POST", f"{base('bo')}/v1/rail/live?namespace={ev['group']}", json.dumps({"note": "Bo, on the lane"})))
+    ev["bo_note"] = shown(http("POST", "bo", f"/v1/rail/live?namespace={ev['group']}", json.dumps({"note": "Bo, on the lane"})))
     say("bo note", **ev["bo_note"])
 
     # The show.
     t0 = time.time()
-    run = subprocess.run(["node", APP / "station.mjs", "--api", base("ana"), "--token", token("ana"), "--group", ev["group"], "--mp3", mp3, "--show", SHOW,
+    run = subprocess.run(["node", APP / "station.mjs", "--svrngs", data("ana"), "--group", ev["group"], "--mp3", mp3, "--show", SHOW,
                           "--public", public, "--keep", str(KEEP), "--piece", str(PIECE), "--out", W / "station.jsonl"],
                          capture_output=True, text=True, timeout=SECONDS + 60)
     ev["station"] = {"exit": run.returncode, "stderr": run.stderr[-800:], "s": round(time.time() - t0, 1)}
@@ -235,18 +229,18 @@ def main():
     Y, Z = b"onair carried Y " + os.urandom(4096), b"onair carried Z " + os.urandom(4096)
     hy, hz = blake3(Y), blake3(Z)
     ev["carried"] = {"hash_Y": hy,
-                     "put_Y": shown(http("PUT", f"{base('ana')}/v1/blob?group={ev['group']}&keep={KEEP}", Y)),
-                     "put_Z": shown(http("PUT", f"{base('ana')}/v1/blob?group={ev['group']}&keep={KEEP}", Z))}
+                     "put_Y": shown(http("PUT", "ana", f"/v1/blob?group={ev['group']}&keep={KEEP}", Y)),
+                     "put_Z": shown(http("PUT", "ana", f"/v1/blob?group={ev['group']}&keep={KEEP}", Z))}
     last_put = time.time()
-    ev["carried"]["bo_get_Y"] = shown(http("GET", f"{base('bo')}/v1/blob/{hy}?group={ev['group']}"))
+    ev["carried"]["bo_get_Y"] = shown(http("GET", "bo", f"/v1/blob/{hy}?group={ev['group']}"))
     ev["carried"]["hash_Z"] = hz
 
     # 4.2's plants: no end, Bo's signature, a byte flipped, an act's signature.
     plants = {}
-    recs, code, err = stations("--api", base("ana"), "--token", token("ana"), "--group", ev["group"], "--mp3", mp3, "--show", "no-ended", "--public", public,
+    recs, code, err = stations("--svrngs", data("ana"), "--group", ev["group"], "--mp3", mp3, "--show", "no-ended", "--public", public,
                                "--limit", 2, "--pace", 0, "--no-ended")
     plants["no-ended"] = {"exit": code, "stderr": err, "lines": [r.get("sign") for r in recs if r["event"] == "piece"]}
-    recs, code, err = stations("--api", base("bo"), "--token", token("bo"), "--group", ev["group"], "--mp3", mp3, "--show", "bo-signed", "--public", public,
+    recs, code, err = stations("--svrngs", data("bo"), "--group", ev["group"], "--mp3", mp3, "--show", "bo-signed", "--public", public,
                                "--limit", 2, "--pace", 0)
     plants["bo-signed"] = {"exit": code, "stderr": err, "lines": [r.get("sign") for r in recs if r["event"] in ("piece", "ended")]}
     air = public / "air"
@@ -280,13 +274,13 @@ def main():
     # 4.1, carried: Ana stopped, Cy asks Y (Bo holds it) and Z (no one running does).
     ev["carried"]["ana_stopped"] = stop("ana")
     t = time.time()
-    ev["carried"]["cy_get_Y"] = shown(http("GET", f"{base('cy')}/v1/blob/{hy}?group={ev['group']}", timeout=60))
-    ev["carried"]["cy_got_Y_bytes"] = http("GET", f"{base('cy')}/v1/blob/{hy}?group={ev['group']}", timeout=60)["bytes"] == Y
-    ev["carried"]["cy_get_Z"] = shown(http("GET", f"{base('cy')}/v1/blob/{hz}?group={ev['group']}", timeout=60))
+    ev["carried"]["cy_get_Y"] = shown(http("GET", "cy", f"/v1/blob/{hy}?group={ev['group']}", timeout=60))
+    ev["carried"]["cy_got_Y_bytes"] = http("GET", "cy", f"/v1/blob/{hy}?group={ev['group']}", timeout=60)["bytes"] == Y
+    ev["carried"]["cy_get_Z"] = shown(http("GET", "cy", f"/v1/blob/{hz}?group={ev['group']}", timeout=60))
     ev["carried"]["s"] = round(time.time() - t, 1)
 
     # 4.1, scoped: Dee, outside the group, asks Y.
-    ev["scoped"] = {"dee_get_Y": shown(http("GET", f"{base('dee')}/v1/blob/{hy}?group={ev['group']}", timeout=60))}
+    ev["scoped"] = {"dee_get_Y": shown(http("GET", "dee", f"/v1/blob/{hy}?group={ev['group']}", timeout=60))}
 
     # 4.1, lapses: past keep, Bo and Cy ask piece 0, Y and a hash never held.
     piece0 = next((r["hash"] for r in station if r["event"] == "piece" and r["n"] == 0), None)
@@ -295,7 +289,7 @@ def main():
     if left > 0: time.sleep(left)
     never = os.urandom(32).hex()
     ev["lapses"] = {"s_after_last_put": round(time.time() - last_put, 1), "never_held": never, "piece0": piece0,
-                    **{f"{w}_{name}": shown(http("GET", f"{base(w)}/v1/blob/{h}?group={ev['group']}", timeout=60))
+                    **{f"{w}_{name}": shown(http("GET", w, f"/v1/blob/{h}?group={ev['group']}", timeout=60))
                        for w in ("bo", "cy") for name, h in (("piece0", piece0), ("Y", hy), ("never", never)) if h}}
     # "No store holds a piece": each store's files of the show's pieces, Bo's
     # and Cy's running; Ana's stopped since the carried step, so started

@@ -7,3 +7,8 @@ Streaming was dropped by syp-1 (operator, 2026-10-10, "Drop streaming +
 share"; `git log --grep syp-1-no-stream`): the endpoint, `SVRNGS_FOLDER_PORT`,
 `GET /v1/folders` and the one-way `share --folder` these scripts call are
 gone, so they do not run after it. They stay as the record of what ran.
+
+Their asks of svrngs now go through `svrngs ask`, as every program's do
+since V1.13.3 ("never send the key"), so no file here shows a program
+sending svrngs's token; what ran at `575a911` sent it with `curl` and
+`urllib`.

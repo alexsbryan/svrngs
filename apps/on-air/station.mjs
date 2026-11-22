@@ -4,24 +4,24 @@
 // signed `ended` last. Every answer svrngs gives is kept as it came, and a
 // step it refused is said, never filled in:
 //
-//   node station.mjs --api <url> --token <file> --group <id> --mp3 <file>
+//   node station.mjs --svrngs <dir> --group <id> --mp3 <file>
 //        --show <name> --public <dir> [--keep 60] [--piece 4] [--pace 1] [--limit n]
 //        [--no-ended] [--out <file.jsonl>]
 //
-// --token is svrngs's `token` file, beside its `api` file: every ask shows
-// what it holds (give-token). --pace 0 sends as fast as it can (a plant's show); --no-ended stops
+// --svrngs is svrngs's data dir, asked through apps/client/svrngs.mjs,
+// which never sends its token. --pace 0 sends as fast as it can (a plant's show); --no-ended stops
 // without the signed end (the off-air plant).
 import './vendored.mjs';
-import { readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
+import { svrngs } from '../client/svrngs.mjs';
+
 const air = await import('./page/air.mjs');
 const { values: o } = parseArgs({
   options: {
-    api: { type: 'string' },
-    token: { type: 'string' },
+    svrngs: { type: 'string' },
     group: { type: 'string' },
     mp3: { type: 'string' },
     show: { type: 'string' },
@@ -34,10 +34,9 @@ const { values: o } = parseArgs({
     out: { type: 'string' },
   },
 });
-for (const k of ['api', 'token', 'group', 'mp3', 'show', 'public'])
+for (const k of ['svrngs', 'group', 'mp3', 'show', 'public'])
   if (!o[k]) throw new Error(`--${k} is needed`);
-const api = o.api.replace(/\/$/, '');
-const token = readFileSync(o.token, 'utf8').trim();
+const here = svrngs(o.svrngs);
 const dir = join(o.public, 'air', o.show);
 await mkdir(join(dir, 'lines'), { recursive: true });
 await mkdir(join(dir, 'pieces'), { recursive: true });
@@ -53,11 +52,7 @@ async function say(event, fields) {
 async function ask(method, path, body, type = 'application/octet-stream') {
   const t0 = Date.now();
   try {
-    const r = await fetch(api + path, {
-      method,
-      body,
-      headers: { 'content-type': type, authorization: `Bearer ${token}` },
-    });
+    const r = await here.fetch(path, { method, body, headers: { 'content-type': type } });
     const text = await r.text();
     let json = null;
     try {

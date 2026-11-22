@@ -5,35 +5,34 @@
 // checks under the station's key, or when the drain names the station's key
 // as its sender. Anything else is refused, saying why.
 //
-//   node listen.mjs --api <url> --token <file> --group <id> --station <person>
+//   node listen.mjs --svrngs <dir> --group <id> --station <person>
 //        --out <dir> [--for <seconds>]
 //
-// --token is svrngs's `token` file, beside its `api` file: every ask shows
-// what it holds (give-token).
+// --svrngs is svrngs's data dir, asked through apps/client/svrngs.mjs,
+// which never sends its token.
 //
 // It stops on the station's `ended`, or after --for seconds (default 300),
 // saying which.
 import './vendored.mjs';
-import { readFileSync } from 'node:fs';
 import { mkdir, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
+import { svrngs } from '../client/svrngs.mjs';
+
 const air = await import('./page/air.mjs');
 const { values: o } = parseArgs({
   options: {
-    api: { type: 'string' },
-    token: { type: 'string' },
+    svrngs: { type: 'string' },
     group: { type: 'string' },
     station: { type: 'string' },
     out: { type: 'string' },
     for: { type: 'string', default: '300' },
   },
 });
-for (const k of ['api', 'token', 'group', 'station', 'out'])
+for (const k of ['svrngs', 'group', 'station', 'out'])
   if (!o[k]) throw new Error(`--${k} is needed`);
-const api = o.api.replace(/\/$/, '');
-const token = readFileSync(o.token, 'utf8').trim();
+const here = svrngs(o.svrngs);
 await mkdir(o.out, { recursive: true });
 
 async function say(event, fields) {
@@ -44,7 +43,7 @@ async function say(event, fields) {
 
 async function get(path) {
   try {
-    const r = await fetch(api + path, { headers: { authorization: `Bearer ${token}` } });
+    const r = await here.fetch(path);
     return { status: r.status, bytes: new Uint8Array(await r.arrayBuffer()) };
   } catch (e) {
     return {
