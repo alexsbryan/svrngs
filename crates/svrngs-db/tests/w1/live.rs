@@ -652,10 +652,13 @@ fn minimal<R: Replica>(make: &dyn Fn(Site) -> R) -> (Vec<R>, String, Result<(), 
 /// The live engine on the gate's seeds, each run met in full and judged:
 /// 30 s in a debug build on an M-series Mac, the runs one after another.
 /// Shared among threads they took 86 s, the threads waiting on SQLite's one
-/// lock around every allocation, which it counts (libsqlite3-sys 0.39.1's
-/// build.rs:168-188 leaves SQLITE_DEFAULT_MEMSTATUS at 1).
-/// Its plant: `the_gate_s_seeds_catch_a_live_prune_that_drops_a_set_still_standing`.
+/// lock around every allocation, which it counted until /.cargo/config.toml
+/// set SQLITE_DEFAULT_MEMSTATUS=0 (libsqlite3-sys 0.39.1's build.rs:168-188
+/// leaves it at 1). Out of the gate: the pairs' test below runs every live
+/// copy of these seeds at every step, and fails where this would.
+/// Its plant, still in the gate: `the_gate_s_seeds_catch_a_live_prune_that_drops_a_set_still_standing`.
 #[test]
+#[ignore = "the pairs' test on the same seeds holds it, at every step"]
 fn every_live_copy_ends_on_the_reference_on_the_gate_s_seeds() {
     let failed: Vec<String> = GATE.filter_map(|seed| sim::one(seed, &LiveCopy::new).err()).collect();
     assert!(
@@ -676,19 +679,34 @@ fn the_gate_s_seeds_catch_a_live_prune_that_drops_a_set_still_standing() {
 }
 
 /// The model copy against the engine it emulates, at every write and take
-/// of the gate's seeds: 54 s, as the one above. Where they never part, the
-/// live copies' runs are the model's, so this also holds the one above.
+/// of the gate's seeds. Where they never part, the live copies' runs are the
+/// model's, so this also holds the one above. The seeds are shared among
+/// the computer's threads, which SQLite's allocation count kept waiting on
+/// one lock until it was turned off: 50 s on one thread in a debug build.
 /// Its plant: `the_pair_catches_a_model_copy_that_keeps_clocks_on_resurrect`.
 #[test]
 fn the_live_copy_and_the_model_copy_agree_at_every_step_on_the_gate_s_seeds() {
-    let mut parted = Vec::new();
-    for seed in GATE {
-        let (verdict, p) = watched(format!("seed {seed}"), || sim::one(seed, &Pair::new));
-        if let Err(e) = verdict {
-            parted.push(format!("the pairs' run failed W1: {e}"));
-        }
-        parted.extend(p);
-    }
+    let threads = std::thread::available_parallelism().map_or(1, |n| n.get() as u64);
+    let parted: Vec<String> = std::thread::scope(|s| {
+        let runs: Vec<_> = (0..threads)
+            .map(|t| {
+                s.spawn(move || {
+                    let mut parted = Vec::new();
+                    for seed in GATE.filter(|seed| seed % threads == t) {
+                        let (verdict, p) = watched(format!("seed {seed}"), || sim::one(seed, &Pair::new));
+                        if let Err(e) = verdict {
+                            parted.push(format!("the pairs' run failed W1: {e}"));
+                        }
+                        parted.extend(p);
+                    }
+                    parted
+                })
+            })
+            .collect();
+        runs.into_iter()
+            .flat_map(|run| run.join().expect("a thread of pairs ran"))
+            .collect()
+    });
     assert!(
         parted.is_empty(),
         "{} disagreements:\n{}",
