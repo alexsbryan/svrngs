@@ -333,6 +333,9 @@ pub struct Host {
     /// under it, the folders' sweep and synced directories: none outlives
     /// the node.
     pub(crate) stopping: tokio_util::sync::CancellationToken,
+    /// Each carried app's database here, by group and app, at its origin's
+    /// `/svrngs/sql` (`crate::folder::carried`).
+    pub(crate) states: svrngs_db::States,
 }
 
 impl Node {
@@ -464,6 +467,7 @@ impl Node {
             minting: Default::default(),
             meeting: Default::default(),
             stopping: Default::default(),
+            states: svrngs_db::States::new(&data_dir),
         });
         let (folders, blobs, store) =
             crate::folder::Folders::start((&data_dir, places), host.clone(), nudge.clone())

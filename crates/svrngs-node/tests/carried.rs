@@ -3011,3 +3011,230 @@ async fn a_carried_page_is_told_each_lend_it_reads_at_its_own_origin() {
         node.net().close().await;
     }
 }
+
+/// Board, an app with a schema.sql of one table, `cards(id, title)`,
+/// carried in `group`'s folder on `ana`, once she lists it: its origin, and
+/// the folder.
+async fn board(ana: &Node, group: &str) -> (String, PathBuf) {
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), group).await;
+    carry(&at_ana, "Board");
+    let schema = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT);\n";
+    std::fs::write(at_ana.join("apps/Board/schema.sql"), schema).unwrap();
+    std::mem::forget(root);
+    for _ in 0..30 {
+        if let Some(board) = of_kind(&lends(ana, group).await, "Board").first() {
+            return (board["origin"].as_str().unwrap().to_string(), at_ana);
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    panic!("Board is never listed");
+}
+
+/// `body` posted to Board's database at `origin` on `node`: its status and
+/// answer.
+async fn sql(node: &Node, origin: &str, body: Value) -> (u16, Value) {
+    let answer = at(node, origin, "POST", "/svrngs/sql", Some(body)).await;
+    (answer.status().as_u16(), answer.json().await.unwrap())
+}
+
+/// The lines of `group`'s record on `node`.
+async fn record(node: &Node, group: &str) -> usize {
+    let url = format!("http://{}/v1/rail/log?namespace={group}", node.api_addr());
+    let log: Value = http()
+        .get(url)
+        .asked_as_you()
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    log["ops"].as_array().unwrap().len()
+}
+
+/// The next event of a subscription's stream, its `data:` as JSON, within 10 s.
+async fn next_event(body: &mut axum::body::Body) -> Value {
+    use http_body_util::BodyExt;
+    let mut text = String::new();
+    let event = async {
+        loop {
+            let frame = body.frame().await.expect("the stream goes on").unwrap();
+            text.push_str(std::str::from_utf8(&frame.into_data().unwrap()).unwrap());
+            if let Some((event, _)) = text.split_once("\n\n") {
+                return serde_json::from_str(event.strip_prefix("data: ").unwrap()).unwrap();
+            }
+        }
+    };
+    tokio::time::timeout(Duration::from_secs(10), event)
+        .await
+        .expect("an event within 10 s")
+}
+
+/// **An app keeps its own database at its own origin** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "What a page can do"; invariants 1 and
+/// 10): Board, carried on Ana's computer in a group of one, writes cards by
+/// key, `{count}`, and reads them by SQL; a write sent as SQL is refused
+/// naming the write form; its subscription has the rows now and again
+/// after a write; its writes add no line to the group's record; an app with
+/// no schema.sql keeps no database; and once Ana's yes lets Board read
+/// others' lends, its write is refused and its reads still answered.
+/// Plants, each watched failing: the route also writing through the
+/// record's `append_act` (the record gains its lines); the route reading
+/// none of the door's verdict (the reader's write answered 200); no word
+/// to the subscription of a write (no event within 10 s).
+#[tokio::test]
+async fn an_app_keeps_its_own_database_at_its_origin() {
+    let (nodes, dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 70, ana, &[]);
+    round(ana).await;
+    let (origin, folder) = board(ana, &group).await;
+    let lines = record(ana, &group).await;
+
+    let host = origin.trim_start_matches("http://").trim_end_matches('/');
+    let q = "SELECT%20id%2C%20title%20FROM%20cards%20ORDER%20BY%20id";
+    let ask = http().get(format!("http://{}/svrngs/sql?q={q}", ana.api_addr()));
+    let ask = ask
+        .header("host", host)
+        .header("accept", "text/event-stream");
+    let stream = ask.asked_as_you().sent().await.unwrap();
+    assert_eq!(stream.status(), 200);
+    let mut events = stream.into_body();
+    assert_eq!(
+        next_event(&mut events).await["rows"],
+        json!([]),
+        "a fresh board"
+    );
+
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(sql(ana, &origin, milk).await, (200, json!({ "count": 1 })));
+    let pushed = next_event(&mut events).await;
+    assert_eq!(
+        pushed["rows"],
+        json!([{ "id": "c1", "title": "milk" }]),
+        "pushed: {pushed}"
+    );
+    let read = json!({ "sql": "SELECT title FROM cards WHERE id = ?", "params": ["c1"] });
+    let (status, answer) = sql(ana, &origin, read.clone()).await;
+    assert_eq!(
+        (status, &answer["rows"]),
+        (200, &json!([{ "title": "milk" }])),
+        "{answer}"
+    );
+    let as_sql = json!({ "sql": "UPDATE cards SET title = 'eggs'" });
+    let (status, refused) = sql(ana, &origin, as_sql).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (400, &json!("not-a-read")),
+        "{refused}"
+    );
+    assert!(
+        refused["words"]
+            .as_str()
+            .unwrap()
+            .contains("{write: [op, ...]}"),
+        "{refused}"
+    );
+    for _ in 0..3 {
+        round(ana).await;
+    }
+    assert_eq!(
+        record(ana, &group).await,
+        lines,
+        "no line of the database in the record"
+    );
+
+    carry(&folder, "Plain");
+    let mut listed = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&listed, "Plain").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        listed = lends(ana, &group).await;
+    }
+    let plain = of_kind(&listed, "Plain")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let (status, said) = sql(ana, &plain, read.clone()).await;
+    assert_eq!(status, 404, "{said}");
+    assert_eq!(
+        said["error"],
+        "this app keeps no database: it has no schema.sql"
+    );
+
+    // Ana's yes to Board reading others' lends makes it a reader for good.
+    let app = host.split('.').next().unwrap();
+    let yes = json!({ actor_of(&signing(1)): { app: { "said": "yes", "at": 1, "lends": [] } } });
+    std::fs::write(dirs[0].path().join("reaching.json"), yes.to_string()).unwrap();
+    let eggs = json!({ "write": [{ "insert": "cards", "row": { "id": "c2", "title": "eggs" } }] });
+    let (status, refused) = sql(ana, &origin, eggs).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (403, &json!("reads")),
+        "{refused}"
+    );
+    assert_eq!(
+        refused["words"],
+        "Board reads your friends’ apps, so it can’t write in your group’s database: what it read stays apart from what the group keeps."
+    );
+    let (status, answer) = sql(ana, &origin, read).await;
+    assert_eq!(
+        (status, &answer["rows"]),
+        (200, &json!([{ "title": "milk" }])),
+        "a reader reads"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A write to an app's database is its own computer's alone**, as an
+/// act is (capability-signed; DESIGN §6, "An entry's author is its
+/// signer"): Ben's write reaching Ana's door is refused, saying where to
+/// write, and his read is answered. A phone's write waits for slice C
+/// (svrn-docs `MAGNETS_BUILD.md` §3). Planted, watched failing: the route's
+/// `elsewhere` taken out (Ben's write answered 200).
+#[tokio::test]
+async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 71, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin, _) = board(ana, &group).await;
+    let label = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let bridge = bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let route = format!("http://{}/lend/{label}/svrngs/sql", bridge.local_addr());
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    let wrote = http().post(&route).json(&milk).send().await.unwrap();
+    assert_eq!(
+        wrote.status(),
+        403,
+        "Ana's computer writes nothing as Ben's"
+    );
+    let said: Value = wrote.json().await.unwrap();
+    assert_eq!(said["refused"], "elsewhere", "{said}");
+    assert_eq!(
+        said["words"],
+        "Board writes only from your own computer for now, so this isn’t kept. Open Board from your computer’s home page to write in it."
+    );
+    let read = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+    let read = http().post(&route).json(&read).send().await.unwrap();
+    assert_eq!(read.status(), 200, "Ana's copy answers Ben's reads");
+    assert_eq!(
+        read.json::<Value>().await.unwrap()["rows"],
+        json!([{ "n": 0 }]),
+        "nothing written"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}

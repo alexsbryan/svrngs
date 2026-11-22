@@ -54,8 +54,6 @@ mod form;
 pub use form::FORM;
 use form::Table;
 
-/// Where a carried app's page asks its database, at its own origin.
-pub const SQL_PATH: &str = "/svrngs/sql";
 /// The app's schema, beside its `index.html`.
 pub const SCHEMA: &str = "schema.sql";
 /// The longest a page's statement runs before it is stopped.

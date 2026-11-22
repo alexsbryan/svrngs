@@ -709,8 +709,13 @@ the statement at hand by a `Gate`, and refuses a statement that writes in
 words that name the write form. `Db::write` takes that form, a list of ops
 each naming its row by key, made statements in `form.rs` from the names
 `pragma_table_info` gives, every value bound, and runs them as one
-transaction (`tests/db.rs`). Change sets, their signing and their sync are
-not built yet. Its
+transaction (`tests/db.rs`). The node owns it, one `States` on its `Host`,
+and serves it at each carried app's origin, `svrngs/sql`
+(`svrngs-node/src/carried.rs`): a POST's read or write, a write as this
+computer's person alone and never as an app that reads others' lends, whose
+verdict the door hands it, and a GET's subscription, the read again each time
+the database changes. Change sets, their signing and their sync are not
+built yet. Its
 tests came first. `tests/w1/` holds the
 reference model every copy of a database is checked against (`reference.rs`,
 the join of every admissible change set); the model copy, cr-sqlite's

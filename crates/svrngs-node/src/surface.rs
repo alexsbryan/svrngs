@@ -56,7 +56,7 @@ use svrngs_core::pass::{Label, Whose};
 
 use crate::door::choices;
 use crate::door::LendRefusal;
-use crate::folder::carried::{Handled, ACTS, SENDS};
+use crate::folder::carried::{Handled, ACTS, SENDS, SQL};
 use crate::group::Namesake;
 use crate::lend::{Program, SendRow, Source};
 use crate::node::{Asking, Groups, Lending, Unlisted};
@@ -118,6 +118,8 @@ pub const LEND_PATH: &str = "/svrngs-lend";
 pub(crate) enum AppRoute {
     /// [`ACTS`]: a carried app's own part of the record.
     Acts,
+    /// [`SQL`]: its own database in its group.
+    Sql,
     /// [`READS_PATH`]: the lends it reads ([`reads`]).
     Reads,
     /// `<READS_PATH>/<label><STOP_SUFFIX>`: its own stop of that lend.
@@ -139,6 +141,7 @@ impl AppRoute {
         let stop = stop.and_then(|p| Label::parse(p.strip_suffix(STOP_SUFFIX)?));
         match path {
             ACTS => Self::Acts,
+            SQL => Self::Sql,
             READS_PATH => Self::Reads,
             TO_PATH => Self::To,
             _ if path.starts_with(LEND_PATH) => {

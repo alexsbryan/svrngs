@@ -31,6 +31,14 @@
 //!   person, and refused for any other device's, which signs its own and
 //!   carries it (`/carry`, capability-signed).
 //!
+//! - [`SQL`], the app's own database in its group (svrngs-db), opened from
+//!   the `schema.sql` that runs as the person asking: `POST {sql, params}`
+//!   one read, answered `{rows, more}`; `POST {write: [op, ...]}` a write by
+//!   key, answered `{count}`, as this computer's person alone and never as
+//!   an app that reads others' lends; `GET ?q=` the read's rows as an event
+//!   stream, now and again each time they change. A refusal is
+//!   `{refused, words}`, as `apps/magnets/tests/standin.mjs` pins the route.
+//!
 //! The route answers every act each time, from no cursor: a round may
 //! place another computer's act before one already read, and a correction
 //! voids an act read before, so the app asks again and folds them all.
@@ -41,8 +49,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
+use std::sync::Arc;
 
-use axum::body::to_bytes;
+use axum::body::{to_bytes, Body};
 use axum::extract::{Request, State};
 use axum::http::header::{self, HeaderName, HeaderValue};
 use axum::http::{Method, StatusCode};
@@ -52,6 +61,7 @@ use iroh_blobs::Hash;
 use serde_json::{json, Value};
 use svrngs_core::{Admission, Append, AppendRefusal, Command, Files, Op, Placed};
 use svrngs_core::{RailAct, SignedOp, SyncPath};
+use svrngs_db::{Db, Refused};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
@@ -64,6 +74,10 @@ use crate::surface::AppRoute;
 /// Where a carried app's page asks its own acts, and writes one, at its
 /// own origin.
 pub const ACTS: &str = "/svrngs/acts";
+
+/// Where a carried app's page asks its own database in its group, and
+/// writes it, at its own origin.
+pub const SQL: &str = "/svrngs/sql";
 
 /// The most a carried app's write reads: an act's most, and its envelope.
 const WRITE_MOST: usize = svrngs_core::MAX_PAYLOAD_BYTES + 1024;
@@ -118,6 +132,11 @@ const NOT_IN: Withheld = (
     "you can bring things only to a group you’re in",
 );
 const NO_FOLDER: Withheld = (Closed, 409, "this computer keeps no folder of that group");
+const NO_SCHEMA: Withheld = (
+    Unlent,
+    404,
+    "this app keeps no database: it has no schema.sql",
+);
 const UNWRITTEN: Withheld = (Fault, 500, "your group’s folder can’t be written here");
 
 /// svrngs's own answer for `refused`.
@@ -133,8 +152,13 @@ fn traced(group: &str, refused: Withheld, why: &dyn std::fmt::Display) -> Withhe
 }
 
 /// What the door asks of a carried app: the key asking, the path asked,
-/// and the route that path names, parsed once by the door.
-pub(crate) type Opened<'a> = (&'a str, &'a str, AppRoute);
+/// the route that path names, parsed once by the door, and the kernel's
+/// verdict on a write as the app's class, asked by the door on a non-GET of
+/// the record's route, which it refuses there, and of the database's.
+pub(crate) type Opened<'a> = (&'a str, &'a str, AppRoute, Wrote);
+
+/// Whether the app may write what the group keeps (`app::writes`).
+pub(crate) type Wrote = Result<(), eudoxia_community::app::Unwritten>;
 
 /// A carried app's answer, or why the door gives its own.
 type Given = Result<Response, Withheld>;
@@ -464,12 +488,13 @@ impl Folders {
     /// that key stands in the group, else the route's answer or a file's;
     /// each under [`FLOOR`].
     pub(crate) async fn open(&self, lend: &Lend, at: Opened<'_>, req: Request) -> Response {
-        let (Source::Carried(app, group), (key, path, route)) = (&lend.source, at) else {
+        let (Source::Carried(app, group), (key, path, route, wrote)) = (&lend.source, at) else {
             return said(NOT_ITS_GROUP);
         };
         let answered = match self.host.rail.standing(group) {
             Ok(Standing::Members(people)) if people.contains_key(key) => match route {
                 AppRoute::Acts => self.acts((app, group), (&people, key), req).await,
+                AppRoute::Sql => self.sql((app, group), (&people, key, wrote), req).await,
                 _ => self.file(group, app, path, (&people, key)).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
@@ -567,6 +592,96 @@ impl Folders {
         tracing::debug!(target: "folder", group, %app, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         Ok(answer)
     }
+}
+
+impl Folders {
+    /// The app `kind`'s database in `group`, for the key `key` of `people`,
+    /// opened from the `schema.sql` that runs as that key's person: a read,
+    /// a write as them, or a subscription (the module docs).
+    async fn sql(&self, app: (&AppName, &str), who: (&People, &str, Wrote), req: Request) -> Given {
+        let ((app, group), (people, key, wrote)) = (app, who);
+        let schema = format!("apps/{app}/{}", svrngs_db::SCHEMA);
+        let schema = self.runs_at(group, app, &schema, (people, key)).await?;
+        tracing::debug!(target: "folder", group, %app, schema = schema.is_some(), "carried: an app's database asked; none without a schema.sql");
+        let schema = schema.ok_or(NO_SCHEMA)?;
+        let schema = String::from_utf8_lossy(&schema);
+        let db = match self.host.states.open(group, app.as_str(), &schema) {
+            Ok(db) => db,
+            Err(r) => return Ok(refused(&r)),
+        };
+        if req.method() == Method::GET {
+            let query = form_urlencoded::parse(req.uri().query().unwrap_or_default().as_bytes());
+            let q = query
+                .into_iter()
+                .find_map(|(k, q)| (k == "q").then(|| q.into_owned()));
+            let q = q.ok_or((Malformed, 422, "a subscription asks ?q=<a SELECT>"))?;
+            return Ok(subscribed(db, q));
+        }
+        let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
+        let body = serde_json::from_slice(&body).unwrap_or_default();
+        let answered = match svrngs_db::asked(&body) {
+            Ok(svrngs_db::Asked::Read(sql, params)) => db.read(sql, params),
+            Ok(svrngs_db::Asked::Write(ops)) => {
+                let elsewhere = key != self.host.actor;
+                tracing::debug!(target: "folder", group, %app, elsewhere, ?wrote, "carried: a write to an app's database, refused for an app that reads others' lends, and from any device but this computer");
+                if wrote.is_err() {
+                    let words = format!("{app} reads your friends’ apps, so it can’t write in your group’s database: what it read stays apart from what the group keeps.");
+                    return Ok(told(403, "reads", words));
+                }
+                if elsewhere {
+                    let words = format!("{app} writes only from your own computer for now, so this isn’t kept. Open {app} from your computer’s home page to write in it.");
+                    return Ok(told(403, "elsewhere", words));
+                }
+                db.write(ops)
+            }
+            Err(r) => Err(r),
+        };
+        Ok(answered.map_or_else(|r| refused(&r), |a| Json(a).into_response()))
+    }
+}
+
+/// A refusal of an app's database, as its page reads one: `{refused,
+/// words}`, its short name and what to do.
+fn told(status: u16, refused: &str, words: String) -> Response {
+    let status = StatusCode::from_u16(status).expect("a status");
+    (status, Json(json!({ "refused": refused, "words": words }))).into_response()
+}
+
+/// `r`, svrngs-db's refusal, [`told`].
+fn refused(r: &Refused) -> Response {
+    let (status, name) = r.said();
+    told(status, name, r.to_string())
+}
+
+/// `q`'s rows on `db` as an event stream, each event one `data:` line of
+/// the read's answer: now, then each time they differ after the database
+/// changes. Refused once, the query is answered as any refusal, in place of
+/// the stream; refused later, the stream ends, and the page's next ask is
+/// told why.
+fn subscribed(db: Arc<Db>, q: String) -> Response {
+    let first = match db.read(&q, &[]) {
+        Ok(first) => first,
+        Err(r) => return refused(&r),
+    };
+    let rows = n0_future::stream::unfold((db.watch(), Some(first), None), move |at| {
+        let (db, q) = (db.clone(), q.clone());
+        async move {
+            let (mut changed, mut now, last) = at;
+            loop {
+                let rows = now.take().filter(|r| last.as_ref() != Some(r));
+                if let Some(rows) = rows {
+                    let event = Ok::<_, std::convert::Infallible>(format!("data: {rows}\n\n"));
+                    return Some((event, (changed, None, Some(rows))));
+                }
+                changed.changed().await.ok()?;
+                let read = db.read(&q, &[]);
+                tracing::debug!(target: "folder", group = db.group, app = db.app, refused = ?read.as_ref().err(), "carried: a subscription read again as its database changed, its rows pushed if they differ, or it ends");
+                now = Some(read.ok()?);
+            }
+        }
+    });
+    let kind = [(header::CONTENT_TYPE, "text/event-stream")];
+    (kind, Body::from_stream(rows)).into_response()
 }
 
 /// Whether the act `id` among `ops`, a group's acts as the wire spells

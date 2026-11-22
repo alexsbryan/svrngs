@@ -4754,6 +4754,7 @@ dependencies = [
  "socket2",
  "str0m",
  "svrngs-core",
+ "svrngs-db",
  "svrngs-node",
  "svrngs-runtime",
  "tempfile",

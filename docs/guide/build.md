@@ -251,6 +251,8 @@ runs as they accepted it.
 | Files beside `index.html` | Each file, as the version this person accepted | the browser, for anything from another server or written inside the page |
 | `GET svrngs/acts` | This app's entries, and `you`, `you_key`, `group`, `people`, `spans`, `page` | `closed` outside the group |
 | `POST svrngs/acts` | One entry, signed as the person: `{op}`, or `{corrects, op}` for one of its own | `closed` for a reader or another app's entry; `limit` past the count; `path` for anything else |
+| `POST svrngs/sql` | With a `schema.sql` beside `index.html`, the app's own database in the group: `{sql, params}`, one read, gives `{rows, more}`; `{write: [op, ...]}`, each op `{insert: <table>, row}`, `{update: <table>, key, set}` or `{delete: <table>, key}`, writes rows by key as the person and gives `{count}`. It never reaches the record | `{refused, words}`: `not-a-read` for a write sent as SQL, `form`, `sql`, `not-allowed`, `too-long`; `reads` for a reader; `elsewhere` from another device |
+| `GET svrngs/sql?q=` | That read's `{rows, more}` as an event stream, now and again each time they change | as the read above |
 | `GET svrngs-reads` | The lends this person said yes to: `kind`, `name`, `lender`, `address`, `stop`; `new`, `unanswered` | `closed`, `unlent`, `away` |
 | `GET svrngs-lend/<label>/<path>` | That lend's answer at that path, rebuilt: JSON, plain text, JPEG, PNG or WebP | `unasked`, `stopped`, `closed`, `away`, `limit` |
 | `POST svrngs-lend/<label>/<path>` | A send, JSON, where that lend's `sends:` row says and its person ticked it; answered as a read is | `unasked`, `stopped`, `closed`, `away`, `limit` |

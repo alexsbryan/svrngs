@@ -11,6 +11,9 @@ svrngs-core = { workspace = true }
 # The community profile decides who may use a lend and what an app may write.
 eudoxia-community = { git = "https://github.com/alexsbryan/eudoxia", rev = "a0d3b0e5049f2dd84bdd7322d63518264704447d" }
 svrngs-runtime = { workspace = true }
+# Each carried app's database in each group, which the node owns as it owns
+# the runtime (svrn-docs rings/current/APP_STATE.md §10).
+svrngs-db = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

@@ -97,8 +97,11 @@ Nothing we run holds them. We run three things, and you can replace each:
 
 ## Run it with nobody in the middle
 
-1. **Build it.** `cargo build --release -p svrngs`, then
-   `target/release/svrngs`.
+1. **Build it.** In a clone, once: `git submodule update --init`, then
+   `cargo fetch --manifest-path
+   vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml`, for cr-sqlite's
+   source and its crates, since the build asks no network. Then `cargo
+   build --release -p svrngs`, and `target/release/svrngs`.
 2. **Relay for yourselves.** On a computer that a name leads to, with TCP
    ports 80 and 443 and UDP port 7842 open: `svrngs relay <name> --open`.
    Its certificate comes from Let's Encrypt.
