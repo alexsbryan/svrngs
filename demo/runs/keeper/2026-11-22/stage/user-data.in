@@ -1,0 +1,13 @@
+#cloud-config
+# Sam (uid 1000) and Alex (uid 1001), two accounts on one Fedora 45 VM, each
+# with a node. Only Alex's manager lingers here: Sam's comes from the keeper.
+disable_root: false
+ssh_pwauth: false
+users:
+  - name: root
+    ssh_authorized_keys: ["@KEY@"]
+  - {name: sam, uid: "1000", lock_passwd: true, shell: /bin/bash, ssh_authorized_keys: ["@KEY@"]}
+  - {name: alex, uid: "1001", lock_passwd: true, shell: /bin/bash}
+packages: [llama-cpp, python3]
+runcmd:
+  - [loginctl, enable-linger, alex]
