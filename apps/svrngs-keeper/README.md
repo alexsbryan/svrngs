@@ -22,12 +22,21 @@ svrngs crate and no Give (`tests/surface.rs`).
 - `src/unit.rs`: a native card as its unit, `svrngs-keeper-<name>.service`,
   with the spike's settings: `Restart=on-failure`, `RestartSec=2`, at most
   4 starts in 60 s, `SuccessExitStatus=143`, `WantedBy=default.target`.
+- `src/promote.rs`: `keep <port>`, decided from what the host printed: the
+  port's process and the parents that come with it (a wrapper script, up to
+  the terminal's shell), what it declines and why, and the card.
+  llama-server started as itself is composed from `cards/llama-server` and
+  its `/props`; anything else is copied, with no environment.
+- `src/host.rs`: the reads (`ss`, `/proc`, `/props`) and the handover: the
+  original stopped by pid@start through a pidfd, the unit's own process
+  checked within 30 s, and the original started again as it was if not.
 - `src/kept.rs` and `src/main.rs`: the `svrngs-keeper` command.
 
 ## The command
 
 ```
 svrngs-keeper keep [--name <name>] <card>   # a native card, run here for good
+svrngs-keeper keep <port> [--lend <lend>]   # what runs on <port>, kept in its place
 svrngs-keeper list
 svrngs-keeper stop <name>                   # until you start it, at boot too
 svrngs-keeper start <name>
@@ -45,6 +54,13 @@ keeps the unit, and linger starts it at boot.
 linger on, under the real user manager: kill -9 brings it back, `stop`
 stays stopped, `remove` leaves its data, and `keep` twice resets nothing.
 
+`keep <port>` shows what it will run and asks; `--lend <lend>` names it and
+then runs `svrngs approve <lend>`, since only svrngs knows which lend a port
+is. `tests/promote.rs` holds its decisions; `tests/promote.sh
+target/debug/svrngs-keeper` proves it on a Linux host (not in a toolbox,
+whose programs the host's units cannot run): llama-server with a relative
+and a `~` model path, a wrapper script, a renamed python, and a copy that
+fails and is rolled back.
+
 Give's tests exercise its runtime through Give's names (`../give/tests`).
-The queue that grows it, next into `keep <port>`, is
-`ralph/next/keeper/STATE.md`.
+The queue that grows it is `ralph/next/keeper/STATE.md`.

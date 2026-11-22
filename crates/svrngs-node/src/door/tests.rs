@@ -1171,6 +1171,8 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         ("crates/svrngs/src/cli.rs", "dial: a group's page"),
         // The clock and randomness, at their adapters (clippy.toml).
         ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),
+        ("apps/svrngs-keeper/src/host.rs", "dial: the program its own person started, asked how it runs and whether it answers"),
+        ("apps/svrngs-keeper/src/host.rs", "the handover's adapter waits on the clock for what it asks"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot is named for when it was taken"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot times its pause"),
         ("apps/svrngs-keeper/src/runtime.rs", "the runtime is podman's adapter: it waits on the clock"),

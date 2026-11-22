@@ -28,6 +28,11 @@ thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# `keep <port>` stops the program it replaces by pid@start, through a pidfd
+# (src/host.rs); rustix is already in the lock, and safe.
+[target.'cfg(target_os = "linux")'.dependencies]
+rustix = { version = "1", features = ["process"] }
+
 [dev-dependencies]
 # The forked systemd tests' scratch folder (src/systemd/tests.rs).
 tempfile = "3"

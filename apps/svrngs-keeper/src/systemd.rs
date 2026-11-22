@@ -169,6 +169,17 @@ impl SystemdUser {
         Ok(linger_is_enabled(&String::from_utf8_lossy(&out.stdout)))
     }
 
+    /// `systemctl --user show-environment`: the environment the user's
+    /// manager starts each unit with, as it printed it.
+    pub fn environment(&self) -> Result<String, String> {
+        let out = self.systemctl(&["--user", "show-environment"])?;
+        if !out.status.success() {
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            return Err(format!("systemctl --user show-environment failed: {}", stderr.trim()));
+        }
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+
     /// Make this user's systemd manager outlive their sessions, so the unit
     /// stays up across logout and comes back at boot. The probe runs first
     /// and an already-lingering user is left alone (a repeat polkit prompt

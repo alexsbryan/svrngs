@@ -2,15 +2,20 @@
 //! rings/current/HOSTING_AND_GIVE_BOUNDARY.md). The card an app is written as
 //! ([`card`]), the runtime that keeps one in rootless podman ([`runtime`],
 //! over [`podman`]'s command line and, on a Mac, its [`machine`]), and the
-//! author's [`check`] of a card; and the user unit [`systemd`] keeps one in.
+//! author's [`check`] of a card; the user unit [`systemd`] keeps one in; and
+//! a program running on a port, made into a card ([`promote`], over
+//! [`host`]'s reads of this computer).
 //! It knows no group and names no svrngs type: Give's keeper asks it to run
 //! the group's app, and svrngs calls its program.
 
 pub mod card;
 pub mod check;
+#[cfg(target_os = "linux")]
+pub mod host;
 pub mod kept;
 pub mod machine;
 pub mod podman;
+pub mod promote;
 pub mod runtime;
 pub mod unit;
 // Forked from commonwealth-ai's host-kit, whose rustfmt policy is stock and
