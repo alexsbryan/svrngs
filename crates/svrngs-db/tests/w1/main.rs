@@ -11,8 +11,10 @@
 //! - `sim`: the seeded simulator of deliveries, and its judge of a full meet.
 //! - `live`: the live copy, cr-sqlite itself behind the same trait, and the
 //!   pair, a model copy and a live copy in lockstep.
-//! - `cases`: the cases driven by hand, on any copy: the minimal case of the
-//!   split.
+//! - `rule`: what a copy does with a set above a missing re-add (APP_STATE
+//!   §8, question 9): today's rule and the three candidates.
+//! - `cases`: the cases driven by hand, on any copy under any rule: the
+//!   minimal case of the split, and two removals.
 //!
 //! The tests, each beside the plant it was watched failing on:
 //! - `laws`: the join's laws over seeded histories;
@@ -20,7 +22,9 @@
 //! - `review`: the review's case;
 //! - `seeds`: the gate's fixed seeds, and the soak the gate doesn't run;
 //! - `live`: the live engine on the gate's seeds, the pair on them, and the
-//!   split, which the gate doesn't run.
+//!   split, which the gate doesn't run;
+//! - `rules`: question 9's rules on the fixed cases, and on the gate's seeds
+//!   and the soak's, which the gate doesn't run.
 
 mod cases;
 mod change;
@@ -29,6 +33,8 @@ mod live;
 mod reference;
 mod replica;
 mod review;
+mod rule;
+mod rules;
 mod s1;
 mod seeds;
 mod sim;

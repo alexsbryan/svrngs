@@ -17,9 +17,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use rusqlite::types::{Value, ValueRef};
 use rusqlite::{Connection, OpenFlags, Row, params, params_from_iter};
 
-use crate::cases::{A, B, minimal};
+use crate::cases::Case;
 use crate::change::{Change, ChangeSet, SetId, Site, State, Val};
 use crate::replica::{ModelCopy, Op, Plant, Replica};
+use crate::rule::Rule;
 use crate::seeds::GATE;
 use crate::sim::{self, SCHEMA, TABLES};
 
@@ -646,9 +647,10 @@ fn the_live_engine_over_six_thousand_seeds() {
 }
 
 /// The split W's soak found (svrn-docs APP_STATE.md §8, question 9), on the
-/// live engine: the minimal case, then seeds 2706 and 5691, each on model
-/// copies alone, live copies alone and pairs. It fails while copies split.
-/// Run `cargo test -p svrngs-db --test w1 -- --ignored split --nocapture`.
+/// live engine: the minimal case and two removals (`cases.rs`), then seeds
+/// 2706 and 5691, each on model copies alone, live copies alone and pairs,
+/// under today's rule, the engine's. It fails while copies split. Run
+/// `cargo test -p svrngs-db --test w1 -- --ignored split --nocapture`.
 #[test]
 #[ignore = "fails while the split stands, APP_STATE §8 q9, slice B's to decide"]
 fn the_split_on_the_live_engine() {
@@ -664,30 +666,31 @@ fn the_split_on_the_live_engine() {
         0 => Ok(()),
         n => Err(format!("{n} pairs parted")),
     };
-    println!("the minimal case, model copies alone:");
-    let (_, said, v) = minimal(&model);
-    println!("{said}");
-    verdict("the minimal case, model copies".into(), &v);
-    println!("the minimal case, live copies alone:");
-    let (live, said, v) = minimal(&LiveCopy::new);
-    println!("{said}");
-    for (c, name) in [(A, "A"), (B, "B")] {
-        println!("    {name}'s crsql_changes rows:");
-        for row in live[c].rows() {
-            println!("      {row:?}");
+    let today = Rule::Today;
+    for case in Case::ALL {
+        let name = case.name();
+        println!("{name}, model copies alone:");
+        let (_, said, v) = case.run(today, &model);
+        println!("{said}");
+        verdict(format!("{name}, model copies"), &v);
+        println!("{name}, live copies alone:");
+        let (live, said, v) = case.run(today, &LiveCopy::new);
+        println!("{said}");
+        for &(c, copy) in case.standing() {
+            println!("    {copy}'s crsql_changes rows:");
+            for row in live[c].rows() {
+                println!("      {row:?}");
+            }
         }
+        verdict(format!("{name}, live copies"), &v);
+        println!("{name}, pairs:");
+        let ((_, _, v), parted) = watched(name.into(), || case.run(today, &Pair::new));
+        for p in &parted {
+            println!("    parted: {p}");
+        }
+        verdict(format!("{name}, pairs"), &v);
+        verdict(format!("{name}, live copies against the model's"), &agreed(&parted));
     }
-    verdict("the minimal case, live copies".into(), &v);
-    println!("the minimal case, pairs:");
-    let ((_, _, v), parted) = watched("the minimal case".into(), || minimal(&Pair::new));
-    for p in &parted {
-        println!("    parted: {p}");
-    }
-    verdict("the minimal case, pairs".into(), &v);
-    verdict(
-        "the minimal case, live copies against the model's".into(),
-        &agreed(&parted),
-    );
     for seed in [2706, 5691] {
         println!("seed {seed}, {:?}:", sim::Shape::of(seed));
         verdict(format!("seed {seed}, model copies"), &sim::one(seed, &model));

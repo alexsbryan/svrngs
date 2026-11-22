@@ -4,12 +4,18 @@
 //! names (paths under `core/rs/core/src/`). It merges a change at a time, in
 //! the order sets arrive, as the engine does, so it is a second decider for
 //! the reference to judge, not the reference again. svrngs-db goes behind the
-//! same trait when it is built.
+//! same trait when it is built. It is built with a rule for a set above a
+//! missing re-add (`rule.rs`), today's by default.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::change::{Change, ChangeSet, RowKey, SENTINEL, SetId, Site, State, Val, pack};
+use crate::rule::Rule;
+
+/// Each device's mark: every set of the device up to this version has been
+/// taken here, or by a source this copy pulled from in full.
+pub type Marks = BTreeMap<Site, i64>;
 
 /// A copy of one app's database on one device.
 pub trait Replica {
@@ -32,6 +38,21 @@ pub trait Replica {
     /// which the simulator holds to, and a copy undoes nothing it merged
     /// (APP_STATE §4, "A removed device").
     fn removed(&mut self, site: Site);
+    /// The sets taken and not applied, under a rule that holds them
+    /// (`Rule::WaitForLife`, `Rule::Contiguous`). They are among `kept`.
+    fn held(&self) -> BTreeSet<SetId> {
+        BTreeSet::new()
+    }
+    /// This copy's marks, under a rule that applies by them
+    /// (`Rule::Contiguous`).
+    fn marks(&self) -> Marks {
+        Marks::new()
+    }
+    /// Takes a source's marks once it has taken every set the source keeps;
+    /// whether any of its own rose.
+    fn adopt(&mut self, _marks: &Marks) -> bool {
+        false
+    }
 }
 
 /// A table of an app's schema: its name and its non-key columns in schema
@@ -133,6 +154,16 @@ pub struct ModelCopy {
     plant: Plant,
     /// The sites `Plant::UndoRemoved` refuses.
     fenced: BTreeSet<Site>,
+    rule: Rule,
+    /// The sets taken and not applied, under H and P.
+    held: BTreeMap<SetId, ChangeSet>,
+    /// Under P, the marks it applies by. A copy's own writes count in its own.
+    marks: Marks,
+    /// How often a column change brought back a row standing here at a
+    /// shorter causal length while a value of its earlier life stood in
+    /// another column: question 9's moment, where today's rule keeps that
+    /// value and N clears it.
+    earlier: usize,
 }
 
 impl ModelCopy {
@@ -141,6 +172,15 @@ impl ModelCopy {
     }
 
     pub fn planted(site: Site, tables: &'static [Table], plant: Plant) -> ModelCopy {
+        ModelCopy::made(site, tables, plant, Rule::default())
+    }
+
+    /// A copy under one of question 9's rules.
+    pub fn ruled(site: Site, tables: &'static [Table], rule: Rule) -> ModelCopy {
+        ModelCopy::made(site, tables, Plant::None, rule)
+    }
+
+    fn made(site: Site, tables: &'static [Table], plant: Plant, rule: Rule) -> ModelCopy {
         assert!(
             tables.iter().all(|t| !t.cols.is_empty()),
             "a table of keys alone takes cr-sqlite's other insert path (after_insert.rs:50-54), which this model leaves out"
@@ -154,7 +194,16 @@ impl ModelCopy {
             kept: BTreeMap::new(),
             plant,
             fenced: BTreeSet::new(),
+            rule,
+            held: BTreeMap::new(),
+            marks: Marks::new(),
+            earlier: 0,
         }
+    }
+
+    /// How often question 9's moment came here (`ModelCopy::earlier`).
+    pub fn earlier(&self) -> usize {
+        self.earlier
     }
 
     fn cols(&self, table: &str) -> &'static [&'static str] {
@@ -346,8 +395,26 @@ impl ModelCopy {
         let exists = local_cl != 0;
         let longer = c.cl > local_cl;
         // :620-640: a column change at a longer length brings the row back
-        // first, its sentinel at that length.
+        // first, its sentinel at that length. Over a row standing here, at an
+        // odd length, its earlier life's values stay (resurrect, below).
         if longer && (exists || c.cl > 1) {
+            if local_cl % 2 == 1 {
+                let carried = self
+                    .rows
+                    .get(&key)
+                    .is_some_and(|row| row.iter().any(|(cid, v)| *cid != c.cid && *v != Val::Null));
+                self.earlier += usize::from(carried);
+                if self.rule == Rule::NewLifeEmpty {
+                    // N: the row as a copy that never held it makes it, from
+                    // its key alone. A deleted row is held so here already:
+                    // its row gone and its columns' clocks dropped
+                    // (merge_delete, :304-366).
+                    self.rows.remove(&key);
+                    if let Some(clocks) = self.clocks.get_mut(&key) {
+                        clocks.retain(|cid, _| cid == SENTINEL);
+                    }
+                }
+            }
             self.resurrect(
                 &key,
                 Clock {
@@ -418,6 +485,50 @@ impl ModelCopy {
         let standing = self.standing();
         self.kept.retain(|id, _| standing.contains(id));
     }
+
+    /// A set merged, kept while it stands, and counted in its device's mark.
+    fn apply(&mut self, set: &ChangeSet) {
+        for c in set.changes() {
+            self.merge(c);
+        }
+        let (site, version) = set.id();
+        let mark = self.marks.entry(site).or_default();
+        *mark = (*mark).max(version);
+        self.kept.insert(set.id(), set.clone());
+        self.prune();
+    }
+
+    /// Whether the rule lets this set apply here now.
+    fn admits(&self, set: &ChangeSet) -> bool {
+        match self.rule {
+            Rule::Today | Rule::NewLifeEmpty => true,
+            // H: each column change past length 1 finds its row here at that
+            // length or a longer one, which outranks it, or finds its row's
+            // row-level change at that length in the set.
+            Rule::WaitForLife => set.changes().iter().all(|c| {
+                let here = self.local_cl(&(c.table.clone(), c.pk.clone()));
+                let own = set
+                    .changes()
+                    .iter()
+                    .any(|o| o.cid == SENTINEL && o.table == c.table && o.pk == c.pk && o.cl == c.cl);
+                c.cid == SENTINEL || c.cl <= 1 || here >= c.cl || own
+            }),
+            // P: every earlier set of its device is counted in the mark.
+            Rule::Contiguous => {
+                let (site, version) = set.id();
+                version <= self.marks.get(&site).copied().unwrap_or(0) + 1
+            }
+        }
+    }
+
+    /// Applies the held sets the rule now admits, the lowest named first,
+    /// until it admits none.
+    fn release(&mut self) {
+        while let Some(id) = self.held.iter().find(|(_, s)| self.admits(s)).map(|(id, _)| *id) {
+            let set = self.held.remove(&id).expect("a held set found is held");
+            self.apply(&set);
+        }
+    }
 }
 
 impl Replica for ModelCopy {
@@ -439,6 +550,7 @@ impl Replica for ModelCopy {
         }
         self.db_version = dbv;
         let set = ChangeSet::new(self.own(dbv)).expect("a write that changed something has rows");
+        self.marks.insert(self.site, dbv);
         self.kept.insert(set.id(), set.clone());
         self.prune();
         Some(set)
@@ -448,15 +560,24 @@ impl Replica for ModelCopy {
         if self.fenced.contains(&set.id().0) {
             return;
         }
-        for c in set.changes() {
-            self.merge(c);
+        match self.rule {
+            Rule::Today | Rule::NewLifeEmpty => self.apply(set),
+            Rule::WaitForLife | Rule::Contiguous => {
+                self.held.insert(set.id(), set.clone());
+                self.release();
+            }
         }
-        self.kept.insert(set.id(), set.clone());
-        self.prune();
     }
 
+    /// The sets standing here and those held, in the order of their names,
+    /// as today's copy lists its own.
     fn kept(&self) -> Vec<ChangeSet> {
-        self.kept.values().cloned().collect()
+        if self.held.is_empty() {
+            return self.kept.values().cloned().collect();
+        }
+        let mut all = self.kept.clone();
+        all.extend(self.held.iter().map(|(id, s)| (*id, s.clone())));
+        all.into_values().collect()
     }
 
     fn standing(&self) -> BTreeSet<SetId> {
@@ -479,12 +600,37 @@ impl Replica for ModelCopy {
             .collect()
     }
 
+    fn held(&self) -> BTreeSet<SetId> {
+        self.held.keys().copied().collect()
+    }
+
+    fn marks(&self) -> Marks {
+        match self.rule {
+            Rule::Contiguous => self.marks.clone(),
+            _ => Marks::new(),
+        }
+    }
+
+    fn adopt(&mut self, marks: &Marks) -> bool {
+        if self.rule != Rule::Contiguous {
+            return false;
+        }
+        let mut rose = false;
+        for (site, theirs) in marks {
+            let mine = self.marks.entry(*site).or_default();
+            rose |= *theirs > *mine;
+            *mine = (*mine).max(*theirs);
+        }
+        self.release();
+        rose
+    }
+
     fn removed(&mut self, site: Site) {
         if self.plant != Plant::UndoRemoved {
             return;
         }
         let rest: Vec<ChangeSet> = self.kept.values().filter(|s| s.id().0 != site).cloned().collect();
-        let mut rebuilt = ModelCopy::planted(self.site, self.tables, self.plant);
+        let mut rebuilt = ModelCopy::made(self.site, self.tables, self.plant, self.rule);
         rebuilt.db_version = self.db_version;
         rebuilt.fenced = self.fenced.clone();
         rebuilt.fenced.insert(site);

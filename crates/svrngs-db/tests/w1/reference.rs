@@ -33,9 +33,10 @@
 //! `mark_locally_inserted`).
 
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
-use crate::change::{Change, ChangeSet, RowKey, SENTINEL, State, Val};
+use crate::change::{Change, ChangeSet, RowKey, SENTINEL, SetId, State, Val};
+use crate::rule::Rule;
 
 /// The join of every change taken so far.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -149,4 +150,62 @@ impl Join {
 /// order.
 pub fn state<'a>(sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
     Join::of(sets).state()
+}
+
+/// The state the admissible sets merge to under `rule` (`rule.rs`): the join
+/// of all of them, under today's rule and N; of those H's fixpoint admits;
+/// or of each device's sets below its first missing one, under P.
+pub fn under<'a>(rule: Rule, sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
+    let sets: Vec<&ChangeSet> = sets.into_iter().collect();
+    match rule {
+        Rule::Today | Rule::NewLifeEmpty => state(sets),
+        Rule::WaitForLife => state(given_life(&sets)),
+        Rule::Contiguous => state(contiguous(&sets)),
+    }
+}
+
+/// H's fixpoint: a set is admitted once each of its column changes at a
+/// causal length past 1 meets a row-level change of its row at that length
+/// or a longer one, in the set itself or in a set admitted. A longer one
+/// already outranks the change, so it can bring nothing back. Admitting a set
+/// only adds row-level changes, so a set once admissible stays so, and the
+/// least fixpoint is one whatever order the sets are judged in.
+fn given_life<'a>(sets: &[&'a ChangeSet]) -> Vec<&'a ChangeSet> {
+    let mut lives: BTreeMap<RowKey, i64> = BTreeMap::new();
+    let (mut admitted, mut rest) = (Vec::new(), sets.to_vec());
+    loop {
+        let (now, later): (Vec<&ChangeSet>, Vec<&ChangeSet>) = rest.into_iter().partition(|s| has_life(s, &lives));
+        if now.is_empty() {
+            return admitted;
+        }
+        for c in now.iter().flat_map(|s| s.changes()).filter(|c| c.cid == SENTINEL) {
+            let longest = lives.entry((c.table.clone(), c.pk.clone())).or_default();
+            *longest = (*longest).max(c.cl);
+        }
+        admitted.extend(now);
+        rest = later;
+    }
+}
+
+/// Whether each of the set's column changes past length 1 has its row's
+/// life, given the longest row-level change of each row admitted.
+fn has_life(set: &ChangeSet, lives: &BTreeMap<RowKey, i64>) -> bool {
+    let own = |c: &Change| {
+        set.changes()
+            .iter()
+            .any(|o| o.cid == SENTINEL && o.table == c.table && o.pk == c.pk && o.cl >= c.cl)
+    };
+    set.changes().iter().all(|c| {
+        let admitted = lives.get(&(c.table.clone(), c.pk.clone())).copied().unwrap_or(0);
+        c.cid == SENTINEL || c.cl <= 1 || admitted >= c.cl || own(c)
+    })
+}
+
+/// P's sets: each device's sets whose every earlier set of the device is
+/// admissible too. A device's writes number its sets 1, 2, 3 and on, with no
+/// gap (`replica.rs`, `ModelCopy::write`).
+fn contiguous<'a>(sets: &[&'a ChangeSet]) -> Vec<&'a ChangeSet> {
+    let have: BTreeSet<SetId> = sets.iter().map(|s| s.id()).collect();
+    let whole = |s: &ChangeSet| (1..s.id().1).all(|v| have.contains(&(s.id().0, v)));
+    sets.iter().copied().filter(|s| whole(s)).collect()
 }

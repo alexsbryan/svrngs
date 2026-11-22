@@ -4,7 +4,9 @@
 //! relayed by any copy that keeps them, reordered in flight, duplicated,
 //! dropped and held by partitions, and a device may be removed while members
 //! still relay its sets. Then the copies still standing meet in full, and
-//! `judge` holds each to W1. A seed names a run.
+//! `judge` holds each to W1, under a rule for a set above a missing re-add
+//! (`rule.rs`). A seed names a run under one rule: where a rule changes what
+//! a copy keeps, the draws part from another rule's run of the same seed.
 //!
 //! Not yet, and each lands with what it needs: phones (slice C), a copy
 //! crashed mid-apply and two schema versions adopted at different times
@@ -15,6 +17,7 @@ use std::collections::BTreeSet;
 use crate::change::{ChangeSet, Rng, SetId, Site, State, Val};
 use crate::reference;
 use crate::replica::{Op, Replica, Table};
+use crate::rule::Rule;
 
 /// The simulator's schema, as SQL. `votes` is owned (APP_STATE §4, "Who may
 /// write which row"), and each device writes it only under its own person's
@@ -69,6 +72,10 @@ struct Counts {
     partitions: usize,
     removed: usize,
 }
+
+/// A run so far, as its later draws see it (`Sim::fingerprint`): the
+/// generator's state, each copy's kept sets, and the sets in flight.
+pub type Fingerprint = (u64, Vec<Vec<SetId>>, Vec<(usize, usize, SetId)>);
 
 pub struct Sim<R> {
     rng: Rng,
@@ -156,6 +163,22 @@ impl<R: Replica> Sim<R> {
     /// Every set any device sealed.
     pub fn written(&self) -> &[ChangeSet] {
         &self.written
+    }
+
+    pub fn copies(&self) -> &[R] {
+        &self.copies
+    }
+
+    /// What the run has done so far, as its later draws can see it. Two runs
+    /// of one seed that agree on it make the same draws from here on.
+    pub fn fingerprint(&self) -> Fingerprint {
+        let kept = self
+            .copies
+            .iter()
+            .map(|c| c.kept().iter().map(ChangeSet::id).collect())
+            .collect();
+        let wire = self.wire.iter().map(|(f, t, s)| (*f, *t, s.id())).collect();
+        (self.rng.0, kept, wire)
     }
 
     fn standing(&self) -> Vec<usize> {
@@ -264,6 +287,8 @@ impl<R: Replica> Sim<R> {
     /// The full meet: the partition heals, what is in flight between
     /// standing copies arrives in any order, then each sends each the sets it
     /// keeps that the other hasn't taken, some twice, until none is left.
+    /// Having taken every set one keeps, the other adopts its marks, where a
+    /// rule counts them; the meet goes on while a mark rises.
     pub fn meet(&mut self) {
         self.sides = None;
         let mut wire = std::mem::take(&mut self.wire);
@@ -295,6 +320,8 @@ impl<R: Replica> Sim<R> {
                     self.seen[to].insert(set.id());
                     moved = true;
                 }
+                let marks = self.copies[from].marks();
+                moved |= self.copies[to].adopt(&marks);
             }
             if !moved {
                 return;
@@ -303,13 +330,14 @@ impl<R: Replica> Sim<R> {
     }
 
     /// W1 after a full meet: each standing copy's data is the reference's
-    /// over every admissible set, those some standing copy wrote or took;
-    /// its kept sets cover its own clock rows (invariant 3); and a newcomer
-    /// synced from it, its sets in any order and one twice, ends equal to it.
-    pub fn judge(&mut self, make: &dyn Fn(Site) -> R) -> Result<(), String> {
+    /// under `rule` over every admissible set, those some standing copy wrote
+    /// or took; its kept sets cover its own clock rows (invariant 3); and a
+    /// newcomer synced from it, its marks adopted, its sets in any order and
+    /// one twice, ends equal to it.
+    pub fn judge(&mut self, rule: Rule, make: &dyn Fn(Site) -> R) -> Result<(), String> {
         let standing = self.standing();
         let admissible: BTreeSet<SetId> = standing.iter().flat_map(|&c| self.seen[c].iter().copied()).collect();
-        let want = reference::state(self.written.iter().filter(|s| admissible.contains(&s.id())));
+        let want = reference::under(rule, self.written.iter().filter(|s| admissible.contains(&s.id())));
         for &c in &standing {
             let got = self.copies[c].state();
             if got != want {
@@ -327,6 +355,7 @@ impl<R: Replica> Sim<R> {
             let mut sets = self.copies[c].kept();
             self.rng.shuffle(&mut sets);
             let mut newcomer = make(Site::of(250));
+            newcomer.adopt(&self.copies[c].marks());
             for set in &sets {
                 newcomer.take(set);
             }
@@ -357,13 +386,21 @@ pub fn diff(got: &State, want: &State) -> String {
     "no row differs".into()
 }
 
-/// One seeded run, met and judged; a failure names its seed and what the
-/// run did.
+/// One seeded run, met and judged under today's rule; a failure names its
+/// seed and what the run did.
 pub fn one<R: Replica>(seed: u64, make: &dyn Fn(Site) -> R) -> Result<(), String> {
+    one_under(seed, Rule::Today, make).map(|_| ())
+}
+
+/// One seeded run of copies `make` builds under `rule`, met and judged by
+/// it; how many sets the standing copies hold at the end, or the failure.
+pub fn one_under<R: Replica>(seed: u64, rule: Rule, make: &dyn Fn(Site) -> R) -> Result<usize, String> {
     let shape = Shape::of(seed);
     let mut sim = Sim::new(seed, shape, make);
     sim.run(shape.steps);
     sim.meet();
-    sim.judge(make)
-        .map_err(|e| format!("seed {seed}, {shape:?}, {:?}: {e}", sim.counts))
+    sim.judge(rule, make)
+        .map_err(|e| format!("seed {seed}, {shape:?}, {:?}: {e}", sim.counts))?;
+    let held: BTreeSet<SetId> = sim.standing().iter().flat_map(|&c| sim.copies[c].held()).collect();
+    Ok(held.len())
 }
