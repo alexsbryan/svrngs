@@ -39,9 +39,9 @@ pub struct UserUnit<'a> {
     pub path: &'a Path,
     /// The unit file's text, placeholders already substituted.
     pub content: &'a str,
-    /// The prefix of every line the install prints (`svrnmesh`).
+    /// The prefix of every line its linger step prints (`svrnmesh`).
     pub prefix: &'a str,
-    /// What stops at logout, in the warning's words (`daemon`).
+    /// What stops at logout, in the linger warning's words (`daemon`).
     pub what: &'a str,
 }
 
@@ -81,10 +81,10 @@ impl SystemdUser {
             .map_err(|e| format!("systemctl {}: {e}", args.join(" ")))
     }
 
-    /// Write the unit, reload the user manager, enable it (and start it now
-    /// when `start_now`), then make the user's manager outlive their
-    /// sessions ([`Self::ensure_linger`]). A lingering refusal warns and
-    /// does not fail the install: the unit is correctly installed.
+    /// Write the unit, reload the user manager, and enable it (and start it
+    /// now when `start_now`). Linger is the caller's to ask for
+    /// ([`Self::ensure_linger`]): it changes the whole account, so the
+    /// keeper asks first (kept.rs `boot`).
     pub fn install(&self, unit: &UserUnit<'_>, start_now: bool) -> Result<(), String> {
         if let Some(parent) = unit.path.parent() {
             std::fs::create_dir_all(parent)
@@ -103,7 +103,6 @@ impl SystemdUser {
             let verb = if start_now { "enable --now" } else { "enable" };
             return Err(format!("systemctl {verb} failed: {}", stderr.trim()));
         }
-        self.ensure_linger(unit.prefix, unit.what);
         Ok(())
     }
 

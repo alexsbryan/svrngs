@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use anyhow::Context;
-use svrngs_keeper::kept::{self, Places, Stored};
+use svrngs_keeper::kept::{self, Boot, Places, Stored};
 use svrngs_keeper::systemd::SystemdUser;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
@@ -21,10 +21,11 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
 
   keep: run a native card (a compose.yaml with x-svrngs.native, or the
   folder it is in) here for good, as the systemd user unit
-  svrngs-keeper-<name>.service. It starts when this computer starts, and
-  again if it stops. <name> is the card's title unless --name gives one.
-  The same card again changes nothing; a new one replaces it, and the one
-  before is kept beside it as previous.yaml.
+  svrngs-keeper-<name>.service. It starts again if it stops, and when you
+  log in; when this computer starts, too, if you let your account run with
+  nobody logged in (the first keep asks). <name> is the card's title
+  unless --name gives one. The same card again changes nothing; a new one
+  replaces it, and the one before is kept beside it as previous.yaml.
 
   keep <port>: keep what runs on <port> now, in place of the copy you
   started. llama-server is kept from the card svrngs-keeper ships for it;
@@ -111,7 +112,8 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
         }
         ["start", name] => {
             let name = kept::start(systemd, places, name)?;
-            println!("{} runs again, and starts when this computer starts.", name.as_str());
+            let starts = Boot::read(systemd.lingers()).starts();
+            println!("{} runs again. {starts} and starts again if it stops.", name.as_str());
             Ok(())
         }
         ["remove", name] => {
@@ -132,7 +134,7 @@ fn keep(systemd: &SystemdUser, places: &Places, card: &str, name: Option<&str>) 
         path = path.join("compose.yaml");
     }
     let text = std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
-    let kept = kept::keep(systemd, places, &text, name)?;
+    let kept = kept::keep(systemd, places, &text, name, || kept::boot(systemd, terminal))?;
     let (name, port, unit) = (kept.name.as_str(), kept.port, &kept.unit);
     match kept.stored {
         Stored::New => println!("{name} is kept here now, for port {port}: the systemd unit {unit}."),
@@ -143,19 +145,12 @@ fn keep(systemd: &SystemdUser, places: &Places, card: &str, name: Option<&str>) 
             previous.display()
         ),
     }
+    // Read again: a yes logind refused starts it at login all the same.
     println!(
         "{} and starts again if it stops (4 times a minute at most).",
-        starts(systemd)
+        Boot::read(systemd.lingers()).starts()
     );
     Ok(())
-}
-
-fn starts(systemd: &SystemdUser) -> &'static str {
-    match systemd.lingers() {
-        Ok(true) => "It starts when this computer starts, before anyone logs in,",
-        Ok(false) => "It starts when you log in,",
-        Err(_) => "It starts when you log in at least,",
-    }
 }
 
 #[cfg(not(target_os = "linux"))]
@@ -247,9 +242,10 @@ fn promote(
             added.join(", ")
         );
     }
+    let boot = kept::boot(systemd, terminal);
     println!(
         "{} and starts again if it stops (4 times a minute at most).",
-        starts(systemd)
+        boot.starts()
     );
     if !ask(&format!(
         "The {program} you started stops, and this one takes its place. Keep it running?"
@@ -261,7 +257,7 @@ fn promote(
         println!("svrngs-keeper could not stop yours ({why}), so nothing was kept.");
         return Ok(ExitCode::from(1));
     }
-    let kept = kept::keep(systemd, places, &card, Some(&name));
+    let kept = kept::keep(systemd, places, &card, Some(&name), || boot);
     let (mut up, mut gave_up) = (false, false);
     if kept.is_ok() {
         host::within(30, || {
@@ -309,8 +305,13 @@ fn promote(
     Ok(ExitCode::from(1))
 }
 
+/// Ask `question` if stdin is a terminal; `None` when it is not.
+fn terminal(question: &str) -> Option<bool> {
+    use std::io::IsTerminal;
+    std::io::stdin().is_terminal().then(|| ask(question))
+}
+
 /// Ask `question`; yes is `y` or `yes` on its own line.
-#[cfg(target_os = "linux")]
 fn ask(question: &str) -> bool {
     use std::io::Write;
     print!("{question} Type y, then press Enter: ");

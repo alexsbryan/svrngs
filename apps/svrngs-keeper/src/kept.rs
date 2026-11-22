@@ -110,15 +110,86 @@ pub fn name_of(title: &str) -> String {
     out.trim_end_matches('-').to_string()
 }
 
+/// The question `keep` asks before it lets this account run with nobody
+/// logged in (ralph/next/keeper/STATE.md, "The user flow").
+pub const LINGER_ASK: &str =
+    "To start it before you log in, your account needs to run when nobody is logged in. Turn that on?";
+
+/// When a kept card will start, as the answer to [`LINGER_ASK`] left it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Boot {
+    /// The account lingers already, so nothing was asked.
+    Lingers,
+    /// Asked, and yes: `keep` turns linger on (`SystemdUser::ensure_linger`).
+    TurnOn,
+    /// Asked and no, or no terminal to ask: it starts at login. `unread` is
+    /// why whether the account lingers could not be read, if it could not.
+    Login { unread: Option<String> },
+}
+
+impl Boot {
+    /// What linger reads now, without asking: for the line after a keep.
+    pub fn read(lingers: Result<bool, String>) -> Boot {
+        match lingers {
+            Ok(true) => Boot::Lingers,
+            Ok(false) => Boot::Login { unread: None },
+            Err(why) => Boot::Login { unread: Some(why) },
+        }
+    }
+
+    /// The plan's "It starts …", ending in a comma for what follows.
+    pub fn starts(&self) -> &'static str {
+        match self {
+            Boot::Lingers | Boot::TurnOn => "It starts when this computer starts, before anyone logs in,",
+            Boot::Login { unread: None } => "It starts when you log in,",
+            Boot::Login { unread: Some(_) } => "It starts when you log in at least,",
+        }
+    }
+}
+
+/// Ask [`LINGER_ASK`] only while this account doesn't linger. `ask` is the
+/// terminal: `None` when there is none to ask in, and a yes or a no.
+pub fn boot(systemd: &SystemdUser, ask: impl FnOnce(&str) -> Option<bool>) -> Boot {
+    let unread = match systemd.lingers() {
+        Ok(true) => {
+            tracing::debug!("lingers already: not asked");
+            return Boot::Lingers;
+        }
+        Ok(false) => None,
+        Err(why) => {
+            tracing::debug!(why, "whether it lingers was not read, so it is asked");
+            Some(why)
+        }
+    };
+    match ask(LINGER_ASK) {
+        Some(true) => {
+            tracing::debug!("linger: yes");
+            Boot::TurnOn
+        }
+        answer => {
+            tracing::debug!(terminal = answer.is_some(), "linger: no, so it starts at login");
+            Boot::Login { unread }
+        }
+    }
+}
+
 /// Keep the card `text` under `name` (or its title's): store it, write its
-/// unit, and have systemd enable and start it, then ask for linger once
-/// (`SystemdUser::install`). The same card again resets nothing.
-pub fn keep(systemd: &SystemdUser, places: &Places, text: &str, name: Option<&str>) -> Result<Kept, KeptError> {
+/// unit, and have systemd enable and start it, then turn linger on if
+/// `boot` says to. `boot` is asked only once the card is read, so a card
+/// refused asks nothing. The same card again resets nothing.
+pub fn keep(
+    systemd: &SystemdUser,
+    places: &Places,
+    text: &str,
+    name: Option<&str>,
+    boot: impl FnOnce() -> Boot,
+) -> Result<Kept, KeptError> {
     let card = Card::parse(text)?;
     let Some(program) = &card.native else {
         tracing::debug!(title = card.title, "refused: not a native card");
         return Err(KeptError::NotNative(card.title));
     };
+    let boot = boot();
     let name = Name::new(&name.map_or_else(|| name_of(&card.title), str::to_string))?;
     let dir = places.card_dir(&name);
     let (path, previous) = (dir.join("compose.yaml"), dir.join("previous.yaml"));
@@ -142,18 +213,17 @@ pub fn keep(systemd: &SystemdUser, places: &Places, text: &str, name: Option<&st
     let (unit, unit_path) = (unit_name(&name), places.unit_path(&name));
     let content = native(&name, &card, program);
     let unit_before = std::fs::read_to_string(&unit_path).ok();
-    systemd
-        .install(
-            &UserUnit {
-                name: &unit,
-                path: &unit_path,
-                content: &content,
-                prefix: "svrngs-keeper",
-                what: "programs it keeps",
-            },
-            true,
-        )
-        .map_err(KeptError::Systemd)?;
+    let user_unit = UserUnit {
+        name: &unit,
+        path: &unit_path,
+        content: &content,
+        prefix: "svrngs-keeper",
+        what: "programs it keeps",
+    };
+    systemd.install(&user_unit, true).map_err(KeptError::Systemd)?;
+    if boot == Boot::TurnOn {
+        systemd.ensure_linger(user_unit.prefix, user_unit.what);
+    }
     // `enable --now` leaves a running unit as it is, so a changed unit runs
     // only once it starts again. The unit names its card's version, so any
     // new card changes it.

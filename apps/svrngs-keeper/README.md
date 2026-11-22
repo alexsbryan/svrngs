@@ -18,7 +18,7 @@ svrngs crate and no Give (`tests/surface.rs`).
 - `src/machine.rs`: Podman's machine on a Mac.
 - `src/check.rs`: the author's check of a card (`give check`).
 - `src/systemd.rs`: a user unit written, driven and read back, and linger
-  asked for once; forked from commonwealth-ai host-kit's `service.rs`.
+  turned on; forked from commonwealth-ai host-kit's `service.rs`.
 - `src/unit.rs`: a native card as its unit, `svrngs-keeper-<name>.service`,
   with the spike's settings: `Restart=on-failure`, `RestartSec=2`, at most
   4 starts in 60 s, `SuccessExitStatus=143`, `WantedBy=default.target`.
@@ -47,7 +47,9 @@ A kept card lives in `~/.local/share/svrngs-keeper/<name>/compose.yaml`,
 the one it replaced beside it as `previous.yaml`; the unit goes in
 `~/.config/systemd/user/` (both follow `XDG_DATA_HOME`, `XDG_CONFIG_HOME`).
 The same card kept again resets nothing. It supervises nothing: systemd
-keeps the unit, and linger starts it at boot.
+keeps the unit, and linger starts it at boot. While the account doesn't
+linger, `keep` asks first whether it may run with nobody logged in; on no,
+or with no terminal to ask in, the unit starts at login.
 
 `tests/kept.rs` drives it through a stand-in `systemctl` and `loginctl`.
 `tests/host.sh target/debug/svrngs-keeper` proves it on a Linux host with

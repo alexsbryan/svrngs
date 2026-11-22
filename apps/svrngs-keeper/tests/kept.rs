@@ -6,7 +6,7 @@
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-use svrngs_keeper::kept::{self, KeptError, Places, Row, Running, Starts, Status, Stored};
+use svrngs_keeper::kept::{self, Boot, KeptError, Places, Row, Running, Starts, Status, Stored};
 use svrngs_keeper::systemd::SystemdUser;
 
 const CODER: &str = r#"x-svrngs:
@@ -62,8 +62,21 @@ impl Here {
             ),
         )
         .unwrap();
+        // Linger is the file `lingers`, as `enable-linger` leaves it.
         let loginctl = root.join("loginctl");
-        std::fs::write(&loginctl, "#!/bin/sh\necho Linger=yes\n").unwrap();
+        std::fs::write(
+            &loginctl,
+            format!(
+                "#!/bin/sh\necho \"$@\" >> {root}/loginctl.log\n\
+                 case \"$1\" in\n\
+                 show-user) if [ -e {root}/lingers ]; then echo Linger=yes; else echo Linger=no; fi ;;\n\
+                 enable-linger) touch {root}/lingers ;;\n\
+                 esac\nexit 0\n",
+                root = root.display()
+            ),
+        )
+        .unwrap();
+        std::fs::write(root.join("lingers"), "").unwrap();
         for p in [&systemctl, &loginctl] {
             std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap();
         }
@@ -89,7 +102,38 @@ impl Here {
     }
 
     fn keep(&self, text: &str) -> Result<kept::Kept, KeptError> {
-        kept::keep(&self.systemd, &self.places, text, None)
+        kept::keep(&self.systemd, &self.places, text, None, || Boot::Lingers)
+    }
+
+    /// An account that doesn't linger.
+    fn not_lingering(self) -> Here {
+        std::fs::remove_file(self.root.join("lingers")).unwrap();
+        self
+    }
+
+    /// Ask as `keep` does, answering `answer` (`None`: no terminal), and
+    /// keep `CODER` with what it answered: the questions asked, the answer,
+    /// and whether linger was turned on.
+    fn keep_answering(&self, answer: Option<bool>) -> (Vec<String>, Boot, bool) {
+        let mut asked = Vec::new();
+        let boot = kept::boot(&self.systemd, |q| {
+            asked.push(q.to_string());
+            answer
+        });
+        let _ = std::fs::remove_file(self.root.join("loginctl.log"));
+        let kept_with = boot.clone();
+        kept::keep(&self.systemd, &self.places, CODER, None, || kept_with).unwrap();
+        let loginctl = std::fs::read_to_string(self.root.join("loginctl.log")).unwrap_or_default();
+        let turned_on = loginctl.lines().any(|l| l.starts_with("enable-linger "));
+        assert_eq!(
+            self.argv(),
+            [
+                "--user daemon-reload",
+                "--user enable --now svrngs-keeper-coder.service"
+            ],
+            "the unit is enabled whatever the answer"
+        );
+        (asked, boot, turned_on)
     }
 }
 
@@ -342,4 +386,52 @@ fn status_reads_every_state_it_names_and_refuses_the_rest() {
     assert!(kept::status("LoadState=not-found\n", Ok(true)).is_err());
     assert!(kept::status(&show("maintenance", "enabled"), Ok(true)).is_err());
     assert!(kept::status(&show("active", "enabled").replace("NRestarts=4\n", ""), Ok(true)).is_err());
+}
+
+#[test]
+fn a_yes_turns_linger_on_and_it_starts_when_this_computer_starts() {
+    let here = Here::new().not_lingering();
+    let (asked, boot, turned_on) = here.keep_answering(Some(true));
+    assert_eq!(asked, [kept::LINGER_ASK]);
+    assert_eq!((&boot, turned_on), (&Boot::TurnOn, true));
+    assert!(boot.starts().contains("when this computer starts"), "{}", boot.starts());
+    // The line after a keep is read again, and says the same.
+    let after = Boot::read(here.systemd.lingers());
+    assert!(
+        after.starts().contains("when this computer starts"),
+        "{}",
+        after.starts()
+    );
+}
+
+#[test]
+fn a_no_leaves_linger_off_and_it_starts_when_you_log_in() {
+    let here = Here::new().not_lingering();
+    let (asked, boot, turned_on) = here.keep_answering(Some(false));
+    assert_eq!((&boot, turned_on), (&Boot::Login { unread: None }, false));
+    assert_eq!(asked, [kept::LINGER_ASK]);
+    assert!(boot.starts().contains("when you log in"), "{}", boot.starts());
+    assert_eq!(here.systemd.lingers(), Ok(false));
+    // Still off, so the next keep asks again.
+    let (asked, _, _) = here.keep_answering(Some(false));
+    assert_eq!(asked, [kept::LINGER_ASK]);
+}
+
+#[test]
+fn with_no_terminal_to_ask_linger_stays_off() {
+    let here = Here::new().not_lingering();
+    let (asked, boot, turned_on) = here.keep_answering(None);
+    assert_eq!((&boot, turned_on), (&Boot::Login { unread: None }, false));
+    assert_eq!(asked, [kept::LINGER_ASK]);
+    assert!(boot.starts().contains("when you log in"), "{}", boot.starts());
+    assert_eq!(here.systemd.lingers(), Ok(false));
+}
+
+#[test]
+fn an_account_that_lingers_already_is_not_asked() {
+    let here = Here::new();
+    let (asked, boot, turned_on) = here.keep_answering(Some(true));
+    assert!(asked.is_empty(), "{asked:?}");
+    assert_eq!((&boot, turned_on), (&Boot::Lingers, false));
+    assert!(boot.starts().contains("when this computer starts"), "{}", boot.starts());
 }
