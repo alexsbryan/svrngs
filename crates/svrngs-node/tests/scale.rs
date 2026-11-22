@@ -908,10 +908,13 @@ async fn the_account_matches_a_hand_count() {
     //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
     //   = 29; every register read below catches up first
     //   (journal.rs `RingJournal::folded`), 11; node 0's question of
-    //   whether the group says where it meets (node.rs `cut_over`), 1; and its two
+    //   whether the group says where it meets (node.rs `cut_over`), 1; its two
     //   questions of where the group meets (group.rs `meeting`), once for
     //   its endpoint at the round's start and once to dial it (relay
-    //   fallbacks), 2: 43.
+    //   fallbacks), 2; and its read of the record, after each reached
+    //   member's exchange, that the member's app databases are judged by
+    //   (ring_sync.rs `states`, `bound`), read before it lists them, so with
+    //   none kept here it posts nothing, 2: 45.
     // - register: node 0 asks whether its group already names its relay
     //   before it dials (ring_sync.rs `run_one_round`, `Host::say_relay`:
     //   it does, so no `RelayAt` is committed), lists its members (node.rs
@@ -931,7 +934,7 @@ async fn the_account_matches_a_hand_count() {
         "acts_moved": 4,
         "cpu_s": null, "wall_s": null,
         "folds": {
-            "write_index": {"kept": 43, "rebuilt": 0},
+            "write_index": {"kept": 45, "rebuilt": 0},
             "digest": {"kept": 23, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
             "register": {"kept": 7, "rebuilt": 4},
