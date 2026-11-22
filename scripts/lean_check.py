@@ -999,10 +999,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the self-heal), to come down to where they land. The cap to 26,150.
 # The second pool: +199 drawn, +501 and +60 left; the first's +80 of
 # JavaScript also stands.
+# (2026-11-22) The review's fixes land at 26,147 (2b3bd031..14ea09b3), +430
+# over 25,717, the self-heal not built, and the cap comes down to it. The
+# second pool: +197 drawn, +503 and +60 left.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26150,
+    ".": 26148,
 
     "js": 8671,
 
