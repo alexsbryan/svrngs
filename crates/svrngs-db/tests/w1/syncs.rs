@@ -651,8 +651,9 @@ fn held(tallies: Vec<(Variant, Tally)>) {
 /// The seeds a variant parts on model copies, run again on live copies alone
 /// and on pairs, so each failure is the rule's and not the model's: over
 /// `W1_SEEDS` as `<first>..<end>`, else the gate's, each variant and carry
-/// `W1_SYNCS` and `W1_CARRIES` name. Each seed where the live copies' class
-/// isn't the model's, or a pair parts, is said; then each variant's line.
+/// `W1_SYNCS` and `W1_CARRIES` name, and with `W1_LIVE_ALL` set, every seed.
+/// Each seed where the live copies' class isn't the model's, or a pair parts,
+/// is said; then each variant's line.
 /// Run `cargo test -p svrngs-db --test w1 -- --ignored
 /// the_seeds_that_part_on_live --nocapture`.
 #[test]
@@ -660,6 +661,7 @@ fn held(tallies: Vec<(Variant, Tally)>) {
 #[expect(clippy::disallowed_methods, reason = "each variant's time over its seeds, said")]
 fn the_seeds_that_part_on_live_copies() {
     let seeds = range("W1_SEEDS", "0..1000");
+    let all_seeds = std::env::var("W1_LIVE_ALL").is_ok();
     let threads = std::thread::available_parallelism().map_or(1, |n| n.get() as u64);
     for (variant, carry) in chosen() {
         let start = Instant::now();
@@ -672,28 +674,28 @@ fn the_seeds_that_part_on_live_copies() {
                         let mut out = Vec::new();
                         for seed in seeds.filter(|seed| seed % threads == t) {
                             let m = sim::one_synced(seed, Rule::default(), variant, carry, &model);
-                            let Some(want) = class(&m) else {
+                            let want = class(&m);
+                            if want.is_none() && !all_seeds {
                                 continue;
-                            };
+                            }
                             let l = sim::one_synced(seed, Rule::default(), variant, carry, &LiveCopy::new);
                             let (p, parted) = watched(format!("seed {seed}"), || {
                                 sim::one_synced(seed, Rule::default(), variant, carry, &Pair::new)
                             });
-                            let odd =
-                                (class(&l) != Some(want) || class(&p) != Some(want) || !parted.is_empty()).then(|| {
-                                    let said = |v: &Verdict| {
-                                        v.failure
-                                            .as_ref()
-                                            .map_or("passed".to_owned(), |(c, e)| format!("{}: {e}", c.name()))
-                                    };
-                                    format!(
-                                        "seed {seed}: model {}\n  live {}\n  pairs {}\n  parted: {parted:?}",
-                                        said(&m),
-                                        said(&l),
-                                        said(&p)
-                                    )
-                                });
-                            out.push((seed, Some(want), odd));
+                            let odd = (class(&l) != want || class(&p) != want || !parted.is_empty()).then(|| {
+                                let said = |v: &Verdict| {
+                                    v.failure
+                                        .as_ref()
+                                        .map_or("passed".to_owned(), |(c, e)| format!("{}: {e}", c.name()))
+                                };
+                                format!(
+                                    "seed {seed}: model {}\n  live {}\n  pairs {}\n  parted: {parted:?}",
+                                    said(&m),
+                                    said(&l),
+                                    said(&p)
+                                )
+                            });
+                            out.push((seed, want, odd));
                         }
                         out
                     })
@@ -710,16 +712,17 @@ fn the_seeds_that_part_on_live_copies() {
             println!("ODD, {name}, {}", said.as_deref().unwrap_or_default());
         }
         let mut by: BTreeMap<Class, usize> = BTreeMap::new();
-        for (_, class, _) in &each {
-            *by.entry(class.expect("a failing seed's class")).or_default() += 1;
+        for class in each.iter().filter_map(|e| e.1) {
+            *by.entry(class).or_default() += 1;
         }
+        let parted: usize = by.values().sum();
         let by: Vec<String> = by.iter().map(|(c, n)| format!("{n} {}", c.name())).collect();
         println!(
-            "{name}: seeds {}..{}, {} parted on model copies ({}); on live copies and pairs, {} not alike or a pair parted; {:.1} s on {threads} threads",
+            "{name}: seeds {}..{}, {parted} parted on model copies ({}); {} run on live copies and pairs, {} not alike or a pair parted; {:.1} s on {threads} threads",
             seeds.start,
             seeds.end,
-            each.len(),
             by.join(", "),
+            each.len(),
             odd.len(),
             start.elapsed().as_secs_f64()
         );
