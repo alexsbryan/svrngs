@@ -148,7 +148,7 @@ These are the figures the launch approved, in code lines as
   - `remove` leaves its data;
   - `keep` run twice resets nothing.
 
-- [ ] keeper-promote — depends [keeper-units] — ONE UNIT:
+- [x] keeper-promote 2e78b0939 — depends [keeper-units] — ONE UNIT:
   - `keep <port>`. The port's holder is read with `ss -ltnpH`; the
     keeper links no svrngs reader.
   - **A program it knows** has a card it ships (`cards/llama-server`),
