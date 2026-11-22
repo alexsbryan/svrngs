@@ -487,3 +487,80 @@ async fn the_state_route_serves_a_standing_member_alone() {
         "Bo's own set, from a standing member"
     );
 }
+
+/// A change row as svrngs-db writes one, for a set a test makes.
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Row {
+    table: String,
+    pk: Vec<u8>,
+    cid: String,
+    val: Cell,
+    col_version: i64,
+    cl: i64,
+    seq: i64,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+enum Cell {
+    Null,
+    Integer(i64),
+    Real(f64),
+    Text(String),
+    Blob(Vec<u8>),
+}
+
+/// **A call whose change has a key cr-sqlite couldn't unpack is answered,
+/// and the set refused for good**: a standing member's one set, signed by
+/// its own key, with an empty key, is counted here, applied nowhere, and the
+/// computer goes on answering.
+#[tokio::test]
+async fn a_call_with_a_key_cr_sqlite_cannot_unpack_is_answered_and_its_set_refused() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let bo = SigningKey::from_bytes(&[13u8; 32]);
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
+    members.insert(Person::parse("Bo").unwrap(), vec![crate::actor_of(&bo)]);
+    rail.set_seed(NS, &Roster::new(members)).unwrap();
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
+
+    let his = svrngs_db::States::new(&dir.path().join("bo"), bo.clone());
+    let his = his.open(NS, "board", Some(SCHEMA)).unwrap();
+    let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    his.write(&card).unwrap();
+    let mut set = his
+        .missing(&Default::default(), 1 << 20)
+        .unwrap()
+        .sets
+        .remove(0);
+    let mut changes: Vec<Row> = postcard::from_bytes(&set.changes).unwrap();
+    changes.iter_mut().for_each(|c| c.pk = vec![]);
+    set.changes = postcard::to_allocvec(&changes).unwrap();
+    let at = svrngs_core::set::At {
+        group: NS,
+        app: "board",
+        device: set.device.as_str(),
+        nonce: &set.nonce,
+        seq: set.seq.get(),
+        schema: &set.schema,
+    };
+    set.sig = svrngs_db::Sig::parse(&at.sign(&bo, &set.changes)).unwrap();
+    let call = svrngs_db::Call {
+        sets: vec![set],
+        ..Default::default()
+    };
+    let (status, _) = state(inbound.clone(), Some(&bo), (NS, "board"), &call).await;
+    assert_eq!(status, 200);
+    let rows = db.read("SELECT * FROM cards", &[]).unwrap();
+    assert_eq!(rows["rows"], serde_json::json!([]), "none of it applied");
+    assert_eq!(
+        db.ask().unwrap().marks.len(),
+        1,
+        "counted, refused for good"
+    );
+    let (status, _) = state(inbound, Some(&key()), (NS, "board"), &Default::default()).await;
+    assert_eq!(status, 200, "and the computer answers on");
+}

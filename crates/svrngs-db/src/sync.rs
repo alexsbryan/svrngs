@@ -38,7 +38,7 @@ use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, Transaction
 use serde::{Deserialize, Serialize};
 use svrngs_core::set::{At, Nonce, Site, site};
 
-use crate::parse::{BOUND, Change};
+use crate::parse::{Change, Valid, parse};
 use crate::{Db, Refused, fault};
 
 /// A set's seq at its database, and a mark, a have or a twin's place: from 1
@@ -233,11 +233,12 @@ fn adopt(conn: &Connection, (site, theirs): (Site, i64)) -> rusqlite::Result<()>
 
 /// `set`, at `site`, kept and counted, `held` while it waits; and, `rows`
 /// given, merged into `crsql_changes` first as `site`'s at its seq, where
-/// cr-sqlite decides what wins.
-fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&[Change]>, held: bool) -> rusqlite::Result<()> {
+/// cr-sqlite decides what wins: only rows the parse made, so nothing it
+/// didn't read reaches cr-sqlite.
+fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, held: bool) -> rusqlite::Result<()> {
     let put = "INSERT INTO crsql_changes (\"table\", pk, cid, val, col_version, db_version, site_id, cl, seq, ts) \
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '0')";
-    for c in rows.unwrap_or_default() {
+    for c in rows.map_or(&[][..], |v| &v.0) {
         let p = params![c.table, c.pk, c.cid, c.val, c.col_version, set.seq, site, c.cl, c.seq];
         conn.prepare_cached(put)?.execute(p)?;
     }
@@ -437,17 +438,21 @@ impl Db {
         if sigs.contains(&set.sig) || counted && sigs.is_empty() {
             return Ok(Took::Held);
         }
-        let bounded = |c: &Vec<Change>| c.iter().all(|c| c.col_version <= BOUND && c.cl <= BOUND);
-        let parsed: Option<Vec<Change>> = postcard::from_bytes(&set.changes).ok().filter(bounded);
-        if parsed.is_some() && !sigs.is_empty() {
+        // One whose device the record doesn't bind, or written under a schema
+        // this copy doesn't hold, waits, unparsed: its changes are read only
+        // against the tables of its own schema (APP_STATE §4, the four
+        // outcomes). Any other is parsed before cr-sqlite sees it.
+        let waits = !bound(set.device.as_str()) || set.schema != self.schema;
+        let parsed = (!waits).then(|| parse(&set.changes, &self.tables));
+        if matches!(parsed, Some(Ok(_))) && !sigs.is_empty() {
             tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), "state: a second set at one site and seq, both taken: a copied or restored database runs beside its original");
         }
         // Rolled back and released as it drops on any `?`.
         let sp = tx.savepoint()?;
         let took = match parsed {
-            None => count(&sp, (site, set.seq)).map(|()| Took::Refused)?,
-            Some(_) if !bound(set.device.as_str()) => keep(&sp, (set, site), None, true).map(|()| Took::Waits)?,
-            Some(rows) => keep(&sp, (set, site), Some(&rows), false).map(|()| Took::Taken)?,
+            None => keep(&sp, (set, site), None, true).map(|()| Took::Waits)?,
+            Some(Err(_)) => count(&sp, (site, set.seq)).map(|()| Took::Refused)?,
+            Some(Ok(valid)) => keep(&sp, (set, site), Some(&valid), false).map(|()| Took::Taken)?,
         };
         sp.commit()?;
         let twin = took == Took::Taken && !sigs.is_empty();
@@ -455,8 +460,9 @@ impl Db {
     }
 
     /// Each set waiting here whose device the record now binds, as `bound`
-    /// says, applied and no longer held: judged again on each change to the
-    /// record. How many.
+    /// says, and whose schema this copy holds, judged again: parsed, and
+    /// applied and no longer held, or refused for good, kept no more and
+    /// still counted. How many it applied.
     pub fn rejudge(&self, bound: &dyn Fn(&str) -> bool) -> Result<usize, Refused> {
         let mut conn = self.conn();
         let held = rows(&conn, "SELECT bytes FROM svrngs_sets WHERE held", [], |r| {
@@ -467,17 +473,22 @@ impl Db {
             .into_iter()
             .filter_map(|b| postcard::from_bytes::<Set>(&b).ok());
         let mut taken = 0;
-        for set in held.filter(|s| bound(s.device.as_str())) {
+        for set in held.filter(|s| bound(s.device.as_str()) && s.schema == self.schema) {
             let place = (site(&self.group, &self.app, set.device.as_str(), &set.nonce), set.seq);
-            let rows: Vec<Change> = postcard::from_bytes(&set.changes).unwrap_or_default();
+            let parsed = parse(&set.changes, &self.tables);
             let unheld = "UPDATE svrngs_sets SET held = 0 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
-            // Rolled back and released as it drops, unless all of it applied.
+            let gone = "DELETE FROM svrngs_sets WHERE site = ?1 AND seq = ?2 AND sig = ?3";
+            let at = params![place.0, place.1, set.sig];
+            // Rolled back and released as it drops, unless all of it is written.
             let sp = conn.savepoint().map_err(fault)?;
-            let applied = keep(&sp, (&set, place.0), Some(&rows), false);
-            let applied = applied.and_then(|()| sp.execute(unheld, params![place.0, place.1, set.sig]));
-            let applied = applied.and_then(|_| sp.commit());
-            tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), applied = applied.is_ok(), "state: a set that waited for its device, now bound, applied; or held still, as this copy couldn't");
-            taken += usize::from(applied.is_ok());
+            let judged = match &parsed {
+                Ok(valid) => keep(&sp, (&set, place.0), Some(valid), false).and_then(|()| sp.execute(unheld, at)),
+                Err(_) => sp.execute(gone, at),
+            };
+            let judged = judged.and_then(|_| sp.commit());
+            let applied = judged.is_ok() && parsed.is_ok();
+            tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.device, seq = set.seq.get(), applied, refused = parsed.is_err(), written = judged.is_ok(), "state: a set that waited for its device, now bound, applied; refused for good as it doesn't parse; or held still, as this copy couldn't");
+            taken += usize::from(applied);
         }
         if taken > 0 {
             self.changed.send_modify(|n| *n += 1);

@@ -24,12 +24,13 @@ pub const FORM: &str = "A write goes as {write: [op, ...]}, each op one of \
     or {delete: <table>, key: {<every key column>: <value>}}, \
     each value null, a number, a string or {base64: \"...\"}.";
 
-/// A table as `pragma_table_info` names it: its columns, and its key's in
-/// the key's order.
+/// A table as `pragma_table_info` names it: its columns, its key's in the
+/// key's order, and those that are NOT NULL.
 #[derive(Debug, Default)]
 pub struct Table {
     pub columns: Vec<String>,
     pub key: Vec<String>,
+    pub not_null: Vec<String>,
 }
 
 /// One op as one statement, and the values it binds.

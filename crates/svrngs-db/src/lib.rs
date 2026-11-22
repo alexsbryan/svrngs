@@ -577,19 +577,18 @@ fn new_tables(conn: &mut Connection, schema: &str, (group, app, device): (&str, 
 }
 
 /// Each of the app's tables in `conn`, with its columns and key, as the
-/// write form names them.
+/// write form names them, and its NOT NULL columns, as the parse reads them.
 fn tables_of(conn: &Connection) -> Result<BTreeMap<String, Table>, Refused> {
-    let each = "SELECT t.name, c.name, c.pk FROM sqlite_master AS t, pragma_table_info(t.name) AS c \
+    let each = "SELECT t.name, c.name, c.pk, c.\"notnull\" FROM sqlite_master AS t, pragma_table_info(t.name) AS c \
         WHERE t.type = 'table' ORDER BY t.name, c.pk = 0, c.pk, c.cid";
     let mut stmt = conn.prepare(each).map_err(fault)?;
-    let columns = stmt.query_map([], |r| {
-        Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, i64>(2)?))
-    });
+    let columns = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)));
     let mut tables = BTreeMap::<String, Table>::new();
     for column in columns.map_err(fault)? {
-        let (name, column, pk) = column.map_err(fault)?;
+        let (name, column, pk, not_null): (String, String, i64, bool) = column.map_err(fault)?;
         let table = tables.entry(name).or_default();
         (pk > 0).then(|| table.key.push(column.clone()));
+        not_null.then(|| table.not_null.push(column.clone()));
         table.columns.push(column);
     }
     tables.retain(|name, _| !internal(name));

@@ -208,19 +208,26 @@ fn a_set_waits_for_its_device_and_applies_once_the_record_binds_it() {
 }
 
 /// **A fault holds its mark, and the copy says it is still syncing**: a set
-/// this copy can't apply, here one naming a table it lacks, leaves the
-/// device's mark where it was and blocks adopting the member's mark for it;
-/// a call taken whole after clears it. Plant: a fault counted in the mark
+/// this copy can't apply, here one whose title the table's CHECK refuses as
+/// SQLite applies it, leaves the device's mark where it was and blocks
+/// adopting the member's mark for it; a call taken whole after clears it.
+/// The parse leaves a CHECK to SQLite, since one can read the row's other
+/// columns as they stand on each copy. Plant: a fault counted in the mark
 /// (the set never fetched again).
 #[test]
 fn a_fault_holds_its_mark_and_is_said_syncing() {
+    const CHECKED: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT CHECK (title <> 'gone'));";
     let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (board(dir.path(), 1), board(dir.path(), 2));
+    let open = |n: u8| States::new(&dir.path().join(format!("computer-{n}")), key(n)).open("g", "board", Some(CHECKED));
+    let (a, b) = (open(1).unwrap(), open(2).unwrap());
     write(&a, "c1", "milk");
     assert!(b.syncing(), "a new copy is syncing until its first full sync");
     let mut sent = call(&a, &b);
     let good = sent.sets[0].clone();
-    sent.sets[0] = remade(&good, &key(1), |c| c[0].table = "gone".into());
+    let gone = |c: &mut Change| c.val = Val::Text("gone".into());
+    sent.sets[0] = remade(&good, &key(1), |c| {
+        c.iter_mut().filter(|c| c.cid == "title").for_each(gone)
+    });
     assert_eq!(took(&b, &sent), [Took::Fault]);
     assert!(b.syncing(), "said syncing while a fault stands");
     assert!(
