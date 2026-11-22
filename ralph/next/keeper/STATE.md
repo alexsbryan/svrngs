@@ -269,7 +269,32 @@ These are the figures the launch approved, in code lines as
     (scripts/gate/README.md), so the audit needs it pushed.
   - No worker ticks this row or pushes.
 
-- [ ] REVIEW-audit-keeper — depends [keeper-demo, HUMAN-eudoxia-push] — the unchanged full
+- [ ] keeper-linger-ask — depends [keeper-demo] — ONE UNIT: `keep` asks
+  before it lets this account run with nobody logged in, as "The user flow"
+  above has it. keeper-demo found it doesn't
+  (demo/runs/keeper/2026-11-22/README.md, "Found on the way"). `keep` turned
+  linger on with no question, and before the yes it said "It starts when you
+  log in", read before it changed linger.
+  - The first `keep` on an account that doesn't linger asks: "To start it
+    before you log in, your account needs to run when nobody is logged in.
+    Turn that on? Type y, then press Enter:".
+    - **Yes:** linger, through the fork's `ensure_linger`.
+    - **No, or no terminal to ask:** no linger. The unit is enabled for
+      login, and the line says "It starts when you log in". A later `keep`
+      asks again only while linger is off.
+  - The plan's "It starts …" line says what will be true after that answer,
+    never what was true before it.
+
+  read: apps/svrngs-keeper/src/{main.rs,kept.rs,systemd.rs}; "The user
+  flow"; the demo README.
+  check, on the stand-in loginctl (tests/kept.rs), each planted first (the
+  ask skipped, so linger is always turned on):
+  - y turns linger on, and the line says "when this computer starts";
+  - n doesn't, and it says "when you log in";
+  - no terminal doesn't;
+  - an account that already lingers isn't asked.
+
+- [ ] REVIEW-audit-keeper — depends [keeper-demo, HUMAN-eudoxia-push, keeper-linger-ask] — the unchanged full
   `scripts/check.sh` in the svrngs-gate container, exit 0. The ported-from
   lines are listed by `scripts/ports.py`. CSP and the trust floor are
   unchanged, and the counts are within each allowance.
