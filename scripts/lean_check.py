@@ -990,10 +990,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (svrn-docs app-state-diligence/b-sync-fixes-2026-11-22/, estimated +195
 # to +275); a build past it comes back to the operator. From 25,717: the cap
 # to 25,951. Drawn so far: +1,450 (A +654, B +796). Left: none, and +80.
+# (2026-11-22) The operator's second ceiling for the shared database:
+# +700 of all code but JavaScript and +60 of JavaScript, for the review's
+# fixes past the first pool and slices B's second half to E, drawn the
+# same way (svrn-docs APP_STATE.md, Decisions). The review's fixes, at
+# 25,945 after steps 1 to 6 (2b3bd031..145eda7e), draw +199 for the rest,
+# estimated +125 to +175 by file (R8, R4, N2 and H1, H3, the bounds and
+# the self-heal), to come down to where they land. The cap to 26,150.
+# The second pool: +199 drawn, +501 and +60 left; the first's +80 of
+# JavaScript also stands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25951,
+    ".": 26150,
 
     "js": 8671,
 
