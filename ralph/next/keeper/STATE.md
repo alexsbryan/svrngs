@@ -218,7 +218,7 @@ These are the figures the launch approved, in code lines as
 
   `cargo check --workspace` here with the patch.
 
-- [ ] svrngs-renew — depends [svrngs-economize, eudoxia-cgroups] — ONE
+- [x] svrngs-renew 1581a2f35 — depends [svrngs-economize, eudoxia-cgroups] — ONE
   UNIT, svrngs's half (K1+K2 of KEEP_SHARING_BUILD):
   - **Name the job.** `Answer::Job` from the socket's cgroup path and the
     unit's `Description`: the approval says "the systemd unit
