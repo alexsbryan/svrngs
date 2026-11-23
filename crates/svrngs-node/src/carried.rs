@@ -670,7 +670,12 @@ impl Folders {
             let q = q.ok_or((Malformed, 422, "a subscription asks ?q=<a SELECT>"))?;
             return Ok(subscribed(db, q, others).await);
         }
-        let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
+        // Past the most it reads, refused in the route's own shape and in words
+        // of the database's, so a page says a pasted list too long for one write.
+        let Ok(body) = to_bytes(req.into_body(), WRITE_MOST).await else {
+            let words = format!("This is more than {} KiB, the most svrngs/sql takes at once, so nothing of it was kept. Send a long list in parts, a write of fewer rows each.", WRITE_MOST / 1024);
+            return Ok(told(413, "too-large", words));
+        };
         let body = serde_json::from_slice(&body).unwrap_or_default();
         let answered = match svrngs_db::asked(&body) {
             Ok(svrngs_db::Asked::Read(sql, params)) => {

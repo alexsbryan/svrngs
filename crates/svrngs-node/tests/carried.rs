@@ -3132,10 +3132,13 @@ async fn next_event(body: &mut axum::body::Body) -> Value {
 /// no schema.sql keeps no database; and once Ana's yes lets Board read
 /// others' lends, its write is refused and its reads still answered; and
 /// alone in its group, its copy is never said to be syncing.
+/// A write past the most the route reads is refused as the route's own,
+/// `too-large`, saying to send it in parts.
 /// Plants, each watched failing: the route also writing through the
 /// record's `append_act` (the record gains its lines); the route reading
 /// none of the door's verdict (the reader's write answered 200); no word
-/// to the subscription of a write (no event within 10 s).
+/// to the subscription of a write (no event within 10 s); the body's limit
+/// said as an act's (413 `{error, kind}`, no `refused`).
 #[tokio::test]
 async fn an_app_keeps_its_own_database_at_its_origin() {
     let (nodes, dirs) = computers().await;
@@ -3198,6 +3201,22 @@ async fn an_app_keeps_its_own_database_at_its_origin() {
         record(ana, &group).await,
         lines,
         "no line of the database in the record"
+    );
+    // A write past the most the route reads is refused in its own shape,
+    // nothing of it kept.
+    let rows = (0..2_000).map(|i| json!({ "insert": "cards", "row": { "id": format!("c{i:04}"), "title": "a long pasted line" } }));
+    let (status, refused) = sql(ana, &origin, json!({ "write": rows.collect::<Vec<_>>() })).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (413, &json!("too-large")),
+        "{refused}"
+    );
+    assert_eq!(refused["words"], "This is more than 65 KiB, the most svrngs/sql takes at once, so nothing of it was kept. Send a long list in parts, a write of fewer rows each.");
+    let count = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+    assert_eq!(
+        sql(ana, &origin, count).await.1["rows"],
+        json!([{ "n": 1 }]),
+        "nothing of it kept"
     );
 
     carry(&folder, "Plain");

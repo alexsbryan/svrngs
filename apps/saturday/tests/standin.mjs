@@ -34,10 +34,10 @@
 //
 //   most rows  a read gives its first MOST_ROWS rows, with `more: true`
 //              when it had more (docs/guide/database.md, "Read")
-//   too large  a POST body past MOST_BYTES is answered 413 {error, kind:
-//              'path'} with x-svrngs-refused: path, as the real route
-//              answered one (a run on svrngs 1.13.3: 66,528 bytes taken,
-//              66,577 refused, "the act is too large, or came cut short")
+//   too large  a POST body past MOST_BYTES is answered 413 {refused:
+//              'too-large', words}, as the real route answers one
+//              (crates/svrngs-node/src/carried.rs `sql`; a run on svrngs
+//              1.13.3: 66,528 bytes taken, 66,577 refused)
 //
 // What it doesn't stand in for: limits but that one, sync between copies, merges, and
 // a removed person's rows. Its refusals are 400 {refused: 'form'}, 400
@@ -400,8 +400,8 @@ export async function serve({ port = 0, host = '127.0.0.1', link = null } = {}) 
         let body = '';
         for await (const chunk of req) body += chunk;
         if (Buffer.byteLength(body) > MOST_BYTES) {
-          res.setHeader('x-svrngs-refused', 'path');
-          return json(413, { error: 'the act is too large, or came cut short', kind: 'path' });
+          const words = `This is more than ${MOST_BYTES / 1024} KiB, the most svrngs/sql takes at once, so nothing of it was kept. Send a long list in parts, a write of fewer rows each.`;
+          return json(413, { refused: 'too-large', words });
         }
         const answer = await posted(db, body, PEOPLE[name]);
         json(200, given(answer));
