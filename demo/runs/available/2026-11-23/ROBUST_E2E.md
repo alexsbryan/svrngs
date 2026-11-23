@@ -93,3 +93,42 @@ test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; fin
 The repetition driver is `robust-e2e.py` in this directory. Run it inside the
 normal gate image under its lock. It uses the ordinary browser step's
 selection and parallelism, with the ordinary relay-tiers binary alongside.
+
+## Ten consecutive passes under parallel load
+
+The loop's `avail-robust-e2e-3.await.log` records the run at `cff602b3`:
+
+```sh
+/tmp/keeper-audit/gate.sh bash -ec 'ulimit -n 10240; python3 -u demo/runs/available/2026-11-23/robust-e2e.py'
+```
+
+Exit 0 in 11m32s, with 32 visible CPUs and default libtest parallelism.
+The ordinary `browser` selection ran alongside all 16 `relay_tiers` tests.
+Both suites exited 0 in all ten trials; their per-run totals were 44 passed,
+5 ignored, 2 filtered out for `browser` and 16 passed for `relay_tiers`.
+
+| Case | Consecutive passes |
+|---|---:|
+| Mid-film channel close, Chromium | 10/10 |
+| Mid-film channel close, WebKit | 10/10 |
+| Cross-lend navigation, WebKit | 10/10 (9 first attempts; 1 targeted retry) |
+| Seek on the page's ordinary dial | 10/10 |
+| Seek on the data endpoint | 10/10 |
+
+Trial 7 hit the real Playwright crash: `Error: Assertion error` at
+`WKPage._onTargetCreated` (`wkPage.js:331:31`). The driver logged one retry
+and the navigation assertions passed. The full per-trial logs are in
+`target/robust-e2e-r87wyt03/`. The last trial reported:
+
+```text
+test result: ok. 44 passed; 0 failed; 5 ignored; 0 measured; 2 filtered out; finished in 69.25s
+the seek over QUIC: 262144 B filled the connection; the next stream waited for credit
+the seek over a page's dial: both lookaheads started; seek arrived in 1755 ms before releasing their tails
+the seek over QUIC: 262144 B filled the connection; the next stream waited for credit
+the seek over a data endpoint: both lookaheads started; seek arrived in 1200 ms before releasing their tails
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 27.63s
+```
+
+Both engines returned 206 with the exact 6,291,456-byte range and matching
+SHA in all twenty film transfers. One logged `fallbackMs=4001`, above the
+old 4,000 ms ceiling, with the channel-close and relay witnesses intact.
