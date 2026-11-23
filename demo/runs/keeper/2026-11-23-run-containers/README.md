@@ -33,3 +33,24 @@ If the plain run breaks on job attribution, repeat with a new `W` and
 This is one run per configuration. An orderly reboot exercises neither
 recovery from a dead foreground adapter nor same-name foreign-pod ownership
 (Proof 2).
+
+### Plain Podman result
+
+`W=/tmp/opencode/keeper-container-plain python3 -B …/run.py` exited 0 (45 s).
+Fedora 45, kernel 7.2.11, Podman 6.1.3, systemd 262, `Delegate=no`.
+Selected output from `avail-run-containers-1.await.log:3–12` and the
+driver's `run/after-door.log:3–4`:
+
+```text
+planted subtree …/svrngs-keeper-test-recipes.service/wrong-job: accepted=false
+before: LISTEN and established, pasta pid=1608, both …/svrngs-keeper-test-recipes.service; in_unit=true
+Alex reads the marker before reboot: passed (28264fac2cb645b8beb8dd01860df1dc, HTTP 200)
+after: LISTEN and established, pasta pid=952, both …/svrngs-keeper-test-recipes.service; in_unit=true
+boot_before=68ed43bf-7084-41d0-b096-2263d6e35ca6 boot_after=86a1c5f1-01f2-4fcc-801b-ff7c5dff0fd9
+approved: boot=7560773838930461136 cgroups=[7591] → boot=9701252711243206604 cgroups=[5112]
+TCP read: taker=Cgroup(5112) checked=Err(Held(Another)) renewed=Ok(())
+same marker at same address after reboot: passed (direct and Alex both HTTP 200; only Sam's linger manager)
+```
+
+No `--split` run was needed. The driver powered the VM off and removed
+the scratch disk, including its test unit, pod and volume.
