@@ -1157,6 +1157,7 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         // Dials, each writing nothing to a share's port unchecked.
         ("crates/svrngs-node/src/door/bound.rs", "dial: checked by bound"),
         ("crates/svrngs-node/src/door/bound.rs", "dial: a checked flow"),
+        ("crates/svrngs-node/src/door/bound.rs", "dial: witness the unit before saving access"),
         ("crates/svrngs-node/src/door.rs", "dial: unwritten probe"),
         ("crates/svrngs-node/src/door/udp.rs", "dial: member's programs"),
         ("crates/svrngs-node/src/share.rs", "dial: unwritten probe"),
@@ -1167,13 +1168,15 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         ("crates/svrngs-node/src/publication.rs", "dial: a group's page"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
+        ("apps/svrngs-keeper/src/host.rs", "dial: local prefill or readiness, without share credentials"),
         // svrngs's own API, asked only once it proves it holds the token.
         ("crates/svrngs-node/src/api.rs", "dial: svrngs's own API, proved before it is asked"),
         ("apps/give/src/record.rs", "dial: svrngs's own API, proved before it is asked, by each answer's deadline"),
         ("crates/svrngs/src/cli.rs", "dial: a group's page"),
         // The clock and randomness, at their adapters (clippy.toml).
         ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),
-        ("apps/svrngs-keeper/src/host.rs", "dial: the local llama-server's read-only /props prefill, without share credentials"),
+        ("apps/svrngs-keeper/src/host.rs", "the local prefill probe sets its deadline at the edge"),
+        ("apps/svrngs-keeper/src/host.rs", "the local readiness probe waits at the edge"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot is named for when it was taken"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot times its pause"),
         ("apps/svrngs-keeper/src/runtime.rs", "the runtime is podman's adapter: it waits on the clock"),
