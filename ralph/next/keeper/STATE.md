@@ -377,7 +377,7 @@ envelope.
   - a failed write leaves the job running, unshared, and the next plan is
     `Reuse`.
 
-- [ ] avail-terminal — depends [avail-plan, avail-keeper-facts, avail-publish] — ONE UNIT: spec §§2.1–2.2, §3.2; row R1, its code.
+- [x] avail-terminal 9ef329ffb — depends [avail-plan, avail-keeper-facts, avail-publish] — ONE UNIT: spec §§2.1–2.2, §3.2; row R1, its code.
   - `plan/run.rs`, the executor at the edge: it replays at confirm, gives
     `ReviewAgain` with no side effects, and feeds each owner's answer back
     as a `Done` event.
