@@ -73,6 +73,7 @@ export async function person({ who, engine, device }) {
           return c.textContent;
         };
         const last = after === null ? all.at(-1) : all.find((p) => own(p) === after);
+        if (!last) throw new Error(`no paragraph ${JSON.stringify(after)} here; the editor holds ${JSON.stringify(all.map(own))}`);
         const range = document.createRange();
         range.selectNodeContents(last);
         range.collapse(false);
