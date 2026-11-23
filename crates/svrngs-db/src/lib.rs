@@ -841,17 +841,19 @@ impl Db {
         if !stmt.readonly() {
             return Err(Refused::NotARead);
         }
-        let until = gate.now().saturating_add(QUERY_MOST.as_micros() as u64);
-        gate.until.store(until, Relaxed);
         // Each value it makes at most `ANSWER_MOST`, refused by SQLite
         // (`SQLITE_TOOBIG`) before it is made, as no copy keeps a larger one
         // (`parse.rs`); svrngs's own statements, a set applied among them,
         // run under SQLite's, so a merged row is never refused on one copy.
+        // The limit is set before the deadline, and both are put back with
+        // no return between, so no path out of a read leaves either.
         let length = rusqlite::limits::Limit::SQLITE_LIMIT_LENGTH;
         let was = conn.set_limit(length, ANSWER_MOST as i32).map_err(fault)?;
+        gate.until
+            .store(gate.now().saturating_add(QUERY_MOST.as_micros() as u64), Relaxed);
         let ran = rows(&mut stmt, &params);
-        conn.set_limit(length, was).map_err(fault)?;
         gate.until.store(u64::MAX, Relaxed);
+        let _ = conn.set_limit(length, was);
         tracing::debug!(target: "state", group = self.group, app = self.app, refused = ?ran.as_ref().err(), "state: a page's read answered, or stopped");
         let (rows, more) = ran?;
         Ok(json!({ "rows": rows, "more": more }))

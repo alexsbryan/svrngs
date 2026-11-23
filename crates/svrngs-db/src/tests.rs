@@ -58,3 +58,26 @@ fn a_crash_between_a_restore_s_moves_leaves_the_app_s_name_a_whole_database() {
         assert_eq!(cards(&db), card, "after {made} moves and a restore");
     }
 }
+
+/// **A page's read puts back every bound it sets, on every path out of
+/// it** (the delta review's N3): after a read answered, one stopped at
+/// `QUERY_MOST` and one refused as SQLite refuses a value past
+/// `ANSWER_MOST`, the connection holds SQLite's own limit on a value and
+/// no deadline, so svrngs's own statements, a merge among them, run under
+/// neither. Plant, watched failing: the read's two restores left out.
+#[test]
+fn a_page_s_read_puts_back_every_bound_it_sets() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_states, db) = board(dir.path());
+    let length = rusqlite::limits::Limit::SQLITE_LIMIT_LENGTH;
+    let own = db.conn().limit(length).unwrap();
+    let slow = "WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r) SELECT count(*) FROM r";
+    let big = format!("SELECT zeroblob({}) AS big", ANSWER_MOST + 1);
+    for (sql, answered) in [("SELECT id FROM cards", true), (slow, false), (&big, false)] {
+        let read = db.read(sql, &[]);
+        assert_eq!(read.is_ok(), answered, "{sql}: {read:?}");
+        let live = db.conn();
+        let bounds = (live.limit(length).unwrap(), live.gate.until.load(Relaxed));
+        assert_eq!(bounds, (own, u64::MAX), "{sql}");
+    }
+}
