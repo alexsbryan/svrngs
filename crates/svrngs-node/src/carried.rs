@@ -631,7 +631,16 @@ impl Folders {
         let schema = self.runs_at(group, app, &schema, who).await?;
         tracing::debug!(target: "folder", group, %app, schema = schema.is_some(), "carried: an app's database asked; none without a schema.sql in the files that run as the person");
         let schema = String::from_utf8_lossy(&schema.ok_or(NO_SCHEMA)?).into_owned();
-        Ok(self.host.states.open(group, app.as_str(), Some(&schema)))
+        let db = self.host.states.open(group, app.as_str(), Some(&schema));
+        // One found copied from another computer's is made again, once
+        // nothing else holds it, by the record's binding (svrngs-db `remake`).
+        match db {
+            Ok(db) if db.copied() => {
+                let bound = crate::ring_sync::bound(&self.host.rail, group);
+                Ok(self.host.states.remake(db, &schema, &bound))
+            }
+            db => Ok(db),
+        }
     }
 
     /// Every app database this computer keeps in `group`, as the round

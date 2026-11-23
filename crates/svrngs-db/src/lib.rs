@@ -129,6 +129,12 @@ pub enum Refused {
     /// A write whose set no other computer would take: why, and what to do.
     #[error("This write isn't kept, since no other computer would take it: {0}.")]
     Unkept(Unfit),
+    /// A write to the app named, whose file here was found copied from
+    /// another computer's and is being made again (`States::remake`).
+    #[error(
+        "This copy of {0} was copied from another computer’s, so svrngs is making it again. Try again in a moment."
+    )]
+    Copied(String),
 }
 
 impl Refused {
@@ -146,6 +152,7 @@ impl Refused {
             Self::Unkept(_) => (422, "unkept"),
             Self::Schema(_) => (422, "schema"),
             Self::NotYours(_) | Self::NotYetGone(_) => (403, "not-yours"),
+            Self::Copied(_) => (503, "copied"),
         }
     }
 }
@@ -271,6 +278,50 @@ impl States {
         Ok(db)
     }
 
+    /// `db`, a file found copied ([`Db::copied`]), made again with a fresh
+    /// nonce, so a site of its own (svrn-docs
+    /// `app-state-diligence/sync-simplify-2026-11-22/`, change 5): never
+    /// under a live connection, so only once nothing but this computer's
+    /// map holds it, else given back as it is, refusing writes, to make at a
+    /// later open. A new file beside it takes every set the old one keeps,
+    /// as a call that isn't full, by the record `binds`, the old site's as
+    /// another's, keeps the old file's synced flag and the site it retires,
+    /// and is renamed into its place only once whole: a crash leaves the old
+    /// file, still flagged, to make again.
+    pub fn remake(&self, db: Arc<Db>, schema: &str, binds: &Binds) -> Result<Arc<Db>, Refused> {
+        let at = (db.group.clone(), db.app.clone());
+        let mut dbs = self.dbs.lock().expect("the databases' lock");
+        let held = Arc::strong_count(&db) > 2;
+        tracing::warn!(target: "state", group = at.0, app = at.1, held, "state: a database found copied from another computer's is made again with a fresh nonce, or waits while a connection holds it");
+        if held {
+            return Ok(db);
+        }
+        dbs.remove(&at);
+        let path = self.dir.join(&at.0).join(format!("{}.db", at.1));
+        let fresh = path.with_extension("db.new");
+        let _ = std::fs::remove_file(&fresh);
+        let kept = "SELECT bytes FROM svrngs_sets WHERE bytes IS NOT NULL";
+        let kept: Vec<Vec<u8>> = sync::rows(&db.conn(), kept, [], |r| r.get(0)).map_err(fault)?;
+        let sets = kept.iter().map(|b| postcard::from_bytes(b).map_err(fault));
+        let call = Call {
+            sets: sets.collect::<Result<_, _>>()?,
+            ..Call::default()
+        };
+        let (retired, synced) = (db.site, db.synced.load(Relaxed));
+        drop(db);
+        let new = Db::open(&fresh, (&at.0, &at.1), (Some(schema), synced), self.key.clone())?;
+        new.ingest(&call, binds, None)?;
+        let retire = "UPDATE svrngs_db SET retired = ?1";
+        new.conn().execute(retire, [retired]).map_err(fault)?;
+        drop(new);
+        for gone in ["db-wal", "db-shm"] {
+            let _ = std::fs::remove_file(path.with_extension(gone));
+        }
+        std::fs::rename(&fresh, &path).map_err(fault)?;
+        drop(dbs);
+        self.made(&at.0, &at.1, (Some(schema), false))
+    }
+
     /// Each database of `group` this computer has open closed, as it drops,
     /// and its file left on disk: a group this computer left, or was removed
     /// from, keeps its other files held and readable here, none of it live
@@ -323,6 +374,9 @@ pub struct Db {
     /// Whether it has synced in full once, and whether a set faulted since.
     synced: AtomicBool,
     faulted: AtomicBool,
+    /// Whether a set sealed by another file of its nonce and key reached it:
+    /// it was copied, and is to be made again (`States::remake`).
+    copied: AtomicBool,
 }
 
 /// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
@@ -541,11 +595,11 @@ impl Db {
             return Self::open(path, names, (None, false), key);
         }
         let tables = tables_of(conn)?;
-        let own = "SELECT nonce, schema, synced, crsql_site_id() FROM svrngs_db";
+        let own = "SELECT nonce, schema, synced, crsql_site_id(), copied FROM svrngs_db";
         let own = conn.query_row(own, [], |r| {
-            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get::<_, Vec<u8>>(3)?))
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get::<_, Vec<u8>>(3)?, r.get(4)?))
         });
-        let (nonce, hash, synced, site): ([u8; 16], [u8; 32], bool, _) = own.map_err(fault)?;
+        let (nonce, hash, synced, site, copied): ([u8; 16], [u8; 32], bool, _, bool) = own.map_err(fault)?;
         let derived = svrngs_core::set::site(group, app, &device, &nonce);
         tracing::debug!(target: "state", group, app, own = site == derived, "state: a database's site is its own, derived from this computer's key and the nonce it was made with, or it was made under another key");
         if site != derived {
@@ -582,11 +636,17 @@ impl Db {
             changed: watch::Sender::new(0),
             synced: synced.into(),
             faulted: false.into(),
+            copied: copied.into(),
         })
     }
 
     fn conn(&self) -> std::sync::MutexGuard<'_, Open> {
         self.conn.lock().expect("the database's lock")
+    }
+
+    /// Whether this file was found copied, and is to be made again.
+    pub fn copied(&self) -> bool {
+        self.copied.load(Relaxed)
     }
 
     /// Whether this copy is still to be said syncing: it has never synced in
@@ -694,6 +754,9 @@ impl Db {
         stands: bool,
         then: impl FnOnce(rusqlite::Transaction<'_>, usize, Vec<Option<Value>>) -> Result<T, Refused>,
     ) -> Result<T, Refused> {
+        if self.copied() {
+            return Err(Refused::Copied(self.app.clone()));
+        }
         let listed = ops.as_array().filter(|o| !o.is_empty());
         let listed =
             listed.ok_or_else(|| Refused::Form(format!("write takes a list of one or more ops, not {ops}. {FORM}")))?;
@@ -717,7 +780,9 @@ impl Db {
 }
 
 /// svrngs's own tables in a database, made with it: the nonce it was made
-/// with, its schema's hash and whether it has synced in full once; the sets
+/// with, its schema's hash, whether it has synced in full once, whether it
+/// was found copied, and the site it retired when it was made again
+/// (`States::remake`); the sets
 /// it keeps, as postcard's bytes (APP_STATE §4, "Sealed and signed"), named
 /// by site, seq and signature so two at one seq are both kept, and how each
 /// is kept (`sync.rs`, `Kept`), a refused one with no bytes; each site's
@@ -725,7 +790,8 @@ impl Db {
 /// (`sync.rs`, `keep`); each device muted here, past its share (`sync.rs`,
 /// `Db::over`); and each phone this computer is the home of, its epoch here
 /// and the last seq it handed it (`sync.rs`, `Db::place`).
-const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL);
+const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL,
+      copied INTEGER NOT NULL DEFAULT 0, retired BLOB);
     CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, kept INTEGER NOT NULL,
       bytes BLOB, PRIMARY KEY (site, seq, sig));
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);

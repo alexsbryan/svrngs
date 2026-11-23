@@ -312,10 +312,16 @@ fn an_established_copy_adopts_a_mark_only_on_its_site_s_own_computer_s_word() {
 
 /// **A copy never adopts a mark for its own site**, though the word is its
 /// own key's: Ana's database copied beside its original writes a third and
-/// a fourth set. Her copy, sent the fourth past the 2^53 bound, refuses it
-/// for good and counts it above a gap. The copy's full call, claiming her
-/// site's mark at 4, moves her mark not at all. Plant: this copy's own site
-/// not left out (her mark at 4).
+/// a fourth set. Her copy, sent the fourth, past the 2^53 bound too, finds
+/// it a set at her own site above every version she sealed: her file was
+/// copied, so it is set aside, never counted, and her file flagged to be
+/// made again (svrn-docs `sync-simplify-2026-11-22/`, change 5). The copy's
+/// full call, claiming her site's mark at 4, moves her mark not at all. So
+/// no set of her own site is ever counted above her mark, and the own-site
+/// guard in `ingest` stands beside the cap at what is counted, which alone
+/// holds it now. Plant, watched failing: the copied file not looked for in
+/// `take` (the set refused for good and counted above a gap, `Refused` for
+/// `Fault`).
 #[test]
 fn a_copy_never_adopts_a_mark_for_its_own_site() {
     let dir = tempfile::tempdir().unwrap();
@@ -335,7 +341,8 @@ fn a_copy_never_adopts_a_mark_for_its_own_site() {
     let past = remade(&call(&copy, &a).sets[1], &key(1), |c| {
         c.iter_mut().for_each(|c| c.col_version = (1 << 53) + 1)
     });
-    assert_eq!(took(&a, &alone(vec![past])), [Took::Refused]);
+    assert_eq!(took(&a, &alone(vec![past])), [Took::Fault]);
+    assert!(a.copied(), "her file found copied");
     let ana = Device::parse(&svrngs_core::actor_of(&key(1))).unwrap();
     a.ingest(&word, &bound(), Some(&ana)).unwrap();
     assert_eq!(a.ask().unwrap().marks[&own(&a)], seq(2), "her own site's mark, unmoved");

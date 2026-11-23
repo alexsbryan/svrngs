@@ -242,7 +242,7 @@ impl ToSql for Kept {
 }
 
 /// `sql`'s rows on `conn`, each read by `f`.
-fn rows<T>(
+pub(crate) fn rows<T>(
     conn: &Connection,
     sql: &str,
     p: impl rusqlite::Params,
@@ -429,8 +429,11 @@ impl Db {
         let place = |r: &Row| Ok((r.get(0)?, r.get(1)?));
         let marks = rows(&conn, "SELECT site, mark FROM svrngs_marks", [], place).map_err(fault)?;
         let haves = rows(&conn, "SELECT site, seq FROM svrngs_above", [], place).map_err(fault)?;
+        // And every set kept at the site this copy retired as it was made
+        // again, as its copy's twins may sit at any of those places.
         let twins = "SELECT site, seq, sig FROM svrngs_sets WHERE (site, seq) IN \
-            (SELECT site, seq FROM svrngs_sets GROUP BY site, seq HAVING count(*) > 1)";
+            (SELECT site, seq FROM svrngs_sets GROUP BY site, seq HAVING count(*) > 1) \
+            OR site = (SELECT retired FROM svrngs_db)";
         let twins = rows(&conn, twins, [], |r| Ok((place(r)?, r.get(2)?))).map_err(fault)?;
         let muted = rows(&conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0)).map_err(fault)?;
         let (marks, haves, twins) = (
@@ -508,9 +511,10 @@ impl Db {
         let mut tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
         let mut room = self.room(&tx, binds).map_err(fault)?;
         let (mut out, mut stopped) = (Vec::new(), BTreeSet::new());
+        let twins: BTreeSet<Place> = call.ask.twins.iter().map(|(place, _)| *place).collect();
         for set in sets {
             let place = (self.site_of(&set.head), set.head.seq);
-            let took = self.take(&mut tx, (set, place.0), &mut room).unwrap_or_else(|e| {
+            let took = self.take(&mut tx, (set, place.0), (&mut room, &twins)).unwrap_or_else(|e| {
                 tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), %e, "state: a set this copy couldn't apply, its mark held");
                 Took::Fault
             });
@@ -665,7 +669,12 @@ impl Db {
     /// `tx` (the spike's `take`). Whatever it writes, it writes in a
     /// savepoint of its own, released only once all of it is written, so a
     /// set is kept and counted together or not at all.
-    fn take(&self, tx: &mut Transaction, (set, site): (&Set, Site), room: &mut Room) -> rusqlite::Result<Took> {
+    fn take(
+        &self,
+        tx: &mut Transaction,
+        (set, site): (&Set, Site),
+        (room, twins): (&mut Room, &BTreeSet<Place>),
+    ) -> rusqlite::Result<Took> {
         // Its signature first, before anything in it is read.
         if !self.signed(set) {
             return Ok(Took::NotItsDevice);
@@ -685,7 +694,23 @@ impl Db {
         let (counted, mark, sited): (bool, u64, bool) = tx.query_row(counted, params![site, set.head.seq], |r| {
             Ok((r.get(0)?, r.get(1)?, r.get(2)?))
         })?;
-        if sigs.contains(&set.head.sig) || counted && sigs.is_empty() {
+        // A set at this copy's own site above every version it sealed was
+        // sealed by another file of its nonce and key, a copy of this one run
+        // beside it, as only such a file could seal it (svrn-docs
+        // `app-state-diligence/sync-simplify-2026-11-22/`, change 5): set
+        // aside, its mark held, and this file flagged to be made again
+        // (`States::remake`), after which the set is another site's here.
+        if site == self.site && set.head.seq.get() > mark {
+            tracing::warn!(target: "state", group = self.group, app = self.app, seq = set.head.seq.get(), mark, "state: a set at this copy's own site above every version it sealed, so this file was copied from another computer's: it is made again");
+            tx.execute("UPDATE svrngs_db SET copied = 1", [])?;
+            self.copied.store(true, Relaxed);
+            return Ok(Took::Fault);
+        }
+        // Counted here with no set kept at its place, it was pruned here,
+        // and passed by: but for one at a place the call names a twin, which
+        // is judged, so a twin reaches a copy that pruned its pair.
+        let pruned = counted && sigs.is_empty() && !twins.contains(&(site, set.head.seq));
+        if sigs.contains(&set.head.sig) || pruned {
             return Ok(Took::Held);
         }
         // What it adds to this copy's ask: a site new here, a set counted
