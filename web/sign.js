@@ -218,8 +218,12 @@ async function answered(asked, port) {
 // signer's clock and puts in the open's pass, which names the approver
 // every copy checks it by. Each set signed is kept here by its place, its
 // computer, epoch and seq, until a computer confirms it, and every answer
-// gives the kept ones back to carry; a place already kept is never given a
-// second set (`signed` false), so the worker carries the kept one first.
+// gives the kept ones back to carry. The newest place signed at each
+// computer and epoch is kept apart, whatever the page names confirmed, as
+// the page relays every message and can replay a prepare: a place at or
+// below it is never given a second set (`signed` false, and the worker
+// carries what is kept first), so no seq is signed twice. The same set
+// asked again, its bytes the same, is no second set, and is said signed.
 /**
  * @param {SetAsked} asked
  * @param {string} label
@@ -245,10 +249,17 @@ async function setsSigned(asked, label, now) {
     read.onsuccess = () => {
       /** @type {[string, string][]} */
       const kept = read.result?.sets ?? [];
+      // The newest place signed at each home and epoch, and its set, by
+      // this signer's own record, never by what the page names confirmed.
+      /** @type {Record<string, [number, string]>} */
+      const newest = read.result?.newest ?? {};
+      const [line, seq] = [place.replace(/\/\d+$/, ''), Number(place.split('/').pop())];
+      const [top, was] = newest[line] ?? [0, set];
       answer.sets = kept.filter(([at]) => !asked.confirmed.includes(at));
-      answer.signed = !answer.sets.some(([at]) => at === place);
-      if (answer.signed) answer.sets.push([place, set]);
-      objects.put({ id, sets: answer.sets });
+      answer.signed = seq > top || was === set;
+      if (seq > top) answer.sets.push([place, set]);
+      if (seq > top) newest[line] = [seq, set];
+      objects.put({ id, sets: answer.sets, newest });
     };
     return read;
   });

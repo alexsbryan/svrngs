@@ -408,3 +408,64 @@ test('a phone’s write to its database is prepared, signed by the group’s sig
   assert.deepEqual(refused, [403, { refused: 'unsigned', words: 'This phone didn’t sign it.' }]);
   assert.equal(doors.length, 8, 'prepared, and nothing carried');
 });
+
+// The group's signer's own record of what it signed (sign.js `setsSigned`),
+// as the app's page relays every message to it and can send it a prepare
+// again, naming what it likes confirmed. A computer's prepare at a place is
+// signed once: asked again a second later, its place named confirmed, it is
+// no second set; asked again in the same second, its bytes the same, it is
+// the same set, said signed, and nothing more is kept; a place below the
+// newest signed at its computer and epoch is no set either, and the next
+// place, or one at another epoch, is signed. Plant, watched failing: the
+// place judged by the sets kept alone (the replay signed a second set at
+// ada/0/1).
+test('the group’s signer never signs one place twice, whatever its page says was kept', async () => {
+  const records = new Map();
+  const stored = async (_name, _key, _mode, act) => {
+    const objects = {
+      get: (id) => ({ result: structuredClone(records.get(id)) }),
+      put: (record) => records.set(record.id, structuredClone(record)),
+    };
+    const read = act(objects);
+    read.onsuccess();
+    return read.result;
+  };
+  const { setsSigned } = runInNewContext(
+    [SIGN.constant('Told'), SIGN.defined('setsSigned'), '({ setsSigned })'].join('\n'),
+    {
+      approver: async () => ({ key: 'approver' }),
+      // set.rs `signed`, its set the place and the stamp it was signed at.
+      set_checked: (_label, text) => {
+        const { prepared, ts } = JSON.parse(text);
+        const { epoch, seq } = JSON.parse(prepared);
+        return ['message', `ada/${epoch}/${seq} at ${ts}`, `ada/${epoch}/${seq}`];
+      },
+      set_sealed: (made, sig) => `${made} by ${sig}`,
+      crypto: { subtle: { sign: async () => new Uint8Array([7]) } },
+      store: { stored, hex: (bytes) => Buffer.from(bytes).toString('hex') },
+      Error,
+      JSON,
+      Number,
+      Object,
+    },
+  );
+  const lends = [{ label: LABEL, key: 'ada', group: 'g', kind: 'board' }];
+  // Its answer, read back in this realm, as the port copies it.
+  const sign = async (epoch, seq, now, confirmed = []) => {
+    const asked = { ops: [], prepared: JSON.stringify({ epoch, seq }), by: 'ada', sig: 's' };
+    const authority = { lends, pass: 'p' };
+    return structuredClone(await setsSigned({ ...asked, confirmed, authority }, LABEL, now));
+  };
+  const first = await sign(0, 1, 1000);
+  assert.deepEqual(first, { sets: [['ada/0/1', 'ada/0/1 at 1000 by 07']], signed: true });
+  const replayed = await sign(0, 1, 1001, ['ada/0/1']);
+  assert.deepEqual(replayed, { sets: [], signed: false }, 'no second set at ada/0/1');
+  assert.deepEqual(await sign(0, 1, 1000), { sets: [], signed: true }, 'the same set');
+  assert.equal((await sign(0, 2, 1002)).signed, true, 'the next place');
+  assert.deepEqual(
+    (await sign(0, 1, 1003)).sets.map(([at]) => at),
+    ['ada/0/2'],
+  );
+  assert.equal((await sign(0, 1, 1003)).signed, false, 'a place below the newest');
+  assert.equal((await sign(1, 1, 1004)).signed, true, 'another epoch, a site of its own');
+});
