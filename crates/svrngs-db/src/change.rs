@@ -28,6 +28,13 @@ pub(crate) struct Change {
     pub(crate) seq: i64,
 }
 
+/// A `col_version` or a causal length past this is refused for good: one at
+/// `i64::MAX` freezes its cell (svrn-docs
+/// `app-state-diligence/engine-and-sync.md`, C3), and every copy reads the
+/// bound alike from the set; a phone signs none past its half
+/// (`web/src/set.rs`).
+pub(crate) const BOUND: i64 = 1 << 53;
+
 /// A cell's value, as postcard writes rusqlite's.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(remote = "Sql")]

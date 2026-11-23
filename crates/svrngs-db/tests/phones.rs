@@ -25,7 +25,7 @@ mod set;
 
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, col TEXT DEFAULT 'todo');\n\
     CREATE TABLE seats (row INTEGER NOT NULL, seat INTEGER NOT NULL, who TEXT, PRIMARY KEY (seat, row));\n\
-    CREATE TABLE claims (person_key TEXT NOT NULL, item TEXT NOT NULL, PRIMARY KEY (person_key, item)) STRICT;\n";
+    CREATE TABLE claims (person_key TEXT NOT NULL, item TEXT NOT NULL, note TEXT, PRIMARY KEY (person_key, item)) STRICT;\n";
 
 /// The board's database on the computer of the key `[key; 32]`, in a
 /// directory of its own.
@@ -666,4 +666,93 @@ fn a_phone_signs_a_write_as_its_ops_leave_the_rows() {
         all,
         json!([{ "id": "c1", "title": "eggs", "col": null }, { "id": "c3", "title": "jam", "col": "b" }])
     );
+}
+
+/// `answer`, a prepare by Ana's computer, its text and change rows rewritten
+/// by `lie` and signed again as hers: what a computer acting in bad faith
+/// between a phone and its group answers.
+fn forged(answer: &Value, lie: &dyn Fn(&mut Value, &mut Vec<change::Change>)) -> Value {
+    let mut text: Value = serde_json::from_str(answer["prepared"].as_str().unwrap()).unwrap();
+    let mut rows: Vec<change::Change> =
+        postcard::from_bytes(&STANDARD.decode(text["changes"].as_str().unwrap()).unwrap()).unwrap();
+    lie(&mut text, &mut rows);
+    text["changes"] = STANDARD.encode(postcard::to_allocvec(&rows).unwrap()).into();
+    let text = text.to_string();
+    let sig = svrngs_core::sign_message(
+        &SigningKey::from_bytes(&[1; 32]),
+        &svrngs_core::set::prepared("g", "board", &text),
+    );
+    json!({ "prepared": text, "by": answer["by"], "sig": sig })
+}
+
+/// **Every effect a phone signs follows from its own ops** (svrn-docs
+/// `app-state-diligence/security-review-2026-11-23/`, H1): each change row
+/// it signs is one the ops make. Bo's phone updates a
+/// shared card and his own claim through Ana's computer, and each answer
+/// that would sign another effect is refused: the row said not to stand
+/// and its delete in place of the update; a column the op doesn't name, at
+/// a value the row is said to hold; the named column at a causal length
+/// that deletes its row; and a version past what a phone signs, which
+/// would leave the cell no room. The honest prepares are signed and taken.
+/// Plants, each watched failing: the review's P1 and P2, each signed and
+/// taken, the card deleted and `col` frozen at 2^53.
+#[test]
+fn every_effect_a_phone_signs_follows_from_its_own_ops() {
+    let (_dir, ana) = board(1);
+    let mine = bo().1;
+    ana.write(
+        &json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]),
+        &bound(),
+    )
+    .unwrap();
+    let claim = json!([{ "insert": "claims", "row": { "person_key": mine, "item": "ice", "note": "a bag" } }]);
+    assert_eq!(carry(&ana, &prepared(&ana, &claim)), Took::Taken);
+    let card = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "eggs" } }]);
+    let note = json!([{ "update": "claims", "key": { "person_key": mine, "item": "ice" }, "set": { "note": "two" } }]);
+    let past = |c: &mut change::Change| c.col_version = (1 << 52) + 1;
+    type Lie = Box<dyn Fn(&mut Value, &mut Vec<change::Change>)>;
+    let lies: [(&str, Lie); 4] = [
+        (
+            "its delete",
+            Box::new(|text, rows| {
+                text["stands"] = json!([null]);
+                (rows[0].cid, rows[0].cl, rows[0].col_version) = ("-1".into(), 2, 2);
+            }),
+        ),
+        (
+            "a column it doesn't name",
+            Box::new(|text, rows| {
+                text["stands"][0]["col"] = json!("EVIL");
+                let (table, pk, seq) = (rows[0].table.clone(), rows[0].pk.clone(), rows[0].seq + 1);
+                let val = Sql::Text("EVIL".into());
+                rows.push(change::Change {
+                    table,
+                    pk,
+                    cid: "col".into(),
+                    val,
+                    col_version: 1 << 53,
+                    cl: 1,
+                    seq,
+                });
+            }),
+        ),
+        ("a causal length that deletes", Box::new(|_, rows| rows[0].cl = 2)),
+        ("a version past a phone's", Box::new(move |_, rows| past(&mut rows[0]))),
+    ];
+    let mut signed_anyway = Vec::new();
+    for (ops, row) in [(&card, "a shared card"), (&note, "his own claim")] {
+        let answer = ana.prepare(ops, (&mine, &bound())).unwrap();
+        for (lie, how) in &lies {
+            let signed = signed(&asked(ops, &forged(&answer, how.as_ref())));
+            if !signed.as_ref().is_err_and(|e| e.contains("a change it didn’t ask for")) {
+                signed_anyway.push(format!("{lie}, on {row}"));
+            }
+        }
+        assert_eq!(carry(&ana, &signed(&asked(ops, &answer)).unwrap()), Took::Taken);
+    }
+    assert!(signed_anyway.is_empty(), "signed: {signed_anyway:?}");
+    let all = ana.read("SELECT id, title, col FROM cards", &[]).unwrap()["rows"].clone();
+    assert_eq!(all, json!([{ "id": "c1", "title": "eggs", "col": null }]));
+    let notes = ana.read("SELECT note FROM claims", &[]).unwrap()["rows"].clone();
+    assert_eq!(notes, json!([{ "note": "two" }]));
 }

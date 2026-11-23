@@ -11,15 +11,20 @@
 //! why not out. The set's form and its changes' are
 //! svrngs-db's own files, compiled here (`wire.rs`, `change.rs`).
 //!
-//! Each change row must be one op's: its table, and its key packed as
-//! cr-sqlite packs one; the row's own change (`-1`) at an odd causal length
-//! for an insert or update, an even one for a delete; any other, a column
-//! the op names at the op's value, or, for an insert, one it doesn't name
-//! at NULL. An op with no row is a no-op only where its row stood, before
-//! the write, as the op would leave it. What the phone can't check is the residual (§4, "The
-//! residual"): the causal length and column version the computer set, the
-//! row a no-op stands on, and the order of a composite key's columns, each
-//! as that computer reads its copy, as it serves the app's page too.
+//! Every change row it signs is one the ops make (svrn-docs
+//! `app-state-diligence/security-review-2026-11-23/`, H1), each one op's,
+//! its table and its key packed as cr-sqlite packs one: the row's own
+//! change (`-1`) at an odd causal length only where an insert makes the
+//! row, at an even one only where a delete removes it last; any other, a
+//! column of a row that stands, at an odd causal length, that the ops name
+//! at the value they leave it, or, on a row an insert makes, one they don't
+//! name at NULL; and no version past half the bound every copy holds
+//! ([`MOST`]). An op with no row is a no-op only where its row stood, before
+//! the write, as the op would leave it. What the phone can't check is the
+//! residual (§4, "The residual"): the causal length and column version the
+//! computer set, the row a no-op stands on, and the order of a composite
+//! key's columns, each as that computer reads its copy, as it serves the
+//! app's page too.
 
 use std::collections::BTreeMap;
 
@@ -98,34 +103,44 @@ pub fn signed(label: &str, asked: &Asked) -> Result<Option<(Vec<u8>, String, Str
     let listed = (p.ops == asked.ops).then(|| asked.ops.as_array()).flatten();
     let ops = listed.and_then(|l| l.iter().map(|o| op(o, &p.keys)).collect::<Option<Vec<_>>>());
     let ops = ops.ok_or_else(|| why("the computer prepared other ops than it asked"))?;
-    // Each change row is one the ops leave, in their order: a row's own
-    // change at an odd causal length where they leave a row, an even one
-    // where they remove it; a column at the value they leave it at, NULL
-    // where a row they make doesn't name it.
+    // Each change row is one the ops leave, in their order ([`Left`]): a
+    // row's own change at an odd causal length where an insert makes it, an
+    // even one where a delete removes it last; a column of a row that
+    // stands, at an odd one, at the value they name it, or NULL on a row an
+    // insert makes where they don't; each version at most [`MOST`].
     let net = (p.stands.len() == ops.len()).then(|| net(&ops, &p.stands));
     let net = net.ok_or_else(|| why("its prepare can’t be read"))?;
     for c in &rows {
-        let left = net.get(&(c.table.as_str(), &c.pk[..])).map(|(_, after)| after);
-        let fits = match (left, c.cid.as_str()) {
-            (Some(after), "-1") => (c.cl % 2 == 1) == after.is_some(),
-            (Some(Some(row)), cid) => row.get(cid).unwrap_or(&Sql::Null) == &c.val,
-            _ => false,
-        };
-        fits.then_some(())
+        let (life, versions) = (c.cl % 2 == 1, 1..=MOST);
+        let left = net.get(&(c.table.as_str(), &c.pk[..]));
+        let fits = left.is_some_and(|l| match c.cid.as_str() {
+            "-1" if life => l.made,
+            "-1" => l.gone,
+            cid => {
+                let unnamed = l.made && !l.named.contains_key(cid) && c.val == Sql::Null;
+                life && l.stands && (l.named.get(cid) == Some(&c.val) || unnamed)
+            }
+        });
+        (fits && versions.contains(&c.col_version) && versions.contains(&c.cl))
+            .then_some(())
             .ok_or_else(|| why("the computer’s rows hold a change it didn’t ask for"))?;
     }
-    // And each effect they have is there: a row they make has a change, one
-    // they remove its own, and each column changed from how it stood, or
-    // named on a row they make, unless NULL, its value's.
+    // And each effect they have is there: a row they make has a change, and
+    // each column they name, unless NULL, its value's; one they leave as it
+    // stood, each column they name changed from how it stood; one they
+    // remove, its own.
     let made = |key: &(&str, &[u8]), cid: Option<&str>| {
         let at = |c: &&change::Change| (c.table.as_str(), &c.pk[..]) == *key;
         rows.iter().filter(at).any(|c| cid.is_none_or(|cid| c.cid == cid))
     };
-    let whole = net.iter().all(|(key, (before, after))| match (before, after) {
-        (Some(b), Some(a)) => a.iter().all(|(cid, v)| b.get(cid) == Some(v) || made(key, Some(cid))),
-        (None, Some(a)) => made(key, None) && a.iter().all(|(cid, v)| *v == Sql::Null || made(key, Some(cid))),
-        (Some(_), None) => made(key, Some("-1")),
-        (None, None) => true,
+    let whole = net.iter().all(|(key, l)| {
+        let mut named = l.named.iter();
+        match (&l.before, l.stands) {
+            _ if l.made => made(key, None) && named.all(|(cid, v)| *v == Sql::Null || made(key, Some(cid))),
+            (Some(b), true) => named.all(|(cid, v)| b.get(cid) == Some(v) || made(key, Some(cid))),
+            (Some(_), false) => made(key, Some("-1")),
+            (None, _) => true,
+        }
     });
     if !whole {
         return Err(why("the computer left out a change it asked for"));
@@ -202,30 +217,54 @@ fn op<'v>(op: &'v Value, keys: &BTreeMap<String, Vec<String>>) -> Option<Op<'v>>
     Some(Op { kind, table, pk, named })
 }
 
+/// The most a version a phone signs may be: half the bound every copy
+/// holds (svrngs-db `change.rs`, `BOUND`), whatever the computer that
+/// prepared it says the cell held. An honest cell rises one a write, so no
+/// use comes near either half, and a cell a phone writes keeps at least as
+/// much room above it as below: no computer can have a phone sign a set
+/// that leaves a cell no room, as a version at the bound would freeze it.
+const MOST: i64 = change::BOUND / 2;
+
 /// A row as it stands: its columns to their values, none where there is
 /// no row.
 type Row = Option<BTreeMap<String, Sql>>;
 
-/// Each row `ops` touch, by table and packed key: as it stood before the
-/// write, from `stands`, each op's row read before any ran (svrngs-db
-/// `Db::prepare`), and as the ops leave it, in their order, as the write
-/// form runs them (svrngs-db form.rs): an insert makes a row of what it
-/// names, or sets that on a row there; an update sets what it names on a
-/// row there, and changes nothing where there is none; a delete removes it.
-fn net<'o>(ops: &'o [Op], stands: &[Value]) -> BTreeMap<(&'o str, &'o [u8]), (Row, Row)> {
+/// A row the ops touch, as they leave it: as it stood before them, by the
+/// computer's word (`stands`); whether it stands after, whether an insert
+/// made it, and whether a delete removed it last; and each column they name
+/// since it was made or removed, to the value they leave it.
+#[derive(Default)]
+struct Left {
+    before: Row,
+    stands: bool,
+    made: bool,
+    gone: bool,
+    named: BTreeMap<String, Sql>,
+}
+
+/// Each row `ops` touch, by table and packed key, as they leave it, in
+/// their order, as the write form runs them (svrngs-db form.rs), against
+/// each op's row as it stood before any ran (svrngs-db `Db::prepare`): an
+/// insert makes a row of what it names, or sets that on a row there; an
+/// update sets what it names on a row there, and changes nothing where
+/// there is none; a delete removes it.
+fn net<'o>(ops: &'o [Op], stands: &[Value]) -> BTreeMap<(&'o str, &'o [u8]), Left> {
     let mut rows = BTreeMap::new();
     for (op, stood) in ops.iter().zip(stands) {
         let row =
             |o: &serde_json::Map<String, Value>| o.iter().filter_map(|(c, v)| Some((c.clone(), cell(v)?))).collect();
         let before: Row = stood.as_object().map(row);
-        let (_, now) = rows
-            .entry((op.table, &op.pk[..]))
-            .or_insert_with(|| (before.clone(), before));
+        let left = rows.entry((op.table, &op.pk[..])).or_insert_with(|| Left {
+            stands: before.is_some(),
+            before,
+            ..Left::default()
+        });
         let named = op.named.iter().map(|(c, v)| ((*c).clone(), v.clone()));
-        match (op.kind, now.as_mut()) {
-            (2, _) => *now = None,
-            (0, None) => *now = Some(named.collect()),
-            (_, row) => row.into_iter().for_each(|r| r.extend(named.clone())),
+        match (op.kind, left.stands) {
+            (2, _) => (left.named, left.stands, left.made, left.gone) = (BTreeMap::new(), false, false, true),
+            (0, false) => (left.named, left.stands, left.made, left.gone) = (named.collect(), true, true, false),
+            (_, true) => left.named.extend(named),
+            (_, false) => {}
         }
     }
     rows
