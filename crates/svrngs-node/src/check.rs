@@ -79,10 +79,11 @@ pub fn check(dir: &Path) -> Option<Vec<Finding>> {
         let inline = script && !elsewhere && !body.trim().is_empty();
         let asked = away(tag, script, img).filter(|_| script || sheet || img);
         let inline = (inline || handler).then_some(Refused::Inline);
-        // A file of its own it loads, named as the page names it, that isn't there.
+        // A file of its own it loads, named as the page names it, that isn't
+        // there, and that the shelf doesn't bring beside it as it places it.
         let own = named(tag, &page[start + 1..end]).filter(|_| script || sheet || img);
         let missing = own
-            .filter(|f| !dir.join(f).is_file())
+            .filter(|f| !dir.join(f).is_file() && !super::carried::brings(&page, f))
             .map(|f| Refused::Missing(f.into()));
         let styled = asks(body, line, false).filter(|_| tag.starts_with("style"));
         let said = (asked.into_iter().chain(inline).chain(missing))

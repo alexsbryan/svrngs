@@ -211,3 +211,34 @@ fn a_file_the_page_loads_that_isn_t_there_is_said() {
     ];
     assert_eq!(said(&saved), []);
 }
+
+/// **What the shelf brings beside one of its apps counts as there** (the
+/// shelf's own list, carried.rs `SHELF`): Money's source folder, its
+/// index.html and the files beside it but svrngs's look.css, which the
+/// shelf brings as it places Money, is told nothing; the same page saved
+/// as another app's, the shelf holding no such page, is told look.css is
+/// missing. Planted, watched failing: `brings` read for no page, and
+/// Money's own source folder is refused for look.css.
+#[test]
+fn what_the_shelf_brings_beside_its_app_counts_as_there() {
+    let dir = tempfile::tempdir().unwrap();
+    let money = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/expenses");
+    for f in ["index.html", "index.js", "expenses.js"] {
+        std::fs::copy(money.join(f), dir.path().join(f)).unwrap();
+    }
+    assert!(!dir.path().join("look.css").exists());
+    assert_eq!(check(dir.path()).unwrap(), []);
+    let page = std::fs::read_to_string(dir.path().join("index.html")).unwrap();
+    std::fs::write(
+        dir.path().join("index.html"),
+        page.replace("<title>", "<title>Mine "),
+    )
+    .unwrap();
+    let found = check(dir.path()).unwrap();
+    assert!(
+        found
+            .iter()
+            .any(|(_, _, r)| *r == Refused::Missing("look.css".into())),
+        "{found:?}"
+    );
+}

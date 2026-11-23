@@ -199,6 +199,17 @@ const SHELF: &[(&str, &str, &[File])] = include!(concat!(env!("OUT_DIR"), "/shel
 /// A file an app brings: its name in the app's folder, and its text.
 type File = (&'static str, &'static str);
 
+/// Whether the shelf brings a file named `file` beside the app whose
+/// `index.html` is `page`, as it places that app (`brought`): its own files
+/// and svrngs's look.css, so `svrngs check` counts them present in the
+/// app's source folder too; never for a page the shelf doesn't hold.
+pub(crate) fn brings(page: &str, file: &str) -> bool {
+    let shelved = SHELF
+        .iter()
+        .find(|(.., files)| files.contains(&("index.html", page)));
+    shelved.is_some_and(|(.., files)| files.iter().any(|(f, _)| *f == file))
+}
+
 /// The shelf as the pages list it, beside what a group's people lend.
 pub(crate) fn shelf() -> Value {
     (SHELF.iter())
