@@ -1424,6 +1424,58 @@ async fn a_computer_writes_nothing_as_a_phone_s_person() {
     assert_eq!(live(&read), Vec::<Value>::new(), "nothing written as bo");
 }
 
+/// **An app is told the link a member opens it by** (svrn-docs
+/// MAGNETS_BUILD S7): a carried page doesn't know its group's ordinary link,
+/// and on a computer its own address is loopback, so `svrngs/acts` gives
+/// `link`, the group's page opening the app's label, `<page>#open=<label>`,
+/// as a phone's group page opens a lend (`web/app.js`); none while no page
+/// is kept. Plant, watched failing: the link built on the page's own origin,
+/// and it names the loopback address.
+#[tokio::test]
+async fn an_app_is_told_the_link_a_member_opens_it_by() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 10, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    carry(&synced_in(ana, root.path(), &group).await, "Money");
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&seen, "Money").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let money = &of_kind(&seen, "Money")[0];
+    let origin = money["origin"].as_str().unwrap().to_string();
+    let link = || async {
+        let read: Value = at(ana, &origin, "GET", "/svrngs/acts", None)
+            .await
+            .json()
+            .await
+            .unwrap();
+        read["link"].clone()
+    };
+    assert_eq!(link().await, Value::Null, "no page kept, no link");
+    std::fs::write(
+        ana.rail().root().join("origin"),
+        "https://computers.example.org/",
+    )
+    .unwrap();
+    let label = svrngs_core::pass::Label::carried("Money", &group);
+    let said = format!("https://computers.example.org/#open={}", label.as_str());
+    assert_eq!(link().await, said.as_str());
+    let at_label = format!("http://{}.", label.as_str());
+    assert!(
+        origin.starts_with(&at_label),
+        "{origin}: the label it opens at here"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
 /// **An app is told the page its group's https links print on**
 /// (give-page-host (a)): Give's install line names the page this
 /// computer's svrngs came from, not always ours, so the carried route says

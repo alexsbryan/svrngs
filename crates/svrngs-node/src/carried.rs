@@ -24,7 +24,9 @@
 //!   person_key}`, from svrngs-core's membership (canon-spans), null while
 //!   who stands is unsettled (#124); and `page`, the page the group's https
 //!   links print on (`Host::printed_page`), null where none is kept and
-//!   `{unread}` where it cannot be read (give-page-host);
+//!   `{unread}` where it cannot be read (give-page-host), and `link`, the
+//!   link a member opens the app by, `<page>#open=<label>`, null and
+//!   `{unread}` as `page` is (MAGNETS_BUILD S7);
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
 //!   own, `op` null to void it, and absent never (#165): the prefix put on its kind
 //!   ([`svrngs_core::grant::app_act`]), signed by this computer as its own
@@ -572,8 +574,16 @@ impl Folders {
             // them, so Give names it in its install line (give-page-host).
             let page = (self.host.printed_page(group)).map(|p| p.map(|p| p.as_str().to_owned()));
             tracing::debug!(target: "folder", group, %app, ?page, "carried: the page the group's links print on, none, or why it cannot be read");
-            let page = page.map_or_else(|why| json!({ "unread": why }), |p| json!(p));
-            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "page": page, "people": all, "spans": spans, "ops": ops });
+            // The link a member opens this app by, the group's page opening
+            // its label (svrn-docs MAGNETS_BUILD S7), as an app's own label
+            // is a lend's (`crate::door::LABEL_HEADER`): a page on a computer
+            // is at loopback, so it can't name one a friend can open.
+            let label = svrngs_core::pass::Label::carried(app.as_str(), group);
+            let link = (page.clone()).map(|p| p.map(|p| format!("{p}#open={}", label.as_str())));
+            let said = |p: Result<Option<String>, String>| {
+                p.map_or_else(|why| json!({ "unread": why }), |p| json!(p))
+            };
+            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "page": said(page), "link": said(link), "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
         // A write is its person's own device's (capability-signed): this
