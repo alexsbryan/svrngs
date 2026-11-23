@@ -240,7 +240,9 @@ async function setsSigned(asked, label, now) {
     await store.stored('svrngs-sets', 'id', 'readwrite', (objects) => {
       const read = objects.get(id);
       read.onsuccess = () => {
-        const sets = (read.result?.sets ?? []).filter(([at]) => !asked.confirmed.includes(at));
+        /** @type {[string, string][]} */
+        const kept = read.result?.sets ?? [];
+        const sets = kept.filter(([at]) => !asked.confirmed.includes(at));
         const signed = !sets.some(([at]) => at === place);
         try {
           if (signed) sets.push([place, set_signed(key, label, signing)]);
