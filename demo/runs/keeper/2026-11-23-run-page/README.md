@@ -13,6 +13,9 @@ scratch groups. `ss` is installed inside the disposable container. Both
 test units and their data are discarded with it. Neither the host's user
 manager nor a host group takes part.
 
+Pass `--tty` to run this scene with the node on an unanswered terminal and
+linger off; see the [stdio proof](../2026-11-23-run-stdio/README.md).
+
 ## Recorded run, 2026-11-23
 
 The loop ran both commands at `d4765ba5` in 3m17s. Source:

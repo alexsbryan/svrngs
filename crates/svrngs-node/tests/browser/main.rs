@@ -1992,6 +1992,10 @@ async fn explicit_run_then_share_in_webkit() {
         std::env::var("SVRNGS_RUN_PAGE_DEMO").as_deref(),
         Ok("scratch")
     );
+    if std::env::var_os("SVRNGS_RUN_PAGE_TTY").is_some() {
+        assert!(std::io::IsTerminal::is_terminal(&std::io::stdin()));
+        println!("Page node stdin is a PTY");
+    }
     let engine = Engine::Webkit;
     let dir = tempfile::tempdir().unwrap();
     let relay = relay().await;

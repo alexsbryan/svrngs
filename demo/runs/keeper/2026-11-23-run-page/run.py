@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import pty
 import shutil
 import subprocess as sp
 import sys
@@ -37,12 +38,29 @@ def main():
         unit = "svrngs-keeper-test-browser.service"
         log = home / "browser.log"
         plant = "Environment=SVRNGS_RUN_PAGE_PLANT=1\n" if "--plant" in sys.argv else ""
+        stdin = ""
+        tty = "--tty" in sys.argv
+        if tty:
+            master, slave = pty.openpty()
+            stub = home / "loginctl"
+            # This container has a private user manager but no logind. Model
+            # the account's off state and record both reads and any enable.
+            stub.write_text(
+                f'#!/bin/sh\nprintf "%s\\n" "$1" >> {home}/linger.log\n'
+                f'case "$1" in\n'
+                f'  show-user) test ! -e {home}/lingers && echo Linger=no || echo Linger=yes ;;\n'
+                f'  enable-linger) touch {home}/lingers ;;\n'
+                '  *) exit 2 ;;\nesac\n'
+            )
+            stub.chmod(0o755)
+            stdin = (f"StandardInput=tty\nTTYPath={os.ttyname(slave)}\n"
+                     "Environment=SVRNGS_RUN_PAGE_TTY=1\n")
         (units / unit).write_text(
             f"[Service]\nType=oneshot\nWorkingDirectory=/work\n"
             f"Environment=HOME={home} XDG_RUNTIME_DIR={runtime} SVRNGS_DIR={home}/node\n"
             f"Environment=DBUS_SESSION_BUS_ADDRESS=unix:path={runtime}/bus\n"
             f"Environment=SVRNGS_RUN_PAGE_DEMO=scratch PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright\n"
-            f"Environment=TOKIO_WORKER_THREADS=4 PATH=/opt/node/bin:/usr/bin:/bin\n{plant}"
+            f"Environment=TOKIO_WORKER_THREADS=4 PATH={home}:/opt/node/bin:/usr/bin:/bin\n{plant}{stdin}"
             f"ExecStart={home}/browser --ignored --exact explicit_run_then_share_in_webkit --nocapture\n"
             f"StandardOutput=append:{log}\nStandardError=inherit\n"
             f"TimeoutStartSec=180\n[Install]\nWantedBy=default.target\n"
@@ -63,11 +81,20 @@ def main():
                         if log.exists():
                             print(log.read_text(), end="", flush=True)
                         outcome.check_returncode()
+                        if tty:
+                            calls = (home / "linger.log").read_text().splitlines()
+                            assert calls and set(calls) == {"show-user"}, calls
+                            assert not (home / "lingers").exists()
+                            assert "Type y, then press Enter:" not in log.read_text()
+                            print(f"Page Run and controls: unanswered PTY, loginctl {calls}; linger=no", flush=True)
                     finally:
                         systemctl("stop", "svrngs-keeper-test-page-coder.service", unit, check=False)
                         manager.terminate()
             finally:
                 bus.terminate()
+                if tty:
+                    os.close(slave)
+                    os.close(master)
 
 
 if __name__ == "__main__":

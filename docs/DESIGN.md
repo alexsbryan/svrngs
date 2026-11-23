@@ -215,7 +215,10 @@ is evidence for sign-in, not for unattended disk unlock. Running a program
 with svrngs is separate from sharing it: `svrngs run <name> --port <port>
 -- <command>` (or `--card <compose.yaml>` for one volume-only HTTP
 container, using the port named by the card) asks the sibling keeper to
-start it on Linux and writes no share. Run verifies readiness only with
+start it on Linux and writes no share. The CLI shows the keeper's boot
+consent prompt on the terminal and reads the answer there. The page's Run
+and controls have no terminal input, so they cannot ask for or turn on
+unattended startup. Run verifies readiness only with
 listeners in its active unit's
 cgroup subtree; otherwise it reports manager state and port readiness
 separately (`native_run.rs`). The home page's native Run asks for a name,

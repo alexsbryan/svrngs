@@ -11,7 +11,7 @@ use crate::{
     share::{self, Granted, Pid, ShareRefusal},
     uid::{Answering, Unread},
 };
-use std::{collections::BTreeSet, path::Path};
+use std::{collections::BTreeSet, path::Path, process::Stdio};
 
 /// Run is local only; it takes no share witness or access terms.
 pub async fn native<'a>(
@@ -19,23 +19,31 @@ pub async fn native<'a>(
     view: RunView,
     args: impl IntoIterator<Item = &'a str>,
 ) -> Result<String, String> {
-    let out = keeper(["run", name, "--json"].into_iter().chain(args)).await?;
+    let out = keeper(&view, ["run", name, "--json"].into_iter().chain(args)).await?;
     let started = serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?;
     words::started(name, view, started)
 }
 
-pub(crate) async fn keeper<'a>(args: impl IntoIterator<Item = &'a str>) -> Result<Vec<u8>, String> {
+pub(crate) async fn keeper<'a>(
+    view: &RunView,
+    args: impl IntoIterator<Item = &'a str>,
+) -> Result<Vec<u8>, String> {
     if !cfg!(target_os = "linux") {
         return Err(RUN_UNREAD.into());
     }
     let at = std::env::current_exe().map_err(|_| RUN_UNREAD)?;
     let mut child = tokio::process::Command::new(at.with_file_name("svrngs-keeper"));
-    let answer = tokio::time::timeout(
-        std::time::Duration::from_secs(90),
-        child.args(args).kill_on_drop(true).output(),
-    )
+    let (stdin, stderr) = match view {
+        RunView::Terminal => (Stdio::inherit(), Stdio::inherit()),
+        RunView::Page => (Stdio::null(), Stdio::piped()),
+    };
+    child.stdin(stdin).stdout(Stdio::piped()).stderr(stderr);
+    child.args(args).kill_on_drop(true);
+    let answer = tokio::time::timeout(std::time::Duration::from_secs(90), async {
+        child.spawn()?.wait_with_output().await
+    })
     .await;
-    tracing::debug!(target: "plan", status = ?answer.as_ref().map(|out| out.as_ref().map(|o| o.status)), "plan: keeper answered");
+    tracing::debug!(target: "plan", ?view, status = ?answer.as_ref().map(|out| out.as_ref().map(|o| o.status)), "plan: keeper answered");
     match answer {
         Ok(Ok(out)) if out.status.success() => Ok(out.stdout),
         _ => Err(RUN_UNREAD.into()),
@@ -51,8 +59,8 @@ enum Row {
 }
 
 pub(crate) async fn rows() -> Result<serde_json::Value, String> {
-    let rows: Vec<Row> =
-        serde_json::from_slice(&keeper(["list", "--json"]).await?).map_err(|_| RUN_UNREAD)?;
+    let out = keeper(&RunView::Page, ["list", "--json"]).await?;
+    let rows: Vec<Row> = serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?;
     Ok(words::run_form(
         rows.into_iter()
             .filter_map(|row| match row {

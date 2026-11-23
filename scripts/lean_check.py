@@ -982,10 +982,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Both doors then share the same service review, at 25,484 and 8,682 JS.
 # avail-run-page-copy spends 10 non-JS of the release reserve on the shared
 # Run confirmation, its two next steps and the keeper's verified port.
+# avail-run-stdio spends 9 more on explicit stdio at that same keeper call.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25554,
+    ".": 25563,
 
     "js": 8732,
 

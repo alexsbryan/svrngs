@@ -725,7 +725,8 @@ async fn run_one(Json(ask): Json<ToRun>) -> Result<Json<String>, Response> {
 async fn run_action(
     Json((name, action)): Json<(LendName, plan::Action)>,
 ) -> Result<Json<()>, Response> {
-    run_reply(run::keeper([action.verb(), name.as_str()]).await.map(drop))
+    let answer = run::keeper(&plan::RunView::Page, [action.verb(), name.as_str()]).await;
+    run_reply(answer.map(drop))
 }
 
 async fn run_rows() -> Result<Json<serde_json::Value>, Response> {
