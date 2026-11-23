@@ -59,11 +59,13 @@ use tokio::sync::watch;
 
 mod form;
 mod parse;
+mod schema;
 mod sync;
 mod tidy;
 pub use form::FORM;
 use form::Table;
 pub use parse::Unfit;
+pub use schema::{Unmade, check};
 pub use svrngs_core::SigningKey;
 pub use sync::{Ask, Binds, Call, Device, Head, Hex, Place, ROW_MOST, Seq, Set, Sig, Took};
 
@@ -106,6 +108,10 @@ pub enum Refused {
     /// This computer keeps no such database.
     #[error("This computer keeps no database of this app in this group.")]
     NotHere,
+    /// A `schema.sql` that makes no database: what stopped it, why, and the
+    /// fix.
+    #[error("{0}")]
+    Schema(schema::Unmade),
     /// A write whose set no other computer would take: why, and what to do.
     #[error("This write isn't kept, since no other computer would take it: {0}.")]
     Unkept(Unfit),
@@ -124,6 +130,7 @@ impl Refused {
             Self::Fault(_) => (500, "fault"),
             Self::NotHere => (404, "not-here"),
             Self::Unkept(_) => (422, "unkept"),
+            Self::Schema(_) => (422, "schema"),
         }
     }
 }
@@ -368,7 +375,9 @@ fn internal(table: &str) -> bool {
 }
 
 /// What `schema.sql` may do: make tables and indexes in `main`, and what
-/// SQLite reads and writes of its own schema to do it.
+/// SQLite reads and writes of its own schema to do it, the `REINDEX` it asks
+/// for as it makes an index included (svrn-docs `magnets-spikes/README.md`,
+/// S5). What it refuses is said by the check (`schema.rs`, [`schema::Unmade`]).
 fn schema_rule(ctx: AuthContext<'_>) -> Authorization {
     let main = ctx.database_name.is_none_or(|d| d == "main");
     let allowed = main
@@ -376,6 +385,7 @@ fn schema_rule(ctx: AuthContext<'_>) -> Authorization {
             AuthAction::CreateTable { table_name } | AuthAction::CreateIndex { table_name, .. } => {
                 !internal(table_name)
             }
+            AuthAction::Reindex { index_name } => !internal(index_name),
             AuthAction::Insert { table_name }
             | AuthAction::Update { table_name, .. }
             | AuthAction::Read { table_name, .. } => {
@@ -634,22 +644,13 @@ const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT 
     CREATE TABLE svrngs_sites (site BLOB PRIMARY KEY, device TEXT NOT NULL);
     CREATE TABLE svrngs_muted (device TEXT PRIMARY KEY);";
 
-/// A new database's tables: `schema` applied under [`schema_rule`], then
-/// each table it made made a CRR, and svrngs's own made ([`OWN`]), with a
+/// A new database's tables: `schema` made as `svrngs check` makes it
+/// (`schema.rs`, `made`), and svrngs's own made ([`OWN`]), with a
 /// nonce drawn for it and its site, `device`'s with that nonce, and synced
 /// from the start where it is the `root`; or the first refusal.
 fn new_tables(conn: &mut Connection, (schema, root): (&str, bool), names: (&str, &str, &str)) -> Result<(), Refused> {
     let (group, app, device) = names;
-    conn.authorizer(Some(schema_rule)).map_err(fault)?;
-    let applied = conn.execute_batch(schema);
-    conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
-        .map_err(fault)?;
-    applied.map_err(|e| Refused::Malformed(format!("schema.sql: {e}")))?;
-    let tables = tables_of(conn)?;
-    for t in tables.keys() {
-        conn.query_row("SELECT crsql_as_crr(?1)", [t], |_| Ok(()))
-            .map_err(|e| Refused::Malformed(format!("{t}: {e}")))?;
-    }
+    schema::made(conn, schema)?;
     let mut nonce = [0; 16];
     #[expect(
         clippy::disallowed_methods,

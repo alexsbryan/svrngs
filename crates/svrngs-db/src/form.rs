@@ -33,6 +33,14 @@ pub struct Table {
     pub not_null: Vec<String>,
 }
 
+impl Table {
+    /// Whether its rows are each their person's: its key's first column is
+    /// `person_key` (svrn-docs APP_STATE §4, "Who may write which row").
+    pub fn owned(&self) -> bool {
+        self.key.first().is_some_and(|k| k.eq_ignore_ascii_case("person_key"))
+    }
+}
+
 /// One op as one statement, and the values it binds.
 pub type Statement = (String, Vec<Sql>);
 

@@ -340,8 +340,11 @@ fn a_schema_s_trigger_is_refused() {
         CREATE TRIGGER gone AFTER DELETE ON cards BEGIN INSERT INTO seen VALUES (1); END;\n";
     let refused = refused_twice(dir.path(), "board", schema);
     println!("MEASURE a schema's trigger: {refused}");
-    assert!(matches!(refused, Refused::Malformed(_)), "{refused:?}");
-    assert!(refused.to_string().contains("not authorized"), "{refused}");
+    assert!(matches!(refused, Refused::Schema(_)), "{refused:?}");
+    assert!(
+        refused.to_string().contains("asks SQLite for CreateTrigger"),
+        "{refused}"
+    );
 }
 
 /// **`schema.sql` neither begins nor ends a transaction**: svrngs applies
@@ -358,7 +361,7 @@ fn a_schema_s_transaction_is_refused() {
     let schema = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\nCOMMIT;\n";
     let refused = refused_twice(dir.path(), "board", schema);
     println!("MEASURE a schema's COMMIT: {refused}");
-    assert!(refused.to_string().contains("not authorized"), "{refused}");
+    assert!(refused.to_string().contains("asks SQLite for Transaction"), "{refused}");
 }
 
 /// `schema` refused as svrngs opens its database, and refused again, in the
@@ -416,7 +419,7 @@ fn a_database_closes_as_it_drops() {
     assert!(!log.exists(), "dropped, the database closed and left no log");
     let refused = refused_twice(dir.path(), "notes", "CREATE TABLE notes (body TEXT);\n");
     println!("MEASURE a table with no key: {refused}");
-    assert!(matches!(refused, Refused::Malformed(_)), "{refused:?}");
+    assert!(matches!(refused, Refused::Schema(_)), "{refused:?}");
     let log = dir.path().join("state/g/notes.db-wal");
     assert!(!log.exists(), "refused at open, the database closed and left no log");
 }

@@ -4670,6 +4670,7 @@ dependencies = [
  "serde",
  "serde_json",
  "svrngs-core",
+ "svrngs-db",
  "svrngs-node",
  "tempfile",
  "thiserror 2.0.21",
