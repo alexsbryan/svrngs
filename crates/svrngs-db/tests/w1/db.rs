@@ -353,14 +353,10 @@ impl Replica for DbCopy {
                 marks,
                 ..Ask::default()
             };
-            // Each mark's head, as the member sends one: the head of the run's
-            // set at the mark, which every set of the run is.
-            let heads = call.marks.iter().flatten().filter_map(|(s, m)| run.sets.get(&(*s, *m)));
             svrngs_db::Call {
                 ask,
                 sets,
                 full: call.marks.is_some(),
-                heads: heads.map(|set| set.head.clone()).collect(),
                 synced: call.marks.is_some() && call.synced,
             }
         };

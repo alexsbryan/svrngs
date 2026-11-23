@@ -2,8 +2,9 @@
 //! `rings/current/APP_STATE.md` §4, "What travels" and the four outcomes; §7,
 //! invariants 8, 11 and 12): what the wire says is parsed before anything in
 //! it is used, and a set's signature is checked first; a second set at a
-//! place this copy refused is judged; a mark moves only past a set its
-//! device signed; and a copy is synced only by a copy that is.
+//! place this copy refused is judged; a mark moves only up to what this
+//! copy has counted, on a word it trusts; and a copy is synced only by a
+//! copy that is.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -208,102 +209,74 @@ fn own(db: &Db) -> svrngs_core::set::Site {
     *db.ask().unwrap().marks.keys().next().unwrap()
 }
 
-/// **A full call's marks pass no set their device hasn't signed, and never
-/// this copy's own site**: a member's call that claims a mark far past
-/// every set Ana's device has signed, with no head, moves no copy's mark
-/// for her, her own copy's included, so her next set reaches Ben, and Cy
-/// through Ben. Plant: the claimed mark adopted with no head (Ben's mark at
-/// 1,000,000,000).
+/// **A full call's marks pass nothing this copy hasn't counted, on any
+/// word**: Ben holds Ana's one set. Her own computer's full call, which
+/// vouches for her site, claims her mark at 1,000,000,000, and so does Ben's
+/// call into Dee's new copy, which trusts its source. Ben's mark stays at 1,
+/// and so does Dee's, so Ana's next set, carried to Cy alone, reaches both
+/// through Cy, and the copies agree. Plant: the cap dropped (Ben's mark at
+/// 1,000,000,000, her next set passed by).
 #[test]
-fn a_full_call_s_marks_pass_no_set_their_device_has_not_signed() {
+fn a_full_call_s_marks_pass_nothing_this_copy_has_not_counted() {
     let dir = tempfile::tempdir().unwrap();
-    let (a, b, c) = (board(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
+    let (a, b, c) = (root(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
     write(&a, "c1", "milk");
-    assert_eq!(took(&b, &call(&a, &b)), [Took::Taken]);
+    took(&b, &call(&a, &b));
     let a_site = own(&a);
-    let mut claim = Call {
-        full: true,
-        ..Default::default()
-    };
+    let ana = Device::parse(&svrngs_core::actor_of(&key(1))).unwrap();
+    let mut claim = call(&a, &b);
     claim.ask.marks.insert(a_site, seq(1_000_000_000));
-    b.ingest(&claim, &bound(), None).unwrap();
+    b.ingest(&claim, &bound(), Some(&ana)).unwrap();
     assert_eq!(
         b.ask().unwrap().marks[&a_site],
         seq(1),
-        "no mark past a set its device signed"
+        "not on her own computer's word"
     );
-    a.ingest(&claim, &bound(), None).unwrap();
-    assert_eq!(
-        a.ask().unwrap().marks[&a_site],
-        seq(1),
-        "nor another's word for this copy's own site"
-    );
+    let d = board(dir.path(), 4);
+    let mut claim = call(&b, &d);
+    claim.ask.marks.insert(a_site, seq(1_000_000_000));
+    took(&d, &claim);
+    assert_eq!(d.ask().unwrap().marks[&a_site], seq(1), "nor on a newcomer's source's");
     write(&a, "c2", "eggs");
-    assert_eq!(took(&b, &call(&a, &b)), [Took::Taken], "Ana's next set reaches Ben");
-    took(&c, &call(&b, &c));
-    assert_eq!(cards(&c), cards(&a), "and Cy, through Ben");
+    took(&c, &call(&a, &c));
+    for to in [&b, &d] {
+        assert_eq!(took(to, &call(&c, to)), [Took::Taken], "her next set, through Cy");
+        assert_eq!(cards(to), cards(&c));
+    }
 }
 
-/// **A mark is adopted up to the head its device signed, and no further**:
-/// Ben holds Ana's two sets; a new copy pulled from him in full, his call
-/// claiming her mark far past them, adopts it to 2, her head's seq. A head
-/// whose signature isn't hers, or one of another site, adopts nothing.
-/// Plant: the call's head taken unchecked (the forged head's seq adopted).
+/// **A newcomer adopts its source's marks up to what it has counted, its
+/// gaps filled**: Ana's first set, its one value outranked by her third, is
+/// pruned where it was written, so Ben is sent two of her three, and so is
+/// Cy's new copy, pulled from Ben in full, his call claiming her mark far
+/// past them. Cy's mark is 3, the highest he counted, and his ask names no
+/// gap. Plants: a newcomer's source not trusted (her two sets counted above
+/// a gap, and no mark); the cap dropped (Cy's mark at 1,000,000,000).
 #[test]
-fn a_mark_is_adopted_up_to_the_head_its_device_signed() {
+fn a_newcomer_adopts_its_source_s_marks_up_to_what_it_has_counted() {
     let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (root(dir.path(), 1), board(dir.path(), 2));
-    write(&a, "c1", "milk");
-    write(&a, "c2", "eggs");
-    took(&b, &call(&a, &b));
-    let a_site = own(&a);
-    let c = board(dir.path(), 3);
-    let mut sent = call(&b, &c);
-    assert_eq!(
-        sent.heads.len(),
-        1,
-        "a head for the one site whose mark Ben has past Cy's"
-    );
-    sent.ask.marks.insert(a_site, seq(1_000_000_000));
-    took(&c, &sent);
-    assert_eq!(c.ask().unwrap().marks[&a_site], seq(2), "up to her head");
-
-    let head = sent.heads[0].clone();
-    let claimed = |heads: Vec<svrngs_db::Head>| {
-        let mut claim = Call {
-            full: true,
-            synced: true,
-            heads,
-            ..Default::default()
-        };
-        claim.ask.marks.insert(a_site, seq(2));
-        claim
-    };
-    let mut forged = head.clone();
-    forged.sig = Sig::parse(&"00".repeat(64)).unwrap();
-    let mut elsewhere = head.clone();
-    elsewhere.nonce = [9; 16];
-    for (what, h) in [("a head not hers", forged), ("a head of another site", elsewhere)] {
-        let d = board(&dir.path().join(what), 4);
-        d.ingest(&claimed(vec![h]), &bound(), None).unwrap();
-        assert!(d.ask().unwrap().marks.is_empty(), "{what} adopted");
+    let (a, b, c) = (root(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
+    for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c1", "jam")] {
+        write(&a, id, title);
     }
-    let d = board(&dir.path().join("hers"), 4);
-    d.ingest(&claimed(vec![head]), &bound(), None).unwrap();
-    assert_eq!(
-        d.ask().unwrap().marks[&a_site],
-        seq(2),
-        "her own head, adopted by a new copy"
-    );
+    assert_eq!(took(&b, &call(&a, &b)), [Took::Taken; 2]);
+    let a_site = own(&a);
+    let mut sent = call(&b, &c);
+    sent.ask.marks.insert(a_site, seq(1_000_000_000));
+    assert_eq!(took(&c, &sent), [Took::Taken; 2]);
+    let ask = c.ask().unwrap();
+    assert_eq!(ask.marks.get(&a_site), Some(&seq(3)), "up to what Cy counted");
+    assert!(ask.haves.is_empty(), "no gap left");
+    assert_eq!(cards(&c), cards(&a));
 }
 
 /// **An established copy adopts a mark only on its site's own computer's
-/// word**: Ana writes three sets, and Ben has all three; Cy has synced, and
-/// has the first. Ben's full call, claiming her mark at 3 with her own head
-/// at 3, moves Cy's mark not at all, so Cy fetches the two he lacks. Her
-/// own computer's call does: it vouches for its own sets. A new copy
-/// adopts Ben's word, as a newcomer trusts its source (APP_STATE §4).
-/// Plant: any caller trusted (Cy's mark at 3, sets 2 and 3 never fetched).
+/// word**: Cy has synced, and has Ana's first set; her second, its one
+/// value outranked by her third, is pruned where it was written. Ben's full
+/// call sends Cy her third and claims her mark at 3, and Cy counts the third
+/// above a gap his ask names, as Ben's word moves no established copy's
+/// mark. Her own computer's call closes the gap: it vouches for its own
+/// sets. Plant: any caller trusted (Cy's mark at 3 on Ben's word).
 #[test]
 fn an_established_copy_adopts_a_mark_only_on_its_site_s_own_computer_s_word() {
     let dir = tempfile::tempdir().unwrap();
@@ -312,30 +285,34 @@ fn an_established_copy_adopts_a_mark_only_on_its_site_s_own_computer_s_word() {
     took(&c, &call(&a, &c));
     assert!(!c.syncing(), "Cy has synced");
     write(&a, "c2", "eggs");
-    write(&a, "c3", "jam");
-    took(&b, &call(&a, &b));
+    write(&a, "c2", "jam");
+    assert_eq!(took(&b, &call(&a, &b)), [Took::Taken; 2]);
     let a_site = own(&a);
     let devices = |n: u8| Some(Device::parse(&svrngs_core::actor_of(&key(n))).unwrap());
-    let mut word = call(&b, &c);
-    word.sets.clear();
-    assert_eq!((word.full, word.heads.len()), (true, 1));
-    c.ingest(&word, &bound(), devices(2).as_ref()).unwrap();
+    let word = c.ingest(&call(&b, &c), &bound(), devices(2).as_ref()).unwrap();
+    assert_eq!(word.iter().map(|(_, t)| *t).collect::<Vec<_>>(), [Took::Taken]);
+    let ask = c.ask().unwrap();
     assert_eq!(
-        c.ask().unwrap().marks[&a_site],
-        seq(1),
+        (ask.marks[&a_site], ask.haves.len()),
+        (seq(1), 1),
         "Ben's word moves no established copy's mark"
     );
-    assert_eq!(call(&a, &c).sets.len(), 2, "so Cy fetches what he lacks");
-    c.ingest(&word, &bound(), devices(1).as_ref()).unwrap();
-    assert_eq!(c.ask().unwrap().marks[&a_site], seq(3), "her own computer's word does");
+    c.ingest(&call(&a, &c), &bound(), devices(1).as_ref()).unwrap();
+    let ask = c.ask().unwrap();
+    assert_eq!(
+        (ask.marks[&a_site], ask.haves.len()),
+        (seq(3), 0),
+        "her own computer's word does"
+    );
+    assert_eq!(cards(&c), cards(&a));
 }
 
 /// **A copy never adopts a mark for its own site**, though the word is its
-/// own key's and the head is signed: Ana's database copied beside its
-/// original writes a third set, and its call, claiming her site's mark at 3
-/// with that set's head, moves her copy's mark not at all, so the set
-/// stays one she is sent. Plant: this copy's own site not left out (her
-/// mark at 3).
+/// own key's: Ana's database copied beside its original writes a third and
+/// a fourth set. Her copy, sent the fourth past the 2^53 bound, refuses it
+/// for good and counts it above a gap. The copy's full call, claiming her
+/// site's mark at 4, moves her mark not at all. Plant: this copy's own site
+/// not left out (her mark at 4).
 #[test]
 fn a_copy_never_adopts_a_mark_for_its_own_site() {
     let dir = tempfile::tempdir().unwrap();
@@ -349,13 +326,16 @@ fn a_copy_never_adopts_a_mark_for_its_own_site() {
     let a = board(dir.path(), 1);
     let copy = States::new(&to, key(1)).open("g", "board", None).unwrap();
     write(&copy, "c3", "jam");
+    write(&copy, "c4", "salt");
     let mut word = call(&copy, &a);
     word.sets.clear();
-    assert_eq!(word.heads.len(), 1, "the copy's head at 3");
+    let past = remade(&call(&copy, &a).sets[1], &key(1), |c| {
+        c.iter_mut().for_each(|c| c.col_version = (1 << 53) + 1)
+    });
+    assert_eq!(took(&a, &alone(vec![past])), [Took::Refused]);
     let ana = Device::parse(&svrngs_core::actor_of(&key(1))).unwrap();
     a.ingest(&word, &bound(), Some(&ana)).unwrap();
     assert_eq!(a.ask().unwrap().marks[&own(&a)], seq(2), "her own site's mark, unmoved");
-    assert_eq!(call(&copy, &a).sets.len(), 1, "the set at 3, still sent her");
 }
 
 /// **A copy is synced only by a copy that is** (invariant 8): Ana holds the

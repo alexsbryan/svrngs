@@ -133,10 +133,8 @@ impl<const N: usize> FromSql for Hex<N> {
 /// A set's signed head: its device, the nonce of the database it was
 /// written in, its seq there, its schema's hash, its changes' hash
 /// (`svrngs_core::set::changes`), and the device's signature over them all
-/// (`At::message`). It checks without the set's changes, so a copy keeps the
-/// highest it has checked for each site (`svrngs_heads`), and a member
-/// vouches for a mark by one (APP_STATE §4, "What travels"). Ordered as its
-/// fields are, so by device, nonce and seq first.
+/// (`At::message`). Ordered as its fields are, so by device, nonce and seq
+/// first.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Head {
     pub device: Device,
@@ -174,17 +172,14 @@ pub struct Ask {
 
 /// What a member sends a copy: the sets the copy's ask says it lacks, the
 /// member's own ask, and whether those are all it keeps that the copy lacks,
-/// so the copy may adopt its marks; and, for each site whose mark the
-/// member's ask has past the copy's, the highest head of it the member has
-/// checked, which the copy adopts the mark up to and no further; and whether
-/// the member's own copy has synced, as only a full call from one that has
-/// makes a copy synced (APP_STATE §7, invariant 8).
+/// so the copy may adopt its marks; and whether the member's own copy has
+/// synced, as only a full call from one that has makes a copy synced
+/// (APP_STATE §7, invariant 8).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Call {
     pub ask: Ask,
     pub sets: Vec<Set>,
     pub full: bool,
-    pub heads: Vec<Head>,
     pub synced: bool,
 }
 
@@ -215,13 +210,12 @@ pub enum Took {
     Over,
 }
 
-/// The most bytes one row of a copy's ask costs in a call, with the head
-/// beside it: a site's mark, its 16 bytes and a seq of up to 9 (postcard's
-/// varint of `i64::MAX`), beside that site's head, a 65-byte device, a
-/// 16-byte nonce, a seq, two 32-byte hashes and a 130-byte signature. A
-/// have, a twin's place and signature, or a muted device costs less.
-/// `tests/bounds.rs` holds it to postcard's encoding of the largest of each.
-pub const ROW_MOST: usize = 309;
+/// The most bytes one row of a copy's ask costs in a call: a twin's place
+/// and signature, a 16-byte site, a seq of up to 9 (postcard's varint of
+/// `i64::MAX`) and a 130-byte signature. A site's mark, a have or a muted
+/// device costs less. `tests/bounds.rs` holds it to postcard's encoding of
+/// the largest of each.
+pub const ROW_MOST: usize = 155;
 
 /// The keys a group's record binds, standing or cut, as a set's device is
 /// judged by them (APP_STATE §4, "A removed device"); and the room a call's
@@ -371,21 +365,16 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     let bytes = (kept != Kept::Refused).then(|| postcard::to_allocvec(set).expect("a set is written in memory"));
     let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
     conn.execute(sql, params![site, seq, set.head.sig, kept, bytes])?;
+    // The site's device, by which its share is counted, a muted device's
+    // sets are found and a word for its mark is trusted: kept for a set
+    // taken, refused or waiting for its schema here, never for one waiting
+    // for its key, so a key no record binds adds no row but the ones its
+    // share holds.
+    let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device) VALUES (?1, ?2)";
     if kept != Kept::Unbound {
-        headed(conn, site, &set.head)?;
+        conn.execute(sited, params![site, set.head.device])?;
     }
     count(conn, (site, seq))
-}
-
-/// `head`, of `site`, kept as the highest of it this copy has checked, where
-/// it is higher: a set taken, refused or waiting for its schema here, or a
-/// head a mark was adopted by. A set waiting for its key leaves none, so a
-/// key no record binds adds no row but the ones its share holds.
-fn headed(conn: &Connection, site: Site, head: &Head) -> rusqlite::Result<()> {
-    let sql = "INSERT INTO svrngs_heads (site, device, seq, head) VALUES (?1, ?2, ?3, ?4) \
-        ON CONFLICT (site) DO UPDATE SET seq = excluded.seq, head = excluded.head WHERE excluded.seq > seq";
-    let bytes = postcard::to_allocvec(head).expect("a head is written in memory");
-    conn.execute(sql, params![site, head.device, head.seq, bytes]).map(drop)
 }
 
 impl Db {
@@ -396,9 +385,10 @@ impl Db {
     /// stands (§4, "A removed device", "Why"). Copies may keep different
     /// sets, so each prunes by its own clocks (§7, invariant 3), and two
     /// sets at one place stay while either's values stand. Its place stays
-    /// counted, and its site's head stays, so a copy that never took it is
-    /// vouched past it by its site's own computer. A set that waits, or was
-    /// refused, holds no value here and is kept as it is. How many it dropped.
+    /// counted, so a copy that never took it is vouched past it by its
+    /// site's own computer, once that copy counts a set above it. A set that
+    /// waits, or was refused, holds no value here and is kept as it is. How
+    /// many it dropped.
     fn prune(&self, conn: &Connection) -> rusqlite::Result<usize> {
         let clock = |t: &String| format!("\"{}__crsql_clock\"", t.replace('"', "\"\""));
         let stands = self.tables.keys().map(|t| {
@@ -430,16 +420,12 @@ impl Db {
         }
     }
 
-    /// Whether `head`'s signature is its device's, over this database's
-    /// group and app.
-    fn checks(&self, head: &Head) -> bool {
-        let at = self.at((&head.device, &head.nonce, head.seq, &head.schema));
-        at.check(&head.changes, head.sig.as_str())
-    }
-
-    /// Whether `set`'s head checks, and its changes are the ones it signs.
+    /// Whether `set`'s head is signed by its device, over this database's
+    /// group and app, and its changes are the ones it signs.
     fn signed(&self, set: &Set) -> bool {
-        self.checks(&set.head) && svrngs_core::set::changes(&set.changes) == set.head.changes
+        let head = &set.head;
+        let at = self.at((&head.device, &head.nonce, head.seq, &head.schema));
+        at.check(&head.changes, head.sig.as_str()) && svrngs_core::set::changes(&set.changes) == head.changes
     }
 
     /// The site of `head`'s database, derived from its device and nonce.
@@ -548,7 +534,7 @@ impl Db {
         let ask = self.ask()?;
         let twins: BTreeSet<&Place> = ask.twins.iter().chain(&theirs.twins).map(|(p, _)| p).collect();
         let named: BTreeSet<&Sig> = theirs.twins.iter().map(|(_, s)| s).collect();
-        let kept = "SELECT s.site, s.seq, s.sig, s.bytes, h.device FROM svrngs_sets s JOIN svrngs_heads h \
+        let kept = "SELECT s.site, s.seq, s.sig, s.bytes, h.device FROM svrngs_sets s JOIN svrngs_sites h \
             USING (site) WHERE s.kept = ?1 ORDER BY s.site, s.seq, s.sig";
         let kept = rows(&self.conn(), kept, [Kept::Taken], |r| {
             Ok(((r.get(0)?, r.get(1)?), r.get(2)?, r.get(3)?, r.get(4)?))
@@ -572,33 +558,13 @@ impl Db {
             spent += bytes.len();
             sets.push(postcard::from_bytes(&bytes).map_err(fault)?);
         }
-        let heads = if full {
-            self.heads(&ask, theirs).map_err(fault)?
-        } else {
-            Vec::new()
-        };
         let synced = self.synced.load(Relaxed);
         Ok(Call {
             ask,
             sets,
             full,
-            heads,
             synced,
         })
-    }
-
-    /// The heads a member whose ask is `theirs` may adopt marks up to: for
-    /// each site whose mark in `ours` passes theirs, the highest this copy
-    /// has checked, but where a set of the site waits here. This copy sends
-    /// no set that waits, and its mark counts it, so a member that adopted
-    /// past it would never fetch it.
-    fn heads(&self, ours: &Ask, theirs: &Ask) -> rusqlite::Result<Vec<Head>> {
-        let sql = "SELECT site, head FROM svrngs_heads WHERE site NOT IN \
-            (SELECT site FROM svrngs_sets WHERE kept IN (?1, ?2))";
-        let heads: Vec<(Site, Vec<u8>)> = rows(&self.conn(), sql, WAITING, |r| Ok((r.get(0)?, r.get(1)?)))?;
-        let ahead = |s: &Site| ours.marks.get(s) > theirs.marks.get(s);
-        let heads = heads.into_iter().filter(|(s, _)| ahead(s));
-        Ok(heads.filter_map(|(_, b)| postcard::from_bytes(&b).ok()).collect())
     }
 
     /// `call` taken in one transaction: its sets in (device, nonce, seq)
@@ -640,7 +606,7 @@ impl Db {
         let adopting = marks.filter(|(s, _)| call.full && **s != self.site && !stopped.contains(*s));
         tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature or waits");
         for (s, m) in adopting {
-            self.claimed(&tx, (*s, *m), (call, from, &mut room)).map_err(fault)?;
+            self.claimed(&tx, (*s, *m), (from, call.synced, &room)).map_err(fault)?;
         }
         let took = out.iter().any(|(_, t)| matches!(t, Took::Taken | Took::Twin));
         if took {
@@ -664,9 +630,9 @@ impl Db {
 
     /// What a call may add to this copy's ask, as it begins ([`Room`]).
     fn room<'b>(&self, conn: &Connection, binds: &'b Binds) -> rusqlite::Result<Room<'b>> {
-        let shares = "SELECT h.device, count(*) FROM (SELECT site FROM svrngs_heads UNION ALL SELECT site FROM svrngs_above \
+        let shares = "SELECT h.device, count(*) FROM (SELECT site FROM svrngs_sites UNION ALL SELECT site FROM svrngs_above \
             UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
-            AND t.seq = s.seq AND t.sig <> s.sig)) AS r JOIN svrngs_heads h USING (site) GROUP BY h.device";
+            AND t.seq = s.seq AND t.sig <> s.sig)) AS r JOIN svrngs_sites h USING (site) GROUP BY h.device";
         let held = BTreeMap::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
         let unbound = "SELECT count(*) FROM svrngs_sets WHERE kept = ?1";
         let unbound = conn.query_row(unbound, [Kept::Unbound], |r| r.get(0))?;
@@ -699,39 +665,33 @@ impl Db {
     }
 
     /// The mark `m` a full call claims for `site`, adopted up to the highest
-    /// head of the site this copy has checked, kept here or sent in the call,
-    /// and only where the record binds its device and the caller is trusted
-    /// for it: the site's own computer, which vouches for its own sets, or a
-    /// synced caller into a copy not yet synced, as a newcomer trusts its source
-    /// (APP_STATE §4, "What travels"). So a member's word takes no mark past
-    /// a set its device signed, and makes no established copy skip a set it
-    /// hasn't fetched yet.
+    /// seq of the site this copy has counted and no further, so it fills the
+    /// gaps below what this copy holds and passes nothing it hasn't counted;
+    /// and only where the record binds its device, unmuted here, and the
+    /// caller is trusted for it: the site's own computer, which vouches for
+    /// its own sets, or a synced caller into a copy not yet synced, as a
+    /// newcomer trusts its source (APP_STATE §4, "What travels"). So no word
+    /// takes a mark past a set this copy would fetch, and none makes an
+    /// established copy skip a set it hasn't fetched yet.
     fn claimed(
         &self,
         tx: &Transaction,
         (site, m): (Site, Seq),
-        (call, from, room): (&Call, Option<&Device>, &mut Room),
+        (from, synced, room): (Option<&Device>, bool, &Room),
     ) -> rusqlite::Result<()> {
-        let kept = "SELECT head FROM svrngs_heads WHERE site = ?1";
-        let kept: Option<Vec<u8>> = tx.query_row(kept, [site], |r| r.get(0)).optional()?;
-        let kept: Option<Head> = kept.and_then(|b| postcard::from_bytes(&b).ok());
-        let higher = |h: &&Head| self.site_of(h) == site && kept.as_ref().is_none_or(|k| h.seq > k.seq);
-        let sent = call.heads.iter().find(higher).filter(|h| self.checks(h));
-        let Some(head) = sent.or(kept.as_ref()) else {
+        let top = "SELECT device, max(coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0), \
+            coalesce((SELECT max(seq) FROM svrngs_above WHERE site = ?1), 0)) FROM svrngs_sites WHERE site = ?1";
+        let top = tx.query_row(top, [site], |r| Ok((r.get::<_, Device>(0)?, r.get::<_, i64>(1)?)));
+        let Some((device, top)) = top.optional()? else {
             return Ok(());
         };
-        let trusted = from == Some(&head.device) || call.synced && !self.synced.load(Relaxed);
-        let (bound, new) = (room.binds.binds(&head.device), u64::from(kept.is_none()));
-        let fits = room.fits(&head.device, new);
-        tracing::debug!(target: "state", group = self.group, app = self.app, device = %head.device, mark = m.get(), head = head.seq.get(), trusted, bound, fits, "state: a full call's mark for a site, adopted up to the head its device signed where the record binds it, its caller is trusted for it, and its device has room for it here");
-        if !trusted || !bound || !fits {
+        let trusted = from == Some(&device) || synced && !self.synced.load(Relaxed);
+        let (bound, muted) = (room.binds.binds(&device), room.muted.contains(&device));
+        tracing::debug!(target: "state", group = self.group, app = self.app, %device, mark = m.get(), top, trusted, bound, muted, "state: a full call's mark for a site, adopted up to the highest seq of it this copy has counted, where the record binds its device, unmuted here, and its caller is trusted for it");
+        if !trusted || !bound || muted {
             return Ok(());
         }
-        if let Some(h) = sent {
-            headed(tx, site, h)?;
-            room.add(&head.device, new);
-        }
-        adopt(tx, (site, m.0.min(head.seq.0) as i64))
+        adopt(tx, (site, (m.get() as i64).min(top)))
     }
 
     /// `set`, at `site`, offered to this copy within the call's transaction
@@ -746,9 +706,9 @@ impl Db {
         let sigs = "SELECT sig FROM svrngs_sets WHERE site = ?1 AND seq = ?2";
         let sigs: Vec<Sig> = rows(tx, sigs, params![site, set.head.seq], |r| r.get(0))?;
         let counted = "SELECT ?2 <= coalesce(mark, 0) OR EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1 AND seq = ?2), \
-            coalesce(mark, 0), EXISTS (SELECT 1 FROM svrngs_heads WHERE site = ?1) \
+            coalesce(mark, 0), EXISTS (SELECT 1 FROM svrngs_sites WHERE site = ?1) \
             FROM (SELECT (SELECT mark FROM svrngs_marks WHERE site = ?1) AS mark)";
-        let (counted, mark, headed): (bool, u64, bool) = tx.query_row(counted, params![site, set.head.seq], |r| {
+        let (counted, mark, sited): (bool, u64, bool) = tx.query_row(counted, params![site, set.head.seq], |r| {
             Ok((r.get(0)?, r.get(1)?, r.get(2)?))
         })?;
         if sigs.contains(&set.head.sig) || counted && sigs.is_empty() {
@@ -759,7 +719,7 @@ impl Db {
         // rows of it. Past its device's share, or the share of keys the
         // record doesn't bind, it is dropped ([`Self::over`]).
         let device = &set.head.device;
-        let adds = u64::from(!headed) + u64::from(set.head.seq.0 > mark + 1) + [0, 2, 1][sigs.len().min(2)];
+        let adds = u64::from(!sited) + u64::from(set.head.seq.0 > mark + 1) + [0, 2, 1][sigs.len().min(2)];
         if !room.fits(device, adds) {
             return self.over(tx, set, room);
         }

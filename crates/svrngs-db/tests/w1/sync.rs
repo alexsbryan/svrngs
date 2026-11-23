@@ -63,9 +63,12 @@ pub struct Sync {
     /// svrngs-db's adoption: a member's mark for a device is taken only on
     /// the word of that device's own copy, or into a copy not yet synced
     /// from one that has, as a newcomer trusts its source (svrn-docs
-    /// `app-state-diligence/b-sync-fixes-2026-11-22/`, D1; svrngs-db
-    /// sync.rs `claimed`). With sets pruned, a gap a pruned set leaves at an
-    /// established copy closes only on its own device's word.
+    /// `app-state-diligence/b-sync-fixes-2026-11-22/`, D1), and only up to
+    /// the highest seq of it this copy has counted, so it fills gaps and
+    /// passes no set the copy would fetch (`sync-simplify-2026-11-22/`,
+    /// change 2; svrngs-db sync.rs `claimed`). With sets pruned, a gap a
+    /// pruned set leaves at an established copy closes only on its own
+    /// device's word.
     pub vouched: bool,
 }
 
@@ -244,6 +247,13 @@ impl Book {
     /// or above it and counted.
     pub fn holds(&self, id: SetId) -> bool {
         id.1 <= self.mark(id.0) || self.above.contains(&id)
+    }
+
+    /// The highest seq of the site counted here: the highest set above its
+    /// mark, or the mark.
+    fn top(&self, site: Site) -> i64 {
+        let above = self.above.iter().filter(|id| id.0 == site).map(|id| id.1).max();
+        above.unwrap_or(0).max(self.mark(site))
     }
 
     /// A set taken here, or refused here for good, counted in its device's
@@ -428,8 +438,9 @@ impl Sync {
             let newcomer = call.synced && !book.synced;
             for (site, m) in theirs {
                 let vouched = !self.vouched || newcomer || call.from == Some(*site);
+                let m = if self.vouched { (*m).min(book.top(*site)) } else { *m };
                 if !stopped.contains(site) && vouched {
-                    book.adopt(self.mark, *site, *m);
+                    book.adopt(self.mark, *site, m);
                 }
             }
             book.synced |= call.synced;

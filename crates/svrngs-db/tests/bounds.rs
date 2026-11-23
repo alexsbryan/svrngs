@@ -12,7 +12,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use svrngs_core::set::At;
-use svrngs_db::{Ask, Binds, Call, Db, Device, Head, ROW_MOST, Seq, Set, Sig, SigningKey, States, Took};
+use svrngs_db::{Ask, Binds, Call, Db, Device, ROW_MOST, Seq, Set, Sig, SigningKey, States, Took};
 
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
 const BUDGET: usize = 4 << 20;
@@ -100,28 +100,20 @@ fn signed(set: &Set, by: &SigningKey, f: impl Fn(&mut Vec<Change>)) -> Set {
     set
 }
 
-/// **`ROW_MOST` is the most one row of an ask costs, with its head**:
-/// postcard's encoding of the largest site's mark beside its head, and of
-/// the largest have, twin and muted device. Plant: one byte fewer.
+/// **`ROW_MOST` is the most one row of an ask costs**: postcard's encoding
+/// of the largest twin, a place and its signature; and of the largest
+/// site's mark or have, and muted device. Plant: one byte fewer.
 #[test]
 fn row_most_is_the_most_a_row_of_an_ask_costs() {
     let most = Seq::new(i64::MAX as u64).unwrap();
-    let head = Head {
-        device: Device::parse(&"f".repeat(64)).unwrap(),
-        nonce: [0xff; 16],
-        seq: most,
-        schema: [0xff; 32],
-        changes: [0xff; 32],
-        sig: Sig::parse(&"f".repeat(128)).unwrap(),
-    };
-    let site =
-        postcard::to_allocvec(&([0xffu8; 16], most)).unwrap().len() + postcard::to_allocvec(&head).unwrap().len();
-    assert_eq!(site, ROW_MOST, "a site's mark beside its head");
-    let twin = postcard::to_allocvec(&(([0xffu8; 16], most), head.sig.clone()))
+    let sig = Sig::parse(&"f".repeat(128)).unwrap();
+    let twin = postcard::to_allocvec(&(([0xffu8; 16], most), sig)).unwrap().len();
+    assert_eq!(twin, ROW_MOST, "a twin's place and signature");
+    let mark = postcard::to_allocvec(&([0xffu8; 16], most)).unwrap().len();
+    let muted = postcard::to_allocvec(&Device::parse(&"f".repeat(64)).unwrap())
         .unwrap()
         .len();
-    let muted = postcard::to_allocvec(&head.device).unwrap().len();
-    for (what, n) in [("a twin", twin), ("a muted device", muted)] {
+    for (what, n) in [("a site's mark or a have", mark), ("a muted device", muted)] {
         assert!(n <= ROW_MOST, "{what}: {n}");
     }
 }
