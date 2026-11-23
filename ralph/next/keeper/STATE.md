@@ -620,7 +620,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     are kept, and a same-name foreign pod is untouched (green).
   - Size: keeper only. Counted: none expected.
 
-- [ ] avail-run-page-copy — depends [avail-run-page] — ONE UNIT: the page's next step after Run, a page acceptance blocker (QA oc-cruu42, 2026-11-23).
+- [x] avail-run-page-copy 355ccfd66 — depends [avail-run-page] — ONE UNIT: the page's next step after Run, a page acceptance blocker (QA oc-cruu42, 2026-11-23).
   - Today `plan/words.rs:173`, for Verified, says on both doors
     "{name} is running here. Share it separately with `svrngs share`.",
     sending a lightly technical Sam from the page to the terminal.
