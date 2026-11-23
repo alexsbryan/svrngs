@@ -848,6 +848,62 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     plants the withdrawal itself (`tests/door/live.rs`);
   - a concurrent withdrawal; a failed save; the busy port.
 
+- [ ] avail-webkit-alone — depends [avail-proof] — ONE UNIT (the gate's instrument, 0 counted): run the timing-bound relay case alone, as `playback::` already is (keeper-lead, from principles, with QA oc-cruu42's evidence; the operator asked for the jam cleared, 2026-11-23).
+  - `webrtc_page::the_channel_closed_mid_film_completes_over_the_relay`,
+    in both engines, asserts a 2,500–4,000 ms fallback
+    (`webrtc_page.rs:186`).
+    - Alone, at main and at the tip, it falls back in 3,753–3,898 ms.
+    - In the parallel `browser` step it took 4,006 and 4,010 ms
+      (`REVIEW-audit-available-4.await.log`).
+  - The gate already runs its timing-bound browser cases alone:
+    `scripts/check.sh:123` skips `playback::` in `browser`, and `:189`
+    runs it in its own step.
+  - Do the same for this case:
+    - skip it in `browser`;
+    - run it in a step of its own;
+    - leave the test and its threshold unchanged;
+    - keep it `fragile` in `docs/seams.tsv`;
+    - update `docs/CHECKS.md` where it lists the steps.
+  - The plant is the recorded reds under parallel load. The green is the
+    new step passing three times alone, in the gate image.
+  - **The WebKit navigation abort**
+    (`navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit`,
+    Playwright's `WKPage._onTargetCreated` assertion):
+    - read `wkPage.js:331` and say what target creation trips it;
+    - fix the test's setup if it is the test's;
+    - if it is an upstream Playwright bug, record the evidence and the
+      version, and change nothing.
+    - Never retry until green, and never skip.
+
+- [ ] avail-page-prefill — depends [avail-proof] — ONE UNIT: the page fills in the command Sam already runs (the operator, 2026-11-23: "find the right balance of delightful UX and code heft … as long as we aren't adding bloat or creeping beyond domain boundaries").
+  - **Keeper (uncounted):** `svrngs-keeper facts <port> [--name]`
+    (`facts.rs`) already reads, read-only, only the listener's folder and
+    llama-server's `/props` model path, the one live read spec S2 allows.
+    Return the form's fields (`command`, `folder`, `port`) beside or in
+    place of the card. Nothing else is read from the live process.
+  - **Node (counted):**
+    - one closed `prefill {port}` request on the existing local home route;
+    - it goes through the one keeper call in `plan/run.rs`;
+    - the keeper's JSON is returned to the page untouched;
+    - no planner state, no new words in `plan/words.rs`, no
+      card-to-command round trip, no `run_form` export;
+    - a failed or empty read gives an empty form, with no error to Sam.
+  - **Page (JS):** on a row under "Already running here" that svrngs does
+    not run, a "Run it with svrngs" control opens the existing form with
+    those fields filled in. Sam reads them, can edit them, and presses
+    Run. Nothing runs without that press.
+  - **Allowance:** the counted room left (8) and +12 JS.
+    - Measured, before and after.
+    - If the lean version can't fit, park with per-file counts. A raise is
+      the operator's.
+  - **Checks:**
+    - a node test: a refusal from elsewhere, and no write;
+    - the keeper's facts returns fields from a llama-server fixture, and
+      nothing for a non-llama listener;
+    - a WebKit scene in the gate container: the prefilled form, then Run
+      after a confirming press. Plant: the form submits without the
+      press, which must fail.
+
 - [ ] HUMAN-release-hosts — depends [avail-proof] — the operator. The
   release waits on this row (the operator, 2026-11-22: "release only after
   packaged proofs"):
@@ -867,7 +923,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   No worker ticks this row, installs on the operator's own svrngs, or
   touches a real host but beefymac's scratch folders.
 
-- [ ] REVIEW-audit-available — depends [avail-proof] — the unchanged full
+- [ ] REVIEW-audit-available — depends [avail-proof, avail-webkit-alone, avail-page-prefill] — the unchanged full
   `scripts/check.sh` in svrngs-gate, with the main `.git` mounted
   (PROMPT.addendum). It also checks:
   - `scripts/ports.py` lists every ported-from line;
@@ -1084,3 +1140,9 @@ Windows.
     - Another full run is warranted only after a targeted instrument fix,
       or a predeclared change that tests a specific hypothesis. Never
       repeat it unchanged.
+  - **Answer to the park** (keeper-lead, from principles, 2026-11-23): the
+    WebKit relay case was an instrument too tight for a loaded run, as
+    `playback::` was. avail-webkit-alone runs it alone, with the threshold
+    unchanged. After it and avail-page-prefill, run one unchanged full
+    gate on the pinned candidate. If browser fails again, park with the
+    evidence. Never repeat until green.
