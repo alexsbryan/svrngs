@@ -10,14 +10,19 @@ reads with SQL and writes by naming rows, at its own address, with plain
 It's for data people change together, like a board, votes or a shopping
 list. For a record of who said what, use the group's entries
 ([`svrngs/acts`](build.md#what-svrngsacts-gives-you)). For a program that
-should run on one computer at a time, see
-[Bring a folder or lend a program?](choose-an-app.md).
+runs on one computer, lend it instead: [Build an
+app](build.md#or-lend-a-server-on-a-port) draws the two shapes side by side.
+
+The database comes with the release after 1.13.3. To tell whether your
+svrngs has it, run `svrngs check` on a folder with a `schema.sql`: one that
+has it names the tables after "Nothing in … that apps can't load."
 
 On this page: [start from Magnets](#start-from-magnets) ·
 [write schema.sql](#write-schemasql) · [read](#read) ·
 [write](#write) · [whose row it is](#whose-row-it-is) ·
 [change your schema](#change-your-schema) ·
-[send the link](#send-the-link) · [what everyone sees](#what-everyone-sees).
+[send the link](#send-the-link) · [test your app](#test-your-app) ·
+[what everyone sees](#what-everyone-sees).
 The shapes that merge well are on [their own page](database-patterns.md).
 
 ## Start from Magnets
@@ -101,14 +106,24 @@ most 1,000 rows, with `more: true` when there were more, and stops after
 computer of the group yet. Say "still syncing" then, never an empty board.
 
 To keep a view current, subscribe. Each event is a read's answer, now and
-again each time the rows change:
+again each time the rows change, `syncing: true` beside its rows while this
+copy hasn't synced yet:
 
 ```js
 const live = new EventSource(`${SQL}?q=${encodeURIComponent('SELECT film, SUM(yes) AS n FROM votes GROUP BY film')}`);
-live.onmessage = (e) => draw(JSON.parse(e.data).rows);
+live.onmessage = (e) => {
+  const { rows, syncing } = JSON.parse(e.data);
+  if (syncing) say('Still syncing with your group…');
+  else draw(rows);
+};
+live.onerror = () => say('Your group’s computers can’t be reached right now.');
 ```
 
-Every change sends the whole answer again, so subscribe to a small query.
+A subscription takes its query alone, `q`, with no `params`. To read rows by
+a value, such as your own votes, read with `POST` again as each change
+arrives. An `EventSource` can't read a refusal's words; to show them, read
+the stream with `fetch`, as Magnets does in `index.js`. Every change sends
+the whole answer again, so subscribe to a small query.
 
 ## Write
 
@@ -149,6 +164,9 @@ delete a row people still edit.
 A person's writes are limited, about 30 a minute for each app, with an
 hour's worth at once. Past that, a write is answered 429, `refused:
 "limit"`, with a `Retry-After` in seconds. A list of 300 rows is one write.
+One write is at most 65 KiB of JSON, several hundred short rows; past
+that it's answered 413, `refused: "too-large"`, nothing of it kept. Send
+a longer list in parts.
 
 Today a write is taken from your own computer, and a phone reads. An app
 that reads your friends' lends (`reads.txt`) doesn't write the group's
@@ -161,10 +179,15 @@ Only that person's devices change it, on every computer. Write the
 `you_key` that `GET svrngs/acts` gives your page:
 
 ```js
-const { you_key, people } = await (await fetch('svrngs/acts')).json();
+const { you_key, spans } = await (await fetch('svrngs/acts')).json();
+const names = new Map((spans ?? []).map((s) => [s.person_key, s.person]));
 ```
 
-Show names from `people`: two people can share one. A write to someone
+Name a row's person from `spans`, which pairs each name with its
+`person_key`; two people can share a name, and `joined` tells them apart.
+When a row names a key your page doesn't know, someone may have joined
+since it read `svrngs/acts`, so read it again. `spans` is null for a moment
+while svrngs settles who's in; read it again then too. A write to someone
 else's row is refused, 403 `not-yours`, with words that say what to
 write instead. Once the group's keeper removes a person, any member can delete
 their rows. An owned table is `STRICT`, with `person_key TEXT NOT NULL`
@@ -203,6 +226,25 @@ opens your app by from the group's page, such as
 `https://group.svrnme.sh/#open=<your app's label>`. Put it behind a
 **Copy** button, so people can send it in the chat. It's null while the
 group keeps no page for links.
+
+## Test your app
+
+A group of your own is a group of one, so it can't show what happens
+between two people. Make a second test computer on the same machine, with
+a home and a data folder of its own:
+
+```
+$ HOME=~/test/ana SVRNGS_DIR=~/test/ana/.svrngs svrngs new Test --as Ana
+$ HOME=~/test/bo SVRNGS_DIR=~/test/bo/.svrngs svrngs join '<the link Ana's home page gives>' --as Bo
+```
+
+Each runs on as svrngs does, with a home page of its own. Put your app in
+Ana's group folder, `~/test/ana/svrngs/Test/apps/` or wherever **Folder
+location** on her home page says, open it on both, and act as each. To see
+owned rows hold, have Ana write her row, then have Bo's page change or
+delete it: each is refused, 403 `not-yours`. An update of a key with no
+row changes nothing and answers `{count: 0}`, so try it on a row that's
+there. A test group has no group page for links, so its `link` is null.
 
 ## What everyone sees
 

@@ -5,8 +5,9 @@
 // A computer and a phone on one board see each other's moves, pushed. And
 // the page says still syncing, unreachable and a refused move in board.js's
 // words, drawing no fresh fridge meanwhile. The board's order, SQL and words
-// are board.test.mjs's laws. Where SVRNGS_ROUTE names one, each runs against
-// the real route on a computer's svrngs (web/tests/route.mjs), opened there
+// are board.test.mjs's laws. Where SVRNGS_ROUTE names one (its JSON in
+// board.test.mjs's head), each runs against the real route on a computer's
+// svrngs (web/tests/route.mjs), opened there
 // first, as the scene crates/svrngs/tests/scenes/magnets.rs runs them, but
 // the states', whose switches are the stand-in's alone. Without Playwright
 // or its browser this fails naming the install (`launch` exits 3); it never

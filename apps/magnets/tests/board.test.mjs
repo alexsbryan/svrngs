@@ -1,11 +1,15 @@
 // Magnets' board, as MAGNETS.md's "The whole app" has it, run under Node
 // against the stand-in's route in SQLite (standin.mjs `posted`, sqlite.py),
 // or, where SVRNGS_ROUTE names one, the real route on a computer's svrngs
-// (web/tests/route.mjs; the scene crates/svrngs/tests/scenes/magnets.rs
-// runs it so): each read and each tap sent as the text the page sends. Each
-// law is a check that returns why it broke, or null, and the second test
-// plants one broken board, or one broken route, per law and watches its
-// check catch it, always on the stand-in, whose route a plant can break.
+// (web/tests/route.mjs): JSON `{origin, port, token, db}`, the app's origin
+// there, that svrngs's port and token from its data folder (`api`, `token`)
+// and the app's database file, `state/<group>/magnets.db`, as svrngs's own
+// scene crates/svrngs/tests/scenes/magnets.rs sets it. Unset, it runs on the
+// stand-in alone. Each read and each tap is sent as the text the page
+// sends. Each law is a check that returns why it broke, or null, and the
+// second test plants one broken board, or one broken route, per law and
+// watches its check catch it, always on the stand-in, whose route a plant
+// can break.
 
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
