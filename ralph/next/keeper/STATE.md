@@ -471,7 +471,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - The demo's model is at `/tmp/keeper-demo/qwen2.5-0.5b.gguf`. Search
     nowhere else: a refused read ends the session.
 
-- [ ] avail-run-busy-witness — depends [avail-run-linux] — ONE UNIT (demo only, no production code): close QA's busy-port evidence gap (oc-cruu42, 2026-11-23). At fabda979, `demo/runs/keeper/2026-11-23-run-linux/run.py:57–70` samples `/health` only before Run. It checks the SSH child's liveness, the managed unit's MainPID (0) and Alex's origin. None of those shows the original listener untouched, or nothing written. Patch that scene, with no new harness, to record in its JSONL, before and after the refused Run:
+- [ ] avail-run-busy-witness — depends [avail-run-linux] — ONE UNIT (keeper, plus the demo): fix Run's false success, then close QA's busy-port evidence gap (oc-cruu42, 2026-11-23). At fabda979, `demo/runs/keeper/2026-11-23-run-linux/run.py:57–70` samples `/health` only before Run. It checks the SSH child's liveness, the managed unit's MainPID (0) and Alex's origin. None of those shows the original listener untouched, or nothing written. Patch that scene, with no new harness, to record in its JSONL, before and after the refused Run:
   - the port owner's PID and start time, from `ss` and `/proc/<pid>/stat`;
   - the hash of a stable localhost response body;
   - that the unit file and the keeper's job record are absent, and
@@ -479,6 +479,22 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - the existing share's declaration and revision, which are equal.
 
   Then rerun that scene in the scratch VM and update the README's row. Demo: the busy-port case with all four witnesses equal or absent.
+
+  **First, Run's false success** (QA, 2026-11-23).
+  - Today `apps/svrngs-keeper/src/native_run.rs:97–105` calls a Run
+    verified from `host::wait_for_answer` alone: an HTTP status on either
+    loopback. If another program binds the port after the precheck and
+    the new service exits, Run still says coder is running. Nothing is
+    published wrongly, since Share checks ownership itself, but Sam is
+    told something false.
+  - The fix: claim "running" only with owned-listener evidence, a listener
+    on the port inside the unit's cgroup. Otherwise report the manager's
+    state and the endpoint's readiness as two separate observations.
+  - Reuse what renewal and Share already read. Add no new authorization or
+    parsing stack.
+  - Plant: a foreign listener on the port while the unit has exited. Today
+    it reads verified (red). After the fix it is not (green).
+  - Size: keeper only, a few lines. Counted: none expected.
 
 - [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses, unchanged:
   - the card (`compose.yaml` plus `x-svrngs`) and `card::check`;
