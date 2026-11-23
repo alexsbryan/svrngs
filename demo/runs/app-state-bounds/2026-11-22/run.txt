@@ -1,0 +1,4 @@
+$ cargo test -p svrngs-db --test measure -- --nocapture   # 9da65e7b, Darwin arm64, debug profile (deps at opt-level 2), 2026-11-22 22:15
+MEASURE 16 rows: a tap's write µs best/median/slowest (308, 378, 653); BOARD read µs (21, 24, 65) (QUERY_MOST 250000 µs); answer 493 B (ANSWER_MOST 4194304 B, ROWS_MOST 1000)
+MEASURE 10000 rows: a tap's write µs best/median/slowest (302, 10000, 815694); BOARD read µs (1685, 1730, 5445) (QUERY_MOST 250000 µs); answer 30912 B (ANSWER_MOST 4194304 B, ROWS_MOST 1000)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 126.65s
