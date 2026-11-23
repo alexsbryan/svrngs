@@ -910,12 +910,11 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
                 lend.terms.sign_in_with_svrngs = Some(client.clone());
             }
-            let secret = match share::adds_headers(&lend, theirs) {
-                false => {
-                    tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
-                    None
-                }
-                true => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
+            let secret = if share::adds_headers(&lend, theirs) {
+                here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?
+            } else {
+                tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
+                None
             };
             share_lend(&root, &lend, secret.as_deref())?;
             if asked.readers {

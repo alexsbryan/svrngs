@@ -359,26 +359,23 @@ impl Folders {
     /// (iroh-blobs 0.103 `import_path_impl`, `finish_import_impl`).
     async fn take(&self, path: &Path, was: &Metadata) -> Result<Option<TempTag>, FolderError> {
         let read = |e| FolderError::Read(path.to_path_buf(), e);
-        let tag = match was.len() <= self.inline {
-            true => {
-                let mut bytes = Vec::new();
-                let file = std::fs::File::open(path).map_err(read)?;
-                file.take(was.len() + 1)
-                    .read_to_end(&mut bytes)
-                    .map_err(read)?;
-                if bytes.len() as u64 != was.len() {
-                    return Ok(None);
-                }
-                self.store.add_bytes(bytes).temp_tag().await
+        let tag = if was.len() <= self.inline {
+            let mut bytes = Vec::new();
+            let file = std::fs::File::open(path).map_err(read)?;
+            file.take(was.len() + 1)
+                .read_to_end(&mut bytes)
+                .map_err(read)?;
+            if bytes.len() as u64 != was.len() {
+                return Ok(None);
             }
-            false => {
-                let options = AddPathOptions {
-                    path: path.to_path_buf(),
-                    mode: ImportMode::Copy,
-                    format: BlobFormat::Raw,
-                };
-                self.store.add_path_with_opts(options).temp_tag().await
-            }
+            self.store.add_bytes(bytes).temp_tag().await
+        } else {
+            let options = AddPathOptions {
+                path: path.to_path_buf(),
+                mode: ImportMode::Copy,
+                format: BlobFormat::Raw,
+            };
+            self.store.add_path_with_opts(options).temp_tag().await
         };
         let tag = tag.map_err(|e| FolderError::Store(path.to_path_buf(), e.to_string()))?;
         let now = std::fs::symlink_metadata(path).map_err(read)?;
@@ -791,8 +788,7 @@ pub(crate) fn dirs_of(data_dir: &Path, group: &str) -> Result<Vec<PathBuf>, Stri
         synced::syncing_in(data_dir).map_err(|(at, why)| format!("{}: {why}", at.display()))?;
     Ok(kept
         .into_iter()
-        .filter(|((g, _), _)| g == group)
-        .map(|(_, dir)| dir)
+        .filter_map(|((g, _), dir)| (g == group).then_some(dir))
         .collect())
 }
 

@@ -134,13 +134,12 @@ impl Folders {
 /// Each computer asked, by its key, with its ask's answer: one whose task
 /// failed is said as that, never dropped (#148).
 fn heard(hash: Hash, group: &str, joined: impl Iterator<Item = (String, Ended)>) -> Replies {
-    let mut answers = Vec::new();
-    for (actor, said) in joined {
+    let heard = |(actor, said): (String, Ended)| {
         let said = said.unwrap_or_else(|e| Err(format!("its ask failed: {e}")));
         tracing::debug!(target: "blob", %hash, group, holder = actor, ?said, "blob: a computer of the group asked what it holds");
-        answers.push((actor, said));
-    }
-    answers
+        (actor, said)
+    };
+    joined.map(heard).collect()
 }
 
 /// An ask's task as it ended: its answer, or how the task failed.
