@@ -75,3 +75,71 @@ WebKit Alex opened: {"title":"Run page witness","url":"http://umfrj1nxbj23n9mv5p
 test explicit_run_then_share_in_webkit ... ok
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 49 filtered out; finished in 20.02s
 ```
+
+## Prefill, 2026-11-23
+
+`cargo test --locked -p svrngs-keeper --test promote -- --nocapture` checks
+the real keeper CLI. Both fixture processes can answer `/props`; only the
+one identified as llama-server should suggest a command. The supplied
+model path has spaces and an apostrophe and must parse as one argument.
+On the old card-only answer the new test failed:
+
+```text
+assertion `left == right` failed
+  left: Null
+ right: "coder"
+test facts_suggests_fields_only_for_llama_server ... FAILED
+```
+
+With the fields in place:
+
+```text
+llama-server: "prefill"
+other-listener: "unavailable"
+test facts_suggests_fields_only_for_llama_server ... ok
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+```
+
+`cargo test --locked -p svrngs-node --test home prefill_is_local_and_read_only -- --nocapture`
+drives the home origin with a session proof. Before the closed query was
+parsed, the extra command reached the list handler; red, then green:
+
+```text
+assertion `left == right` failed: closed prefill query: {"error":"svrngs couldn’t verify this. Check it from your terminal, then look again.","kind":"closed"}
+  left: 403
+ right: 400
+test prefill_is_local_and_read_only ... FAILED
+
+foreign: 403; extra command: 400; local unread: null; no lend
+test prefill_is_local_and_read_only ... ok
+```
+
+`bash demo/runs/keeper/2026-11-23-run-page/gate.sh --prefill` uses WebKit,
+the real local routes and the keeper. With `--plant-submit`, the form is
+submitted programmatically before the confirming press; with `--plant-edit`,
+the fixture lets a person edit the field while the reply is pending but
+intercepts the input event before it can invalidate the suggestion. Both
+plants failed on their own assertion:
+
+```text
+AssertionError [ERR_ASSERTION]: Run submitted without a confirming press
+1 !== 0
+test run_prefill_waits_for_confirmation_in_webkit ... FAILED
+
+AssertionError [ERR_ASSERTION]: late answer replaced Sam’s edit
++ `llama-server --model "/tmp/.tmpyqe2rS/Sam's model.gguf" --host 127.0.0.1 --port 20100`
+- 'Sam’s own command'
+test run_prefill_waits_for_confirmation_in_webkit ... FAILED
+```
+
+Without the plants, the late answer leaves the edit intact. A second
+late answer cannot fill the form opened from another row. The model's
+suggestion shows its actual port and folder, and the edited command runs
+only after a press. The original listener remains alive and no lend exists.
+The gate stops its test service and discards its scratch home and manager.
+
+```text
+WebKit prefill: {"command":"llama-server --model \"/tmp/.tmpKO1RM3/Sam's model.gguf\" --host 127.0.0.1 --port 20100","confirmedPosts":1,"folder":"/tmp/.tmpKO1RM3","lateEdit":"preserved","otherRow":"blank command","port":20100}
+test run_prefill_waits_for_confirmation_in_webkit ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 50 filtered out; finished in 5.75s
+```

@@ -80,7 +80,7 @@ use crate::join::{Entered, NotJoined};
 use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
-use crate::plan::{self, run, Availability, Done};
+use crate::plan::{self, run, Action, Availability, Done};
 use crate::share::{self, Share, ShareRefusal};
 
 /// The home page's host, before its port.
@@ -722,15 +722,24 @@ async fn run_one(Json(ask): Json<ToRun>) -> Result<Json<String>, Response> {
     run_reply(run::native(ask.name.as_str(), plan::RunView::Page, args).await)
 }
 
-async fn run_action(
-    Json((name, action)): Json<(LendName, plan::Action)>,
-) -> Result<Json<()>, Response> {
+async fn run_action(Json((name, action)): Json<(LendName, Action)>) -> Result<Json<()>, Response> {
     let answer = run::keeper(&plan::RunView::Page, [action.verb(), name.as_str()]).await;
     run_reply(answer.map(drop))
 }
 
-async fn run_rows() -> Result<Json<serde_json::Value>, Response> {
-    run_reply(run::rows().await)
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RunQuery {
+    prefill: Option<NonZeroU16>,
+}
+
+async fn run_rows(Query(query): Query<RunQuery>) -> Response {
+    if let Some(port) = query.prefill {
+        let out = run::keeper(&plan::RunView::Page, ["facts", &port.to_string()]).await;
+        let json = out.unwrap_or_else(|_| b"null".to_vec());
+        return ([(header::CONTENT_TYPE, "application/json")], json).into_response();
+    }
+    run_reply(run::rows().await).into_response()
 }
 
 fn run_reply<T>(got: Result<T, String>) -> Result<Json<T>, Response> {

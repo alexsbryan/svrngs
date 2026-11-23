@@ -172,6 +172,42 @@ async fn run_routes_take_only_the_home_pages_closed_requests() {
     alex.net().close().await;
 }
 
+#[tokio::test]
+async fn prefill_is_local_and_read_only() {
+    let dir = tempfile::tempdir().unwrap();
+    let alex = on_wire::start(1, dir.path()).await;
+    let host = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{host}\r\n");
+    let foreign = "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\nOrigin: https://elsewhere.invalid\r\n";
+    let browser = Browser::of(&alex);
+    let port = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let path = format!("/run?prefill={}", port.local_addr().unwrap().port());
+    assert_eq!(
+        ask(&browser, "GET", &host, &path, foreign, "").await.status,
+        403
+    );
+    let got = ask(
+        &browser,
+        "GET",
+        &host,
+        &format!("{path}&command=/bin/true"),
+        &own,
+        "",
+    )
+    .await;
+    assert_eq!(got.status, 400, "closed prefill query: {}", got.body);
+    let got = ask(&browser, "GET", &host, &path, &own, "").await;
+    assert_eq!(got.status, 200, "{}", got.body);
+    assert!(got.json().get("command").is_none(), "{}", got.body);
+    assert!(lend::all(dir.path()).unwrap().is_empty());
+    println!(
+        "foreign: 403; extra command: 400; local unread: {}; no lend",
+        got.body
+    );
+    alex.net().close().await;
+}
+
 /// **The home page answers only itself, shows what `/v1/lends` answers, and
 /// takes only the person's yes and stop.** Typed, it serves its page and
 /// module, never to be framed, and every answer, its session's bootstrap

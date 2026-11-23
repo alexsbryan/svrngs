@@ -40,9 +40,11 @@ They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, 
 ## Run coder with svrngs
 
 Trying a model in a terminal is fine. A **Shared while you run it** copy
-doesn't start again by itself. To have svrngs run coder, stop your terminal
-copy first. Then choose **Run it with svrngs** under **Already running here**,
-or run this in a terminal, using your model's full path and the flags you need:
+doesn't start again by itself. To have svrngs run coder, look for your
+terminal copy under **Already running here** and choose **Run it with svrngs**
+on its row. Review the suggested model path and command, and add any flags
+you need. Stop the terminal copy, then press Run. Or stop the copy and run
+this in a terminal, using your model's full path and flags:
 
 ```
 svrngs run coder --port 8101 -- /usr/bin/llama-server -m "$HOME/models/my-model.gguf" --host 127.0.0.1 --port 8101

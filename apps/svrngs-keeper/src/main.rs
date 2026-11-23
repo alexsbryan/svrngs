@@ -34,7 +34,7 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
   unless --name gives one. The same card again changes nothing; a new one
   replaces it, and the one before is kept beside it as previous.yaml.
 
-  facts: suggest a llama-server card to review, as JSON.
+  facts: suggest a llama-server command and folder to review, as JSON.
   list: each card kept here, and whether it runs.
   stop: stop it until you start it, including after signing in. start: run it again.
   restart: restart it if it is running.

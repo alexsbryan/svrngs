@@ -228,8 +228,12 @@ with holders descended from the active launch agent. Otherwise it reports
 manager state and port readiness separately (`native_run.rs`); neither
 read approves sharing. The home page's native Run asks for a name,
 port, folder and command; the keeper parses quoting without running a
-shell. After Run verifies the program, the page points to **Already running
-here** to share it; the terminal gives a Share command for its verified port.
+shell. Choosing Run on an unmanaged listener's row opens that same form.
+The home page's read-only `/run?prefill=<port>` passes through the keeper's
+llama-server suggestion, when available, without replacing edits or
+submitting the form. After Run verifies the program, the page points to
+**Already running here** to share it; the terminal gives a Share command
+for its verified port.
 The page's Start and Stop controls use only the keeper's observed jobs
 and leave sharing alone. The share review is still a separate act.
 When Share would grant a running service, it

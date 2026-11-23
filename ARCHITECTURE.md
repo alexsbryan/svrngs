@@ -984,11 +984,11 @@ changed, under upstream's stock rustfmt and one clippy allowance
 renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
 `src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
 starts, restarts and removes one, and supervises nothing. `tests/host.sh` proves it
-under a real user manager. `facts <port>` only suggests a card: `src/host.rs`
-reads the listeners and asks a recognized llama-server for its model path,
-`src/promote.rs` fills `cards/llama-server`, and `src/facts.rs` returns the
-suggestion as JSON. No live command or environment is copied. The keeper
-installs an explicitly supplied command with `run --port … -- <command>`
+under a real user manager. `facts <port>` only suggests Run form fields:
+`src/host.rs` reads the listeners and asks a recognized llama-server for
+its model path, `src/promote.rs` quotes the command, and `src/facts.rs`
+returns the suggestion as JSON. No live command or environment is copied.
+The keeper installs an explicitly supplied command with `run --port … -- <command>`
 (`src/native_run.rs`), using the same card renderer. It refuses a port
 with a listener on any address, and waits up to 30 s for a local HTTP
 answer (llama-server must finish loading). `run --port … --card …` takes

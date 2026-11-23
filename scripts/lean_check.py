@@ -989,12 +989,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # avail-run-mac-renew spends 105 for a shared live grant witness and plist registration.
 # avail-mac-plist-read spends 11 to parse the door's login plist, leaving 10 for shipping.
 # avail-ship packs both binaries under one checksum and adds the uninstall notice.
+# avail-page-prefill uses the existing Run route and form: +6 non-JS, +10 JS.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25720,
+    ".": 25724,
 
-    "js": 8732,
+    "js": 8742,
 
     "swift": 1,
 }

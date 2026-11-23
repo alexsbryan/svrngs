@@ -5,16 +5,29 @@ use svrngs_keeper::{host, promote};
 
 #[derive(Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
-pub enum Facts {
-    Prefill { port: u16, card: String },
-    Unavailable { port: u16, why: String },
+pub enum Facts<'a> {
+    Prefill {
+        port: u16,
+        name: &'a str,
+        folder: String,
+        command: String,
+    },
+    Unavailable {
+        port: u16,
+        why: String,
+    },
 }
 
-pub fn read(port: u16, name: &str) -> Facts {
-    match prefill(port, name) {
-        Ok(card) => {
+pub fn read(port: u16, name: &str) -> Facts<'_> {
+    match prefill(port) {
+        Ok((folder, command)) => {
             tracing::debug!(port, "facts:prefill");
-            Facts::Prefill { port, card }
+            Facts::Prefill {
+                port,
+                name,
+                folder,
+                command,
+            }
         }
         Err(why) => {
             tracing::debug!(port, %why, "facts:no_prefill");
@@ -23,7 +36,7 @@ pub fn read(port: u16, name: &str) -> Facts {
     }
 }
 
-fn prefill(port: u16, name: &str) -> Result<String, String> {
+fn prefill(port: u16) -> Result<(String, String), String> {
     let sockets = host::listeners(port)?;
     let first = sockets.first().ok_or("nothing listens on this port")?;
     let pid = *first.pids.first().ok_or("the listener could not be named")?;
@@ -32,6 +45,12 @@ fn prefill(port: u16, name: &str) -> Result<String, String> {
     }
     let folder = host::llama_folder(pid)?;
     let model = host::props(promote::dial(&first.addr), port)?;
-    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-    Ok(promote::llama_card(name, &folder, port, &model, &home))
+    let command = promote::llama_command(&folder, port, &model)?;
+    Ok((
+        folder
+            .into_os_string()
+            .into_string()
+            .map_err(|_| "folder is not UTF-8")?,
+        command,
+    ))
 }

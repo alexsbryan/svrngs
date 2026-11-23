@@ -1,4 +1,4 @@
-//! Interpret listener observations and draft a llama-server card for review.
+//! Interpret listener observations and draft a llama-server command for review.
 
 use std::path::Path;
 
@@ -55,35 +55,18 @@ pub fn props(body: &str) -> Result<String, String> {
         .ok_or_else(|| "/props gave no model_path".into())
 }
 
-fn homed(path: &str, home: &str) -> String {
-    match path.strip_prefix(home).and_then(|r| r.strip_prefix('/')) {
-        Some(rest) => format!("~/{rest}"),
-        None if path == home => "~".into(),
-        None => path.into(),
-    }
-}
-
 /// A relative model path is relative to the program's folder, not ours.
-pub fn model(folder: &Path, reported: &str, home: &str) -> String {
-    homed(&folder.join(reported).to_string_lossy(), home)
-}
-
-const LLAMA: &str = include_str!("../cards/llama-server/compose.yaml");
-
-fn q(s: &str) -> String {
-    // A JSON string is a YAML double-quoted scalar, escapes and all.
-    serde_json::Value::from(s).to_string()
-}
-
-pub fn llama_card(name: &str, folder: &Path, port: u16, reported: &str, home: &str) -> String {
-    let model = model(folder, reported, home);
-    [
-        ("@name@", q(name)),
-        ("@about@", q(&format!("llama-server with your model {model}"))),
-        ("@model@", q(&model)),
-        ("@port@", port.to_string()),
-        ("@folder@", q(&homed(&folder.to_string_lossy(), home))),
-    ]
-    .iter()
-    .fold(LLAMA.to_string(), |card, (k, v)| card.replace(k, v))
+pub fn llama_command(folder: &Path, port: u16, reported: &str) -> Result<String, String> {
+    let model = folder.join(reported);
+    let model = model.to_str().ok_or("model path is not UTF-8")?;
+    shlex::try_join([
+        "llama-server",
+        "--model",
+        model,
+        "--host",
+        "127.0.0.1",
+        "--port",
+        &port.to_string(),
+    ])
+    .map_err(|e| e.to_string())
 }

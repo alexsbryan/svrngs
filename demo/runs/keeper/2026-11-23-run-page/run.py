@@ -38,6 +38,12 @@ def main():
         unit = "svrngs-keeper-test-browser.service"
         log = home / "browser.log"
         plant = "Environment=SVRNGS_RUN_PAGE_PLANT=1\n" if "--plant" in sys.argv else ""
+        scene = "explicit_run_then_share_in_webkit"
+        if "--prefill" in sys.argv:
+            scene = "run_prefill_waits_for_confirmation_in_webkit"
+            for arm in ("submit", "edit"):
+                if f"--plant-{arm}" in sys.argv:
+                    plant = f"Environment=SVRNGS_PREFILL_PLANT={arm}\n"
         stdin = ""
         tty = "--tty" in sys.argv
         if tty:
@@ -61,7 +67,7 @@ def main():
             f"Environment=DBUS_SESSION_BUS_ADDRESS=unix:path={runtime}/bus\n"
             f"Environment=SVRNGS_RUN_PAGE_DEMO=scratch PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright\n"
             f"Environment=TOKIO_WORKER_THREADS=4 PATH={home}:/opt/node/bin:/usr/bin:/bin\n{plant}{stdin}"
-            f"ExecStart={home}/browser --ignored --exact explicit_run_then_share_in_webkit --nocapture\n"
+            f"ExecStart={home}/browser --ignored --exact {scene} --nocapture\n"
             f"StandardOutput=append:{log}\nStandardError=inherit\n"
             f"TimeoutStartSec=180\n[Install]\nWantedBy=default.target\n"
         )

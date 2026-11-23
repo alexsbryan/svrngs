@@ -1980,6 +1980,67 @@ async fn slow_way(relay: &Server, by: Duration) -> String {
 /// port in both engines' runs of [`the_home_page_lends_what_runs_here`].
 static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "run in the gate with the isolated user manager"]
+async fn run_prefill_waits_for_confirmation_in_webkit() {
+    use tokio::io::{AsyncBufReadExt, BufReader};
+
+    assert_eq!(
+        std::env::var("SVRNGS_RUN_PAGE_DEMO").as_deref(),
+        Ok("scratch")
+    );
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let (ada, _) = house(dir.path(), &relay, &signing(7)).await;
+    let held = free_here(20100).await;
+    let port = held.local_addr().unwrap().port();
+    let other = free_here(port + 1).await;
+    let other_port = other.local_addr().unwrap().port();
+    let run = free_here(other_port + 1).await;
+    let run_port = run.local_addr().unwrap().port();
+    let executable = dir.path().join("llama-server");
+    std::fs::copy("/usr/bin/python3", &executable).unwrap();
+    drop(held);
+    let mut listener = tokio::process::Command::new(executable)
+        .args([
+            "-u",
+            "-c",
+            include_str!("../../../../apps/svrngs-keeper/tests/props_fixture.py"),
+            &port.to_string(),
+        ])
+        .current_dir(dir.path())
+        .stdout(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .unwrap();
+    let mut ready = String::new();
+    BufReader::new(listener.stdout.take().unwrap())
+        .read_line(&mut ready)
+        .await
+        .unwrap();
+    assert_eq!(ready.trim(), port.to_string());
+    drop(run);
+    let seen = drive(
+        Engine::Webkit,
+        "run-prefill.mjs",
+        json!({
+            "ask": format!("http://svrngs.localhost:{}/", ada.api_addr().port()),
+            "port": port, "other": other_port, "runPort": run_port, "folder": dir.path(),
+            "plant": std::env::var("SVRNGS_PREFILL_PLANT").ok(),
+        }),
+        None,
+    )
+    .await;
+    assert!(svrngs_node::lend::all(dir.path()).unwrap().is_empty());
+    assert!(
+        listener.try_wait().unwrap().is_none(),
+        "Run must leave the original alone"
+    );
+    listener.kill().await.unwrap();
+    println!("WebKit prefill: {seen}");
+}
+
 // The isolated user manager and packaged keeper are supplied by the demo
 // driver. No test in the standard browser suite touches a login manager.
 #[cfg(target_os = "linux")]
