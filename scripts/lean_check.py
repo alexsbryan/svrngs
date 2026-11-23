@@ -1014,10 +1014,21 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # per slice: the second ceiling whole, 26,651 (+700 over 25,951), and
 # JavaScript at 8,741 (+60, and the operator's +10 for a phone's signed
 # write, "A: frame signs"). It comes down once, to where the build lands.
+# (2026-11-22) The operator's raise for a phone's signed write, "Raise +170
+# now": the cap to 26,821. Phones came to about +360 over 26,456, against
+# +160 estimated: the phone's check of every change against its op before it
+# signs (web/src/set.rs, 130), the home remembering each place it handed so a
+# set carried after its prepare is never signed twice (+38), and the copied
+# file's rebuild with twins (+40). The economizing first: the push before
+# sleep (-35, d9118b3e), signed heads (-30, 86bbaff1) and sets kept waiting
+# for a binding (-73, 1d411099). Phones' own cuts, in set.rs and the
+# prepare, land in its commits. The rest is the phone's check, which is what
+# keeps a computer between a phone and its group from signing for it. It
+# comes down to where phones lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26651,
+    ".": 26821,
 
     "js": 8741,
 
