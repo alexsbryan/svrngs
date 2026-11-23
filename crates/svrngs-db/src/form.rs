@@ -43,6 +43,12 @@ impl Table {
     pub fn owned(&self) -> bool {
         self.key.first().is_some_and(|k| k.eq_ignore_ascii_case("person_key"))
     }
+
+    /// Its file columns, in its order (`parse.rs`, `names_a_file`).
+    pub fn files(&self) -> Vec<String> {
+        let files = self.columns.iter().filter(|c| crate::parse::names_a_file(c));
+        files.cloned().collect()
+    }
 }
 
 /// One op as one statement, and the values it binds.

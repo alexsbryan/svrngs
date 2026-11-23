@@ -968,7 +968,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
 /// database is made from it and, where `was` names the folder of the version
 /// it follows, held to only adding to that one's (`svrngs_db::check`); refused
 /// when anything is, so an agent's loop reads it by the exit code. Its
-/// all-clear names each table, owned or shared.
+/// all-clear names each table, owned or shared, and each file column.
 fn checked(dir: &Path, was: Option<&Path>) -> Result<String, Refusal> {
     let shown = dir.display();
     let none = |d: &Path| {
@@ -1004,9 +1004,15 @@ fn checked(dir: &Path, was: Option<&Path>) -> Result<String, Refusal> {
         return Err(Refused::Unfit(format!("{fix}:\n{}", said.join("\n"))).into());
     }
     let tables = made.and_then(Result::ok).unwrap_or_default();
-    let each = tables.into_iter().map(|(t, owned)| match owned {
-        true => format!(" {t}, each row its person's own."),
-        false => format!(" {t}, any member's to change."),
+    let named = |files: &[String]| -> String {
+        files
+            .iter()
+            .map(|f| format!(" {f} names a file."))
+            .collect()
+    };
+    let each = tables.into_iter().map(|(t, owned, files)| match owned {
+        true => format!(" {t}, each row its person's own.{}", named(&files)),
+        false => format!(" {t}, any member's to change.{}", named(&files)),
     });
     let each: String = each.collect();
     let each = (!each.is_empty()).then(|| format!(" Its database's tables:{each} A column you add stays in every copy of your group for good, so try a new one in a group of your own first."));

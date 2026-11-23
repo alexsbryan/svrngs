@@ -27,7 +27,7 @@ use rusqlite::{Connection, OptionalExtension as _};
 
 use crate::form::Table;
 use crate::sync::rows;
-use crate::{Open, Refused, fault, internal, schema_rule, tables_of};
+use crate::{Open, Refused, fault, internal, parse, schema_rule, tables_of};
 
 /// Why a `schema.sql` makes no database, a closed set (AGENTS 9): what
 /// stopped it, why, and the fix (svrn-docs `magnets-spikes/README.md`, S5,
@@ -99,6 +99,8 @@ pub enum Unmade {
         n = crate::COLUMNS_MOST
     )]
     Wide(String),
+    #[error("In {0}, {1} names a file and holds its name as text. To fix it, declare it `{1} TEXT`, or rename it.")]
+    File(String, String),
     #[error("The schema.sql it follows makes no database either: {0}")]
     Follows(String),
 }
@@ -185,7 +187,8 @@ pub(crate) fn made(conn: &mut Connection, schema: &str) -> Result<BTreeMap<Strin
 /// as cr-sqlite writes a DEFAULT's words into its own statements
 /// (`vendor/cr-sqlite/core/rs/core/src/backfill.rs:226-228`) and a merge
 /// fills it into the row it makes again (`changes_vtab_write.rs`,
-/// `clear_earlier_life`).
+/// `clear_earlier_life`); and each file column TEXT, as it holds a file's
+/// name (`parse.rs`, `names_a_file`).
 fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
     let plain = "SELECT CASE WHEN l.wr THEN 'the table is WITHOUT ROWID' ELSE \
         (SELECT c.name || ' is GENERATED' FROM pragma_table_xinfo(?1) c WHERE c.hidden > 1) END FROM pragma_table_list(?1) l";
@@ -211,11 +214,12 @@ fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
         FROM pragma_index_list(?1) l \
         WHERE l.partial OR EXISTS (SELECT 1 FROM pragma_index_xinfo(l.name) x WHERE x.key AND x.cid < 0)";
     let index: Option<String> = conn.query_row(index, [t], |r| r.get(0)).optional().map_err(fault)?;
-    let defaults = "SELECT name, dflt_value FROM pragma_table_xinfo(?1) WHERE dflt_value NOT NULL";
-    let defaults: Vec<(String, String)> = rows(conn, defaults, [t], |r| Ok((r.get(0)?, r.get(1)?))).map_err(fault)?;
-    let unvalued = (defaults.into_iter()).find(|(_, d)| !literal(d) || d.len() > crate::VALUE_MOST);
-    let unvalued = unvalued.map(|(c, _)| format!("In {t}, the DEFAULT of {c} isn't one short value"));
-    tracing::debug!(target: "state", table = t, ?unplain, ?folded, off, ?checked, ?index, ?unvalued, "state: a table held to svrngs's limits, a rowid table of plain columns with no CHECK and each DEFAULT one value, its key compared as BINARY, its person_key TEXT first in the key of a STRICT table, and each index of columns with no WHERE");
+    let each = "SELECT name, type, dflt_value FROM pragma_table_xinfo(?1)";
+    let each: Vec<Declared> = rows(conn, each, [t], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))).map_err(fault)?;
+    let unvalued = (each.iter()).find(|(.., d)| d.as_ref().is_some_and(|d| !literal(d) || d.len() > crate::VALUE_MOST));
+    let unvalued = unvalued.map(|(c, ..)| format!("In {t}, the DEFAULT of {c} isn't one short value"));
+    let unfiled = (each.iter()).find(|(c, kind, _)| parse::names_a_file(c) && !kind.eq_ignore_ascii_case("text"));
+    tracing::debug!(target: "state", table = t, ?unplain, ?folded, off, ?checked, ?index, ?unvalued, ?unfiled, "state: a table held to svrngs's limits, a rowid table of plain columns with no CHECK and each DEFAULT one value, its key compared as BINARY, its person_key TEXT first in the key of a STRICT table, each file column TEXT, and each index of columns with no WHERE");
     let runs = [
         (checked, "take the CHECK out, and check the value in your page"),
         (index, "index columns, keeping a worked-out value in its own column"),
@@ -225,9 +229,13 @@ fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
     let unmade = (unplain.map(|u| Unmade::Unplain(t.into(), u)))
         .or(folded.map(|c| Unmade::Folded(t.into(), c)))
         .or(off.map(|o| Unmade::PersonKey(t.into(), o)))
+        .or(unfiled.map(|(c, ..)| Unmade::File(t.into(), c.clone())))
         .or(runs);
     unmade.map_or(Ok(()), |u| Err(Refused::Schema(u)))
 }
+
+/// A column as SQLite keeps its declaration: its name, type and DEFAULT.
+type Declared = (String, String, Option<String>);
 
 /// Whether `words`, a DEFAULT as SQLite keeps it (`pragma_table_xinfo`'s
 /// `dflt_value`, the text between its parentheses where it had them), is
@@ -278,16 +286,18 @@ fn columns(conn: &Connection) -> Result<Columns, Refused> {
 }
 
 /// `schema`, a `schema.sql`, as `svrngs check` reads it: each table it
-/// makes and whether it is owned ([`Table::owned`]), or the first refusal,
+/// makes, whether it is owned ([`Table::owned`]) and its file columns
+/// (`parse.rs`, `names_a_file`), or the first refusal,
 /// made on a scratch database as a database is made from it ([`made`]);
 /// and, where it follows `was`, an earlier version's, refused unless it only
 /// adds to it ([`follows`]).
-pub fn check(schema: &str, was: Option<&str>) -> Result<Vec<(String, bool)>, Refused> {
+pub fn check(schema: &str, was: Option<&str>) -> Result<Vec<(String, bool, Vec<String>)>, Refused> {
     let (_, now, tables) = scratch(schema)?;
     let earlier = |r: Refused| Refused::Schema(Unmade::Follows(r.to_string()));
     was.map(|was| follows(&scratch(was).map_err(earlier)?.1, &now))
         .transpose()?;
-    Ok(tables.iter().map(|(t, table)| (t.clone(), table.owned())).collect())
+    let each = |(t, table): (&String, &Table)| (t.clone(), table.owned(), table.files());
+    Ok(tables.iter().map(each).collect())
 }
 
 /// Whether `now` only adds to `was` (APP_STATE §4, "It only adds"), each a

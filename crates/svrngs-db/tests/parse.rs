@@ -618,3 +618,39 @@ fn a_value_past_value_most_is_refused_for_good_on_every_copy() {
         .expect_err("a value past VALUE_MOST kept");
     assert_eq!(refused.said(), (422, "unkept"), "{refused}");
 }
+
+/// **A file column holds one spelling of a file's name, on every copy**
+/// (svrn-docs `rings/current/APP_FILES.md` §4, "A file column"; §7,
+/// invariant 2): a column named `file`, or ending in `_file`, holds 64
+/// lowercase hex, or null. Computer 9's card names its photo so, and is
+/// taken, as is one naming none; the same card, its name in upper case or
+/// in base32, as iroh-blobs also reads one, is refused for good by two
+/// copies, none of it applied; and a write of either is refused at the
+/// writer, in words naming the column. Plant, watched failing: the code
+/// before this commit (the upper-case name taken at the write and at
+/// apply).
+#[test]
+fn a_file_column_holds_one_spelling_of_a_file_s_name() {
+    const PHOTOS: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, photo_file TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let name = "0123456789abcdef".repeat(4);
+    let photo = |n: Value| json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk", "photo_file": n } }]);
+    let good = written(dir.path(), ("board", PHOTOS), photo(json!(name)));
+    let none = written(&dir.path().join("none"), ("board", PHOTOS), photo(Value::Null));
+    for (n, set) in [(5, &good), (6, &none)] {
+        let to = db(&dir.path().join("taken"), n, ("board", PHOTOS));
+        assert_eq!(took(&to, std::slice::from_ref(set)), [Took::Taken], "on copy {n}");
+    }
+    let base32 = "ciqdkzy5xb7acbbacnv3tgjslc5hmrpkxfyq2ukjvsy6dhnvi4kwsnq".to_string();
+    for (what, bad) in [("upper case", name.to_uppercase()), ("base32", base32)] {
+        let set = remade(&good, &key(9), "board", |c| {
+            let named = c.iter_mut().filter(|c| c.cid == "photo_file");
+            named.for_each(|c| c.val = Val::Text(bad.clone()))
+        });
+        refused_on_two_copies(dir.path(), ("board", PHOTOS), &set, what);
+        let refused = db(&dir.path().join(what), 4, ("board", PHOTOS)).write(&photo(json!(bad)), &bound());
+        let refused = refused.expect_err("a name in another spelling kept");
+        assert_eq!(refused.said(), (422, "unkept"), "{refused}");
+        assert!(refused.to_string().contains("cards.photo_file"), "{refused}");
+    }
+}

@@ -82,6 +82,11 @@ each one it finds, with the fix, and exits non-zero:
   page as it writes.
 - At most 32 columns in a table or an index, so every row fits one read.
   Split a wider table in two, keyed by the same id.
+
+A column named `file`, or ending in `_file` like `photo_file`, holds a
+file's name: 64 lowercase hex characters, or `NULL`. Declare it `TEXT`.
+`svrngs check` names each one, and a write of any other value is refused.
+Files themselves come in a later release.
 - A column has a name, a type, `NOT NULL` or not, its place in the key,
   and a `DEFAULT` of one value, like `0`, `-1`, `'todo'` or `NULL`. No
   `CHECK`, and no function or other expression anywhere. An index orders

@@ -34,7 +34,8 @@ fn checked(args: &[&Path]) -> (bool, String) {
 }
 
 /// **`svrngs check` reads schema.sql by svrngs-db's rule**: a schema it
-/// takes is named table by table, owned or shared; a NOCASE key is refused
+/// takes is named table by table, owned or shared, each file column said;
+/// a NOCASE key is refused
 /// with its fix, beside the page's findings, and the exit code says so, as
 /// a row schema.sql inserts is, since it only declares, and a CHECK, an
 /// index of an expression and a table past 32 columns are, each with its
@@ -51,6 +52,10 @@ fn svrngs_check_reads_schema_sql_by_svrngs_db_s_rule() {
     let (passed, said) = checked(&[&board]);
     assert!(passed, "{said}");
     assert!(said.contains("Its database's tables: cards, any member's to change. votes, each row its person's own."), "{said}");
+    let photos =
+        "CREATE TABLE photos (id TEXT PRIMARY KEY NOT NULL, photo_file TEXT, poster_file TEXT);\n";
+    let (passed, said) = checked(&[&app(root.path(), "photos", Some(photos))]);
+    assert!(passed && said.contains("photos, any member's to change. photo_file names a file. poster_file names a file."), "{said}");
 
     let tags = app(
         root.path(),

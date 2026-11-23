@@ -58,6 +58,26 @@ pub enum Unfit {
         kb = crate::VALUE_MOST >> 10
     )]
     Long(String),
+    #[error("{0} holds a file's name, as a column named file or ending in _file does: 64 lowercase hex, or null")]
+    File(String),
+}
+
+/// Whether `column` names a file (svrn-docs `rings/current/APP_FILES.md`
+/// §4, "A file column"): `file`, or a name ending in `_file`, in any case,
+/// found by name as `person_key` is. This rule's one home, read where a
+/// schema is checked (`schema.rs`, `limits`) and where a change is taken
+/// ([`fit`]).
+pub(crate) fn names_a_file(column: &str) -> bool {
+    let c = column.to_ascii_lowercase();
+    c == "file" || c.ends_with("_file")
+}
+
+/// Whether `v` is a file's name in the one spelling every copy keeps: 64
+/// lowercase hex, or null. iroh-blobs reads base32 too, so two spellings
+/// would hold one file in two values.
+fn spelled(v: &Sql) -> bool {
+    let hex = |t: &String| t.len() == 64 && t.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+    matches!(v, Sql::Null) || matches!(v, Sql::Text(t) if hex(t))
 }
 
 /// What a column keeps a value as it is given: its declared type's
@@ -131,7 +151,8 @@ pub(crate) fn parse(bytes: &[u8], tables: &BTreeMap<String, Table>) -> Result<Va
 /// length odd, since cr-sqlite merges a change at an even one as its row's
 /// delete and no write makes one, so only a row's own change deletes it;
 /// no NULL for a NOT NULL column, which SQLite would refuse on every copy
-/// alike; and no key or value past [`crate::VALUE_MOST`] bytes, so every
+/// alike; a file column's value a file's name in its one spelling
+/// ([`names_a_file`]); and no key or value past [`crate::VALUE_MOST`] bytes, so every
 /// row a copy holds fits one page's read, sorted or not, and every copy
 /// refuses it alike, never a row refused on the copy where its change won.
 pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Result<Valid, Unfit> {
@@ -152,11 +173,14 @@ pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Res
             .flat_map(|k| t.key.iter().zip(k))
             .map(|(col, v)| (col, v, true));
         let value = (c.cid != SENTINEL).then_some((&c.cid, &c.val, false));
-        let wrong = keyed.chain(value).find(|(col, v, key)| !kept(col, v, *key));
+        let cells: Vec<_> = keyed.chain(value).collect();
+        let wrong = cells.iter().find(|(col, v, key)| !kept(col, v, *key));
+        let unnamed = cells.iter().find(|(col, v, _)| names_a_file(col) && !spelled(v));
         let why = match key {
             _ if !column => Unfit::NoColumn(named()),
             None => Unfit::Key(c.table.clone()),
             _ if let Some((col, ..)) = wrong => Unfit::Kind(format!("{}.{col}", c.table)),
+            _ if let Some((col, ..)) = unnamed => Unfit::File(format!("{}.{col}", c.table)),
             _ if size.max(c.pk.len()) > crate::VALUE_MOST => Unfit::Long(named()),
             _ if !versions.contains(&c.col_version) || !versions.contains(&c.cl) => Unfit::Versions(named()),
             _ if c.cid != SENTINEL && c.cl % 2 == 0 => Unfit::Unread,

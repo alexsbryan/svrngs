@@ -119,7 +119,7 @@ fn what_the_schema_s_authorizer_refuses_is_said_with_its_fix() {
 #[test]
 fn an_index_is_made() {
     let schema = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, col TEXT);\nCREATE INDEX cards_col ON cards (col);";
-    assert_eq!(check(schema, None), Ok(vec![("cards".into(), false)]));
+    assert_eq!(check(schema, None), Ok(vec![("cards".into(), false, vec![])]));
 }
 
 /// **A key compared as anything but BINARY is refused**: cr-sqlite keys a
@@ -142,7 +142,7 @@ fn a_key_compared_as_anything_but_binary_is_refused() {
     let plain = "CREATE TABLE tags (name TEXT PRIMARY KEY NOT NULL, label TEXT COLLATE NOCASE);";
     assert_eq!(
         check(plain, None),
-        Ok(vec![("tags".into(), false)]),
+        Ok(vec![("tags".into(), false, vec![])]),
         "a column outside the key may fold"
     );
 }
@@ -190,7 +190,7 @@ fn an_owned_table_s_person_key_is_text_first_in_a_strict_key() {
         votes(text, "person_key, film", " STRICT") + "\nCREATE TABLE films (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
     assert_eq!(
         check(&schema, None),
-        Ok(vec![("films".into(), false), ("votes".into(), true)])
+        Ok(vec![("films".into(), false, vec![]), ("votes".into(), true, vec![])])
     );
 }
 
@@ -214,7 +214,7 @@ fn a_schema_that_follows_another_only_adds_to_it() {
         CREATE INDEX cards_note ON cards (note);\nCREATE TABLE lists (id TEXT PRIMARY KEY NOT NULL);";
     assert_eq!(
         check(grown, Some(lines)),
-        Ok(vec![("cards".into(), false), ("lists".into(), false)])
+        Ok(vec![("cards".into(), false, vec![]), ("lists".into(), false, vec![])])
     );
     let refusals = [
         (
@@ -450,5 +450,31 @@ fn schema_sql_only_declares() {
     let declared = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT COLLATE NOCASE, n INTEGER NOT NULL DEFAULT -1,\n\
         c TEXT DEFAULT 'it''s', r REAL DEFAULT +1.5e3, b BLOB DEFAULT x'00ff', z DEFAULT NULL, s TEXT DEFAULT '');\n\
         CREATE INDEX t_v ON t (v DESC, n COLLATE BINARY);";
-    assert_eq!(check(declared, None), Ok(vec![("t".into(), false)]));
+    assert_eq!(check(declared, None), Ok(vec![("t".into(), false, vec![])]));
+}
+
+/// **A file column is TEXT, and the check names each one** (svrn-docs
+/// `rings/current/APP_FILES.md` §4, "A file column"): a column named
+/// `file`, or ending in `_file`, in any case, holds a file's name, so one
+/// declared otherwise, or with no type, is refused with its fix; each one
+/// declared TEXT is taken and named beside its table, and `profile`, which
+/// ends in `file` but not `_file`, is no file column. Plant, watched
+/// failing: the code before this commit (`photo_FILE INTEGER` taken).
+#[test]
+fn a_file_column_is_text_and_the_check_names_each_one() {
+    for schema in [
+        "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, photo_FILE INTEGER);",
+        "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, file BLOB);",
+        "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, poster_file);",
+    ] {
+        let words = refused(schema);
+        println!("MEASURE {schema}\n  {words}");
+        assert!(
+            words.contains("names a file") && words.contains("To fix it"),
+            "{schema}: {words}"
+        );
+    }
+    let taken = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, photo_file TEXT, File text, profile TEXT);";
+    let files = vec!["photo_file".to_string(), "File".to_string()];
+    assert_eq!(check(taken, None), Ok(vec![("t".into(), false, files)]));
 }
