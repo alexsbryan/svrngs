@@ -39,6 +39,15 @@ PLAN_IO = re.compile(
     r"|\b(?:include_bytes|include_str|env|option_env|print|println|eprint|eprintln)\s*!"
     r"|\bjob\s*::\s*(?!Keep\b)\w+"
 )
+# O3: app jobs are read here; only the executor may start the keeper. The
+# command's own restart is outside the node and acts on svrngs itself.
+NODE_COMMAND = {
+    "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
+    "plan/run.rs": "Command::new(path).args(args).stdin(Stdio::null()).output()",
+    "home.rs": "Command::new(opener);",
+    "network.rs": 'Command::new("/usr/sbin/scutil");',
+    "update.rs": 'Command::new("tar")',
+}
 # An exemption from the lint, however spelled: `allow`, `expect` or `warn`,
 # alone or among other lints, inner or outer, under a `cfg_attr` too.
 EXEMPT = re.compile(r"\b(allow|expect|warn)\s*\(([^()]*[,\s])?unsafe_code\b")
@@ -963,10 +972,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then avail-terminal's replay and ordered owner results: 25,094 (+30,
 # within the raised envelope in keeper CHARTER, "The release").
 # Its terminal and owner adapters land at 25,499 (25,521 ceiling).
+# O3 pins the node's process calls and the executor's keeper entry at 25,513.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25500,
+    ".": 25514,
 
     "js": 8651,
 
@@ -1043,6 +1053,13 @@ def main():
             broken.append(f"{rel} is async: the core stays synchronous (RUST_ARCH §2, §4)")
         if rel in PLAN_PURE and (site := PLAN_IO.search(text)):
             broken.append(f"{rel} uses {site[0]}: the share planner is pure; put effects in plan/run.rs (KEEP_IT_RUNNING_RELEASE P4)")
+        if not TEST_FILE.search(rel) and '/tests/' not in rel:
+            if '"svrngs-keeper"' in text and rel != "crates/svrngs-node/src/plan/run.rs":
+                broken.append(f"{rel}: only plan/run.rs may run the keeper (KEEP_IT_RUNNING_RELEASE O3)")
+            if (node := rel.removeprefix("crates/svrngs-node/src/")) != rel:
+                code = re.sub(r"\s+", "", text)
+                if "Command::new(" in code.replace(NODE_COMMAND.get(node, ""), "", 1):
+                    broken.append(f"{rel}: an unlisted process call; the node may only read app jobs (KEEP_IT_RUNNING_RELEASE O3)")
     core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
