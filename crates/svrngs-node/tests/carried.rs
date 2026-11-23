@@ -3945,13 +3945,23 @@ async fn a_phone_reads_through_any_computer_that_keeps_the_app_and_a_removed_one
     }
 }
 
-/// The set Bo's phone's signer (`web/src/set.rs`, compiled here) signs for
-/// `ops` in `group` as `prepared`, a prepare's answer, gave them back, as
-/// `{carry}` holds it.
+/// The set Bo's phone's signer (`web/src/set.rs`, compiled here) makes for
+/// `ops` in `group` as `prepared`, a prepare's answer, gave them back,
+/// under a pass Bo's phone signed naming its open's approver, `signing(10)`,
+/// which signs it, as `{carry}` holds it.
 fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
     let text = |f: &str| prepared[f].as_str().unwrap().to_owned();
     let (group, app, ops) = (group.to_owned(), "Board".to_owned(), ops.clone());
-    let label = svrngs_core::pass::Label::carried(&app, &group).to_string();
+    use svrngs_core::pass::{Label, Pass};
+    let carried = Label::carried(&app, &group);
+    let (label, approver) = (carried.to_string(), actor_of(&signing(10)));
+    let pass = Pass::approvable(
+        &signing(7),
+        &"h".repeat(64),
+        (carried, vec![]),
+        i64::MAX,
+        Some(approver),
+    );
     let asked = set::Asked {
         group,
         app,
@@ -3959,8 +3969,12 @@ fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
         prepared: text("prepared"),
         by: text("by"),
         sig: text("sig"),
+        pass: pass.encode(),
+        ts: 1_000,
     };
-    json!({ "carry": set::signed(&signing(7), &label, &asked).unwrap().0 })
+    let (message, set, _) = set::signed(&label, &asked).unwrap();
+    let sig = svrngs_core::sign_message(&signing(10), &message);
+    json!({ "carry": set::sealed(&set, &sig).unwrap() })
 }
 
 // The phone's signer, the page's file compiled here, formatted by its own

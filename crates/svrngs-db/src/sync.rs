@@ -306,7 +306,7 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     // The site's device, by which its share is counted and a muted device's
     // sets are found; and its home, from whom alone a word for its mark is
     // trusted: a phone's, as its set names it, else the device's own.
-    let home = set.home.as_ref().map_or(&set.head.device, |(home, _)| home);
+    let home = set.phone.as_ref().map_or(&set.head.device, |p| &p.home);
     let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device, home) VALUES (?1, ?2, ?3)";
     conn.execute(sited, params![site, set.head.device, home])?;
     count(conn, (site, seq))
@@ -345,12 +345,13 @@ impl Db {
     /// Whether `set`'s head is signed by its device, over this database's
     /// group and app, and its changes are the ones it signs.
     fn signed(&self, set: &Set) -> bool {
-        let head = &set.head;
-        let at = head.at((&self.group, &self.app));
-        // A phone's names the home its signed nonce is derived from.
-        let homed =
-            (set.home.as_ref()).is_none_or(|(home, epoch)| crate::wire::nonce(home.as_str(), *epoch) == head.nonce);
-        homed && at.check(&head.changes, head.sig.as_str()) && svrngs_core::set::changes(&set.changes) == head.changes
+        let (head, names) = (&set.head, (self.group.as_str(), self.app.as_str()));
+        // A phone's is its open's approver's, where its pass holds
+        // (wire.rs `Phoned::signer`); any other set its device's own.
+        let own = || Some((head.device.to_string(), head.at(names).message(&head.changes)));
+        let signer = set.phone.as_ref().map_or_else(own, |p| p.signer(head, names));
+        let signed = signer.is_some_and(|(by, message)| svrngs_core::verify_hex(&by, &message, head.sig.as_str()));
+        signed && svrngs_core::set::changes(&set.changes) == head.changes
     }
 
     /// The site of `head`'s database, derived from its device and nonce.

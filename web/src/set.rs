@@ -25,7 +25,6 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde::Deserialize;
 use serde_json::Value;
 use svrngs_core::pass::Label;
-use svrngs_core::SigningKey;
 
 #[path = "../../crates/svrngs-db/src/change.rs"]
 #[rustfmt::skip]
@@ -47,6 +46,8 @@ pub struct Asked {
     pub prepared: String,
     pub by: String,
     pub sig: String,
+    pub pass: String,
+    pub ts: i64,
 }
 
 /// A prepare's text (svrngs-db `Db::prepare`), as the phone reads it.
@@ -70,10 +71,11 @@ struct Op<'v> {
     named: Vec<(&'v String, Sql)>,
 }
 
-/// The set `key` signs for `asked`, its place `(home, epoch, seq)` beside
-/// it, under the label `label` of the app whose page asked, or the words
-/// for why not.
-pub fn signed(key: &SigningKey, label: &str, asked: &Asked) -> Result<(String, (String, u64, u64)), String> {
+/// For `asked`, under the label `label` of the app whose page asked: what
+/// its open's approver signs, the set that signature goes in ([`sealed`]),
+/// postcard's bytes in base64, and its place, `home/epoch/seq`; or the
+/// words for why not.
+pub fn signed(label: &str, asked: &Asked) -> Result<(Vec<u8>, String, String), String> {
     let why = |what| {
         format!(
             "This phone didn’t sign {}’s write, since {what}. Try again, or open it through another computer.",
@@ -98,14 +100,36 @@ pub fn signed(key: &SigningKey, label: &str, asked: &Asked) -> Result<(String, (
     if !ops.iter().enumerate().all(unchanged) {
         return Err(why("the computer left out a change it asked for"));
     }
-    let at = (wire::nonce(&asked.by, p.epoch), seq, schema);
-    let mut set = wire::Set::signed(key, (&asked.group, &asked.app), at, changes);
-    set.home = Some((
-        wire::Device::parse(&asked.by).ok_or_else(|| why("its prepare can’t be read"))?,
-        p.epoch,
-    ));
+    // The phone's device is its pass's person, and the open's approver
+    // signs, where the pass holds as every copy checks it (wire.rs
+    // `Phoned::signer`).
+    let pass = svrngs_core::pass::Pass::decode(&asked.pass);
+    let device = pass
+        .and_then(|p| wire::Device::parse(&p.person))
+        .zip(wire::Device::parse(&asked.by));
+    let (device, home) = device.ok_or_else(|| why("its open’s pass can’t be read"))?;
+    let mut set = wire::Set::unsigned(device, (wire::nonce(&asked.by, p.epoch), seq, schema), changes);
+    let phoned = wire::Phoned {
+        home,
+        epoch: p.epoch,
+        pass: asked.pass.clone(),
+        ts: asked.ts,
+    };
+    let signer = phoned.signer(&set.head, (&asked.group, &asked.app));
+    let (_, message) = signer.ok_or_else(|| why("its open’s pass doesn’t hold"))?;
+    set.phone = Some(phoned);
     let set = postcard::to_allocvec(&set).expect("a set is written in memory");
-    Ok((STANDARD.encode(set), (asked.by.clone(), p.epoch, p.seq)))
+    let place = format!("{}/{}/{}", asked.by, p.epoch, p.seq);
+    Ok((message, STANDARD.encode(set), place))
+}
+
+/// `set`, a set [`signed`] made, with its approver's signature `sig`: the
+/// set the phone carries, postcard's bytes in base64; none where either
+/// isn't one.
+pub fn sealed(set: &str, sig: &str) -> Option<String> {
+    let mut set: wire::Set = postcard::from_bytes(&STANDARD.decode(set).ok()?).ok()?;
+    set.head.sig = wire::Sig::parse(sig)?;
+    Some(STANDARD.encode(postcard::to_allocvec(&set).ok()?))
 }
 
 /// A prepare read: it, its changes as bytes and as rows, postcard's whole,

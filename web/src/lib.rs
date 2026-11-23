@@ -759,20 +759,28 @@ fn unsigned(
     Ok(svrngs_core::unsigned_act(actor, &group, ts as i64, kind))
 }
 
-/// The set the phone whose key is `key` signs for `asked`, JSON (set.rs
-/// `Asked`), asked from the page at the label `label`: `[set, home, epoch,
-/// seq]`, the set as postcard's bytes in base64; or why not, in words for
-/// the person (web/sign.js, which alone holds the key).
+/// A phone's write to the app at the label `label`, `asked` as JSON (set.rs
+/// `Asked`), checked: `[message, set, place]`, what its open's approver
+/// signs, the set its signature goes in (`set_sealed`) and its place, its
+/// home, epoch and seq; or `[null, words]`, why not, in words for the
+/// person (web/sign.js, which alone holds the approver).
 #[wasm_bindgen]
-pub fn set_signed(key: Vec<u8>, label: String, asked: String) -> Result<js_sys::Array, JsError> {
-    let asked = serde_json::from_str(&asked)?;
-    let (set, (home, epoch, seq)) = set::signed(&signing(key)?, &label, &asked).map_err(|e| JsError::new(&e))?;
-    Ok(js_sys::Array::of4(
-        &set.into(),
-        &home.into(),
-        &(epoch as f64).into(),
-        &(seq as f64).into(),
-    ))
+pub fn set_checked(label: String, asked: String) -> Result<js_sys::Array, JsError> {
+    let asked: set::Asked = serde_json::from_str(&asked)?;
+    Ok(match set::signed(&label, &asked) {
+        Ok((message, set, place)) => {
+            let message = js_sys::Uint8Array::from(message.as_slice());
+            js_sys::Array::of3(&message.into(), &set.into(), &place.into())
+        }
+        Err(words) => js_sys::Array::of2(&JsValue::NULL, &words.into()),
+    })
+}
+
+/// `set`, as `set_checked` made it, with its approver's signature `sig`,
+/// hex: the set a phone carries, postcard's bytes in base64.
+#[wasm_bindgen]
+pub fn set_sealed(set: String, sig: String) -> Result<String, JsError> {
+    set::sealed(&set, &sig).ok_or_else(|| JsError::new("not a set and its signature"))
 }
 
 /// The act, JSON, an app `kind`'s page asks for with `body`, as the door

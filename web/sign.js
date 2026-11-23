@@ -9,7 +9,12 @@
 // approves an app's exact entry while the open's pass is live, by its own
 // clock. Every refusal tells the person to open the app again from the
 // group's page.
-import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, {
+  actor,
+  approve_line,
+  set_checked,
+  set_sealed,
+} from './wasm/svrngs_web.js?v=__VERSION__';
 import {
   base64url,
   ed25519,
@@ -167,10 +172,11 @@ class Told extends Error {}
 const AGAIN = 'Open this app again from your group’s page to write in it.';
 
 // What the app framing this signer `asked`, answered on `port`: its open
-// adopted, or an entry approved; anything else refused, by a throw.
+// adopted, a write to its database signed, or an entry approved; anything
+// else refused, by a throw.
 /**
- * @param {MessageEvent<{ opening?: Handoff, saved?: string } | null>} asked an open to adopt, else an
- *   entry, which `entryAsked` reads
+ * @param {MessageEvent<{ opening?: Handoff, saved?: string, set?: SetAsked } | null>} asked an open
+ *   to adopt, a set to sign, else an entry, which `entryAsked` reads
  * @param {MessagePort} port
  */
 async function answered(asked, port) {
@@ -187,7 +193,66 @@ async function answered(asked, port) {
     port.postMessage({ opened: true });
     return;
   }
+  if (asked.data?.set) {
+    port.postMessage(await setsSigned(asked.data.set, label, now));
+    return;
+  }
   port.postMessage({ pass: await entryApproved(asked.data, label, now) });
+}
+
+// A computer's prepare of the framing app's write to its own database, as
+// lend.js `setWritten` hands it on: the open it is under, the page's ops,
+// the prepare's text, the computer that signed it and how, and the places
+// of the sets a computer has kept since.
+/**
+ * @typedef {{ authority: Handoff, ops: unknown, prepared: string, by: string, sig: string,
+ *   confirmed: string[] }} SetAsked
+ */
+
+// The framing app's write to its own database, signed for this phone by
+// its open's approver, as an entry is approved (svrn-docs
+// rings/current/APP_STATE.md §4, "Phones"; the operator's B′, 2026-11-22):
+// under a live open this browser's group page issued for the app, prepared
+// by a computer that open names, and checked against the page's ops by
+// svrngs's own wasm (web/src/set.rs, `set_checked`), which stamps it by this
+// signer's clock and puts in the open's pass, which names the approver
+// every copy checks it by. Each set signed is kept here by its place, its
+// computer, epoch and seq, until a computer confirms it, and every answer
+// gives the kept ones back to carry; a place already kept is never given a
+// second set (`signed` false), so the worker carries the kept one first.
+/**
+ * @param {SetAsked} asked
+ * @param {string} label
+ * @param {number} now in seconds
+ */
+async function setsSigned(asked, label, now) {
+  const signer = await approver(label, asked.authority, now);
+  const lend = asked.authority.lends.find((one) => one.label === label);
+  const computers = [lend?.key, ...(lend?.lenders ?? []).map((one) => one.key)];
+  if (!lend?.group || !computers.includes(asked.by)) {
+    throw new Error(`${asked.by} is no computer of this open`);
+  }
+  Object.assign(asked, { group: lend.group, app: lend.kind, pass: asked.authority.pass, ts: now });
+  const [message, made, place] = set_checked(label, JSON.stringify(asked));
+  if (!message) throw new Told(made);
+  const signature = await crypto.subtle.sign('Ed25519', signer.key, message);
+  const set = set_sealed(made, store.hex(new Uint8Array(signature)));
+  const id = `${lend.group}/${lend.kind}`;
+  /** @type {{ sets: [string, string][], signed: boolean }} */
+  const answer = { sets: [], signed: false };
+  await store.stored('svrngs-sets', 'id', 'readwrite', (objects) => {
+    const read = objects.get(id);
+    read.onsuccess = () => {
+      /** @type {[string, string][]} */
+      const kept = read.result?.sets ?? [];
+      answer.sets = kept.filter(([at]) => !asked.confirmed.includes(at));
+      answer.signed = !answer.sets.some(([at]) => at === place);
+      if (answer.signed) answer.sets.push([place, set]);
+      objects.put({ id, sets: answer.sets });
+    };
+    return read;
+  });
+  return answer;
 }
 
 // The entry asked, `data`, approved under a grant the open kept for

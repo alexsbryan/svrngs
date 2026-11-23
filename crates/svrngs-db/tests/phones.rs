@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde_json::{Value, json};
-use svrngs_core::pass::Label;
+use svrngs_core::pass::{Label, Pass};
 use svrngs_core::set::site;
 use svrngs_db::{Asked, Binds, Db, Seq, Set, SigningKey, States, Took};
 
@@ -46,8 +46,21 @@ fn bo() -> (SigningKey, String) {
     (key, device)
 }
 
+/// Bo's open's approver, `[8; 32]`.
+fn approver() -> SigningKey {
+    SigningKey::from_bytes(&[8; 32])
+}
+
+/// The pass Bo's phone signed for his open of Board in `g`, naming its
+/// approver, lapsing at `until`, as hand.js signs one (web/src/lib.rs
+/// `pass`).
+fn pass_until(until: i64) -> Pass {
+    let (app, approver) = (Label::carried("board", "g"), svrngs_core::actor_of(&approver()));
+    Pass::approvable(&bo().0, &"h".repeat(64), (app, vec![]), until, Some(approver))
+}
+
 /// What Bo's phone's signer is asked for `ops`, as `answer`, a prepare's,
-/// gave them back.
+/// gave them back, under his open's pass, stamped at 1,000.
 fn asked(ops: &Value, answer: &Value) -> set::Asked {
     let text = |f: &str| answer[f].as_str().unwrap().to_owned();
     let (group, app, ops) = ("g".into(), "board".into(), ops.clone());
@@ -58,14 +71,18 @@ fn asked(ops: &Value, answer: &Value) -> set::Asked {
         prepared: text("prepared"),
         by: text("by"),
         sig: text("sig"),
+        pass: pass_until(2_000_000_000).encode(),
+        ts: 1_000,
     }
 }
 
-/// The set Bo's phone's signer signs for `asked`, framed by Board's own
-/// page, postcard's bytes in base64; or its words for why not.
+/// The set Bo's phone's signer makes for `asked`, framed by Board's own
+/// page, signed by its open's approver, postcard's bytes in base64; or its
+/// words for why not.
 fn signed(asked: &set::Asked) -> Result<String, String> {
     let label = Label::carried("board", "g").to_string();
-    set::signed(&bo().0, &label, asked).map(|(set, _)| set)
+    let (message, set, _) = set::signed(&label, asked)?;
+    Ok(set::sealed(&set, &svrngs_core::sign_message(&approver(), &message)).unwrap())
 }
 
 /// `ops`, prepared on `db` for Bo's phone and signed there.
@@ -241,7 +258,7 @@ fn a_phone_signs_only_what_its_page_asked() {
         ..asked(&ops, &answer)
     });
     assert!(unsigned.unwrap_err().contains("isn’t a computer’s prepare"));
-    let elsewhere = set::signed(&bo().0, &Label::carried("magnets", "g").to_string(), &honest);
+    let elsewhere = set::signed(&Label::carried("magnets", "g").to_string(), &honest);
     assert!(
         elsewhere.unwrap_err().contains("isn’t a computer’s prepare"),
         "another app's page"
@@ -373,7 +390,7 @@ fn a_phone_s_site_is_vouched_for_by_its_home() {
         &json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "tea" } }]),
     );
     let mut moved: Set = postcard::from_bytes(&STANDARD.decode(&set).unwrap()).unwrap();
-    moved.home = Some((device(2), 0));
+    moved.phone.as_mut().unwrap().home = device(2);
     let moved = STANDARD.encode(postcard::to_allocvec(&moved).unwrap());
     assert_eq!(
         carry(&ben, &moved),
@@ -392,7 +409,7 @@ fn nonce_at(home: u8, epoch: u64) -> [u8; 16] {
     );
     let set: Set = postcard::from_bytes(&STANDARD.decode(set).unwrap()).unwrap();
     assert_eq!(
-        set.home.as_ref().map(|(_, e)| *e),
+        set.phone.as_ref().map(|p| p.epoch),
         Some(epoch),
         "an epoch this helper reads"
     );
@@ -450,4 +467,68 @@ fn a_phone_s_prepare_refuses_another_s_owned_row() {
     assert_eq!(refused.unwrap_err(), svrngs_db::Refused::NotYours("claims".into()));
     let set = prepared(&ana, &claim(&bo().1));
     assert_eq!(carry(&ana, &set), Took::Taken, "his own row, taken at apply");
+}
+
+/// **A phone's set holds only under its open's pass** (the operator's B′,
+/// 2026-11-22; svrn-docs HOLDER_APPROVAL §2, rule 4): its pass must be
+/// signed by the set's device, open this app's carried label in this group,
+/// name the approver that signs the set, and lapse no sooner than the set's
+/// stamp. Bo's signer refuses a pass his phone didn't sign, a pass of
+/// another app and a stamp past its lapse, each in words for him; a set
+/// signed by his phone's own key, not the approver its pass names, is not
+/// his device's at Ana's copy; the set as his open's approver signs it is
+/// taken. Plants, each watched failing in wire.rs `Phoned::signer`: the
+/// pass's own signature unread (the forged pass signed); its app unread
+/// (another app's signed); its lapse unread (the late stamp signed); the
+/// set's signer read as its device (the device-signed set taken).
+#[test]
+fn a_phone_s_set_holds_only_under_its_open_s_pass() {
+    let (_dir, ana) = board(1);
+    let ops = json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    let answer = ana.prepare(&ops, (&bo().1, &bound())).unwrap();
+    let refused = |asked: set::Asked| signed(&asked).unwrap_err();
+    let holds = "This phone didn’t sign board’s write, since its open’s pass doesn’t hold. Try again, or open it through another computer.";
+    let mut forged = pass_until(2_000_000_000);
+    forged.person = svrngs_core::actor_of(&SigningKey::from_bytes(&[9; 32]));
+    let pass = forged.encode();
+    assert_eq!(
+        refused(set::Asked {
+            pass,
+            ..asked(&ops, &answer)
+        }),
+        holds,
+        "a pass its person didn't sign"
+    );
+    let (magnets, approver) = (Label::carried("magnets", "g"), svrngs_core::actor_of(&approver()));
+    let other = Pass::approvable(
+        &bo().0,
+        &"h".repeat(64),
+        (magnets, vec![]),
+        2_000_000_000,
+        Some(approver),
+    );
+    let pass = other.encode();
+    assert_eq!(
+        refused(set::Asked {
+            pass,
+            ..asked(&ops, &answer)
+        }),
+        holds,
+        "another app's pass"
+    );
+    let late = set::Asked {
+        ts: 2_000_000_001,
+        ..asked(&ops, &answer)
+    };
+    assert_eq!(refused(late), holds, "a stamp past its lapse");
+
+    let label = Label::carried("board", "g").to_string();
+    let (message, set, _) = set::signed(&label, &asked(&ops, &answer)).unwrap();
+    let by_device = set::sealed(&set, &svrngs_core::sign_message(&bo().0, &message)).unwrap();
+    assert_eq!(
+        carry(&ana, &by_device),
+        Took::NotItsDevice,
+        "signed by his device, not its approver"
+    );
+    assert_eq!(carry(&ana, &signed(&asked(&ops, &answer)).unwrap()), Took::Taken);
 }

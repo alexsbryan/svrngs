@@ -84,17 +84,53 @@ pub struct Head {
 }
 
 /// One change set as it travels and is kept: its signed head, the changes
-/// whose hash it signs, and, for a phone's, its home and its epoch there,
-/// from which its nonce is derived ([`nonce`]): the computer that prepares
-/// its sets and applies them first, which vouches for its site's mark as a
-/// computer vouches for its own (svrn-docs
-/// `rings/current/app-state-diligence/sync-simplify-2026-11-22/`, change 4).
-/// Its device's signature over the nonce binds them.
+/// whose hash it signs, and, for a phone's, what it carries beside them
+/// ([`Phoned`]).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Set {
     pub head: Head,
     pub changes: Vec<u8>,
-    pub home: Option<(Device, u64)>,
+    pub phone: Option<Phoned>,
+}
+
+/// What a phone's set carries beside its head (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "Phones"; the operator's B′,
+/// 2026-11-22): its home, the computer that prepares its sets and applies
+/// them first, which vouches for its site's mark as a computer vouches for
+/// its own, and its epoch there, from which its nonce is derived
+/// ([`nonce`]; `app-state-diligence/sync-simplify-2026-11-22/`, change 4);
+/// the pass of the open it was written under, which names its signer, that
+/// open's approver; and the stamp it was signed at, by the phone's clock.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Phoned {
+    pub home: Device,
+    pub epoch: u64,
+    pub pass: String,
+    pub ts: i64,
+}
+
+/// What an open's approver signs for a phone's set: a domain of its own,
+/// then the set's own message and its stamp.
+const PHONED: &[u8] = b"svrngs/db-phone-set/v1\0";
+
+impl Phoned {
+    /// The key `head`, a phone's, is signed by, and what it signs, as a set
+    /// of `app` in `group`, where its pass holds: signed by the set's device,
+    /// opening that app's carried label, naming an approver, the stamp
+    /// within its lapse, and the nonce derived from the home and epoch. So
+    /// a leaked approver is worth one pass's scope, and its stamp can be
+    /// backdated only within that pass's lapse (svrn-docs HOLDER_APPROVAL
+    /// §2, rule 4).
+    pub(crate) fn signer(&self, head: &Head, (group, app): (&str, &str)) -> Option<(String, Vec<u8>)> {
+        let pass = svrngs_core::pass::Pass::decode(&self.pass)?;
+        let opens = pass.app == svrngs_core::pass::Label::carried(app, group);
+        let homed = nonce(self.home.as_str(), self.epoch) == head.nonce;
+        let holds = pass.signed() && pass.person == head.device.as_str() && opens && self.ts <= pass.until && homed;
+        let mut message = PHONED.to_vec();
+        message.extend(head.at((group, app)).message(&head.changes));
+        message.extend(self.ts.to_be_bytes());
+        holds.then_some((pass.approver?, message))
+    }
 }
 
 impl Head {
@@ -114,12 +150,20 @@ impl Head {
 
 impl Set {
     /// `changes`, written under `schema`, signed by `key` at `seq` of its
-    /// database of `nonce`, a set of `app` in `group`: the one place a set is
-    /// made and signed.
+    /// database of `nonce`, a set of `app` in `group`: the one place a
+    /// computer's set is made and signed.
     pub(crate) fn signed(key: &SigningKey, names: (&str, &str), at: (Nonce, Seq, [u8; 32]), changes: Vec<u8>) -> Self {
+        let mut set = Self::unsigned(Hex(svrngs_core::actor_of(key)), at, changes);
+        set.head.sig = Hex(set.head.at(names).sign(key, &set.head.changes));
+        set
+    }
+
+    /// `changes`, written under `schema`, at `seq` of `device`'s database of
+    /// `nonce`, its signature still to come: the one place a set is made.
+    pub(crate) fn unsigned(device: Device, at: (Nonce, Seq, [u8; 32]), changes: Vec<u8>) -> Self {
         let ((nonce, seq, schema), hash) = (at, svrngs_core::set::changes(&changes));
-        let (device, sig) = (Hex(svrngs_core::actor_of(key)), Hex(String::new()));
-        let mut head = Head {
+        let sig = Hex("0".repeat(128));
+        let head = Head {
             device,
             nonce,
             seq,
@@ -127,11 +171,10 @@ impl Set {
             changes: hash,
             sig,
         };
-        head.sig = Hex(head.at(names).sign(key, &hash));
         Self {
             head,
             changes,
-            home: None,
+            phone: None,
         }
     }
 }

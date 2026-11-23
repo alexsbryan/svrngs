@@ -1174,7 +1174,6 @@ const authority = () => ({ ...JSON.parse(openMessage(handed)), proof: handed.pro
  */
 async function approved(group, line) {
   const { pass } = await signerAnswer({ group, reach: handed.pass, line, authority: authority() });
-  if (!pass) throw new Error('the trusted signer did not answer');
   return pass;
 }
 
@@ -1213,8 +1212,7 @@ async function setWritten(request, where, ops) {
     if (!took.ok) return took;
   }
   if (signer.signed) return Response.json({ count: JSON.parse(prepared.prepared).count });
-  const words =
-    'This write wasn’t kept yet, as this phone carried an earlier one first. Write it again.';
+  const words = 'This write wasn’t kept yet: this phone sent an earlier one first. Write it again.';
   return Response.json({ refused: 'again', words }, { status: 503 });
 }
 
