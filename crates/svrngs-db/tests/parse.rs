@@ -582,3 +582,39 @@ fn a_value_is_kept_as_its_column_s_type_so_a_set_every_copy_fails_is_refused() {
     assert_eq!((rows(&a, all), rows(&b, all)), (six.clone(), six));
     assert_eq!(took(&a, &[five]), [Took::Held], "refused for good, counted");
 }
+
+/// **A value past `ANSWER_MOST` is refused for good on every copy, and at
+/// the write in words** (`fit`), as a page's read makes none larger
+/// (`Db::read`): computer 9's card, its title made 4 MiB and a byte, is
+/// refused by two copies whose record binds three keys, so the set is
+/// within its device's share and reaches the parse; none of it is applied;
+/// and the write of such a card is refused at the writer. Plant, watched
+/// failing: `fit` without its length arm (both copies take it).
+#[test]
+fn a_value_past_answer_most_is_refused_for_good_on_every_copy() {
+    let dir = tempfile::tempdir().unwrap();
+    let base = written(dir.path(), ("board", CARDS), card("c1", "milk"));
+    let long = "x".repeat((4 << 20) + 1);
+    let set = remade(&base, &key(9), "board", |c| {
+        let titles = c.iter_mut().filter(|c| c.cid == "title");
+        titles.for_each(|c| c.val = Val::Text("x".repeat((4 << 20) + 1)))
+    });
+    let three = [2, 3, 9].map(|n| svrngs_core::actor_of(&key(n)));
+    let three = svrngs_db::Binds::new(three.map(|k| (k.clone(), k, false)), BUDGET);
+    for n in [2, 3] {
+        let to = db(&dir.path().join("long"), n, ("board", CARDS));
+        let call = Call {
+            sets: vec![set.clone()],
+            ..Default::default()
+        };
+        let took: Vec<Took> = (to.ingest(&call, &three, None).unwrap().into_iter())
+            .map(|(_, t)| t)
+            .collect();
+        assert_eq!(took, [Took::Refused], "on copy {n}");
+        assert_eq!(rows(&to, "SELECT * FROM cards"), json!([]), "none of it applied");
+    }
+    let refused = db(dir.path(), 4, ("board", CARDS))
+        .write(&card("c2", &long), &bound())
+        .expect_err("a value past ANSWER_MOST kept");
+    assert_eq!(refused.said(), (422, "unkept"), "{refused}");
+}

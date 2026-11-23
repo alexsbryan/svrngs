@@ -53,6 +53,11 @@ pub enum Unfit {
         "{0} takes only a value of its declared type, which every computer keeps as written: write it as that type, or declare the column TEXT, INTEGER, REAL or BLOB to fit what it holds"
     )]
     Kind(String),
+    #[error(
+        "{0} holds more than {mb} MB, the most a page reads back of one value: keep it in parts, a row each",
+        mb = crate::ANSWER_MOST >> 20
+    )]
+    Long(String),
 }
 
 /// What a column keeps a value as it is given: its declared type's
@@ -125,8 +130,10 @@ pub(crate) fn parse(bytes: &[u8], tables: &BTreeMap<String, Table>) -> Result<Va
 /// `col_version` and causal length from 1 to [`BOUND`], a column's causal
 /// length odd, since cr-sqlite merges a change at an even one as its row's
 /// delete and no write makes one, so only a row's own change deletes it;
-/// and no NULL for a NOT NULL column, which SQLite would refuse on every
-/// copy alike.
+/// no NULL for a NOT NULL column, which SQLite would refuse on every copy
+/// alike; and no key or value past [`crate::ANSWER_MOST`] bytes, the most a
+/// page's read makes of one (`Db::read`), so every copy refuses it alike,
+/// never a row refused on the copy where its change won.
 pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Result<Valid, Unfit> {
     let mut keys = Vec::with_capacity(changes.len());
     for c in &changes {
@@ -134,6 +141,11 @@ pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Res
         let (named, versions) = (|| format!("{}.{}", c.table, c.cid), 1..=BOUND);
         let column = c.cid == SENTINEL || t.columns.contains(&c.cid) && !t.key.contains(&c.cid);
         let key = unpack(&c.pk).filter(|k| k.len() == t.key.len());
+        let size = match &c.val {
+            Sql::Text(s) => s.len(),
+            Sql::Blob(b) => b.len(),
+            _ => 0,
+        };
         let kept = |col: &String, v: &Sql, key: bool| t.kinds.get(col).is_some_and(|k| k.keeps(v, (key, t.strict)));
         let keyed = key
             .iter()
@@ -145,6 +157,7 @@ pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Res
             _ if !column => Unfit::NoColumn(named()),
             None => Unfit::Key(c.table.clone()),
             _ if let Some((col, ..)) = wrong => Unfit::Kind(format!("{}.{col}", c.table)),
+            _ if size.max(c.pk.len()) > crate::ANSWER_MOST => Unfit::Long(named()),
             _ if !versions.contains(&c.col_version) || !versions.contains(&c.cl) => Unfit::Versions(named()),
             _ if c.cid != SENTINEL && c.cl % 2 == 0 => Unfit::Unread,
             _ if c.val == Sql::Null && t.not_null.contains(&c.cid) => Unfit::Null(named()),

@@ -10,8 +10,9 @@ description = "An app's database in a group: SQLite tables beside the group's re
 # `hooks` for the authorizer and the progress handler (svrn-docs APP_STATE §4,
 # "What SQL may do"). 0.41, not the spike's 0.35, which RUSTSEC-2026-0459
 # flags (APP_STATE §8 q8). `fallible_uint` binds a set's seq, a u64, and
-# refuses one past i64::MAX.
-rusqlite = { version = "=0.41.0", features = ["bundled", "hooks", "fallible_uint"] }
+# refuses one past i64::MAX; `limits` bounds each value a page's statement
+# makes (`lib.rs`, `Db::read`).
+rusqlite = { version = "=0.41.0", features = ["bundled", "hooks", "fallible_uint", "limits"] }
 # A page's statements and rows as JSON, a BLOB as base64, its refusals'
 # words, and who is told the database changed: the crates and versions the
 # node's lock already holds.

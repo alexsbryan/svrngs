@@ -500,3 +500,40 @@ fn a_read_answers_at_most_its_bytes_saying_there_were_more() {
     );
     assert_eq!(read["more"], true);
 }
+
+/// **A value and an answer are bounded by SQLite's own limit** (the
+/// review's P3; APP_STATE §4, "What SQL may do"): a value past
+/// `ANSWER_MOST` is refused as SQLite refuses it, before it is made, in a
+/// read, as `randomblob`, `printf` and two `zeroblob`s would make it; one a
+/// write would keep is refused in words, as every copy's parse refuses it
+/// (`tests/parse.rs`); and an answer stops at the cell that passes
+/// `ANSWER_MOST`, the row it is in left out whole and `more` said. Plants,
+/// watched failing: `Db::read` without the limit (each value made); `rows`
+/// counting bytes only between rows (two rows, 6 MiB).
+#[test]
+fn a_value_and_an_answer_are_bounded_by_sqlite_s_own_limit() {
+    let (_dir, db) = board();
+    let big = 5 << 20;
+    for sql in [
+        format!("SELECT length(randomblob({big})) AS n"),
+        format!("SELECT printf('%.*c', {big}, 'x') AS big"),
+        format!("SELECT zeroblob({big}) AS a, zeroblob({big}) AS b"),
+    ] {
+        let read = db.read(&sql, &[]);
+        assert!(
+            matches!(&read, Err(Refused::Malformed(w)) if w.contains("too big")),
+            "{sql}: {read:?}"
+        );
+    }
+    let long = json!([{ "insert": "cards", "row": { "id": "c9", "title": "x".repeat(big) } }]);
+    let refused = write(&db, long).expect_err("a 5 MiB value kept");
+    assert_eq!(refused.said(), (422, "unkept"), "{refused}");
+    for n in 0..3 {
+        write(&db, json!([{ "insert": "cards", "row": { "id": format!("c{n}") } }])).unwrap();
+    }
+    let read = db
+        .read("SELECT id, zeroblob(3 << 20) AS big FROM cards ORDER BY id", &[])
+        .unwrap();
+    assert_eq!(read["rows"].as_array().unwrap().len(), 1);
+    assert_eq!(read["more"], true);
+}

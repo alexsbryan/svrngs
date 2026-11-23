@@ -22,7 +22,8 @@
 //! SQLite's authorizer ([`page_rule`]), asked as the page's statement is
 //! prepared, and a statement that writes is refused, its words naming the
 //! form ([`Refused::NotARead`]); a query runs under a progress handler that
-//! stops it at [`QUERY_MOST`] and gives at most [`ROWS_MOST`] rows, saying
+//! stops it at [`QUERY_MOST`], and under SQLite's own limit on a value,
+//! [`ANSWER_MOST`] bytes, and gives at most [`ROWS_MOST`] rows, saying
 //! when there were more. rusqlite takes both by `&mut`, so each is
 //! installed once, at open, and the statement at hand is told them through
 //! a [`Gate`].
@@ -813,7 +814,14 @@ impl Db {
         }
         let until = gate.now().saturating_add(QUERY_MOST.as_micros() as u64);
         gate.until.store(until, Relaxed);
+        // Each value it makes at most `ANSWER_MOST`, refused by SQLite
+        // (`SQLITE_TOOBIG`) before it is made, as no copy keeps a larger one
+        // (`parse.rs`); svrngs's own statements, a set applied among them,
+        // run under SQLite's, so a merged row is never refused on one copy.
+        let length = rusqlite::limits::Limit::SQLITE_LIMIT_LENGTH;
+        let was = conn.set_limit(length, ANSWER_MOST as i32).map_err(fault)?;
         let ran = rows(&mut stmt, &params);
+        conn.set_limit(length, was).map_err(fault)?;
         gate.until.store(u64::MAX, Relaxed);
         tracing::debug!(target: "state", group = self.group, app = self.app, refused = ?ran.as_ref().err(), "state: a page's read answered, or stopped");
         let (rows, more) = ran?;
@@ -1009,19 +1017,21 @@ fn said(e: rusqlite::Error) -> Refused {
 }
 
 /// The statement's rows, at most [`ROWS_MOST`] and [`ANSWER_MOST`] bytes of
-/// their text and blobs, and whether there were more.
+/// their text and blobs, and whether there were more: counted cell by cell,
+/// so the row that would pass it is left out whole, and no row is read
+/// after it.
 fn rows(stmt: &mut rusqlite::Statement<'_>, params: &[Sql]) -> Result<(Vec<Value>, bool), Refused> {
     let names: Vec<String> = stmt.column_names().map(String::from).collect();
     let mut found = stmt.query(rusqlite::params_from_iter(params)).map_err(said)?;
     let (mut out, mut size) = (Vec::new(), 0);
     while let Some(row) = found.next().map_err(said)? {
-        if out.len() == ROWS_MOST || size > ANSWER_MOST {
-            return Ok((out, true));
-        }
         let mut cells = serde_json::Map::new();
         for (i, name) in names.iter().enumerate() {
             let cell = row.get_ref(i).map_err(said)?;
             size += cell.as_bytes().map_or(8, <[u8]>::len);
+            if out.len() == ROWS_MOST || size > ANSWER_MOST {
+                return Ok((out, true));
+            }
             let cell = match cell {
                 ValueRef::Null => Value::Null,
                 ValueRef::Integer(i) => json!(i),

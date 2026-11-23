@@ -109,8 +109,9 @@ const { rows, more, syncing } = await read(
 ```
 
 A read is one statement that only reads your app's own tables. It gives at
-most 1,000 rows, with `more: true` when there were more, and stops after
-250 ms. Name the columns you want, rather than `SELECT *`.
+most 1,000 rows and 4 MB, with `more: true` when there were more, and stops
+after 250 ms. A value is at most 4 MB, in a read or a write. Name the
+columns you want, rather than `SELECT *`.
 
 `syncing: true` means this computer's copy hasn't synced with another
 computer of the group yet. Say "still syncing" then, never an empty board.
