@@ -562,9 +562,14 @@ impl Db {
 
     /// What a call may add to this copy's ask, as it begins ([`Room`]).
     fn room<'b>(&self, conn: &Connection, binds: &'b Binds) -> rusqlite::Result<Room<'b>> {
+        // Each row the ask names, by the device of its site: the sites, the
+        // sets counted above a mark, each twin, and each set kept at the site
+        // this file retired as it was made again, which the ask names as
+        // twins too ([`Self::ask`]).
         let shares = "SELECT h.device, count(*) FROM (SELECT site FROM svrngs_sites UNION ALL SELECT site FROM svrngs_above \
             UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
-            AND t.seq = s.seq AND t.sig <> s.sig)) AS r JOIN svrngs_sites h USING (site) GROUP BY h.device";
+            AND t.seq = s.seq AND t.sig <> s.sig) OR site = (SELECT retired FROM svrngs_db)) AS r \
+            JOIN svrngs_sites h USING (site) GROUP BY h.device";
         let held = BTreeMap::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
         let muted = BTreeSet::from_iter(rows(conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0))?);
         let rows = held;

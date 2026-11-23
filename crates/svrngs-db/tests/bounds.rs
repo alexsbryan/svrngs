@@ -220,3 +220,27 @@ fn a_device_past_its_share_is_muted_and_its_sets_before_stand() {
     let got = took(&d, &alone(twins), &binds(&[4, 9], 6));
     assert_eq!(got, [Took::Taken, Took::Twin, Took::Twin, Took::Twin, Took::Over]);
 }
+
+/// **A file made again counts its retired site's sets in its device's
+/// share** (the operator's review of `41d94397`): a copy made again names
+/// every set kept at the site it retired in its ask, as twins
+/// (`sync.rs`, `ask`), so those rows count against its device's share of
+/// the room as any other. Ana's copy keeps three sets at the site it
+/// retires; a set of her key at another site, with a share of three rows,
+/// is then past her share. Plant, watched failing: the retired site's sets
+/// left out of the count (the set taken, the ask past its room).
+#[test]
+fn a_file_made_again_counts_its_retired_sites_sets_in_its_share() {
+    let dir = tempfile::tempdir().unwrap();
+    let states = States::new(&dir.path().join("computer-1"), key(1));
+    let ana = states.open("g", "board", Some(SCHEMA)).unwrap();
+    for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c3", "jam")] {
+        write(&ana, id, title);
+    }
+    let ana = states.remake(ana).unwrap();
+    assert_eq!(ana.ask().unwrap().twins.len(), 3, "the retired site's sets, named");
+    let other = States::new(&dir.path().join("other"), key(1));
+    let other = other.open("g", "board", Some(SCHEMA)).unwrap();
+    write(&other, "c4", "tea");
+    assert_eq!(took(&ana, &call(&other, &ana), &binds(&[1], 3)), [Took::Over]);
+}
