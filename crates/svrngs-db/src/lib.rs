@@ -630,7 +630,7 @@ impl Db {
     /// where it changes an owned row the record `binds` doesn't give this
     /// computer's person (`owned.rs`).
     pub fn write(&self, ops: &Value, binds: &Binds) -> Result<(Value, Option<Seq>), Refused> {
-        let (sealed, count) = self.run(ops, |tx, count, _| {
+        let (sealed, count) = self.run(ops, false, |tx, count, _| {
             // Its set sealed in its own transaction (APP_STATE §4): refused,
             // the write is rolled back with it.
             let sealed = self.seal(&tx, binds)?;
@@ -653,17 +653,25 @@ impl Db {
     /// signer takes it from a computer and never from the app's page. Its
     /// text holds the ops, the set's changes as the parse every copy runs
     /// takes them, the schema's hash, each table's key columns in order, the
-    /// rows changed, and each op's row as it stands after them all, null
-    /// where there is none, so an op with no change row is told a no-op.
-    pub fn prepare(&self, ops: &Value) -> Result<Value, Refused> {
-        let (made, stands, count) = self.run(ops, |tx, count, statements| {
+    /// rows changed, each op's row as it stood before them, null where there
+    /// was none, so an op with no change row is a no-op only where its row
+    /// already stood as the op would leave it (§4, "A no-op is told from a
+    /// missing effect"); and the place the phone, `phone`, signs the set at,
+    /// its epoch here and seq.
+    pub fn prepare(&self, ops: &Value, phone: &str) -> Result<Value, Refused> {
+        // This computer is the phone's home here (svrn-docs
+        // `app-state-diligence/sync-simplify-2026-11-22/`, change 4): the
+        // phone's site is its nonce at this computer, and its next seq is
+        // the one after the highest this copy counts of that site.
+        let (epoch, nonce) = (0, wire::nonce(self.device.as_str(), 0));
+        let site = svrngs_core::set::site(&self.group, &self.app, phone, &nonce);
+        let (made, stands, count, next) = self.run(ops, true, |tx, count, stands| {
             let seq = tx.query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0));
             let made = self.changes(&tx, seq.map_err(fault)?).map_err(fault)?;
-            let stands = statements.iter().map(|(_, (sql, key))| {
-                let mut row = tx.prepare(sql).map_err(said)?;
-                Ok(rows(&mut row, key)?.0.into_iter().next())
-            });
-            Ok((made, stands.collect::<Result<Vec<_>, Refused>>()?, count))
+            let next = "SELECT coalesce(max(seq), 0) + 1 FROM (SELECT mark AS seq FROM svrngs_marks WHERE site = ?1 \
+                UNION ALL SELECT seq FROM svrngs_above WHERE site = ?1)";
+            let next: u64 = tx.query_row(next, [site], |r| r.get(0)).map_err(fault)?;
+            Ok((made, stands, count, next))
         })?;
         tracing::debug!(target: "state", group = self.group, app = self.app, rows = made.len(), count, "state: a phone's write prepared and rolled back whole, its rows for its signer");
         if made.is_empty() {
@@ -673,22 +681,22 @@ impl Db {
         let keys: BTreeMap<_, _> = self.tables.iter().map(|(t, table)| (t, &table.key)).collect();
         let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));
         let schema = STANDARD.encode(self.schema);
-        let text =
-            json!({ "ops": ops, "changes": changes, "schema": schema, "keys": keys, "count": count, "stands": stands });
+        let text = json!({ "ops": ops, "changes": changes, "schema": schema, "keys": keys, "count": count, "stands": stands, "epoch": epoch, "seq": next });
         let text = text.to_string();
         let sig = svrngs_core::sign_message(&self.key, &svrngs_core::set::prepared(&self.group, &self.app, &text));
         Ok(json!({ "prepared": text, "by": self.device, "sig": sig }))
     }
 
     /// `ops`, in the write form, run whole in one transaction, which `then`
-    /// is handed with the rows they changed and each op's statements, to
-    /// commit or drop; rolled back as it drops on any refusal, or a COMMIT
-    /// that fails (rusqlite 0.41 `transaction.rs:220-229`), so no write
-    /// leaves its transaction open.
+    /// is handed with the rows they changed and, where it `stands`, each
+    /// op's row as it stood before, to commit or drop; rolled back as it
+    /// drops on any refusal, or a COMMIT that fails (rusqlite 0.41
+    /// `transaction.rs:220-229`), so no write leaves its transaction open.
     fn run<T>(
         &self,
         ops: &Value,
-        then: impl FnOnce(rusqlite::Transaction<'_>, usize, &[form::Op]) -> Result<T, Refused>,
+        stands: bool,
+        then: impl FnOnce(rusqlite::Transaction<'_>, usize, Vec<Option<Value>>) -> Result<T, Refused>,
     ) -> Result<T, Refused> {
         let listed = ops.as_array().filter(|o| !o.is_empty());
         let listed =
@@ -699,11 +707,16 @@ impl Db {
         let statements = statements?;
         let mut conn = self.conn();
         let tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
+        let stood = statements.iter().filter(|_| stands).map(|(_, (sql, key))| {
+            let mut row = tx.prepare(sql).map_err(said)?;
+            Ok(rows(&mut row, key)?.0.into_iter().next())
+        });
+        let stood = stood.collect::<Result<Vec<_>, Refused>>()?;
         let ran = (statements.iter()).map(|((sql, values), _)| tx.execute(sql, rusqlite::params_from_iter(values)));
         let ran = ran.sum::<Result<usize, _>>();
         tracing::debug!(target: "state", group = self.group, app = self.app, ?ran, "state: a write run whole, or rolled back whole as SQLite refused it");
         let count = ran.map_err(said)?;
-        then(tx, count, &statements)
+        then(tx, count, stood)
     }
 }
 

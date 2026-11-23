@@ -3945,45 +3945,38 @@ async fn a_phone_reads_through_any_computer_that_keeps_the_app_and_a_removed_one
     }
 }
 
-/// The set at `seq` of the changes `prepared`, a prepare's answer in
-/// `group`, names, signed by `by`, as Bo's phone's database of nonce
-/// `[9; 16]`, unchecked
-/// (the check is its signer's, `web/src/set.rs`), as `{carry}` holds it.
-fn carried(group: &str, prepared: &Value, by: &svrngs_core::SigningKey, seq: u64) -> Value {
-    use base64::{engine::general_purpose::STANDARD, Engine as _};
-    use svrngs_db::{Device, Head, Seq, Set, Sig};
-    let text: Value = serde_json::from_str(prepared["prepared"].as_str().unwrap()).unwrap();
-    let bytes = |f: &str| STANDARD.decode(text[f].as_str().unwrap()).unwrap();
-    let (changes, schema): (_, [u8; 32]) = (bytes("changes"), bytes("schema").try_into().unwrap());
-    let (device, hash) = (actor_of(&signing(7)), svrngs_core::set::changes(&changes));
-    let at = svrngs_core::set::At {
+/// The set Bo's phone's signer (`web/src/set.rs`, compiled here) signs for
+/// `ops` in `group` as `prepared`, a prepare's answer, gave them back, as
+/// `{carry}` holds it.
+fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
+    let text = |f: &str| prepared[f].as_str().unwrap().to_owned();
+    let (group, app, ops) = (group.to_owned(), "Board".to_owned(), ops.clone());
+    let label = svrngs_core::pass::Label::carried(&app, &group).to_string();
+    let asked = set::Asked {
         group,
-        app: "Board",
-        device: &device,
-        nonce: &[9; 16],
-        seq,
-        schema: &schema,
+        app,
+        ops,
+        prepared: text("prepared"),
+        by: text("by"),
+        sig: text("sig"),
     };
-    let sig = Sig::parse(&at.sign(by, &hash)).unwrap();
-    let (device, seq) = (Device::parse(&device).unwrap(), Seq::new(seq).unwrap());
-    let head = Head {
-        device,
-        nonce: [9; 16],
-        seq,
-        schema,
-        changes: hash,
-        sig,
-    };
-    let set = Set { head, changes };
-    json!({ "carry": STANDARD.encode(postcard::to_allocvec(&set).unwrap()) })
+    json!({ "carry": set::signed(&signing(7), &label, &asked).unwrap().0 })
 }
+
+// The phone's signer, the page's file compiled here, formatted by its own
+// crate's rustfmt.toml.
+#[path = "../../../web/src/set.rs"]
+#[allow(dead_code)]
+#[rustfmt::skip]
+mod set;
 
 /// **A phone's write is prepared by a computer and carried back signed as
 /// the phone's own** (svrn-docs `rings/current/APP_STATE.md` §4, "Phones"):
 /// Bo's phone, under its pass for Board on Ana's computer, has a card
-/// prepared there, signed by Ana's computer; it signs the set as its own
-/// and carries it, and Ana's copy takes it, the card shown; the same bytes
-/// again are held. A set signed by another key is not its device's, and
+/// prepared there, signed by Ana's computer; its signer signs the set as
+/// its own and it carries it, and Ana's copy takes it, the card shown; the
+/// same bytes again are held. A set whose signature isn't its device's is
+/// refused as not its device's, and
 /// bytes that are no set are refused saying what a carry is; neither
 /// reaches the copy. Bo's phone's write sent as a write is refused, as it
 /// signs its own. Plant, watched failing: the route answering a carry as
@@ -4021,9 +4014,13 @@ async fn a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed() {
         prepared["sig"].as_str().unwrap()
     ));
 
-    let forged = post(carried(&group, &prepared, &signing(8), 1))
-        .await
-        .unwrap();
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    let set = carried(&group, &milk, &prepared);
+    let bytes = STANDARD.decode(set["carry"].as_str().unwrap()).unwrap();
+    let mut forged: svrngs_db::Set = postcard::from_bytes(&bytes).unwrap();
+    forged.head.sig = svrngs_db::Sig::parse(&"0".repeat(128)).unwrap();
+    let forged = json!({ "carry": STANDARD.encode(postcard::to_allocvec(&forged).unwrap()) });
+    let forged = post(forged).await.unwrap();
     assert_eq!(forged.status(), 422);
     assert_eq!(
         forged.json::<Value>().await.unwrap()["refused"],
@@ -4038,7 +4035,6 @@ async fn a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed() {
         "neither reached the copy"
     );
 
-    let set = carried(&group, &prepared, &signing(7), 1);
     let took = post(set.clone()).await.unwrap();
     assert_eq!(took.status(), 200);
     assert_eq!(

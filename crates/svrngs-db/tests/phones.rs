@@ -1,30 +1,35 @@
 //! A phone's write to an app's database (svrn-docs
 //! `rings/current/APP_STATE.md` §4, "Phones"; MAGNETS_BUILD S2): prepared
-//! by a computer, which keeps none of it, signed by the phone, applied as
-//! a carried set. At the database itself, with no node or route. Each test
-//! names the plant it was watched failing on.
+//! by a computer, which keeps none of it, checked and signed by the phone's
+//! signer, applied as a carried set. At the database itself, with no node
+//! or route; the signer is the page's own, `web/src/set.rs`, compiled here.
+//! Each test names the plant it was watched failing on.
 
-use std::path::Path;
 use std::sync::Arc;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde_json::{Value, json};
-use svrngs_core::set::{At, site};
-use svrngs_db::{Asked, Binds, Db, Device, Head, Seq, Set, Sig, SigningKey, States, Took};
+use svrngs_core::pass::Label;
+use svrngs_core::set::site;
+use svrngs_db::{Asked, Binds, Db, Seq, Set, SigningKey, States, Took};
+
+use set::change::{self, Value as Sql};
+// The phone's signer, the page's file compiled here, formatted by its own
+// crate's rustfmt.toml.
+#[path = "../../../web/src/set.rs"]
+#[allow(dead_code)]
+#[rustfmt::skip]
+mod set;
 
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, col TEXT DEFAULT 'todo');\n\
     CREATE TABLE seats (row INTEGER NOT NULL, seat INTEGER NOT NULL, who TEXT, PRIMARY KEY (seat, row));\n";
 
-/// `key`'s computer's databases under `dir`.
-fn states(dir: &Path, key: u8) -> States {
-    States::new(dir, SigningKey::from_bytes(&[key; 32]))
-}
-
-/// The board's database on the computer of `key`, in a directory of its own.
+/// The board's database on the computer of the key `[key; 32]`, in a
+/// directory of its own.
 fn board(key: u8) -> (tempfile::TempDir, Arc<Db>) {
     let dir = tempfile::tempdir().unwrap();
-    let db = states(dir.path(), key).open("g", "board", Some(SCHEMA)).unwrap();
-    (dir, db)
+    let states = States::new(dir.path(), SigningKey::from_bytes(&[key; 32]));
+    (dir, states.open("g", "board", Some(SCHEMA)).unwrap())
 }
 
 /// The keys every copy here binds: every test key's.
@@ -33,60 +38,60 @@ fn bound() -> Binds {
     Binds::new(keys, 4 << 20)
 }
 
-/// Bo's phone, its key `[7; 32]`, and its database's nonce `[9; 16]`.
+/// Bo's phone: its key, `[7; 32]`, and its device.
 fn bo() -> (SigningKey, String) {
     let key = SigningKey::from_bytes(&[7; 32]);
     let device = svrngs_core::actor_of(&key);
     (key, device)
 }
 
-/// Bo's phone's site at the board.
-fn bo_site() -> [u8; 16] {
-    site("g", "board", &bo().1, &[9; 16])
+/// What Bo's phone's signer is asked for `ops`, as `answer`, a prepare's,
+/// gave them back.
+fn asked(ops: &Value, answer: &Value) -> set::Asked {
+    let text = |f: &str| answer[f].as_str().unwrap().to_owned();
+    let (group, app, ops) = ("g".into(), "board".into(), ops.clone());
+    set::Asked {
+        group,
+        app,
+        ops,
+        prepared: text("prepared"),
+        by: text("by"),
+        sig: text("sig"),
+    }
 }
 
-/// The set at `seq` of the changes `answer`, a prepare's, names, signed by
-/// Bo's phone, unchecked: the check is its signer's (`web/src/set.rs`).
-fn signed(answer: &Value, seq: u64) -> Set {
-    let text: Value = serde_json::from_str(answer["prepared"].as_str().unwrap()).unwrap();
-    let bytes = |f: &str| STANDARD.decode(text[f].as_str().unwrap()).unwrap();
-    let (changes, schema): (_, [u8; 32]) = (bytes("changes"), bytes("schema").try_into().unwrap());
-    let ((key, device), hash) = (bo(), svrngs_core::set::changes(&changes));
-    let at = At {
-        group: "g",
-        app: "board",
-        device: &device,
-        nonce: &[9; 16],
-        seq,
-        schema: &schema,
-    };
-    let sig = Sig::parse(&at.sign(&key, &hash)).unwrap();
-    let (device, seq) = (Device::parse(&device).unwrap(), Seq::new(seq).unwrap());
-    let head = Head {
-        device,
-        nonce: [9; 16],
-        seq,
-        schema,
-        changes: hash,
-        sig,
-    };
-    Set { head, changes }
+/// The set Bo's phone's signer signs for `asked`, framed by Board's own
+/// page, postcard's bytes in base64; or its words for why not.
+fn signed(asked: &set::Asked) -> Result<String, String> {
+    let label = Label::carried("board", "g").to_string();
+    set::signed(&bo().0, &label, asked).map(|(set, _)| set)
 }
 
-/// `set` carried to `db` as its route takes one, `{carry}`, postcard's
-/// bytes in base64: how it ended.
-fn carry(db: &Db, set: &Set) -> Took {
-    let carry = json!({ "carry": STANDARD.encode(postcard::to_allocvec(set).unwrap()) });
-    let Ok(Asked::Carry(set)) = svrngs_db::asked(&carry) else {
-        panic!("{carry} is no carry")
+/// `ops`, prepared on `db` for Bo's phone and signed there.
+fn prepared(db: &Db, ops: &Value) -> String {
+    signed(&asked(ops, &db.prepare(ops, &bo().1).unwrap())).unwrap()
+}
+
+/// `card` inserted, as [`prepared`].
+fn card(db: &Db, card: &str) -> String {
+    prepared(
+        db,
+        &json!([{ "insert": "cards", "row": { "id": card, "title": card } }]),
+    )
+}
+
+/// `set` carried to `db` as its route takes one, `{carry}`: how it ended.
+fn carry(db: &Db, set: &str) -> Took {
+    let Ok(Asked::Carry(set)) = svrngs_db::asked(&json!({ "carry": set })) else {
+        panic!("{set} is no carry")
     };
     db.carry(set, &bound()).unwrap()
 }
 
-/// `card` inserted, prepared on `db` for Bo's phone.
-fn prepared(db: &Db, card: &str) -> Value {
-    db.prepare(&json!([{ "insert": "cards", "row": { "id": card, "title": card } }]))
-        .unwrap()
+/// The site of the carried `set`.
+fn site_of(set: &str) -> [u8; 16] {
+    let set: Set = postcard::from_bytes(&STANDARD.decode(set).unwrap()).unwrap();
+    site("g", "board", set.head.device.as_str(), &set.head.nonce)
 }
 
 /// Every row of `cards`, by id.
@@ -97,11 +102,12 @@ fn cards(db: &Db) -> Value {
 /// **A computer prepares a phone's write and keeps none of it** (§4,
 /// "Phones", step 1): Ana's computer prepares an update of her card and a
 /// new one, and answers them signed as hers, with the ops, each table's
-/// key in order, the rows changed and each op's row as it would stand.
-/// Her board is as it was, and her next write takes the version the
-/// prepare didn't spend. A no-op is answered its count alone, as nothing
-/// is to sign. Plant, watched failing: the prepare committing its
-/// transaction (Ana's board has the eggs).
+/// key in order, the rows changed, each op's row as it stood before, and
+/// the place Bo's phone signs at, its first there. Her board is as it was,
+/// and her next write takes the version the prepare didn't spend. A no-op
+/// is answered its count alone, as nothing is to sign. Plant, watched
+/// failing: the prepare committing its transaction (Ana's board had the
+/// eggs and the jam).
 #[test]
 fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
     let (_dir, db) = board(1);
@@ -111,7 +117,7 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
         { "update": "cards", "key": { "id": "c1" }, "set": { "title": "eggs" } },
         { "insert": "cards", "row": { "id": "c2", "title": "jam" } },
     ]);
-    let answer = db.prepare(&ops).unwrap();
+    let answer = db.prepare(&ops, &bo().1).unwrap();
     let (text, by, sig) = (answer["prepared"].as_str().unwrap(), &answer["by"], &answer["sig"]);
     assert_eq!(by, &json!(svrngs_core::actor_of(&SigningKey::from_bytes(&[1; 32]))));
     let message = svrngs_core::set::prepared("g", "board", text);
@@ -124,10 +130,17 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
     assert_eq!(prepared["ops"], ops);
     assert_eq!(prepared["keys"], json!({ "cards": ["id"], "seats": ["seat", "row"] }));
     assert_eq!(prepared["count"], 2);
-    let stands = json!([{ "id": "c1", "title": "eggs", "col": null }, { "id": "c2", "title": "jam", "col": null }]);
-    assert_eq!(prepared["stands"], stands);
+    assert_eq!(
+        prepared["stands"],
+        json!([{ "id": "c1", "title": "milk", "col": null }, null]),
+        "as they stood"
+    );
+    assert_eq!(
+        (&prepared["epoch"], &prepared["seq"]),
+        (&json!(0), &json!(1)),
+        "Bo's first place here"
+    );
     assert_eq!(prepared["schema"].as_str().unwrap().len(), 44, "a hash, in base64");
-    assert!(prepared["changes"].as_str().is_some_and(|c| !c.is_empty()));
     assert_eq!(
         cards(&db),
         json!([{ "id": "c1", "title": "milk" }]),
@@ -138,36 +151,119 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
 
     let same = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "milk" } }]);
     assert_eq!(
-        db.prepare(&same).unwrap(),
+        db.prepare(&same, &bo().1).unwrap(),
         json!({ "count": 1 }),
         "a no-op: nothing to sign"
     );
 }
 
+/// **A phone signs only what its page asked** (§4, "Phones", step 2; W3):
+/// a mixed batch, an update, an insert, a delete and a no-op, prepared on
+/// Ana's computer, is signed. Each lie a computer could tell is refused
+/// whole, in words that say why: one effect deliberately missing, the
+/// insert's; a value the page didn't ask; other ops than it sent; a prepare
+/// no computer signed; and a page of another app asking. Plants, each
+/// watched failing: a no-op read with no regard to its row (the missing
+/// insert signed); a column's value left unread (the ham signed).
+#[test]
+fn a_phone_signs_only_what_its_page_asked() {
+    let (_dir, ana) = board(1);
+    let both = json!([
+        { "insert": "cards", "row": { "id": "c1", "title": "milk" } },
+        { "insert": "cards", "row": { "id": "c3", "title": "tea" } },
+    ]);
+    ana.write(&both).unwrap();
+    let ops = json!([
+        { "update": "cards", "key": { "id": "c1" }, "set": { "title": "eggs" } },
+        { "insert": "cards", "row": { "id": "c2", "title": "jam" } },
+        { "delete": "cards", "key": { "id": "c3" } },
+        { "update": "cards", "key": { "id": "c1" }, "set": { "col": null } },
+    ]);
+    let answer = ana.prepare(&ops, &bo().1).unwrap();
+    let honest = asked(&ops, &answer);
+    let set = signed(&honest).expect("the batch as its page asked it");
+    assert_eq!(carry(&ana, &set), Took::Taken);
+    assert_eq!(
+        cards(&ana),
+        json!([{ "id": "c1", "title": "eggs" }, { "id": "c2", "title": "jam" }])
+    );
+
+    // A computer's lie, signed as Ana's computer signs a prepare: its text
+    // with its changes rewritten by `lie`.
+    let lied = |lie: &dyn Fn(&mut Vec<change::Change>)| {
+        let mut text: Value = serde_json::from_str(&honest.prepared).unwrap();
+        let bytes = STANDARD.decode(text["changes"].as_str().unwrap()).unwrap();
+        let mut rows: Vec<change::Change> = postcard::from_bytes(&bytes).unwrap();
+        lie(&mut rows);
+        text["changes"] = STANDARD.encode(postcard::to_allocvec(&rows).unwrap()).into();
+        let text = text.to_string();
+        let sig = svrngs_core::sign_message(
+            &SigningKey::from_bytes(&[1; 32]),
+            &svrngs_core::set::prepared("g", "board", &text),
+        );
+        signed(&set::Asked {
+            prepared: text,
+            sig,
+            ..asked(&ops, &answer)
+        })
+    };
+    let jam = |c: &change::Change| c.val == Sql::Text("jam".into());
+    let missing = lied(&|rows| {
+        let pk = rows.iter().find(|c| jam(c)).unwrap().pk.clone();
+        rows.retain(|c| c.pk != pk);
+    });
+    let words = "This phone didn’t sign board’s write, since the computer left out a change it asked for. Try again, or open it through another computer.";
+    assert_eq!(missing, Err(words.into()), "one effect deliberately missing");
+    let ham = lied(&|rows| {
+        rows.iter_mut()
+            .filter(|c| jam(c))
+            .for_each(|c| c.val = Sql::Text("ham".into()))
+    });
+    assert!(
+        ham.unwrap_err().contains("a change it didn’t ask for"),
+        "a value the page didn't ask"
+    );
+    let other = signed(&set::Asked {
+        ops: json!([ops[0]]),
+        ..asked(&ops, &answer)
+    });
+    assert!(other.unwrap_err().contains("other ops than it asked"));
+    let unsigned = signed(&set::Asked {
+        by: bo().1,
+        ..asked(&ops, &answer)
+    });
+    assert!(unsigned.unwrap_err().contains("isn’t a computer’s prepare"));
+    let elsewhere = set::signed(&bo().0, &Label::carried("magnets", "g").to_string(), &honest);
+    assert!(
+        elsewhere.unwrap_err().contains("isn’t a computer’s prepare"),
+        "another app's page"
+    );
+}
+
 /// **A phone's set is applied as carried, never moving a mark past a gap**
-/// (§4, "Phones", step 3; "What travels"): Bo's phone signs its second set
-/// before its first reaches Ana's computer, which takes it, its card shown,
-/// and counts it above Bo's site's mark, none yet; then the first, and the
-/// mark is 2. The same bytes again, as a retry sends them, are held.
-/// Plants, each watched failing: the carry judging the set by no keys the
-/// record binds (Bo's set waits); a copy reading only its mark for a set it
-/// holds (the retry taken again, as a twin of itself).
+/// (§4, "Phones", step 3; "What travels"): Bo's two cards, each prepared
+/// and applied at Ana's computer, his home there, at seqs 1 and 2. The
+/// second reaches Ben's computer first, which takes it, its card shown, and
+/// counts it above Bo's site's mark, none yet; then the first, and the mark
+/// is 2. The same bytes again, as a retry sends them, are held. Plants,
+/// each watched failing: the carry judging the set by no keys the record
+/// binds (Bo's set waits); a copy reading only its mark for a set it
+/// holds, never its signature (the retry taken again, as a twin of itself).
 #[test]
 fn a_phone_s_set_is_applied_as_carried_never_past_a_gap() {
-    let (_dir, ana) = board(1);
-    let (jam, milk) = (signed(&prepared(&ana, "jam"), 2), signed(&prepared(&ana, "milk"), 1));
-    assert_eq!(carry(&ana, &jam), Took::Taken);
-    assert_eq!(cards(&ana), json!([{ "id": "jam", "title": "jam" }]));
-    let ask = ana.ask().unwrap();
-    assert_eq!(ask.marks.get(&bo_site()), None, "no mark past the gap");
-    assert!(
-        ask.haves.contains(&(bo_site(), Seq::new(2).unwrap())),
-        "counted above it"
-    );
+    let ((_a, ana), (_b, ben)) = (board(1), board(2));
+    let milk = card(&ana, "milk");
     assert_eq!(carry(&ana, &milk), Took::Taken);
-    assert_eq!(ana.ask().unwrap().marks[&bo_site()].get(), 2, "the gap filled");
-    assert_eq!(carry(&ana, &milk), Took::Held, "a retry's same bytes, held");
-    assert_eq!(cards(&ana).as_array().unwrap().len(), 2);
+    let jam = card(&ana, "jam");
+    assert_eq!(carry(&ben, &jam), Took::Taken);
+    assert_eq!(cards(&ben), json!([{ "id": "jam", "title": "jam" }]));
+    let (ask, bo) = (ben.ask().unwrap(), site_of(&milk));
+    assert_eq!(ask.marks.get(&bo), None, "no mark past the gap");
+    assert!(ask.haves.contains(&(bo, Seq::new(2).unwrap())), "counted above it");
+    assert_eq!(carry(&ben, &milk), Took::Taken);
+    assert_eq!(ben.ask().unwrap().marks[&bo].get(), 2, "the gap filled");
+    assert_eq!(carry(&ben, &milk), Took::Held, "a retry's same bytes, held");
+    assert_eq!(cards(&ben).as_array().unwrap().len(), 2);
 }
 
 /// **A switch of computers after apply, before the reply, ends with one
@@ -176,13 +272,14 @@ fn a_phone_s_set_is_applied_as_carried_never_past_a_gap() {
 /// is applied, and its answer is lost, so his phone carries the same bytes
 /// through Ben's. Once Ana's and Ben's copies meet, each holds his card,
 /// counts his seq once, and names no twin; and the bytes carried again are
-/// held on both. Plant, watched failing: a copy reading only its mark for
-/// a set it holds, never its signature (sync.rs `take`: the retry taken
-/// again, as a twin of itself).
+/// held on both. This holds for an honest phone's signer: a device acting
+/// in bad faith can still show different copies different writes of its
+/// own. Plant, watched failing: a copy reading only its mark for a set it
+/// holds (the retry taken again, as a twin of itself).
 #[test]
 fn a_switch_of_computers_after_apply_ends_with_one_set_at_that_seq() {
     let ((_a, ana), (_b, ben)) = (board(1), board(2));
-    let milk = signed(&prepared(&ana, "milk"), 1);
+    let milk = card(&ana, "milk");
     assert_eq!(carry(&ana, &milk), Took::Taken, "applied; its answer lost");
     assert_eq!(
         carry(&ben, &milk),
@@ -200,7 +297,7 @@ fn a_switch_of_computers_after_apply_ends_with_one_set_at_that_seq() {
             json!([{ "id": "milk", "title": "milk" }]),
             "the write present"
         );
-        assert_eq!(ask.marks[&bo_site()].get(), 1);
+        assert_eq!(ask.marks[&site_of(&milk)].get(), 1);
         assert!(ask.twins.is_empty(), "one set at that seq: {:?}", ask.twins);
         assert_eq!(carry(db, &milk), Took::Held);
     }

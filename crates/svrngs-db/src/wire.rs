@@ -125,3 +125,17 @@ impl Set {
         Self { head, changes }
     }
 }
+
+/// The nonce of a phone's database at its home, the computer `home` that
+/// prepares its sets and applies them first, in its `epoch` there (svrn-docs
+/// `rings/current/app-state-diligence/sync-simplify-2026-11-22/`, change 4):
+/// derived, never drawn, so a phone keeps no nonce to lose, and a set's home
+/// is read from the nonce its device signed.
+pub(crate) fn nonce(home: &str, epoch: u64) -> Nonce {
+    let mut bytes = b"svrngs/db-home/v1\0".to_vec();
+    svrngs_core::field(&mut bytes, home.as_bytes());
+    bytes.extend_from_slice(&epoch.to_be_bytes());
+    svrngs_core::ContentHash::of(&bytes).as_bytes()[..16]
+        .try_into()
+        .expect("a hash is longer")
+}

@@ -42,6 +42,8 @@ mod dial;
 #[path = "../../crates/svrngs-node/src/version.rs"]
 #[allow(dead_code)]
 mod version;
+// A phone's set, checked and signed for the group's signer (web/sign.js).
+mod set;
 
 use iroh::RelayUrl;
 use svrngs_core::alpn::Alpn;
@@ -755,6 +757,22 @@ fn unsigned(
         grant,
     };
     Ok(svrngs_core::unsigned_act(actor, &group, ts as i64, kind))
+}
+
+/// The set the phone whose key is `key` signs for `asked`, JSON (set.rs
+/// `Asked`), asked from the page at the label `label`: `[set, home, epoch,
+/// seq]`, the set as postcard's bytes in base64; or why not, in words for
+/// the person (web/sign.js, which alone holds the key).
+#[wasm_bindgen]
+pub fn set_signed(key: Vec<u8>, label: String, asked: String) -> Result<js_sys::Array, JsError> {
+    let asked = serde_json::from_str(&asked)?;
+    let (set, (home, epoch, seq)) = set::signed(&signing(key)?, &label, &asked).map_err(|e| JsError::new(&e))?;
+    Ok(js_sys::Array::of4(
+        &set.into(),
+        &home.into(),
+        &(epoch as f64).into(),
+        &(seq as f64).into(),
+    ))
 }
 
 /// The act, JSON, an app `kind`'s page asks for with `body`, as the door

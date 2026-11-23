@@ -25,7 +25,7 @@ pub(crate) struct Change {
 }
 
 /// A cell's value, as postcard writes rusqlite's.
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(remote = "Sql")]
 pub(crate) enum Value {
     Null,

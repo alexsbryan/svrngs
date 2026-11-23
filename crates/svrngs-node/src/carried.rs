@@ -718,10 +718,10 @@ impl Folders {
                 // Its owned rows judged as the record binds this computer's
                 // person, as every copy judges them again (svrngs-db `owned.rs`).
                 let bound = crate::ring_sync::bound(&self.host.rail, group);
-                let (db, ops) = (db.clone(), ops.clone());
+                let (db, ops, phone) = (db.clone(), ops.clone(), key.to_owned());
                 // A phone's prepare seals nothing, and so wakes nothing.
                 let wrote = tokio::task::spawn_blocking(move || match prepare {
-                    true => db.prepare(&ops).map(|answer| (answer, None)),
+                    true => db.prepare(&ops, &phone).map(|answer| (answer, None)),
                     false => db.write(&ops, &bound),
                 });
                 let wrote = wrote.await;
