@@ -7,7 +7,8 @@
 //! of a seq and a key is svrngs-db's (`sync.rs`).
 
 use serde::{Deserialize, Serialize};
-use svrngs_core::set::Nonce;
+use svrngs_core::SigningKey;
+use svrngs_core::set::{At, Nonce};
 
 /// A set's seq at its database, and a mark, a have or a twin's place: from 1
 /// to `i64::MAX`, what SQLite holds. Parsed as the wire is read, so a call
@@ -88,4 +89,39 @@ pub struct Head {
 pub struct Set {
     pub head: Head,
     pub changes: Vec<u8>,
+}
+
+impl Head {
+    /// What it signs, as a set of `app` in `group` (`At::message`).
+    pub(crate) fn at<'h>(&'h self, (group, app): (&'h str, &'h str)) -> At<'h> {
+        let (device, nonce, seq, schema) = (self.device.as_str(), &self.nonce, self.seq.0, &self.schema);
+        At {
+            group,
+            app,
+            device,
+            nonce,
+            seq,
+            schema,
+        }
+    }
+}
+
+impl Set {
+    /// `changes`, written under `schema`, signed by `key` at `seq` of its
+    /// database of `nonce`, a set of `app` in `group`: the one place a set is
+    /// made and signed.
+    pub(crate) fn signed(key: &SigningKey, names: (&str, &str), at: (Nonce, Seq, [u8; 32]), changes: Vec<u8>) -> Self {
+        let ((nonce, seq, schema), hash) = (at, svrngs_core::set::changes(&changes));
+        let (device, sig) = (Hex(svrngs_core::actor_of(key)), Hex(String::new()));
+        let mut head = Head {
+            device,
+            nonce,
+            seq,
+            schema,
+            changes: hash,
+            sig,
+        };
+        head.sig = Hex(head.at(names).sign(key, &hash));
+        Self { head, changes }
+    }
 }

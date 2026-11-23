@@ -39,7 +39,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, TransactionBehavior::Immediate, params};
 use serde::{Deserialize, Serialize};
-use svrngs_core::set::{At, Nonce, Site, site};
+use svrngs_core::set::{Site, site};
 
 use crate::parse::{Change, Valid, fit, parse};
 pub use crate::wire::{Device, Head, Hex, Seq, Set, Sig};
@@ -315,24 +315,11 @@ impl Db {
         Ok(dropped)
     }
 
-    /// What a set of this database's group and app, written by `device` in
-    /// its database of `nonce` at `seq` under `schema`, is signed as.
-    fn at<'s>(&'s self, (device, nonce, seq, schema): (&'s Device, &'s Nonce, Seq, &'s [u8; 32])) -> At<'s> {
-        At {
-            group: &self.group,
-            app: &self.app,
-            device: device.as_str(),
-            nonce,
-            seq: seq.get(),
-            schema,
-        }
-    }
-
     /// Whether `set`'s head is signed by its device, over this database's
     /// group and app, and its changes are the ones it signs.
     fn signed(&self, set: &Set) -> bool {
         let head = &set.head;
-        let at = self.at((&head.device, &head.nonce, head.seq, &head.schema));
+        let at = head.at((&self.group, &self.app));
         at.check(&head.changes, head.sig.as_str()) && svrngs_core::set::changes(&set.changes) == head.changes
     }
 
@@ -374,21 +361,13 @@ impl Db {
         let made = fit(made, &self.tables).map_err(Refused::Unkept)?;
         owned::mine(&made, &self.tables, binds, &self.device)?;
         let changes = postcard::to_allocvec(&made.0).expect("changes are written in memory");
-        let hash = svrngs_core::set::changes(&changes);
-        let sig = self
-            .at((&self.device, &self.nonce, seq, &self.schema))
-            .sign(&self.key, &hash);
-        let sig = Sig::parse(&sig).expect("a signature is written in lower-case hex");
-        let (device, nonce, schema) = (self.device.clone(), self.nonce, self.schema);
-        let head = Head {
-            device,
-            nonce,
-            seq,
-            schema,
-            changes: hash,
-            sig,
-        };
-        keep(conn, (&Set { head, changes }, self.site), None, Kept::Taken).map_err(fault)?;
+        let set = Set::signed(
+            &self.key,
+            (&self.group, &self.app),
+            (self.nonce, seq, self.schema),
+            changes,
+        );
+        keep(conn, (&set, self.site), None, Kept::Taken).map_err(fault)?;
         self.prune(conn).map_err(fault)?;
         Ok(Some(seq))
     }
