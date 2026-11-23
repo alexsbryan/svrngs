@@ -278,10 +278,12 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     let bytes = (kept != Kept::Refused).then(|| postcard::to_allocvec(set).expect("a set is written in memory"));
     let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
     conn.execute(sql, params![site, seq, set.head.sig, kept, bytes])?;
-    // The site's device, by which its share is counted, a muted device's
-    // sets are found and a word for its mark is trusted.
-    let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device) VALUES (?1, ?2)";
-    conn.execute(sited, params![site, set.head.device])?;
+    // The site's device, by which its share is counted and a muted device's
+    // sets are found; and its home, from whom alone a word for its mark is
+    // trusted: a phone's, as its set names it, else the device's own.
+    let home = set.home.as_ref().map_or(&set.head.device, |(home, _)| home);
+    let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device, home) VALUES (?1, ?2, ?3)";
+    conn.execute(sited, params![site, set.head.device, home])?;
     count(conn, (site, seq))
 }
 
@@ -320,7 +322,10 @@ impl Db {
     fn signed(&self, set: &Set) -> bool {
         let head = &set.head;
         let at = head.at((&self.group, &self.app));
-        at.check(&head.changes, head.sig.as_str()) && svrngs_core::set::changes(&set.changes) == head.changes
+        // A phone's names the home its signed nonce is derived from.
+        let homed =
+            (set.home.as_ref()).is_none_or(|(home, epoch)| crate::wire::nonce(home.as_str(), *epoch) == head.nonce);
+        homed && at.check(&head.changes, head.sig.as_str()) && svrngs_core::set::changes(&set.changes) == head.changes
     }
 
     /// The site of `head`'s database, derived from its device and nonce.
@@ -562,13 +567,49 @@ impl Db {
         Ok(Took::Over)
     }
 
+    /// The place this computer, the home of the phone `phone` here, hands its
+    /// next set (svrn-docs `app-state-diligence/sync-simplify-2026-11-22/`,
+    /// change 4): in the phone's epoch here, the seq after every one handed
+    /// or counted, so none is handed twice; or the next epoch's first, a site
+    /// of its own, once a set of the site is counted above one missing here,
+    /// as the site's mark would stall on that gap for good. Handed and kept
+    /// in one transaction, so two prepares at once hand two places.
+    pub(crate) fn place(&self, phone: &str) -> rusqlite::Result<(u64, u64)> {
+        let mut conn = self.conn();
+        let tx = conn.transaction_with_behavior(Immediate)?;
+        let was = "SELECT epoch, handed FROM svrngs_homes WHERE device = ?1";
+        let was = tx.query_row(was, [phone], |r| Ok((r.get(0)?, r.get(1)?))).optional()?;
+        let (epoch, handed): (u64, u64) = was.unwrap_or((0, 0));
+        let site = site(
+            &self.group,
+            &self.app,
+            phone,
+            &crate::wire::nonce(self.device.as_str(), epoch),
+        );
+        let counted = "SELECT coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0), \
+            EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1)";
+        let (mark, gap): (u64, bool) = tx.query_row(counted, [site], |r| Ok((r.get(0)?, r.get(1)?)))?;
+        let (epoch, next) = if gap {
+            (epoch + 1, 1)
+        } else {
+            (epoch, handed.max(mark) + 1)
+        };
+        tracing::debug!(target: "state", group = self.group, app = self.app, phone, epoch, next, gap, "state: the place this computer, a phone's home, hands its next set: past every one handed, or a fresh epoch past a gap");
+        let hand = "INSERT INTO svrngs_homes (device, epoch, handed) VALUES (?1, ?2, ?3) \
+            ON CONFLICT (device) DO UPDATE SET epoch = ?2, handed = ?3";
+        tx.execute(hand, params![phone, epoch, next])?;
+        tx.commit()?;
+        Ok((epoch, next))
+    }
+
     /// The mark `m` a full call claims for `site`, adopted up to the highest
     /// seq of the site this copy has counted and no further, so it fills the
     /// gaps below what this copy holds and passes nothing it hasn't counted;
     /// and only where its device is unmuted here, and the caller is trusted
-    /// for it: the site's own computer, which vouches for its own sets, or a
-    /// synced caller into a copy not yet synced, as a newcomer trusts its
-    /// source (APP_STATE §4, "What travels"). So no word takes a mark past a
+    /// for it: the site's home, the computer of its own database or a
+    /// phone's home, which vouches for its sets as it applied them first,
+    /// or a synced caller into a copy not yet synced, as a newcomer trusts
+    /// its source (APP_STATE §4, "What travels"). So no word takes a mark past a
     /// set this copy would fetch, and none makes an established copy skip a
     /// set it hasn't fetched yet.
     fn claimed(
@@ -577,13 +618,15 @@ impl Db {
         (site, m): (Site, Seq),
         (from, synced, room): (Option<&Device>, bool, &Room),
     ) -> rusqlite::Result<()> {
-        let top = "SELECT device, max(coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0), \
+        let top = "SELECT device, home, max(coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0), \
             coalesce((SELECT max(seq) FROM svrngs_above WHERE site = ?1), 0)) FROM svrngs_sites WHERE site = ?1";
-        let top = tx.query_row(top, [site], |r| Ok((r.get::<_, Device>(0)?, r.get::<_, i64>(1)?)));
-        let Some((device, top)) = top.optional()? else {
+        let top = tx.query_row(top, [site], |r| {
+            Ok((r.get::<_, Device>(0)?, r.get::<_, Device>(1)?, r.get::<_, i64>(2)?))
+        });
+        let Some((device, home, top)) = top.optional()? else {
             return Ok(());
         };
-        let trusted = from == Some(&device) || synced && !self.synced.load(Relaxed);
+        let trusted = from == Some(&home) || synced && !self.synced.load(Relaxed);
         let muted = room.muted.contains(&device);
         tracing::debug!(target: "state", group = self.group, app = self.app, %device, mark = m.get(), top, trusted, muted, "state: a full call's mark for a site, adopted up to the highest seq of it this copy has counted, where its device is unmuted here and its caller is trusted for it");
         if !trusted || muted {

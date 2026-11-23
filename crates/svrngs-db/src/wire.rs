@@ -83,12 +83,18 @@ pub struct Head {
     pub sig: Sig,
 }
 
-/// One change set as it travels and is kept: its signed head, and the
-/// changes whose hash it signs.
+/// One change set as it travels and is kept: its signed head, the changes
+/// whose hash it signs, and, for a phone's, its home and its epoch there,
+/// from which its nonce is derived ([`nonce`]): the computer that prepares
+/// its sets and applies them first, which vouches for its site's mark as a
+/// computer vouches for its own (svrn-docs
+/// `rings/current/app-state-diligence/sync-simplify-2026-11-22/`, change 4).
+/// Its device's signature over the nonce binds them.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Set {
     pub head: Head,
     pub changes: Vec<u8>,
+    pub home: Option<(Device, u64)>,
 }
 
 impl Head {
@@ -122,7 +128,11 @@ impl Set {
             sig,
         };
         head.sig = Hex(head.at(names).sign(key, &hash));
-        Self { head, changes }
+        Self {
+            head,
+            changes,
+            home: None,
+        }
     }
 }
 

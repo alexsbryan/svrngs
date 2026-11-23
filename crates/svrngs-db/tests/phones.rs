@@ -302,3 +302,123 @@ fn a_switch_of_computers_after_apply_ends_with_one_set_at_that_seq() {
         assert_eq!(carry(db, &milk), Took::Held);
     }
 }
+
+/// The board on the computer of `[key; 32]` made synced, as the computer
+/// that carries its schema makes it, so its copy is an established one.
+fn root(key: u8) -> (tempfile::TempDir, Arc<Db>) {
+    let dir = tempfile::tempdir().unwrap();
+    let states = States::new(dir.path(), SigningKey::from_bytes(&[key; 32]));
+    (dir, states.carry("g", "board", SCHEMA).unwrap())
+}
+
+/// The device of the key `[key; 32]`.
+fn device(key: u8) -> svrngs_db::Device {
+    svrngs_db::Device::parse(&svrngs_core::actor_of(&SigningKey::from_bytes(&[key; 32]))).unwrap()
+}
+
+/// `to` takes `from`'s full call, as the round has it from `from`'s
+/// computer.
+fn call(from: &Db, (to, by): (&Db, u8)) {
+    let call = from.missing(&to.ask().unwrap(), 4 << 20).unwrap();
+    to.ingest(&call, &bound(), Some(&device(by))).unwrap();
+}
+
+/// **A phone's site is vouched for by its home** (svrn-docs
+/// `app-state-diligence/sync-simplify-2026-11-22/`, change 4): Bo's phone
+/// writes through Ana's computer, its home there, twice to one card's
+/// title, and Ana's copy drops the first set, outranked, before any round.
+/// Ben's established copy, called by Ana's, is sent the second alone, at
+/// seq 2, and takes Ana's word for the site's mark up to it: the gap
+/// closes on the home's call, nothing kept above it. A set naming a home
+/// its nonce isn't derived from is not its device's. Plant, watched
+/// failing: the word trusted from the site's device alone, as before
+/// change 4 (Ben's mark for Bo's site none, seq 2 kept above it).
+#[test]
+fn a_phone_s_site_is_vouched_for_by_its_home() {
+    let ((_a, ana), (_b, ben)) = (root(1), root(2));
+    ana.write(&json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]))
+        .unwrap();
+    for title in ["eggs", "jam"] {
+        let set = prepared(
+            &ana,
+            &json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": title } }]),
+        );
+        assert_eq!(carry(&ana, &set), Took::Taken);
+    }
+    let jam = json!([{ "id": "c1", "title": "jam" }]);
+    assert_eq!(cards(&ana), jam);
+    call(&ana, (&ben, 1));
+    let (ask, bo) = (ben.ask().unwrap(), site("g", "board", &bo().1, &nonce_at(1, 0)));
+    assert_eq!(cards(&ben), jam, "the second set alone, the first outranked");
+    assert_eq!(
+        ask.marks.get(&bo).map(|m| m.get()),
+        Some(2),
+        "the gap closed on the home's call"
+    );
+    assert!(ask.haves.is_empty(), "nothing kept above a gap: {:?}", ask.haves);
+
+    let set = prepared(
+        &ana,
+        &json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "tea" } }]),
+    );
+    let mut moved: Set = postcard::from_bytes(&STANDARD.decode(&set).unwrap()).unwrap();
+    moved.home = Some((device(2), 0));
+    let moved = STANDARD.encode(postcard::to_allocvec(&moved).unwrap());
+    assert_eq!(
+        carry(&ben, &moved),
+        Took::NotItsDevice,
+        "a home its nonce isn't derived from"
+    );
+}
+
+/// The nonce of Bo's phone's database at the home `[home; 32]`, in `epoch`,
+/// as its set carries it.
+fn nonce_at(home: u8, epoch: u64) -> [u8; 16] {
+    let (_keep, ana) = board(home);
+    let set = prepared(
+        &ana,
+        &json!([{ "insert": "cards", "row": { "id": "n", "title": "n" } }]),
+    );
+    let set: Set = postcard::from_bytes(&STANDARD.decode(set).unwrap()).unwrap();
+    assert_eq!(
+        set.home.as_ref().map(|(_, e)| *e),
+        Some(epoch),
+        "an epoch this helper reads"
+    );
+    set.head.nonce
+}
+
+/// **A phone's home never hands one place twice, and moves it to a fresh
+/// site past a gap** (change 4, "Phone twins, prevented"): two prepares at
+/// Ana's computer with nothing carried between hand seqs 1 and 2. The
+/// second set reaches Ana's copy and the first never does, carried through
+/// Ben's computer instead, so Ana counts 2 above a missing 1, and her next
+/// prepare hands the next epoch's first place, a site of its own. Plant,
+/// watched failing: the place read from what is counted alone (the second
+/// prepare handing seq 1 again).
+#[test]
+fn a_phone_s_home_never_hands_a_place_twice() {
+    let ((_a, ana), (_b, ben)) = (board(1), board(2));
+    let place = |answer: &Value| {
+        let text: Value = serde_json::from_str(answer["prepared"].as_str().unwrap()).unwrap();
+        (text["epoch"].as_u64().unwrap(), text["seq"].as_u64().unwrap())
+    };
+    let [one, two] = ["milk", "jam"].map(|card| {
+        let ops = json!([{ "insert": "cards", "row": { "id": card, "title": card } }]);
+        let answer = ana.prepare(&ops, &bo().1).unwrap();
+        (place(&answer), signed(&asked(&ops, &answer)).unwrap())
+    });
+    assert_eq!(
+        (one.0, two.0),
+        ((0, 1), (0, 2)),
+        "two places, though nothing came back between"
+    );
+    assert_eq!(carry(&ben, &one.1), Took::Taken, "the first through Ben's computer");
+    assert_eq!(carry(&ana, &two.1), Took::Taken);
+    let tea = json!([{ "insert": "cards", "row": { "id": "tea", "title": "tea" } }]);
+    assert_eq!(
+        place(&ana.prepare(&tea, &bo().1).unwrap()),
+        (1, 1),
+        "a fresh site past the gap"
+    );
+}

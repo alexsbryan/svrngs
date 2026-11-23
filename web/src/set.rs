@@ -98,7 +98,11 @@ pub fn signed(key: &SigningKey, label: &str, asked: &Asked) -> Result<String, St
         return Err(why("the computer left out a change it asked for"));
     }
     let at = (wire::nonce(&asked.by, p.epoch), seq, schema);
-    let set = wire::Set::signed(key, (&asked.group, &asked.app), at, changes);
+    let mut set = wire::Set::signed(key, (&asked.group, &asked.app), at, changes);
+    set.home = Some((
+        wire::Device::parse(&asked.by).ok_or_else(|| why("its prepare can’t be read"))?,
+        p.epoch,
+    ));
     let set = postcard::to_allocvec(&set).expect("a set is written in memory");
     Ok(STANDARD.encode(set))
 }

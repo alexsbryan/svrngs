@@ -659,25 +659,17 @@ impl Db {
     /// missing effect"); and the place the phone, `phone`, signs the set at,
     /// its epoch here and seq.
     pub fn prepare(&self, ops: &Value, phone: &str) -> Result<Value, Refused> {
-        // This computer is the phone's home here (svrn-docs
-        // `app-state-diligence/sync-simplify-2026-11-22/`, change 4): the
-        // phone's site is its nonce at this computer, and its next seq is
-        // the one after the highest this copy counts of that site.
-        let (epoch, nonce) = (0, wire::nonce(self.device.as_str(), 0));
-        let site = svrngs_core::set::site(&self.group, &self.app, phone, &nonce);
-        let (made, stands, count, next) = self.run(ops, true, |tx, count, stands| {
+        let (made, stands, count) = self.run(ops, true, |tx, count, stands| {
             let seq = tx.query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0));
             let made = self.changes(&tx, seq.map_err(fault)?).map_err(fault)?;
-            let next = "SELECT coalesce(max(seq), 0) + 1 FROM (SELECT mark AS seq FROM svrngs_marks WHERE site = ?1 \
-                UNION ALL SELECT seq FROM svrngs_above WHERE site = ?1)";
-            let next: u64 = tx.query_row(next, [site], |r| r.get(0)).map_err(fault)?;
-            Ok((made, stands, count, next))
+            Ok((made, stands, count))
         })?;
         tracing::debug!(target: "state", group = self.group, app = self.app, rows = made.len(), count, "state: a phone's write prepared and rolled back whole, its rows for its signer");
         if made.is_empty() {
             return Ok(json!({ "count": count }));
         }
         let made = parse::fit(made, &self.tables).map_err(Refused::Unkept)?;
+        let (epoch, next) = self.place(phone).map_err(fault)?;
         let keys: BTreeMap<_, _> = self.tables.iter().map(|(t, table)| (t, &table.key)).collect();
         let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));
         let schema = STANDARD.encode(self.schema);
@@ -725,16 +717,18 @@ impl Db {
 /// it keeps, as postcard's bytes (APP_STATE §4, "Sealed and signed"), named
 /// by site, seq and signature so two at one seq are both kept, and how each
 /// is kept (`sync.rs`, `Kept`), a refused one with no bytes; each site's
-/// mark, and the sets counted above a mark; each site's device (`sync.rs`,
-/// `keep`); and each device muted here, past its share (`sync.rs`,
-/// `Db::over`).
+/// mark, and the sets counted above a mark; each site's device and its home
+/// (`sync.rs`, `keep`); each device muted here, past its share (`sync.rs`,
+/// `Db::over`); and each phone this computer is the home of, its epoch here
+/// and the last seq it handed it (`sync.rs`, `Db::place`).
 const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL);
     CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, kept INTEGER NOT NULL,
       bytes BLOB, PRIMARY KEY (site, seq, sig));
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
     CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));
-    CREATE TABLE svrngs_sites (site BLOB PRIMARY KEY, device TEXT NOT NULL);
-    CREATE TABLE svrngs_muted (device TEXT PRIMARY KEY);";
+    CREATE TABLE svrngs_sites (site BLOB PRIMARY KEY, device TEXT NOT NULL, home TEXT NOT NULL);
+    CREATE TABLE svrngs_muted (device TEXT PRIMARY KEY);
+    CREATE TABLE svrngs_homes (device TEXT PRIMARY KEY, epoch INTEGER NOT NULL, handed INTEGER NOT NULL);";
 
 /// A new database's tables: `schema` made as `svrngs check` makes it
 /// (`schema.rs`, `made`), and svrngs's own made ([`OWN`]), with a
