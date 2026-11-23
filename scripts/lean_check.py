@@ -1037,10 +1037,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # write by its net effect, +13. Slice D's answers to W7's trips took 31 of
 # the room phones had counted on (1c481255..61c800eb). It comes down to where
 # phones lands, and again by a fresh read of the phones code.
+# (2026-11-22) The operator's raise for slice E, the release, "Raise +200":
+# the cap to 27,145. Measured from the code there is (svrn-docs
+# app-state-diligence/e-opening-2026-11-22/): the widest schema by a rebuild
+# of the copy, a set whose schema a copy lacks dropped and sent again, the
+# size cap with a share per device, and each bound's number in one home, about
+# +110 to +250. It comes down to where E lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26945,
+    ".": 27145,
 
     "js": 8741,
 
