@@ -1073,10 +1073,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # per-scratch bound and the DEFAULT probe dropped. The cap to 27,282.
 # JavaScript lands at 8,747 with the phone's signer fixes in: its cap down
 # to 8,748.
+# (2026-11-23) The operator's raise, +127: the delta review's fixes, +99 (a
+# schema.sql that only declares +25, a key compared as SQLite orders it +3,
+# every version through the one decider +4, a restore's swap whole at every
+# step +9, a read's bounds put back on every path +12, a row that fits one
+# answer, 32 columns and 128 KiB a value +16, a database opened outside the
+# lock +5, its node callers off the runtime's threads +25); the file column,
+# +27 of the operator's +28; and a page's read without the JSON aggregates,
+# +1. Cut first: INERT and its function list, the CHECK toggle in keep, one
+# refusal for each kind. The cap to 27,409.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 27282,
+    ".": 27409,
 
     "js": 8748,
 
