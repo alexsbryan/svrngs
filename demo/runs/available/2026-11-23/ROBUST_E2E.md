@@ -41,16 +41,53 @@ range and SHA matched. `fallbackMs` was 3,755 and 3,856 ms (diagnostic).
 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 47 filtered out; finished in 27.32s
 ```
 
-Seek: `cargo test --locked --offline --quiet -p svrngs-node --test relay_tiers a_seek_over_the_share -- --nocapture`.
-Red: remove the connection receive window from the ordinary page dial, leaving
-the data endpoint as a control. Green: restore the window.
+## Relay seek: credit and order
+
+The first replay (`avail-robust-e2e-1.await.log`, `db159de5`) had 10/10
+Chromium closes, WebKit closes, WebKit navigations and page-dial seeks,
+but 9/10 data-endpoint seeks. Its last data-endpoint run read 787,827 B
+before the seek against a 786,432 B limit. The two lookahead readers were
+still granting fresh connection credit, so that byte count wasn't a bound
+on the bytes that were queued before the seek.
+
+The replacement stops returning any credit while a controlled QUIC sender
+fills exactly `QUEUED` across two streams. It checks whether the next
+stream can write before readers return credit. The HTTP half goes through
+the real door and relay: it observes both partial responses, reads the
+seek's 206 and body, then releases both old tails and reads them to EOF.
+
+Focused command in the gate image:
+
+```sh
+TOKIO_WORKER_THREADS=4 cargo test --locked --offline -p svrngs-node \
+  --test relay_tiers a_seek_over_the_share -- --nocapture
+```
+
+Red, remove the connection receive window from the ordinary page dial and
+leave the data endpoint as a control:
 
 ```text
-the seek over a page's dial did not overtake the lookahead: 787510 B read ahead of it
-test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 33.52s
-the seek over a data endpoint: [136291, 138596] B ahead of its answer, arrived in 2399 ms
-the seek over a page's dial: [254491, 144805] B ahead of its answer, arrived in 3499 ms
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 33.63s
+seek write exceeded QUEUED: Ready(Ok(1))
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 27.63s
+```
+
+Red, restore the cap but make the fixture hold the seek behind the old
+tails. Run only `a_seek_over_the_share_on_a_pages_dial`:
+
+```text
+the seek over QUIC: 262144 B filled the connection; the next stream waited for credit
+the seek and lookahead prefixes must arrive before the lookahead tails are released: Elapsed(())
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 67.76s
+```
+
+Green, no plants, both dials:
+
+```text
+the seek over QUIC: 262144 B filled the connection; the next stream waited for credit
+the seek over QUIC: 262144 B filled the connection; the next stream waited for credit
+the seek over a page's dial: both lookaheads started; seek arrived in 1299 ms before releasing their tails
+the seek over a data endpoint: both lookaheads started; seek arrived in 1751 ms before releasing their tails
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 27.63s
 ```
 
 The repetition driver is `robust-e2e.py` in this directory. Run it inside the

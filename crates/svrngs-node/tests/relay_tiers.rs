@@ -16,6 +16,7 @@ mod common;
 #[path = "common/on_wire.rs"]
 mod on_wire;
 
+use std::future::Future as _;
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
 use std::time::{Duration, Instant};
@@ -785,16 +786,14 @@ async fn pressed_on(node: &Node) -> String {
 /// a relay holding Ada's computer to the share, 125,000 bytes a second
 /// (`crates/svrngs/src/relay.rs` `SHARE_RATE`; a 64 KiB burst in place of
 /// its 8 MiB), and Sam's dial through it, built as the page builds
-/// `paths`. Two lookahead ranges must both be flowing before the seek.
-/// Count the lookahead bytes delivered before the seek, allowing the
-/// connection window plus two windows for further reads and credit updates.
+/// `paths`. First witness the exact connection credit with a controlled
+/// QUIC sender. Then open two HTTP ranges through Ada's real door; the
+/// seek must return before either lookahead is allowed to finish.
 /// Ada's group meets at its own plain-HTTP relay, her build's answering
 /// nowhere, so the share watch, which reads only the build's relay,
 /// refuses nothing. Elapsed time is diagnostic only.
-///
-/// [`QUEUED`]: svrngs_node::dial::QUEUED
 async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportConfig) {
-    const PART: usize = 2 * 1024 * 1024;
+    let part = svrngs_node::dial::QUEUED as usize / 2;
     let mut held = RelayServer::new("127.0.0.1:0".parse::<SocketAddr>().unwrap());
     let mut share = ClientRateLimit::new(NonZeroU32::new(125_000).unwrap());
     share.max_burst_bytes = NonZeroU32::new(64 * 1024);
@@ -802,8 +801,12 @@ async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportCo
     let (_relay, url) = relay(held).await;
     let (_dir, node) = ada("http://127.0.0.1:9/", &url).await;
     homed(&node, &url).await;
-    let label = lent_to_sam(&node, serving_each(PART).await);
+    let (finish, held) = tokio::sync::watch::channel(false);
+    let label = lent_to_sam(&node, serving_each(part, held).await);
     let dialer = sam_dialer(&url, paths).await;
+    tokio::time::timeout(Duration::from_secs(45), connection_credit(&url, &dialer))
+        .await
+        .expect("the credit probe must make progress over the relay");
     let at = EndpointAddr::new(node.endpoint().id()).with_relay_url(url.parse().unwrap());
     let conn = dialer.connect(at, svrngs_node::alpn::ALPN).await.unwrap();
     let head = |range: &str| {
@@ -818,38 +821,110 @@ async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportCo
     };
     tokio::time::timeout(Duration::from_secs(45), async {
         let (_first, mut first) = ask("bytes=0-").await;
-        let (_second, mut second) = ask(&format!("bytes={PART}-")).await;
-        let mut read = [0, 0];
-        while read.iter().any(|n| *n < PART / 4) {
-            // Read both to keep connection-level credit moving, even if
-            // the lender started sending on one stream before the other.
-            lookahead(&mut first, &mut second, &mut read).await;
+        let (_second, mut second) = ask(&format!("bytes={part}-")).await;
+        async fn started(stream: &mut iroh::endpoint::RecvStream) {
+            let mut head = Vec::new();
+            while !head.ends_with(b"\r\n\r\n") && head.len() < 4096 {
+                let mut byte = [0];
+                stream.read_exact(&mut byte).await.unwrap();
+                head.push(byte[0]);
+            }
+            assert!(head.starts_with(b"HTTP/1.1 206") && head.ends_with(b"\r\n\r\n"), "{head:?}");
+            let mut first_byte = [0];
+            stream.read_exact(&mut first_byte).await.unwrap();
+            assert_eq!(&first_byte, b"r");
         }
+        tokio::join!(started(&mut first), started(&mut second));
         let (_seek, mut seek) = ask("bytes=0-1").await;
         let asked = Instant::now();
-        let mut ahead = [0, 0];
-        let reply = seek.read_to_end(4096);
-        tokio::pin!(reply);
-        let reply = loop {
-            tokio::select! {
-                biased;
-                reply = &mut reply => break reply.unwrap(),
-                () = lookahead(&mut first, &mut second, &mut ahead) => {
-                    let bytes = ahead.iter().sum::<usize>();
-                    assert!(bytes <= 3 * svrngs_node::dial::QUEUED as usize,
-                        "the seek over {way} did not overtake the lookahead: {bytes} B read ahead of it");
-                }
-            }
-        };
-        eprintln!("the seek over {way}: {ahead:?} B ahead of its answer, arrived in {} ms", asked.elapsed().as_millis());
+        // Drain just the finite prefixes already offered, to return credit
+        // even if they occupy the whole window. The tails stay gated.
+        let mut prefix_a = vec![0; part - 1];
+        let mut prefix_b = vec![0; part - 1];
+        let (a, b, reply) = tokio::join!(
+            first.read_exact(&mut prefix_a),
+            second.read_exact(&mut prefix_b),
+            seek.read_to_end(4096),
+        );
+        a.unwrap();
+        b.unwrap();
+        assert_eq!(prefix_a, vec![b'r'; part - 1]);
+        assert_eq!(prefix_b, prefix_a);
+        let reply = reply.unwrap();
         let response = String::from_utf8(reply).unwrap();
         assert!(response.starts_with("HTTP/1.1 206"), "{response:?}");
         assert_eq!(response.split_once("\r\n\r\n").unwrap().1, "ok");
+        eprintln!("the seek over {way}: both lookaheads started; seek arrived in {} ms before releasing their tails", asked.elapsed().as_millis());
+        finish.send(true).unwrap();
+        let (a, b) = tokio::join!(first.read_to_end(1), second.read_to_end(1));
+        assert_eq!(a.unwrap(), b"!");
+        assert_eq!(b.unwrap(), b"!");
     })
     .await
-    .expect("lookahead and seek must make progress over the relay");
+    .expect("the seek and lookahead prefixes must arrive before the lookahead tails are released");
     dialer.close().await;
     node.endpoint().close().await;
+}
+
+/// Fill exactly `QUEUED` on two streams without returning any credit. A
+/// third stream must be unwritable until the reader drains the lookahead.
+async fn connection_credit(url: &str, dialer: &iroh::Endpoint) {
+    const ALPN: &[u8] = b"seek-credit/0";
+    let part = svrngs_node::dial::QUEUED as usize / 2;
+    let lender = build_relayed_endpoint(
+        SecretKey::from_bytes(&[11; 32]),
+        vec![ALPN.to_vec()],
+        &at(url),
+    )
+    .await
+    .unwrap();
+    lender.online().await;
+    let addr = EndpointAddr::new(lender.id()).with_relay_url(url.parse().unwrap());
+    let (blocked, at_limit) = tokio::sync::oneshot::channel();
+    let (_server, _client) = tokio::join!(
+        async {
+            let conn = lender.accept().await.unwrap().await.unwrap();
+            let (mut a, _) = conn.accept_bi().await.unwrap();
+            let (mut b, _) = conn.accept_bi().await.unwrap();
+            let (mut seek, _) = conn.accept_bi().await.unwrap();
+            let bytes = vec![b'r'; part];
+            a.write_all(&bytes).await.unwrap();
+            b.write_all(&bytes).await.unwrap();
+            let extra = {
+                let mut write = std::pin::pin!(seek.write(b"s"));
+                std::future::poll_fn(|cx| std::task::Poll::Ready(write.as_mut().poll(cx))).await
+            };
+            assert!(extra.is_pending(), "seek write exceeded QUEUED: {extra:?}");
+            blocked.send(()).unwrap();
+            seek.write_all(b"s").await.unwrap();
+            seek.finish().unwrap();
+            // The seek can be acknowledged with lookahead bytes still in flight.
+            conn
+        },
+        async {
+            let conn = dialer.connect(addr, ALPN).await.unwrap();
+            let open = async || {
+                let (mut send, recv) = conn.open_bi().await.unwrap();
+                send.write_all(b"?").await.unwrap();
+                send.finish().unwrap();
+                recv
+            };
+            let (mut a, mut b, mut seek) = (open().await, open().await, open().await);
+            at_limit.await.unwrap();
+            let mut bytes = vec![0; part];
+            a.read_exact(&mut bytes).await.unwrap();
+            assert_eq!(bytes, vec![b'r'; part]);
+            b.read_exact(&mut bytes).await.unwrap();
+            assert_eq!(bytes, vec![b'r'; part]);
+            assert_eq!(seek.read_to_end(1).await.unwrap(), b"s");
+            eprintln!(
+                "the seek over QUIC: {} B filled the connection; the next stream waited for credit",
+                2 * part
+            );
+            conn
+        }
+    );
+    lender.close().await;
 }
 
 /// [`a_seek_over_the_share`] over a page's endpoint's dial to a lender
@@ -909,32 +984,15 @@ async fn sam_dialer(url: &str, paths: iroh::endpoint::QuicTransportConfig) -> ir
         .unwrap()
 }
 
-/// Each lookahead has more bytes than the allowance being tested. Reading
-/// a chunk is cancel-safe when the seek wins the outer select.
-async fn lookahead(
-    first: &mut iroh::endpoint::RecvStream,
-    second: &mut iroh::endpoint::RecvStream,
-    read: &mut [usize; 2],
-) {
-    let (index, chunk) = tokio::select! {
-        chunk = first.read_chunk(16 * 1024) => (0, chunk),
-        chunk = second.read_chunk(16 * 1024) => (1, chunk),
-    };
-    read[index] += chunk
-        .unwrap()
-        .unwrap_or_else(|| panic!("lookahead {index} ended early: {read:?}"))
-        .len();
-}
-
-/// [`serving`], each connection answered on a task of its own, as a
-/// threaded server answers (the phone's run's `film-server.py`): an answer
-/// waiting on a slow reader holds up no other.
-async fn serving_each(big: usize) -> u16 {
+/// Each lookahead serves its prefix, then waits for the test to release
+/// its last byte. The seek has no such dependency.
+async fn serving_each(prefix: usize, held: tokio::sync::watch::Receiver<bool>) -> u16 {
     use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let port = listener.local_addr().unwrap().port();
     tokio::spawn(async move {
         while let Ok((mut asked, _)) = listener.accept().await {
+            let mut held = held.clone();
             tokio::spawn(async move {
                 let mut buf = vec![0u8; 4096];
                 let mut n = 0;
@@ -947,8 +1005,9 @@ async fn serving_each(big: usize) -> u16 {
                 }
                 let head = String::from_utf8_lossy(&buf[..n]).to_ascii_lowercase();
                 let ranged = head.contains("range:");
-                let body = if ranged && !head.contains("range: bytes=0-1\r\n") {
-                    vec![b'r'; big]
+                let lookahead = ranged && !head.contains("range: bytes=0-1\r\n");
+                let body = if lookahead {
+                    vec![b'r'; prefix]
                 } else {
                     b"ok".to_vec()
                 };
@@ -959,10 +1018,13 @@ async fn serving_each(big: usize) -> u16 {
                 };
                 let head = format!(
                     "HTTP/1.1 {status}\r\ncontent-length: {}\r\nconnection: close\r\n\r\n",
-                    body.len()
+                    body.len() + usize::from(lookahead)
                 );
                 let _ = asked.write_all(head.as_bytes()).await;
                 let _ = asked.write_all(&body).await;
+                if lookahead && held.wait_for(|released| *released).await.is_ok() {
+                    let _ = asked.write_all(b"!").await;
+                }
             });
         }
     });
