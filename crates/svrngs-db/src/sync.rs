@@ -474,7 +474,9 @@ impl Db {
             })
         });
         let made = made.map_err(fault)?;
-        let reused = "SELECT EXISTS (SELECT 1 FROM svrngs_sets WHERE site = ?1 AND seq = ?2)";
+        // Its own mark counts every version it sealed, a set pruned since too.
+        let reused = "SELECT ?2 <= coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0) \
+            OR EXISTS (SELECT 1 FROM svrngs_sets WHERE site = ?1 AND seq = ?2)";
         let reused: bool = conn
             .query_row(reused, params![self.site, seq], |r| r.get(0))
             .map_err(fault)?;

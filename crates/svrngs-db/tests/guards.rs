@@ -143,3 +143,35 @@ fn a_database_is_opened_only_by_a_plain_name() {
     assert!(opened.is_empty(), "opened: {opened:?}");
     assert!(states.open("g", "board", Some(SCHEMA)).is_ok(), "a plain name opens");
 }
+
+/// **A version pruned is never sealed again** (APP_STATE §4, "Sealed and
+/// signed": the seal fails loudly on a version this device's sets hold, the
+/// reuse Fly's fork PR #29 names, engine-and-sync C6): Ana writes a card and
+/// writes it again, so her first set, outranked, is pruned. cr-sqlite's
+/// count of her versions is put back to none from a second connection, as
+/// that reuse would, so her next write is given version 1 again: it is
+/// refused, in words, and nothing of it is kept. Plant, watched failing:
+/// the guard reading the kept sets alone, not the site's own mark (the write
+/// sealed at 1 a second time).
+#[test]
+fn a_version_pruned_is_never_sealed_again() {
+    let dir = tempfile::tempdir().unwrap();
+    let a = board(dir.path(), 1);
+    let card = |id: &str, title: &str| json!([{ "insert": "cards", "row": { "id": id, "title": title } }]);
+    a.write(&card("c1", "milk")).unwrap();
+    a.write(&card("c1", "jam")).unwrap();
+    let side = side(dir.path(), 1);
+    side.execute("UPDATE crsql_db_versions SET db_version = 0", []).unwrap();
+    let refused = a.write(&card("c2", "eggs")).err().map(|r| r.to_string());
+    assert_eq!(
+        refused.as_deref(),
+        Some("This computer couldn't: this database gave a write the version 1 again."),
+    );
+    let rows = a.read("SELECT id, title FROM cards ORDER BY id", &[]).unwrap();
+    assert_eq!(
+        rows["rows"],
+        json!([{ "id": "c1", "title": "jam" }]),
+        "nothing of it kept"
+    );
+    svrngs_db::close(side).unwrap();
+}
