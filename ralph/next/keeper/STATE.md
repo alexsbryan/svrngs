@@ -663,6 +663,10 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
       answered. Plant: today's `output()`, which hangs or times out;
     - the page from a node hosted on a terminal: it never reads the
       terminal and never prompts.
+    - In the pty proof, wait until the consent prompt is visible before
+      sending the answer, then check the resulting linger state.
+    - In the page proof, drive Run while the node holds a real tty, and
+      leave the tty unanswered. Run returns, and linger is unchanged.
   - Size: a small counted patch, in the reserve.
 
 - [ ] avail-run-mac — depends [avail-unmagic] — ONE UNIT (keeper): spec §5 row 5.
