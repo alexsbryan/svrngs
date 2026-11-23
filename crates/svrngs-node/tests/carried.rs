@@ -4160,3 +4160,90 @@ async fn every_computer_takes_the_widest_version_a_member_runs() {
         node.net().close().await;
     }
 }
+
+/// The reads a person may make of an app's database at once, and the
+/// subscriptions they keep open of it (`carried.rs` `READS_AN_HOUR`,
+/// `SUBSCRIPTIONS_MOST`), said here apart so a change to either fails here.
+const READS_AN_HOUR: usize = 3_600;
+const SUBSCRIPTIONS_MOST: usize = 8;
+
+/// **A person's subscriptions to an app and their reads of its database are
+/// bounded** (svrn-docs `rings/current/APP_STATE.md` §4, "What SQL may do";
+/// invariant 9's plants, "a page opening 500 subscriptions" and "a read
+/// loop"): Ana's Board opens nine subscriptions. Her first ends as the ninth
+/// opens, the oldest past the most, and her second is still pushed her
+/// next card. Then eight loops read as fast as they can until refused:
+/// every read taken, the subscriptions' among them, is within an hour's
+/// reads and the refill since, and each loop is refused 429 `limit`, its
+/// words naming the rate, with `Retry-After`. Plants, each watched failing:
+/// the oldest subscription never ended (the first still open); no read
+/// refill (a loop never refused).
+#[tokio::test]
+async fn a_person_s_subscriptions_and_reads_are_bounded() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 81, ana, &[]);
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let started = std::time::Instant::now();
+    let host = origin.trim_start_matches("http://").trim_end_matches('/');
+    let q = "SELECT%20id%20FROM%20cards%20ORDER%20BY%20id";
+    let mut streams = Vec::new();
+    for _ in 0..=SUBSCRIPTIONS_MOST {
+        let ask = http().get(format!("http://{}/svrngs/sql?q={q}", ana.api_addr()));
+        let ask = ask
+            .header("host", host)
+            .header("accept", "text/event-stream");
+        let mut events = ask.asked_as_you().sent().await.unwrap().into_body();
+        assert_eq!(next_event(&mut events).await["rows"], json!([]));
+        streams.push(events);
+    }
+    use http_body_util::BodyExt;
+    let ended = tokio::time::timeout(Duration::from_secs(10), streams[0].frame()).await;
+    assert!(matches!(ended, Ok(None)), "the oldest ended: {ended:?}");
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(sql(ana, &origin, milk).await.0, 200);
+    assert_eq!(
+        next_event(&mut streams[1]).await["rows"],
+        json!([{ "id": "c1" }])
+    );
+
+    let origin = origin.as_str();
+    let one = |_| async move {
+        let read = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+        for n in 0.. {
+            let answer = at(ana, origin, "POST", "/svrngs/sql", Some(read.clone())).await;
+            if !answer.status().is_success() {
+                let after = answer
+                    .headers()
+                    .get("retry-after")
+                    .map(|v| v.to_str().unwrap().to_owned());
+                return (n, after, answer.json::<Value>().await.unwrap());
+            }
+            assert!(n < READS_AN_HOUR, "a loop is never refused");
+        }
+        unreachable!()
+    };
+    let loops = n0_future::join_all((0..8).map(one)).await;
+    let read = SUBSCRIPTIONS_MOST + 1 + loops.iter().map(|(n, ..)| n).sum::<usize>();
+    let most = READS_AN_HOUR + started.elapsed().as_secs() as usize + 1;
+    assert!(
+        (READS_AN_HOUR..=most).contains(&read),
+        "an hour's reads, and the refill since: read {read}, at most {most}"
+    );
+    for (_, after, said) in loops {
+        assert_eq!(said["refused"], "limit", "{said}");
+        let words = said["words"].as_str().unwrap();
+        assert!(
+            words.contains(&format!("about {} reads a minute", READS_AN_HOUR / 60)),
+            "{words}"
+        );
+        assert!(
+            after.is_some_and(|s| s.parse::<u64>().is_ok_and(|s| s > 0)),
+            "{said}"
+        );
+    }
+    for node in &nodes {
+        node.net().close().await;
+    }
+}

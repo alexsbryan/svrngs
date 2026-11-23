@@ -66,8 +66,9 @@ use serde_json::{json, Value};
 use svrngs_core::{Admission, Append, AppendRefusal, Command, Files, Op, Placed};
 use svrngs_core::{Device, RailAct, SignedOp, SyncPath};
 use svrngs_db::{Db, Refused, Set, Took};
+use tokio::sync::watch;
 
-use super::{blob::People, dirs_of, Folders};
+use super::{blob::People, dirs_of, Asker, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
 use crate::iroh::Dialer;
 use crate::lend::{AppName, Lend, Program, Source};
@@ -685,6 +686,11 @@ impl Folders {
     /// a write as them, or a subscription (the module docs).
     async fn sql(&self, app: (&AppName, &str), who: (&People, &str, Wrote), req: Request) -> Given {
         let ((app, group), (people, key, wrote)) = (app, who);
+        let asker: Asker = (
+            group.into(),
+            app.to_string(),
+            people[key].person_key.clone(),
+        );
         let db = match self.database((app, group), (people, key)).await? {
             Ok(db) => db,
             Err(r) => return Ok(refused(&r)),
@@ -700,9 +706,19 @@ impl Folders {
                 .into_iter()
                 .find_map(|(k, q)| (k == "q").then(|| q.into_owned()));
             let q = q.ok_or((Malformed, 422, "a subscription asks ?q=<a SELECT>"))?;
+            if let Some(wait) = self.read_refill(&asker, app) {
+                return Ok(wait);
+            }
+            // Its place among the person's subscriptions to the app here, the
+            // oldest ended once past the most ([`SUBSCRIPTIONS_MOST`]).
+            let mut nth = 0;
+            self.opened.send_modify(|o| {
+                nth = *o.entry(asker.clone()).and_modify(|n| *n += 1).or_insert(1)
+            });
             let (host, group, key) = (self.host.clone(), group.to_owned(), key.to_owned());
             let stands = move || matches!(host.rail.standing(&group), Ok(Standing::Members(p)) if p.contains_key(&key));
-            return Ok(subscribed(db, q, others, stands).await);
+            let newer = (self.opened.subscribe(), asker, nth);
+            return Ok(subscribed(db, q, (others, stands), newer).await);
         }
         // Past the most it reads, refused in the route's own shape and in words
         // of the database's, so a page says a pasted list too long for one write.
@@ -717,6 +733,9 @@ impl Folders {
         let prepare = matches!(asked, Ok(svrngs_db::Asked::Prepare(_)));
         let answered = match asked {
             Ok(svrngs_db::Asked::Read(sql, params)) => {
+                if let Some(wait) = self.read_refill(&asker, app) {
+                    return Ok(wait);
+                }
                 read(&db, sql.into(), params.to_vec(), others).await
             }
             Ok(svrngs_db::Asked::Write(ops) | svrngs_db::Asked::Prepare(ops)) => {
@@ -730,7 +749,7 @@ impl Folders {
                     let words = format!("{app} writes only from your own computer for now, so this isn’t kept. Open {app} from your computer’s home page to write in it.");
                     return Ok(told(403, "elsewhere", words));
                 }
-                let wait = self.seals((group, app.as_str()), &people[key].person_key);
+                let wait = self.refill(&asker, ("sets", SETS_AN_HOUR));
                 if wait > 0 {
                     let words = format!("{app} is writing faster than an app may here, about {} writes a minute, as every computer of your group takes each one. It can write again in {wait} seconds.", SETS_AN_HOUR / 60);
                     let refused = [(header::RETRY_AFTER, wait.to_string())];
@@ -803,10 +822,10 @@ impl Folders {
     /// seals at most, never by its ops or rows, so a paste of 300 is one
     /// (svrn-docs `app-state-diligence/app-fit.md`, N5). Kept in memory, so a
     /// restart refills it; the acts' refill reads the record (`spent`).
-    fn seals(&self, (group, app): (&str, &str), person: &str) -> i64 {
+    fn refill(&self, asker: &Asker, (kind, per_hour): (&'static str, i64)) -> i64 {
         let now = crate::door::unix_now().unwrap_or(i64::MAX / 2);
-        let (mut wait, at) = (0, (now, SETS_AN_HOUR));
-        let key = (group.to_owned(), app.to_owned(), person.to_owned());
+        let (mut wait, at) = (0, (now, per_hour));
+        let key = (asker.clone(), kind);
         self.sealed.send_if_modified(|due| {
             let was = due.get(&key).copied().unwrap_or(0);
             wait = wait_at(was, at);
@@ -814,7 +833,7 @@ impl Folders {
                 .then(|| due.insert(key, due_after(was, now, at)))
                 .is_some()
         });
-        tracing::debug!(target: "folder", group, app, person, wait, "carried: a write to an app's database, counted in its person's sets an hour, or the seconds it waits");
+        tracing::debug!(target: "folder", ?asker, kind, wait, "carried: a write or read of an app's database, counted in its person's budget an hour, or the seconds it waits");
         wait
     }
 }
@@ -829,6 +848,29 @@ impl Folders {
 /// this stands until slice E sets it from Magnets' recorded taps and a page
 /// writing for 60 seconds (APP_STATE §4, "What SQL may do").
 pub(crate) const SETS_AN_HOUR: i64 = 1_800;
+
+/// How many reads of an app's database, a read or a subscription opened,
+/// one person may make on this computer at once, and, one refilling every
+/// `3600 / READS_AN_HOUR` seconds, in an hour: this number's one home.
+/// Provisional: twice [`SETS_AN_HOUR`], as a page reads once as it opens and
+/// a subscription brings the rest, until a read loop's recorded run sets it.
+pub(crate) const READS_AN_HOUR: i64 = 3_600;
+
+/// How many subscriptions to an app one person keeps open on this computer,
+/// the oldest ended past it: this number's one home. Provisional: a page
+/// keeps one, and a person a few tabs and a phone or two.
+pub(crate) const SUBSCRIPTIONS_MOST: u64 = 8;
+
+impl Folders {
+    /// A read of `app` by `asker`, in its person's budget of reads; or the
+    /// refusal that says how long it waits.
+    fn read_refill(&self, asker: &Asker, app: &AppName) -> Option<Response> {
+        let wait = self.refill(asker, ("reads", READS_AN_HOUR));
+        let words = format!("{app} is reading faster than an app may here, about {} reads a minute. It can read again in {wait} seconds.", READS_AN_HOUR / 60);
+        let refused = [(header::RETRY_AFTER, wait.to_string())];
+        (wait > 0).then(|| (refused, told(429, "limit", words)).into_response())
+    }
+}
 
 /// A refusal of an app's database, as its page reads one: `{refused,
 /// words}`, its short name and what to do.
@@ -871,28 +913,35 @@ fn refused(r: &Refused) -> Response {
 async fn subscribed(
     db: Arc<Db>,
     q: String,
-    others: bool,
-    stands: impl Fn() -> bool + Clone + Send + 'static,
+    (others, stands): (bool, impl Fn() -> bool + Clone + Send + 'static),
+    (newer, asker, nth): (watch::Receiver<BTreeMap<Asker, u64>>, Asker, u64),
 ) -> Response {
     let first = match read(&db, q.clone(), Vec::new(), others).await {
         Ok(first) => first,
         Err(r) => return refused(&r),
     };
-    let rows = n0_future::stream::unfold((db.watch(), Some(first), None), move |at| {
-        let (db, q, stands) = (db.clone(), q.clone(), stands.clone());
+    let rows = n0_future::stream::unfold((db.watch(), newer, Some(first), None), move |at| {
+        let (db, q, stands, asker) = (db.clone(), q.clone(), stands.clone(), asker.clone());
         async move {
-            let (mut changed, mut now, last) = at;
+            let (mut changed, mut newer, mut now, last) = at;
             loop {
                 // A database to be made wider ends its subscriptions, so none
                 // holds it (svrngs-db `widen`): the page's next ask is of the
-                // wider one.
-                (!db.retiring()).then_some(())?;
+                // wider one. And one past its person's most here ends.
+                let opened = newer.borrow().get(&asker).copied();
+                let past = opened.is_some_and(|n| n - nth >= SUBSCRIPTIONS_MOST);
+                (!db.retiring() && !past).then_some(())?;
                 let rows = now.take().filter(|r| last.as_ref() != Some(r));
                 if let Some(rows) = rows {
                     let event = Ok::<_, std::convert::Infallible>(format!("data: {rows}\n\n"));
-                    return Some((event, (changed, None, Some(rows))));
+                    return Some((event, (changed, newer, None, Some(rows))));
                 }
-                changed.changed().await.ok()?;
+                // A change, or a subscription the person opened since, which
+                // may make this one past the most.
+                tokio::select! {
+                    moved = changed.changed() => moved.ok()?,
+                    opened = newer.changed() => opened.ok()?,
+                }
                 let stands = stands();
                 tracing::debug!(target: "folder", group = db.group, app = db.app, stands, "carried: a subscription's asker still stands in the group as its database changes, else the stream ends");
                 stands.then_some(())?;
