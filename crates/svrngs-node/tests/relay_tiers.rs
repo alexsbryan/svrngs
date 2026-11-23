@@ -72,9 +72,20 @@ async fn a_dial_reaches_a_member_at_a_relay_this_computer_does_not_hold() {
             .await
             .expect("online");
     }
+    // Ada takes the first dial whose handshake completes. The control's,
+    // given up, can come first: iroh sends a dial's first packets, the
+    // close Bo's giving up sends among them, to every path it knows for
+    // the remote (iroh-1.4.2 socket/remote_map/remote_state.rs
+    // `handle_msg_send_datagram`), and R1 is one once Bo dials there.
     let taken = tokio::spawn({
         let ada = ada.clone();
-        async move { ada.accept().await.unwrap().await.unwrap() }
+        async move {
+            loop {
+                if let Ok(c) = ada.accept().await.unwrap().await {
+                    break c;
+                }
+            }
+        }
     });
     let dial =
         |url: &str| EndpointAddr::new(ada.id()).with_relay_url(url.parse::<RelayUrl>().unwrap());
