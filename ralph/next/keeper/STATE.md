@@ -306,7 +306,7 @@ names its part of it; read the spec's §2 and §3 before any row. Rows marked
 (keeper) are under `apps/` and uncounted. The rest spend CHARTER's release
 envelope.
 
-- [ ] avail-economize — depends [] — ONE UNIT, behaviour kept: spec §5 row
+- [x] avail-economize 480b53c69 — depends [] — ONE UNIT, behaviour kept: spec §5 row
   R3.
   - The pass over `surface.rs`, `home.rs`, `cli.rs`, `lend.rs`, `uid.rs`,
     `door/bound.rs`, `job.rs`, `lent-row.js` and `running-here.js`.
