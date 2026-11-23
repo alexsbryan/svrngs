@@ -317,7 +317,7 @@ envelope.
 
   check: each cut's focused tests; fresh lean counts.
 
-- [ ] avail-plan — depends [avail-economize] — ONE UNIT: spec §3.1, §3.6,
+- [x] avail-plan befdaf978 — depends [avail-economize] — ONE UNIT: spec §3.1, §3.6,
   §3.7 P1, P2, P4; row R-plan.
   - `crates/svrngs-node/src/plan.rs` and `plan/words.rs`, both pure: the
     closed event types, `step` and `plan`, the return points, the method,
