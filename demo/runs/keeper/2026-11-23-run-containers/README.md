@@ -54,3 +54,44 @@ same marker at same address after reboot: passed (direct and Alex both HTTP 200;
 
 No `--split` run was needed. The driver powered the VM off and removed
 the scratch disk, including its test unit, pod and volume.
+
+## Proof 2: recovery without the foreground process
+
+`recover.py` uses the same scratch VM and a disposable shell recipe, with
+no `ExecStop`. A pod label is set at creation; cleanup checks that label
+and addresses the pod by the inspected ID. Plant: `--plant` skips the
+label check, so a running same-name pod with another label must fail the
+preservation check. In the unplanted run, killing only the unit's main
+process must produce a new pod and container with the same volume marker,
+once before and once after the container's healthcheck passes. Finally,
+stopping the container itself must restart the unit; a failing or
+unreadable healthcheck is not an exit.
+
+```sh
+W=/tmp/opencode/keeper-container-recover-red2 python3 -B demo/runs/keeper/2026-11-23-run-containers/recover.py --plant --control-group
+W=/tmp/opencode/keeper-container-recover-trace python3 -B demo/runs/keeper/2026-11-23-run-containers/recover.py --control-group
+W=/tmp/opencode/keeper-container-recover-process2 python3 -B demo/runs/keeper/2026-11-23-run-containers/recover.py
+```
+
+Selected output from the three `run/events.jsonl` captures (IDs shortened):
+
+```text
+RED --plant: cleaning pod d94c074298e5 (another-job)
+same-name foreign pod is untouched: failed; expected=d94c074298e5 after=89f9983ceceb state=Running
+AssertionError: the same-name foreign pod was touched
+RED --control-group: foreground death recovers: failed; pod=d1dd0ecd8bf8 Degraded; manager=deactivating restarts=0
+GREEN KillMode=process: refused foreign pod 41f17a28c0be (another-job)
+same-name foreign pod is untouched: passed; expected=41f17a28c0be after=41f17a28c0be state=Running
+kill before readiness: passed; health=starting restarts=1 old=47b56c993310 new=8ebb8deea24e body=5c6cb4760c8843a38ebd81a4a659b4e6 HTTP 200
+nonready and unreadable are not exits: passed; unhealthy_exit=1 unreadable_exit=125 main_pid=2512
+kill after readiness: passed; health=healthy restarts=2 old=8ebb8deea24e new=dec46fb6bece body=5c6cb4760c8843a38ebd81a4a659b4e6 HTTP 200
+actual container exit restarts the unit: passed; restarts=3
+```
+
+Under the default kill mode, systemd's group teardown took down the infra
+container but did not finish deactivating in the 25 s observation. With
+`KillMode=process`, systemd observes the foreground exit immediately and
+leaves the detached Podman workload for the next invocation to reclaim.
+The green run exited 0. Its journal shows both `status=9/KILL` events and
+the labelled pod IDs being stopped and removed by the next invocation.
+All three VM disks, including test units, pods and volumes, were discarded.

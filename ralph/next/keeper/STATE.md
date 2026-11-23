@@ -510,10 +510,15 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     passed. The original failure was intermittent, and no reset was
     captured directly.
 
-- [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses, unchanged:
+- [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses:
   - the card (`compose.yaml` plus `x-svrngs`) and `card::check`;
   - `runtime::App` (`pull`, `start`, `wait_healthy`, `health`, `stop`);
   - `machine` and `podman`.
+  The Give and check call paths stay unchanged. Keeper needs an opt-in
+  seam in `runtime.rs:172–202,517–534`: the existing start supplies no
+  atomic ownership mark, and the existing stop targets a reusable name.
+  Set the ownership mark during pod creation; inspect it and target the
+  immutable Podman ID for cleanup. Proof 2 checks the same-name refusal.
 
   None of Give's custody policy (`keep.rs:585–611`) is taken.
 

@@ -179,7 +179,7 @@ def scene(split):
     return ok
 
 
-def main():
+def with_vm(run):
     vm.W.mkdir()
     vm.OUT.mkdir()
     for name in ("key", "seed.iso"):
@@ -189,9 +189,7 @@ def main():
     qemu = vm.qemu()
     try:
         assert vm.ssh_up(40), "the scratch VM did not answer SSH"
-        split = "--split" in sys.argv[1:]
-        install(split)
-        return 0 if scene(split) else 1
+        return run()
     finally:
         try:
             vm.root("systemctl poweroff", 10)
@@ -200,6 +198,16 @@ def main():
             qemu.kill()
             qemu.wait(10)
         disk.unlink()
+
+
+def main():
+    split = "--split" in sys.argv[1:]
+
+    def run():
+        install(split)
+        return 0 if scene(split) else 1
+
+    return with_vm(run)
 
 
 if __name__ == "__main__":
