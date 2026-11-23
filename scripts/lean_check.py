@@ -960,10 +960,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Sharing the return wording's template brings it to 24,940.
 # Then avail-publish reserves revisions under the existing lend lock and
 # makes the access write conditional: 25,064 (+124, within the +435 envelope).
+# Then avail-terminal's replay and ordered owner results: 25,094 (+30,
+# within the raised envelope in keeper CHARTER, "The release").
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25065,
+    ".": 25095,
 
     "js": 8651,
 

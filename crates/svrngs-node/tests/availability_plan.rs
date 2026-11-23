@@ -354,7 +354,6 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     let addr = listener.local_addr().unwrap();
     nature.port = addr.port().try_into().unwrap();
     let before = observe(nature.clone());
-    let access = plan(&before).unwrap();
     let template = Lend::carried("coder", "house").unwrap();
     let keep = Keep {
         unit: "coder.service".into(),
@@ -373,24 +372,34 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     // Obstruct the declaration writer, after the revision can be reserved.
     let partial = lend::lends_dir(dir.path()).join(format!(".{}.json.partial", nature.name));
     std::fs::create_dir_all(&partial).unwrap();
-    let done = run::publish(dir.path(), &access, template.clone(), granted.clone());
-    assert!(
-        matches!(done, Done::NotPublished { ref why } if why.contains(".json.partial")),
-        "{done:?}"
-    );
+    let mut takeovers = 0;
+    let mut execute = |token: &str, running: &Nature| {
+        run::confirm(
+            token,
+            || observe(running.clone()),
+            |next| match next {
+                Step::Keeper(_) => {
+                    takeovers += 1;
+                    Done::Verified
+                }
+                Step::Access(p) => run::publish(dir.path(), p, template.clone(), granted.clone()),
+            },
+        )
+    };
+    let run::Confirmation::Finished(result) = execute(&plan(&before).unwrap().token, &nature)
+    else {
+        panic!("initial confirmation did not finish");
+    };
     assert!(lend::read(dir.path(), &nature.name).unwrap().is_none());
     assert!(lend::all(dir.path()).unwrap().is_empty());
-    let after = fold(
-        &[Event::Done(Done::Verified), Event::Done(done)],
-        before.clone(),
-    );
-    let report = after.report.unwrap();
+    let words = plan(&result)
+        .unwrap()
+        .report_words(result.report.as_ref().unwrap())
+        .unwrap();
     assert!(
-        matches!(report, Report::RunningNotShared { .. }),
-        "{report:?}"
+        words.text.starts_with("Running here; not shared.") && words.text.contains(".json.partial"),
+        "{words:?}"
     );
-    let words = access.report_words(&report).unwrap();
-    assert!(words.text.starts_with("Running here; not shared."));
     assert_eq!(words.button.as_deref(), Some("Review sharing"));
 
     std::fs::remove_dir(&partial).unwrap();
@@ -402,8 +411,18 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         retry.steps().collect::<Vec<_>>().as_slice(),
         [Step::Access(_)]
     ));
-    assert!(
-        matches!(run::publish(dir.path(), &retry, template, granted), Done::Published { rev } if rev == retry.if_rev + 1)
+    let run::Confirmation::Finished(result) = execute(&retry.token, &nature) else {
+        panic!("retry did not finish");
+    };
+    let words = plan(&result)
+        .unwrap()
+        .report_words(result.report.as_ref().unwrap())
+        .unwrap();
+    assert!(words.text.starts_with("Shared with House."), "{words:?}");
+    assert_eq!(takeovers, 1, "retry restarted the already running job");
+    assert_eq!(
+        lend::revision(dir.path(), &nature.name).unwrap(),
+        retry.if_rev + 1
     );
     let saved = lend::read(dir.path(), &nature.name).unwrap().unwrap();
     assert_eq!(saved.port(), Some(nature.port));
@@ -419,4 +438,23 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         std::net::TcpStream::connect_timeout(&addr, std::time::Duration::from_secs(1)).unwrap();
     listener.set_nonblocking(true).unwrap();
     assert!(listener.accept().is_ok());
+}
+
+#[test]
+fn p3_changed_revision_requests_review_before_calling_either_owner() {
+    let (nature, terms) = facts();
+    let reviewed = observation(nature, terms, Return::Startup, Return::Startup);
+    let original = fold(&reviewed, State::default());
+    let current = step(original.clone(), Event::Revision(14));
+    let result = run::confirm(
+        &plan(&original).unwrap().token,
+        || current.clone(),
+        |_| {
+            panic!("a stale review called an effect owner");
+        },
+    );
+    let run::Confirmation::ReviewAgain(review) = result else {
+        panic!("a stale confirmation did not request another review");
+    };
+    assert_eq!(plan(&review).unwrap(), plan(&current).unwrap());
 }
