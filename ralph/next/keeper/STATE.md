@@ -299,14 +299,181 @@ These are the figures the launch approved, in code lines as
   lines are listed by `scripts/ports.py`. CSP and the trust floor are
   unchanged, and the counts are within each allowance.
 
-## After the demo, not now
+## The release: available by default (svrn-docs rings/current/KEEP_IT_RUNNING_RELEASE.md)
 
-- The page: the keep in each line under What you lend, beside Give's, as
-  svrn-docs `rings/current/PLAY_LEND_GIVE_UX.md` §3.2 and §3.4 give it.
-  Two strangers' scenes go first (§5.10).
-- Give's image cards rendered to Quadlets, so a kept Give app survives
-  its keeper's reboot.
-- The Mac, forking commonwealth-ai `sovereign-service`'s LaunchAgent half,
-  and renewal by launchd job.
-- The promise words, K4.
-- The home-access Flatpak scope, which is the operator's.
+The spec at svrn-docs `4f77680` is this section's design, and each row
+names its part of it; read the spec's §2 and §3 before any row. Rows marked
+(keeper) are under `apps/` and uncounted. The rest spend CHARTER's release
+envelope.
+
+- [ ] avail-rehearse — depends [] — ONE UNIT, evidence: spec §5 row R0.
+  - xenia strangers (DeepSeek Flash, `--variant max`) on the availability
+    rehearsal (svrn-docs `rings/current/play-lend-give/prototype/availability/`,
+    not ours: run it, never edit it). Its strings are first corrected to
+    spec §2.1's (svrngs's voice, `AfterUnlock`) in a copy beside the runs.
+  - The plant runs first: the two choices' labels swapped. Then Hana ("you
+    restart tonight: make sure Cy can use coder tomorrow") and Ivo, two runs
+    each.
+  - Recorded in svrn-docs `rings/current/play-lend-give/runs/availability-<date>/`,
+    the way PLAY_LEND_GIVE_UX §4 records them.
+
+  read: PLAY_LEND_GIVE_UX §4; the rehearsal's README.
+  check: the plant is told apart from the real labels, or the round says
+  could-not-judge; each count is reported as a rehearsal, never a people
+  result.
+
+- [ ] avail-economize — depends [] — ONE UNIT, behaviour kept: spec §5 row
+  R3.
+  - The pass over `surface.rs`, `home.rs`, `cli.rs`, `lend.rs`, `uid.rs`,
+    `door/bound.rs`, `job.rs`, `lent-row.js` and `running-here.js`.
+  - It leaves out every file app-state (PR 7) changed (CHARTER,
+    "Alongside app-state").
+  - Each cut is its own commit and ratchets the caps.
+  - Recorded in `demo/runs/economize/<date>-available/SURVEY.md`.
+
+  check: each cut's focused tests; fresh lean counts.
+
+- [ ] avail-plan — depends [avail-economize] — ONE UNIT: spec §3.1, §3.6,
+  §3.7 P1, P2, P4; row R-plan.
+  - `crates/svrngs-node/src/plan.rs` and `plan/words.rs`, both pure: the
+    closed event types, `step` and `plan`, the return points, the method,
+    the token, and every string as a function of the outcome.
+
+  check, each planted first:
+  - P1: the same events give the same plan and token, and folding a prefix
+    then the rest equals folding the whole;
+  - P2: the table test over the product of the closed sets;
+  - P4: a `lean_check.py` rule naming `plan.rs` as pure.
+
+  Demo: `svrngs share <port> --plan` prints, for each kind on this host,
+  §2.1's words, and acts on nothing.
+
+- [ ] avail-keeper-facts — depends [] — ONE UNIT (keeper): spec §3.4, §3.7
+  T1; row R2.
+  - Facts as JSON with the keeper's own token; `--yes`; `list --json`;
+    `restart`; `start` resets a failed unit; `Nice=10`.
+  - Recoverable takeover: lock, stage, `takeover.json`, stop the recorded
+    pid@start, verify, enable. Reconcile on every call.
+
+  check, each planted first: an interruption at each stage is reconciled on
+  this host, and a retry never stops a second process (T1).
+
+- [ ] avail-publish — depends [avail-economize] — ONE UNIT: spec §3.2, §3.7
+  W1, W2; row R-publish.
+  - A share's revision, with tombstones on withdrawal.
+  - One conditional publish through `lend::mutate`: binding, grant,
+    audience and limit together.
+  - `RunningNotShared`.
+
+  check, each planted first:
+  - a concurrent withdrawal wins;
+  - a stale confirmation is refused and never resurrects a withdrawn
+    share;
+  - a failed write leaves the job running, unshared, and the next plan is
+    `Reuse`.
+
+- [ ] avail-terminal — depends [avail-plan, avail-keeper-facts, avail-publish] — ONE UNIT: spec §2.4, §3.2; row R1.
+  - `plan/run.rs`, the executor at the edge: it replays at confirm, gives
+    `ReviewAgain` with no side effects, and feeds each owner's answer back
+    as a `Done` event.
+  - `svrngs share` through the plan.
+  - svrngs-keeper built by `scripts/build-release.sh`, always installed by
+    `web/install.sh`, and in `packaging/arch`.
+  - The guides: models.md, lend.md and troubleshooting.md.
+
+  Demo, first: partial success. A planted failed write leaves "Running
+  here; not shared", and the next review shares it with no restart. Then
+  Sam's scene, three no-login reboots in the spike's VM
+  (`demo/runs/keeper/2026-11-22/`'s driver).
+
+- [ ] avail-page — depends [avail-terminal, avail-rehearse] — ONE UNIT:
+  spec §2.1, §2.2, §3.7 O3, O4; row R4.
+  - The page renders the review and the result svrngs sends, through two
+    routes. No string lives in the page.
+  - It follows avail-rehearse's findings.
+
+  check:
+  - O3, a lean rule: svrngs only reads jobs, and one module runs the
+    keeper;
+  - O4, `vocab_check.py`: no mechanism word on the page;
+  - the first demo again, from the page, in WebKit.
+
+- [ ] avail-containers — depends [avail-keeper-facts] — ONE UNIT (keeper):
+  spec §5 row R5.
+  - A rootless Podman container or pod becomes a Quadlet, verified by the
+    unit's cgroup.
+  - First, a plant: today a container's port copies pasta
+    (`promote.rs`, no container case).
+
+  Demo: Actual, and an Immich-shaped pod, through a reboot in the VM.
+
+- [ ] avail-mac-native — depends [avail-keeper-facts] — ONE UNIT (keeper):
+  spec §5 row R6.
+  - Fork commonwealth-ai `svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0`,
+    its LaunchAgent half, as `launchd.rs`: unchanged first, with ported-from
+    lines.
+  - Then reads by `lsof` and `ps`, and §3.4 on the Mac.
+
+  Demo on beefymac (PROMPT.addendum, "beefymac"): llama-server on Metal,
+  kill -9, and `launchctl kickstart -k` of its agent. The reboots and
+  sign-ins are the operator's, in HUMAN-release-hosts.
+
+- [ ] avail-mac-renew — depends [avail-mac-native, avail-publish] — ONE
+  UNIT: spec §3.3, §3.7 B2; row R7.
+  - A LaunchAgent's label plus its plist's hash, judged by lineage.
+  - A Podman-machine container by name and image digest, with the engine
+    read before and after the dial.
+  - Whether a sandboxed Mac app can reach Podman's socket is answered
+    first; until it is, a Mac container is `ThisRun`.
+
+  check: B2's Mac twins, each planted, and Alex's link after the agent's
+  restart and a kill -9 on beefymac. After a reboot, it is
+  HUMAN-release-hosts'.
+
+- [ ] avail-mac-containers — depends [avail-mac-renew] — ONE UNIT (keeper):
+  spec §5 row R8.
+  - Spike M0 on a Podman machine's restart policy, then the keeper's Mac
+    containers.
+
+  Demo: Actual on beefymac.
+
+- [ ] avail-proof — depends [avail-page, avail-containers, avail-mac-renew, avail-mac-containers] — ONE UNIT, evidence: spec §5 R9, the parts that are
+  automatic. In `demo/runs/available/<date>/`, predictions first, each case
+  given one of the four verdicts:
+  - the gated cases: a takeover interrupted at each stage, a VM power-cut
+    between stop and start among them; a withdrawal concurrent with a
+    confirmation; a failed publication; a stale confirmation after a
+    withdrawal;
+  - the packaged path in the VM: the Arch package, and the install line on
+    Fedora Workstation's image. After a reboot, Alex's old link reaches the
+    same app and the same data, a marker written before the reboot and read
+    after. Stop sharing leaves Sam's app answering on localhost, and Alex's
+    open stream ends within 2 s, with a test that plants the withdrawal
+    itself (`tests/door/live.rs`, spec §3.5);
+  - the strangers again, on the built page.
+
+- [ ] HUMAN-release-hosts — depends [avail-proof] — the operator. The
+  release waits on this row (the operator, 2026-11-22: "release only after
+  packaged proofs"):
+  - beefymac with the install line, including three reboots and sign-ins
+    with Alex's link and the data marker;
+  - a real Fedora laptop: a GPU model before sign-in, a passphrase disk
+    (`AfterUnlock`), and the login screen's idle suspend;
+  - the people sessions (spec §5 R9, "People").
+
+  No worker ticks this row, installs on the operator's own svrngs, or
+  touches a real host but beefymac's scratch folders.
+
+- [ ] REVIEW-audit-available — depends [avail-proof] — the unchanged full
+  `scripts/check.sh` in svrngs-gate, with the main `.git` mounted
+  (PROMPT.addendum). It also checks:
+  - `scripts/ports.py` lists every ported-from line;
+  - CSP and the trust floor are unchanged;
+  - the counts are within CHARTER's release envelope.
+
+## Not in this release
+
+Spec §5, "Out": starting on request (N1), running while this computer is
+off (N2), another account's service (N3), UDP coming back by itself,
+compose projects with their own networks, before login on a Mac, and
+Windows.

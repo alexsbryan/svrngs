@@ -27,6 +27,28 @@ envelope, not a reason for a workaround.
   host checks use units named `svrngs-keeper-test-*` and remove them.
   Never touch the operator's own units or the installed svrngs.
 
+**The full gate from this worktree.** This checkout is a git worktree,
+whose `.git` points into `/home/alexbryan/dev/svrngs/.git`. In the gate's
+`podman run`, add `-v /home/alexbryan/dev/svrngs/.git:/home/alexbryan/dev/svrngs/.git`,
+or git in the container finds no repository, and lean_check and trust_check
+fail for the mount alone (commons lesson d789eff5;
+`/tmp/keeper-audit/gate.sh` is a working copy).
+
+**beefymac** (`ssh beefymac`, the operator's Mac; approved for this
+queue's Mac rows):
+- Only a scratch folder, `~/svrngs-keeper-scratch`.
+- Only launch agents and containers named `svrngs-keeper-test-*`, removed
+  at the end of the unit, with the commit saying what was removed.
+- Never the operator's installed svrngs, its groups, or `~/Library/LaunchAgents`
+  entries not of this queue's naming.
+- No reboot of beefymac without the operator: a "reboot" demo there is
+  recorded by the operator in HUMAN-release-hosts, and a worker uses
+  `launchctl` restarts and sign-out/sign-in only if the operator has said
+  so in this file.
+
+**xenia** runs on DeepSeek Flash at `--variant max` (AGENTS.md, "Ralph
+model effort"), as PLAY_LEND_GIVE_UX §4's runs were.
+
 **Never touch the operator's real svrngs groups or lends.** svrngs runs for
 a check only as a scratch node: `SVRNGS_DIR` and `HOME` in a scratch
 folder, as svrn-docs LEND_SANDBOX §6 B5 does.

@@ -128,3 +128,34 @@ out of its way:
   `SuccessExitStatus=143`, `WantedBy=default.target`, and loopback ports.
 - **The spike's probe** is the prototype of the renewal rule (svrn-docs
   `local-hosting-spike/probe/src/main.rs` `renew`): ported, not linked.
+
+## The release: available by default (2026-11-22)
+
+The operator, in order:
+- "'Linux, command line, native programs' -- that's clearly not anywhere
+  close to a complete release";
+- "Keep vs Give is an implementation detail … End users have clean
+  interface. We should make both hold strongly";
+- "make a deterministic deployment plan that we can execute on our service
+  topology", which "might have to be a folded function";
+- a reviewer's production handoff, to incorporate;
+- "use svrngs --> the program that offers this service for other
+  programs";
+- "Size raise fine, release only after packaged proofs".
+
+The design is svrn-docs `rings/current/KEEP_IT_RUNNING_RELEASE.md` at
+`4f77680`. Its §4 holds the settled decisions, each with its grounds, and
+its §5 the release line. Where a row and the spec disagree, the spec wins:
+correct the row in a commit to this file's STATE.md, citing it.
+
+**The envelope.** The operator approved the raise as an envelope: at most
+about +435 of all code but JavaScript and +30 of JavaScript over the counts
+after avail-economize's cuts (spec §6). Each row spends only as far as it
+lands, with a `Size:` paragraph. Past the envelope, stop with
+`needs-human`. The counts at `04e5873b`, rebased on main `789707dc`: core
+3,471 of 3,539, all code but JavaScript 24,655 of 24,656, JavaScript 8,668
+of 8,689.
+
+**The release gate.** No release before HUMAN-release-hosts: the packaged
+proofs on beefymac and a real Fedora laptop, and the people sessions. The
+release itself is the operator's (PLAN §2).
