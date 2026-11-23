@@ -297,3 +297,28 @@ fn a_version_is_judged_once_against_a_file() {
     let ana = ana_states.open("g", "board", None).unwrap();
     ana_states.widen(&ana, &v2).unwrap();
 }
+
+/// **A restore that can't swap leaves the database open as it was** (the
+/// review's L2): with the place the live file is kept in during the swap
+/// taken, by a directory, Ana's copy made wider faults, and her database
+/// still reads and writes, then after a restart holds both her cards on the
+/// version it had. Plant, watched failing: the old connection closed before
+/// the copy opens in its place (the next write panics under the database's
+/// lock).
+#[test]
+fn a_restore_that_can_t_swap_leaves_the_database_open_as_it_was() {
+    let dir = tempfile::tempdir().unwrap();
+    let ana_states = states(dir.path(), 1);
+    let ana = ana_states.carry("g", "board", V1).unwrap();
+    write(&ana, json!({ "id": "c1", "title": "milk" })).unwrap();
+    std::fs::create_dir(dir.path().join("state/g/board.db.old")).unwrap();
+    let faulted = ana_states.widen(&ana, V2);
+    assert!(matches!(faulted, Err(Refused::Fault(_))), "{faulted:?}");
+    write(&ana, json!({ "id": "c2", "title": "tea" })).unwrap();
+    let both = json!([{ "id": "c1", "title": "milk" }, { "id": "c2", "title": "tea" }]);
+    assert_eq!(rows(&ana, "SELECT * FROM cards ORDER BY id"), both);
+    drop((ana, ana_states));
+    let ana_states = states(dir.path(), 1);
+    let ana = ana_states.open("g", "board", None).unwrap();
+    assert_eq!(rows(&ana, "SELECT * FROM cards ORDER BY id"), both);
+}

@@ -355,8 +355,9 @@ impl States {
     /// keeps, which prune has thinned. All under `db`'s one lock, so no
     /// statement runs on the file between the copy and the swap, and every
     /// holder of `db`, a page's subscription among them, has the new file at
-    /// its next ask, told it changed. On any failure before the swap, the
-    /// old file stays, open as it was, and the copy goes.
+    /// its next ask, told it changed. On any failure before the copy opens
+    /// in the file's place, the old file stays, open as it was, and the copy
+    /// goes: `db` never holds no connection.
     fn restored(&self, db: &Db, change: impl FnOnce(&Connection) -> Result<(), Refused>) -> Result<(), Refused> {
         let mut live = db.conn();
         let (names, path) = (
@@ -375,30 +376,42 @@ impl States {
             own.map_err(fault)?;
             drop(restored);
             drop(Db::open(&copy, names, (None, false), self.key.clone())?);
-            let closed = !copy.with_extension("db.new-wal").exists();
+            let closed = !copy.with_extension("new-wal").exists();
             closed
                 .then_some(())
                 .ok_or_else(|| fault("the restored copy's WAL stayed open"))
         })();
-        tracing::debug!(target: "state", group = db.group, app = db.app, refused = ?made.as_ref().err(), "state: a database restored whole into a copy, changed there and opened as this computer's, then swapped in under its lock; or left as it was, the copy refused");
-        if let Err(e) = made {
+        // Then swapped in only once it opens in the live file's place: the
+        // live file's WAL folded into it and gone, its connection kept open
+        // on it in rollback mode, so the copy opens with WAL files of its
+        // own; the live file kept under another name meanwhile, and put back
+        // where the copy doesn't open, its connection still on it. So `live`
+        // always holds a connection that works, the old one or the copy's.
+        let old = path.with_extension("db.old");
+        let moved = made.and_then(|()| {
+            live.execute_batch("PRAGMA journal_mode=DELETE").map_err(fault)?;
+            std::fs::rename(&path, &old).map_err(fault)
+        });
+        let swapped = moved.clone().and_then(|()| {
+            std::fs::rename(&copy, &path).map_err(fault)?;
+            Db::open(&path, names, (None, false), self.key.clone())
+        });
+        tracing::debug!(target: "state", group = db.group, app = db.app, refused = ?swapped.as_ref().err(), "state: a database restored whole into a copy, changed there and opened as this computer's in its place, then swapped in under its lock; or left as it was, open, the copy refused");
+        let new = swapped.inspect_err(|_| {
+            if moved.is_ok() {
+                // What the copy's failed open left of its WAL, then the old file back.
+                let _ = ["db-wal", "db-shm"].map(|g| std::fs::remove_file(path.with_extension(g)));
+                let _ = std::fs::rename(&old, &path);
+            }
             let _ = std::fs::remove_file(&copy);
-            return Err(e);
-        }
-        drop(std::mem::replace(&mut live.open, Open(None)));
-        for gone in ["db-wal", "db-shm"] {
-            let _ = std::fs::remove_file(path.with_extension(gone));
-        }
-        // Renamed into place only once whole, and opened again from there,
-        // the old file's own name; a rename that fails leaves the old file.
-        let renamed = std::fs::rename(&copy, &path).map_err(fault);
-        let new = Db::open(&path, names, (None, false), self.key.clone())?;
+        })?;
+        let _ = std::fs::remove_file(&old);
         (db.synced).store(new.synced.load(Relaxed), Relaxed);
         db.copied.store(new.copied(), Relaxed);
         *live = new.live.into_inner().expect("a lock just made");
         drop(live);
         db.changed.send_modify(|n| *n += 1);
-        renamed
+        Ok(())
     }
 
     /// Each database of `group` this computer has open closed, as it drops,
