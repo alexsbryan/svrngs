@@ -4598,6 +4598,7 @@ dependencies = [
  "iroh-relay",
  "mimalloc",
  "n0-future",
+ "plist",
  "rcgen",
  "reqwest 0.12.28",
  "ring",

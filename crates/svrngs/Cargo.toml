@@ -36,6 +36,9 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "tim
 tracing = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+plist = { version = "1.10.3", default-features = false, features = ["serde"] }
+
 # Linux's allocator (main.rs): the malloc of musl as zig builds it keeps
 # what the command frees (demo/runs/leak/2026-10-17/README.md).
 [target.'cfg(target_env = "musl")'.dependencies]

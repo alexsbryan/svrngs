@@ -133,3 +133,14 @@ After the green run, `cargo check --locked --offline --ignore-rust-version
 Both labels still returned 113, and `test ! -e "$HOME/svrngs-keeper-scratch"`
 passed after cleanup. The two scratch nodes, plists, and archive were
 removed. The packaged reboot and sign-in proof was not run here.
+
+## The door's login plist
+
+Run `bash demo/runs/keeper/2026-11-23-mac-renew/beefymac.sh plist 667c52f2`
+to compare the old reader with the current one. It uses the same scratch
+launch registrations but stops after inspecting the first CLI Share's
+saved grant. For cases that change the plist after bootstrap, the loaded
+registrations stay in place; the fixture checks the door's registered path
+before Share. The negative cases use `~/.svrngs` as the asking root to
+expose any unintended fallback. The wrong-type plant uses plist data
+containing the exact root's UTF-8 bytes, not a string.

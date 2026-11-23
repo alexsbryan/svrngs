@@ -24,8 +24,12 @@ door_label = label + '-door'
 domain = f'gui/{os.getuid()}'
 door_target = f'{domain}/{door_label}'
 cases = ('changed', 'holder', 'taker', 'held', 'withdrawn')
+plist_yes = ('plist-formatted', 'plist-binary', 'plist-absent')
+plist_no = ('plist-wrong-root', 'plist-malformed', 'plist-wrong-type')
 case = sys.argv[1]
-assert case in ('all', *cases)
+assert case in ('all', *cases, *plist_yes, *plist_no)
+plist_case = case in (*plist_yes, *plist_no)
+node_dir = '.svrngs' if plist_case and case not in ('plist-formatted', 'plist-binary') else 'node'
 plant = sys.argv[2] if len(sys.argv) > 2 else ''
 assert not plant or plant == case in cases
 
@@ -46,7 +50,7 @@ with tempfile.TemporaryDirectory(dir=scratch) as tmp:
     def env(who):
         home = work / who
         home.mkdir(exist_ok=True)
-        return dict(os.environ, HOME=str(home), SVRNGS_DIR=str(home / 'node'),
+        return dict(os.environ, HOME=str(home), SVRNGS_DIR=str(home / node_dir),
                     XDG_DATA_HOME=str(home / 'data'), TOKIO_WORKER_THREADS='4',
                     RUST_LOG='error,door=debug,job=debug,cli=debug,plan=debug', SVRNGS_TEST_CONTROL=plant,
                     SVRNGS_TEST_RACE=str(race), SVRNGS_TEST_HANDOFF=str(work / 'fds'))
@@ -175,19 +179,17 @@ else:
     expected = (200, data.read_text())
     active = work / 'sam/Library/LaunchAgents' / f'{label}.plist'
     door_plist = active.with_name(f'{door_label}.plist')
-    lend = work / 'sam/node/lends' / f'{name}.json'
+    lend = work / 'sam' / node_dir / 'lends' / f'{name}.json'
     assert show().returncode == show(door_target).returncode == 113
     try:
         active.parent.mkdir(parents=True)
-        registration = plistlib.dumps(dict(Label=door_label,
+        registration = dict(Label=door_label,
             ProgramArguments=[str(svr)], RunAtLoad=True,
             EnvironmentVariables={k: v for k, v in env('sam').items() if k in (
                 'HOME', 'SVRNGS_DIR', 'XDG_DATA_HOME', 'TOKIO_WORKER_THREADS', 'RUST_LOG',
                 'SVRNGS_TEST_CONTROL', 'SVRNGS_TEST_RACE', 'SVRNGS_TEST_HANDOFF')},
-            StandardOutPath=str(work / 'sam.log'), StandardErrorPath=str(work / 'sam.log')))
-        # Match web/install.sh's SVRNGS_DIR spelling, which CLI kept_over reads.
-        door_plist.write_bytes(re.sub(rb'(<key>SVRNGS_DIR</key>)\s+(<string>)',
-                                     rb'\1\2', registration))
+            StandardOutPath=str(work / 'sam.log'), StandardErrorPath=str(work / 'sam.log'))
+        door_plist.write_bytes(plistlib.dumps(registration))
         call('sam', '/bin/launchctl', 'bootstrap', domain, door_plist)
         start('alex', svr)
         for who in ('sam', 'alex'):
@@ -200,13 +202,35 @@ else:
               '/bin/sh', wrapper, server, port, mark, data, route, 'app')
         first = pid()
         assert first and active.is_file()
+        # Change only the file checked at Share, keeping the loaded door and app live.
+        if plist_case:
+            variables = registration['EnvironmentVariables']
+            if case == 'plist-absent':
+                del variables['SVRNGS_DIR']
+            if case == 'plist-wrong-root':
+                variables['SVRNGS_DIR'] = str(work)  # existing, but not the asking root
+            if case == 'plist-wrong-type':
+                variables['SVRNGS_DIR'] = os.fsencode(variables['SVRNGS_DIR'])  # plist data, not string
+            if case == 'plist-malformed':
+                door_plist.write_bytes(b'<plist version="1.0"><dict>')
+            elif case != 'plist-formatted':
+                fmt = plistlib.FMT_BINARY if case == 'plist-binary' else plistlib.FMT_XML
+                door_plist.write_bytes(plistlib.dumps(registration, fmt=fmt))
+            assert str(door_plist) in show(door_target).stdout
         share = (svr, 'share', port, '--program', 'mac-fixture', '--name', name, '--group', 'Scratch')
         shared = confirm(*share)
         print(shared)
-        assert 'closes until you approve' not in shared, 'Share gave conflicting restart guidance'
         before = json.loads(lend.read_text())
         original = active.read_bytes()
         got = before.get('keep')
+        if plist_case:
+            print(f'{case}: first Share grant={got is not None}; expected={case in plist_yes}')
+            if (got is not None) != (case in plist_yes):
+                raise SystemExit(5)
+            if got is not None:
+                assert got['unit'] == label and got['files'] == hashlib.sha256(original).hexdigest()
+            raise SystemExit(0)
+        assert 'closes until you approve' not in shared, 'Share gave conflicting restart guidance'
         assert got and got['unit'] == label, 'first Share must grant the verified login service'
         assert got['files'] == hashlib.sha256(original).hexdigest()
         for job in (door_target, target):

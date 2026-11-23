@@ -1193,24 +1193,36 @@ fn restart(root: &Path) -> Result<String, Refusal> {
 }
 
 /// Whether what keeps svrngs running at login runs it over `root`: the
-/// `SVRNGS_DIR` its LaunchAgent or systemd unit names, as install.sh
-/// writes them, else `~/.svrngs`, as a package's unit runs it; so its
-/// restart ([`restart`]) restarts the svrngs over `root`, and no other.
+/// `SVRNGS_DIR` its LaunchAgent or systemd unit names, else `~/.svrngs`,
+/// as a package's unit runs it. On Mac only a parsed plist may default.
+/// A restart ([`restart`]) then restarts the svrngs over `root`, and no other.
 fn kept_over(root: &Path) -> bool {
     let home = home().unwrap_or_default();
+    let resolve = |dir: Option<&str>| {
+        std::fs::canonicalize(dir.map_or_else(|| home.join(".svrngs"), PathBuf::from))
+    };
     #[cfg(target_os = "macos")]
-    let kept = home.join("Library/LaunchAgents/sh.svrnme.svrngs.plist");
+    let kept = {
+        #[derive(serde::Deserialize)]
+        struct Login {
+            #[serde(rename = "EnvironmentVariables", default)]
+            vars: std::collections::BTreeMap<String, plist::Value>,
+        }
+        plist::from_file::<_, Login>(home.join("Library/LaunchAgents/sh.svrnme.svrngs.plist"))
+            .map_err(std::io::Error::other)
+            .and_then(|mut login| match login.vars.remove("SVRNGS_DIR") {
+                Some(plist::Value::String(dir)) => resolve(Some(&dir)),
+                None => resolve(None),
+                _ => Err(std::io::Error::other("SVRNGS_DIR is not a plist string")),
+            })
+    };
     #[cfg(not(target_os = "macos"))]
-    let kept = home.join(".config/systemd/user/svrngs.service");
-    // `<key>SVRNGS_DIR</key><string><dir></string>`, `Environment=SVRNGS_DIR=<dir>`.
-    let kept = std::fs::read_to_string(kept).unwrap_or_default();
-    let named = kept
-        .split_once("SVRNGS_DIR")
-        .map(|(_, d)| d.trim_start_matches("</key><string>"));
-    let named = named.and_then(|d| d.trim_start_matches('=').split(['<', '\n']).next());
-    let kept = named
-        .map_or(home.join(".svrngs"), PathBuf::from)
-        .canonicalize();
+    let kept = resolve(
+        std::fs::read_to_string(home.join(".config/systemd/user/svrngs.service"))
+            .unwrap_or_default()
+            .split_once("SVRNGS_DIR")
+            .and_then(|(_, d)| d.trim_start_matches('=').split(['<', '\n']).next()),
+    );
     tracing::debug!(target: "cli", ?kept, root = %root.display(), "cli: the data dir svrngs is kept running over at login, against this command's");
     kept.is_ok_and(|kept| root.canonicalize().is_ok_and(|here| here == kept))
 }

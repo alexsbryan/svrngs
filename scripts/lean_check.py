@@ -987,10 +987,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # avail-run-stdio spends 9 more on explicit stdio at that same keeper call.
 # avail-run-mac adds the read-only sign-in observation for svrngs's own agent.
 # avail-run-mac-renew spends 105 for a shared live grant witness and plist registration.
+# avail-mac-plist-read spends 11 to parse the door's login plist, leaving 10 for shipping.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25707,
+    ".": 25718,
 
     "js": 8732,
 

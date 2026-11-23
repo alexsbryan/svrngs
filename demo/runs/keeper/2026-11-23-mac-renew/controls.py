@@ -7,7 +7,7 @@ repo = scratch / 'repo'
 assert Path.cwd() == repo and not (repo / '.git').exists()
 src = repo / 'crates'
 mode = sys.argv[1]
-assert mode in ('test', 'plant')
+assert mode in ('test', 'plant', 'plist')
 
 
 def change(path, old, new, count=1):
@@ -22,6 +22,9 @@ def change(path, old, new, count=1):
 for path in ('svrngs-node/src/job/mac.rs', 'svrngs/src/cli.rs'):
     change(path, 'sh.svrnme.svrngs', 'svrngs-keeper-test-mac-renew-door',
            count=1 if path.endswith('mac.rs') else 2)
+
+if mode == 'plist':
+    sys.exit(0)
 
 bound = 'svrngs-node/src/door/bound.rs'
 change(bound, '    let fresh = || {\n        let another', '''    if let Some(signal) = std::env::var_os("SVRNGS_TEST_RACE").map(std::path::PathBuf::from).filter(|p| p.exists()) {

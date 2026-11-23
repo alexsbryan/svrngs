@@ -386,7 +386,10 @@ stopped lend stays stopped.
 On macOS, Share looks for the keeper's exact label from the share name.
 It grants renewal only with both login registrations verified: the svrngs
 door and the app, whose regular plist must be registered in the GUI domain,
-set to start at sign-in and not disabled (`job/mac.rs`). The grant pins
+set to start at sign-in and not disabled (`job/mac.rs`). The CLI parses the
+door's login plist and checks that its `EnvironmentVariables.SVRNGS_DIR`
+names the same canonical data directory; only a parsed plist without that
+key may use `~/.svrngs` (`cli.rs` `kept_over`). The grant pins
 the label and plist hash. The same door check at Share and renewal requires
 every listener holder and the connection taker to trace to the current
 agent PID and start time. The name alone never confers access. Approve on
