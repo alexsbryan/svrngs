@@ -8,7 +8,7 @@
 //! do", has it, for the release's four targets (scripts/build-release.sh)
 //! and x86_64 Linux's gnu, the gate's (scripts/gate/Containerfile). Any
 //! other target stops the build, saying so. The build asks no network: a
-//! fresh checkout or worktree runs [`FETCH`] once.
+//! fresh checkout or worktree runs what [`fetch`] says once.
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::PathBuf;
@@ -20,9 +20,17 @@ const SHIM: &str = "svrngs_crsqlite";
 /// cr-sqlite's source, from this crate's directory.
 const SOURCE: &str = "../../vendor/cr-sqlite/core";
 
-/// What a fresh checkout or worktree runs once, so this build needs no network.
-const FETCH: &str = "run `git submodule update --init` and then `cargo fetch --manifest-path \
-    vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml` once";
+/// What a fresh checkout or worktree runs once, so this build needs no
+/// network: the submodule, then a fetch of the copy of the bundle's manifest
+/// this build writes in OUT_DIR (below), which has a workspace of its own,
+/// so it fetches in a worktree inside another checkout too, where the
+/// submodule's own manifest is taken for a stray of that checkout's.
+fn fetch() -> String {
+    let out = std::env::var("OUT_DIR").unwrap_or_default();
+    format!(
+        "run `git submodule update --init` and build again; if a crate is still missing, run `cargo fetch --manifest-path {out}/bundle_static/Cargo.toml` once"
+    )
+}
 
 /// Where the programs this build runs come from, said when one doesn't start.
 const TOOLS: &str = "git, ld and nm come with Xcode's command line tools on a Mac (xcode-select --install), \
@@ -125,7 +133,7 @@ fn main() {
         .compile(&format!("crsqlite_svrngs_{:016x}", hash.finish()));
 }
 
-/// What `cmd` printed, or the build stopped with what it said, and [`FETCH`].
+/// What `cmd` printed, or the build stopped with what it said, and [`fetch`].
 fn run(cmd: &mut Command) -> Vec<u8> {
     let ran = cmd
         .output()
@@ -133,7 +141,8 @@ fn run(cmd: &mut Command) -> Vec<u8> {
     let said = String::from_utf8_lossy(&ran.stderr);
     assert!(
         ran.status.success(),
-        "{cmd:?} failed: {said}\nIf it lacks its source or a crate, {FETCH}."
+        "{cmd:?} failed: {said}\nIf it lacks its source or a crate, {}.",
+        fetch()
     );
     ran.stdout
 }
