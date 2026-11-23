@@ -404,7 +404,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - every remaining test of svrngs-keeper and svrngs-node green;
   - lean counts.
 
-- [ ] avail-run-linux — depends [avail-unmagic] — ONE UNIT: spec §2.2–§2.4, §5 row 2.
+- [x] avail-run-linux eb93617c8 — depends [avail-unmagic] — ONE UNIT: spec §2.2–§2.4, §5 row 2.
   - `svrngs-keeper run <name> [--folder] -- <command>` writes a native card
     and its unit.
   - It refuses a busy port with spec §2.2's sentence.
