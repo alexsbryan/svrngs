@@ -1023,3 +1023,28 @@ Windows.
     - Plant: more than 8 KiB over a pipe, truncated before the fix and
       whole after it.
   - **Then one controlled full gate,** under the same protocol.
+  - **The controlled gate on 2b1a7040** (`REVIEW-audit-available-4.await.log`):
+    - tests and pages pass now (698433df, 2d320f05);
+    - browser failed again: the relay case at `fallbackMs` 4,010, where
+      `webrtc_page.rs:186` takes 2,500–4,000;
+    - one WebKit navigation trial at the tip aborted in Playwright's
+      `WKPage._onTargetCreated` again (1 of 6 at the tip across the
+      protocol runs, 0 of 6 at main).
+  - **Relay fallback, ms** (keeper-lead, from the await logs):
+    - focused, at main 789707dc: 3,753, 3,856, 3,802, 3,896, 3,898, 3,855;
+    - focused, at the tip: 3,803, 3,812, 3,769, 3,793, 3,761, 3,842;
+    - full gate, at the tip: 4,006 (first gate) and 4,010 (this one).
+    - Alone, the tip is no slower than main. Main has only 100–250 ms of
+      margin, and the full gate's parallel browser load crosses it.
+    - The full gate has not run at main in this image, so "pre-existing"
+      is not yet shown.
+  - **Next, under QA's protocol:**
+    - run the unchanged full gate once at 789707dc, in the same image;
+    - if browser fails there the same way, record both cases as
+      pre-existing instrument limits, with the evidence;
+    - leave the gate red. Don't change the threshold, skip, or take
+      best-of-N.
+    - Then mark the row done with `needs-human` for the operator's
+      morning read: the full gate can't exit 0 on these fragile cases on
+      main either.
+    - If main passes, it's specific to this revision: diagnose it.
