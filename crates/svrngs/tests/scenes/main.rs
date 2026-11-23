@@ -90,6 +90,8 @@ mod give_move;
 mod give_gone;
 // Magnets (apps/magnets): a sentence in a group of one, kept across a restart.
 mod magnets;
+// Mixed (APP_STATE §11, W5): the last release and this build in one group.
+mod mixed;
 
 /// svrngs itself, as each person's computer runs it ([`svrngs`]).
 #[test]
@@ -116,6 +118,20 @@ fn svrngs() -> (std::path::PathBuf, &'static [&'static str]) {
     static MADE: std::sync::OnceLock<(tempfile::TempDir, std::path::PathBuf)> =
         std::sync::OnceLock::new();
     let (_, svrngs) = MADE.get_or_init(|| {
+        let dir = tempfile::tempdir().unwrap();
+        let svrngs = as_main::installed_at(dir.path(), build_relay());
+        (dir, svrngs)
+    });
+    (svrngs.clone(), &as_main::HEADER)
+}
+
+/// Where every person's svrngs meets as its build's relay, whichever build
+/// it runs ([`svrngs`]; mixed.rs's last release): the browser harness's
+/// relay, started once on a runtime of its own and kept until the binary
+/// ends.
+fn build_relay() -> &'static str {
+    static AT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    AT.get_or_init(|| {
         let (tx, rx) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
             let runtime = tokio::runtime::Runtime::new().unwrap();
@@ -125,10 +141,6 @@ fn svrngs() -> (std::path::PathBuf, &'static [&'static str]) {
                 std::future::pending::<()>().await;
             });
         });
-        let relay = rx.recv().expect("the build's relay said where it is");
-        let dir = tempfile::tempdir().unwrap();
-        let svrngs = as_main::installed_at(dir.path(), &relay);
-        (dir, svrngs)
-    });
-    (svrngs.clone(), &as_main::HEADER)
+        rx.recv().expect("the build's relay said where it is")
+    })
 }

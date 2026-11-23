@@ -48,7 +48,7 @@ const WORDS: [&str; 3] = ["haunted", "lasagna", "situation"];
 
 /// Magnets' shipped files, its folder but its tests, put in `folder`'s
 /// `apps/magnets/`, as Ana carries it.
-fn carry(folder: &Path) {
+pub(crate) fn carry(folder: &Path) {
     let to = folder.join("apps/magnets");
     std::fs::create_dir_all(&to).unwrap();
     for file in std::fs::read_dir(repo().join("apps/magnets")).unwrap() {
@@ -81,7 +81,7 @@ fn api(who: &Person) -> (u16, String) {
 
 /// `body` posted to Magnets' `svrngs/sql` at `origin` on `who`'s computer,
 /// as a program there asks it, as them: the answer.
-async fn asked(who: &Person, origin: &str, body: Value) -> Value {
+pub(crate) async fn asked(who: &Person, origin: &str, body: Value) -> Value {
     let ((port, token), url) = (api(who), reqwest::Url::parse(origin).unwrap());
     let host = format!("{}:{port}", url.host_str().unwrap());
     let ask = axum::http::Request::post("/svrngs/sql").header("host", host);
@@ -214,11 +214,11 @@ async fn magnets(engine: Engine) {
 
 /// Ana's magnet, then Cy's, by their ids in Magnets' pack
 /// (apps/magnets/pack.json), each its word.
-const ANA_S: &str = "goose";
-const CY_S: &str = "moon";
+pub(crate) const ANA_S: &str = "goose";
+pub(crate) const CY_S: &str = "moon";
 
 /// The magnet `id` put at `position`, as a tap writes it (board.js `put`).
-fn put(id: &str, position: i64) -> Value {
+pub(crate) fn put(id: &str, position: i64) -> Value {
     json!({ "write": [{ "insert": "magnets", "row": { "id": id, "position": position } }] })
 }
 
@@ -235,7 +235,7 @@ async fn board(who: &Person, origin: &str) -> (Vec<String>, bool) {
 
 /// Within two minutes, two of a round's minutes, `who`'s sentence is
 /// `want`, its copy synced; else the scene is late, saying what it shows.
-async fn shows(who: &Person, origin: &str, want: &[&str]) {
+pub(crate) async fn shows(who: &Person, origin: &str, want: &[&str]) {
     let want: Vec<String> = want.iter().map(|w| w.to_string()).collect();
     for _ in 0..120 {
         if board(who, origin).await == (want.clone(), false) {

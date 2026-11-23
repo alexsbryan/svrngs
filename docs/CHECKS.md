@@ -356,6 +356,10 @@ Movie Night's startup is B's own: a module held in flight.
    scene needed what only the real binary does (install, release paths,
    launchd), so none stays on it; `SCENES_BINARY` still pins the product
    for a rehearsal, and the xenia worlds run the product as built.
+   The mixed scene's Bo runs v1.13.3 the same way, its own test binary as
+   its `main` through as_main.rs `installed_from` (`Scene::runs`), made
+   from the tag by scenes/last-release.sh into `target/last-release/` or
+   named by `SCENES_LAST_RELEASE`; with neither, the scene is never-ran.
    Sampled with `lsof` over the scenes step's whole process tree
    (demo/runs/flakes/2026-11-13): every scene's svrngs opened 421 sockets
    to loopback and 13 to this host's LAN address (night's room), none

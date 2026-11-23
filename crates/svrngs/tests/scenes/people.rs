@@ -1,6 +1,6 @@
-//! The people of a scene: each a `svrngs` of this build, run as the
-//! demos' drivers run one (demo/runs/c/dry-2026-10-12-rerun/run.py,
-//! `env`), with a `HOME` and so a data dir of its own and nothing else of
+//! The people of a scene: each a `svrngs` of this build, or of another
+//! where a scene says so ([`Scene::runs`]), run as the demos' drivers run
+//! one (demo/runs/c/dry-2026-10-12-rerun/run.py, `env`), with a `HOME` and so a data dir of its own and nothing else of
 //! this computer's environment but its `PATH`; the scene's group made by
 //! `svrngs new --relay` at the relay on 127.0.0.1 and joined by `svrngs
 //! join` at the link the founder's home page makes, so every act goes
@@ -78,6 +78,9 @@ pub async fn judged(place: String, scene: impl std::future::Future<Output = ()> 
 pub struct Scene {
     pub relay: Server,
     dir: PathBuf,
+    /// The program each person whose computer runs another build runs as
+    /// `svrngs` ([`Scene::runs`]); everyone else runs [`program`].
+    builds: std::sync::Mutex<std::collections::BTreeMap<String, PathBuf>>,
 }
 
 impl Scene {
@@ -89,7 +92,25 @@ impl Scene {
         Scene {
             relay: relay().await,
             dir,
+            builds: Default::default(),
         }
+    }
+
+    /// `name`'s computer runs `build` as `svrngs` from its next start on, as
+    /// an install of another release puts one in place; [`program`] again
+    /// with none, as an upgrade to this build does.
+    pub fn runs(&self, name: &str, build: Option<PathBuf>) {
+        let mut builds = self.builds.lock().unwrap();
+        match build {
+            Some(build) => builds.insert(name.to_string(), build),
+            None => builds.remove(name),
+        };
+    }
+
+    /// The program `name`'s computer runs as `svrngs` ([`Scene::runs`]).
+    fn program_of(&self, name: &str) -> PathBuf {
+        let builds = self.builds.lock().unwrap();
+        builds.get(name).cloned().unwrap_or_else(|| program().0)
     }
 
     /// The scene not played, and why, in its place, where the gate's
@@ -143,7 +164,8 @@ impl Scene {
     pub async fn once(&self, name: &str, args: &[&str]) -> String {
         let home = self.dir.join(name.to_lowercase());
         std::fs::create_dir_all(&home).unwrap();
-        let run = svrngs(&home, name, args).stdin(Stdio::null()).output();
+        let mut run = svrngs(&self.program_of(name), &home, name, args);
+        let run = run.stdin(Stdio::null()).output();
         let out = tokio::time::timeout(Duration::from_secs(90), run);
         let out = out.await.expect("the command ends within 90 s").unwrap();
         let said = printed(&out.stdout);
@@ -183,7 +205,7 @@ impl Scene {
     /// `typed` on its stdin, as a terminal there runs it: what it printed,
     /// once it exits.
     pub async fn command(&self, who: &Person, args: &[&str], typed: &str) -> String {
-        let mut run = svrngs(&who.home, &who.name, args)
+        let mut run = svrngs(&self.program_of(&who.name), &who.home, &who.name, args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -214,7 +236,7 @@ impl Scene {
             .append(true)
             .open(home.join("svrngs.log"))
             .unwrap();
-        let child = svrngs(&home, name, args)
+        let child = svrngs(&self.program_of(name), &home, name, args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(log)
@@ -302,10 +324,10 @@ fn printed(out: &[u8]) -> String {
     }
 }
 
-/// `svrngs <args>`, this build's ([`program`]), in `home`, with nothing
-/// else of this computer's environment but its `PATH`.
-fn svrngs(home: &std::path::Path, name: &str, args: &[&str]) -> Command {
-    let mut c = Command::new(program().0);
+/// `svrngs <args>`, `program` ([`Scene::program_of`]), in `home`, with
+/// nothing else of this computer's environment but its `PATH`.
+fn svrngs(program: &std::path::Path, home: &std::path::Path, name: &str, args: &[&str]) -> Command {
+    let mut c = Command::new(program);
     c.args(args)
         .env_clear()
         .env("HOME", home)
