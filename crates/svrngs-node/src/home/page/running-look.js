@@ -38,11 +38,12 @@ import { get } from './routes.js?v=__VERSION__';
  * @typedef {{ pid?: number, start?: number, program?: string, folder?: string, account?: string, unit?: string, description?: string }} Answer
  */
 
-// What answers, as its lender reads it, as lend.rs `Answer` says it:
-// "python3 in ~/dev/garden", or "the systemd unit coder.service (coder)".
+// The job's description, or its name without the system's filename suffix.
+// Old jobs carry a generated suffix in the description; it isn't a name.
 /** @param {Answer} answer */
 export const answered = ({ account, program, folder, unit, description }) => {
-  if (unit) return `the systemd unit ${unit}${description ? ` (${description})` : ''}`;
+  if (unit)
+    return description?.replace(/, kept by svrngs-keeper$/, '') ?? unit.replace(/\.service$/, '');
   return account
     ? `a program of the account ${account}`
     : `${program}${folder ? ` in ${folder}` : ''}`;

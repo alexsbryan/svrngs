@@ -345,8 +345,10 @@ protocol is refused unless it is given `--replace`; a lend file from
 V1.12.2 written again keeps what V1.12.2 wrote.
 **A lend kept to a unit is renewed through its restarts** (svrn-docs
 `rings/current/KEEP_SHARING_ON_RESTART.md` §2). On Linux a holder that runs
-in a service of this account's user manager is shown as that unit (its
-name and `Description`, `job.rs`), not its program. Approving one unit's
+in a service of this account's user manager is handed to the front ends as
+that job (its name and `Description`, `job.rs`), not its executable. The
+home page uses the job's description or name without the manager's terms
+(`running-look.js`, checked by `vocab_check.py`). Approving one unit's
 job alone, by `svrngs share`, `svrngs approve` or Keep sharing it, grants
 it (`Terms::keep`: the unit and a hash of its files under `~/.config`),
 unless `--ask-after-restart`; a transient unit, or one with no file there,

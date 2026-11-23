@@ -960,14 +960,9 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
   );
 });
 
-// A lend kept to a systemd unit whose files changed while it restarted
-// says so on its lender's line, with the unit answering now named as lend.rs
-// `Answer` says it, and offers Keep sharing it by its token (door.rs
-// `answering`, bound.rs `renewed`; svrn-docs KEEP_SHARING_ON_RESTART §4).
-// Planted, each watched failing: lent-row.js with no `changed` (the line
-// threw on the unknown hold); `answered` not reading `unit` (the job said
-// as "undefined").
-test('a kept lend whose unit changed says so, and names the unit', async () => {
+// A held lend names the jobs without the manager's vocabulary, including
+// a description from a unit written before the availability page.
+test('a kept lend whose setup changed says so, and names the programs', async () => {
   const unit = 'svrngs-keeper-coder.service';
   const answers = [
     { unit, description: 'coder, kept by svrngs-keeper' },
@@ -981,7 +976,7 @@ test('a kept lend whose unit changed says so, and names the unit', async () => {
   const line = page.text('#lent li details summary')[0];
   assert.ok(
     line.includes(
-      `What runs coder changed since you chose to keep sharing it when it starts again, so coder is closed for now. Now answering: the systemd unit ${unit} (coder, kept by svrngs-keeper) and the systemd unit recipes.service.`,
+      'What runs coder changed since you chose to keep sharing it when it starts again, so coder is closed for now. Now answering: coder and recipes.',
     ),
     line,
   );

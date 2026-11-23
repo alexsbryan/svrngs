@@ -973,12 +973,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # within the raised envelope in keeper CHARTER, "The release").
 # Its terminal and owner adapters land at 25,499 (25,521 ceiling).
 # O3 pins the node's process calls and the executor's keeper entry at 25,513.
+# O4 keeps mechanism names out of the page's and planner's copy, at 25,521 and 8,651 JS.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25514,
+    ".": 25522,
 
-    "js": 8651,
+    "js": 8652,
 
     "swift": 1,
 }
