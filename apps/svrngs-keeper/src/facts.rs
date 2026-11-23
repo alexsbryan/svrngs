@@ -22,6 +22,7 @@ pub enum Facts {
 #[derive(Serialize)]
 pub struct Offer {
     pub port: u16,
+    pub listener: Identity,
     pub name: String,
     pub what: String,
     pub omitted_settings: Vec<String>,
@@ -132,6 +133,7 @@ impl Draft {
             recipe,
             offer: Offer {
                 port,
+                listener: Identity::from(listener),
                 name,
                 what,
                 omitted_settings,

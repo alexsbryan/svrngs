@@ -996,17 +996,27 @@ pub fn declare(
     lend: &Lend,
     secret: Option<(&str, &str)>,
 ) -> Result<(), LendError> {
+    let _held = lock_lend(data_dir, &lend.name, true)?;
+    let slot = lock_path(data_dir, &lend.name, "rev");
+    advance(&slot, revision_at(&slot)?)?;
+    replace_secret(data_dir, lend, secret)?;
+    write(data_dir, lend)?;
+    tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
+        limit = ?lend.terms.limit, refused = lend.terms.refused.len(), upload = ?lend.terms.upload.map(Upload::bps),
+        secret = secret.is_some(), asks = lend.terms.asks.is_some(),
+        "lend: declared");
+    Ok(())
+}
+
+type Header<'a> = (&'a str, &'a str);
+
+fn replace_secret(dir: &Path, lend: &Lend, secret: Option<Header<'_>>) -> Result<(), LendError> {
     if secret.is_some() && lend.terms.sign_in_with_svrngs.is_some() {
         tracing::debug!(target: "lend", lend = %lend.name,
             "lend: refused — a lend declares its own password or a sign-in with svrngs, never both");
         return Err(LendError::TwoSecrets);
     }
-    // Held from the secret to the declaration, as every change is, so a
-    // change that read the lend before never writes it back over this.
-    let _held = lock_lend(data_dir, &lend.name, true)?;
-    let slot = lock_path(data_dir, &lend.name, "rev");
-    advance(&slot, revision_at(&slot)?)?;
-    let secrets = secret_dir(data_dir, &lend.name);
+    let secrets = secret_dir(dir, &lend.name);
     if secrets.exists() {
         std::fs::remove_dir_all(&secrets).map_err(unwritable(&secrets))?;
     }
@@ -1014,12 +1024,13 @@ pub fn declare(
         crate::declared::write_declared_in(&secrets, header, value)
             .map_err(unwritable(&secrets))?;
     }
-    write(data_dir, lend)?;
-    tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
-        limit = ?lend.terms.limit, refused = lend.terms.refused.len(), upload = ?lend.terms.upload.map(Upload::bps),
-        secret = secret.is_some(), asks = lend.terms.asks.is_some(),
-        "lend: declared");
     Ok(())
+}
+
+#[derive(Clone, Copy)]
+pub enum Credentials<'a> {
+    Keep,
+    Replace(Option<Header<'a>>),
 }
 
 /// Change the lend `name` in place: read it, let `edit` rewrite it, write it
@@ -1032,7 +1043,7 @@ pub fn mutate(
     name: &LendName,
     edit: impl FnOnce(&mut Lend),
 ) -> Result<bool, LendError> {
-    changed(data_dir, name, None, |had| {
+    changed(data_dir, name, None, Credentials::Keep, |had| {
         had.map(|mut lend| {
             edit(&mut lend);
             lend
@@ -1043,15 +1054,23 @@ pub fn mutate(
 
 /// Publish the complete declaration at the reviewed revision. The existing
 /// credential and choice files are outside this change.
-pub(crate) fn publish(dir: &Path, lend: Lend, if_rev: u64) -> Result<u64, LendError> {
-    changed(dir, &lend.name.clone(), Some(if_rev), |_| Some(lend))
-        .map(|rev| rev.expect("publication supplies a declaration"))
+pub(crate) fn publish(
+    dir: &Path,
+    lend: Lend,
+    if_rev: u64,
+    secret: Credentials<'_>,
+) -> Result<u64, LendError> {
+    changed(dir, &lend.name.clone(), Some(if_rev), secret, |_| {
+        Some(lend)
+    })
+    .map(|rev| rev.expect("publication supplies a declaration"))
 }
 
 fn changed(
     dir: &Path,
     name: &LendName,
     if_rev: Option<u64>,
+    secret: Credentials<'_>,
     edit: impl FnOnce(Option<Lend>) -> Option<Lend>,
 ) -> Result<Option<u64>, LendError> {
     let _held = lock_lend(dir, name, true)?;
@@ -1065,6 +1084,9 @@ fn changed(
         return Ok(None);
     };
     let rev = advance(&slot, rev)?;
+    if let Credentials::Replace(secret) = secret {
+        replace_secret(dir, &lend, secret)?;
+    }
     write(dir, &lend)?;
     Ok(Some(rev))
 }

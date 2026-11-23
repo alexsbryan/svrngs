@@ -308,6 +308,44 @@ async fn shares(lender: &Lender<'_>, args: &[&str]) -> Result<String, Refusal> {
     cli::answer(verb, lender, &no_relay()).await
 }
 
+#[tokio::test]
+async fn terminal_review_is_read_only_and_refuses_a_listener_that_changed_after_yes() {
+    use svrngs_node::lend::{self, LendName};
+    let wire = Wire::default();
+    let (sam, _held) = sams_lab(&wire).await;
+    let name = LendName::parse("navidrome").unwrap();
+    let mut lender = Lender::of(&sam, "y");
+    lender.terminal = true;
+    lender.answers = Some(answering(11, (4321, 77), "navidrome", None));
+    lender.changed = Some(answering(12, (4322, 78), "other", None));
+    let args = ["4533", "--group", "Lab", "--ask-after-restart"];
+    let reviewed = shares(&lender, &[&args[..], &["--plan"]].concat())
+        .await
+        .unwrap();
+    assert!(
+        reviewed.contains("Lab can use this copy now."),
+        "{reviewed}"
+    );
+    assert!(
+        reviewed.contains("navidrome in ~/dev/navidrome"),
+        "{reviewed}"
+    );
+    assert!(lender.asked.borrow().is_empty());
+    assert_eq!(lend::revision(sam.dir.path(), &name).unwrap(), 0);
+
+    let err = shares(&lender, &args)
+        .await
+        .expect_err("a changed listener must not be shared");
+    assert!(
+        err.to_string().starts_with(svrngs_node::plan::REVIEW_AGAIN),
+        "{err}"
+    );
+    assert!(err.to_string().contains("other in ~/dev/other"), "{err}");
+    assert!(lender.asked.borrow()[0].contains("Share this run"));
+    assert!(lend::read(sam.dir.path(), &name).unwrap().is_none());
+    assert_eq!(lend::revision(sam.dir.path(), &name).unwrap(), 0);
+}
+
 /// Every file under `dir` but `except`, by path, holding `needle`.
 fn holding(dir: &std::path::Path, needle: &[u8], except: &std::path::Path) -> Vec<String> {
     let mut found = Vec::new();

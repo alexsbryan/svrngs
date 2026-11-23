@@ -679,7 +679,7 @@ fn w1_a_concurrent_withdrawal_wins() {
             let previewed = revision(dir, &draft.name).unwrap();
             ready.send(()).unwrap();
             withdrawn.recv().unwrap();
-            publish(dir, draft.clone(), previewed)
+            publish(dir, draft.clone(), previewed, Credentials::Keep)
         });
         racing.recv().unwrap();
         let stopped = withdraw(root.path(), &shelf.name);
@@ -703,7 +703,7 @@ fn w1_stale_publication_cannot_resurrect_or_overwrite_a_share() {
     // Stop sharing can race even the first confirmation for this name.
     assert!(!withdraw(path, &shelf.name).unwrap());
     let expect_stale = |draft: &Lend, at| {
-        let result = publish(path, draft.clone(), at);
+        let result = publish(path, draft.clone(), at, Credentials::Keep);
         assert!(
             matches!(result, Err(LendError::RevisionChanged(_))),
             "stale publication was not refused: {result:?}"
@@ -711,7 +711,7 @@ fn w1_stale_publication_cannot_resurrect_or_overwrite_a_share() {
     };
     expect_stale(&shelf, lagged);
     let fresh = revision(path, &shelf.name).unwrap();
-    let published = publish(path, shelf.clone(), fresh).unwrap();
+    let published = publish(path, shelf.clone(), fresh, Credentials::Keep).unwrap();
     let previewed = revision(path, &shelf.name).unwrap();
     assert_eq!(published, previewed);
     assert!(withdraw(path, &shelf.name).unwrap());

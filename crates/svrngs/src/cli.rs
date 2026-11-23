@@ -136,6 +136,7 @@ use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal, Terms};
 use svrngs_node::link::{client_link, https_link, Link, Origin};
 use svrngs_node::oidc::KeyFailure;
+use svrngs_node::plan::{self, run, Availability, Done, Report};
 
 pub const USAGE: &str = include_str!("help.txt");
 
@@ -208,7 +209,7 @@ pub enum Verb {
     /// No secret: it is read from a prompt (the module docs). Each
     /// `--group`, a name or the start of an id, as typed: who can open it;
     /// and `--ask-after-restart` ([`share::kept`]).
-    Share(Share, Vec<String>, bool),
+    Share(Share, Vec<String>, bool, bool),
     /// Each `--group` as typed: only those taken from its audience; none
     /// withdraws it.
     Unshare(LendName, Vec<String>),
@@ -298,6 +299,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut run = true;
     let mut device = false;
     let mut print = false;
+    let mut preview = false;
     let (mut open, mut staging, mut here) = (false, false, None);
     let mut joined = None;
     let mut more = Vec::new();
@@ -368,6 +370,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
             "--print" if verb == "open" => print = true,
+            "--plan" if verb == "share" => preview = true,
             "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
             "--readers" if verb == "share" => readers = true,
             "--ask-after-restart" if matches!(verb.as_str(), "share" | "approve") => ask = true,
@@ -434,6 +437,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         });
     }
     match (verb.as_str(), folder, group) {
+        ("share", Some(_), _) if preview => return Err("--plan reviews a port, not a folder".into()),
         ("share", Some(dir), Some(group)) => {
             let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
             return Ok(Verb::Folder { dir, group });
@@ -496,6 +500,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 },
                 groups,
                 ask,
+                preview,
             ))
         }
         "leave" => Ok(Verb::Leave(
@@ -589,6 +594,8 @@ refusal_from!(KeyError => Unjudged, ApiError => Unjudged, KeyFailure => Unjudged
 /// It ran and refused: exit 1.
 #[derive(Debug, thiserror::Error)]
 pub enum Refused {
+    #[error("{0}")]
+    SharePlan(String),
     #[error(
         "svrngs is already running on this computer ({0} is held); stop it, then run this again"
     )]
@@ -762,6 +769,10 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
         .map_err(|e| Unjudged::DataDir(root.to_path_buf(), e))?;
     let path = root.join("lock");
     let file = File::create(&path).map_err(|e| Unjudged::DataDir(path.clone(), e))?;
+    claim_file(path, file)
+}
+
+fn claim_file(path: PathBuf, file: File) -> Result<File, Refusal> {
     // A command looks whether svrngs holds it by taking it a moment
     // (`Here::ask`), so a start that finds it held looks once more.
     let taken = file.try_lock().or_else(|_| {
@@ -885,10 +896,20 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let group = seed.name().clone();
             said(&seed, answer, |outcome| Said::Left { group, outcome })?.to_string()
         }
-        Verb::Share(mut asked, groups, ask) => {
-            asked.audience = audience_of(&root, asked.port, &groups)?;
+        Verb::Share(mut asked, groups, ask, preview) => {
+            let names = audience_names(&root, asked.port, &groups)?;
+            asked.audience = Audience::Selected(names.keys().cloned().collect());
             let known = share::well_known_kind(asked.port);
-            let claimed = claim(&root);
+            let claimed = if preview {
+                let path = root.join("lock");
+                match File::open(&path) {
+                    Ok(file) => claim_file(path, file).map(Some),
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+                    Err(e) => return Err(Unjudged::DataDir(path, e).into()),
+                }
+            } else {
+                claim(&root).map(Some)
+            };
             let terms = match (&claimed, share::kind_of(&asked, known.clone())) {
                 (Err(Refusal::Refused(Refused::Busy(_))), Some(kind)) => {
                     Some(terms_of(here, &kind, &groups).await?)
@@ -899,13 +920,53 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 }
             };
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
-            let mut lend = share::lend_of(&asked, known, theirs)?;
-            share::renamed(&root, &lend, asked.replace)?;
-            let read = here.answering(lend.raw(), asked.port, asked.pid.map(|p| p.pid));
-            let (approved, answers) =
-                share::approve((asked.port, lend.raw()), read, asked.pid, None)?;
-            lend.terms.approved = Some(approved);
-            lend.terms.keep = share::kept(&answers, ask);
+            let lend = share::lend_of(&asked, known, theirs)?;
+            let terminal = here.terminal();
+            let availability = if ask || !(preview || terminal) {
+                Availability::ThisRun
+            } else {
+                Availability::Keep
+            };
+            let terms_plan = plan::Terms {
+                groups: names,
+                limit: asked.limit,
+                availability,
+            };
+            let read = |pid: Option<share::Pid>| {
+                here.answering(
+                    asked.raw.unwrap_or(Raw::Tcp),
+                    asked.port,
+                    pid.map(|p| p.pid),
+                )
+            };
+            let intent = |lend| run::Share {
+                dir: &root,
+                lend,
+                terms: terms_plan.clone(),
+                pid: asked.pid,
+                replace: asked.replace,
+                door: if availability == Availability::Keep && kept_over(&root) {
+                    run::service_return("svrngs.service")
+                } else {
+                    plan::Return::Unknown
+                },
+            };
+            let (observed, witness) = intent(&lend).observe(read)?;
+            let reviewed = plan::plan(&observed).expect("share names its audience");
+            let words = share_review(&reviewed, &witness.answers);
+            if preview {
+                return Ok(words);
+            }
+            if terminal
+                && !said_yes(
+                    here,
+                    &lend.name,
+                    &format!("{words}Type y, then press Enter: "),
+                )?
+            {
+                return Ok("Nothing was changed.\n".into());
+            }
+            let mut lend = lend.clone();
             if !lend.terms.sends.is_empty() && !sends_said(here, &lend)? {
                 lend.terms.sends.clear();
             }
@@ -922,13 +983,46 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 }
                 true => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
             };
-            share_lend(&root, &lend, secret.as_deref())?;
+            let mut current = intent(&lend);
+            current.terms.groups = audience_names(&root, asked.port, &groups)?;
+            let replay = current.observe(read)?;
+            let secret_header =
+                lend::Credentials::Replace(secret.as_deref().map(|s| (lend::SECRET_HEADER, s)));
+            let (result, witness) = match run::confirm(
+                &reviewed.token,
+                || replay,
+                |witness, next| current.execute(next, witness, secret_header, read),
+            ) {
+                run::Confirmation::Finished(result, witness) => (result, witness),
+                run::Confirmation::ReviewAgain(now, witness) => {
+                    let review = plan::plan(&now).expect("replayed review");
+                    return Err(Refused::SharePlan(format!(
+                        "{}\n{}",
+                        plan::REVIEW_AGAIN,
+                        share_review(&review, &witness.answers)
+                    ))
+                    .into());
+                }
+                run::Confirmation::Unavailable => {
+                    return Err(Refused::SharePlan(plan::REVIEW_AGAIN.into()).into())
+                }
+            };
+            let report = result.report.as_ref().expect("the owner answered");
+            let line = reviewed.report_words(report).expect("the owner finished");
+            if !matches!(report, Report::Done(Done::Published { .. })) {
+                return Err(Refused::SharePlan(line.text).into());
+            }
+            eprintln!("{}", line.text);
+            let lend = lend::read(&root, &lend.name)
+                .ok()
+                .flatten()
+                .ok_or_else(|| Unjudged::Keep(lend.name.to_string()))?;
             if asked.readers {
                 share_readers(here, &lend, (asked.port, theirs)).await?;
             }
             let sharing = Said::Shared {
                 lend: Box::new(lend),
-                answers,
+                answers: witness.answers,
                 secret: secret.is_some(),
                 accounts,
                 client,
@@ -941,7 +1035,16 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                     let api = svrngs_node::api::kept_address(&root)?.ok_or(Unjudged::NotRunning)?;
                     issued(sharing, api).to_string()
                 }
-                claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
+                claimed => {
+                    return start(
+                        Verb::Run,
+                        root,
+                        relay,
+                        claimed?.expect("the share is not a preview"),
+                        Some(sharing),
+                    )
+                    .await
+                }
             }
         }
         other => match (claim(&root), other) {
@@ -1206,6 +1309,9 @@ impl Here for PathBuf {
         let token = token.map_err(|(at, e)| Unjudged::Api(ApiError::TokenFile(at, e)))?;
         let ask = || svrngs_node::api::asked(&api, route, token.trim(), body.clone());
         let mut asked = ask().await;
+        if route == PROGRAMS_ROUTE && asked == Err(Withheld::Older) {
+            return Err(Refused::Older.into());
+        }
         // An older svrngs over this data dir, its lock held, as an update
         // leaves one running: restarted once, as `svrngs restart` restarts
         // it, where the login service runs it over this data dir (the
@@ -1788,6 +1894,20 @@ fn said_yes(here: &impl Here, name: &LendName, words: &str) -> Result<bool, Refu
     Ok(["y", "yes"].contains(&said.to_lowercase().as_str()))
 }
 
+fn share_review(reviewed: &plan::Plan<'_>, answers: &[Answer]) -> String {
+    let words = reviewed.words();
+    let mut lines = vec![words.promise];
+    lines.extend(words.reason);
+    lines.extend(
+        words
+            .runs
+            .map(str::to_owned)
+            .or_else(|| (!answers.is_empty()).then(|| what_answers(answers))),
+    );
+    lines.extend([words.impact, words.button, String::new()]);
+    lines.join("\n")
+}
+
 /// `svrngs share --readers`: the account apps reading `lend` are let in as,
 /// signed in once where the table says how (`share::readers_of`), else
 /// what its Authorization header takes, pasted; then kept.
@@ -2123,12 +2243,22 @@ fn full_name(user: &str) -> Option<String> {
 /// finds: refused with the next command when none is named, never all
 /// groups (LENDING_SCOPE §"User interface and commands").
 pub fn audience_of(root: &Path, port: NonZeroU16, named: &[String]) -> Result<Audience, Refusal> {
+    audience_names(root, port, named).map(|groups| Audience::Selected(groups.into_keys().collect()))
+}
+
+fn audience_names(
+    root: &Path,
+    port: NonZeroU16,
+    named: &[String],
+) -> Result<std::collections::BTreeMap<String, String>, Refusal> {
     if named.is_empty() {
         tracing::debug!(target: "cli", port, "cli: share — refused, no group named to lend it to");
         return Err(Refused::NoAudience(port).into());
     }
-    let ids = named.iter().map(|g| group_named(root, g).map(|s| s.id()));
-    ids.collect::<Result<_, _>>().map(Audience::Selected)
+    named
+        .iter()
+        .map(|g| group_named(root, g).map(|s| (s.id(), s.name().to_string())))
+        .collect()
 }
 
 /// The one group held under `root` that `reference` names, by its name or

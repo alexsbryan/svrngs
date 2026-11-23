@@ -333,7 +333,7 @@ fn p2_host_product_matches_the_written_plans_and_words() {
     reason = "the local job's own listener, not a share dial"
 )]
 fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
-    use svrngs_node::lend::{self, Audience, Lend};
+    use svrngs_node::lend::{self, Audience, Credentials, Lend};
     let dir = tempfile::tempdir().unwrap();
     let (mut nature, terms) = facts();
     let observe = |nature: Nature| {
@@ -376,17 +376,23 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     let mut execute = |token: &str, running: &Nature| {
         run::confirm(
             token,
-            || observe(running.clone()),
-            |next| match next {
+            || (observe(running.clone()), ()),
+            |(), next| match next {
                 Step::Keeper(_) => {
                     takeovers += 1;
                     Done::Verified
                 }
-                Step::Access(p) => run::publish(dir.path(), p, template.clone(), granted.clone()),
+                Step::Access(p) => run::publish(
+                    dir.path(),
+                    p,
+                    template.clone(),
+                    granted.clone(),
+                    Credentials::Keep,
+                ),
             },
         )
     };
-    let run::Confirmation::Finished(result) = execute(&plan(&before).unwrap().token, &nature)
+    let run::Confirmation::Finished(result, ()) = execute(&plan(&before).unwrap().token, &nature)
     else {
         panic!("initial confirmation did not finish");
     };
@@ -401,6 +407,7 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         "{words:?}"
     );
     assert_eq!(words.button.as_deref(), Some("Review sharing"));
+    println!("{}", words.text);
 
     std::fs::remove_dir(&partial).unwrap();
     nature.runs = Runs::Kept(keep.clone());
@@ -411,7 +418,7 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         retry.steps().collect::<Vec<_>>().as_slice(),
         [Step::Access(_)]
     ));
-    let run::Confirmation::Finished(result) = execute(&retry.token, &nature) else {
+    let run::Confirmation::Finished(result, ()) = execute(&retry.token, &nature) else {
         panic!("retry did not finish");
     };
     let words = plan(&result)
@@ -420,6 +427,10 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         .unwrap();
     assert!(words.text.starts_with("Shared with House."), "{words:?}");
     assert_eq!(takeovers, 1, "retry restarted the already running job");
+    println!(
+        "{} Takeovers across both attempts: {takeovers}.",
+        words.text
+    );
     assert_eq!(
         lend::revision(dir.path(), &nature.name).unwrap(),
         retry.if_rev + 1
@@ -448,12 +459,12 @@ fn p3_changed_revision_requests_review_before_calling_either_owner() {
     let current = step(original.clone(), Event::Revision(14));
     let result = run::confirm(
         &plan(&original).unwrap().token,
-        || current.clone(),
-        |_| {
+        || (current.clone(), ()),
+        |(), _| {
             panic!("a stale review called an effect owner");
         },
     );
-    let run::Confirmation::ReviewAgain(review) = result else {
+    let run::Confirmation::ReviewAgain(review, ()) = result else {
         panic!("a stale confirmation did not request another review");
     };
     assert_eq!(plan(&review).unwrap(), plan(&current).unwrap());

@@ -962,10 +962,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # makes the access write conditional: 25,064 (+124, within the +435 envelope).
 # Then avail-terminal's replay and ordered owner results: 25,094 (+30,
 # within the raised envelope in keeper CHARTER, "The release").
+# Its terminal and owner adapters land at 25,499 (25,521 ceiling).
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25095,
+    ".": 25500,
 
     "js": 8651,
 

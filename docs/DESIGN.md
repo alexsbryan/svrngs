@@ -205,7 +205,13 @@ that the program is running but sharing was not saved (`plan::Report`).
 The executor (`plan::run::confirm`) rebuilds the plan before calling either
 owner, returns the current review on a token mismatch, and folds each
 owner's answer in order. A keeper refusal ends the attempt before access
-is published.
+is published. `svrngs share --plan` prints the terminal review; at a
+terminal a yes is required before executing it. `--ask-after-restart`,
+and sharing without a terminal, share only the current run. On Linux a
+native takeover is reviewed against the listener's process and start,
+and access is published only after a fresh approval of the verified
+unit on the same address. An enabled unit pulled in by the login target
+is evidence for sign-in, not for unattended disk unlock.
 A group taken away is
 refused at the next request, and what already streams to its people is
 cut within two seconds: every second the door re-reads the declaration

@@ -94,8 +94,9 @@ pub fn now(unit: &str) -> Read {
 
 /// What `/usr/bin/systemctl --user show` says of `unit`, by property, each
 /// read traced.
-fn show(unit: &str) -> Result<BTreeMap<String, String>, &'static str> {
-    let asked = "Description,Transient,SourcePath,FragmentPath,DropInPaths,ControlGroup";
+pub(crate) fn show(unit: &str) -> Result<BTreeMap<String, String>, &'static str> {
+    let asked =
+        "Description,Transient,SourcePath,FragmentPath,DropInPaths,ControlGroup,UnitFileState,WantedBy";
     let systemctl = std::process::Command::new("/usr/bin/systemctl")
         .args(["--user", "show", "-p", asked, "--", unit])
         .output();

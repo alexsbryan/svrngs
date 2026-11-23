@@ -148,9 +148,14 @@ The design is svrn-docs `rings/current/KEEP_IT_RUNNING_RELEASE.md` at
 its §5 the release line. Where a row and the spec disagree, the spec wins:
 correct the row in a commit to this file's STATE.md, citing it.
 
-**The envelope.** The operator approved the raise as an envelope: at most
-about +435 of all code but JavaScript and +30 of JavaScript over the counts
-after avail-economize's cuts (spec §6). Each row spends only as far as it
+**The envelope.** The operator approved the raise as an envelope over the
+counts after avail-economize's cuts (24,636 non-JS, 8,650 JS): first at most
++435 of all code but JavaScript and +30 of JavaScript (spec §6). Then, on
+2026-11-22, "Ok raise it", at most **+885 of all code but JavaScript, a
+ceiling of 25,521**, with JavaScript still +30 (8,680). That came after
+avail-plan landed +304 and avail-publish +124 against estimates of ~+140 and
+~+40, which left 7 lines before the terminal row (demo/runs/economize/
+2026-11-22-plan/SURVEY.md). Each row spends only as far as it
 lands, with a `Size:` paragraph. Past the envelope, stop with
 `needs-human`. The counts at `04e5873b`, rebased on main `789707dc`: core
 3,471 of 3,539, all code but JavaScript 24,655 of 24,656, JavaScript 8,668
