@@ -841,7 +841,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     tell "shared while you run it" from "run by svrngs"?
   - Recorded in `demo/runs/available/strangers-<date>/`.
 
-- [ ] avail-proof — depends [avail-ship, avail-rehearse] — ONE UNIT, evidence: spec §5 row 9, its packaged proofs, in the VM. In `demo/runs/available/<date>/`, predictions first, each case given one of the four verdicts:
+- [x] avail-proof 66bbc0605 — depends [avail-ship, avail-rehearse] — ONE UNIT, evidence: spec §5 row 9, its packaged proofs, in the VM. In `demo/runs/available/<date>/`, predictions first, each case given one of the four verdicts:
   - after a reboot, Alex's old link reaches the same app and data, a marker
     written before the reboot and read after;
   - stop sharing ends Alex's open stream within 2 s, with a test that
