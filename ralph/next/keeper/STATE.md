@@ -880,3 +880,37 @@ Spec §5, "Out": starting on request (N1), running while this computer is
 off (N2), another account's service (N3), UDP coming back by itself,
 compose projects with their own networks, before login on a Mac, and
 Windows.
+  - **QA's triage of the first full gate** (oc-cruu42, 2026-11-23; log
+    `REVIEW-audit-available-1.await.log`). Fix each one in its own commit,
+    red then green, and then run the whole gate again. Never loosen a
+    gate or skip a test.
+    - **keeper run, `refuses_every_listen_address_before_writing` and
+      `a_foreign_answer_after_the_busy_check_does_not_verify_run`:**
+      - the environment. `ss: No such file or directory` (log 287, 315),
+        before the systemd stand-in.
+      - Put iproute2 in the svrngs-gate image (`scripts/gate/`). The WebKit
+        wrapper already installs it.
+      - Not a test skip, not a production change.
+    - **home, three tests:**
+      - `the_home_page_says_where_apps_send_before_it_keeps_a_send`;
+      - `…how_apps_read_a_lend_by_its_group_s_terms`;
+      - `…lend_keeps_its_group_s_terms_as_drawn`.
+
+      They are stale since 5ab554fb: they POST `/running` expecting
+      publication, and that now only previews. Take the token and the
+      shown terms, POST `/running/confirm`, and keep the original product
+      assertions. Each name carries its own new token, with no replay
+      across names.
+    - **`door::tests::every_dial_of_a_share_s_port_goes_through_its_check`:**
+      a stale census allowlist. Reconcile the exact actual and expected
+      entries, without loosening it.
+    - **types and typed lint, `running-here.js:153,160` TS7031:**
+      - from d4765ba5;
+      - give the `view` state of `useState` a concrete, nullable JSDoc
+        type: `fields` tuples, and `rows` with a required name and text,
+        and an optional port, action and button.
+    - **The door seek test and the WebKit relay case:** QA is still
+      triaging these. Judge each from the log: a regression, pre-existing
+      on main 789707dc, or flaky (rerun it alone three times and give the
+      counts).
+    - **Room:** 8 counted, 14 JS. JSDoc and tests are not counted.
