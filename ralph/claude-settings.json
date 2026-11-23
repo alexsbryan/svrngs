@@ -1,5 +1,5 @@
 {
-  "_comment": "Permission contract for a ralph worker in svrngs, run as `claude -p` by commonwealth-ai's scripts/ralph-claude-shim.sh. The deny list is commonwealth-ai ralph/claude-settings.json's: never push, never --no-verify, never rewrite history, never stage everything, never delegate. The allow list is svrngs' own checks and tools.",
+  "_comment": "Permission contract for a ralph worker in svrngs, run as `claude -p` by commonwealth-ai's scripts/ralph-claude-shim.sh. The deny list is commonwealth-ai ralph/claude-settings.json's: never push, never --no-verify, never rewrite history, never stage everything, never delegate. The allow list is svrngs' own checks and tools. Permission files (.opencode/, this file, .githooks/) are never edited by a worker: Edit and Bash deny them here, opencode's edit and bash rules deny them there, and .githooks/commit-msg refuses their change from any ralph session. Reads of code and docs under ~/dev are allowed; secrets (~/.config, ~/.ssh, ~/.local/share) are not.",
   "includeCoAuthoredBy": false,
   "permissions": {
     "defaultMode": "auto",
@@ -16,6 +16,8 @@
       "Read(//home/alexbryan/dev/svrn-docs/rings/current/**)",
       "Grep(//home/alexbryan/dev/svrn-docs/rings/current/**)",
       "Glob(//home/alexbryan/dev/svrn-docs/rings/current/**)",
+      "Read(//home/alexbryan/dev/**)", "Grep(//home/alexbryan/dev/**)", "Glob(//home/alexbryan/dev/**)",
+      "Read(//home/alexbryan/.cargo/registry/**)", "Read(//home/alexbryan/.cache/llama.cpp/**)", "Read(//tmp/**)",
       "Read(/Users/alexsbryan/.cargo/registry/src/**)",
       "Grep(/Users/alexsbryan/.cargo/registry/src/**)",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
@@ -53,7 +55,14 @@
       "Bash(git filter-*)", "Bash(* --no-verify*)", "Bash(sudo *)", "Bash(rm -rf /*)", "Bash(rm -rf ~*)",
       "Bash(git add -A*)", "Bash(git add --all*)", "Bash(git add -u*)", "Bash(git add .)",
       "Bash(git add . *)", "Bash(git add :/*)", "Bash(git commit -a*)", "Bash(git commit --all*)",
-      "Bash(docker*)", "Bash(* docker *)", "Bash(orb*)"
+      "Bash(docker*)", "Bash(* docker *)", "Bash(orb*)",
+      "Edit(//home/alexbryan/dev/svrngs-keeper/.opencode/**)", "Edit(//home/alexbryan/dev/svrngs-keeper/ralph/claude-settings.json)", "Edit(//home/alexbryan/dev/svrngs-keeper/.githooks/**)",
+      "Edit(//home/alexbryan/dev/svrngs/.opencode/**)", "Edit(//home/alexbryan/dev/svrngs/ralph/claude-settings.json)", "Edit(//home/alexbryan/dev/svrngs/.githooks/**)",
+      "Edit(//Users/alexsbryan/dev/svrngs/.opencode/**)", "Edit(//Users/alexsbryan/dev/svrngs/ralph/claude-settings.json)", "Edit(//Users/alexsbryan/dev/svrngs/.githooks/**)",
+      "Edit(//home/alexbryan/dev/svrn-docs/**)", "Edit(//home/alexbryan/dev/commonwealth-ai/**)",
+      "Read(//home/alexbryan/.config/**)", "Read(//home/alexbryan/.ssh/**)", "Read(//home/alexbryan/.local/share/**)",
+      "Read(//Users/alexsbryan/.config/opencode/auth.json)", "Read(//Users/alexsbryan/.ssh/**)",
+      "Bash(*opencode.json*)", "Bash(*claude-settings.json*)", "Bash(*.githooks*)", "Bash(*hooksPath*)"
     ]
   }
 }
