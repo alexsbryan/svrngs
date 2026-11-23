@@ -41,7 +41,7 @@ use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, Transaction
 use serde::{Deserialize, Serialize};
 use svrngs_core::set::{Site, site};
 
-use crate::parse::{Change, Valid, fit, parse};
+use crate::parse::{Change, Unfit, Valid, fit, parse};
 pub use crate::wire::{Device, Head, Hex, Seq, Set, Sig};
 use crate::{Db, Refused, fault, owned};
 use eudoxia_community::db::Record;
@@ -119,13 +119,12 @@ pub enum Took {
     Twin,
     /// Counted here already: passed by.
     Held,
-    /// Its device isn't one this copy's record binds yet: dropped as if it
-    /// never came, its mark unmoved, so a member sends it again once the
-    /// record here binds it (the record's exchange runs first in a dial).
+    /// Its device isn't one this copy's record binds yet, or it names a
+    /// table or column of a schema this copy doesn't hold yet: dropped as if
+    /// it never came, its mark unmoved, so a member sends it again once the
+    /// record here binds it (the record's exchange runs first in a dial), or
+    /// once this copy takes the widest schema (`States::widen`).
     NotYet,
-    /// Written under a schema this copy doesn't hold: kept, held, counted,
-    /// never sent on.
-    Waits,
     /// Refused for good, alike on every copy: counted, never applied.
     Refused,
     /// Its signature isn't its device's: dropped as if it never came, its
@@ -231,8 +230,6 @@ pub(crate) enum Kept {
     /// Refused for good: its place and signature alone, no bytes, so a
     /// second set at its place is judged, never passed by as held.
     Refused,
-    /// Waiting for this copy to hold the schema it was written under.
-    Unschemed,
 }
 
 impl ToSql for Kept {
@@ -321,9 +318,9 @@ impl Db {
     /// sets, so each prunes by its own clocks (§7, invariant 3), and two
     /// sets at one place stay while either's values stand. Its place stays
     /// counted, so a copy that never took it is vouched past it by its
-    /// site's own computer, once that copy counts a set above it. A set that
-    /// waits, or was refused, holds no value here and is kept as it is. How
-    /// many it dropped.
+    /// site's own computer, once that copy counts a set above it. A set
+    /// refused holds no value here and is kept as it is. How many it
+    /// dropped.
     fn prune(&self, conn: &Connection) -> rusqlite::Result<usize> {
         let clock = |t: &String| format!("\"{}__crsql_clock\"", t.replace('"', "\"\""));
         let stands = self.tables.keys().map(|t| {
@@ -454,10 +451,9 @@ impl Db {
     /// keeps, in (site, seq) order, stopped at `budget` bytes of changes:
     /// each above the member's mark for its site that it doesn't name among
     /// its haves, and each at a place where either keeps two that the
-    /// member's ask doesn't name; none that waits here or was refused, nor
-    /// any of a device the member's ask names muted; with this copy's ask,
-    /// and whether it is all of them. A set that waits is sent by its own
-    /// device's copy, or one that took it, never by one where it waits.
+    /// member's ask doesn't name; none refused, nor any of a device the
+    /// member's ask names muted; with this copy's ask, and whether it is all
+    /// of them.
     pub fn missing(&self, theirs: &Ask, budget: usize) -> Result<Call, Refused> {
         let ask = self.ask()?;
         let twins: BTreeSet<&Place> = ask.twins.iter().chain(&theirs.twins).map(|(p, _)| p).collect();
@@ -499,8 +495,8 @@ impl Db {
     /// order, each ending one of the four ways ([`Took`]); then, for a full
     /// call, the member's mark of each site as far as its word goes
     /// ([`Self::claimed`]), but for this copy's own site and each site with a
-    /// set that faulted here, failed its signature or waits here. Each set's
-    /// place and how it ended. `bound` says whether the record binds a
+    /// set that faulted here, failed its signature, or isn't bound or schemed
+    /// here yet. Each set's place and how it ended. `bound` says whether the record binds a
     /// device's key; `from` is the computer the call came from, where known.
     pub fn ingest(&self, call: &Call, binds: &Binds, from: Option<&Device>) -> Result<Vec<(Place, Took)>, Refused> {
         let mut sets: Vec<&Set> = call.sets.iter().collect();
@@ -519,20 +515,14 @@ impl Db {
                 Took::Fault
             });
             tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), ?took, "state: a set offered, and how it ended");
-            if matches!(
-                took,
-                Took::NotYet | Took::Waits | Took::NotItsDevice | Took::Fault | Took::Over
-            ) {
+            if matches!(took, Took::NotYet | Took::NotItsDevice | Took::Fault | Took::Over) {
                 stopped.insert(place.0);
             }
             out.push((place, took));
         }
-        let waiting = "SELECT site FROM svrngs_sets WHERE kept = ?1";
-        let waiting = rows(&tx, waiting, [Kept::Unschemed], |r| r.get::<_, Site>(0));
-        stopped.extend(waiting.map_err(fault)?);
         let marks = call.ask.marks.iter();
         let adopting = marks.filter(|(s, _)| call.full && **s != self.site && !stopped.contains(*s));
-        tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature, isn't bound here yet or waits");
+        tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature, or isn't bound or schemed here yet");
         for (s, m) in adopting {
             self.claimed(&tx, (*s, *m), (from, call.synced, &room)).map_err(fault)?;
         }
@@ -721,12 +711,19 @@ impl Db {
         if !room.fits(device, adds) {
             return self.over(tx, set, room);
         }
-        // One written under a schema this copy doesn't hold waits, unparsed:
-        // its changes are read only against the tables of its own schema
-        // (APP_STATE §4, the four outcomes). Any other is parsed before
-        // cr-sqlite sees it.
-        let waits = (set.head.schema != self.schema).then_some(Kept::Unschemed);
-        let judged = waits.map_or_else(|| parse(&set.changes, &self.tables).map_err(|_| Kept::Refused), Err);
+        // Parsed before cr-sqlite sees it. One written under another schema
+        // that names a table or column this copy lacks waits for the widest
+        // schema here (`States::widen`), dropped as one not bound yet is and
+        // sent again by marks once this copy takes it: never refused for
+        // good, as a copy that holds that schema takes it. One under another
+        // schema that names only what this copy holds, a narrower version's,
+        // is judged as any.
+        let judged = parse(&set.changes, &self.tables);
+        let lacks = |u: &Unfit| matches!(u, Unfit::NoTable(_) | Unfit::NoColumn(_));
+        if set.head.schema != self.schema && judged.as_ref().is_err_and(lacks) {
+            return Ok(Took::NotYet);
+        }
+        let judged = judged.map_err(|_| Kept::Refused);
         // The owned rows it changes, by Eudoxia's rule (`owned.rs`): one that
         // waits for the record's cut of a row's person is dropped as one not
         // bound yet is, and sent again by marks once the Remove lands here.
@@ -740,8 +737,7 @@ impl Db {
         let sp = tx.savepoint()?;
         let took = match judged {
             Ok(valid) => keep(&sp, (set, site), Some(&valid), Kept::Taken).map(|()| Took::Taken)?,
-            Err(Kept::Refused) => keep(&sp, (set, site), None, Kept::Refused).map(|()| Took::Refused)?,
-            Err(waits) => keep(&sp, (set, site), None, waits).map(|()| Took::Waits)?,
+            Err(refused) => keep(&sp, (set, site), None, refused).map(|()| Took::Refused)?,
         };
         sp.commit()?;
         room.add(device, adds);

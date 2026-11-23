@@ -46,7 +46,7 @@ fn a_call_that_fails_leaves_no_transaction_open() {
     let dir = tempfile::tempdir().unwrap();
     let b = board(dir.path(), 2);
     let side = side(dir.path(), 2);
-    side.execute_batch("ALTER TABLE svrngs_sets RENAME COLUMN kept TO aside")
+    side.execute_batch("ALTER TABLE svrngs_muted RENAME COLUMN device TO aside")
         .unwrap();
     assert!(
         b.ingest(&Call::default(), &bound(), None).is_err(),
@@ -54,23 +54,23 @@ fn a_call_that_fails_leaves_no_transaction_open() {
     );
     let free = side.execute_batch("BEGIN IMMEDIATE; ROLLBACK");
     assert!(free.is_ok(), "the call's transaction is still open: {free:?}");
-    side.execute_batch("ALTER TABLE svrngs_sets RENAME COLUMN aside TO kept")
+    side.execute_batch("ALTER TABLE svrngs_muted RENAME COLUMN aside TO device")
         .unwrap();
     svrngs_db::close(side).unwrap();
 }
 
-/// **A set that waits is kept and counted together, or neither**: one
-/// written under a schema this copy doesn't hold, its count failing (a
-/// trigger from a second connection refusing every insert into svrngs's
-/// table of sets counted above a mark, the plant), is a fault, and nothing
-/// of it is kept; once the trigger is gone, the next call keeps it as
-/// waiting, counted.
+/// **A set is kept and counted together, or neither**: an older version's
+/// set at a copy that holds a wider schema, naming only what it holds, its
+/// count failing (a trigger from a second connection refusing every insert
+/// into svrngs's table of sets counted above a mark, the plant), is a fault,
+/// and nothing of it is kept; once the trigger is gone, the next call takes
+/// it, counted.
 #[test]
-fn a_waiting_set_is_kept_and_counted_together_or_not_at_all() {
+fn a_set_is_kept_and_counted_together_or_not_at_all() {
     const WIDER: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT);";
     let dir = tempfile::tempdir().unwrap();
-    let a = States::new(&dir.path().join("computer-1"), key(1));
-    let (a, b) = (a.open("g", "board", Some(WIDER)).unwrap(), board(dir.path(), 2));
+    let b = States::new(&dir.path().join("computer-2"), key(2));
+    let (a, b) = (board(dir.path(), 1), b.open("g", "board", Some(WIDER)).unwrap());
     a.write(
         &json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]),
         &bound(),
@@ -87,7 +87,7 @@ fn a_waiting_set_is_kept_and_counted_together_or_not_at_all() {
         .query_row("SELECT count(*) FROM svrngs_sets", [], |r| r.get(0))
         .unwrap();
     assert_eq!(kept, 0, "a set kept, uncounted");
-    assert_eq!(b.ingest(&sent, &bound(), None).unwrap()[0].1, Took::Waits);
+    assert_eq!(b.ingest(&sent, &bound(), None).unwrap()[0].1, Took::Taken);
     svrngs_db::close(side).unwrap();
 }
 

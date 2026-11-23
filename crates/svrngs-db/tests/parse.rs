@@ -4,7 +4,8 @@
 //! cr-sqlite's packed form with the table's key columns and no NULL, and a
 //! `col_version` and causal length from 1 to 2^53. A set that doesn't parse
 //! is refused for good, the same on every copy, and counted, so it is
-//! fetched once; a set written under a schema this copy doesn't hold waits.
+//! fetched once; a set written under a schema this copy doesn't hold, naming
+//! what it lacks, is dropped and sent again.
 //! The write's own seal parses its set with the same parser, so the writer's
 //! copy refuses what every other copy would.
 //!
@@ -288,11 +289,20 @@ fn a_change_its_table_cannot_hold_is_refused_for_good_and_fetched_once() {
     assert!(!b.syncing(), "refused for good is no fault");
 }
 
-/// **A set written under a schema this copy doesn't hold waits**, as APP_STATE
-/// §4 says, and is no fault: a set a newer version wrote, naming a column
-/// that version added. It is held, and the copy isn't said syncing for it.
+/// **A set written under a schema this copy doesn't hold, naming what it
+/// lacks, is dropped and sent again** (`Took::NotYet`), as a set of a key
+/// the record doesn't bind yet is, and is no fault: a set a newer version
+/// wrote, naming a column that version added. Nothing of it is kept or
+/// counted, so this copy's mark for its site doesn't move, and a call by
+/// marks sends it again once this copy takes the wider schema
+/// (`States::widen`). An older version's set at the wider copy, naming only
+/// what it holds, is taken. (A newer version's insert names every column of
+/// its own, NULL where the page gave none, so it names what an older copy
+/// lacks.) Plants: the lacking set refused for good, as the parse refuses
+/// any other (counted, so never sent again); every set under another schema
+/// dropped (the older version's card isn't taken).
 #[test]
-fn a_set_under_a_schema_this_copy_does_not_hold_waits() {
+fn a_set_under_a_schema_this_copy_does_not_hold_is_dropped_and_sent_again() {
     const WIDER: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT);";
     let dir = tempfile::tempdir().unwrap();
     let base = written(dir.path(), ("board", WIDER), card("c1", "milk"));
@@ -303,15 +313,21 @@ fn a_set_under_a_schema_this_copy_does_not_hold_waits() {
         c.push(note);
     });
     let b = db(&dir.path().join("b"), 2, ("board", CARDS));
-    let call = Call {
-        sets: vec![noted],
+    let call = |set: &Set| Call {
+        sets: vec![set.clone()],
         full: true,
         synced: true,
         ..Default::default()
     };
-    assert_eq!(b.ingest(&call, &bound(), None).unwrap()[0].1, Took::Waits);
+    assert_eq!(b.ingest(&call(&noted), &bound(), None).unwrap()[0].1, Took::NotYet);
     assert!(!b.syncing(), "a set that waits is no fault");
     assert_eq!(rows(&b, "SELECT * FROM cards"), json!([]));
+    assert!(b.ask().unwrap().marks.is_empty(), "its site's mark moved");
+    let older = written(&dir.path().join("older"), ("board", CARDS), card("c2", "eggs"));
+    let w = db(&dir.path().join("w"), 3, ("board", WIDER));
+    assert_eq!(w.ingest(&call(&older), &bound(), None).unwrap()[0].1, Took::Taken);
+    let taken = json!([{ "id": "c2", "title": "eggs", "note": null }]);
+    assert_eq!(rows(&w, "SELECT * FROM cards"), taken);
 }
 
 /// **Every key cr-sqlite packs from a write is one the parse takes**: integer

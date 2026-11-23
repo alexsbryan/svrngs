@@ -124,19 +124,21 @@ fn row_most_is_the_most_a_row_of_an_ask_costs() {
     }
 }
 
-/// **A set waiting for its schema is never sent on**: held here under a
-/// schema this copy doesn't hold, it goes to no member that asks; its own
-/// device's copy, or one that took it, sends it. Plant: `missing` sending
-/// every set with bytes (the waiting one sent on).
+/// **A set waiting for its schema is never sent on**: one naming a column
+/// this copy lacks is dropped here, kept nowhere, so it goes to no member
+/// that asks; its own device's copy, or one that took it, sends it. Plant:
+/// the set refused for good (counted, its place and signature kept).
 #[test]
 fn a_set_waiting_for_its_schema_is_never_sent_on() {
     const WIDER: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT);";
     let dir = tempfile::tempdir().unwrap();
     let wider = States::new(&dir.path().join("computer-5"), key(5));
     let wider = wider.open("g", "board", Some(WIDER)).unwrap();
-    write(&wider, "c2", "eggs");
+    let noted = json!([{ "insert": "cards", "row": { "id": "c2", "title": "eggs", "note": "two" } }]);
+    wider.write(&noted, &binds(&[], 0)).unwrap();
     let (c, d) = (board(dir.path(), 3), board(dir.path(), 4));
-    assert_eq!(took(&d, &call(&wider, &d), &binds(&[3, 4, 5], 10)), [Took::Waits]);
+    assert_eq!(took(&d, &call(&wider, &d), &binds(&[3, 4, 5], 10)), [Took::NotYet]);
+    assert!(d.ask().unwrap().marks.is_empty(), "counted as it waits");
     assert!(call(&d, &c).sets.is_empty(), "not sent on as it waits for its schema");
 }
 
