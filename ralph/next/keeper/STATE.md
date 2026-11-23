@@ -966,6 +966,23 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - **`docs/CHECKS.md`** gains "The release tier": what it runs, where,
     and that a release needs it to pass on the candidate. HUMAN-release-hosts
     runs it first, then the operator's reboots and the people sessions.
+  - **The first run's three failures were stale drivers** (QA oc-cruu42,
+    2026-11-23; `/tmp/opencode/keeper-release-525d960f/`). Fix the
+    drivers, not the product, then rerun those cases and the whole tier.
+    - `linux-native`: `demo/runs/keeper/2026-11-23-run-linux/run.py:116`
+      gives up on the old `"Share it separately" in said`. The page-copy
+      row (355ccfd6) made it `To share it: …`, so the absent-declaration
+      and linger checks never ran. Evaluate and log those checks on their
+      own, and check the new hint separately.
+    - `linux-container-plain` and `-actual`: `renewal()` at
+      `demo/runs/keeper/2026-11-23-run-containers/run.py:193–197` greps
+      the journal for `unit renewed`. 06facd88 renamed that event to
+      `door: a kept lend renewed after a restart, or why not`. Match the
+      current trace, by lend and outcome, and keep the before/after grant
+      equality and the boot checks. The saved approvals did change boot
+      and cgroup, and Alex got the marker.
+    - Plant each fix: the old string, or a renewal that really didn't
+      happen, must still fail.
   - **Demo:** one full run on the current candidate, recorded under
     `demo/runs/release/<date>/`. Plant: one driver made to fail (or a host
     made unreachable) turns the tier red, with that case named.
