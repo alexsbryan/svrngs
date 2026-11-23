@@ -102,7 +102,7 @@ impl Plan<'_> {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub(super) enum Started {
     Verified,
-    Unverified { running: bool, port: u16 },
+    Unverified { state: Option<String>, ready: bool },
     Busy { why: String },
 }
 
@@ -111,8 +111,8 @@ pub(super) fn started(name: &str, started: Started) -> Result<String, String> {
     tracing::debug!(target: "plan", ?started, "plan: keeper Run verdict");
     match started {
         Verified => Ok(format!("{name} is running here. Share it separately with `svrngs share`.\n")),
-        Unverified { running: true, port } => Err(format!("Not shared; {name} is running, but nothing answers on port {port} yet. Check the port in its command.")),
-        Unverified { running: false, .. } => Err(format!("Not shared; svrngs couldn't verify {name} is answering.")),
+        Unverified { state, ready } => Err(format!("Not shared; svrngs couldn't verify {name} is answering. Reported state: {}. The port {}.",
+            state.as_deref().unwrap_or("unknown"), if ready { "answered" } else { "wasn't ready" })),
         Busy { why } => Err(why),
     }
 }

@@ -7,10 +7,10 @@ use std::time::{Duration, Instant};
 
 use crate::promote::{Listen, listens};
 
-/// The sockets on `port`, from `ss -ltnpH sport = :<port>`.
+/// The sockets on `port`, including the kernel's socket cgroup witness.
 pub fn ss(port: u16) -> Result<Vec<Listen>, String> {
     let out = std::process::Command::new("/usr/bin/ss")
-        .args(["-ltnpH", "sport", "=", &format!(":{port}")])
+        .args(["-ltnpH", "--cgroup", "sport", "=", &format!(":{port}")])
         .output()
         .map_err(|e| format!("ss: {e}"))?;
     if !out.status.success() {

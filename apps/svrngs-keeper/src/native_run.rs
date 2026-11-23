@@ -9,9 +9,17 @@ use svrngs_keeper::{card::Card, host, kept, runtime::Name, systemd::SystemdUser,
 #[derive(Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 enum Outcome<'a> {
-    Verified { unit: &'a str },
-    Unverified { running: bool, port: u16 },
-    Busy { why: String },
+    Verified {
+        unit: &'a str,
+    },
+    Unverified {
+        state: Option<String>,
+        ready: bool,
+        port: u16,
+    },
+    Busy {
+        why: String,
+    },
 }
 
 pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
@@ -48,12 +56,12 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
         }
         match outcome {
             Outcome::Verified { .. } => println!("{} is running here on port {port}.", name.as_str()),
-            Outcome::Unverified { running: true, .. } => bail!(
-                "{} is running, but nothing answers on port {port} yet. Check the port in its command.",
-                name.as_str()
-            ),
-            Outcome::Unverified { running: false, .. } => {
-                bail!("svrngs couldn't verify {} is answering", name.as_str())
+            Outcome::Unverified { state, ready, .. } => {
+                let state = state.as_deref().unwrap_or("unknown");
+                bail!(
+                    "Couldn't verify {} is answering (state: {state}; port {port} ready: {ready}).",
+                    name.as_str()
+                )
             }
             Outcome::Busy { why } => bail!("{why}"),
         }
@@ -95,13 +103,35 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
         kept::boot(&systemd, super::terminal)
     })?;
     let llama = Path::new(command[0]).file_name().is_some_and(|p| p == "llama-server");
-    let verified = host::wait_for_answer(port, llama, std::time::Duration::from_secs(30));
-    if verified {
+    let ready = host::wait_for_answer(port, llama, std::time::Duration::from_secs(30));
+    let shown = systemd.show(&kept.unit, &["ActiveState", "ControlGroup"]);
+    let property = |key| shown.as_ref().ok()?.lines().find_map(|line| line.strip_prefix(key));
+    let state = property("ActiveState=");
+    let group = property("ControlGroup=")
+        .map(Path::new)
+        .filter(|g| g.is_absolute() && *g != Path::new("/"));
+    // The same kernel socket cgroup evidence Share reads, without any approval.
+    let owned = ready
+        && state == Some("active")
+        && group.is_some_and(|group| {
+            host::ss(port).is_ok_and(|listeners| {
+                !listeners.is_empty()
+                    && listeners.iter().all(|socket| {
+                        socket
+                            .cgroup
+                            .as_deref()
+                            .is_some_and(|path| Path::new(path).starts_with(group))
+                    })
+            })
+        });
+    tracing::debug!(%unit, ?shown, ready, owned, "run: installed unit and port observed");
+    if owned {
         say(Outcome::Verified { unit: &kept.unit })
     } else {
-        let state = systemd.show(&kept.unit, &["ActiveState"]);
-        let running = state.as_ref().is_ok_and(|s| s.trim() == "ActiveState=active");
-        tracing::debug!(%unit, ?state, "run: no verified answer");
-        say(Outcome::Unverified { running, port })
+        say(Outcome::Unverified {
+            state: state.map(str::to_owned),
+            ready,
+            port,
+        })
     }
 }

@@ -210,8 +210,10 @@ stop or copy it. On Linux, an enabled unit pulled in by the login target
 is evidence for sign-in, not for unattended disk unlock. Running a program
 with svrngs is separate from sharing it: `svrngs run <name> --port <port>
 -- <command>` asks the sibling keeper to start it on Linux; it writes no
-share. When Share would grant a running unit, it dials without sending
-bytes and checks the current listeners and what took the connection against
+share. Run verifies readiness only with listeners in its active unit's
+cgroup subtree; otherwise it reports manager state and port readiness
+separately (`native_run.rs`). When Share would grant a running unit, it
+dials without sending bytes and checks the listeners and connection taker against
 that unit and the reviewed approval before the conditional save
 (svrn-docs `rings/current/KEEP_IT_RUNNING_RELEASE.md`).
 A group taken away is
