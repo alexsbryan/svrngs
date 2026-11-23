@@ -99,3 +99,35 @@ under the release ceilings. The trust check still reported `13 policies,
 13 listeners, 17 gates`. The diffs of `scripts/check.sh`, the floor and its
 checker, and CSP lines from `789707dc` still exited 0; the gate image diff
 adds `iproute2` to the existing package list.
+
+## Controlled gate at `1581f2ba` — failed
+
+`REVIEW-audit-available-3.await.log` records the image digest and both
+revisions at line 3. Of the interleaved WebKit trials, navigation passed
+3/3 at `789707dc` and 2/3 at `1581f2ba`: the latter's first trial exited
+101 from Playwright's `WKPage._onTargetCreated` assertion (lines 566–591).
+All six channel-close trials went direct before closing and passed.
+The unchanged full gate passed `browser`, but exited 1 for two failures:
+
+- `tests`, lines 1339–1359: the Share verb saved the two selected IDs in
+  ID order, not selection order. Asking for both orders makes the check
+  deterministic. The conditional publication test also saw
+  `Selected(["house-id", "trip-id"])` instead of
+  `Selected(["trip-id", "house-id"])`. Retaining the selected order but
+  removing the reviewed-ID guard made the mismatched-audience plant fail.
+  With `698433df`, the gate container's `verbs` passed 48/48, `tcp` 8/8,
+  `udp` 7/7, `availability_plan` 4/4, and `surface` 15/15.
+- `pages`, lines 1659–1679: the WebKit acts driver forced Node to exit
+  with a write pending: `EOF while parsing a string`, column 8192. In the
+  same container, adding a temporary 1 MiB string to the exact test's
+  browser report gave EOF at column 16384, exit 101. After letting Node
+  exit normally (`2d320f05`), the same plant passed 1/1, exit 0. With the
+  plant removed, `pages` passed 3/3.
+
+At `2d320f05` the port ledger still matched all 67 tracked markers.
+The `789707dc` diffs for `scripts/check.sh`, the trust floor and its
+checker, and the CSP lines each exited 0 with no output. `trust_check.py`
+reported `13 policies, 13 listeners, 17 gates`. The final focused count
+was core 3,471/3,539, non-JS 25,715/25,719, and JS 8,731/8,731, below the
+release ceilings of 25,727 non-JS and 8,741 JS. The full gate is still owed
+on the repaired candidate.
