@@ -199,8 +199,10 @@ def mac(run, work, short):
         return
     src = work / 'source.tar'
     sp.run(['git', 'archive', '--format=tar', '-o', src, run.candidate], check=True)
-    setup = shlex.join(['/bin/bash', '-c', (HERE / 'mac.sh').read_text(),
-                        'release-tier', run.candidate, short, git('log', '-1', '--format=%ct')])
+    sqlite = git('rev-parse', f'{run.candidate}:vendor/cr-sqlite')
+    setup = shlex.join(['/usr/bin/lockf', '-k', '/tmp/svrngs-gate.lock',
+                        '/bin/bash', '-c', (HERE / 'mac.sh').read_text(),
+                        'release-tier', run.candidate, short, git('log', '-1', '--format=%ct'), sqlite])
     print('Staging candidate archive and model on beefymac', flush=True)
     with sp.Popen(['tar', '-cf', '-', '-C', work, src.name, '-C', SPIKE, MODEL], stdout=sp.PIPE) as bundle:
         with log.open('wb') as out:

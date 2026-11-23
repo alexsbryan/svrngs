@@ -350,3 +350,40 @@ diff against `35881a42` all exited 0 with no output. The port comparison
 again rejected the in-memory omission of `launchd.rs:2`; the actual
 ledger matched all 67 tracked markers, with none missing or extra.
 The unchanged full gate is owed on the repaired revision.
+
+## Squashed candidate: focused audit
+
+The keeper was squashed onto main `05896fb0` in `eb58f807`. The Fedora,
+Mac and full-gate results above apply to the archived branch, not this
+candidate. On `923a4b9a`, the tracked marker comparison covered both port
+sources recognized by `scripts/ports.py`:
+
+```text
+planted omission FAIL: [('apps/svrngs-keeper/src/launchd.rs:2', 'commonwealth-ai svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0')]
+actual: 69 tracked, 69 listed; missing=[], extra=[]
+```
+
+`python3 -B scripts/trust_check.py` exited 0 with `13 policies, 13
+listeners, 17 gates`. Both diffs below exited 0 with no output:
+
+```sh
+git diff --exit-code 05896fb0 HEAD -- scripts/trust_floor.txt scripts/trust_check.py
+git diff --exit-code 05896fb0 HEAD -G 'Content-Security-Policy|content-security-policy|[a-z]+-src|frame-ancestors|base-uri|form-action' -- apps crates web
+```
+
+`python3 -B scripts/lean_check.py` exited 0: 3,529/3,539 core,
+28,590/28,590 non-JS and 8,795/8,795 JS. Against the new main caps
+(27,385 and 8,747), the candidate adds 1,205 non-JS and 48 JS lines.
+CHARTER's original final ceilings of 25,727 and 8,741 were 1,210 and
+48 above the original main caps at `e5d9813b` (24,517 and 8,693).
+Applying just those keeper allowances to the new main caps, as CHARTER's
+“Alongside app-state” directs, leaves five non-JS and zero JS lines.
+
+The Mac replay needs the carried-SQLite gitlink from the same pin. A
+scratch extraction of `git archive HEAD` alone gave `fatal: cannot change
+to '…/vendor/cr-sqlite/core': No such file or directory` from the exact
+Git read `crates/svrngs-db/build.rs` uses. The clone control with an invalid
+gitlink gave `fatal: remote error: upload-pack: not our ref` (exit 128);
+the candidate's gitlink produced HEAD `c3062b8d802eb9bc44237f5a8b987885adf5d149`
+and the bundle manifest. The Mac driver stages and fetches those inputs
+under the scratch root and beefymac's gate lock before its offline builds.

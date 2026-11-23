@@ -2,11 +2,12 @@
 # Sent over SSH with the candidate archive, so staging and teardown have one owner.
 set -euo pipefail
 umask 077
-candidate=$1 short=$2
+candidate=$1 short=$2 sqlite_pin=$4
 export SOURCE_DATE_EPOCH=$3 SVRNGS_COMMIT=$2 TOKIO_WORKER_THREADS=4
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0
 root=$HOME/svrngs-keeper-scratch
 export CARGO_TARGET_DIR=$root/repo/target
+export CARGO_HOME=$root/cargo RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}
 domain=gui/$(id -u)
 tags=(avail-run-mac mac-proof-lineage mac-proof-ownership mac-proof-managed mac-renew mac-renew-door)
 label() { printf '%s/svrngs-keeper-test-%s' "$domain" "$1"; }
@@ -71,6 +72,15 @@ cd "$root/repo"
 uname -sm
 cargo --version
 shasum -a 256 Cargo.lock "$root/qwen2.5-0.5b.gguf"
+
+# git archive leaves gitlinks empty; svrngs-db reads this checkout's HEAD.
+sqlite_url=$(git config --file .gitmodules --get submodule.vendor/cr-sqlite.url)
+git -c advice.detachedHead=false clone --quiet --depth 1 --revision="$sqlite_pin" "$sqlite_url" vendor/cr-sqlite
+sqlite=$(git -C vendor/cr-sqlite/core rev-parse HEAD)
+printf 'cr-sqlite commit: %s\n' "$sqlite"
+[[ $sqlite == "$sqlite_pin" ]]
+cargo fetch --locked --target aarch64-apple-darwin
+cargo fetch --locked --target aarch64-apple-darwin --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml
 
 demo=demo/runs/keeper/2026-11-23
 renew=$demo-mac-renew
