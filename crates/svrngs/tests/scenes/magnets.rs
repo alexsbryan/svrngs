@@ -19,8 +19,8 @@
 //! the fridge there, and moves another word. Ana opens her lid and sees it.
 //! It relies on **a closing lid stranding no write** (APP_STATE §11, W2):
 //! every computer whose person runs Magnets keeps its database, a page
-//! opened there or not, and a computer about to sleep pushes what it holds
-//! to one awake.
+//! opened there or not, and a write wakes the round, so a member holds it
+//! within the round's seconds.
 
 use std::path::Path;
 use std::process::Stdio;
@@ -257,20 +257,12 @@ async fn magnets_lid(engine: Engine) {
         .await;
     let at_bo = bo.opens(&fridge, "magnets").await;
 
-    // Ana moves a word, and once Bo's computer has it, her lid closes: the
-    // platform's hook asks her svrngs to push what it holds, then it sleeps.
+    // Ana moves a word, and once Bo's computer has it, her lid closes.
     assert_eq!(
         asked(&ana, &at_ana, put(ANA_S, 1)).await,
         json!({ "count": 1 })
     );
     shows(&bo, &at_bo, &[ANA_S]).await;
-    let pushed = scene.command(&ana, &["ask", "/v1/sleeps", "{}"], "").await;
-    let pushed: Value = serde_json::from_str(&pushed).unwrap();
-    assert_eq!(
-        pushed,
-        json!({ "took": 1, "groups": 1 }),
-        "Ana's push before her lid closes"
-    );
     ana.lid(true);
 
     // Cy joins through Bo's computer, opens the fridge there, Ana's word on

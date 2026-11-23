@@ -91,7 +91,6 @@ use std::time::{Duration, Instant};
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
 use crate::{RailError, RingRail};
 use n0_future::task::AbortOnDropHandle;
-use n0_future::StreamExt as _;
 use tokio::sync::{watch, Notify};
 use tracing::{debug, info, warn};
 
@@ -666,14 +665,12 @@ pub(crate) fn bound(rail: &RingRail, group: &str) -> svrngs_db::Binds {
 /// spike's `exchange`, svrn-docs `rings/current/app-state-spike/spike.patch:1355-1401`):
 /// its waiting sets judged again by the record, then a call a chunk, each
 /// giving what the member's last ask lacks and taking what the member's
-/// answer gives, until neither moves or the chunks are spent. Whether the
-/// member answered each call of each one, so holds what this copy sent.
-async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>]) -> bool {
+/// answer gives, until neither moves or the chunks are spent.
+async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>]) {
     let bound = Arc::new(bound(&host.rail, group));
     // The member called, the computer its sets are signed by, which a full
     // answer's marks for its own sites are taken on the word of.
     let from = svrngs_db::Device::parse(&key_actor(&to.1.key));
-    let mut answered = true;
     for db in kept {
         let judge = bound.clone();
         let again = off(db, move |db| db.rejudge(&*judge)).await;
@@ -687,10 +684,7 @@ async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>
                     ..Default::default()
                 }),
             });
-            let Some(Ok(ours)) = ours.await else {
-                answered = false;
-                break;
-            };
+            let Some(Ok(ours)) = ours.await else { break };
             let body = postcard::to_allocvec(&((group, &db.app), &ours))
                 .expect("a call is written in memory");
             let answer =
@@ -720,45 +714,10 @@ async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>
                 Some(answer) if chunk == 1 || moved || !ours.sets.is_empty() => {
                     theirs = Some(answer.ask)
                 }
-                ended => {
-                    answered &= ended.is_some();
-                    break;
-                }
+                _ => break,
             }
         }
     }
-    answered
-}
-
-/// Before this computer sleeps, as a lid closes: each app database it keeps
-/// in each group it stands in pushed to an awake member, by a full call by
-/// that member's marks ([`states`]), so a closing lid strands no write while
-/// another computer of the group is awake (svrn-docs APP_STATE §11, W2;
-/// MAGNETS_BUILD §3, "Slice B": under §4's marks a full call is safe). Every
-/// member of a group is dialled at once, and the group is done once one has
-/// answered each call, so an asleep one costs only its own dial. The
-/// platform's own hook asks it before it sleeps (`carried::SLEEPS`):
-/// nothing here knows how a platform sleeps. Of the groups it keeps a
-/// database in, how many an awake member took, and how many there are.
-pub(crate) async fn before_sleep(host: &Host) -> (usize, usize) {
-    let peers = host.members().await.unwrap_or_default();
-    let (peers, transport): (&[OnlinePeer], &dyn crate::iroh::Fetch) = (&peers, &*host.transport);
-    let groups = host.rail.standings().unwrap_or_default();
-    let kept = (groups.iter()).map(|(g, stands)| (g, stands, host.states.held(g)));
-    let pushes = kept
-        .filter(|(.., k)| !k.is_empty())
-        .map(|(group, stands, kept)| async move {
-            let to = peers
-                .iter()
-                .filter(|p| stands.contains_key(&key_actor(&p.contact.key)));
-            let dials = to.map(|p| states((transport, &p.contact), host, group, &kept));
-            let mut dials: n0_future::FuturesUnordered<_> = dials.collect();
-            dials.any(|took| took).await
-        });
-    let reached = n0_future::join_all(pushes).await;
-    let took = reached.iter().filter(|r| **r).count();
-    info!(groups = reached.len(), took, "ring state: before this computer sleeps, each group's app databases pushed to an awake member, or none answered");
-    (took, reached.len())
 }
 
 /// `f` on `db`, off the runtime's threads, as a database's work is SQLite's

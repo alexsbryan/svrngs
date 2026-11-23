@@ -21,7 +21,7 @@ license=('AGPL-3.0-or-later')
 options=('!strip' '!debug')
 validpgpkeys=('46B4D67C5E6621093BB1AB2B057BF9082AA03CFB') # the svrngs release key
 _get="$url/releases/download/v$pkgver"
-source=(updated-by svrngs.service svrngs.desktop give.service svrngs.svg svrngs.sleep)
+source=(updated-by svrngs.service svrngs.desktop give.service svrngs.svg)
 source_x86_64=("svrngs-$pkgver-linux-x86_64.tar.gz::$_get/svrngs-linux-x86_64.tar.gz"
                "svrngs-$pkgver-linux-x86_64.tar.gz.sig::$_get/svrngs-linux-x86_64.tar.gz.sig"
                "give-$pkgver-linux-x86_64.tar.gz::$_get/give-linux-x86_64.tar.gz"
@@ -34,8 +34,7 @@ sha256sums=('156550c74ba7b2f43db0ffc4774f02919a9cd5583de4f83982dda870cbfe742c'
             'ba3cfc72b741341a849434e0c86be29d73a4c40e6d9574dfc09696b8649b3b4d'
             'd5a74c9218a57af83ed52a922b7b664ed43dce9f1bcd1f87c91e5589f027144e'
             '6da9f803e0968bd48b8292f70718cfe07ce0553e26c0f2682519f3447ff3dc4c'
-            '167affad6218b4d1cf3aa15c3c9a427f474e0e71795a6f8d8ecc3f6e7e98c603'
-            '1ec5889f759fe1e41f47379a7765346f9e37b60c2f15452ff69fe63911150f9c')
+            '167affad6218b4d1cf3aa15c3c9a427f474e0e71795a6f8d8ecc3f6e7e98c603')
 # Each tarball's sum is its line in the release's SHA256SUMS; each .sig's is
 # the sum of that asset as the release serves it, so none is SKIP.
 sha256sums_x86_64=('5f85f0176c1c4c384d396c2514e4938371f1dc549ec6f5f86050afad6cca5d2e'
@@ -63,10 +62,6 @@ package_svrngs-bin() {
   # The menu entry's icon (Icon=svrngs): the app icon, which
   # docs/brand/src/build.mjs writes here beside docs/brand/icon.svg.
   install -Dm644 svrngs.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/svrngs.svg"
-  # Before the computer sleeps, each person's svrngs pushes the app writes no
-  # other computer holds yet to one that's awake: the platform's hook, the
-  # only part of that push that knows how Linux sleeps (svrngs.sleep).
-  install -Dm755 svrngs.sleep "$pkgdir/usr/lib/systemd/system-sleep/svrngs"
 }
 
 package_svrngs-give-bin() {

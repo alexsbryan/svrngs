@@ -34,15 +34,10 @@ apps in. Then run `systemctl --user enable --now svrngs give`.
 The `svrngs-bin` package owns `/usr/bin/svrngs`, its service
 `/usr/lib/systemd/user/svrngs.service`, its entry in your applications
 menu `/usr/share/applications/svrngs.desktop` with its icon
-`/usr/share/icons/hicolor/scalable/apps/svrngs.svg`,
-`/usr/lib/systemd/system-sleep/svrngs`, and `/usr/lib/svrngs/updated-by`.
-That last file tells svrngs that pacman updates it, so svrngs never
-replaces itself. That's the trade: `svrngs update` says how to update
-instead of updating.
-
-Before your computer sleeps, as its lid closes, systemd runs
-`system-sleep/svrngs`, and your svrngs sends the app writes no other
-computer has yet to one that's awake.
+`/usr/share/icons/hicolor/scalable/apps/svrngs.svg`, and
+`/usr/lib/svrngs/updated-by`. That last file tells svrngs that pacman
+updates it, so svrngs never replaces itself. That's the trade:
+`svrngs update` says how to update instead of updating.
 
 The `svrngs-give-bin` package owns `/usr/bin/give` and
 `/usr/lib/systemd/user/give.service`.

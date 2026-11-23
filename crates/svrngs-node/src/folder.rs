@@ -808,7 +808,6 @@ pub(crate) fn router(folders: Folders) -> Router {
     Router::new()
         .route("/v1/folders", post(ask))
         .route(PROGRAMS_ROUTE, post(carried::terms))
-        .route(carried::SLEEPS, post(carried::sleeps))
         .route("/v1/blob", put)
         .route("/v1/blob/{hash}", axum::routing::get(blob::get))
         .with_state(folders)
