@@ -1,0 +1,91 @@
+{
+  "simulated": true,
+  "scene": "scene",
+  "person": "/play-lend-give/world/people/hana.md",
+  "hash": "b8b18c617d638a38cd263a6a6f04dd4adf2c8a3dcabd123c19ce767da4a4b1bd",
+  "model": "deepseek-flash",
+  "begins": "on their laptop, with svrngs’s This computer page open. Cy uses coder and notes in Maple St house. A housemate set the two shares up, and they haven’t used this page before",
+  "as": "Hana",
+  "verdict": {
+    "kind": "failed",
+    "reason": "ran out of patience"
+  },
+  "clock": 78.64061538461539,
+  "patienceLeft": 0,
+  "screens": [
+    {
+      "screen": "This computer",
+      "shown": 357,
+      "read": 149,
+      "taps": 20,
+      "seconds": 63.95561538461539
+    },
+    {
+      "screen": "/",
+      "shown": 87,
+      "read": 0,
+      "taps": 9,
+      "seconds": 4.6850000000000005
+    }
+  ],
+  "hard": [],
+  "said": [],
+  "heard": [
+    {
+      "from": "Cy",
+      "channel": "the house chat",
+      "text": "After you restart your laptop tonight and sign back in, which of coder and notes can I open tomorrow without you doing anything else? Just tell me here; no need to change anything.",
+      "said": 0,
+      "clock": 0
+    }
+  ],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I was trying to work out which of coder and notes would still be openable after a restart, but I got stuck in the computer settings and never found a clear start-at-login setting. I didn't manage to answer Cy in the house chat."
+        }
+      },
+      {
+        "prompt": "What do you think this is for?",
+        "said": {
+          "said": "I think it's a page for managing services on my computer: what's running, what's shared with my groups, and how programs get started with svrngs. I was trying to use it to see whether coder and notes are set to start when I sign back in."
+        }
+      },
+      {
+        "prompt": "What didn't fit together?",
+        "said": {
+          "said": "The page showed coder and notes as lent to Maple St house and said \"0 using it now\", but I couldn't find a plain \"start at login\" setting for either one. \"Shared while you run it\" made it unclear whether they keep running after a restart, and the \"Run it with svrngs\" form said it was a rehearsal that doesn't change anything. Then when I opened \"All your groups\", the session seemed to end with \"You've given up.\""
+        }
+      },
+      {
+        "prompt": "What did you try that didn't do what you expected?",
+        "said": {
+          "said": "I tapped the coder and notes entries expecting their settings, but nothing much changed. I tapped \"Run it with svrngs\" expecting to see how they start, but got a form that said it was a rehearsal and wouldn't change shares or programs. And I tapped \"All your groups\" expecting group settings, but instead the screen said \"You've given up.\""
+        }
+      },
+      {
+        "prompt": "Where did you stop, and why?",
+        "said": {
+          "said": "I stopped on the \"You've given up\" screen. After I tapped \"All your groups\", every look, tap, back, or wait just repeated \"You've given up. Tell a friend how it went.\" So I couldn't get back to the computer page or answer Cy, and I stopped because the session seemed over."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "provider",
+    "endpoint": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "call": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "glance": true
+  },
+  "usage": {
+    "input_tokens": 158144,
+    "output_tokens": 28409
+  },
+  "total_cost_usd": 0.010161718
+}
