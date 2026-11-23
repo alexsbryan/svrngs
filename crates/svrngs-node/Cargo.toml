@@ -86,10 +86,11 @@ tower = { version = "0.5", features = ["util"] }
 # retried or rewritten but what the door names ("client"); and to a member,
 # a request on a bi-stream of the iroh connection (arch-peer).
 # A group's folders (gf-1, sy-1): the store, its provider and verified range
-# fetch, without the rpc default, over the lock's iroh 1.4.2. 0.104.0 is the
+# fetch, without the rpc default, over the lock's iroh 1.4.2. 0.104.1 is the
 # newest that keeps irpc 0.17.0 (0.105.0 needs irpc 1.0.0; relay-survey,
-# "Why iroh-blobs 0.104.0 and not 0.105.0").
-iroh-blobs = { version = "=0.104.0", default-features = false, features = ["fs-store"] }
+# "Why iroh-blobs 0.104.0 and not 0.105.0"). 0.104.1's sweep asks what to
+# keep only after it marks what it found (its CHANGELOG, #240).
+iroh-blobs = { version = "=0.104.1", default-features = false, features = ["fs-store"] }
 irpc = { version = "=0.17.0", default-features = false }
 # The day a computer's person left a group, said by its old lend addresses
 # in this computer's time as the command says one (origin.rs `cut_from`,
