@@ -975,8 +975,9 @@ Windows.
     - The real hosts and the people sessions are separate gates
       (HUMAN-release-hosts).
   - **The controlled full gate** (`REVIEW-audit-available-3.await.log`).
-    - All 12 WebKit trials passed, at 789707dc and at 1581f2ba, and the
-      relay runs went direct before the close.
+    - 11 of 12 WebKit trials passed at 789707dc and 1581f2ba; the
+      candidate's first navigation trial aborted in `WKPage._onTargetCreated`
+      (line 574). All relay runs went direct before the close.
     - Browser passed. Tests and pages failed: two new failures.
   - **`verbs::share::a_share_names_who_can_open_it_and_unshare_takes_one_group_away`:
     a regression from this branch, nondeterministic** (keeper-lead,
@@ -1028,20 +1029,20 @@ Windows.
     - browser failed again: the relay case at `fallbackMs` 4,010, where
       `webrtc_page.rs:186` takes 2,500–4,000;
     - one WebKit navigation trial at the tip aborted in Playwright's
-      `WKPage._onTargetCreated` again (1 of 6 at the tip across the
-      protocol runs, 0 of 6 at main).
+      `WKPage._onTargetCreated` again (one at each candidate, 0 of 6 at
+      main across the two protocol runs).
   - **Relay fallback, ms** (keeper-lead, from the await logs):
     - focused, at main 789707dc: 3,753, 3,856, 3,802, 3,896, 3,898, 3,855;
     - focused, at the tip: 3,803, 3,812, 3,769, 3,793, 3,761, 3,842;
     - full gate, at the tip: 4,006 (first gate) and 4,010 (this one).
-    - Alone, the tip is no slower than main. Main has only 100–250 ms of
-      margin, and the full gate's parallel browser load crosses it.
-    - The full gate has not run at main in this image, so "pre-existing"
-      is not yet shown.
+    - The focused runs at main have only 100–250 ms of margin. The full
+      gate crossed the bar at the tip; whether parallel browser load
+      accounts for that is unresolved.
+    - The full gate has not run at main in this image, so a matching
+      timing miss there is not yet shown.
   - **Next, under QA's protocol:**
     - run the unchanged full gate once at 789707dc, in the same image;
-    - if browser fails there the same way, record both cases as
-      pre-existing instrument limits, with the evidence;
+    - for each matching base failure, record the evidence separately;
     - leave the gate red. Don't change the threshold, skip, or take
       best-of-N.
     - Then mark the row done with `needs-human` for the operator's
@@ -1056,6 +1057,7 @@ Windows.
         of work: the new Run and Share scenario is `#[ignore]` in the
         default tier. The already-running-app test does add two real
         confirmation clicks.
-    - Judge the 4 s bar and the WKPage abort separately: 1 in 6 against 0
-      in 6 is too little to attribute.
+    - Judge the 4 s bar and the WKPage abort separately: one abort per
+      candidate in three trials each against zero in six at main is too
+      little to attribute.
     - Never repeat until green, and never qualify on a red gate.

@@ -131,3 +131,41 @@ reported `13 policies, 13 listeners, 17 gates`. The final focused count
 was core 3,471/3,539, non-JS 25,715/25,719, and JS 8,731/8,731, below the
 release ceilings of 25,727 non-JS and 8,741 JS. The full gate is still owed
 on the repaired candidate.
+
+## Controlled gate at `2b1a7040` — failed
+
+`REVIEW-audit-available-4.await.log:3` pins the same gate image and the base
+`789707dc`. The full gate exited 1 after 1,276 s; only `browser` failed:
+
+```text
+passed     tests (374 s)
+failed     browser (90 s)
+           the bytes after the channel closed must arrive over the relay within 4 s, took 4010 ms:
+           test result: FAILED. 43 passed; 1 failed; 4 ignored; 0 measured; 2 filtered out; finished in 83.95s
+passed     pages (11 s)
+```
+
+This time the worker had selected WebRTC before the close (line 1215), and
+the 206 response had all 6,291,456 bytes and the expected SHA-256 above
+(lines 1216–1236). This is a timing failure at `webrtc_page.rs:183–189`,
+distinct from the earlier run where no direct path was selected.
+
+The exact interleaved trials in `-3.await.log` and `-4.await.log` gave:
+
+| Revision | WebKit navigation | Channel close `fallbackMs`, in trial order |
+|---|---|---|
+| `789707dc` | 6/6 passed | 3753, 3856, 3802; 3896, 3898, 3855 |
+| `1581f2ba` | 2/3 passed | 3803, 3812, 3769 |
+| `2b1a7040` | 2/3 passed | 3793, 3761, 3842 |
+
+Every focused channel-close trial selected WebRTC before the close and
+passed the byte, digest and timing checks. Navigation hit Playwright's
+`WKPage._onTargetCreated` assertion once at each candidate (`-3.await.log:574`,
+`-4.await.log:1051`), separately from the latest full-gate failure. The
+same navigation abort was reproduced on earlier main (see the flake record
+above); these few trials do not establish its frequency or a keeper effect.
+
+Next: one unchanged full gate at the rebase pin `789707dc`, in the same
+image, with the same mounts and worker count. It can demonstrate a matching
+base failure if one occurs; a single green base run cannot establish a
+keeper regression. The result on `2b1a7040` remains failed either way.
