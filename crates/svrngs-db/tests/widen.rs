@@ -212,3 +212,62 @@ fn a_copy_is_made_wider_while_its_page_holds_it() {
     let both = json!([{ "id": "c1", "title": "milk", "note": null }, { "id": "c2", "title": "tea", "note": "one" }]);
     assert_eq!(rows(&subscription, "SELECT * FROM cards ORDER BY id"), both);
 }
+
+/// **A version that declares a kept column otherwise makes no copy wider**
+/// (the review's P5): Ana's copy holds a card of `cards (id, a, b)`. A
+/// version that makes `a` GENERATED, or the table WITHOUT ROWID, as it adds
+/// `c`, is refused in words, and one that folds `a` where an index orders
+/// it is refused naming the index; each time her card reads and writes as
+/// it did. One that adds a CHECK to `b`, or folds `a` where no index orders
+/// it, makes her copy the copy made from it: the same text, columns, cards
+/// and clocks as a fresh one. Plants, watched failing: `limits` without its
+/// rowid and GENERATED arm (the GENERATED version taken); `texts` without
+/// an index's collations (the folded index taken).
+#[test]
+fn a_version_that_declares_a_kept_column_otherwise_makes_no_copy_wider() {
+    let v1 = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT);\n";
+    let indexed = "CREATE INDEX cards_a ON cards (a);\n";
+    let card = json!([{ "id": "r1", "a": "A1", "b": "B1" }]);
+    let refusals = [
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT GENERATED ALWAYS AS ('pwned') VIRTUAL, b TEXT, c TEXT);\n",
+            "",
+            "In cards, a is GENERATED",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT, c TEXT) WITHOUT ROWID;\n",
+            "",
+            "In cards, the table is WITHOUT ROWID",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT COLLATE NOCASE, b TEXT, c TEXT);\n",
+            indexed,
+            "schema.sql drops or changes cards_a",
+        ),
+    ];
+    for (v2, index, said) in refusals {
+        let dir = tempfile::tempdir().unwrap();
+        let ana_states = states(dir.path(), 1);
+        let ana = ana_states.carry("g", "board", &format!("{v1}{index}")).unwrap();
+        write(&ana, card[0].clone()).unwrap();
+        let words = ana_states.widen(&ana, &format!("{v2}{index}")).unwrap_err().to_string();
+        println!("MEASURE {v2}\n  {words}");
+        assert!(words.starts_with(said) && words.contains("To fix it"), "{v2}: {words}");
+        assert_eq!(rows(&ana, "SELECT id, a, b FROM cards"), card, "{v2}");
+        write(&ana, json!({ "id": "r2", "b": "B2" })).unwrap();
+    }
+    for v2 in [
+        "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT CHECK (b IS NULL OR length(b) > 100), c TEXT);\n",
+        "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT COLLATE NOCASE, b TEXT, c TEXT);\n",
+    ] {
+        let (ana_dir, fresh_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+        let ana_states = states(ana_dir.path(), 1);
+        let ana = ana_states.carry("g", "board", v1).unwrap();
+        write(&ana, card[0].clone()).unwrap();
+        ana_states.widen(&ana, v2).unwrap();
+        let fresh_states = states(fresh_dir.path(), 2);
+        let fresh = fresh_states.open("g", "board", Some(v2)).unwrap();
+        call(&ana, &fresh);
+        assert_eq!(file(ana_dir.path()), file(fresh_dir.path()), "{v2}");
+    }
+}

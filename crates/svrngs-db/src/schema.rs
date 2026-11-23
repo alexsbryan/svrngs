@@ -7,7 +7,9 @@
 //! indexes (`schema_rule`); cr-sqlite's `crsql_as_crr` decides each table's
 //! shape, and its six refusals are said by their text, which
 //! `tests/schema.rs` pins, so a fork that rewords one fails there; svrngs's
-//! own limits are read from SQLite's pragmas ([`limits`]). No SQL is parsed
+//! own limits are read from SQLite's pragmas ([`limits`]), a table WITHOUT
+//! ROWID and a GENERATED column outside them, as no copy can take either in
+//! a later version as SQLite reads the rows it holds. No SQL is parsed
 //! here. A CHECK can't be told from the rest without parsing it, so it is
 //! taken, and copies apply each other's sets with CHECKs off (`sync.rs`,
 //! `keep`): the guide says so beside its first `CREATE TABLE`.
@@ -19,6 +21,7 @@ use rusqlite::hooks::{AuthAction, AuthContext, Authorization};
 use rusqlite::{Connection, OptionalExtension as _};
 
 use crate::form::Table;
+use crate::sync::rows;
 use crate::{Open, Refused, fault, internal, schema_rule, tables_of};
 
 /// Why a `schema.sql` makes no database, a closed set (AGENTS 9): what
@@ -75,9 +78,13 @@ pub enum Unmade {
     )]
     Changed(String),
     #[error(
-        "schema.sql adds {0} as NOT NULL, with a DEFAULT, in the key, or generated, and a page on the version it follows still writes rows without it. To fix it, add {0} as a plain column that can be NULL, with no DEFAULT, outside the key."
+        "schema.sql adds {0} as NOT NULL, with a DEFAULT, or in the key, and a page on the version it follows still writes rows without it. To fix it, add {0} as a plain column that can be NULL, with no DEFAULT, outside the key."
     )]
     Added(String),
+    #[error(
+        "In {0}, {1}, and svrngs keeps only tables with a rowid, of columns a write fills, so every later version of your app reads each row alike. To fix it, take out WITHOUT ROWID and GENERATED: the primary key still finds each row, and your page can work out a value as it writes."
+    )]
+    Unplain(String, String),
     #[error("The schema.sql it follows makes no database either: {0}")]
     Follows(String),
 }
@@ -145,8 +152,13 @@ pub(crate) fn made(conn: &mut Connection, schema: &str) -> Result<BTreeMap<Strin
 /// into one row on each copy, so copies never agree (`pragma_index_xinfo`
 /// names a key's collation); and `person_key`, by which Eudoxia's rule reads
 /// whose a row is, comparing its type and bytes, TEXT first in the key of a
-/// STRICT table, so a column of that name never promises a check it isn't.
+/// STRICT table, so a column of that name never promises a check it isn't;
+/// and a table with a rowid, none of its columns GENERATED, as a copy made
+/// wider reads the rows it holds by their place in the table (`widen`).
 fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
+    let plain = "SELECT CASE WHEN l.wr THEN 'the table is WITHOUT ROWID' ELSE \
+        (SELECT c.name || ' is GENERATED' FROM pragma_table_xinfo(?1) c WHERE c.hidden > 1) END FROM pragma_table_list(?1) l";
+    let unplain: Option<String> = conn.query_row(plain, [t], |r| r.get(0)).map_err(fault)?;
     let folded = "SELECT x.coll FROM pragma_index_list(?1) l, pragma_index_xinfo(l.name) x \
         WHERE l.origin = 'pk' AND x.key AND x.coll NOT LIKE 'binary'";
     let folded: Option<String> = conn.query_row(folded, [t], |r| r.get(0)).optional().map_err(fault)?;
@@ -159,128 +171,146 @@ fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
         Some((.., false)) => Some("is in a table that isn't STRICT"),
         _ => None,
     };
-    tracing::debug!(target: "state", table = t, ?folded, off, "state: a table held to svrngs's limits, its key compared as BINARY and its person_key TEXT first in the key of a STRICT table");
-    let unmade = folded
-        .map(|c| Unmade::Folded(t.into(), c))
+    tracing::debug!(target: "state", table = t, ?unplain, ?folded, off, "state: a table held to svrngs's limits, a rowid table of plain columns, its key compared as BINARY and its person_key TEXT first in the key of a STRICT table");
+    let unmade = (unplain.map(|u| Unmade::Unplain(t.into(), u)))
+        .or(folded.map(|c| Unmade::Folded(t.into(), c)))
         .or(off.map(|o| Unmade::PersonKey(t.into(), o)));
     unmade.map_or(Ok(()), |u| Err(Refused::Schema(u)))
 }
 
 /// Each column of the app's tables, `table.column`, as `pragma_table_xinfo`
-/// gives it: what an earlier version's must keep, its declared type, NOT
-/// NULL, place in the key and place in the table, as a copy made wider adds
-/// a column after the last (`widen`); and whether one added must not be
-/// there, as NOT NULL, with a DEFAULT, in the key or generated.
+/// and `pragma_table_list` give it: what an earlier version's must keep, its
+/// declared type, NOT NULL, place in the key and place in the table, as a
+/// copy made wider adds a column after the last (`widen`), its DEFAULT, and
+/// whether its table is STRICT; and whether one added must not be there, as
+/// NOT NULL, with a DEFAULT or in the key.
 type Columns = BTreeMap<String, (String, bool)>;
 
 fn columns(conn: &Connection) -> Result<Columns, Refused> {
-    let each = "SELECT t.name, t.name || '.' || c.name, lower(c.type) || ' ' || c.\"notnull\" || ' ' || c.pk || ' ' || c.cid, \
-        c.\"notnull\" OR c.dflt_value IS NOT NULL OR c.pk > 0 OR c.hidden > 0 \
-        FROM sqlite_master AS t, pragma_table_xinfo(t.name) AS c WHERE t.type = 'table'";
-    let mut stmt = conn.prepare(each).map_err(fault)?;
-    let read = stmt.query_map([], |r| {
+    let each = "SELECT t.name, t.name || '.' || c.name, json_array(lower(c.type), c.\"notnull\", c.pk, c.cid, c.dflt_value, l.strict), \
+        c.\"notnull\" OR c.dflt_value IS NOT NULL OR c.pk > 0 \
+        FROM sqlite_master AS t, pragma_table_xinfo(t.name) AS c, pragma_table_list(t.name) AS l WHERE t.type = 'table'";
+    let read = rows(conn, each, [], |r| {
         Ok((r.get::<_, String>(0)?, (r.get(1)?, (r.get(2)?, r.get(3)?))))
     });
-    let read: Vec<_> = read.and_then(Iterator::collect).map_err(fault)?;
-    Ok(read.into_iter().filter(|(t, _)| !internal(t)).map(|(_, c)| c).collect())
+    Ok(read
+        .map_err(fault)?
+        .into_iter()
+        .filter(|(t, _)| !internal(t))
+        .map(|(_, c)| c)
+        .collect())
 }
 
 /// `schema`, a `schema.sql`, as `svrngs check` reads it: each table it
 /// makes and whether it is owned ([`Table::owned`]), or the first refusal,
 /// made on a scratch database as a database is made from it ([`made`]);
 /// and, where it follows `was`, an earlier version's, refused unless it only
-/// adds to it ([`grows`]).
+/// adds to it ([`follows`]).
 pub fn check(schema: &str, was: Option<&str>) -> Result<Vec<(String, bool)>, Refused> {
-    let scratch = |s: &str| {
-        // Closed as it drops, cr-sqlite's statements finalized first.
-        let mut open = Open(Some(Connection::open_in_memory().map_err(fault)?));
-        let tables = made(&mut open, s)?;
-        Ok::<_, Refused>((columns(&open)?, tables))
-    };
-    let (now, tables) = scratch(schema)?;
-    let follows = |r: Refused| Refused::Schema(Unmade::Follows(r.to_string()));
-    was.map(|was| grows(&scratch(was).map_err(follows)?.0, &now))
+    let (_, now, tables) = scratch(schema)?;
+    let earlier = |r: Refused| Refused::Schema(Unmade::Follows(r.to_string()));
+    was.map(|was| follows(&scratch(was).map_err(earlier)?.1, &now))
         .transpose()?;
     Ok(tables.iter().map(|(t, table)| (t.clone(), table.owned())).collect())
 }
 
-/// Whether `now` only adds to `was` (APP_STATE §4, "It only adds"): each
-/// column of `was` kept with its declared type, NOT NULL and place in the
-/// key; and each column `now` adds to a table of `was` one that can be NULL,
-/// with no DEFAULT and outside the key, so a page on the earlier version
-/// still writes its rows, and no copy rebuilds a table's clocks as its own,
-/// as a changed key does (cr-sqlite `alter.rs:42-71`, `backfill.rs:100-113`).
-/// Corrosion's rules are the reference (`corro-types/src/schema.rs:433-558`).
-fn grows(was: &Columns, now: &Columns) -> Result<(), Refused> {
+/// Whether `now` only adds to `was` (APP_STATE §4, "It only adds"), each a
+/// schema's columns and texts: the one decider for `svrngs check`, a version
+/// held against a copy and a copy made wider. Each column of `was` kept as
+/// [`Columns`] reads it; each index of `was` that `now` has kept with its
+/// text and its columns' collations, as an index a copy holds is ordered
+/// by them; and each column `now` adds to a table of `was` one that can be
+/// NULL, with no DEFAULT and outside the key, so a page on the earlier
+/// version still writes its rows, and no copy rebuilds a table's clocks as
+/// its own, as a changed key does (cr-sqlite `alter.rs:42-71`,
+/// `backfill.rs:100-113`). So a wider version's table text, which a copy made
+/// wider takes (`widen`), declares each column the copy holds as it holds
+/// it, and the closed set ([`limits`]) leaves nothing that stores a row
+/// otherwise. Corrosion's rules are the reference
+/// (`corro-types/src/schema.rs:433-558`).
+fn follows((was, held): &Shape, (now, texts): &Shape) -> Result<(), Refused> {
     let tables: BTreeSet<_> = was.keys().filter_map(|c| c.split_once('.').map(|(t, _)| t)).collect();
     let in_was = |c: &String| c.split_once('.').is_some_and(|(t, _)| tables.contains(t));
     let changed = was
         .iter()
         .find(|(c, (kept, _))| now.get(*c).is_none_or(|(n, _)| n != kept));
+    let index = (held.iter()).find(|(n, t)| t.0 == "index" && texts.get(*n).is_some_and(|m| m != *t));
     let added = now
         .iter()
         .find(|(c, (_, held))| *held && in_was(c) && !was.contains_key(*c));
-    tracing::debug!(target: "state", changed = ?changed.map(|c| c.0), added = ?added.map(|c| c.0), "state: a schema.sql held to only adding to the version it follows");
-    let unmade = changed
-        .map(|(c, _)| Unmade::Changed(c.clone()))
+    tracing::debug!(target: "state", changed = ?changed.map(|c| c.0), index = ?index.map(|i| i.0), added = ?added.map(|c| c.0), "state: a schema.sql held to only adding to the version it follows");
+    let unmade = (changed.map(|(c, _)| c).or(index.map(|(n, _)| n)))
+        .map(|c| Unmade::Changed(c.clone()))
         .or(added.map(|(c, _)| Unmade::Added(c.clone())));
     unmade.map_or(Ok(()), |u| Err(Refused::Schema(u)))
 }
 
 /// The text of each of the app's tables and indexes, by name, as
-/// `sqlite_master` keeps it, with its kind.
-type Texts = BTreeMap<String, (String, String)>;
+/// `sqlite_master` keeps it, with its kind and, for an index, its key
+/// columns' collations.
+type Texts = BTreeMap<String, (String, String, Option<String>)>;
+
+/// What [`follows`] compares of a schema.
+type Shape = (Columns, Texts);
 
 fn texts(conn: &Connection) -> Result<Texts, Refused> {
-    let each = "SELECT name, type, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index') AND sql NOT NULL";
-    let mut stmt = conn.prepare(each).map_err(fault)?;
-    let read = stmt.query_map([], |r| Ok((r.get(0)?, r.get(2)?, (r.get(1)?, r.get(3)?))));
-    let read: Vec<(String, String, _)> = read.and_then(Iterator::collect).map_err(fault)?;
+    let each = "SELECT m.name, m.type, m.tbl_name, m.sql, (SELECT group_concat(x.coll) FROM pragma_index_xinfo(m.name) x WHERE x.key) \
+        FROM sqlite_master m WHERE m.type IN ('table', 'index') AND m.sql NOT NULL";
+    let read = rows(conn, each, [], |r| {
+        Ok((r.get(0)?, r.get(2)?, (r.get(1)?, r.get(3)?, r.get(4)?)))
+    });
+    let read: Vec<(String, String, _)> = read.map_err(fault)?;
     let app = read.into_iter().filter(|(n, t, _)| !internal(n) && !internal(t));
     Ok(app.map(|(n, _, text)| (n, text)).collect())
 }
 
-/// `schema` made on a scratch database, with its columns and texts.
-fn scratch(schema: &str) -> Result<(Open, Columns, Texts), Refused> {
+/// `schema` made on a scratch database, with its shape and tables; closed
+/// as it drops, cr-sqlite's statements finalized first.
+fn scratch(schema: &str) -> Result<(Open, Shape, BTreeMap<String, Table>), Refused> {
     let mut open = Open(Some(Connection::open_in_memory().map_err(fault)?));
-    made(&mut open, schema)?;
-    let (now, texts) = (columns(&open)?, texts(&open)?);
-    Ok((open, now, texts))
+    let tables = made(&mut open, schema)?;
+    let shape = (columns(&open)?, texts(&open)?);
+    Ok((open, shape, tables))
 }
 
 /// Whether `schema` adds to what `conn`, a database, holds: false for one
 /// that adds nothing, as an older version's; refused where it doesn't only
-/// add to it ([`grows`]), as two versions that each add to a third, which
+/// add to it ([`follows`]), as two versions that each add to a third, which
 /// no copy made from either matches.
 pub(crate) fn adds(conn: &Connection, schema: &str) -> Result<bool, Refused> {
-    let (_, now, texts) = scratch(schema)?;
-    let (had, held) = (columns(conn)?, self::texts(conn)?);
-    let more = now.keys().any(|c| !had.contains_key(c)) || texts.keys().any(|n| !held.contains_key(n));
+    let (wider, had) = (scratch(schema)?.1, (columns(conn)?, texts(conn)?));
+    let more = (wider.0.keys()).any(|c| !had.0.contains_key(c)) || wider.1.keys().any(|n| !had.1.contains_key(n));
     tracing::debug!(target: "state", more, "state: a version's schema held against a database's, adding to it or not");
-    more.then(|| grows(&had, &now)).transpose().map(|g| g.is_some())
+    more.then(|| follows(&had, &wider)).transpose().map(|g| g.is_some())
 }
 
 /// `schema`, a wider version's, made on `conn`, a restored copy of a
-/// database (`States::widen`), where it only adds to it ([`grows`]): each
+/// database (`States::widen`), where it only adds to it ([`follows`]): each
 /// column it adds to a table here added after the last, then the table's
 /// text made `schema`'s, so it compares, sorts and checks as on a copy made
 /// from `schema`, within cr-sqlite's bracket, so its triggers take the
 /// column; each table it adds made, and a CRR, then each index. Held after
 /// to `schema`'s text, table for table and index for index, and its
-/// columns, then `ANALYZE`d, `schema`'s hash the copy's.
+/// columns, then `ANALYZE`d, `schema`'s hash the copy's. The text is
+/// written under `writable_schema`, as no statement of SQLite's makes a
+/// table's text a fresh copy's: `ALTER TABLE … ADD COLUMN` writes `, ` and
+/// the column's own text after the last, so a table written over lines
+/// ends unlike its fresh copy; what [`follows`] compared first is what lets
+/// it be written.
 pub(crate) fn widen(conn: &Connection, schema: &str) -> Result<(), Refused> {
-    let (scratch, now, texts) = scratch(schema)?;
-    let (had, held) = (columns(conn)?, self::texts(conn)?);
-    grows(&had, &now)?;
+    let (scratch, wider, _) = scratch(schema)?;
+    let ours = (columns(conn)?, texts(conn)?);
+    follows(&ours, &wider)?;
+    let ((had, held), (now, texts)) = (&ours, &wider);
     let run = |sql: &str| conn.execute_batch(sql).map_err(fault);
     let crsql = |f: &str, t: &str| conn.query_row(&format!("SELECT crsql_{f}"), [t], |_| Ok(()));
     let quoted = |n: &str| format!("\"{}\"", n.replace('"', "\"\""));
     let tables = texts
         .iter()
-        .filter(|(n, (kind, _))| kind == "table" && held.contains_key(*n));
-    for (name, (_, sql)) in tables {
+        .filter(|(n, (kind, ..))| kind == "table" && held.contains_key(*n));
+    for (name, (_, sql, _)) in tables {
         let each = "SELECT name FROM pragma_table_xinfo(?1) ORDER BY cid";
-        let each = crate::sync::rows(&scratch, each, [name], |r| r.get::<_, String>(0)).map_err(fault)?;
+        let each = rows(&scratch, each, [name], |r| r.get::<_, String>(0)).map_err(fault)?;
         let added: Vec<_> = each
             .into_iter()
             .filter(|c| !had.contains_key(&format!("{name}.{c}")))
@@ -299,8 +329,8 @@ pub(crate) fn widen(conn: &Connection, schema: &str) -> Result<(), Refused> {
         crsql("commit_alter('main', ?1, 1)", name).map_err(fault)?;
     }
     let mut made: Vec<_> = texts.iter().filter(|(n, _)| !held.contains_key(*n)).collect();
-    made.sort_by_key(|(_, (kind, _))| kind != "table");
-    for (name, (kind, sql)) in made {
+    made.sort_by_key(|(_, (kind, ..))| kind != "table");
+    for (name, (kind, sql, _)) in made {
         run(sql)?;
         (kind == "table")
             .then(|| crsql("as_crr(?1)", name))

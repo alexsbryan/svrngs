@@ -124,14 +124,14 @@ fn an_index_is_made() {
 
 /// **A key compared as anything but BINARY is refused**: cr-sqlite keys a
 /// row by its bytes and SQLite's NOCASE key folds 'Cat' and 'cat' into one
-/// row, so copies diverge without a word (S5), in a rowid table and one
-/// WITHOUT ROWID alike. Plant, watched failing: `limits` without its
+/// row, so copies diverge without a word (S5), a key of one column and one
+/// named apart alike. Plant, watched failing: `limits` without its
 /// collation query, and both are taken.
 #[test]
 fn a_key_compared_as_anything_but_binary_is_refused() {
     for schema in [
         "CREATE TABLE tags (name TEXT PRIMARY KEY NOT NULL COLLATE NOCASE, n INTEGER);",
-        "CREATE TABLE tags (name TEXT NOT NULL COLLATE NOCASE, n INTEGER, PRIMARY KEY (name)) WITHOUT ROWID;",
+        "CREATE TABLE tags (name TEXT NOT NULL COLLATE NOCASE, n INTEGER, PRIMARY KEY (name)) STRICT;",
     ] {
         let words = refused(schema);
         assert!(
@@ -195,19 +195,25 @@ fn an_owned_table_s_person_key_is_text_first_in_a_strict_key() {
 }
 
 /// **A schema that follows another only adds to it** (APP_STATE §4, "It
-/// only adds"; invariant 14): a new table, and a column that can be NULL
-/// with no DEFAULT, are taken; a column dropped, retyped, made NOT NULL,
-/// moved into the key or moved in the table, as a new column before it
-/// moves it, a table renamed, and a column added as NOT NULL, with a
-/// DEFAULT, in the key or generated, are each refused, naming the column.
-/// Plant, watched failing: `check` not calling `grows`, and the first is
-/// taken.
+/// only adds"; invariant 14): a new table, a column that can be NULL with
+/// no DEFAULT, and a new index are taken, the table written over lines as
+/// Saturday's are; a column dropped, retyped, made NOT NULL, given another
+/// DEFAULT, moved into the key or moved in the table, as a new column
+/// before it moves it, a table renamed or made STRICT, an index rewritten or
+/// its column compared otherwise, and a column added as NOT NULL, with a
+/// DEFAULT or in the key, are each refused, naming the column or index.
+/// Plants, watched failing: `check` not calling `follows`, and the first is
+/// taken; `columns` without the DEFAULT and STRICT and `texts` without an
+/// index's collations (the changed DEFAULT taken), and `columns` without
+/// STRICT alone (the STRICT table taken).
 #[test]
 fn a_schema_that_follows_another_only_adds_to_it() {
     let was = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
-    let grown = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title text, note TEXT);\nCREATE TABLE lists (id TEXT PRIMARY KEY NOT NULL);";
+    let lines = "CREATE TABLE cards (\n  id TEXT PRIMARY KEY NOT NULL,\n  title TEXT\n);\nCREATE INDEX cards_title ON cards (title);";
+    let grown = "CREATE TABLE cards (\n  id TEXT PRIMARY KEY NOT NULL,\n  title text, -- its words\n  note TEXT\n);\nCREATE INDEX cards_title ON cards (title);\n\
+        CREATE INDEX cards_note ON cards (note);\nCREATE TABLE lists (id TEXT PRIMARY KEY NOT NULL);";
     assert_eq!(
-        check(grown, Some(was)),
+        check(grown, Some(lines)),
         Ok(vec![("cards".into(), false), ("lists".into(), false)])
     );
     let refusals = [
@@ -248,11 +254,24 @@ fn a_schema_that_follows_another_only_adds_to_it() {
             "drops or changes cards.title",
         ),
         (
-            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, n INTEGER GENERATED ALWAYS AS (1));",
-            "adds cards.n",
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT DEFAULT 'none');",
+            "drops or changes cards.title",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT) STRICT;",
+            "drops or changes cards.id",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\nCREATE INDEX cards_title ON cards (title, id);",
+            "drops or changes cards_title",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT COLLATE NOCASE);\nCREATE INDEX cards_title ON cards (title);",
+            "drops or changes cards_title",
         ),
     ];
     for (now, said) in refusals {
+        let was = if now.contains("INDEX") { lines } else { was };
         let words = match check(now, Some(was)) {
             Err(Refused::Schema(w)) => w.to_string(),
             other => panic!("{now}\nnot refused: {other:?}"),
@@ -274,4 +293,42 @@ fn a_database_is_refused_in_the_check_s_words() {
     let opened = states.open("g", "tags", Some(schema)).err();
     assert_eq!(opened, check(schema, None).err());
     assert!(opened.is_some_and(|r| r.said() == (422, "schema")));
+}
+
+/// **What svrngs can't keep alike is refused wherever a schema is read**
+/// (the closed set, `limits`): a table WITHOUT ROWID, and a column
+/// GENERATED, stored or not, each in words that say what to write instead,
+/// by the check alone, by the check of a version that follows another, and
+/// where a database is made. Plant, watched failing: `limits` without its
+/// rowid and GENERATED arm, and each is taken.
+#[test]
+fn what_svrngs_can_t_keep_alike_is_refused_wherever_a_schema_is_read() {
+    let was = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT);";
+    let unplain = [
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT) WITHOUT ROWID;",
+            "In t, the table is WITHOUT ROWID",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, a TEXT GENERATED ALWAYS AS ('x') VIRTUAL, b TEXT, c TEXT);",
+            "In t, a is GENERATED",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT, n INTEGER GENERATED ALWAYS AS (1) STORED);",
+            "In t, n is GENERATED",
+        ),
+    ];
+    let dir = tempfile::tempdir().unwrap();
+    let states = States::new(dir.path(), SigningKey::from_bytes(&[1; 32]));
+    for (n, (schema, said)) in unplain.into_iter().enumerate() {
+        let opened = states.open("g", &format!("t{n}"), Some(schema)).err();
+        let read = [check(schema, None).err(), check(schema, Some(was)).err(), opened];
+        for words in read.map(|r| r.map(|r| r.to_string()).unwrap_or_default()) {
+            println!("MEASURE {schema}\n  {words}");
+            assert!(
+                words.starts_with(said) && words.contains("To fix it"),
+                "{schema}: {words}"
+            );
+        }
+    }
 }

@@ -77,6 +77,8 @@ each one it finds, with the fix, and exits non-zero:
 - No `COLLATE NOCASE` on a key. Keep the text in the case you compare it in.
 - Only tables and indexes: no triggers, views or virtual tables. Do that
   work in your page.
+- No `WITHOUT ROWID` and no `GENERATED` column. Work a value out in your
+  page as it writes.
 
 A `CHECK` holds for each computer's own writes, but not for what a merge
 makes. With `CHECK (lo <= hi)`, if Ana sets `lo` to 8 and Ben, apart, sets
@@ -207,9 +209,12 @@ owned tables.
 
 A schema only grows. A new version of `schema.sql` may add tables, indexes,
 and columns that can be NULL, with no `DEFAULT`. It never drops or
-renames a column, changes a type or a key, or renames the app's folder,
-since the database is named by the folder. Each computer keeps what it
-holds, and a page on the earlier version still writes its rows.
+renames a column, changes a type, a `DEFAULT` or a key, changes whether a
+table is `STRICT`, rewrites an index, or renames the app's folder, since
+the database is named by the folder. Each computer keeps what it holds,
+and a page on the earlier version still writes its rows. A new version may
+give a column it keeps a `CHECK`, or a `COLLATE` where no index orders it:
+every computer takes it alike, for what comes after.
 
 Before you copy a new version over the one your group uses, name both:
 
