@@ -80,7 +80,9 @@ download and the candidate's locked Playwright, with Chromium and WebKit
 downloaded into the same scratch folder. If that setup fails, the node
 suite is `never-ran`. Renewal and the six plist cases use the recorded scratch
 instrumentation, with separate build fingerprints. The tier uses only its
-scratch folder and named test agents and does not reboot or sign out.
+scratch folder and named test agents and does not reboot or sign out. Cleanup
+checks that the test agents are gone, then retries scratch removal if Finder
+writes metadata during deletion. Anything still left fails the tier.
 
 Each case reports `passed`, `failed`, `could-not-judge` or `never-ran` with
 its commit, build, and transcript. Candidate mismatch is a failure; missing

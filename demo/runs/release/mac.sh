@@ -45,12 +45,18 @@ cleanup() {
         fi
     done
     cd "$HOME"
-    if [[ $code == 0 ]] && rm -rf "$root" && [[ ! -e $root ]]; then
-        printf 'Cleanup: all six test labels absent (exit 113); removed %s\n' "$root"
-    else
-        code=1
+    if [[ $code == 0 ]]; then
+        # Finder can write .DS_Store during the recursive removal.
+        for attempt in 1 2 3; do
+            if rm -rf "$root" && [[ ! -e $root && ! -L $root ]]; then
+                printf 'Cleanup: all six test labels absent (exit 113); removed %s\n' "$root"
+                result mac-cleanup 0 launchd
+                return
+            fi
+            printf 'Cleanup: scratch removal attempt %s/3 did not verify: %s\n' "$attempt" "$root"
+        done
     fi
-    result mac-cleanup "$code" launchd
+    result mac-cleanup 1 launchd
 }
 trap cleanup EXIT
 trap 'exit 130' INT
