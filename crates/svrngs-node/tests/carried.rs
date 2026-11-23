@@ -4320,3 +4320,239 @@ async fn a_person_s_subscriptions_and_reads_are_bounded() {
         node.net().close().await;
     }
 }
+
+/// Where each run of Ana's computer in the kill loop is killed, drawn from
+/// this seed, so a seed names a loop.
+const KILLED_SEED: u64 = 0x5eed_0b0a;
+/// How many times the kill loop kills Ana's computer.
+const KILLS: usize = 12;
+
+/// splitmix64's next draw from `state`, below `below`.
+fn drawn(state: &mut u64, below: u64) -> u64 {
+    *state = state.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    (z ^ (z >> 31)) % below
+}
+
+/// The cards write `n` of run `run` inserts: one to three, each its own id.
+fn killed_cards(run: usize, n: usize) -> Vec<String> {
+    (0..=n % 3)
+        .map(|i| format!("k{run:02}-{n:03}-{i}"))
+        .collect()
+}
+
+/// Write `n` of run `run`, in the write form: [`killed_cards`], each titled
+/// by its write.
+fn killed_write(run: usize, n: usize) -> Value {
+    let cards = killed_cards(run, n)
+        .into_iter()
+        .map(|id| json!({ "insert": "cards", "row": { "id": id, "title": format!("{run}.{n}") } }));
+    json!({ "write": cards.collect::<Vec<_>>() })
+}
+
+/// Not a check: Ana's computer in a process of its own, which the test
+/// below starts and kills. Over `KILLED_DIR`, on a wire of its own, it
+/// writes Board's cards one write after another as a page does, and says
+/// `acked <n>` on stdout as write `n` is answered 200, before it sends the
+/// next; for any other answer it says `refused <n>` and the answer, and
+/// stops. Without `KILLED_DIR`, nothing.
+#[tokio::test]
+#[ignore = "Ana's computer, which the kill loop below starts and kills"]
+async fn writing_until_killed() {
+    let Some(dir) = std::env::var_os("KILLED_DIR") else {
+        return;
+    };
+    let run: usize = std::env::var("KILLED_RUN").unwrap().parse().unwrap();
+    let group = std::env::var("KILLED_GROUP").unwrap();
+    let ana = start(1, Path::new(&dir)).await;
+    let origin = board_on(&ana, &group).await;
+    for n in 0.. {
+        let (status, said) = sql(&ana, &origin, killed_write(run, n)).await;
+        if status != 200 {
+            println!("refused {n} {status} {said}");
+            return;
+        }
+        println!("acked {n}");
+    }
+}
+
+/// **A write answered 200 is kept through `kill -9`, and reaches another
+/// computer** (svrn-docs `rings/current/APP_STATE.md` §11, W2, "Nothing
+/// acknowledged is lost"): Ana and Ben keep Board, synced. Then Ana's
+/// computer runs in a process of its own ([`writing_until_killed`]),
+/// writing cards one write after another as a page does, and is killed by
+/// SIGKILL [`KILLS`] times, each at a point drawn from [`KILLED_SEED`]:
+/// after 1 to 12 writes are answered, and up to 2 ms more, so the kill lands
+/// anywhere in a write, its commit among them. Each time she starts again
+/// over her data dir. Then, started here: every card of every write
+/// answered 200 is in her copy, with its title; any other is of the one
+/// write each run had in flight, whole or not there at all; she writes on.
+/// At the next rounds Ben's copy holds exactly hers, and only sets travel,
+/// so each write's set was kept with it. On a wire in each process, no
+/// socket: a child process killed is not a seam (docs/CHECKS.md, "Seam
+/// migration ledger"), so wherever a kill lands, the verdict is the same.
+/// Plants, each watched failing: the route answering 200 before the write
+/// commits (a card of an answered write missing); the set kept in a
+/// transaction of its own after the write's commits (Ben's copy lacks a
+/// card Ana's holds).
+#[cfg(unix)]
+#[tokio::test]
+async fn a_write_answered_is_kept_through_kill_9_and_reaches_another_computer() {
+    use std::collections::BTreeSet;
+    use std::io::BufRead as _;
+    use std::os::unix::process::ExitStatusExt as _;
+    use std::sync::mpsc::RecvTimeoutError;
+    let root = tempfile::tempdir().unwrap();
+    let (ana_dir, ben_dir) = (root.path().join("ana"), root.path().join("ben"));
+    let ana = start(1, &ana_dir).await;
+    let ben = start(2, &ben_dir).await;
+    let group = found("house", 83, &ana, &[(&ben, 2)]);
+    for node in [&ben, &ana] {
+        round(node).await;
+    }
+    let (_, _folder) = board(&ana, &group).await;
+    let at_ben = synced_in(&ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[&ana, &ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(&ben, &group).await;
+    round(&ben).await;
+    ana.net().close().await;
+    drop(ana);
+
+    let mut seed = KILLED_SEED;
+    let (mut acked, mut in_flight) = (BTreeSet::new(), Vec::new());
+    for run in 0..KILLS {
+        let (after, wait) = (1 + drawn(&mut seed, 12), drawn(&mut seed, 2_000));
+        let log = root.path().join(format!("run-{run}.log"));
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "writing_until_killed",
+                "--ignored",
+                "--nocapture",
+            ])
+            .env("KILLED_DIR", &ana_dir)
+            .env("KILLED_RUN", run.to_string())
+            .env("KILLED_GROUP", &group)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::fs::File::create(&log).unwrap())
+            .spawn()
+            .unwrap();
+        let out = child.stdout.take().unwrap();
+        let (said, heard) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            for line in std::io::BufReader::new(out).lines().map_while(Result::ok) {
+                if said.send(line).is_err() {
+                    return;
+                }
+            }
+        });
+        let mut answered = 0;
+        loop {
+            let line = match heard.recv_timeout(Duration::from_secs(60)) {
+                Ok(line) => line,
+                Err(RecvTimeoutError::Disconnected) => break,
+                Err(RecvTimeoutError::Timeout) => {
+                    let _ = child.kill();
+                    panic!(
+                        "run {run}: Ana's computer said nothing for 60 s; its log is {}",
+                        log.display()
+                    );
+                }
+            };
+            if let Some(n) = line.strip_prefix("acked ") {
+                assert_eq!(
+                    n,
+                    answered.to_string(),
+                    "run {run}: writes answered in turn"
+                );
+                acked.extend(killed_cards(run, answered));
+                answered += 1;
+                if answered as u64 == after {
+                    std::thread::sleep(Duration::from_micros(wait));
+                    child.kill().unwrap();
+                }
+            } else if line.starts_with("refused") {
+                let _ = child.kill();
+                panic!("run {run}: {line}");
+            }
+        }
+        let ended = child.wait().unwrap();
+        let log = std::fs::read_to_string(&log).unwrap_or_default();
+        assert_eq!(
+            ended.signal(),
+            Some(9),
+            "run {run} wrote until killed: {ended:?}\n{log}"
+        );
+        in_flight.push(killed_cards(run, answered));
+    }
+
+    let ana = start(1, &ana_dir).await;
+    let origin_a = board_on(&ana, &group).await;
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let (status, kept) = sql(&ana, &origin_a, read.clone()).await;
+    assert_eq!((status, &kept["more"]), (200, &json!(false)), "{kept}");
+    let held: BTreeSet<String> = (kept["rows"].as_array().unwrap().iter())
+        .map(|r| r["id"].as_str().unwrap().to_owned())
+        .collect();
+    let lost: Vec<_> = acked.difference(&held).collect();
+    assert!(
+        lost.is_empty(),
+        "every card of a write answered 200 kept through {KILLS} kills; lost: {lost:?}"
+    );
+    for cards in &in_flight {
+        let there = cards.iter().filter(|c| held.contains(*c)).count();
+        assert!(there == 0 || there == cards.len(), "a write in flight as Ana's computer was killed kept whole or not at all: {cards:?}, {there} there");
+    }
+    let unasked: Vec<_> = (held.iter())
+        .filter(|c| !acked.contains(*c) && !in_flight.iter().flatten().any(|f| f == *c))
+        .collect();
+    assert!(unasked.is_empty(), "no card no write made: {unasked:?}");
+    for row in kept["rows"].as_array().unwrap() {
+        let id = row["id"].as_str().unwrap();
+        let (run, n) = (&id[1..3], &id[4..7]);
+        let title = format!(
+            "{}.{}",
+            run.parse::<usize>().unwrap(),
+            n.parse::<usize>().unwrap()
+        );
+        assert_eq!(row["title"], title, "each card as its write wrote it");
+    }
+    let after = sql(&ana, &origin_a, killed_write(KILLS, 0)).await;
+    assert_eq!(
+        after.0, 200,
+        "Ana's computer writes on after the kills: {}",
+        after.1
+    );
+    let (_, kept) = sql(&ana, &origin_a, read.clone()).await;
+
+    let mut seen = Value::Null;
+    for _ in 0..15 {
+        for node in [&ana, &ben] {
+            round(node).await;
+        }
+        seen = sql(&ben, &origin_b, read.clone()).await.1;
+        if seen == kept {
+            break;
+        }
+    }
+    let theirs: BTreeSet<_> = (seen["rows"].as_array().into_iter().flatten())
+        .filter_map(|r| r["id"].as_str())
+        .collect();
+    let missing: Vec<_> = held
+        .iter()
+        .filter(|c| !theirs.contains(c.as_str()))
+        .collect();
+    assert_eq!(
+        seen, kept,
+        "Ben's copy holds exactly Ana's, synced; missing there: {missing:?}"
+    );
+    for node in [&ana, &ben] {
+        node.net().close().await;
+    }
+}
