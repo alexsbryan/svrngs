@@ -458,23 +458,24 @@ impl Db {
         let ask = self.ask()?;
         let twins: BTreeSet<&Place> = ask.twins.iter().chain(&theirs.twins).map(|(p, _)| p).collect();
         let named: BTreeSet<&Sig> = theirs.twins.iter().map(|(_, s)| s).collect();
-        let kept = "SELECT s.site, s.seq, s.sig, s.bytes, h.device FROM svrngs_sets s JOIN svrngs_sites h \
+        // Walked in order, each set's bytes read only once it is sent, and
+        // none past the budget: a call copies only the batch it sends.
+        let kept = "SELECT s.site, s.seq, s.sig, h.device, s.bytes FROM svrngs_sets s JOIN svrngs_sites h \
             USING (site) WHERE s.kept = ?1 ORDER BY s.site, s.seq, s.sig";
-        let kept = rows(&self.conn(), kept, [Kept::Taken], |r| {
-            Ok(((r.get(0)?, r.get(1)?), r.get(2)?, r.get(3)?, r.get(4)?))
-        });
+        let conn = self.conn();
+        let mut kept = conn.prepare_cached(kept).map_err(fault)?;
+        let mut kept = kept.query([Kept::Taken]).map_err(fault)?;
         let (mut sets, mut spent, mut full) = (Vec::new(), 0, true);
-        for (place, sig, bytes, device) in kept.map_err(fault)? {
-            if theirs.muted.contains::<Device>(&device) {
-                continue;
-            }
-            let (site, seq): Place = place;
+        while let Some(r) = kept.next().map_err(fault)? {
+            let read = || Ok::<_, rusqlite::Error>(((r.get(0)?, r.get(1)?), r.get(2)?, r.get(3)?));
+            let (place, sig, device): (Place, Sig, Device) = read().map_err(fault)?;
+            let (site, seq) = place;
             let above = theirs.marks.get(&site).is_none_or(|m| seq > *m) && !theirs.haves.contains(&place);
-            let (twin, sig): (bool, Sig) = (twins.contains(&place), sig);
-            if !above && (!twin || named.contains(&sig)) {
+            let named = !twins.contains(&place) || named.contains(&sig);
+            if theirs.muted.contains(&device) || !above && named {
                 continue;
             }
-            let bytes: Vec<u8> = bytes;
+            let bytes: Vec<u8> = r.get(4).map_err(fault)?;
             if !sets.is_empty() && spent + bytes.len() > budget {
                 full = false;
                 break;
