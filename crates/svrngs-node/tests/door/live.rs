@@ -47,6 +47,41 @@ async fn ends_within(sock: &mut tokio::net::TcpStream, within: Duration) -> Opti
         .map(|()| began.elapsed())
 }
 
+#[tokio::test]
+async fn stopping_the_share_cuts_a_members_live_answer_without_stopping_the_app() {
+    let world = World::new(|_| {}).await;
+    let (origin, _) = origins::streaming_origin().await;
+    for name in ["shelf", "radio"] {
+        world.lend(
+            name,
+            serde_json::json!({ "port": origin.port(), "kind": "k", "groups": [NS] }),
+        );
+    }
+    let bo = world.as_key(2, Alpn::Member).await;
+    let mut shelf = opened(bo, "GET /lend/shelf/stream HTTP/1.1\r\n").await;
+    let two = Duration::from_secs(2);
+    let mut first = [0; 1];
+    tokio::time::timeout(two, shelf.read_exact(&mut first))
+        .await
+        .expect("the answer starts streaming")
+        .unwrap();
+
+    let began = std::time::Instant::now();
+    let name = LendName::parse("shelf").unwrap();
+    assert!(lend::withdraw(world.dir.path(), &name).unwrap());
+    let cut = ends_within(&mut shelf, two.saturating_sub(began.elapsed())).await;
+    let elapsed = began.elapsed();
+    eprintln!(
+        "after Stop sharing, the shelf's answer ended: {cut:?} ({elapsed:?} including withdrawal)"
+    );
+    assert!(
+        cut.is_some() && elapsed <= two,
+        "the shelf's answer still carries on after 2 s"
+    );
+    assert_eq!(ask(bo, "GET", "/lend/radio/now", "").await.status, 200);
+    world.a.endpoint().close().await;
+}
+
 /// Planted, each watched failing when its test was its own: the door
 /// stripping `Upgrade` as hop-by-hop (door.rs:128 before u5-2), which the
 /// service answers 426; the answer's body and the upgraded copy carried on
