@@ -794,7 +794,9 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
 - [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-renew, avail-run-mac-proof, avail-mac-plist-read] — ONE UNIT: spec §5 row 8.
   - `build-release.sh`, `install.sh` (always) and the Arch package, as
     Give's lines are.
-  - Uninstall says what svrngs still runs.
+  - Uninstall says what svrngs still runs. Native jobs name the program
+    directly; Linux container jobs instead call the keeper for start and
+    stop (`apps/svrngs-keeper/src/unit.rs:20–52`). Say both.
   - The guides: models.md, lend.md and troubleshooting.md, in spec §2's
     words.
 

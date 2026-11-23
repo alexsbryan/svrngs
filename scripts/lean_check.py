@@ -988,10 +988,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # avail-run-mac adds the read-only sign-in observation for svrngs's own agent.
 # avail-run-mac-renew spends 105 for a shared live grant witness and plist registration.
 # avail-mac-plist-read spends 11 to parse the door's login plist, leaving 10 for shipping.
+# avail-ship packs both binaries under one checksum and adds the uninstall notice.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25718,
+    ".": 25720,
 
     "js": 8732,
 

@@ -23,6 +23,9 @@ short name.
 - **`command not found: svrngs`**
   Open a new terminal window, or type the whole path,
   `~/.local/bin/svrngs`.
+- **Run is unavailable after updating.** Paste the install line again.
+  It installs the program that Run needs beside `svrngs`; `svrngs update`
+  updates only `svrngs`. If you installed with pacman, update the package instead.
 - **The home page says *"Open svrngs from your computer"*.**
   Your home page opens only from svrngs on your computer. Open svrngs from
   your Applications (on Linux, your applications menu), or type `svrngs
@@ -144,6 +147,26 @@ short name.
 - ***"films already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."***
   The secret is shown only once. Run that command for a new one, and put
   it in the app's settings.
+
+## Run it with svrngs
+
+- **"Port 8101 is in use by llama-server, the copy you started: stop it, then press Run."**
+  Stop that copy yourself, then try again. svrngs hasn't stopped anything.
+- **"Not shared; svrngs couldn't verify coder is answering."**
+  Check the reported state and the port, then check the command, folder and
+  paths you gave it. It runs without your terminal's settings. If it has a
+  setup you need to change, use `svrngs-keeper remove coder`, then Run again.
+- **"Running here; not shared."**
+  Run and Share are separate. If the share couldn't be saved, fix the reason
+  shown and share again; don't Run a second copy.
+- **It runs after sign-in, but friends can't open it before then.**
+  That's expected on a Mac. On Linux, read the Share review: both the app
+  and sharing must start without sign-in, and a locked disk needs unlocking.
+- **An app is still running after uninstall.**
+  Removing svrngs doesn't stop apps you told it to run. Use
+  `svrngs-keeper remove <name>` before uninstalling, or reinstall first.
+  The app's files stay where they were. Managed Linux containers need
+  the keeper for their next start or stop.
 
 ## Programs on your computer
 

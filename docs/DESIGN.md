@@ -215,7 +215,7 @@ is evidence for sign-in, not for unattended disk unlock. Running a program
 with svrngs is separate from sharing it: `svrngs run <name> --port <port>
 -- <command>` asks the sibling keeper to start it on Linux or macOS and
 writes no share. Linux also takes `--card <compose.yaml>` for one volume-only
-HTTP container, using the port named by the card. On Linux the CLI shows
+HTTP container, with `--port` matching the card. On Linux the CLI shows
 the keeper's boot consent prompt at the terminal. The page has no terminal
 input and cannot turn on unattended startup. On macOS the program starts
 at sign-in; Stop takes its plist out of the login set until Start. Lifecycle
@@ -3000,7 +3000,8 @@ page gives one line to paste in a terminal, `curl -fsSL <page>install.sh |
 sh -s -- '<link>'`, composed in the page from the link's `#` part, so the
 token reaches no server. The host that serves the page serves the rest
 beside it, so any host a group names serves it too: `install.sh` at the
-page's address, and under `get/` a tarball of `svrngs` for each platform
+page's address, and under `get/` a tarball of `svrngs` and its sibling
+`svrngs-keeper` for each platform
 built — macOS on Apple silicon and on Intel, Linux on x86_64 and aarch64 as
 static-pie musl binaries with full RELRO
 (`demo/runs/hardening/2026-11-18/`), cross-built by zig (cargo-zigbuild)
@@ -3015,7 +3016,7 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
   release, from its signature, installs exactly that; the page then only
   joins and is kept for links, and cannot choose the program. The release
   kept for `svrngs update` is that file's sum. A file it cannot read or
-  that holds no program is refused, and nothing is installed;
+  that lacks a required program is refused, and nothing is installed;
 - installs into `~/.local/bin`, never with `sudo`, and puts it on the PATH
   of the person's login shell when that is zsh or bash, once, in the
   profile a new terminal window reads, and says so;
@@ -3027,7 +3028,10 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
 Run again, it updates in place and joins nothing twice. With `--uninstall`
 where the link goes, it stops and takes away what it kept at login, the
 programs and the opener, and keeps the data dir and the profile's PATH line,
-saying each and how to remove it. The person is named
+saying each and how to remove it. It leaves jobs created by Run and their
+data: native jobs run their programs directly, while Linux container jobs
+need the keeper at their next start or stop (`apps/svrngs-keeper/src/unit.rs`).
+The person is named
 as their computer shows them: the full name of the account `$USER` names,
 else `$USER`. *A founder's line* has the page's address where the link goes:
 it does all of the above but join, and the home page it opens is where they
@@ -3066,6 +3070,8 @@ why and the fix, and `svrngs update` says the same and exits 1. The install
 line checks no signature: it runs whatever the page serves, unless it is
 given a release already checked (`--archive`, above); pacman checks the
 release key itself (`packaging/arch`).
+`svrngs update` replaces only `svrngs`; paste the install line again to
+install or update both binaries together, or update via pacman if it owns them.
 
 *A computer that keeps apps* gets Give's program from the same line, with
 `--give` after the link or the page's address. The page host serves it

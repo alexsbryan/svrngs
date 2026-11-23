@@ -31,7 +31,9 @@ apps in. Then run `systemctl --user enable --now svrngs give`.
 
 ## What pacman owns
 
-The `svrngs-bin` package owns `/usr/bin/svrngs`, its service
+The `svrngs-bin` package owns `/usr/bin/svrngs` and, starting with the
+release that includes **Run it with svrngs**, `/usr/bin/svrngs-keeper`. It
+also owns its service
 `/usr/lib/systemd/user/svrngs.service`, its entry in your applications
 menu `/usr/share/applications/svrngs.desktop` with its icon
 `/usr/share/icons/hicolor/scalable/apps/svrngs.svg`, and
@@ -53,6 +55,12 @@ Pull this repository, build and install the same way, then run
 
 ## Remove
 
+First run `svrngs-keeper list`. For any app you don't want this computer to
+run anymore, use `svrngs-keeper remove <name>`. The package does not remove
+those setups or their data. Native apps can still start as before after
+removal; managed Linux containers need the keeper to start and stop, so
+remove their setups before removing the package.
+
     systemctl --user disable --now svrngs
     sudo pacman -R svrngs-bin
 
@@ -68,7 +76,12 @@ runs in its place, at the same home page address:
     systemctl --user disable --now svrngs
     mv ~/.local/bin/svrngs ~/.local/bin/svrngs.before-package
     mv ~/.config/systemd/user/svrngs.service ~/.config/systemd/user/svrngs.service.before-package
-    mv ~/.local/share/applications/svrngs.desktop ~/.local/share/applications/svrngs.desktop.before-package
+     mv ~/.local/share/applications/svrngs.desktop ~/.local/share/applications/svrngs.desktop.before-package
+
+If the line installed `~/.local/bin/svrngs-keeper`, move it aside too. For
+managed containers, remove their setups first with `svrngs-keeper remove
+<name>` and set them up again after installing the package: their setups
+name the old keeper's path. Their volumes stay where they were.
 
 If you added Give with `--give`, also run
 `systemctl --user disable --now give`, then move `~/.local/bin/give` and

@@ -41,6 +41,40 @@ For a program apps may also send to, such as llama-server, `share` first asks wh
 
 If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ctrl-C stops it."* Usually it already runs, and `share` ends with *"svrngs is running here already, so they can open it now."*
 
+## Run it with svrngs, then share it
+
+**Shared while you run it** means svrngs doesn't restart your copy. If you
+stop it or restart your computer, start it yourself and share it again when
+asked. For a program you want to keep available, have svrngs run it instead.
+
+1. Stop the copy you started. Under **Already running here** on your home
+   page, choose **Run it with svrngs**. Give it a name, port, folder and the
+   command you use to start it. It runs without your terminal's settings;
+   use full paths if the command or its files aren't found.
+2. Once it says it's running, find it under **Already running here** and
+   share it with the groups you choose. Use the same name for Run and Share.
+   Run on its own gives no one access.
+
+**Run by svrngs** means it starts again after a crash, up to a limit. Read
+the Share review for when friends can open it again. On a Mac, it starts
+after you sign in. On Linux, it can start before sign-in if you allow that
+when running it from a terminal, both parts start with the computer, and
+the disk unlocks on its own. A locked disk needs you to unlock it first.
+Nothing runs while the computer is asleep or off.
+
+Use **Stop** to stop the program; it stays stopped until you start it
+again. **Stop lending** does something different: it takes away your
+friends' access and leaves the program running for you. Use
+`svrngs-keeper remove <name>` to stop running it with svrngs and remove
+its setup; your app's files stay where they were.
+
+On Linux, you can also run one HTTP container with a card that uses named
+volumes only: `svrngs run <name> --port <port> --card <compose.yaml>`.
+Use the port in the card. Managed containers
+aren't available on a Mac; you can share a container you started yourself,
+then share it again after a restart. See [Models](models.md#run-coder-with-svrngs)
+for a terminal example with a native program.
+
 ## Lend Jellyfin
 
 ```
@@ -148,7 +182,7 @@ For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those t
 svrngs unshare films
 ```
 
-It says *"You no longer lend films."* Or press its line under **What you lend** on your home page, then **Stop lending**.
+It says *"You no longer lend films."* Or press its line under **What you lend** on your home page, then **Stop lending**. If svrngs runs films for you, it keeps running.
 
 ## How your friends open it
 
