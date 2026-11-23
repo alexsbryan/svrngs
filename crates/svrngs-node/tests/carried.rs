@@ -3320,8 +3320,9 @@ async fn a_page_writes_only_its_own_person_s_rows() {
 /// **A write to an app's database is its own computer's alone**, as an
 /// act is (capability-signed; DESIGN §6, "An entry's author is its
 /// signer"): Ben's write reaching Ana's door is refused, saying where to
-/// write, and his read is answered. A phone's write waits for slice C
-/// (svrn-docs `MAGNETS_BUILD.md` §3). **And the copy made as the app is
+/// write, and his read is answered. A phone's own is prepared here and
+/// signed on the phone (`a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed`).
+/// **And the copy made as the app is
 /// carried is the root, synced from the start** (APP_STATE §7, invariant
 /// 8): Ana carried Board, so her copy says nothing syncing, to her or to
 /// Ben, though another computer stands in the group. Plants, each watched
@@ -3939,6 +3940,125 @@ async fn a_phone_reads_through_any_computer_that_keeps_the_app_and_a_removed_one
             "a removed phone's subscription refused"
         );
     }
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// The set at `seq` of the changes `prepared`, a prepare's answer in
+/// `group`, names, signed by `by`, as Bo's phone's database of nonce
+/// `[9; 16]`, unchecked
+/// (the check is its signer's, `web/src/set.rs`), as `{carry}` holds it.
+fn carried(group: &str, prepared: &Value, by: &svrngs_core::SigningKey, seq: u64) -> Value {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use svrngs_db::{Device, Head, Seq, Set, Sig};
+    let text: Value = serde_json::from_str(prepared["prepared"].as_str().unwrap()).unwrap();
+    let bytes = |f: &str| STANDARD.decode(text[f].as_str().unwrap()).unwrap();
+    let (changes, schema): (_, [u8; 32]) = (bytes("changes"), bytes("schema").try_into().unwrap());
+    let (device, hash) = (actor_of(&signing(7)), svrngs_core::set::changes(&changes));
+    let at = svrngs_core::set::At {
+        group,
+        app: "Board",
+        device: &device,
+        nonce: &[9; 16],
+        seq,
+        schema: &schema,
+    };
+    let sig = Sig::parse(&at.sign(by, &hash)).unwrap();
+    let (device, seq) = (Device::parse(&device).unwrap(), Seq::new(seq).unwrap());
+    let head = Head {
+        device,
+        nonce: [9; 16],
+        seq,
+        schema,
+        changes: hash,
+        sig,
+    };
+    let set = Set { head, changes };
+    json!({ "carry": STANDARD.encode(postcard::to_allocvec(&set).unwrap()) })
+}
+
+/// **A phone's write is prepared by a computer and carried back signed as
+/// the phone's own** (svrn-docs `rings/current/APP_STATE.md` §4, "Phones"):
+/// Bo's phone, under its pass for Board on Ana's computer, has a card
+/// prepared there, signed by Ana's computer; it signs the set as its own
+/// and carries it, and Ana's copy takes it, the card shown; the same bytes
+/// again are held. A set signed by another key is not its device's, and
+/// bytes that are no set are refused saying what a carry is; neither
+/// reaches the copy. Bo's phone's write sent as a write is refused, as it
+/// signs its own. Plant, watched failing: the route answering a carry as
+/// no database here (404 for the forged set's 422).
+#[tokio::test]
+async fn a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 76, ana, &[]);
+    phone(ana, &group, 7, "bo");
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let (route, pass) = as_phone(ana, &origin, 7, 9).await;
+    let post = |body: Value| {
+        http()
+            .post(&route)
+            .header("x-svrngs-pass", &pass)
+            .json(&body)
+            .send()
+    };
+    let milk = json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    let prepared = post(json!({ "prepare": milk })).await.unwrap();
+    assert_eq!(prepared.status(), 200);
+    let prepared: Value = prepared.json().await.unwrap();
+    assert_eq!(
+        prepared["by"],
+        actor_of(&signing(1)),
+        "prepared and signed by Ana's computer"
+    );
+    let message =
+        svrngs_core::set::prepared(&group, "Board", prepared["prepared"].as_str().unwrap());
+    assert!(svrngs_core::verify_hex(
+        &actor_of(&signing(1)),
+        &message,
+        prepared["sig"].as_str().unwrap()
+    ));
+
+    let forged = post(carried(&group, &prepared, &signing(8), 1))
+        .await
+        .unwrap();
+    assert_eq!(forged.status(), 422);
+    assert_eq!(
+        forged.json::<Value>().await.unwrap()["refused"],
+        "not-its-device"
+    );
+    let junk = post(json!({ "carry": "bm90IGEgc2V0" })).await.unwrap();
+    assert_eq!(junk.status(), 400, "bytes that are no set");
+    let read = json!({ "sql": "SELECT id, title FROM cards" });
+    assert_eq!(
+        sql(ana, &origin, read.clone()).await.1["rows"],
+        json!([]),
+        "neither reached the copy"
+    );
+
+    let set = carried(&group, &prepared, &signing(7), 1);
+    let took = post(set.clone()).await.unwrap();
+    assert_eq!(took.status(), 200);
+    assert_eq!(
+        took.json::<Value>().await.unwrap(),
+        json!({ "took": "taken" })
+    );
+    let card = json!([{ "id": "c1", "title": "milk" }]);
+    assert_eq!(
+        sql(ana, &origin, read).await.1["rows"],
+        card,
+        "Bo's card, on Ana's copy"
+    );
+    let again = post(set).await.unwrap().json::<Value>().await.unwrap();
+    assert_eq!(again, json!({ "took": "held" }), "a retry's same bytes");
+    let wrote = post(json!({ "write": milk })).await.unwrap();
+    assert_eq!(
+        wrote.status(),
+        403,
+        "a phone's write goes prepared, and signed by it"
+    );
     for node in &nodes {
         node.net().close().await;
     }

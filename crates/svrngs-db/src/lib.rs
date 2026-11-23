@@ -157,6 +157,8 @@ pub enum Asked<'a> {
     Write(&'a Value),
     /// A phone's write, `{prepare: [op, ...]}`, for its signer ([`Db::prepare`]).
     Prepare(&'a Value),
+    /// A set a phone signed, `{carry}`, postcard's bytes in base64 ([`Db::carry`]).
+    Carry(Set),
 }
 
 /// The POST `body` as what it asks; refused naming both, for anything else.
@@ -170,6 +172,13 @@ pub fn asked(body: &Value) -> Result<Asked<'_>, Refused> {
     match (fields.as_deref(), body["sql"].as_str(), params) {
         (Some(["write"]), ..) => Ok(Asked::Write(&body["write"])),
         (Some(["prepare"]), ..) => Ok(Asked::Prepare(&body["prepare"])),
+        (Some(["carry"]), ..) => {
+            let bytes = body["carry"].as_str().and_then(|b| STANDARD.decode(b).ok());
+            let set = bytes.and_then(|b| postcard::from_bytes(&b).ok());
+            set.map(Asked::Carry).ok_or_else(|| {
+                Refused::Form("{carry} is a set, postcard's bytes in base64, as a phone's signer makes one.".into())
+            })
+        }
         (Some(["sql"] | ["params", "sql"]), Some(sql), Some(params)) => Ok(Asked::Read(sql, params)),
         _ => Err(Refused::Form(format!(
             "svrngs/sql takes {{sql, params}}, one read, its params a list of values, or {{write: [op, ...]}}, not {body}. {FORM}"
@@ -663,7 +672,7 @@ impl Db {
         let made = parse::fit(made, &self.tables).map_err(Refused::Unkept)?;
         let keys: BTreeMap<_, _> = self.tables.iter().map(|(t, table)| (t, &table.key)).collect();
         let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));
-        let schema = self.schema.iter().map(|b| format!("{b:02x}")).collect::<String>();
+        let schema = STANDARD.encode(self.schema);
         let text =
             json!({ "ops": ops, "changes": changes, "schema": schema, "keys": keys, "count": count, "stands": stands });
         let text = text.to_string();

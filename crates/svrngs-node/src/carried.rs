@@ -65,7 +65,7 @@ use iroh_blobs::Hash;
 use serde_json::{json, Value};
 use svrngs_core::{Admission, Append, AppendRefusal, Command, Files, Op, Placed};
 use svrngs_core::{Device, RailAct, SignedOp, SyncPath};
-use svrngs_db::{Db, Refused};
+use svrngs_db::{Db, Refused, Set, Took};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
@@ -738,6 +738,9 @@ impl Folders {
                 }
                 wrote.map(|(answer, _)| answer)
             }
+            Ok(svrngs_db::Asked::Carry(set)) => {
+                return Ok(self.set_carried(db, (group, app), set).await)
+            }
             Err(r) => Err(r),
         };
         tracing::debug!(target: "folder", group, %app, refused = ?answered.as_ref().err(), "carried: an app's database answered a POST, or refused it and why");
@@ -746,6 +749,29 @@ impl Folders {
 }
 
 impl Folders {
+    /// `set`, signed by a phone and carried here by it (svrn-docs APP_STATE
+    /// §4, "Phones", step 3): applied as any set a member sends, never
+    /// moving a mark past a gap ([`Db::carry`]), and how it ended told, so
+    /// the phone's worker forgets the set once a computer keeps it, 200, or
+    /// none ever will, 422, and carries it again with its next write after a
+    /// 503. One taken wakes the round.
+    async fn set_carried(&self, db: Arc<Db>, (group, app): (&str, &AppName), set: Set) -> Response {
+        let binds = crate::ring_sync::bound(&self.host.rail, group);
+        let took = tokio::task::spawn_blocking(move || db.carry(set, &binds)).await;
+        let took = took.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())));
+        tracing::debug!(target: "folder", group, %app, ?took, "carried: a set a phone signed, carried here, and how it ended");
+        let took = took.unwrap_or(Took::Fault);
+        let (status, words) = match took {
+            Took::Taken | Took::Twin => return (self.nudge.notify_one(), Json(json!({ "took": took }))).1.into_response(),
+            Took::Held | Took::Waits => return Json(json!({ "took": took })).into_response(),
+            Took::Refused => (422, "No computer of your group takes this write, so it isn’t kept."),
+            Took::NotItsDevice => (422, "This write wasn’t signed as this phone, so no computer takes it."),
+            Took::Fault | Took::Over => (503, "This computer couldn’t keep this write. It is kept on this phone and goes with your next one."),
+        };
+        let took = json!(took);
+        told(status, took.as_str().unwrap_or_default(), words.into())
+    }
+
     /// The seconds before a write of the app `app` in `group` by the person
     /// whose first key is `person` is in [`SETS_AN_HOUR`]'s budget; none if
     /// it is now, and then counted, so writes in flight at once can't pass

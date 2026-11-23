@@ -104,8 +104,9 @@ pub struct Call {
 }
 
 /// How a set offered to a copy ends (APP_STATE §4, the four outcomes, with
-/// two ways it ends being here already).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// two ways it ends being here already), as a phone that carried it is told.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum Took {
     /// Applied and kept, counted in its site's mark.
     Taken,
@@ -539,6 +540,20 @@ impl Db {
             self.changed.send_modify(|n| *n += 1);
         }
         Ok(out)
+    }
+
+    /// A set a phone signed and carried here on its own, the same bytes
+    /// through any computer that keeps the app until one confirms them
+    /// (APP_STATE §4, "Phones", step 3): taken as a call of that one set,
+    /// never full, so it moves no mark past a gap, and ending one of the
+    /// four ways as any set a member sends.
+    pub fn carry(&self, set: Set, binds: &Binds) -> Result<Took, Refused> {
+        let call = Call {
+            sets: vec![set],
+            ..Call::default()
+        };
+        let took = self.ingest(&call, binds, None)?;
+        Ok(took.first().map_or(Took::Fault, |(_, took)| *took))
     }
 
     /// What a call may add to this copy's ask, as it begins ([`Room`]).
