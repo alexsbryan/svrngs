@@ -798,6 +798,17 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - The guides: models.md, lend.md and troubleshooting.md, in spec §2's
     words.
 
+  - **Nothing is published** (the operator releases; AGENTS.md "Done"):
+    - no signing with the release key;
+    - no upload, tag or push;
+    - no deploy of the page or the relay;
+    - no change to the AUR.
+
+    Build into a scratch folder. The fresh VM installs from a local file
+    server, with `install.sh` pointed at it.
+  - Counted room: 10 lines to the CHARTER ceiling (25,717 of 25,727).
+    Over that, park with the measured delta.
+
   Demo: a fresh VM, installed by the line.
 
 - [ ] avail-rehearse — depends [avail-ship] — ONE UNIT, evidence: spec §5 row 9, its strangers.
