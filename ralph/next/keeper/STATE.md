@@ -938,8 +938,8 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     step line with a preserving cut. If it can't fit, park with per-file
     counts: a raise is the operator's.
 
-- [ ] avail-release-tier — depends [avail-e2e-gate] — ONE UNIT (evidence tooling; demo/ is not counted): one command that reruns, before each release, the proofs no per-commit gate can run.
-  - **One entry point** (for example `demo/release/run.sh`), reusing the
+- [ ] avail-release-tier — depends [avail-e2e-gate] — ONE UNIT (evidence tooling; `demo/runs/` is not counted): one command that reruns, before each release, the proofs no per-commit gate can run.
+  - **One entry point** (`demo/runs/release/run.py`), reusing the
     recorded drivers as they are:
     - Linux, the packaged Fedora VM replay
       (`demo/runs/available/2026-11-23/run.py`): a no-login reboot with
