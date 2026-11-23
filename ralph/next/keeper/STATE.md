@@ -866,6 +866,10 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     - update `docs/CHECKS.md` where it lists the steps.
   - The plant is the recorded reds under parallel load. The green is the
     new step passing three times alone, in the gate image.
+    - The `browser` step excludes exactly that case. The new step runs
+      exactly one test, with the original 4,000 ms bar. A filter that
+      matches nothing must fail the step, not pass it (QA). Plant that
+      too.
   - **The WebKit navigation abort**
     (`navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit`,
     Playwright's `WKPage._onTargetCreated` assertion):
@@ -892,6 +896,9 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     not run, a "Run it with svrngs" control opens the existing form with
     those fields filled in. Sam reads them, can edit them, and presses
     Run. Nothing runs without that press.
+  - **A late or failed suggestion never replaces Sam's edits, or fills
+    another row's form** (QA). Plant: a delayed answer arriving after
+    Sam types. His text stays.
   - **Allowance:** the counted room left (8) and +12 JS.
     - Measured, before and after.
     - If the lean version can't fit, park with per-file counts. A raise is
