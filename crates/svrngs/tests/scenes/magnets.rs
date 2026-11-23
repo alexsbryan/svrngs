@@ -13,10 +13,12 @@
 //! (APP_STATE §7, invariant 1): a move is a write by key to the app's own
 //! database, beside the record, kept across a restart.
 //!
-//! **The lid closes** ([`magnets_lid`]; MAGNETS_BUILD §3, slice B, proof 2
-//! on three computers) is its second beat: Ana moves a word, and once Bo's
-//! computer has it, Ana's lid closes. Cy joins through Bo's computer, opens
-//! the fridge there, and moves another word. Ana opens her lid and sees it.
+//! **The lid closes** ([`magnets_lid`]; MAGNETS_BUILD §3, slices B and C,
+//! proof 2 whole: two computers, a phone, the lid) is its second beat: Ana
+//! moves a word, and once Bo's computer has it, Ana's lid closes. Cy joins
+//! from her phone by Bo's link, opens the fridge from the group's page
+//! through Bo's computer, and taps another word, her phone's own write,
+//! signed on her phone. Ana opens her lid and sees it.
 //! It relies on **a closing lid stranding no write** (APP_STATE §11, W2):
 //! every computer whose person runs Magnets keeps its database, a page
 //! opened there or not, and a write wakes the round, so a member holds it
@@ -39,7 +41,7 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 use crate::harness::{browsers, relay_url, repo, Engine};
-use crate::people::{late, sees, Person, Scene};
+use crate::people::{late, sees, Browsers, Person, Scene};
 
 /// What Ana puts after the prompt.
 const WORDS: [&str; 3] = ["haunted", "lasagna", "situation"];
@@ -252,16 +254,26 @@ async fn shows(who: &Person, origin: &str, want: &[&str]) {
 }
 
 scene!(
-    /// Planted, watched failing: the members' route answering no app
+    /// Planted, each watched failing: the members' route answering no app
     /// database (ring_routes.rs `ring_state` refusing each as not held), so
-    /// Bo's computer never has Ana's move.
+    /// Bo's computer never has Ana's move; the group's signer signing no set
+    /// (sign.js `setsSigned` refusing), so Cy's tap never moves.
     magnets_lid
 );
 async fn magnets_lid(engine: Engine) {
     let scene = Scene::new("magnets-lid", engine).await;
-    let (ana, fridge) = scene.founds("Ana", "Fridge").await;
+    let (page, _served) = scene.page().await;
+    let relay = relay_url(&scene.relay);
+    let made = [
+        "new", "Fridge", "--as", "Ana", "--origin", &page, "--relay", &relay,
+    ];
+    let ana = scene.start("Ana", &made).await;
+    let fridge = ana.group_named("Fridge").await;
     carry(&ana.folder(&fridge).await);
     let at_ana = ana.opens(&fridge, "magnets").await;
+    // Bo's computer came from the group's page by its install line, so the
+    // links it gives print on that page, and a phone opens them.
+    scene.installs_from("Bo", &page);
     let bo = scene
         .joins("Bo", &ana.invites(&fridge).await, "Fridge")
         .await;
@@ -275,17 +287,36 @@ async fn magnets_lid(engine: Engine) {
     shows(&bo, &at_bo, &[ANA_S]).await;
     ana.lid(true);
 
-    // Cy joins through Bo's computer, opens the fridge there, Ana's word on
-    // it, and moves another word.
-    let cy = scene
-        .joins("Cy", &bo.invites(&fridge).await, "Fridge")
+    // Cy joins from her phone by Bo's link, opens the fridge from the
+    // group's page through Bo's computer, Ana's word on it, and taps
+    // another word: her phone's own write, prepared by Bo's computer and
+    // signed on her phone (svrn-docs APP_STATE §4, "Phones").
+    let mut browsers = Browsers::driven(
+        "demo/runs/canon/2026-10-17-house/people.mjs",
+        engine,
+        &[("cy", Engine::Webkit)],
+    )
+    .await;
+    let link = (bo.on_home_page("/link", &json!({ "group": fridge, "device": false }))).await;
+    let join = json!({ "do": "join", "who": "cy", "link": link["https"], "name": "Cy" });
+    let joined = browsers.tell(join).await;
+    let status = joined["status"].as_str().unwrap_or_default();
+    assert!(status.contains("in Fridge"), "Cy's phone joins: {joined:#}");
+    let taps = json!([
+        { "lent": "magnets", "until": format!("the\\s+{ANA_S}") },
+        { "click": CY_S, "until": format!("{ANA_S}\\s+{CY_S}") },
+    ]);
+    let moved = browsers
+        .tell(json!({ "do": "steps", "who": "cy", "steps": taps }))
         .await;
-    let at_cy = cy.opens(&fridge, "magnets").await;
-    shows(&cy, &at_cy, &[ANA_S]).await;
-    assert_eq!(
-        asked(&cy, &at_cy, put(CY_S, 2)).await,
-        json!({ "count": 1 })
-    );
+    eprintln!("Cy's phone: {moved:#}");
+    if moved["failed"] == true {
+        late(format!(
+            "Cy's phone didn't move {CY_S} within its bound: {moved:#}"
+        ))
+        .await;
+    }
+    shows(&bo, &at_bo, &[ANA_S, CY_S]).await;
 
     // Ana opens her lid, and her fridge shows Cy's word after hers.
     ana.lid(false);
@@ -297,7 +328,7 @@ async fn magnets_lid(engine: Engine) {
         [ANA_S, CY_S],
         "Ana sees Cy's word: {seen:#}"
     );
-    drop((ana, bo, cy));
+    drop((ana, bo));
 }
 
 /// The fork's prompt, and the five words it puts in place of Magnets'

@@ -168,9 +168,10 @@ One write is at most 65 KiB of JSON, several hundred short rows; past
 that it's answered 413, `refused: "too-large"`, nothing of it kept. Send
 a longer list in parts.
 
-Today a write is taken from your own computer, and a phone reads. An app
-that reads your friends' lends (`reads.txt`) doesn't write the group's
-database.
+A write works the same from your own computer and from a phone. On a
+phone, the computer it reaches prepares the write, and the phone signs it
+as its own before any computer keeps it. An app that reads your friends'
+lends (`reads.txt`) doesn't write the group's database.
 
 ## Whose row it is
 
