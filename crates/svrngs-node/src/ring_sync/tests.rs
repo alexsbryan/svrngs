@@ -269,3 +269,57 @@ fn no_states() -> Arc<svrngs_db::States> {
         key,
     ))
 }
+
+/// **The record an app database judges by reads a real removal**
+/// (`bound`; svrngs-db `owned.rs`, Eudoxia's `db::Record`): in a group of
+/// Ada, its keeper, Bo and Cy, each key is bound to its own person and none
+/// is cut; once Ada removes Cy, Cy's key is still bound to Cy, now cut by
+/// the office, and Bo's and Ada's are not. So Eudoxia's rule waits on Bo's
+/// delete of Cy's owned row before the removal, and takes it after, and
+/// refuses Bo's change to it either way. Plant, watched failing: `bound`
+/// reading no cut as the office's (Cy's key read as uncut after it).
+#[test]
+fn bound_reads_the_office_s_cut_from_the_group_s_register() {
+    use eudoxia_community::db::{self, Change, Key, Lacks, Record, Type, Verdict};
+    let dir = tempfile::tempdir().unwrap();
+    let key = |seed: u8| SigningKey::from_bytes(&[seed; 32]);
+    let rail = RingRail::new(dir.path(), Arc::new(key(1)));
+    let people = [("ada", 1), ("bo", 2), ("cy", 3)]
+        .map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&key(k))]));
+    rail.set_seed("house", &Roster::new(people.into_iter().collect()))
+        .unwrap();
+    let [ada, bo, cy] = [1, 2, 3].map(|k| actor_of(&key(k)));
+    let row = Key {
+        kind: Type::Text,
+        bytes: cy.as_bytes(),
+    };
+    let judged = |b: &svrngs_db::Binds, change| db::row(b, &bo, row, change);
+    let before = bound(&rail, "house");
+    for k in [&ada, &bo, &cy] {
+        assert_eq!(
+            (before.person_of(k), before.cut(k)),
+            (Some(k.as_str()), false),
+            "{k}"
+        );
+    }
+    assert_eq!(
+        judged(&before, Change::Delete),
+        Verdict::Waits(Lacks::Removal)
+    );
+
+    let removal = svrngs_core::Removal {
+        person: Person::parse("cy").unwrap(),
+        joined: None,
+    };
+    rail.commit("house", &removal).unwrap().unwrap();
+    let after = bound(&rail, "house");
+    assert_eq!(
+        (after.person_of(&cy), after.cut(&cy)),
+        (Some(cy.as_str()), true),
+        "Cy's, cut"
+    );
+    assert!(!after.cut(&ada) && !after.cut(&bo), "Ada and Bo stand");
+    assert_eq!(after.keys_of(&cy).collect::<Vec<_>>(), [cy.as_str()]);
+    assert_eq!(judged(&after, Change::Delete), Verdict::Taken);
+    assert!(matches!(judged(&after, Change::Write), Verdict::Refused(_)));
+}
