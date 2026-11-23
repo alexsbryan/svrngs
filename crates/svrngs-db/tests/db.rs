@@ -625,3 +625,40 @@ fn every_row_a_copy_holds_fits_one_answer_sorted_or_not() {
         "{read:?}"
     );
 }
+
+/// **A file is opened once however many ask for it at once** (the delta
+/// review's D5): 16 threads at a barrier each open one of two new boards,
+/// eight to a board, ten times over. Every thread of a board is given the
+/// one database, made once, and none is refused; the map of databases is
+/// held only to find a board's place, so one board's open, or the remake
+/// of a copied file, holds no other's. Plant, watched failing: each open
+/// made outside the map's lock with no hold on its own file (two threads
+/// making one board, the second refused "table cards already exists").
+#[test]
+fn a_file_is_opened_once_however_many_ask_at_once() {
+    for _ in 0..10 {
+        let dir = tempfile::tempdir().unwrap();
+        let states = states(dir.path());
+        let start = std::sync::Barrier::new(16);
+        let opened: Vec<_> = std::thread::scope(|s| {
+            let each = (0..16).map(|i| {
+                let (states, start) = (&states, &start);
+                s.spawn(move || {
+                    start.wait();
+                    states.open("g", ["board", "votes"][i % 2], Some(SCHEMA))
+                })
+            });
+            each.collect::<Vec<_>>()
+                .into_iter()
+                .map(|t| t.join().unwrap())
+                .collect()
+        });
+        let opened: Vec<Arc<Db>> = opened
+            .into_iter()
+            .map(|o| o.unwrap_or_else(|r| panic!("{r}")))
+            .collect();
+        for (i, db) in opened.iter().enumerate() {
+            assert!(Arc::ptr_eq(db, &opened[i % 2]), "one database for each board");
+        }
+    }
+}

@@ -244,9 +244,15 @@ impl TryFrom<String> for Name {
 pub struct States {
     dir: PathBuf,
     key: SigningKey,
-    #[expect(clippy::disallowed_types, reason = "the databases opened, each once")]
-    dbs: std::sync::Mutex<BTreeMap<(String, String), Arc<Db>>>,
+    #[expect(clippy::disallowed_types, reason = "each database's place, found once")]
+    dbs: std::sync::Mutex<BTreeMap<(String, String), Opened>>,
 }
+
+/// A database's place among [`States`]': opened once, by the first to ask,
+/// while any other who asks for it meanwhile waits for that one, and no
+/// one else does; refused, the place is let go, so the next open tries it
+/// again.
+type Opened = Arc<std::sync::OnceLock<Result<Arc<Db>, Refused>>>;
 
 impl States {
     pub fn new(data_dir: &Path, key: SigningKey) -> Self {
@@ -273,28 +279,34 @@ impl States {
         self.made(group, app, (Some(schema), true))
     }
 
-    /// [`Self::open`] and [`Self::carry`]: a new one made `root` or not.
+    /// [`Self::open`] and [`Self::carry`]: a new one made `root` or not, made
+    /// again where it was copied, in its place ([`Opened`]), the map of
+    /// places held only to find it.
     fn made(&self, group: &str, app: &str, (schema, root): (Option<&str>, bool)) -> Result<Arc<Db>, Refused> {
         let names = Name::parse(group).zip(Name::parse(app));
         tracing::debug!(target: "state", group, app, plain = names.is_some(), "state: an app's database asked by its group's and app's names, opened only by plain ones");
-        let (dir, file) = names
-            .map(|(g, a)| (self.dir.join(g.as_str()), format!("{a}.db")))
+        let path = names
+            .map(|(g, a)| self.dir.join(g.as_str()).join(format!("{a}.db")))
             .ok_or(Refused::NotHere)?;
+        let named = (group.to_owned(), app.to_owned());
         let mut dbs = self.dbs.lock().expect("the databases' lock");
-        if let Some(db) = dbs.get(&(group.into(), app.into())) {
-            return Ok(db.clone());
-        }
-        let (path, key) = (dir.join(file), self.key.clone());
-        tracing::debug!(target: "state", group, app, made = schema.is_some(), on_disk = path.exists(), "state: an app's database asked, made from its schema if new, or only one on disk");
-        if schema.is_none() && !path.exists() {
-            return Err(Refused::NotHere);
-        }
-        std::fs::create_dir_all(&dir).map_err(fault)?;
-        let db = Arc::new(Db::open(&path, (group, app), (schema, root), key)?);
-        db.copied().then(|| self.remake(&db)).transpose()?;
-        tracing::debug!(target: "state", group, app, "state: an app's database opened, its schema applied and its tables made CRRs");
-        dbs.insert((group.into(), app.into()), db.clone());
-        Ok(db)
+        let place = dbs.entry(named.clone()).or_default().clone();
+        drop(dbs);
+        let opened = place.get_or_init(|| {
+            tracing::debug!(target: "state", group, app, made = schema.is_some(), on_disk = path.exists(), "state: an app's database asked, made from its schema if new, or only one on disk");
+            if schema.is_none() && !path.exists() {
+                return Err(Refused::NotHere);
+            }
+            std::fs::create_dir_all(path.parent().unwrap_or(&path)).map_err(fault)?;
+            let db = Arc::new(Db::open(&path, (group, app), (schema, root), self.key.clone())?);
+            db.copied().then(|| self.remake(&db)).transpose()?;
+            tracing::debug!(target: "state", group, app, "state: an app's database opened, its schema applied and its tables made CRRs");
+            Ok(db)
+        });
+        let mut dbs = self.dbs.lock().expect("the databases' lock");
+        let gone = opened.is_err() && dbs.get(&named).is_some_and(|p| Arc::ptr_eq(p, &place));
+        gone.then(|| dbs.remove(&named));
+        opened.clone()
     }
 
     /// `db`, a file found copied ([`Db::copied`]), made again with a fresh
