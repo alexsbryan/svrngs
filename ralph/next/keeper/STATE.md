@@ -690,7 +690,30 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
 
 - [x] avail-run-mac-containers — depends [avail-run-mac-renew] — DEFERRED, not built (QA oc-cruu42's recommendation, adopted overnight 2026-11-23, for the operator to reverse). Managed Mac containers add the Podman machine's lifecycle, and an endpoint-identity proof beyond native macOS. A Mac container stays shareable while it runs. The native baseline on Linux and macOS is unchanged. No commit.
 
-- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-renew] — ONE UNIT: spec §5 row 8.
+- [ ] avail-run-mac-proof — depends [avail-run-mac] — ONE UNIT (keeper only, counted +0): two Mac controls QA found missing at ad9406ef (oc-cruu42, 2026-11-23).
+  - **A foreign answer after the busy check.**
+    - The Run code requires HTTP readiness, plus a running registered
+      agent PID, plus `lsof` holders descended from that PID
+      (`native_run.rs:209–227`, `host/mac.rs:101–125`).
+    - But avail-run-mac's wrong-PID red exercises the node's login
+      registration matcher (`job/mac.rs`), not Run's listener lineage.
+    - Add the Mac twin of Linux `b4d8f6b8`: a foreign HTTP 200 appears
+      after the busy preflight, with the agent active but of an unrelated
+      lineage. Run must say unverified.
+  - **Ownership before any lifecycle change (N1).**
+    - `Agent::ours` takes canonical path equality plus the file's
+      existence as provenance, and dispatch checks only that the plist is
+      present.
+    - Require the keeper's saved card, and a regular plist at the owned
+      path, before any lifecycle change.
+    - Negative control: an unmanaged registration with the same label at
+      the expected path, and no keeper card. Stop, Start and Remove refuse
+      it, and the job already running stays unchanged.
+  - On beefymac, under the PROMPT.addendum's rules: only
+    `svrngs-keeper-test-*`, removed at the end, and no reboot. Each case
+    red first, then green.
+
+- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-renew, avail-run-mac-proof] — ONE UNIT: spec §5 row 8.
   - `build-release.sh`, `install.sh` (always) and the Arch package, as
     Give's lines are.
   - Uninstall says what svrngs still runs.
