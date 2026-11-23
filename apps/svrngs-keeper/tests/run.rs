@@ -1,7 +1,7 @@
 #![cfg(target_os = "linux")]
 
 use std::{
-    io::{Read, Write},
+    io::{BufRead, BufReader, Write},
     net::TcpListener,
     process::Command,
     time::Duration,
@@ -49,9 +49,18 @@ fn readiness_needs_an_answer_and_llama_must_finish_loading() {
         let serving = std::thread::spawn(move || {
             let (mut stream, _) = listener.accept().unwrap();
             stream.set_read_timeout(Some(Duration::from_secs(1))).unwrap();
-            let mut request = [0; b"GET /health ".len()];
-            stream.read_exact(&mut request).unwrap();
-            assert_eq!(&request, b"GET /health ");
+            let mut reader = BufReader::new(&mut stream);
+            let mut line = String::new();
+            assert_ne!(reader.read_line(&mut line).unwrap(), 0);
+            assert!(line.starts_with("GET /health "));
+            // Closing with unread request bytes can reset the connection.
+            loop {
+                line.clear();
+                assert_ne!(reader.read_line(&mut line).unwrap(), 0);
+                if line == "\r\n" {
+                    break;
+                }
+            }
             write!(stream, "HTTP/1.0 {status} test\r\nContent-Length: 0\r\n\r\n").unwrap();
         });
         assert_eq!(
