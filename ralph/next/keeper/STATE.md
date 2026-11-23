@@ -879,7 +879,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
       version, and change nothing.
     - Never retry until green, and never skip.
 
-- [ ] avail-page-prefill — depends [avail-proof] — ONE UNIT: the page fills in the command Sam already runs (the operator, 2026-11-23: "find the right balance of delightful UX and code heft … as long as we aren't adding bloat or creeping beyond domain boundaries").
+- [x] avail-page-prefill 75d7438b9 — depends [avail-proof] — ONE UNIT: the page fills in the command Sam already runs (the operator, 2026-11-23: "find the right balance of delightful UX and code heft … as long as we aren't adding bloat or creeping beyond domain boundaries").
   - **Keeper (uncounted):** `svrngs-keeper facts <port> [--name]`
     (`facts.rs`) already reads, read-only, only the listener's folder and
     llama-server's `/props` model path, the one live read spec S2 allows.
