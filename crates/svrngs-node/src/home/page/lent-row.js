@@ -198,26 +198,14 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
+  // What three of the row's acts send, named so each act is one line.
+  const everyone = { type: 'change', to: { limit: null } };
+  const [sign, audience] = [{ type: 'sign' }, { type: 'audience' }];
   const letEveryone =
-    limited &&
-    html`
-      <${Act}
-        words="Let everyone in"
-        doing=${doing}
-        on=${{ type: 'change', to: { limit: null } }}
-        send=${send}
-      />
-    `;
+    limited && html`<${Act} words="Let everyone in" doing=${doing} on=${everyone} send=${send} />`;
   const signIn = signs
     ? html`Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide, then test sign-in through your group’s app list. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>. `
-    : html`
-        <${Act}
-          words="Sign people in with svrngs"
-          doing=${doing}
-          on=${{ type: 'sign' }}
-          send=${send}
-        />
-      `;
+    : html`<${Act} words="Sign people in with svrngs" doing=${doing} on=${sign} send=${send} />`;
   return html`
     <li>
       <details open=${undone(account, lend)} aria-label=${lend.name}>
@@ -238,12 +226,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
         waiting=${state.at.change === 'changing'}
         send=${send}
       />
-      <${Act}
-        words="Save who can open this"
-        doing=${doing}
-        on=${{ type: 'audience' }}
-        send=${send}
-      />
+      <${Act} words="Save who can open this" doing=${doing} on=${audience} send=${send} />
       <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
       <${Headers} name=${lend.name} kept=${headers} state=${state} doing=${doing} send=${send} />
       ${signIn}
