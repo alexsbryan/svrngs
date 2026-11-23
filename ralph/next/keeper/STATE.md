@@ -344,7 +344,7 @@ envelope.
   check, each planted first: an interruption at each stage is reconciled on
   this host, and a retry never stops a second process (T1).
 
-- [ ] avail-plan-economize — depends [avail-plan] — ONE UNIT, behaviour kept: an economizing pass over the planner avail-plan landed (`crates/svrngs-node/src/plan.rs`, `plan/words.rs`, and their wiring in `lib.rs` and `lean_check.py`). The operator, 2026-11-22: "Do it", after avail-plan landed +309 counted lines against the spec's ~+140 (befdaf97's `Size:`), leaving 126 of the envelope's +435 for publish (~+40), terminal (~+65), page (~+30) and Mac renewal (~+150).
+- [x] avail-plan-economize 2a81dc014 — depends [avail-plan] — ONE UNIT, behaviour kept: an economizing pass over the planner avail-plan landed (`crates/svrngs-node/src/plan.rs`, `plan/words.rs`, and their wiring in `lib.rs` and `lean_check.py`). The operator, 2026-11-22: "Do it", after avail-plan landed +309 counted lines against the spec's ~+140 (befdaf97's `Size:`), leaving 126 of the envelope's +435 for publish (~+40), terminal (~+65), page (~+30) and Mac renewal (~+150).
   - Preserving cuts only, each its own commit, each ratcheting the caps:
     repeated shapes folded, enums and matches that say the same thing
     twice, words built from one table.
