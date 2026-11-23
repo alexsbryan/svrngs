@@ -3020,6 +3020,18 @@ release's signature (`scripts/release.sh`):
    valid signature, publishes one with it, and leaves none of the Vercel
    CLI's files in the site.
 
+Between build and sign, each release records svrngs-db's tests on each of
+the four targets it ships, since the gate runs on one computer and the
+database runs on all four. They are recorded under `demo/runs/<version>/targets/`,
+each with its command and its verdict: passed, failed, could-not-judge or
+never-ran.
+- macOS on Apple silicon, natively: `cargo test -p svrngs-db`.
+- macOS on Intel, under Rosetta: its test binaries, built for
+  `x86_64-apple-darwin`. A Rosetta that hangs makes this could-not-judge.
+- Linux x86_64 and aarch64: the test binaries `cargo zigbuild -p svrngs-db
+  --tests --target <triple>-unknown-linux-musl` builds. They run on a Linux
+  x86_64 computer, and in an aarch64 kernel such as a podman machine's.
+
 sign and page read the commit's `cli::SHIPPED` (§3, "Where a computer meets
 its groups"): a build at n0's relays they go on with and say so; a build at
 svrngs's they refuse while the relay `DEFAULT_RELAY` names does not answer
