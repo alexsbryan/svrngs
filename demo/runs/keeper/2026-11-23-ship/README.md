@@ -116,3 +116,50 @@ Apps you told svrngs to run are not stopped or removed. Native apps can still st
 Removed '/home/sam/.config/systemd/user/default.target.wants/svrngs-keeper-test-ship.service'.
 passed: uninstall removed both binaries, and the native job still restarts
 ```
+
+## Final run on 2026-11-23 (2cbe67fb)
+
+The first WebKit attempt reached Home but could not find Stop: Home hid
+the app rows when the user had no groups. The focused Home test confirmed
+the missing button. After the fix, the Home suite passed all 48 tests
+(`avail-ship-2.out:920–936,1018–1021`). The focused installer test failed
+on the old uninstall wording, then the installer suite reported
+`16 passed; 0 failed; 1 ignored` (lines 470–481 and 572).
+
+**Planted Stop omission:** `--skip-stop` left the second job active.
+The same stopped-state witness failed before uninstall could run
+(`avail-ship-2.out:740–758`):
+
+```text
+active
+sam$ test "$(systemctl --user is-active svrngs-keeper-test-ship-stopped.service)" = inactive && test "$(systemctl --user is-enabled svrngs-keeper-test-ship-stopped.service)" = disabled && test -f ~/.config/systemd/user/svrngs-keeper-test-ship-stopped.service && ! curl -fsS --max-time 2 http://127.0.0.1:8189/
+AssertionError: (1, 0)
+```
+
+**Packaged replay:** the Linux x86_64 build and fresh Fedora overlay replay
+exited 0 in 56 s (`avail-ship-2.await.log`). The release archive was
+`379596f58552b578e95112b9d34264bee40c80f40bcb7a42c799d63d50d87d11`.
+The missing-keeper plant and complete install passed again (lines 13–47).
+WebKit clicked Stop on `test-ship-stopped` without joining a group; the
+witness found the unit inactive and disabled, its setup still on disk,
+and its port refusing connections both before and after uninstall
+(lines 52–65):
+
+```text
+WebKit Home: test-ship 8188 · Run by svrngs, since 11:15.Stop test-ship test-ship-stopped 8189 · Stopped.Start test-ship-stopped
+curl: (7) Failed to connect to 127.0.0.1:8189 after 0 ms: Could not connect to server
+Uninstalling svrngs does not stop your apps or remove their setup or files. Native apps may still start. Managed Linux containers need svrngs installed to start and stop. To stop an app, open your home page and choose Stop before uninstalling.
+svrngs is uninstalled. If you've already uninstalled, reinstall svrngs to manage your apps again. It left none of your groups: to leave one, run svrngs leave <group> before you uninstall.
+curl: (7) Failed to connect to 127.0.0.1:8189 after 0 ms: Could not connect to server
+passed: Home Stop disabled the job and left its setup; it stayed down through uninstall
+```
+
+The other job was still active after both binaries went away. It served
+the fixture after a restart and was then stopped and disabled (lines 66–70):
+
+```text
+active
+curl: (7) Failed to connect to 127.0.0.1:8188 after 0 ms: Could not connect to server
+Removed '/home/sam/.config/systemd/user/default.target.wants/svrngs-keeper-test-ship.service'.
+passed: uninstall removed both binaries, and the native job still restarts
+```
