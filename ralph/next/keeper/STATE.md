@@ -329,8 +329,10 @@ envelope.
   - P2: the table test over the product of the closed sets;
   - P4: a `lean_check.py` rule naming `plan.rs` as pure.
 
-  Demo: `svrngs share <port> --plan` prints, for each kind on this host,
-  §2.1's words, and acts on nothing.
+  Demo: the pure P2 fixtures preview §2.1's words for each kind and act on
+  nothing. Run `svrngs share <port> --plan` on the host once R1 wires the
+  terminal (release spec §5 R1; today's `crates/svrngs/src/cli.rs:888–925`
+  approves and writes the share, with no preview branch).
 
 - [ ] avail-keeper-facts — depends [] — ONE UNIT (keeper): spec §3.4, §3.7
   T1; row R2.
