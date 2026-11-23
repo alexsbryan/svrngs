@@ -265,6 +265,41 @@ fn a_phone_signs_only_what_its_page_asked() {
     );
 }
 
+/// **A phone reads a write-form value as the computer that prepared it
+/// does** (svrngs-db form.rs `value`): a BLOB is `{base64}`, its one key.
+/// Ana's computer refuses `{base64, also}` before any prepare, and Bo's
+/// phone refuses a prepare of it her computer signed, as ops it can't read,
+/// though it signs her prepare of the BLOB written as the form writes one.
+/// Plant, watched failing: the phone's own reader, which took any object
+/// with a `base64` key (the prepare of `{base64, also}` signed).
+#[test]
+fn a_phone_reads_a_value_as_its_computer_does() {
+    let (_dir, ana) = board(1);
+    let blob = |v: Value| json!([{ "insert": "cards", "row": { "id": "b", "title": v } }]);
+    let one = blob(json!({ "base64": "AQ==" }));
+    let two = blob(json!({ "base64": "AQ==", "also": 1 }));
+    let refused = ana.prepare(&two, (&bo().1, &bound()));
+    assert!(matches!(refused, Err(svrngs_db::Refused::Form(_))), "{refused:?}");
+    let answer = ana.prepare(&one, (&bo().1, &bound())).unwrap();
+    signed(&asked(&one, &answer)).expect("a BLOB as the write form writes one");
+    // Her prepare of the BLOB, its ops `two`, signed as her computer signs one.
+    let mut text: Value = serde_json::from_str(answer["prepared"].as_str().unwrap()).unwrap();
+    text["ops"] = two.clone();
+    let text = text.to_string();
+    let ana_s = SigningKey::from_bytes(&[1; 32]);
+    let sig = svrngs_core::sign_message(&ana_s, &svrngs_core::set::prepared("g", "board", &text));
+    let read = signed(&set::Asked {
+        ops: two.clone(),
+        prepared: text,
+        sig,
+        ..asked(&one, &answer)
+    });
+    assert!(
+        read.unwrap_err().contains("other ops than it asked"),
+        "a value no computer would write"
+    );
+}
+
 /// **A phone's set is applied as carried, never moving a mark past a gap**
 /// (§4, "Phones", step 3; "What travels"): Bo's two cards, each prepared
 /// and applied at Ana's computer, his home there, at seqs 1 and 2. The

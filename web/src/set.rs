@@ -191,14 +191,21 @@ fn op<'v>(op: &'v Value, keys: &BTreeMap<String, Vec<String>>) -> Option<Op<'v>>
     Some(Op { kind, table, pk, named })
 }
 
-/// `v`, a value of the write form, as SQLite holds it (svrngs-db form.rs
-/// `value`): null, a number, a string, or `{base64}` for a BLOB.
+/// `v`, a value of the write form, as SQLite holds it, by svrngs-db form.rs
+/// `value`'s rule: null, a number, a string, or `{base64}`, its one key, for
+/// a BLOB.
 fn value(v: &Value) -> Option<Sql> {
+    let blob = v
+        .as_object()
+        .filter(|o| o.len() == 1)
+        .and_then(|o| o.get("base64")?.as_str());
     Some(match v {
         Value::Null => Sql::Null,
         Value::String(s) => Sql::Text(s.clone()),
-        Value::Number(n) => n.as_i64().map(Sql::Integer).or(n.as_f64().map(Sql::Real))?,
-        _ => Sql::Blob(STANDARD.decode(v.get("base64")?.as_str()?).ok()?),
+        Value::Number(n) => n
+            .as_i64()
+            .map_or_else(|| Sql::Real(n.as_f64().unwrap_or_default()), Sql::Integer),
+        _ => Sql::Blob(STANDARD.decode(blob?).ok()?),
     })
 }
 
