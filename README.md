@@ -1,3 +1,5 @@
+<img alt="svrngs, sovereign rings" src="docs/brand/lockup-on-black.svg" width="300">
+
 # svrngs
 
 svrngs lets friends open what you’re running on localhost. Share Jellyfin,
