@@ -1048,10 +1048,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # party decides a place, which retires the home handing places, the
 # signer's twice-signed refusal, the rows a place handed and never signed
 # leaves, and "write it again". JavaScript to 8,751, down to where it lands.
+# (2026-11-23) From the operator's overnight pool (+100 code, +10
+# JavaScript, drawn only after economizing): +43 for a value held to its
+# column's type at parse, on every copy alike, so copies holding the same
+# sets can't end apart by arrival order. Its pass cut 7 first (one refusal's
+# per-type words, a wrapped signature); the rest is the column-type rule.
+# The cap to 27,188. The pool: +43 drawn, +57 and +10 left.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 27145,
+    ".": 27188,
 
     "js": 8751,
 

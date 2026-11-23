@@ -69,7 +69,7 @@ use form::Table;
 pub use parse::Unfit;
 pub use schema::{Unmade, check};
 pub use svrngs_core::SigningKey;
-pub use sync::{Ask, Binds, Call, Device, Head, Hex, Place, ROW_MOST, SIZE_MOST, Seq, Set, Sig, Took};
+pub use sync::{Ask, Binds, Call, Device, Head, Held, Hex, Place, ROW_MOST, SIZE_MOST, Seq, Set, Sig, Took};
 
 /// The app's schema, beside its `index.html`.
 pub const SCHEMA: &str = "schema.sql";
@@ -724,7 +724,7 @@ impl Db {
         // Equal values tie on site (APP_STATE §4, "How it merges").
         conn.query_row("SELECT crsql_config_set('merge-equal-values', 1)", [], |_| Ok(()))
             .map_err(fault)?;
-        conn.execute_batch(&outranked(&tables)).map_err(fault)?;
+        conn.execute_batch(&sync::recorded(&tables)).map_err(fault)?;
         let (page, until) = (AtomicBool::new(false), AtomicU64::new(u64::MAX));
         #[expect(clippy::disallowed_methods, reason = "a page's query is timed where SQLite runs it")]
         let gate = Arc::new(Gate {
@@ -935,35 +935,6 @@ fn new_tables(conn: &mut Connection, (schema, root): (&str, bool), names: (&str,
     conn.execute("UPDATE crsql_site_id SET site_id = ?1 WHERE ordinal = 0", [site])
         .map_err(fault)
         .map(drop)
-}
-
-/// What records, on a connection, the places each change outranks, for
-/// prune, which visits only the sets at them (`sync.rs`, `Db::prune`): a
-/// temporary table of places, and on each table's clock, before a row is
-/// updated or deleted, its place, and before one is written, the place of
-/// the row it would replace, its key's and column's. So every way SQLite
-/// outranks a cell is recorded, cr-sqlite's merge and a local write alike,
-/// and none reaches the file.
-fn outranked(tables: &BTreeMap<String, Table>) -> String {
-    let mut sql = String::from("CREATE TEMP TABLE svrngs_was (site BLOB NOT NULL, seq INTEGER NOT NULL);");
-    for t in tables.keys().map(|t| t.replace('"', "\"\"")) {
-        let at = |row: &str| {
-            format!(
-                "INSERT INTO svrngs_was SELECT o.site_id, c.db_version FROM \"{t}__crsql_clock\" c \
-                JOIN crsql_site_id o ON o.ordinal = c.site_id WHERE c.key = {row}.key AND c.col_name = {row}.col_name;"
-            )
-        };
-        for (on, rows) in [
-            ("INSERT", at("NEW")),
-            ("UPDATE", at("OLD") + &at("NEW")),
-            ("DELETE", at("OLD")),
-        ] {
-            sql += &format!(
-                "CREATE TEMP TRIGGER \"{t}__svrngs_{on}\" BEFORE {on} ON \"{t}__crsql_clock\" BEGIN {rows} END;"
-            );
-        }
-    }
-    sql
 }
 
 /// The identity of the file at `path`: its inode, and its birth time where

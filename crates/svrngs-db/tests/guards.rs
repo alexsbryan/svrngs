@@ -38,9 +38,10 @@ fn side(dir: &Path, n: u8) -> Connection {
 
 /// **A call that fails partway leaves no transaction open**: one of the
 /// call's own reads fails after its transaction began (a column of
-/// svrngs's table renamed from a second connection, the plant), and the
-/// call is refused; the database's write lock is free after it, so another
-/// connection can begin a write at once.
+/// svrngs's table renamed from a second connection, the plant, which the
+/// full call's read of a site it claims a mark for reads, `Db::claimed`),
+/// and the call is refused; the database's write lock is free after it, so
+/// another connection can begin a write at once.
 #[test]
 fn a_call_that_fails_leaves_no_transaction_open() {
     let dir = tempfile::tempdir().unwrap();
@@ -48,10 +49,16 @@ fn a_call_that_fails_leaves_no_transaction_open() {
     let side = side(dir.path(), 2);
     side.execute_batch("ALTER TABLE svrngs_sites RENAME COLUMN device TO aside")
         .unwrap();
-    assert!(
-        b.ingest(&Call::default(), &bound(), None).is_err(),
-        "the plant fails the call"
-    );
+    let marks = [([7; 16], svrngs_db::Seq::new(1).unwrap())].into();
+    let call = Call {
+        ask: svrngs_db::Ask {
+            marks,
+            ..Default::default()
+        },
+        full: true,
+        ..Call::default()
+    };
+    assert!(b.ingest(&call, &bound(), None).is_err(), "the plant fails the call");
     let free = side.execute_batch("BEGIN IMMEDIATE; ROLLBACK");
     assert!(free.is_ok(), "the call's transaction is still open: {free:?}");
     side.execute_batch("ALTER TABLE svrngs_sites RENAME COLUMN aside TO device")

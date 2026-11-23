@@ -13,6 +13,16 @@ use svrngs_db::{Binds, Db, Refused, SigningKey, States};
 
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\n";
 
+// What each device holds, counted from the file as `Db::held` counted it
+// before its totals: the reference they are held to.
+#[path = "common/held.rs"]
+mod held;
+
+/// `db`'s totals, under `dir`, equal the count over its file.
+fn counted(db: &Db, dir: &Path) {
+    held::as_counted(db, &dir.join("state/g/board.db"));
+}
+
 /// The keys every copy here binds: every test key's.
 fn bound() -> Binds {
     let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
@@ -106,8 +116,10 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     write(&copy, put("c1", "ham")).unwrap();
     call(&copy, &ben);
     assert_eq!(cards(&ben), json!([{ "id": "c1", "title": "ham" }]));
+    counted(&ben, ben_dir.path());
 
     call(&copy, &ana);
+    counted(&ana, ana_dir.path());
     assert!(
         ana.copied(),
         "Ana's file found copied by the copy's set above her versions"
@@ -115,8 +127,11 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     let site = ana.ask().unwrap();
     ana_states.remake(&ana).unwrap();
     assert!(!ana.copied(), "made again");
+    counted(&ana, ana_dir.path());
     call(&copy, &ana);
+    counted(&ana, ana_dir.path());
     write(&ana, put("c3", "pie")).unwrap();
+    counted(&ana, ana_dir.path());
     let marks = ana.ask().unwrap().marks;
     assert!(
         marks.keys().any(|s| !site.marks.contains_key(s)),
@@ -124,6 +139,7 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     );
 
     call(&ana, &ben);
+    counted(&ben, ben_dir.path());
     let all = json!([{ "id": "c1", "title": "ham" }, { "id": "c2", "title": "jam" }, { "id": "c3", "title": "pie" }]);
     assert_eq!(
         cards(&ben),
@@ -131,8 +147,9 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
         "Ben's copy has Ana's jam, the twin at a place it pruned"
     );
     call(&ana, &copy);
-    for db in [&ana, &copy, &ben] {
+    for (db, dir) in [(&ana, &ana_dir), (&copy, &copy_dir), (&ben, &ben_dir)] {
         assert_eq!(cards(db), all);
+        counted(db, dir.path());
     }
 }
 

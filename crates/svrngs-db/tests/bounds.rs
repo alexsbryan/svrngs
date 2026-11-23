@@ -17,6 +17,16 @@ use svrngs_db::{Ask, Binds, Call, Db, Device, ROW_MOST, SIZE_MOST, Seq, Set, Sig
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
 const BUDGET: usize = 4 << 20;
 
+// What each device holds, counted from the file as `Db::held` counted it
+// before its totals: the reference they are held to.
+#[path = "common/held.rs"]
+mod held;
+
+/// Computer `n`'s totals, under `dir`, equal the count over its file.
+fn counted(db: &Db, (dir, n): (&Path, u8)) {
+    held::as_counted(db, &dir.join(format!("computer-{n}/state/g/board.db")));
+}
+
 fn key(n: u8) -> SigningKey {
     SigningKey::from_bytes(&[n; 32])
 }
@@ -165,8 +175,10 @@ fn a_key_the_record_doesn_t_bind_stores_nothing_and_adds_no_row_to_the_ask() {
 /// stand**: one device's sets at a new site each, and then at one place,
 /// each a row of Ben's ask, are taken until its share is full; the next is
 /// dropped, the device named muted in Ben's ask, so a member keeping more of
-/// its sets sends him none, and his ask stays within the room. Plant: the
-/// share unchecked (every set taken, the ask past its room).
+/// its sets sends him none, and his ask stays within the room; and a copy
+/// that keeps twins at one place has totals that are the count over its
+/// file. Plants: the share unchecked (every set taken, the ask past its
+/// room); the totals' triggers counting a twin as any other set.
 #[test]
 fn a_device_past_its_share_is_muted_and_its_sets_before_stand() {
     let dir = tempfile::tempdir().unwrap();
@@ -219,6 +231,7 @@ fn a_device_past_its_share_is_muted_and_its_sets_before_stand() {
         .collect();
     let got = took(&d, &alone(twins), &binds(&[4, 9], 6));
     assert_eq!(got, [Took::Taken, Took::Twin, Took::Twin, Took::Twin, Took::Over]);
+    counted(&d, (dir.path(), 4));
 }
 
 /// **A file made again counts its retired site's sets in its device's
@@ -227,8 +240,11 @@ fn a_device_past_its_share_is_muted_and_its_sets_before_stand() {
 /// (`sync.rs`, `ask`), so those rows count against its device's share of
 /// the room as any other. Ana's copy keeps three sets at the site it
 /// retires; a set of her key at another site, with a share of three rows,
-/// is then past her share. Plant, watched failing: the retired site's sets
-/// left out of the count (the set taken, the ask past its room).
+/// is then past her share. Her totals are the count over her file as she
+/// is made again, and once a write of hers drops a retired set. Plants,
+/// watched failing: the retired site's sets left out of the count (the set
+/// taken, the ask past its room); the totals' triggers counting a retired
+/// set as any other.
 #[test]
 fn a_file_made_again_counts_its_retired_sites_sets_in_its_share() {
     let dir = tempfile::tempdir().unwrap();
@@ -239,10 +255,14 @@ fn a_file_made_again_counts_its_retired_sites_sets_in_its_share() {
     }
     states.remake(&ana).unwrap();
     assert_eq!(ana.ask().unwrap().twins.len(), 3, "the retired site's sets, named");
+    counted(&ana, (dir.path(), 1));
     let other = States::new(&dir.path().join("other"), key(1));
     let other = other.open("g", "board", Some(SCHEMA)).unwrap();
     write(&other, "c4", "tea");
     assert_eq!(took(&ana, &call(&other, &ana), &binds(&[1], 3)), [Took::Over]);
+    // A retired set outranked and dropped moves the totals as one named.
+    write(&ana, "c1", "fig");
+    counted(&ana, (dir.path(), 1));
 }
 
 /// Every test key bound, 256 of them, so each one's share of an app's
