@@ -911,6 +911,60 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
       after a confirming press. Plant: the form submits without the
       press, which must fail.
 
+- [ ] avail-e2e-gate — depends [avail-page-prefill] — ONE UNIT: the end-to-end tests the gate never runs (the operator, 2026-11-23: "Have we added sufficient e2e tests to ensure we won't regress this system?" Then: "Yes queue them").
+  - Today these are `#[ignore]` and run only by hand or by a demo
+    wrapper:
+    - `explicit_run_then_share_in_webkit` (`crates/svrngs-node/tests/browser/main.rs:2049`);
+    - `run_prefill_waits_for_confirmation_in_webkit` (`:1986`);
+    - `a_unit_s_program_is_named_granted_and_renewed_after_it_restarts`
+      (`crates/svrngs-node/src/uid_tests.rs:1357`).
+
+    The scenes take their isolated user manager and packaged keeper from
+    `demo/runs/keeper/2026-11-23-run-page/gate.sh` (`main.rs:2044`).
+  - **Run them in `scripts/check.sh`,** in the gate container, as their
+    own step:
+    - give the step the same guard as the relay step (ed7d7680): it runs
+      exactly those tests, and zero matches fails the step itself;
+    - mark each in `docs/seams.tsv` by what it crosses, `fragile` where it
+      is;
+    - update `docs/CHECKS.md`'s list of steps;
+    - leave the tests and their assertions as they are.
+  - **Plant**, so a regression would be caught: break the product, not
+    the test. For example, Run writing a lend, and a renewal without the
+    unit's cgroup. Each must fail the new step. Then green.
+  - **Size:** the counted room left is 4 (25,723 of 25,727). Move the
+    setup the scenes need out of the demo wrapper into the gate's own
+    image or a step helper, whichever costs fewer counted lines. If it
+    can't fit, park with per-file counts: a raise is the operator's.
+
+- [ ] avail-release-tier — depends [avail-e2e-gate] — ONE UNIT (evidence tooling; demo/ is not counted): one command that reruns, before each release, the proofs no per-commit gate can run.
+  - **One entry point** (for example `demo/release/run.sh`), reusing the
+    recorded drivers as they are:
+    - Linux, the packaged Fedora VM replay
+      (`demo/runs/available/2026-11-23/run.py`): a no-login reboot with
+      the same link and data marker, busy port, failed save, concurrent
+      withdrawal, stop sharing;
+    - Linux, `2026-11-23-run-linux`, `-run-containers` (with
+      `stop_gap.py`), `-run-stdio` and `-ship`;
+    - Mac, on beefymac and without a reboot (PROMPT.addendum's rules):
+      the `-run-mac`, `-mac-proof` and `-mac-renew` drivers, including
+      `plist` mode, and `cargo test` of the keeper and the node built on
+      beefymac, since no Mac gate exists.
+  - **Each case gives one of the four verdicts:** passed, failed,
+    could-not-judge, never-ran. A host that can't be reached is
+    never-ran, never passed. The tier fails on failed or never-ran, as
+    `check.sh` does.
+  - It cleans up every scratch unit, agent, VM and folder, and says what
+    it removed.
+  - **`docs/CHECKS.md`** gains "The release tier": what it runs, where,
+    and that a release needs it to pass on the candidate. HUMAN-release-hosts
+    runs it first, then the operator's reboots and the people sessions.
+  - **Demo:** one full run on the current candidate, recorded under
+    `demo/runs/release/<date>/`. Plant: one driver made to fail (or a host
+    made unreachable) turns the tier red, with that case named.
+  - **Size:** 0 counted. Anything that has to land in `scripts/` is
+    measured; if it crosses the ceiling, park.
+
 - [ ] HUMAN-release-hosts — depends [avail-proof] — the operator. The
   release waits on this row (the operator, 2026-11-22: "release only after
   packaged proofs"):
@@ -918,6 +972,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     with Alex's link and the data marker;
   - a real Fedora laptop: a GPU model before sign-in, a passphrase disk
     (`AfterUnlock`), and the login screen's idle suspend;
+  - first, the release tier (avail-release-tier) on the final candidate;
   - the people sessions (spec §5 R9, "People").
     - The scene asks "which comes back after a restart?" and wants the
       answer without any change.
@@ -930,7 +985,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   No worker ticks this row, installs on the operator's own svrngs, or
   touches a real host but beefymac's scratch folders.
 
-- [ ] REVIEW-audit-available — depends [avail-proof, avail-webkit-alone, avail-page-prefill] — the unchanged full
+- [ ] REVIEW-audit-available — depends [avail-proof, avail-webkit-alone, avail-page-prefill, avail-e2e-gate, avail-release-tier] — the unchanged full
   `scripts/check.sh` in svrngs-gate, with the main `.git` mounted
   (PROMPT.addendum). It also checks:
   - `scripts/ports.py` lists every ported-from line;
