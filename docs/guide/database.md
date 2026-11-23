@@ -80,6 +80,8 @@ each one it finds, with the fix, and exits non-zero:
   your page writes the first rows. Do that work in your page.
 - No `WITHOUT ROWID` and no `GENERATED` column. Work a value out in your
   page as it writes.
+- At most 32 columns in a table or an index, so every row fits one read.
+  Split a wider table in two, keyed by the same id.
 - A column has a name, a type, `NOT NULL` or not, its place in the key,
   and a `DEFAULT` of one value, like `0`, `-1`, `'todo'` or `NULL`. No
   `CHECK`, and no function or other expression anywhere. An index orders
@@ -103,9 +105,12 @@ const { rows, more, syncing } = await read(
 ```
 
 A read is one statement that only reads your app's own tables. It gives at
-most 1,000 rows and 4 MB, with `more: true` when there were more, and stops
-after 250 ms. A value is at most 4 MB, in a read or a write. Name the
-columns you want, rather than `SELECT *`.
+most 1,000 rows and 4 MB, but always its first row, with `more: true` when
+there were more, and stops after 250 ms. A table has at most 32 columns and
+a value at most 128 KB, in a read or a write, so every row fits one read.
+Keep a longer value in parts, a row each in a table keyed by `(id, n)`, or
+lend a program that keeps its own files. Name the columns you want, rather
+than `SELECT *`.
 
 `syncing: true` means this computer's copy hasn't synced with another
 computer of the group yet. Say "still syncing" then, never an empty board.

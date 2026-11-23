@@ -94,6 +94,11 @@ pub enum Unmade {
         "In {0}, {1}, and svrngs keeps only tables with a rowid, of columns a write fills, so every later version of your app reads each row alike. To fix it, take out WITHOUT ROWID and GENERATED: the primary key still finds each row, and your page can work out a value as it writes."
     )]
     Unplain(String, String),
+    #[error(
+        "SQLite says {0}: a table or an index has at most {n} columns, so each row of it fits one read of your page. To fix it, split the table, and keep the rest in a second table keyed by the same id.",
+        n = crate::COLUMNS_MOST
+    )]
+    Wide(String),
     #[error("The schema.sql it follows makes no database either: {0}")]
     Follows(String),
 }
@@ -141,7 +146,10 @@ pub(crate) fn made(conn: &mut Connection, schema: &str) -> Result<BTreeMap<Strin
     let applied = conn.execute_batch(schema);
     conn.authorizer(None::<fn(AuthContext<'_>) -> Authorization>)
         .map_err(fault)?;
-    let unrun = |e| Refused::Malformed(format!("schema.sql: {e}"));
+    let unrun = |e: rusqlite::Error| match e.to_string() {
+        wide if wide.starts_with("too many columns") => Refused::Schema(Unmade::Wide(wide)),
+        e => Refused::Malformed(format!("schema.sql: {e}")),
+    };
     applied.map_err(|e| heard.try_iter().next().map_or_else(|| unrun(e), Refused::Schema))?;
     let tables = tables_of(conn)?;
     for t in tables.keys() {
@@ -173,7 +181,7 @@ pub(crate) fn made(conn: &mut Connection, schema: &str) -> Result<BTreeMap<Strin
 /// `SQLITE_CONSTRAINT_CHECK`, a CHECK of no function included; no index
 /// of an expression (`pragma_index_xinfo`'s cid below 0), whose entry
 /// can be many times its row, or with a WHERE; and each DEFAULT one value
-/// ([`literal`]) no longer than a value a copy keeps (`parse.rs`, `fit`),
+/// ([`literal`]) no longer than a value a copy keeps ([`crate::VALUE_MOST`]),
 /// as cr-sqlite writes a DEFAULT's words into its own statements
 /// (`vendor/cr-sqlite/core/rs/core/src/backfill.rs:226-228`) and a merge
 /// fills it into the row it makes again (`changes_vtab_write.rs`,
@@ -205,7 +213,7 @@ fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
     let index: Option<String> = conn.query_row(index, [t], |r| r.get(0)).optional().map_err(fault)?;
     let defaults = "SELECT name, dflt_value FROM pragma_table_xinfo(?1) WHERE dflt_value NOT NULL";
     let defaults: Vec<(String, String)> = rows(conn, defaults, [t], |r| Ok((r.get(0)?, r.get(1)?))).map_err(fault)?;
-    let unvalued = (defaults.into_iter()).find(|(_, d)| !literal(d) || d.len() > crate::ANSWER_MOST);
+    let unvalued = (defaults.into_iter()).find(|(_, d)| !literal(d) || d.len() > crate::VALUE_MOST);
     let unvalued = unvalued.map(|(c, _)| format!("In {t}, the DEFAULT of {c} isn't one short value"));
     tracing::debug!(target: "state", table = t, ?unplain, ?folded, off, ?checked, ?index, ?unvalued, "state: a table held to svrngs's limits, a rowid table of plain columns with no CHECK and each DEFAULT one value, its key compared as BINARY, its person_key TEXT first in the key of a STRICT table, and each index of columns with no WHERE");
     let runs = [
@@ -337,6 +345,7 @@ fn texts(conn: &Connection) -> Result<Texts, Refused> {
 /// as it drops, cr-sqlite's statements finalized first.
 fn scratch(schema: &str) -> Result<(Open, Shape, BTreeMap<String, Table>), Refused> {
     let mut open = Open(Some(Connection::open_in_memory().map_err(fault)?));
+    crate::narrow(&open)?;
     let tables = made(&mut open, schema)?;
     let shape = (columns(&open)?, texts(&open)?);
     Ok((open, shape, tables))

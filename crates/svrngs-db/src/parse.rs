@@ -54,8 +54,8 @@ pub enum Unfit {
     )]
     Kind(String),
     #[error(
-        "{0} holds more than {mb} MB, the most a page reads back of one value: keep it in parts, a row each",
-        mb = crate::ANSWER_MOST >> 20
+        "{0} holds more than {kb} KB, the most one value holds, so every row fits one read: keep it in parts, a row each in a table keyed by (id, n), or lend a program that keeps its own files",
+        kb = crate::VALUE_MOST >> 10
     )]
     Long(String),
 }
@@ -131,9 +131,9 @@ pub(crate) fn parse(bytes: &[u8], tables: &BTreeMap<String, Table>) -> Result<Va
 /// length odd, since cr-sqlite merges a change at an even one as its row's
 /// delete and no write makes one, so only a row's own change deletes it;
 /// no NULL for a NOT NULL column, which SQLite would refuse on every copy
-/// alike; and no key or value past [`crate::ANSWER_MOST`] bytes, the most a
-/// page's read makes of one (`Db::read`), so every copy refuses it alike,
-/// never a row refused on the copy where its change won.
+/// alike; and no key or value past [`crate::VALUE_MOST`] bytes, so every
+/// row a copy holds fits one page's read, sorted or not, and every copy
+/// refuses it alike, never a row refused on the copy where its change won.
 pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Result<Valid, Unfit> {
     let mut keys = Vec::with_capacity(changes.len());
     for c in &changes {
@@ -157,7 +157,7 @@ pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Res
             _ if !column => Unfit::NoColumn(named()),
             None => Unfit::Key(c.table.clone()),
             _ if let Some((col, ..)) = wrong => Unfit::Kind(format!("{}.{col}", c.table)),
-            _ if size.max(c.pk.len()) > crate::ANSWER_MOST => Unfit::Long(named()),
+            _ if size.max(c.pk.len()) > crate::VALUE_MOST => Unfit::Long(named()),
             _ if !versions.contains(&c.col_version) || !versions.contains(&c.cl) => Unfit::Versions(named()),
             _ if c.cid != SENTINEL && c.cl % 2 == 0 => Unfit::Unread,
             _ if c.val == Sql::Null && t.not_null.contains(&c.cid) => Unfit::Null(named()),

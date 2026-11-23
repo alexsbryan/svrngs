@@ -432,8 +432,9 @@ fn a_database_closes_as_it_drops() {
 /// **A database gives back what pruning frees, past Corrosion's bound**
 /// (APP_STATE §4, "What is kept"; `tidy.rs`): it is made with
 /// `auto_vacuum=INCREMENTAL`, though cr-sqlite's own tables come first. Ana
-/// writes 90 cards of 640 KiB each, within her share of the app's
-/// database (`SIZE_MOST`), then writes each again with one word,
+/// writes 450 cards of `VALUE_MOST`, 128 KiB, each, five to a write, within
+/// her share of the app's database (`SIZE_MOST`), then writes each again
+/// with one word,
 /// so every first set is pruned and the pages its text held are freed: over
 /// 12,000 of them. `tidy` gives them back until 10,000 or fewer are
 /// free, and asked again gives back nothing. A WAL past 5 GiB, Corrosion's
@@ -445,23 +446,15 @@ fn a_database_gives_back_what_pruning_frees() {
     let side = rusqlite::Connection::open(dir.path().join("state/g/board.db")).unwrap();
     let count = |p: &str| side.pragma_query_value(None, p, |r| r.get::<_, u64>(0)).unwrap();
     assert_eq!(count("auto_vacuum"), 2, "made to give pages back");
-    let long = "x".repeat(640 << 10);
+    let long = "x".repeat(svrngs_db::VALUE_MOST);
     // Ana's key alone bound, so her share is the whole of `SIZE_MOST`.
-    let alone = |db: &Db, ops: Value| db.write(&ops, &svrngs_db::Binds::new([], 0));
-    for n in 0..90 {
-        alone(
-            &db,
-            json!([{ "insert": "cards", "row": { "id": format!("c{n}"), "title": long } }]),
-        )
-        .unwrap();
-    }
-    for n in 0..90 {
-        alone(
-            &db,
-            json!([{ "insert": "cards", "row": { "id": format!("c{n}"), "title": "short" } }]),
-        )
-        .unwrap();
-    }
+    let alone = |db: &Db, title: &str, n: usize| {
+        let five = (0..5).map(|k| json!({ "insert": "cards", "row": { "id": format!("c{n}-{k}"), "title": title } }));
+        db.write(&json!(five.collect::<Vec<_>>()), &svrngs_db::Binds::new([], 0))
+            .unwrap();
+    };
+    (0..90).for_each(|n| alone(&db, &long, n));
+    (0..90).for_each(|n| alone(&db, "short", n));
     let free = count("freelist_count");
     assert!(
         free > 12_000,
@@ -475,7 +468,8 @@ fn a_database_gives_back_what_pruning_frees() {
     );
     assert!(!truncated, "no WAL near 5 GiB");
     assert_eq!(db.tidy().unwrap(), (0, false), "nothing more to give");
-    assert_eq!(cards(&db).as_array().unwrap().len(), 90);
+    let all = db.read("SELECT count(*) AS n FROM cards", &[]).unwrap();
+    assert_eq!(all["rows"][0]["n"], 450);
     svrngs_db::close(side).unwrap();
 }
 
@@ -507,7 +501,8 @@ fn a_read_answers_at_most_its_bytes_saying_there_were_more() {
 /// read, as `randomblob`, `printf` and two `zeroblob`s would make it; one a
 /// write would keep is refused in words, as every copy's parse refuses it
 /// (`tests/parse.rs`); and an answer stops at the cell that passes
-/// `ANSWER_MOST`, the row it is in left out whole and `more` said. Plants,
+/// `ANSWER_MOST`, the row it is in, after the first, left out whole and
+/// `more` said. Plants,
 /// watched failing: `Db::read` without the limit (each value made); `rows`
 /// counting bytes only between rows (two rows, 6 MiB).
 #[test]
@@ -536,4 +531,97 @@ fn a_value_and_an_answer_are_bounded_by_sqlite_s_own_limit() {
         .unwrap();
     assert_eq!(read["rows"].as_array().unwrap().len(), 1);
     assert_eq!(read["more"], true);
+}
+
+/// **Every row a copy holds fits one answer, sorted or not** (the delta
+/// review's D3 and D4; the operator's bound on a row, 2026-11-23): a table
+/// has at most `COLUMNS_MOST` columns and a value at most `VALUE_MOST`
+/// bytes, so a row of the most columns, each at the most, fits
+/// `ANSWER_MOST`. Such a row reads whole and sorted, by its key, by a
+/// column of it and in a group, a page pages past it, and a phone's
+/// prepare of an update of it reads it as it stood. A value past
+/// `VALUE_MOST` is refused at the write, a table of more columns at the
+/// check, and a page's read of more columns before it runs; an answer's
+/// first row is always answered whole. Plant, watched failing: the code
+/// before this commit (a value of `VALUE_MOST + 1` kept, a table of
+/// `COLUMNS_MOST + 1` columns taken, a read of 2,000 columns run, and a
+/// first row past `ANSWER_MOST` left out, `more: true`).
+#[test]
+fn every_row_a_copy_holds_fits_one_answer_sorted_or_not() {
+    use svrngs_db::{ANSWER_MOST, COLUMNS_MOST, VALUE_MOST};
+    let columns = |n: usize| (1..n).map(|i| format!(", c{i} TEXT")).collect::<String>();
+    let schema = format!(
+        "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL{});",
+        columns(COLUMNS_MOST)
+    );
+    let dir = tempfile::tempdir().unwrap();
+    let db = states(dir.path()).open("g", "t", Some(&schema)).unwrap();
+    let ana = svrngs_core::actor_of(&SigningKey::from_bytes(&[1; 32]));
+    let alone = svrngs_db::Binds::new([(ana.clone(), ana, false)], 4 << 20);
+    let write = |ops: Value| db.write(&ops, &alone).map(drop);
+    let row = |id: &str, each: usize| {
+        let mut row = json!({ "id": id });
+        (1..COLUMNS_MOST).for_each(|i| row[format!("c{i}")] = json!(format!("{id}{}", "x".repeat(each))));
+        json!([{ "insert": "t", "row": row }])
+    };
+    for (id, each) in [("p1", 1), ("p2", VALUE_MOST - 2), ("p3", 1)] {
+        write(row(id, each)).unwrap();
+    }
+    let long = write(row("p4", VALUE_MOST - 1)).expect_err("a value past VALUE_MOST kept");
+    assert_eq!(long.said(), (422, "unkept"), "{long}");
+    let ids = |sql: &str| {
+        let read = db.read(sql, &[]).unwrap_or_else(|r| panic!("{sql}: {r}"));
+        let ids = read["rows"].as_array().unwrap().iter().map(|r| r["id"].clone());
+        (ids.collect::<Vec<_>>(), read["more"].clone())
+    };
+    for sql in [
+        "SELECT * FROM t ORDER BY id",
+        "SELECT * FROM t ORDER BY c1",
+        "SELECT * FROM t ORDER BY c31 DESC, c1",
+        "SELECT * FROM t ORDER BY length(c2), id",
+        "SELECT * FROM t GROUP BY c1 ORDER BY id",
+        "SELECT DISTINCT * FROM t ORDER BY id",
+        "SELECT * FROM t",
+    ] {
+        let (mut ids, more) = ids(sql);
+        ids.sort_by_key(|id| id.to_string());
+        let wanted = vec![json!("p1"), json!("p2"), json!("p3")];
+        assert_eq!((ids, more), (wanted, json!(false)), "{sql}");
+    }
+    assert_eq!(
+        ids("SELECT * FROM t WHERE id > 'p1' ORDER BY id").0,
+        [json!("p2"), json!("p3")]
+    );
+    // An answer's first row whole: two computed values past ANSWER_MOST between them.
+    let half = ANSWER_MOST / 2 + 1;
+    let first = db
+        .read(&format!("SELECT zeroblob({half}) AS a, zeroblob({half}) AS b"), &[])
+        .unwrap();
+    assert_eq!(
+        (first["rows"].as_array().unwrap().len(), &first["more"]),
+        (1, &json!(false))
+    );
+    let update = json!([{ "update": "t", "key": { "id": "p2" }, "set": { "c1": "short now" } }]);
+    let phone = svrngs_core::actor_of(&SigningKey::from_bytes(&[9; 32]));
+    let binds = svrngs_db::Binds::new([(phone.clone(), phone.clone(), false)], 4 << 20);
+    let prepared = db.prepare(&update, (&phone, &binds)).unwrap();
+    let text: Value = serde_json::from_str(prepared["prepared"].as_str().unwrap()).unwrap();
+    assert_eq!(text["stands"][0]["id"], "p2", "the row as it stood");
+    let wide = format!(
+        "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL{});",
+        columns(COLUMNS_MOST + 1)
+    );
+    let words = svrngs_db::check(&wide, None).unwrap_err().to_string();
+    assert!(
+        words.contains("at most 32 columns") && words.contains("To fix it"),
+        "{words}"
+    );
+    let read = (0..2000)
+        .map(|i| format!("printf('%.*c', {}, 'x') AS c{i}", ANSWER_MOST - i))
+        .collect::<Vec<_>>();
+    let read = db.read(&format!("SELECT {}", read.join(", ")), &[]);
+    assert!(
+        matches!(&read, Err(Refused::Malformed(w)) if w.contains("too many columns")),
+        "{read:?}"
+    );
 }

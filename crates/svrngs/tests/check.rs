@@ -36,9 +36,9 @@ fn checked(args: &[&Path]) -> (bool, String) {
 /// **`svrngs check` reads schema.sql by svrngs-db's rule**: a schema it
 /// takes is named table by table, owned or shared; a NOCASE key is refused
 /// with its fix, beside the page's findings, and the exit code says so, as
-/// a row schema.sql inserts is, since it only declares, and a CHECK and an
-/// index of an expression are, each with its fix; a
-/// schema that drops a column of the version it follows is refused, and a
+/// a row schema.sql inserts is, since it only declares, and a CHECK, an
+/// index of an expression and a table past 32 columns are, each with its
+/// fix; a schema that drops a column of the version it follows is refused, and a
 /// folder named as that version that is no app's is said, never taken for
 /// one with no schema. Plant, watched failing: `checked` not reading
 /// schema.sql, and no table is named.
@@ -75,6 +75,7 @@ fn svrngs_check_reads_schema_sql_by_svrngs_db_s_rule() {
         "{said}"
     );
 
+    let wide = (1..33).map(|i| format!(", c{i} TEXT")).collect::<String>();
     for (name, schema, words) in [
         (
             "checked",
@@ -85,6 +86,11 @@ fn svrngs_check_reads_schema_sql_by_svrngs_db_s_rule() {
             "sorted",
             format!("{cards}CREATE INDEX cards_t ON cards (title || id);\n"),
             "The index cards_t orders an expression",
+        ),
+        (
+            "wide",
+            format!("CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL{wide});\n"),
+            "has at most 32 columns",
         ),
     ] {
         let (passed, said) = checked(&[&app(root.path(), name, Some(&schema))]);

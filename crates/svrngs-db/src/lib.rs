@@ -85,6 +85,16 @@ pub const ROWS_MOST: usize = 1000;
 /// room (`svrngs-node` `peer_wire.rs`, `ASK_ROOM_BYTES`), [`ROWS_MOST`] rows
 /// of 4 KiB, until Magnets' recorded answers set it.
 pub const ANSWER_MOST: usize = 4 << 20;
+/// The most columns a table, an index or a page's answer has, by SQLite's
+/// own limit on every connection a page's statement or a schema runs on
+/// ([`narrow`]): this number's one home. With [`VALUE_MOST`], every row a
+/// copy holds fits one answer whole, and a sorted read of it.
+pub const COLUMNS_MOST: usize = 32;
+/// The most bytes of one value, or of a row's key, a copy keeps:
+/// [`ANSWER_MOST`] over [`COLUMNS_MOST`], held where a value is taken, a
+/// write, a phone's prepare and every copy's apply, by one parse
+/// (`parse.rs`, `fit`), a fixed ceiling every copy shares.
+pub const VALUE_MOST: usize = ANSWER_MOST / COLUMNS_MOST;
 
 /// Why a page's ask was not run, said to the page in its words: what
 /// stopped it, why, and what to do.
@@ -372,6 +382,7 @@ impl States {
             live.execute("VACUUM INTO ?1", [copy.to_string_lossy()])
                 .map_err(fault)?;
             let restored = Open(Some(Connection::open(&copy).map_err(fault)?));
+            narrow(&restored)?;
             change(&restored)?;
             // The copy's own identity, taken as it is first opened (`Db::open`).
             let own = restored.execute_batch("UPDATE svrngs_db SET file = NULL");
@@ -587,6 +598,14 @@ impl Gate {
     }
 }
 
+/// `conn` held to [`COLUMNS_MOST`] columns in a table, an index and a
+/// statement's answer, by SQLite's own limit, which refuses one of more as
+/// it is prepared, so no read makes a row of more values at once.
+fn narrow(conn: &Connection) -> Result<(), Refused> {
+    let columns = rusqlite::limits::Limit::SQLITE_LIMIT_COLUMN;
+    conn.set_limit(columns, COLUMNS_MOST as i32).map(drop).map_err(fault)
+}
+
 fn fault(e: impl std::fmt::Display) -> Refused {
     Refused::Fault(e.to_string())
 }
@@ -695,6 +714,7 @@ impl Db {
         // (`vendor/cr-sqlite/core/src/ext-data.c:24-29`), which only
         // [`close`] finalizes. Without cr-sqlite, above, it has none.
         let mut open = Open(Some(conn));
+        narrow(&open)?;
         let conn = open.0.as_mut().expect("just opened");
         // Corrosion's: a WAL folded in is cut back to 1 GiB (`tidy.rs`). And
         // the fixed ceiling no file passes, 1 GiB in SQLite's 4 KiB pages,
@@ -1050,7 +1070,9 @@ fn said(e: rusqlite::Error) -> Refused {
 /// The statement's rows, at most [`ROWS_MOST`] and [`ANSWER_MOST`] bytes of
 /// their text and blobs, and whether there were more: counted cell by cell,
 /// so the row that would pass it is left out whole, and no row is read
-/// after it.
+/// after it; but the first row answered whole, so a page always gets past
+/// it. Every row a copy holds fits [`ANSWER_MOST`] ([`VALUE_MOST`]); a
+/// row a statement works out holds at most [`COLUMNS_MOST`] values of it.
 fn rows(stmt: &mut rusqlite::Statement<'_>, params: &[Sql]) -> Result<(Vec<Value>, bool), Refused> {
     let names: Vec<String> = stmt.column_names().map(String::from).collect();
     let mut found = stmt.query(rusqlite::params_from_iter(params)).map_err(said)?;
@@ -1060,7 +1082,7 @@ fn rows(stmt: &mut rusqlite::Statement<'_>, params: &[Sql]) -> Result<(Vec<Value
         for (i, name) in names.iter().enumerate() {
             let cell = row.get_ref(i).map_err(said)?;
             size += cell.as_bytes().map_or(8, <[u8]>::len);
-            if out.len() == ROWS_MOST || size > ANSWER_MOST {
+            if out.len() == ROWS_MOST || size > ANSWER_MOST && !out.is_empty() {
                 return Ok((out, true));
             }
             let cell = match cell {
