@@ -723,7 +723,8 @@ async function lent(request, url, where, signs = false) {
   if (!held) return unheldAt(request, url);
   const lend = held.lends.find((one) => one.label === where.label);
   if (!lend) return closed();
-  const own = request.method === 'POST' && lend.group && (await owned(request, where, lend, signs));
+  const own =
+    request.method === 'POST' && lend.group ? await owned(request, where, lend, signs) : null;
   if (own) return own;
   if (where.read && request.mode === 'navigate') return opening(held, where);
   return proxied(
@@ -756,8 +757,9 @@ function unheldAt(request, url) {
 }
 
 // A group's lend's post that this phone writes as its own, from a page that
-// may name acts: its acts, posted as JSON (`writing`), and a write to its
-// database (`setWritten`); any other post to its acts refused, and none
+// may name acts: its acts, posted as JSON (`writing`), and a body naming a
+// write to its database (`setWritten`), which the computer that prepares
+// it holds to the write form; any other post to its acts refused, and none
 // else, which goes to the lend's door.
 /**
  * @param {Request} request
@@ -768,9 +770,11 @@ function unheldAt(request, url) {
  */
 async function owned(request, where, lend, signs) {
   if (where.path === '/svrngs/acts') return actsPosted(request, lend, signs);
+  if (!signs || where.path !== '/svrngs/sql') return null;
   const body = request.clone();
-  const asked = signs && where.path === '/svrngs/sql' && (await body.json().catch(() => null));
-  return asked?.write ? setWritten(request, where, asked.write) : null;
+  /** @type {{ write?: unknown } | null} */
+  const asked = await body.json().catch(() => null);
+  return asked?.write === undefined ? null : setWritten(request, where, asked.write);
 }
 
 // A group's lend's acts, posted as JSON by a page that may name them, are
