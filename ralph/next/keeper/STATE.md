@@ -699,7 +699,9 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
       registration matcher (`job/mac.rs`), not Run's listener lineage.
     - Add the Mac twin of Linux `b4d8f6b8`: a foreign HTTP 200 appears
       after the busy preflight, with the agent active but of an unrelated
-      lineage. Run must say unverified.
+      lineage. Run must say unverified. Record the HTTP 200 and the
+      active agent's PID beside the verdict, so the record shows lineage
+      caused the refusal.
   - **Ownership before any lifecycle change (N1).**
     - `Agent::ours` takes canonical path equality plus the file's
       existence as provenance, and dispatch checks only that the plist is
@@ -708,7 +710,8 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
       path, before any lifecycle change.
     - Negative control: an unmanaged registration with the same label at
       the expected path, and no keeper card. Stop, Start and Remove refuse
-      it, and the job already running stays unchanged.
+      it, and the job already running stays unchanged. Record its PID
+      and registration before and after the refused commands.
   - On beefymac, under the PROMPT.addendum's rules: only
     `svrngs-keeper-test-*`, removed at the end, and no reboot. Each case
     red first, then green.
