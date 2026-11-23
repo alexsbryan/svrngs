@@ -3549,6 +3549,76 @@ async fn an_app_s_writes_to_its_database_are_counted_in_sets() {
     }
 }
 
+/// **A phone's carried sets are counted as its writes are** (svrn-docs
+/// `app-state-diligence/security-review-2026-11-23/`, L4): Bo's phone
+/// carries one set to Ana's computer from eight loops at once, as fast as
+/// they can, until refused. Every carry taken or held is within an hour's
+/// sets and the refill since, and each loop is refused 429 `limit`, its
+/// words naming the rate; a prepare after is still answered, its budget
+/// its own. Plant, watched failing: `{carry}` passing no refill (no loop
+/// is refused).
+#[tokio::test]
+async fn a_phone_s_carried_sets_are_counted_as_its_writes_are() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 78, ana, &[]);
+    phone(ana, &group, 7, "bo");
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let (route, pass) = as_phone(ana, &origin, 7, 9).await;
+    let post = |body: Value| {
+        http()
+            .post(&route)
+            .header("x-svrngs-pass", &pass)
+            .json(&body)
+            .send()
+    };
+    let milk = json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    let prepared: Value = post(json!({ "prepare": milk }))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let set = carried(&group, &milk, &prepared);
+    let started = std::time::Instant::now();
+    let one = |_| async {
+        for n in 0.. {
+            let answer = post(set.clone()).await.unwrap();
+            if !answer.status().is_success() {
+                return (n, answer.status(), answer.json::<Value>().await.unwrap());
+            }
+            assert!(n < SETS_AN_HOUR, "a loop is never refused");
+        }
+        unreachable!()
+    };
+    let loops = n0_future::join_all((0..8).map(one)).await;
+    let carried = loops.iter().map(|(n, ..)| n).sum::<usize>();
+    let most = SETS_AN_HOUR + started.elapsed().as_secs() as usize / 2 + 1;
+    assert!(
+        (SETS_AN_HOUR..=most).contains(&carried),
+        "an hour's sets, and the refill since: carried {carried}, at most {most}"
+    );
+    for (_, status, said) in loops {
+        assert_eq!(
+            (status.as_u16(), &said["refused"]),
+            (429, &json!("limit")),
+            "{said}"
+        );
+        let words = said["words"].as_str().unwrap();
+        assert!(
+            words.contains(&format!("about {} writes a minute", SETS_AN_HOUR / 60)),
+            "{words}"
+        );
+    }
+    let tea = json!([{ "insert": "cards", "row": { "id": "c2", "title": "tea" } }]);
+    let again = post(json!({ "prepare": tea })).await.unwrap();
+    assert_eq!(again.status(), 200, "a prepare's budget is its own");
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
 /// **A write that seals a set wakes the round** (the seat's decision,
 /// 2026-11-22: a lid closed within the round's minute stranded a move, on
 /// every platform): Ben's copy keeps

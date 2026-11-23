@@ -746,11 +746,8 @@ impl Folders {
                     let words = format!("{app} writes only from your own computer for now, so this isn’t kept. Open {app} from your computer’s home page to write in it.");
                     return Ok(told(403, "elsewhere", words));
                 }
-                let wait = self.refill(&asker, ("sets", SETS_AN_HOUR));
-                if wait > 0 {
-                    let words = format!("{app} is writing faster than an app may here, about {} writes a minute, as every computer of your group takes each one. It can write again in {wait} seconds.", SETS_AN_HOUR / 60);
-                    let refused = [(header::RETRY_AFTER, wait.to_string())];
-                    return Ok((refused, told(429, "limit", words)).into_response());
+                if let Some(wait) = self.write_refill(&asker, app, "sets") {
+                    return Ok(wait);
                 }
                 // Its owned rows judged as the record binds this computer's
                 // person, as every copy judges them again (svrngs-db `owned.rs`).
@@ -777,8 +774,15 @@ impl Folders {
                 }
                 wrote.map(|(answer, _)| answer)
             }
+            // A phone's set carried here is counted as a write is, in a
+            // budget of its own beside its prepare's, so no device has this
+            // computer check sets faster than a person writes, and a carry
+            // never spends a write.
             Ok(svrngs_db::Asked::Carry(set)) => {
-                return Ok(self.set_carried(db, (group, app), set).await)
+                if let Some(wait) = self.write_refill(&asker, app, "carries") {
+                    return Ok(wait);
+                }
+                return Ok(self.set_carried(db, (group, app), set).await);
             }
             Err(r) => Err(r),
         };
@@ -810,6 +814,16 @@ impl Folders {
         };
         let took = json!(took);
         told(status, took.as_str().unwrap_or_default(), words.into())
+    }
+
+    /// A write of `app` by `asker`, or a set carried, `kind`, in its
+    /// person's budget of [`SETS_AN_HOUR`] for it; or the refusal that says
+    /// how long it waits.
+    fn write_refill(&self, asker: &Asker, app: &AppName, kind: &'static str) -> Option<Response> {
+        let wait = self.refill(asker, (kind, SETS_AN_HOUR));
+        let words = format!("{app} is writing faster than an app may here, about {} writes a minute, as every computer of your group takes each one. It can write again in {wait} seconds.", SETS_AN_HOUR / 60);
+        let refused = [(header::RETRY_AFTER, wait.to_string())];
+        (wait > 0).then(|| (refused, told(429, "limit", words)).into_response())
     }
 
     /// A read of `app` by `asker`, in its person's budget of reads; or the
