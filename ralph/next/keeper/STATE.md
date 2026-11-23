@@ -896,6 +896,9 @@ Windows.
       - `…how_apps_read_a_lend_by_its_group_s_terms`;
       - `…lend_keeps_its_group_s_terms_as_drawn`.
 
+      These are in `--test folders`. QA confirmed them 3/3 on 789707dc
+      and 0/3 on 66bbc060, with
+      `cargo test --locked --offline -p svrngs-node --test folders the_home_page`.
       They are stale since 5ab554fb: they POST `/running` expecting
       publication, and that now only previews. Take the token and the
       shown terms, POST `/running/confirm`, and keep the original product
@@ -903,7 +906,15 @@ Windows.
       across names.
     - **`door::tests::every_dial_of_a_share_s_port_goes_through_its_check`:**
       a stale census allowlist. Reconcile the exact actual and expected
-      entries, without loosening it.
+      entries, without loosening it. QA reproduced it alone. Remove the
+      old `host.rs` `/props` reason, and add the current ones:
+      - three from 24bfe771: `dial: local prefill or readiness, without
+        share credentials`, `the local prefill probe sets its deadline at
+        the edge`, and `the local readiness probe waits at the edge`;
+      - one from d6069b2b, in `bound.rs`: `dial: witness the unit before
+        saving access`.
+
+      No other census differences were seen.
     - **types and typed lint, `running-here.js:153,160` TS7031:**
       - from d4765ba5;
       - give the `view` state of `useState` a concrete, nullable JSDoc
