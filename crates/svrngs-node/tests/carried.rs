@@ -4556,3 +4556,190 @@ async fn a_write_answered_is_kept_through_kill_9_and_reaches_another_computer() 
         node.net().close().await;
     }
 }
+
+/// **A member's version whose schema.sql runs an expression or makes rows
+/// is refused on every computer, and each keeps working on the version it
+/// holds** (svrn-docs `rings/current/APP_STATE.md` §4, "Its schema": one
+/// decider, svrngs-db's, for every copy): Board, carried on Ana's computer,
+/// reaches Ben's, and Ana writes a card. Ana changes Board's schema.sql, her
+/// own change, which runs for her at once: first a version whose new table
+/// has a DEFAULT that calls randomblob, then one that inserts a row. Each
+/// time her page's read is refused `schema`, 422, in words naming
+/// schema.sql; Ben's round refuses to make his copy wider by it, said at
+/// debug, and his copy works on as it was: a card he writes is read back
+/// with the columns it had, and reaches Ana's copy. Once she puts the
+/// version back, her page reads every card, no row schema.sql made and no
+/// column it added, as Ben's does. Plants, each watched failing: the node's
+/// call site taking a member's version without asking svrngs-db
+/// (`Folders::database` not calling `States::widen`: Ana's read answered
+/// 200); svrngs-db's schema rule letting every function and insert through
+/// (Ana's copy made wider by her version, her read answered 200).
+#[tokio::test]
+async fn a_member_s_version_that_runs_an_expression_or_makes_rows_is_refused_everywhere() {
+    use std::collections::BTreeSet;
+    let (said, _heard) = heard("folder=debug");
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 84, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(ben, &group).await;
+    round(ben).await;
+    let card = |id: &str, by: &str| json!({ "write": [{ "insert": "cards", "row": { "id": id, "title": by } }] });
+    assert_eq!(sql(ana, &origin_a, card("c1", "ana")).await.0, 200);
+
+    let read = json!({ "sql": "SELECT * FROM cards ORDER BY id" });
+    let first = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT);\n";
+    let versions = [
+        format!("{first}CREATE TABLE tags (id TEXT NOT NULL PRIMARY KEY, mark BLOB DEFAULT (randomblob(16)));\n"),
+        format!("{first}INSERT INTO cards (id, title) VALUES ('s1', 'made by schema.sql');\n"),
+    ];
+    // Ben's computer alone judges Ana's version as a member's: hers, while
+    // her own is refused, judges none of the others'.
+    let ana_key = actor_of(&signing(1));
+    let refusals = || {
+        let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+        let of_ana = |l: &&str| {
+            l.contains("made wider by the version a member runs") && l.contains(&ana_key)
+        };
+        let refused = |l: &str| {
+            Some(
+                l.split_once("refused=")?
+                    .1
+                    .split(" key=")
+                    .next()?
+                    .to_owned(),
+            )
+        };
+        let lines: Vec<_> = traced.lines().filter(of_ana).filter_map(refused).collect();
+        lines
+            .into_iter()
+            .filter(|r| r.contains("Schema("))
+            .collect::<BTreeSet<_>>()
+    };
+    for (n, version) in versions.iter().enumerate() {
+        std::fs::write(folder.join("apps/Board/schema.sql"), version).unwrap();
+        let mut answer = (0, Value::Null);
+        for _ in 0..20 {
+            answer = sql(ana, &origin_a, read.clone()).await;
+            if answer.0 != 200 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+        let (status, refused) = answer;
+        assert_eq!(
+            (status, &refused["refused"]),
+            (422, &json!("schema")),
+            "version {n}: {refused}"
+        );
+        let words = refused["words"].as_str().unwrap();
+        assert!(
+            words.contains("schema.sql") && words.contains("To fix it"),
+            "{words}"
+        );
+
+        let mut judged = false;
+        for _ in 0..15 {
+            for node in [ana, ben] {
+                round(node).await;
+            }
+            if refusals().len() == n + 1 {
+                judged = true;
+                break;
+            }
+        }
+        assert!(
+            judged,
+            "version {n} refused on Ben's computer, said at debug: {:?}",
+            refusals()
+        );
+        let mine = format!("b{n}");
+        assert_eq!(
+            sql(ben, &origin_b, card(&mine, "ben")).await.0,
+            200,
+            "Ben's copy takes his card"
+        );
+        let (status, rows) = sql(ben, &origin_b, read.clone()).await;
+        assert_eq!(status, 200, "{rows}");
+        let rows = rows["rows"].as_array().unwrap().clone();
+        assert!(
+            rows.iter()
+                .all(|r| r.as_object().unwrap().keys().eq(["id", "title"].iter())),
+            "Ben's copy holds the columns it had: {rows:?}"
+        );
+        assert!(rows.iter().any(|r| r["id"] == mine.as_str()), "{rows:?}");
+        assert!(
+            rows.iter().all(|r| r["id"] != "s1"),
+            "no row schema.sql made: {rows:?}"
+        );
+    }
+
+    std::fs::write(folder.join("apps/Board/schema.sql"), first).unwrap();
+    let every = json!([
+        { "id": "b0", "title": "ben" },
+        { "id": "b1", "title": "ben" },
+        { "id": "c1", "title": "ana" },
+    ]);
+    let mut seen = Value::Null;
+    for _ in 0..20 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        seen = sql(ana, &origin_a, read.clone()).await.1;
+        if seen["rows"] == every {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    assert_eq!(
+        seen["rows"], every,
+        "Ana's copy, her version back, every card and nothing schema.sql made: {seen}"
+    );
+    assert_eq!(sql(ben, &origin_b, read).await.1["rows"], every);
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A value far past any bound is refused at write, and nothing of it
+/// kept** (svrn-docs `rings/current/APP_STATE.md` §4, "What SQL may do";
+/// W4): Board's page writes one card whose title is 8 MiB. It is refused,
+/// named and in words, and Board holds no card. Today the route's own cap
+/// on what it reads refuses it, `too-large`, before svrngs-db's parse would
+/// (`Unfit::Long`); either holds. Plant, watched failing: the route reading
+/// any body and the parse taking any value (the card kept, 200).
+#[tokio::test]
+async fn a_value_far_past_any_bound_is_refused_at_write() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 85, ana, &[]);
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let big = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "x".repeat(8 << 20) } }] });
+    let (status, refused) = sql(ana, &origin, big).await;
+    assert!((400..500).contains(&status), "refused: {status}");
+    assert!(refused["refused"].is_string(), "{refused}");
+    assert!(
+        refused["words"].as_str().is_some_and(|w| !w.is_empty()),
+        "{refused}"
+    );
+    let count = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+    assert_eq!(
+        sql(ana, &origin, count).await,
+        (200, json!({ "rows": [{ "n": 0 }], "more": false })),
+        "nothing of it kept"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
