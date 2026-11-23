@@ -6,7 +6,7 @@ pub mod run;
 pub(crate) use words::Action;
 mod words;
 pub(crate) use words::shared_while;
-pub use words::{Review, REVIEW_AGAIN};
+pub use words::{Review, RunView, REVIEW_AGAIN};
 
 use crate::{
     job::Keep,

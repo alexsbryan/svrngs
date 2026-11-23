@@ -41,7 +41,7 @@ def scene(plant):
     image = next(line.split()[1] for line in text.splitlines() if line.strip().startswith("image:"))
     proof.vm.say("pull", said=proof.guest(f"{proof.SAM} podman pull --quiet {image}", 180))
     code, said = proof.vm.terminal(run)
-    assert code == 0 and "is running here. Share it separately" in said, said
+    assert code == 0 and f"{NAME} is running here. To share it: `svrngs share {proof.PORT} " in said, said
     proof.guest("test ! -e /home/sam/.svrngs/lends/actual.json")
     assert proof.sample("before")
     marker = uuid.uuid4().hex

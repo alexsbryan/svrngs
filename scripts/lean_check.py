@@ -980,10 +980,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then avail-run-linux: explicit Run and a fresh witness before saving a unit grant, to 25,424.
 # Then avail-run-page's review and confirmation reuse the share executor, at 25,502 and 8,680 JS.
 # Both doors then share the same service review, at 25,484 and 8,682 JS.
+# avail-run-page-copy spends 10 non-JS of the release reserve on the shared
+# Run confirmation, its two next steps and the keeper's verified port.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25544,
+    ".": 25554,
 
     "js": 8732,
 

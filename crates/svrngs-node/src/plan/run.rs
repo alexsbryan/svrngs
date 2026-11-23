@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::words::{self, RUN_UNREAD};
 use super::{
-    plan, step, Availability, Done, Event, Method, Nature, Plan, Platform, Return, Runs, State,
-    Terms,
+    plan, step, Availability, Done, Event, Method, Nature, Plan, Platform, Return, RunView, Runs,
+    State, Terms,
 };
 use crate::{
     door::bound,
@@ -16,10 +16,12 @@ use std::{collections::BTreeSet, path::Path};
 /// Run is local only; it takes no share witness or access terms.
 pub async fn native<'a>(
     name: &'a str,
+    view: RunView,
     args: impl IntoIterator<Item = &'a str>,
 ) -> Result<String, String> {
     let out = keeper(["run", name, "--json"].into_iter().chain(args)).await?;
-    words::started(name, serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?)
+    let started = serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?;
+    words::started(name, view, started)
 }
 
 pub(crate) async fn keeper<'a>(args: impl IntoIterator<Item = &'a str>) -> Result<Vec<u8>, String> {

@@ -719,7 +719,7 @@ async fn run_one(Json(ask): Json<ToRun>) -> Result<Json<String>, Response> {
         "--command",
         &ask.command,
     ];
-    run_reply(run::native(ask.name.as_str(), args).await)
+    run_reply(run::native(ask.name.as_str(), plan::RunView::Page, args).await)
 }
 
 async fn run_action(

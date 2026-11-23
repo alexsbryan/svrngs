@@ -18,6 +18,7 @@ enum Source<'a> {
 enum Outcome<'a> {
     Verified {
         unit: &'a str,
+        port: u16,
     },
     Unverified {
         state: Option<String>,
@@ -172,7 +173,7 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
         });
     tracing::debug!(%unit, ?shown, ready, owned, "run: installed unit and port observed");
     if owned {
-        say(Outcome::Verified { unit: &kept.unit })
+        say(Outcome::Verified { unit: &kept.unit, port })
     } else {
         say(Outcome::Unverified {
             state: state.map(str::to_owned),

@@ -220,7 +220,9 @@ listeners in its active unit's
 cgroup subtree; otherwise it reports manager state and port readiness
 separately (`native_run.rs`). The home page's native Run asks for a name,
 port, folder and command; the keeper parses quoting without running a
-shell. Its Start and Stop controls use only the keeper's observed jobs
+shell. After Run verifies the program, the page points to **Already running
+here** to share it; the terminal gives a Share command for its verified port.
+The page's Start and Stop controls use only the keeper's observed jobs
 and leave sharing alone. The share review is still a separate act.
 When Share would grant a running unit, it
 dials without sending bytes and checks the listeners and connection taker against

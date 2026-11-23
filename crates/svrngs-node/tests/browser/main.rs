@@ -125,20 +125,7 @@ async fn computer(
 /// 127.0.0.1 alone, its group seeded with `founder` holding
 /// `signing(founder_key)`.
 async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u8) -> Node {
-    let node = Node::start(
-        dir.to_path_buf(),
-        signing(me),
-        &RelayConfig {
-            relay_urls: vec![relay],
-            n0_services: false,
-            loopback_only: true,
-        },
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts");
-    drive::opens_at(node.api_addr().port(), &node.token());
+    let node = browser_node(dir, relay, me, no_seed).await;
     let seed = Roster::new(
         [(
             Person::parse(founder).unwrap(),
@@ -148,6 +135,29 @@ async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u
         .collect(),
     );
     node.rail().set_seed(NS, &seed).unwrap();
+    node
+}
+
+async fn browser_node(
+    dir: &Path,
+    relay: String,
+    me: u8,
+    seed_text: fn(&Path) -> Result<Option<String>, String>,
+) -> Node {
+    let node = Node::start(
+        dir.to_path_buf(),
+        signing(me),
+        &RelayConfig {
+            relay_urls: vec![relay],
+            n0_services: false,
+            loopback_only: true,
+        },
+        seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts");
+    drive::opens_at(node.api_addr().port(), &node.token());
     node
 }
 
@@ -214,10 +224,15 @@ async fn standing_on(
     founder: &str,
 ) -> Node {
     let node = seeded(dir, relay, me, founder, 1).await;
+    sync_standing(&node, NS, ada, person).await;
+    node
+}
+
+async fn sync_standing(node: &Node, ns: &str, ada: &Node, person: &str) {
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
-    let synced = node.host().sync_with(NS, &ada.endpoint().addr()).await;
+    let synced = node.host().sync_with(ns, &ada.endpoint().addr()).await;
     assert!(
         synced.stop.is_none(),
         "{person} syncs ada's record: {synced:?}"
@@ -225,7 +240,6 @@ async fn standing_on(
     // No address lookup here: ada is told where the new computer listens.
     let addrs = node.endpoint().addr().ip_addrs().copied().collect();
     ada.transport().add_known_peer(node.endpoint().id(), addrs);
-    node
 }
 
 /// A link's token naming `issuer`, reached through `relay`. Its secret
@@ -259,20 +273,7 @@ async fn keep_folder(at: &Node, folder: &Path) {
 /// holds this group, not `NS`.
 async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, String) {
     use svrngs_node::group::{draw, Name};
-    let node = Node::start(
-        dir.to_path_buf(),
-        signing(1),
-        &RelayConfig {
-            relay_urls: vec![relay_url(relay)],
-            n0_services: false,
-            loopback_only: true,
-        },
-        svrngs_node::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts");
-    drive::opens_at(node.api_addr().port(), &node.token());
+    let node = browser_node(dir, relay_url(relay), 1, svrngs_node::group::seed_text).await;
     let ada = Name::parse("ada").unwrap();
     let seed = draw(
         Name::parse("house").unwrap(),
@@ -1985,6 +1986,8 @@ static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "run in the gate with the isolated user manager"]
 async fn explicit_run_then_share_in_webkit() {
+    use svrngs_node::{group, lend::Audience};
+
     assert_eq!(
         std::env::var("SVRNGS_RUN_PAGE_DEMO").as_deref(),
         Ok("scratch")
@@ -1992,7 +1995,7 @@ async fn explicit_run_then_share_in_webkit() {
     let engine = Engine::Webkit;
     let dir = tempfile::tempdir().unwrap();
     let relay = relay().await;
-    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let (ada, ns) = house(dir.path(), &relay, &signing(7)).await;
     let busy = free_here(20000).await;
     let busy_port = busy.local_addr().unwrap().port();
     let free = free_here(busy_port + 1).await;
@@ -2020,7 +2023,7 @@ async fn explicit_run_then_share_in_webkit() {
         &ada,
         json!({
             "read": "#run-form summary",
-            "all": "#run-form, #lent li",
+            "all": "#running > h2, #run-form [role=status], #run-form > p:not(:first-of-type), #lent li",
             "unfold": true,
             "do": [
                 field("name", name), field("port", &busy_port.to_string()),
@@ -2033,6 +2036,14 @@ async fn explicit_run_then_share_in_webkit() {
         }),
     )
     .await;
+    let heading = ran["after"][1][0].as_str().unwrap();
+    assert_eq!(heading, "Already running here");
+    let success = ran["after"][1][1].as_str().unwrap().trim();
+    assert_eq!(
+        success,
+        format!("{name} is running here. To share it, find it under {heading}."),
+        "Run confirmation under #run-form"
+    );
     let still_busy = std::net::TcpListener::bind(("127.0.0.1", busy_port));
     assert!(
         still_busy.is_err(),
@@ -2042,7 +2053,8 @@ async fn explicit_run_then_share_in_webkit() {
         svrngs_node::lend::all(dir.path()).unwrap().is_empty(),
         "Run or Start published: {ran:#}"
     );
-    println!("WebKit Run: {}", ran["after"]);
+    println!("WebKit Run confirmation: {success}");
+    println!("WebKit Run and lifecycle: {}", ran["after"]);
     let row = format!("#running li:has-text('localhost:{port}')");
     let shared = home_page(
         engine,
@@ -2056,10 +2068,21 @@ async fn explicit_run_then_share_in_webkit() {
                 act(&format!("{row} button"), "Share test-page-coder"),
                 act(&format!("{row} button"), "You lent test-page-coder"),
             ],
-            "after": ["#lent li", "test-page-coder:"],
+            "after": ["#lent details[aria-label='test-page-coder'] > summary", "Lent to house"],
         }),
     )
     .await;
+    let review = shared["after"][1]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(Value::as_str)
+        .find(|row| row.contains("Share test-page-coder"))
+        .unwrap();
+    assert!(review.contains("house can "), "Share review: {review}");
+    println!("WebKit Share review: {}", review.trim());
+    let saved_row = shared["later"][0].as_str().unwrap();
+    assert!(saved_row.starts_with("test-page-coder:"), "{saved_row}");
     let saved = svrngs_node::lend::read(
         dir.path(),
         &svrngs_node::lend::LendName::parse(name).unwrap(),
@@ -2067,12 +2090,18 @@ async fn explicit_run_then_share_in_webkit() {
     .unwrap()
     .unwrap();
     assert_eq!(saved.port().unwrap().get(), port, "{shared:#}");
+    assert_eq!(saved.terms.audience, Audience::Selected(vec![ns.clone()]));
     assert!(
         saved.terms.keep.is_some(),
         "Share did not grant the observed job: {shared:#}"
     );
     let bo_dir = tempfile::tempdir().unwrap();
-    let bo = standing(bo_dir.path(), &relay, &ada, 7, "bo").await;
+    let bo = browser_node(bo_dir.path(), relay_url(&relay), 7, group::seed_text).await;
+    let seed = group::read_seed(&ada.rail().group_dir(&ns).unwrap())
+        .unwrap()
+        .unwrap();
+    bo.host().keep_group(&seed, None, &[]).unwrap();
+    sync_standing(&bo, &ns, &ada, "bo").await;
     let opened = home_page(engine, &bo, json!({ "open": "test-page-coder" })).await;
     assert_eq!(opened["opened"]["title"], "Run page witness", "{opened:#}");
     println!("WebKit Share: {}", shared["later"]);

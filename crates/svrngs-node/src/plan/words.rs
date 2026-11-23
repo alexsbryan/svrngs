@@ -161,18 +161,30 @@ impl Plan<'_> {
 #[derive(Debug, serde::Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub(super) enum Started {
-    Verified,
+    Verified { port: std::num::NonZeroU16 },
     Unverified { state: Option<String>, ready: bool },
     Busy { why: String },
 }
 
-pub(super) fn started(name: &str, started: Started) -> Result<String, String> {
+#[derive(Debug)]
+pub enum RunView {
+    Page,
+    Terminal,
+}
+
+pub(super) fn started(name: &str, view: RunView, started: Started) -> Result<String, String> {
     use Started::*;
-    tracing::debug!(target: "plan", ?started, "plan: Run verdict");
+    tracing::debug!(target: "plan", ?started, ?view, "plan: Run verdict");
     match started {
-        Verified => Ok(format!("{name} is running here. Share it separately with `svrngs share`.\n")),
+        Verified { port } => Ok(format!("{name} is running here. {}\n", match view {
+            RunView::Page => "To share it, find it under Already running here.".into(),
+            RunView::Terminal => format!("To share it: `svrngs share {port} --program <program> --name {name} --group <group>`."),
+        })),
         Unverified { state, ready } => Err(format!("Not shared; svrngs couldn't verify {name} is answering. Reported state: {}. The port {}.",
             state.as_deref().unwrap_or("unknown"), if ready { "answered" } else { "wasn't ready" })),
         Busy { why } => Err(why),
     }
 }
+
+#[cfg(test)]
+mod tests;

@@ -42,3 +42,33 @@ WebKit Alex opened: {"title":"Run page witness","url":"http://umfrj1nxbj23n9mv5p
 test explicit_run_then_share_in_webkit ... ok
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 49 filtered out; finished in 17.01s
 ```
+
+## Run confirmation and named audience, 2026-11-23
+
+Run `bash demo/runs/keeper/2026-11-23-run-page/gate.sh` with the new
+assertions, first leaving the old Run sentence in `plan/words.rs` as the
+plant. The test reads the confirmation immediately after Run, checks it
+against the rendered heading, and still checks the separate lifecycle row.
+The Share review and the saved row must both name `house`, whose real seed
+Sam and Alex both keep. The stored audience must use that group's id.
+
+**Red — the old Run response:**
+
+```text
+assertion `left == right` failed: Run confirmation under #run-form
+  left: "test-page-coder is running here. Share it separately with `svrngs share`."
+ right: "test-page-coder is running here. To share it, find it under Already running here."
+test explicit_run_then_share_in_webkit ... FAILED
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 49 filtered out; finished in 8.35s
+```
+
+**Green — the same command with the new Run response** (review excerpt):
+
+```text
+WebKit Run confirmation: test-page-coder is running here. To share it, find it under Already running here.
+house can open it again after you sign in.
+WebKit Share: ["test-page-coder: everyone in the groups you chose at once, 0 using it now. Lent to house (yours, since 23 Nov)."]
+WebKit Alex opened: {"title":"Run page witness","url":"http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra5fbvu8pvr9.localhost:55077/"}
+test explicit_run_then_share_in_webkit ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 49 filtered out; finished in 20.02s
+```

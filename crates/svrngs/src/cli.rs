@@ -136,7 +136,7 @@ use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal, Terms};
 use svrngs_node::link::{client_link, https_link, Link, Origin};
 use svrngs_node::oidc::KeyFailure;
-use svrngs_node::plan::{self, run, Availability, Done};
+use svrngs_node::plan::{self, run, Availability, Done, RunView::Terminal};
 
 pub const USAGE: &str = include_str!("help.txt");
 
@@ -867,7 +867,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             update::Outcome::Packaged(words) => format!("{words}\n"),
         },
         Verb::Restart => restart(&root)?,
-        Verb::RunApp(name, args) => run::native(&name, args.iter().map(String::as_str))
+        Verb::RunApp(name, args) => run::native(&name, Terminal, args.iter().map(String::as_str))
             .await
             .map_err(Refused::RunApp)?,
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
