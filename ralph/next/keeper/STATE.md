@@ -909,8 +909,23 @@ Windows.
       - give the `view` state of `useState` a concrete, nullable JSDoc
         type: `fields` tuples, and `rows` with a required name and text,
         and an optional port, action and button.
-    - **The door seek test and the WebKit relay case:** QA is still
-      triaging these. Judge each from the log: a regression, pre-existing
-      on main 789707dc, or flaky (rerun it alone three times and give the
-      counts).
+    - **Typed lint's own failures** (log 825–872):
+      - `lend-found.js:88` (5ab554fb, 03f2fe26) uses the untyped
+        `lend.token` as a boolean. Check that it is a string.
+      - `running-here.js:147` (2cbe67fb) treats a template-or-empty-string
+        union as a boolean. Make `shares` nullable, and use explicit null
+        and length checks.
+      - The typed `view` fixes the other conditionals. Check the optional
+        action by an explicit value check.
+    - **iproute2:** `scripts/gate/Containerfile:20` has lsof and procps
+      but no iproute2. Add it to the same apt list (net +0 lines).
+    - **The door seek test and the WebKit relay case:**
+      - their bodies, and the transport and relay code, are unchanged
+        from 789707dc;
+      - both are already `fragile` in `docs/seams.tsv:144,593`;
+      - WebKit carried all 6 MiB with the right hash, and missed its 4 s
+        bound by 6 ms.
+      - Replay each alone at base 789707dc and at the tip, in the same
+        image, and give the counts. Don't change any timing threshold.
+      - QA is doing the isolated relay comparison.
     - **Room:** 8 counted, 14 JS. JSDoc and tests are not counted.
