@@ -33,8 +33,9 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
     let name = Name::new(name)?;
     let mut options = args.splitn(2, |w| *w == "--");
     let mut flags = options.next().unwrap_or_default();
-    let command = options.next().filter(|a| !a.is_empty());
+    let argv = options.next().filter(|a| !a.is_empty());
     let (mut port, mut folder, mut card_file, mut json) = (None, None, None, false);
+    let mut quoted = None;
     while !flags.is_empty() {
         flags = match flags {
             ["--port", value, rest @ ..] if port.is_none() => {
@@ -49,6 +50,14 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
                 card_file = Some(Path::new(value));
                 rest
             }
+            ["--command", value, rest @ ..] if quoted.is_none() && argv.is_none() => {
+                quoted = Some(
+                    shlex::split(value)
+                        .filter(|a| !a.is_empty())
+                        .context("give a command with complete quotes")?,
+                );
+                rest
+            }
             ["--json", rest @ ..] if !json => {
                 json = true;
                 rest
@@ -57,7 +66,10 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
             [] => unreachable!(),
         };
     }
-    let source = match (command, card_file, folder) {
+    let words = quoted
+        .as_ref()
+        .map(|args| args.iter().map(String::as_str).collect::<Vec<_>>());
+    let source = match (argv.or(words.as_deref()), card_file, folder) {
         (Some(command), None, folder) => Source::Command(command, folder),
         (None, Some(file), None) => Source::Card(file),
         _ => bail!("give a command after --, or a compose.yaml with --card"),

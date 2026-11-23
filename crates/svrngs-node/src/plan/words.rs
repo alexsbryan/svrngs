@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-use super::{Done, Job, Method, Plan, Reason, Report, Return, Runs};
+use super::{Done, Method, Plan, Reason, Return, Runs};
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -10,14 +10,80 @@ pub struct Review {
     pub button: String,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct Line {
-    pub text: String,
-    pub button: Option<String>,
+pub const REVIEW_AGAIN: &str = "Something changed since you reviewed this.";
+pub(crate) const RUN_UNREAD: &str =
+    "svrngs couldn’t verify this. Check it from your terminal, then look again.";
+pub(crate) const RUN: &str = "Run it with svrngs";
+pub(crate) const STARTING: &str = "Starting…";
+pub(crate) const SHARED_WHILE: &str = "Shared while you run it.";
+
+pub(crate) fn shared_while(lend: &crate::lend::Lend) -> Option<(&'static str, &'static str)> {
+    (cfg!(target_os = "linux")
+        && matches!(lend.source, crate::lend::Source::Port(_))
+        && lend.terms.keep.is_none())
+    .then_some((SHARED_WHILE, RUN))
 }
 
-const REVIEW: &str = "Review sharing";
-pub const REVIEW_AGAIN: &str = "Something changed since you reviewed this.";
+#[derive(serde::Deserialize)]
+pub(super) struct Kept {
+    name: String,
+    port: u16,
+    status: Status,
+}
+
+#[derive(serde::Deserialize)]
+struct Status {
+    running: Running,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum Running {
+    Since(Option<String>),
+    Starting,
+    Stopped,
+    Failed(String),
+}
+
+pub(super) fn owned(Kept { name, port, status }: Kept) -> serde_json::Value {
+    use {Action::*, Running::*};
+    let (text, action) = match status.running {
+        Since(Some(at)) => (format!("Run by svrngs, since {at}."), Stop),
+        Since(None) => ("Run by svrngs.".into(), Stop),
+        Starting => (STARTING.into(), Stop),
+        Stopped => ("Stopped.".into(), Start),
+        Failed(why) => (format!("{name} stopped ({why}). {RUN_UNREAD}"), Start),
+    };
+    let button = format!(
+        "{} {name}",
+        if matches!(action, Start) {
+            "Start"
+        } else {
+            "Stop"
+        }
+    );
+    serde_json::json!({ "name": name, "port": port, "text": text, "action": action, "button": button })
+}
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum Action {
+    Start,
+    Stop,
+}
+
+impl Action {
+    pub(crate) fn verb(&self) -> &'static str {
+        match self {
+            Self::Start => "start",
+            Self::Stop => "stop",
+        }
+    }
+}
+
+pub(super) fn run_form(rows: Vec<serde_json::Value>) -> serde_json::Value {
+    serde_json::json!({ "run": RUN, "fields": [["name", "Name"], ["port", "Port"], ["folder", "Folder"], ["command", "The command you start it with"]], "starting": STARTING, "rows": rows })
+}
 
 impl Plan<'_> {
     fn audience(&self) -> String {
@@ -71,30 +137,24 @@ impl Plan<'_> {
         }
     }
 
-    pub fn report_words(&self, report: &Report) -> Option<Line> {
-        use {Done::*, Job::*};
+    pub fn report_words(&self, report: &Done) -> String {
+        use Done::*;
         let name = &self.nature.name;
         let audience = self.audience();
-        let (text, button) = match report {
-            Report::Job(Starting) => ("Starting…".into(), None),
-            Report::Job(Started) => return None,
-            Report::Job(KeepsStopping { said }) => (format!("Not available: {name} {said}"), Some(format!("Start {name} again"))),
-            Report::Job(StoppedBySharer) => ("Stopped by you, after a restart too.".into(), Some(format!("Start {name}"))),
-            Report::Job(SetupChanged) => (format!("Closed until you review it: {name} changed since you shared it."), Some(REVIEW.into())),
-            Report::Job(PortTaken { by }) => (format!("Closed: a program of the account {by} is on {name}’s port. It opens again by itself once {name} has it back."), None),
-            Report::Job(SharingStopped) => (format!("{name} still runs here for you. {audience} can’t use it any more."), Some("Stop running it here".into())),
-            Report::Done(Published { .. }) => {
+        match report {
+            Published { .. } => {
                 let mut text = format!("Shared with {audience}. {}", self.promise(&audience));
                 if matches!(self.nature.runs, Runs::ByHand) {
-                    text += &format!("\nShared while you run it. To have svrngs run it: svrngs run {name} --port {} -- <the command you start it with>.", self.nature.port);
+                    text += &format!("\n{SHARED_WHILE} To have svrngs run it: svrngs run {name} --port {} -- <the command you start it with>.", self.nature.port);
                 }
-                (text, None)
+                text
             }
-            Report::Done(NotPublished { why }) if matches!(self.method, Method::Reuse(_)) => (format!("Running here; not shared. The share couldn’t be saved: {why}."), Some(REVIEW.into())),
-            Report::Done(NotPublished { why }) => (format!("The share couldn’t be saved: {why}."), Some(REVIEW.into())),
-            Report::Done(Unverified) => (format!("Not shared; svrngs couldn't verify {name} is answering."), Some(REVIEW.into())),
-        };
-        Some(Line { text, button })
+            NotPublished { why } if matches!(self.method, Method::Reuse(_)) => {
+                format!("Running here; not shared. The share couldn’t be saved: {why}.")
+            }
+            NotPublished { why } => format!("The share couldn’t be saved: {why}."),
+            Unverified => format!("Not shared; svrngs couldn't verify {name} is answering."),
+        }
     }
 }
 
@@ -108,7 +168,7 @@ pub(super) enum Started {
 
 pub(super) fn started(name: &str, started: Started) -> Result<String, String> {
     use Started::*;
-    tracing::debug!(target: "plan", ?started, "plan: keeper Run verdict");
+    tracing::debug!(target: "plan", ?started, "plan: Run verdict");
     match started {
         Verified => Ok(format!("{name} is running here. Share it separately with `svrngs share`.\n")),
         Unverified { state, ready } => Err(format!("Not shared; svrngs couldn't verify {name} is answering. Reported state: {}. The port {}.",

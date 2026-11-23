@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+use super::words::{self, RUN_UNREAD};
 use super::{
     plan, step, Availability, Done, Event, Method, Nature, Plan, Platform, Return, Runs, State,
     Terms,
@@ -10,57 +11,71 @@ use crate::{
     share::{self, Granted, Pid, ShareRefusal},
     uid::{Answering, Unread},
 };
-use std::{collections::BTreeSet, path::Path, process::Stdio};
+use std::{collections::BTreeSet, path::Path};
 
 /// Run is local only; it takes no share witness or access terms.
-pub async fn native(name: &str, args: &[String]) -> Result<String, String> {
-    if !cfg!(target_os = "linux") {
-        return Err("Running a program with svrngs is available on Linux.".into());
-    }
-    let path = std::env::current_exe()
-        .map_err(|e| e.to_string())?
-        .with_file_name("svrngs-keeper");
-    let child = tokio::process::Command::new(path)
-        .args(["run", name, "--json"])
-        .args(args)
-        .stdout(Stdio::piped())
-        .kill_on_drop(true)
-        .spawn()
-        .map_err(|e| format!("svrngs couldn't open its keeper: {e}"))?;
-    let out = tokio::time::timeout(std::time::Duration::from_secs(90), child.wait_with_output())
-        .await
-        .map_err(|_| "svrngs couldn't verify the start before the wait ended.")?
-        .map_err(|e| e.to_string())?;
-    tracing::debug!(target: "plan", status = %out.status, "plan: keeper Run answered");
-    let started = serde_json::from_slice(&out.stdout)
-        .ok()
-        .filter(|_| out.status.success())
-        .ok_or("svrngs couldn't verify the start.")?;
-    super::words::started(name, started)
+pub async fn native<'a>(
+    name: &'a str,
+    args: impl IntoIterator<Item = &'a str>,
+) -> Result<String, String> {
+    let out = keeper(["run", name, "--json"].into_iter().chain(args)).await?;
+    words::started(name, serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?)
 }
 
-pub enum Confirmation<T> {
-    ReviewAgain(State, T),
-    Finished(State, T),
-    Unavailable,
+pub(crate) async fn keeper<'a>(args: impl IntoIterator<Item = &'a str>) -> Result<Vec<u8>, String> {
+    if !cfg!(target_os = "linux") {
+        return Err(RUN_UNREAD.into());
+    }
+    let at = std::env::current_exe().map_err(|_| RUN_UNREAD)?;
+    let mut child = tokio::process::Command::new(at.with_file_name("svrngs-keeper"));
+    let answer = tokio::time::timeout(
+        std::time::Duration::from_secs(90),
+        child.args(args).kill_on_drop(true).output(),
+    )
+    .await;
+    tracing::debug!(target: "plan", status = ?answer.as_ref().map(|out| out.as_ref().map(|o| o.status)), "plan: keeper answered");
+    match answer {
+        Ok(Ok(out)) if out.status.success() => Ok(out.stdout),
+        _ => Err(RUN_UNREAD.into()),
+    }
+}
+
+#[derive(serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+enum Row {
+    Kept(super::words::Kept),
+    Unread { name: String },
+    Removed,
+}
+
+pub(crate) async fn rows() -> Result<serde_json::Value, String> {
+    let rows: Vec<Row> =
+        serde_json::from_slice(&keeper(["list", "--json"]).await?).map_err(|_| RUN_UNREAD)?;
+    Ok(words::run_form(
+        rows.into_iter()
+            .filter_map(|row| match row {
+                Row::Kept(kept) => Some(words::owned(kept)),
+                Row::Unread { name } => {
+                    Some(serde_json::json!({ "name": name, "text": RUN_UNREAD }))
+                }
+                Row::Removed => None,
+            })
+            .collect(),
+    ))
 }
 
 /// Replay first; only a current review may publish access.
-pub fn confirm<T>(
+pub fn confirm(
     token: &str,
-    replay: impl FnOnce() -> (State, T),
-    publish: impl FnOnce(&T, &Plan<'_>) -> Done,
-) -> Confirmation<T> {
-    let (observed, witness) = replay();
-    let Some(ready) = plan(&observed) else {
-        return Confirmation::Unavailable;
-    };
+    observed: &State,
+    publish: impl FnOnce(&Plan<'_>) -> Done,
+) -> Option<Done> {
+    let ready = plan(observed)?;
     if ready.token != token {
         tracing::debug!(target: "plan", "plan: confirm requires a new review");
-        return Confirmation::ReviewAgain(observed, witness);
+        return None;
     }
-    let done = publish(&witness, &ready);
-    Confirmation::Finished(step(observed, Event::Done(done)), witness)
+    Some(publish(&ready))
 }
 
 pub struct Share<'a> {
@@ -160,12 +175,14 @@ pub(crate) fn own_return() -> Return {
 
 pub fn service_return(unit: &str) -> Return {
     // Unit enablement proves a sign-in path; it doesn't prove unattended disk unlock.
-    if job::show(unit).is_ok_and(|show| {
-        show.get("UnitFileState").is_some_and(|v| v == "enabled")
-            && show
-                .get("WantedBy")
-                .is_some_and(|v| v.split_whitespace().any(|t| t == "default.target"))
-    }) {
+    let Ok(show) = job::show(unit) else {
+        return Return::Unknown;
+    };
+    let enabled = show.get("UnitFileState").map(String::as_str) == Some("enabled");
+    let wanted = show
+        .get("WantedBy")
+        .is_some_and(|v| v.split_whitespace().any(|t| t == "default.target"));
+    if enabled && wanted {
         Return::SignIn
     } else {
         Return::Unknown

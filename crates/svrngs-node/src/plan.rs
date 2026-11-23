@@ -3,8 +3,10 @@
 //! See svrn-docs KEEP_IT_RUNNING_RELEASE §3.1. Only the owners can attest the inputs.
 
 pub mod run;
+pub(crate) use words::Action;
 mod words;
-pub use words::{Line, Review, REVIEW_AGAIN};
+pub(crate) use words::shared_while;
+pub use words::{Review, REVIEW_AGAIN};
 
 use crate::{
     job::Keep,
@@ -20,8 +22,6 @@ pub enum Event {
     Starts { app: Return, door: Return },
     Terms(Terms),
     Revision(u64),
-    Job(Job),
-    Done(Done),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -77,32 +77,10 @@ pub enum Return {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Job {
-    Starting,
-    Started,
-    /// The owner's observation, including the measured count and its window.
-    KeepsStopping {
-        said: String,
-    },
-    StoppedBySharer,
-    SetupChanged,
-    PortTaken {
-        by: String,
-    },
-    SharingStopped,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Done {
     Unverified,
     Published { rev: u64 },
     NotPublished { why: String },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Report {
-    Job(Job),
-    Done(Done),
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -111,7 +89,6 @@ pub struct State {
     starts: Option<(Return, Return)>,
     terms: Option<Terms>,
     rev: Option<u64>,
-    pub report: Option<Report>,
 }
 
 pub fn step(mut state: State, event: Event) -> State {
@@ -120,8 +97,6 @@ pub fn step(mut state: State, event: Event) -> State {
         Event::Starts { app, door } => state.starts = Some((app, door)),
         Event::Terms(terms) => state.terms = Some(terms),
         Event::Revision(rev) => state.rev = Some(rev),
-        Event::Job(job) => state.report = Some(Report::Job(job)),
-        Event::Done(done) => state.report = Some(Report::Done(done)),
     }
     state
 }

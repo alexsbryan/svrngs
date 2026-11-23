@@ -80,7 +80,7 @@ use crate::join::{Entered, NotJoined};
 use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
-use crate::plan::{self, run, Availability, Done, Report};
+use crate::plan::{self, run, Availability, Done};
 use crate::share::{self, Share, ShareRefusal};
 
 /// The home page's host, before its port.
@@ -165,6 +165,8 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) ->
     .route("/lent", get(lent).post(change))
     .route("/running", get(running).post(lend_one))
     .route("/running/confirm", axum::routing::post(lend_one))
+    .route("/run", get(run_rows).post(run_one))
+    .route("/run/action", axum::routing::post(run_action))
     .route("/link", axum::routing::post(link))
     .route("/connection", axum::routing::post(connection))
     .route("/publication", get(crate::publication::status).post(crate::publication::publish))
@@ -472,7 +474,11 @@ async fn lent(State(at): State<Asking>) -> Response {
         tracing::debug!(target: "home", lend = %l.name, read, by, "home: how apps read a lend, by its groups' terms and svrngs's, or why those can't be read");
         readers.extend(read.then(|| (l.name.to_string(), said)));
     }
-    Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers, "headers": headers }))
+    let sharing: std::collections::BTreeMap<_, _> = all
+        .iter()
+        .filter_map(|l| plan::shared_while(l).map(|said| (&l.name, said)))
+        .collect();
+    Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers, "headers": headers, "sharing": sharing }))
         .into_response()
 }
 
@@ -694,6 +700,42 @@ fn unread(why: &str, error: &dyn std::fmt::Display) -> Response {
     LendRefusal::fault(why)
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ToRun {
+    name: LendName,
+    port: NonZeroU16,
+    folder: String,
+    command: String,
+}
+
+async fn run_one(Json(ask): Json<ToRun>) -> Result<Json<String>, Response> {
+    let port = ask.port.to_string();
+    let args = [
+        "--port",
+        &port,
+        "--folder",
+        &ask.folder,
+        "--command",
+        &ask.command,
+    ];
+    run_reply(run::native(ask.name.as_str(), args).await)
+}
+
+async fn run_action(
+    Json((name, action)): Json<(LendName, plan::Action)>,
+) -> Result<Json<()>, Response> {
+    run_reply(run::keeper([action.verb(), name.as_str()]).await.map(drop))
+}
+
+async fn run_rows() -> Result<Json<serde_json::Value>, Response> {
+    run_reply(run::rows().await)
+}
+
+fn run_reply<T>(got: Result<T, String>) -> Result<Json<T>, Response> {
+    got.map(Json).map_err(LendRefusal::closed)
+}
+
 /// `GET /running`: what answers on this computer, less svrngs's own
 /// listener and what it lends already, each [`shown`]; and the kinds the
 /// table knows by their name alone, for the person to say.
@@ -876,22 +918,13 @@ async fn lend_one(
     let confirming = path.as_str() == "/running/confirm";
     if confirming {
         let token = token.ok_or_else(|| LendRefusal::closed(plan::REVIEW_AGAIN))?;
-        let result = run::confirm(
-            &token,
-            || (observed.clone(), witness),
-            |w, p| intent.execute(p, w, lend::Credentials::Replace(None)),
-        );
-        if let run::Confirmation::Finished(result, _) = result {
-            let report = result.report.expect("confirmation reports a result");
-            if matches!(report, Report::Done(Done::Published { .. })) {
+        if let Some(report) = run::confirm(&token, &observed, |p| {
+            intent.execute(p, &witness, lend::Credentials::Replace(None))
+        }) {
+            if matches!(report, Done::Published { .. }) {
                 return Ok(Json(shown(port, Some(&lend.kind), Some(name), &terms)).into_response());
             }
-            return Err(LendRefusal::closed(
-                reviewed
-                    .report_words(&report)
-                    .expect("the owner finished")
-                    .text,
-            ));
+            return Err(LendRefusal::closed(reviewed.report_words(&report)));
         }
     }
     let said = confirming.then_some(plan::REVIEW_AGAIN);

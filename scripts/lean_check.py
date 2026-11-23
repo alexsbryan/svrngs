@@ -42,7 +42,7 @@ PLAN_IO = re.compile(
 # O3: app jobs are read here; only the executor may start the keeper. The
 # command's own restart is outside the node and acts on svrngs itself.
 NODE_COMMAND = {
-    "plan/run.rs": 'Command::new(path).args(["run",name,"--json"]).args(args).stdout(Stdio::piped()).kill_on_drop(true).spawn()',
+    "plan/run.rs": 'Command::new(at.with_file_name("svrngs-keeper"))',
     "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
     "home.rs": "Command::new(opener);",
     "network.rs": 'Command::new("/usr/sbin/scutil");',
@@ -983,9 +983,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25485,
+    ".": 25544,
 
-    "js": 8683,
+    "js": 8732,
 
     "swift": 1,
 }

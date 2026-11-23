@@ -1979,6 +1979,111 @@ async fn slow_way(relay: &Server, by: Duration) -> String {
 /// port in both engines' runs of [`the_home_page_lends_what_runs_here`].
 static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
+// The isolated user manager and packaged keeper are supplied by the demo
+// driver. No test in the standard browser suite touches a login manager.
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "run in the gate with the isolated user manager"]
+async fn explicit_run_then_share_in_webkit() {
+    assert_eq!(
+        std::env::var("SVRNGS_RUN_PAGE_DEMO").as_deref(),
+        Ok("scratch")
+    );
+    let engine = Engine::Webkit;
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let busy = free_here(20000).await;
+    let busy_port = busy.local_addr().unwrap().port();
+    let free = free_here(busy_port + 1).await;
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let name = "test-page-coder";
+    let site = dir.path().join("site");
+    std::fs::create_dir(&site).unwrap();
+    std::fs::write(
+        site.join("index.html"),
+        "<!doctype html><title>Run page witness</title>",
+    )
+    .unwrap();
+    let address = if std::env::var_os("SVRNGS_RUN_PAGE_PLANT").is_some() {
+        "'127.0.0.1"
+    } else {
+        "'127.0.0.1'"
+    };
+    let cmd = format!("/usr/bin/python3 -m http.server {port} --bind {address}");
+    let field = |key: &str, value: &str| json!([format!("#run-form input[name={key}]"), value]);
+    let act = |selector: &str, words: &str| json!([selector, null, true, words]);
+    let submit = "#run-form form button";
+    let ran = home_page(
+        engine,
+        &ada,
+        json!({
+            "read": "#run-form summary",
+            "all": "#run-form, #lent li",
+            "unfold": true,
+            "do": [
+                field("name", name), field("port", &busy_port.to_string()),
+                field("folder", site.to_str().unwrap()), field("command", &cmd),
+                act(submit, "is in use by"), field("port", &port.to_string()),
+                act(submit, "Run by svrngs"),
+                act("#run-form button:has-text('Stop test-page-coder')", "Stopped."),
+                act("#run-form button:has-text('Start test-page-coder')", "Run by svrngs"),
+            ],
+        }),
+    )
+    .await;
+    let still_busy = std::net::TcpListener::bind(("127.0.0.1", busy_port));
+    assert!(
+        still_busy.is_err(),
+        "the refused Run took the busy listener"
+    );
+    assert!(
+        svrngs_node::lend::all(dir.path()).unwrap().is_empty(),
+        "Run or Start published: {ran:#}"
+    );
+    println!("WebKit Run: {}", ran["after"]);
+    let row = format!("#running li:has-text('localhost:{port}')");
+    let shared = home_page(
+        engine,
+        &ada,
+        json!({
+            "all": "#running li, #lent li",
+            "do": [
+                act("#running button:has-text('Look for programs')", &format!("localhost:{port}")),
+                field_on(&row, "name", name), field_on(&row, "kind", "test-http"),
+                [format!("{row} input[type=checkbox]"), true],
+                act(&format!("{row} button"), "Share test-page-coder"),
+                act(&format!("{row} button"), "You lent test-page-coder"),
+            ],
+            "after": ["#lent li", "test-page-coder:"],
+        }),
+    )
+    .await;
+    let saved = svrngs_node::lend::read(
+        dir.path(),
+        &svrngs_node::lend::LendName::parse(name).unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(saved.port().unwrap().get(), port, "{shared:#}");
+    assert!(
+        saved.terms.keep.is_some(),
+        "Share did not grant the observed job: {shared:#}"
+    );
+    let bo_dir = tempfile::tempdir().unwrap();
+    let bo = standing(bo_dir.path(), &relay, &ada, 7, "bo").await;
+    let opened = home_page(engine, &bo, json!({ "open": "test-page-coder" })).await;
+    assert_eq!(opened["opened"]["title"], "Run page witness", "{opened:#}");
+    println!("WebKit Share: {}", shared["later"]);
+    println!("WebKit Alex opened: {}", opened["opened"]);
+}
+
+#[cfg(target_os = "linux")]
+fn field_on(row: &str, key: &str, value: &str) -> Value {
+    json!([format!("{row} input[name={key}]"), value])
+}
+
 /// A port from 20000 up that nothing on this host holds now, inside the
 /// probe's span and below the system's own (Linux's from 32768), with its
 /// listener: dropped, nothing listens there.

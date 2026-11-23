@@ -136,7 +136,7 @@ use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal, Terms};
 use svrngs_node::link::{client_link, https_link, Link, Origin};
 use svrngs_node::oidc::KeyFailure;
-use svrngs_node::plan::{self, run, Availability, Done, Report};
+use svrngs_node::plan::{self, run, Availability, Done};
 
 pub const USAGE: &str = include_str!("help.txt");
 
@@ -867,7 +867,9 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             update::Outcome::Packaged(words) => format!("{words}\n"),
         },
         Verb::Restart => restart(&root)?,
-        Verb::RunApp(name, args) => run::native(&name, &args).await.map_err(Refused::RunApp)?,
+        Verb::RunApp(name, args) => run::native(&name, args.iter().map(String::as_str))
+            .await
+            .map_err(Refused::RunApp)?,
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {
             kind,
@@ -996,34 +998,24 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             };
             let mut current = intent(&lend);
             current.terms.groups = audience_names(&root, asked.port, &groups)?;
-            let replay = current.observe(read)?;
+            let (observed, witness) = current.observe(read)?;
             let secret_header =
                 lend::Credentials::Replace(secret.as_deref().map(|s| (lend::SECRET_HEADER, s)));
-            let (result, witness) = match run::confirm(
-                &reviewed.token,
-                || replay,
-                |witness, ready| current.execute(ready, witness, secret_header),
-            ) {
-                run::Confirmation::Finished(result, witness) => (result, witness),
-                run::Confirmation::ReviewAgain(now, witness) => {
-                    let review = plan::plan(&now).expect("replayed review");
-                    return Err(Refused::SharePlan(format!(
-                        "{}\n{}",
-                        plan::REVIEW_AGAIN,
-                        share_review(&review, &witness.answers)
-                    ))
-                    .into());
+            let Some(report) = run::confirm(&reviewed.token, &observed, |ready| {
+                current.execute(ready, &witness, secret_header)
+            }) else {
+                let mut words = plan::REVIEW_AGAIN.to_string();
+                if let Some(review) = plan::plan(&observed) {
+                    words += "\n";
+                    words += &share_review(&review, &witness.answers);
                 }
-                run::Confirmation::Unavailable => {
-                    return Err(Refused::SharePlan(plan::REVIEW_AGAIN.into()).into())
-                }
+                return Err(Refused::SharePlan(words).into());
             };
-            let report = result.report.as_ref().expect("the owner answered");
-            let line = reviewed.report_words(report).expect("the owner finished");
-            if !matches!(report, Report::Done(Done::Published { .. })) {
-                return Err(Refused::SharePlan(line.text).into());
+            let line = reviewed.report_words(&report);
+            if !matches!(report, Done::Published { .. }) {
+                return Err(Refused::SharePlan(line).into());
             }
-            eprintln!("{}", line.text);
+            eprintln!("{line}");
             let lend = lend::read(&root, &lend.name)
                 .ok()
                 .flatten()

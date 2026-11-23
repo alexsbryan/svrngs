@@ -25,7 +25,7 @@ import { answered } from './running-look.js?v=__VERSION__';
  * groups to lend it to, and HOME's `dispatch`, told to read again once it
  * changes.
  * @typedef {object} LentProps
- * @property {Lend} l
+ * @property {Lend & { sharing?: [string, string] }} l
  * @property {boolean} signs
  * @property {AppsAccount} [account]
  * @property {string[]} [headers]
@@ -186,6 +186,11 @@ function Keep({ lend, doing, send }) {
 const undone = (/** @type {AppsAccount | undefined} */ account, /** @type {Lend} */ lend) =>
   (account !== undefined && !account.kept) || Boolean(lend.held);
 
+/** @param {LentProps['l']['sharing']} sharing */
+const runLink = (sharing) =>
+  sharing &&
+  html`<p>${sharing[0]} <a href="#run-form" onClick=${() => document.querySelector('#run-form details')?.setAttribute('open', '')}>${sharing[1]}</a></p>`;
+
 /** @param {LentProps} props */
 export function Lent({ l: lend, signs, account, headers, groups, home }) {
   /** @type {() => State} */
@@ -209,7 +214,8 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   return html`
     <li>
       <details open=${undone(account, lend)} aria-label=${lend.name}>
-      <summary>${words}</summary>
+       <summary>${words}</summary>
+       ${runLink(lend.sharing)}
       <${Keep} lend=${lend} doing=${doing} send=${send} />
       <${Field}
         words="How many people at once: "

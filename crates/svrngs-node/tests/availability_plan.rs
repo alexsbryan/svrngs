@@ -45,26 +45,13 @@ fn observation(nature: Nature, terms: Terms, app: Return, door: Return) -> [Even
 #[test]
 fn p1_every_prefix_replays_and_material_changes_invalidate_the_token() {
     let (nature, terms) = facts();
-    let mut events = observation(
+    let events = observation(
         nature.clone(),
         terms.clone(),
         Return::Startup,
         Return::Startup,
-    )
-    .to_vec();
-    events.extend([
-        Event::Job(Job::Starting),
-        Event::Done(Done::NotPublished {
-            why: "disk full".into(),
-        }),
-    ]);
-    let whole = fold(&events, State::default());
-    assert_eq!(
-        whole.report,
-        Some(Report::Done(Done::NotPublished {
-            why: "disk full".into()
-        }))
     );
+    let whole = fold(&events, State::default());
     let shown = plan(&whole).unwrap();
     for split in 0..=events.len() {
         let prefix = fold(&events[..split], State::default());
@@ -333,52 +320,39 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     let partial = lend::lends_dir(dir.path()).join(format!(".{}.json.partial", nature.name));
     std::fs::create_dir_all(&partial).unwrap();
     let execute = |token: &str| {
-        run::confirm(
-            token,
-            || (observe(nature.clone()), ()),
-            |(), ready| {
-                run::publish(
-                    dir.path(),
-                    ready,
-                    template.clone(),
-                    granted.clone(),
-                    Credentials::Keep,
-                )
-            },
-        )
+        run::confirm(token, &observe(nature.clone()), |ready| {
+            run::publish(
+                dir.path(),
+                ready,
+                template.clone(),
+                granted.clone(),
+                Credentials::Keep,
+            )
+        })
     };
-    let run::Confirmation::Finished(result, ()) = execute(&first.token) else {
+    let Some(result) = execute(&first.token) else {
         panic!("initial confirmation did not finish");
     };
     assert!(lend::read(dir.path(), &nature.name).unwrap().is_none());
     assert!(lend::all(dir.path()).unwrap().is_empty());
-    let words = plan(&result)
-        .unwrap()
-        .report_words(result.report.as_ref().unwrap())
-        .unwrap();
+    let words = first.report_words(&result);
     assert!(
-        words
-            .text
-            .starts_with("Running here; not shared. The share couldn’t be saved:")
-            && words.text.contains(".json.partial"),
+        words.starts_with("Running here; not shared. The share couldn’t be saved:")
+            && words.contains(".json.partial"),
         "{words:?}"
     );
-    assert_eq!(words.button.as_deref(), Some("Review sharing"));
-    println!("{}", words.text);
+    println!("{words}");
 
     std::fs::remove_dir(&partial).unwrap();
     let reviewed = observe(nature.clone());
     let retry = plan(&reviewed).unwrap();
     assert!(matches!(retry.method, Method::Reuse(_)));
-    let run::Confirmation::Finished(result, ()) = execute(&retry.token) else {
+    let Some(result) = execute(&retry.token) else {
         panic!("retry did not finish");
     };
-    let words = plan(&result)
-        .unwrap()
-        .report_words(result.report.as_ref().unwrap())
-        .unwrap();
-    assert!(words.text.starts_with("Shared with House."), "{words:?}");
-    println!("{}", words.text);
+    let words = retry.report_words(&result);
+    assert!(words.starts_with("Shared with House."), "{words:?}");
+    println!("{words}");
     assert_eq!(
         lend::revision(dir.path(), &nature.name).unwrap(),
         retry.if_rev + 1
@@ -405,15 +379,11 @@ fn p3_changed_revision_requests_review_before_publishing() {
     let reviewed = observation(nature, terms, Return::Startup, Return::Startup);
     let original = fold(&reviewed, State::default());
     let current = step(original.clone(), Event::Revision(14));
-    let result = run::confirm(
-        &plan(&original).unwrap().token,
-        || (current.clone(), ()),
-        |(), _| {
-            panic!("a stale review called an effect owner");
-        },
+    let result = run::confirm(&plan(&original).unwrap().token, &current, |_| {
+        panic!("a stale review called an effect owner");
+    });
+    assert!(
+        result.is_none(),
+        "a stale confirmation did not request another review"
     );
-    let run::Confirmation::ReviewAgain(review, ()) = result else {
-        panic!("a stale confirmation did not request another review");
-    };
-    assert_eq!(plan(&review).unwrap(), plan(&current).unwrap());
 }

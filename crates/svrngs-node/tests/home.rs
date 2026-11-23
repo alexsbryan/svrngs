@@ -148,6 +148,30 @@ async fn ask(
     }
 }
 
+#[tokio::test]
+async fn run_routes_take_only_the_home_pages_closed_requests() {
+    let dir = tempfile::tempdir().unwrap();
+    let alex = on_wire::start(1, dir.path()).await;
+    let host = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{host}\r\n");
+    let foreign = "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\nOrigin: https://elsewhere.invalid\r\n";
+    let browser = Browser::of(&alex);
+    for (path, body) in [
+        (
+            "/run",
+            r#"{"name":"test","port":1,"folder":".","command":"/bin/false","argv":["/bin/true"]}"#,
+        ),
+        ("/run/action", r#"["test","remove"]"#),
+    ] {
+        let got = ask(&browser, "POST", &host, path, &own, body).await;
+        assert_eq!(got.status, 422, "{path}: {}", got.body);
+        let got = ask(&browser, "POST", &host, path, foreign, body).await;
+        assert_eq!(got.status, 403, "{path}: {}", got.body);
+    }
+    alex.net().close().await;
+}
+
 /// **The home page answers only itself, shows what `/v1/lends` answers, and
 /// takes only the person's yes and stop.** Typed, it serves its page and
 /// module, never to be framed, and every answer, its session's bootstrap

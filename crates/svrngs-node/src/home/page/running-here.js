@@ -2,12 +2,13 @@
 // "Already running here" on the home page, once the person is in a group:
 // what the look says (running-look.js RUNNING), its button, and each
 // program it found, a row of its own (`Found`).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { html, useEffect, useMachine, useState } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LEND } from './lend-found.js?v=__VERSION__';
 import { GroupChoice } from './group-choice.js?v=__VERSION__';
 import { answered, needs, RUNNING } from './running-look.js?v=__VERSION__';
+import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import { Shown, State } from './running-look.js?v=__VERSION__' */
@@ -123,6 +124,51 @@ function Found({ r: shown, named, groups, home }) {
  * @typedef {{ groups: Choice[], home: Home }} RunningProps
  */
 
+function RunForm() {
+  const [view, set] = useState(/** @type {any} */ (null));
+  const [said, say] = useState('');
+  const [busy, wait] = useState(false);
+  const refresh = () => get('/run').then(set);
+  /** @param {Error} error */
+  const refused = (error) => say(error.message);
+  useEffect(() => {
+    refresh().catch(refused);
+  }, []);
+  /** @param {string} path @param {unknown} body */
+  const act = (path, body) => {
+    wait(true);
+    say(path === '/run' ? view.starting : '');
+    return post(path, body)
+      .then((answer) => say(answer ?? ''), refused)
+      .then(() => refresh().catch(refused))
+      .finally(() => wait(false));
+  };
+  /** @param {import('../ui/view.js?v=__VERSION__').Targeted<HTMLFormElement>} event */
+  const submit = (event) => {
+    event.preventDefault();
+    const { name, port, folder, command } = Object.fromEntries(new FormData(event.currentTarget));
+    void act('/run', { name, port: Number(port), folder, command });
+  };
+  return html`<div id="run-form">
+    ${
+      view &&
+      html`<details><summary>${view.run}</summary>
+      <form onSubmit=${submit}><fieldset disabled=${busy}>
+        ${view.fields.map(([key, label]) => html`<label>${label} <input name=${key} required /></label>`)}
+        <button>${view.run}</button>
+      </fieldset></form>
+    </details>`
+    }
+    <p role="status">${said}</p>
+    ${view?.rows.map(
+      ({ name, port, text, action, button }) => html`<p key=${name}>
+      ${name} ${port} · ${text}
+      ${action && html`<button disabled=${busy} onClick=${() => act('/run/action', [name, action])}>${button}</button>`}
+    </p>`,
+    )}
+  </div>`;
+}
+
 /** @param {RunningProps} props */
 function Running({ groups, home }) {
   const [state, send] = useMachine(() =>
@@ -147,6 +193,7 @@ function Running({ groups, home }) {
   return html`
     <section id="running">
       <h2>Already running here</h2>
+      <${RunForm} />
       <p>${SAID[state.at.running](state)}</p>
       <p>
         <${Act}

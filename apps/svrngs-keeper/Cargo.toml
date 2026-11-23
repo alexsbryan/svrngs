@@ -24,6 +24,7 @@ serde_json = "1"
 # deprecated by its author and still the YAML reader the registry here
 # already holds; the card reads it into a Value and walks it itself (card.rs).
 serde_yaml = "0.9"
+shlex = "2"
 tar = "0.4"
 thiserror = "2"
 tracing = "0.1"

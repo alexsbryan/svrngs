@@ -218,7 +218,11 @@ container, using the port named by the card) asks the sibling keeper to
 start it on Linux and writes no share. Run verifies readiness only with
 listeners in its active unit's
 cgroup subtree; otherwise it reports manager state and port readiness
-separately (`native_run.rs`). When Share would grant a running unit, it
+separately (`native_run.rs`). The home page's native Run asks for a name,
+port, folder and command; the keeper parses quoting without running a
+shell. Its Start and Stop controls use only the keeper's observed jobs
+and leave sharing alone. The share review is still a separate act.
+When Share would grant a running unit, it
 dials without sending bytes and checks the listeners and connection taker against
 that unit and the reviewed approval before the conditional save
 (svrn-docs `rings/current/KEEP_IT_RUNNING_RELEASE.md`).
