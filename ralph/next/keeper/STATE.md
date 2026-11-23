@@ -388,7 +388,7 @@ envelope.
 
 Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the operator, 2026-11-22: "Yes this is all I wanted … that's the bulletproof system"). Each row's design and grounded estimate is the spec's §5 row named in it; where they disagree, the spec wins. svrngs never stops or signals a program it didn't start (spec §3.4, N1).
 
-- [ ] avail-unmagic — depends [avail-terminal] — ONE UNIT: spec §5 row 1. Remove the live takeover, the adoption and the copying from a live process.
+- [x] avail-unmagic 3c3646180 — depends [avail-terminal] — ONE UNIT: spec §5 row 1. Remove the live takeover, the adoption and the copying from a live process.
   - **Keeper:** `takeover.rs`; the stop, verify and identity paths of
     `host.rs`; `promote.rs`'s adoption, declines, copy card and
     environment; `facts.rs`, reduced to the prefill; `main.rs` `at_port`'s
