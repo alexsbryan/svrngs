@@ -932,10 +932,11 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - **Plant**, so a regression would be caught: break the product, not
     the test. For example, Run writing a lend, and a renewal without the
     unit's cgroup. Each must fail the new step. Then green.
-  - **Size:** the counted room left is 4 (25,723 of 25,727). Move the
-    setup the scenes need out of the demo wrapper into the gate's own
-    image or a step helper, whichever costs fewer counted lines. If it
-    can't fit, park with per-file counts: a raise is the operator's.
+  - **Size:** the charter ceiling is 25,727, but `scripts/lean_check.py`
+    (`:996`, `:1114–1115`) allows at most 25,723 at HEAD, already used.
+    Reuse the demo's test fixture in the gate and fund its
+    step line with a preserving cut. If it can't fit, park with per-file
+    counts: a raise is the operator's.
 
 - [ ] avail-release-tier — depends [avail-e2e-gate] — ONE UNIT (evidence tooling; demo/ is not counted): one command that reruns, before each release, the proofs no per-commit gate can run.
   - **One entry point** (for example `demo/release/run.sh`), reusing the

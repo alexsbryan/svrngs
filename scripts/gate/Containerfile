@@ -116,5 +116,7 @@ ENV CARGO_INCREMENTAL=0 USER=gate
 # it the container's cgroup, for podman's pauses.
 COPY delegate.sh /usr/local/bin/delegate
 USER root
+# The keeper test fixture starts a private systemd --user, not systemd as PID 1.
+RUN mkdir -p /run/systemd/system
 ENTRYPOINT ["/usr/local/bin/delegate"]
 CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; exec scripts/check.sh"]

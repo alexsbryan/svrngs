@@ -1,6 +1,6 @@
 #!/bin/bash
 # The gate flags from scripts/gate/README.md, with the worktree's git mount.
-# Only inside this disposable container: add ss and enable a private user manager.
+# The gate image carries ss and the private user manager's systemd marker.
 set -euo pipefail
 if command -v podman >/dev/null; then P=(podman); else P=(flatpak-spawn --host podman); fi
 exec flock /tmp/svrngs-gate.lock "${P[@]}" run --rm --init --userns=keep-id:uid=1000,gid=1000 \
@@ -13,11 +13,4 @@ exec flock /tmp/svrngs-gate.lock "${P[@]}" run --rm --init --userns=keep-id:uid=
     -v svrngs-gate-cargo-git:/home/gate/.cargo/git \
     -v svrngs-gate-npm:/home/gate/.npm \
     -v svrngs-gate-containers:/home/gate/.local/share/containers \
-    --entrypoint /bin/bash svrngs-gate -ec '
-        if ! command -v ss >/dev/null; then
-            apt-get update -qq
-            apt-get install -qy --no-install-recommends iproute2
-        fi
-        mkdir -p /run/systemd/system
-        exec /usr/local/bin/delegate python3 -B demo/runs/keeper/2026-11-23-run-page/run.py "$@"
-    ' gate "$@"
+    svrngs-gate python3 -B demo/runs/keeper/2026-11-23-run-page/run.py "$@"
