@@ -69,9 +69,9 @@ fn p1_every_prefix_replays_and_material_changes_invalidate_the_token() {
     let whole = fold(&events, State::default());
     assert_eq!(
         whole.report,
-        Some(Report::Done(Done::NotPublished {
+        Some(Report::RunningNotShared {
             why: "disk full".into()
-        }))
+        })
     );
     let shown = plan(&whole).unwrap();
     for split in 0..=events.len() {
@@ -313,9 +313,9 @@ fn p2_host_product_matches_the_written_plans_and_words() {
     );
     let plan = plan(&state).unwrap();
     let status = plan
-        .report_words(&Report::Done(Done::NotPublished {
+        .report_words(&Report::RunningNotShared {
             why: "disk full".into(),
-        }))
+        })
         .unwrap();
     assert_eq!(
         status.text,
@@ -325,4 +325,98 @@ fn p2_host_product_matches_the_written_plans_and_words() {
     println!(
         "P2: {checked} host combinations, including the rehearsal hosts and the passphrase disk"
     );
+}
+
+#[test]
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the local job's own listener, not a share dial"
+)]
+fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
+    use svrngs_node::lend::{self, Audience, Lend};
+    let dir = tempfile::tempdir().unwrap();
+    let (mut nature, terms) = facts();
+    let observe = |nature: Nature| {
+        let rev = lend::revision(dir.path(), &nature.name).unwrap();
+        let mut observed = observation(nature, terms.clone(), Return::Startup, Return::Startup);
+        observed[3] = Event::Revision(rev);
+        fold(&observed, State::default())
+    };
+    let before = observe(nature.clone());
+    assert!(matches!(plan(&before).unwrap().method, Method::Takeover(_)));
+    assert!(
+        !dir.path().join("locks").exists(),
+        "preview creates no files"
+    );
+
+    // Stand in for the keeper's verified takeover with a scratch listener.
+    let listener = std::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0)).unwrap();
+    let addr = listener.local_addr().unwrap();
+    nature.port = addr.port().try_into().unwrap();
+    let before = observe(nature.clone());
+    let access = plan(&before).unwrap();
+    let template = Lend::carried("coder", "house").unwrap();
+    let keep = Keep {
+        unit: "coder.service".into(),
+        files: "verified".into(),
+    };
+    let approved = eudoxia_community::binding::Approved {
+        at: addr.ip(),
+        boot: Some(9),
+        sockets: [23].into(),
+        cgroups: [42].into(),
+        processes: [].into(),
+        held: false,
+    };
+    let granted = (approved.clone(), Some(keep.clone()));
+
+    // Obstruct the declaration writer, after the revision can be reserved.
+    let partial = lend::lends_dir(dir.path()).join(format!(".{}.json.partial", nature.name));
+    std::fs::create_dir_all(&partial).unwrap();
+    let done = run::publish(dir.path(), &access, template.clone(), granted.clone());
+    assert!(
+        matches!(done, Done::NotPublished { ref why } if why.contains(".json.partial")),
+        "{done:?}"
+    );
+    assert!(lend::read(dir.path(), &nature.name).unwrap().is_none());
+    assert!(lend::all(dir.path()).unwrap().is_empty());
+    let after = fold(
+        &[Event::Done(Done::Verified), Event::Done(done)],
+        before.clone(),
+    );
+    let report = after.report.unwrap();
+    assert!(
+        matches!(report, Report::RunningNotShared { .. }),
+        "{report:?}"
+    );
+    let words = access.report_words(&report).unwrap();
+    assert!(words.text.starts_with("Running here; not shared."));
+    assert_eq!(words.button.as_deref(), Some("Review sharing"));
+
+    std::fs::remove_dir(&partial).unwrap();
+    nature.runs = Runs::Kept(keep.clone());
+    let reviewed = observe(nature.clone());
+    let retry = plan(&reviewed).unwrap();
+    assert!(matches!(retry.method, Method::Reuse(_)));
+    assert!(matches!(
+        retry.steps().collect::<Vec<_>>().as_slice(),
+        [Step::Access(_)]
+    ));
+    assert!(
+        matches!(run::publish(dir.path(), &retry, template, granted), Done::Published { rev } if rev == retry.if_rev + 1)
+    );
+    let saved = lend::read(dir.path(), &nature.name).unwrap().unwrap();
+    assert_eq!(saved.port(), Some(nature.port));
+    assert_eq!(saved.terms.approved, Some(approved));
+    assert_eq!(saved.terms.keep, Some(keep));
+    assert_eq!(
+        saved.terms.audience,
+        Audience::Selected(vec!["house-id".into()])
+    );
+    assert_eq!(saved.terms.limit, terms.limit);
+    // The original listener still accepts a connection after both attempts.
+    let _client =
+        std::net::TcpStream::connect_timeout(&addr, std::time::Duration::from_secs(1)).unwrap();
+    listener.set_nonblocking(true).unwrap();
+    assert!(listener.accept().is_ok());
 }

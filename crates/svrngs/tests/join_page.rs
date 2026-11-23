@@ -218,6 +218,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
             sends: Vec::new(),
             approved: None,
             keep: None,
+            revision: None,
         },
     };
     // What answers on its port approved, as `svrngs share` does: the door
@@ -540,6 +541,7 @@ async fn phone_joins_through(
             sends: Vec::new(),
             approved: None,
             keep: None,
+            revision: None,
         },
     };
     // Approved as the shelf above is.

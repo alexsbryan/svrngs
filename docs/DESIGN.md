@@ -196,7 +196,13 @@ it. Every change to a declaration — its groups, its limit, turning on
 sign-in, stopping it, sharing it again — holds that lend's lock (`locks/<lend>.lock`, `File::try_lock`)
 from its read to its write (`lend::mutate`), so no change writes back
 what another narrowed; one made while another holds it is refused, busy
-(409 on the home page), and changes nothing. A group taken away is
+(409 on the home page), and changes nothing. The lock also protects a
+per-name revision in `locks/<lend>.rev`. Withdrawal advances it even when
+no declaration stands and leaves it behind. A confirmed plan can publish
+its binding, grant, audience and limit in one declaration write only at
+the reviewed revision. A write failure after a verified takeover reports
+that the program is running but sharing was not saved (`plan::Report`).
+A group taken away is
 refused at the next request, and what already streams to its people is
 cut within two seconds: every second the door re-reads the declaration
 for each answer still streaming to a member or pass holder and each
@@ -340,8 +346,8 @@ approves afresh from that same read with `Chosen::Cgroups`, its subtree's
 cgroups this boot: only when the lend isn't held, the unit's files hash to
 the grant (else `Hold::Changed`, and its lender is asked again), a
 connection's taker was read, every socket there and that taker are the
-unit's, at the address approved before, and only over the approval it
-judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
+unit's, at the address approved before, and only over the revision and
+approval it judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
 stopped lend stays stopped.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.

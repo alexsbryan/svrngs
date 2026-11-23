@@ -32,6 +32,7 @@ fn shelf(upload: Option<u64>) -> Lend {
             sends: Vec::new(),
             approved: None,
             keep: None,
+            revision: None,
         },
     }
 }

@@ -3,6 +3,7 @@
 //! See svrn-docs KEEP_IT_RUNNING_RELEASE §3.1. Only the owners can attest the
 //! inputs, or supply a binding for a listener that has yet to start.
 
+pub mod run;
 mod words;
 pub use words::{Line, Review, REVIEW_AGAIN};
 
@@ -126,6 +127,7 @@ pub enum Stage {
 pub enum Report {
     Job(Job),
     Done(Done),
+    RunningNotShared { why: String },
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -144,6 +146,12 @@ pub fn step(mut state: State, event: Event) -> State {
         Event::Terms(terms) => state.terms = Some(terms),
         Event::Revision(rev) => state.rev = Some(rev),
         Event::Job(job) => state.report = Some(Report::Job(job)),
+        Event::Done(Done::NotPublished { why })
+            if state.report == Some(Report::Done(Done::Verified)) =>
+        {
+            tracing::debug!(target: "plan", %why, "plan: verified takeover could not be shared");
+            state.report = Some(Report::RunningNotShared { why });
+        }
         Event::Done(done) => state.report = Some(Report::Done(done)),
     }
     state

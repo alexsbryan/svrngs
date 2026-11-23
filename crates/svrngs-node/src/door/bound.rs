@@ -129,7 +129,7 @@ pub(crate) fn renewed(
         Err(not) => not,
         Ok(new) => {
             kept = Some(mutated(dir, &lend.name, |l| {
-                let judged = l.terms == lend.terms;
+                let judged = lend.terms.revision.is_some() && &*l == lend;
                 if judged {
                     l.terms.approved = Some(new.clone());
                 }

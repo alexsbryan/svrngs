@@ -305,6 +305,7 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
             sends: Vec::new(),
             approved: None,
             keep: None,
+            revision: None,
         },
     };
     svrngs_node::lend::declare(dir.path(), &lend, None).unwrap();

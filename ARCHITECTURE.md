@@ -705,9 +705,15 @@ grant at an approval; `door::bound::renewed` renews with it.
 `plan.rs` folds the current app and door observations, chosen terms, share
 revision, and job or publication reports without reading the host. Its steps
 name a takeover only when needed, followed by a conditional access write;
-the owners must supply the resulting binding and grant. `plan/words.rs`
-renders the review and reports. The preview token binds the observed target,
-recipe, terms and revision; terminal and page wiring follow this fold
+the owners must supply the resulting binding and grant. `plan/run.rs`
+publishes them with the audience and limit through the same locked mutation
+as other declaration edits. The revision advances before the declaration is
+changed, so a failed write can spend a revision without publishing access.
+`locks/<lend>.rev` survives withdrawal and is outside `lend::all`. A failed
+publication after a verified takeover folds to `RunningNotShared`; a fresh
+observation of the kept job can reuse it. `plan/words.rs` renders the review
+and reports. The preview token binds the target, recipe, terms and revision;
+terminal and page wiring follow this fold
 (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` §3).
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.

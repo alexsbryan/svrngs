@@ -294,6 +294,7 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
             sends: Vec::new(),
             approved: None,
             keep: None,
+            revision: None,
         },
     }
 }
@@ -1995,6 +1996,14 @@ fn a_lend_kept_to_a_unit_is_renewed_after_it_restarts_and_only_then() {
             .is_none(),
         "stays stopped"
     );
+    crate::lend::declare(dir.path(), &kept, None).unwrap();
+    let recreated = now();
+    assert_eq!(
+        renewed(&kept, &in_unit(12, 14, 2), job("f1", &[14])),
+        another,
+        "a renewal cannot write over a byte-for-byte redeclaration"
+    );
+    assert_eq!(now().terms.approved, recreated.terms.approved);
 }
 
 /// **A transient job is never named a unit, so never granted**

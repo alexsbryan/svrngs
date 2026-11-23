@@ -97,7 +97,8 @@ impl Plan<'_> {
             Report::Done(RolledBack { said }) => (format!("{name} didn’t start in its new place, so yours was started again as it was. It last said: ‘{said}’"), None),
             Report::Done(Interrupted { .. }) => (format!("{name} isn’t running: moving it didn’t finish."), Some(format!("Start {name}"))),
             Report::Done(Published { .. }) => (format!("Shared with {audience}. {}", self.promise(&audience)), None),
-            Report::Done(NotPublished { why }) => (format!("Running here; not shared. The share couldn’t be saved: {why}."), Some(REVIEW.into())),
+            Report::Done(NotPublished { why }) => (format!("The share couldn’t be saved: {why}."), Some(REVIEW.into())),
+            Report::RunningNotShared { why } => (format!("Running here; not shared. The share couldn’t be saved: {why}."), Some(REVIEW.into())),
         };
         Some(Line { text, button })
     }
