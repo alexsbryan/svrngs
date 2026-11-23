@@ -1010,12 +1010,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-22) Slice B's second half lands at 26,322 (e5805a2d..2014ae99,
 # rebased), +174 over 26,148, and the cap comes down to it. The second
 # pool: +372 drawn, +328 and +60 left.
+# (2026-11-22) One cap for the shared database's build, in place of a draw
+# per slice: the second ceiling whole, 26,651 (+700 over 25,951), and
+# JavaScript at 8,741 (+60, and the operator's +10 for a phone's signed
+# write, "A: frame signs"). It comes down once, to where the build lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26323,
+    ".": 26651,
 
-    "js": 8671,
+    "js": 8741,
 
     "swift": 1,
 }
