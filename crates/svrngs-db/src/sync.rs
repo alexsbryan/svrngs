@@ -323,6 +323,13 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     });
     conn.pragma_update(None, "ignore_check_constraints", false)?;
     merged?;
+    // The site's device, by which its share is counted and a muted device's
+    // sets are found; and its home, from whom alone a word for its mark is
+    // trusted: a phone's, as its set names it, else the device's own. Kept
+    // before the set, so the set's device is known as the set is kept.
+    let home = set.phone.as_ref().map_or(&set.head.device, |p| &p.home);
+    let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device, home) VALUES (?1, ?2, ?3)";
+    conn.execute(sited, params![site, set.head.device, home])?;
     let bytes = (kept != Kept::Refused).then(|| postcard::to_allocvec(set).expect("a set is written in memory"));
     let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
     conn.execute(sql, params![site, seq, set.head.sig, kept, bytes])?;
@@ -331,12 +338,6 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     if kept == Kept::Taken {
         conn.execute("INSERT INTO temp.svrngs_was VALUES (?1, ?2)", params![site, seq])?;
     }
-    // The site's device, by which its share is counted and a muted device's
-    // sets are found; and its home, from whom alone a word for its mark is
-    // trusted: a phone's, as its set names it, else the device's own.
-    let home = set.phone.as_ref().map_or(&set.head.device, |p| &p.home);
-    let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device, home) VALUES (?1, ?2, ?3)";
-    conn.execute(sited, params![site, set.head.device, home])?;
     count(conn, (site, seq))
 }
 
