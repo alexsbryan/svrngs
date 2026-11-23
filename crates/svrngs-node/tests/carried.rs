@@ -3425,6 +3425,61 @@ async fn an_app_s_writes_to_its_database_are_counted_in_sets() {
     }
 }
 
+/// **A write that seals a set wakes the round** (the seat's decision,
+/// 2026-11-22: a lid closed within the round's minute stranded a move on any
+/// computer whose platform says nothing before it sleeps): Ben's copy keeps
+/// Board, synced, and no round is asked after Ana writes a card, but Ben's
+/// copy has it within 10 s, not the 60 s interval. Plant, watched failing:
+/// the route's nudge taken out (Ben's copy lacks the card).
+#[tokio::test]
+async fn a_write_that_seals_a_set_wakes_the_round() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 78, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, _folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(ben, &group).await;
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    assert_eq!(
+        sql(ben, &origin_b, read.clone()).await,
+        (200, json!({ "rows": [], "more": false })),
+        "Ben's copy, synced, before Ana writes"
+    );
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let card = json!({ "rows": [{ "id": "c1", "title": "milk" }], "more": false });
+    let mut seen = Value::Null;
+    for _ in 0..100 {
+        seen = sql(ben, &origin_b, read.clone()).await.1;
+        if seen == card {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(
+        seen, card,
+        "Ana's card on Ben's copy within 10 s, by the round her write woke"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
 /// **A closing lid strands no write** (svrn-docs `rings/current/APP_STATE.md`
 /// §11, W2): Ben's computer keeps Board's database, synced. Ana writes a
 /// card; 50 ms later her computer is told it will sleep, as the platform's

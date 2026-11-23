@@ -35,7 +35,7 @@ fn board() -> (tempfile::TempDir, Arc<Db>) {
 
 /// `ops` written: the rows changed, or why not.
 fn write(db: &Db, ops: Value) -> Result<Value, Refused> {
-    db.write(&ops)
+    db.write(&ops).map(|(answer, _)| answer)
 }
 
 /// Every row of `cards`, by id.

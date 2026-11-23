@@ -690,7 +690,18 @@ impl Folders {
                 }
                 let (db, ops) = (db.clone(), ops.clone());
                 let wrote = tokio::task::spawn_blocking(move || db.write(&ops)).await;
-                wrote.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())))
+                let wrote = wrote.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())));
+                // A write that sealed a set wakes the round, so a member holds
+                // it within the round's own seconds, not its minute, on every
+                // platform (ring_sync.rs, the nudge); `/v1/sleeps` closes the
+                // rest where a platform says it sleeps. A write refused, or
+                // one that changed nothing, sealed none and wakes nothing.
+                let sealed = wrote.as_ref().ok().and_then(|(_, s)| *s);
+                tracing::debug!(target: "folder", group, %app, sealed = ?sealed.map(|s| s.get()), "carried: a write that sealed a set wakes the round, or none");
+                if sealed.is_some() {
+                    self.nudge.notify_one();
+                }
+                wrote.map(|(answer, _)| answer)
             }
             Err(r) => Err(r),
         };

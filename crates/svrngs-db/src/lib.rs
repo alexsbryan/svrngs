@@ -591,8 +591,9 @@ impl Db {
     }
 
     /// The page's write, `ops` in the write form, as one transaction:
-    /// `{count}`, the rows changed in all; or refused, nothing of it kept.
-    pub fn write(&self, ops: &Value) -> Result<Value, Refused> {
+    /// `{count}`, the rows changed in all, and the seq of the set it sealed,
+    /// none where it changed nothing; or refused, nothing of it kept.
+    pub fn write(&self, ops: &Value) -> Result<(Value, Option<Seq>), Refused> {
         let listed = ops.as_array().filter(|o| !o.is_empty());
         let listed =
             listed.ok_or_else(|| Refused::Form(format!("write takes a list of one or more ops, not {ops}. {FORM}")))?;
@@ -611,12 +612,12 @@ impl Db {
         let count = ran.map_err(said)?;
         // Its set sealed in its own transaction (APP_STATE §4): refused, the
         // write is rolled back with it.
-        self.seal(&tx)?;
+        let sealed = self.seal(&tx)?;
         tx.commit().map_err(fault)?;
         if count > 0 {
             self.changed.send_modify(|n| *n += 1);
         }
-        Ok(json!({ "count": count }))
+        Ok((json!({ "count": count }), sealed))
     }
 }
 
