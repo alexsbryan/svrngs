@@ -45,9 +45,11 @@ pub fn container(name: &Name, card: &Card, program: &str, path: &str, owner: &st
         card.version
     );
     // Group teardown killed Podman's infra and hung the unit (recover.py).
-    // Explicit stop lets Podman tear its own pod down; a dead main process
-    // leaves no MAINPID and recovery is done by the next start instead.
-    let service = format!("Type=exec\nKillMode=process\nExecStart={call}\nExecStop={call} --stop $MAINPID\n");
+    // Stop before systemd signals a live wrapper: it may still be launching
+    // under the card lock. If the wrapper is gone, systemd can skip ExecStop.
+    // Clean up before the restart delay, since Stop can cancel the next start.
+    let service =
+        format!("Type=exec\nKillMode=process\nExecStart={call}\nExecStop={call} --stop\nExecStopPost={call} --stop\n");
     render(name, &card.version, &service)
 }
 

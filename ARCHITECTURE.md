@@ -992,9 +992,11 @@ answer (llama-server must finish loading). `run --port … --card …` takes
 one volume-only HTTP container on Linux. `container_run.rs` installs a
 unit that waits for a container exit, independently of readiness. A pod
 is labelled at creation and reclaimed by ID only after the label matches;
-its named volumes stay. The keeper manages its services through the OS;
-`scripts/lean_check.py` guards against
-direct process signaling (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` N1).
+its named volumes stay. The unit takes down the owned pod before signaling
+a live wrapper (`ExecStop`), and also cleans up after an exit (`ExecStopPost`)
+so canceling the pending restart cannot strand a serving pod. The keeper manages
+its services through the OS; `scripts/lean_check.py` guards against direct
+process signaling (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` N1).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

@@ -60,10 +60,8 @@ pub fn serve(args: &[&str]) -> anyhow::Result<()> {
     };
     let stopping = match mode {
         [] => false,
-        ["--stop"] => {
-            tracing::debug!(name, "serve-card: main already exited; leave recovery to next start");
-            return Ok(());
-        }
+        ["--stop"] => true,
+        // Older generated units still pass $MAINPID when it exists.
         ["--stop", main] if main.parse::<std::num::NonZeroU32>().is_ok() => true,
         _ => bail!("unexpected serve-card arguments"),
     };

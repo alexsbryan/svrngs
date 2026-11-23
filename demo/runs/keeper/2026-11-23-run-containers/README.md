@@ -134,3 +134,45 @@ The final link was `http://9v2g3qr4tzw16kc1xrmvmmpu4g7a3z1ukzld4r0c27ztg5a1krsas
 Sam and Alex had only their linger managers after reboot. The final run
 exited 0, explicitly stopped and removed the scratch service, and
 discarded the VM disk with its retained volume.
+
+## Stop in the wrapper's restart delay
+
+`stop_gap.py` uses the installed keeper and Actual card, without a share.
+A scratch drop-in stretches `RestartSec` to 30 seconds: kill only the main
+process, wait for `auto-restart` with `MainPID=0` and `NRestarts=0`, then
+issue `svrngs-keeper stop test-actual` inside that window. Judge both the
+manager and the service: the port must refuse a connection and the exact
+old pod ID must be gone. Restart Sam's user manager before explicitly
+starting Actual and signing in with the password set before the kill.
+
+```sh
+W=/tmp/opencode/keeper-stop-gap-red python3 -B demo/runs/keeper/2026-11-23-run-containers/stop_gap.py
+W=/tmp/opencode/keeper-stop-gap-proof python3 -B demo/runs/keeper/2026-11-23-run-containers/stop_gap.py
+```
+
+First command with the original keeper exited 1; second with the fixed
+keeper exited 0. Fedora 45, Podman 6.1.3, systemd 262. Selected output
+from the two `run/events.jsonl` and the green `run/stop-gap-unit.log`
+(`port` is HTTP status then curl exit):
+
+```text
+RED   {"event": "wrapper killed; waiting to restart", "SubState": "auto-restart", "MainPID": "0", "NRestarts": "0", "port": "200 0"}
+RED   {"case": "Stop during restart delay removes the pod", "verdict": "failed", "ActiveState": "inactive", "UnitFileState": "disabled", "NRestarts": "0", "port": "200 0", "pod_exists_exit": "0"}
+GREEN pod stop --time 2 8afcc1952fd25db61c307d3f77a19bed51909b9200302fa2f01111027aebd03e status=0
+GREEN pod rm 8afcc1952fd25db61c307d3f77a19bed51909b9200302fa2f01111027aebd03e status=0
+GREEN {"event": "wrapper killed; waiting to restart", "SubState": "auto-restart", "MainPID": "0", "NRestarts": "0", "port": "000 7"}
+GREEN {"case": "Stop during restart delay removes the pod", "verdict": "passed", "ActiveState": "inactive", "UnitFileState": "disabled", "NRestarts": "0", "port": "000 7", "pod_exists_exit": "1"}
+GREEN {"case": "stays stopped after restarting Sam's user manager", "verdict": "passed", "ActiveState": "inactive", "UnitFileState": "disabled", "NRestarts": "0", "port": "000 7", "volume": "present"}
+GREEN {"case": "explicit Start reads the same marker", "verdict": "passed", "status": ["200", "ok", true]}
+GREEN {"case": "an unopposed crash still recovers", "verdict": "passed", "restarts": "1", "status": ["200", "ok", true]}
+GREEN {"case": "PID-less stop refuses a same-name foreign pod", "verdict": "passed", "exit": 2, "same_id": true, "container": "running"}
+```
+
+Removing the PID requirement alone still returned `200 0` after Stop:
+systemd can skip `ExecStop` when the wrapper dies. `ExecStopPost` runs the
+same label-checked cleanup before the restart delay, so Stop can cancel
+the restart with the pod already gone. The live `ExecStop` still lets a
+launch finish under the card lock before systemd signals the wrapper.
+The green run stopped and removed the test unit, stopped and removed
+the foreign fixture by ID, and discarded the scratch VM disk, including
+its transient foreign unit, retained Actual volume and test drop-in.
