@@ -124,21 +124,23 @@ pub struct DbCopy {
     _dir: tempfile::TempDir,
 }
 
-/// Copies for one run, each of its own computer, sharing what the run sealed.
+/// Copies for one run, each of its own computer, sharing what the run sealed:
+/// a hand case's, seed 0's.
 pub fn maker() -> impl Fn(Site) -> DbCopy {
-    phoned(0)
+    phoned(0, 0)
 }
 
-/// [`maker`], the record binding `phones` phones too, each to a person of
-/// its own, from the run's start.
-pub fn phoned(phones: u8) -> impl Fn(Site) -> DbCopy {
+/// [`maker`] for the run `seed`, each copy's nonce pinned from it
+/// (`DbCopy::new`), the record binding `phones` phones too, each to a
+/// person of its own, from the run's start.
+pub fn phoned(seed: u64, phones: u8) -> impl Fn(Site) -> DbCopy {
     let mut run = Run::default();
     for p in 0..phones {
         let device = svrngs_core::actor_of(&phone_keys(p).0);
         run.devices.insert(device, Site::of(PHONE + 1 + p));
     }
     let run = Rc::new(RefCell::new(run));
-    move |site| DbCopy::new(site, &run)
+    move |site| DbCopy::new(site, (seed, &run))
 }
 
 /// A change row as svrngs-db writes one into a set, for a test to read.
@@ -231,7 +233,8 @@ fn form(ops: &[Op]) -> Json {
 }
 
 impl DbCopy {
-    pub fn new(site: Site, run: &Rc<RefCell<Run>>) -> DbCopy {
+    /// The copy at `site` in the run `seed` of `run`.
+    pub fn new(site: Site, (seed, run): (u64, &Rc<RefCell<Run>>)) -> DbCopy {
         let dir = tempfile::tempdir().expect("a directory for the copy");
         let key = SigningKey::from_bytes(&[site.0[0]; 32]);
         let device = svrngs_core::actor_of(&key);
@@ -243,12 +246,28 @@ impl DbCopy {
         } else {
             states.open(GROUP, APP, Some(SCHEMA))
         };
-        let db = db.expect("the database opens");
-        let side = Connection::open(dir.path().join(format!("state/{GROUP}/{APP}.db"))).expect("a second connection");
-        let nonce: [u8; 16] = side
-            .query_row("SELECT nonce FROM svrngs_db", [], |r| r.get(0))
-            .expect("its nonce");
+        drop(db.expect("the database opens"));
+        states.close(GROUP);
+        // Its nonce pinned from the run's seed and the copy, its site derived
+        // from it as svrngs-db's `new_tables` writes both, and opened again,
+        // as cr-sqlite reads its site as a connection opens: a drawn nonce
+        // orders the copy's kept sets by its site's bytes, and cr-sqlite
+        // breaks equal values' ties on site, so the run's draws would part
+        // from one run of the seed to the next (svrn-docs
+        // `app-state-diligence/phones-simplify-2026-11-22/`, §5).
+        let path = dir.path().join(format!("state/{GROUP}/{APP}.db"));
+        let mut nonce = [0; 16];
+        nonce[0] = site.0[0];
+        nonce[1..9].copy_from_slice(&seed.to_be_bytes());
         let real = svrngs_core::set::site(GROUP, APP, &device, &nonce);
+        let pin = Connection::open(&path).expect("a connection to pin it");
+        pin.execute("UPDATE svrngs_db SET nonce = ?1", [nonce])
+            .expect("its nonce pinned");
+        let sited = "UPDATE crsql_site_id SET site_id = ?1 WHERE ordinal = 0";
+        pin.execute(sited, [real]).expect("its site pinned");
+        svrngs_db::close(pin).expect("the pin's connection closes");
+        let db = states.open(GROUP, APP, None).expect("the database opens pinned");
+        let side = Connection::open(&path).expect("a second connection");
         let mut shared = run.borrow_mut();
         shared.devices.insert(device, site);
         shared.sites.insert(real, site);
@@ -638,7 +657,7 @@ impl Replica for DbCopy {
 fn seeded(seed: u64, carry: Carry) -> (Verdict, Vec<String>) {
     let shape = Shape::phoned(seed);
     watched(format!("seed {seed}, {}", carry.name()), || {
-        let make = phoned(shape.phones);
+        let make = phoned(seed, shape.phones);
         sim::one_shaped((seed, shape), Rule::default(), (Variant::Vouched, carry), &make)
     })
 }
@@ -756,6 +775,46 @@ fn held_on(range: std::ops::Range<u64>) {
 #[test]
 fn svrngs_db_s_sync_is_the_reference_s_on_the_gate_s_seeds() {
     held_on(syncs::range("W1_DB_SEEDS", "0..100"));
+}
+
+/// **A seed's run on svrngs-db's copies is the same each time** (svrn-docs
+/// `app-state-diligence/phones-simplify-2026-11-22/`, §5): seeds 0..20,
+/// under each carry, each run twice, and after the meet the draws it made,
+/// each copy's kept sets, marks and haves, the run's counts, its verdict
+/// and its copies' first disagreement equal. So a seed the soak fails fails
+/// again when it is run alone. Plant, watched failing: each copy's nonce
+/// drawn as it is made, unpinned (`DbCopy::new`).
+#[test]
+fn a_seed_s_run_on_svrngs_db_s_copies_is_the_same_each_time() {
+    let run = |seed: u64, carry: Carry| {
+        let shape = Shape::phoned(seed);
+        let make = phoned(seed, shape.phones);
+        let (said, parted) = watched(String::new(), || {
+            let mut sim = sim::Sim::synced(seed, shape, &make, Variant::Vouched, carry);
+            sim.run(shape.steps);
+            sim.meet();
+            let copies = sim.copies().iter();
+            let kept: Vec<BTreeSet<SetId>> = copies.clone().map(|c| ids(&c.kept()).into_iter().collect()).collect();
+            let books: Vec<_> = copies.map(DbCopy::book).collect();
+            let drawn = sim.fingerprint().0;
+            let print = format!("{drawn} {kept:?} {books:?} {}", sim.said());
+            format!("{print} {:?}", sim.verdict(Rule::default(), &make))
+        });
+        format!("{said} {parted:?}")
+    };
+    let differ: Vec<String> = std::thread::scope(|s| {
+        let each = (0..20).flat_map(|seed| Carry::ALL.map(|carry| (seed, carry)));
+        let each = each.map(|(seed, carry)| {
+            let differs = move || run(seed, carry) != run(seed, carry);
+            (format!("seed {seed}, {}", carry.name()), s.spawn(differs))
+        });
+        let each: Vec<_> = each.collect();
+        let joined = each
+            .into_iter()
+            .map(|(name, d)| (name, d.join().expect("a seed's two runs")));
+        joined.filter_map(|(name, differs)| differs.then_some(name)).collect()
+    });
+    assert!(differ.is_empty(), "runs of one seed differ: {differ:?}");
 }
 
 /// The soak on svrngs-db's copies, out of the gate: `W1_DB_SEEDS`, 0..100,000

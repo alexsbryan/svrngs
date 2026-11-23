@@ -49,7 +49,7 @@ fn moved(pos: i64) -> Vec<Op> {
 /// set too.
 fn three() -> (Net<DbCopy>, ChangeSet) {
     let sync = Variant::Vouched.sync().expect("svrngs-db's adoption");
-    let mut net = Net::new(sync, 3, &phoned(1));
+    let mut net = Net::new(sync, 3, &phoned(0, 1));
     let ana = net.write(ANA, &placed(0), "Ana places the cat");
     net.meet(ALL);
     let synced = ALL.iter().all(|&c| net.copies[c].synced());

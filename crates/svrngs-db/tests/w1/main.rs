@@ -22,7 +22,8 @@
 //! - `db`: svrngs-db's own database behind the same trait, its own sync held
 //!   at every call to the bookkeeping under §4's marks, on the gate's seeds
 //!   with one or two phones each, W's sync cases and the review's case
-//!   between computers.
+//!   between computers; each copy's nonce pinned by its run's seed, so a
+//!   seed's run is the same each time.
 //! - `phones`: a phone's sets between svrngs-db's copies by hand, its site
 //!   vouched for by its home and a set whose pass doesn't hold.
 //!
