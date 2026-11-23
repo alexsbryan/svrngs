@@ -141,6 +141,9 @@ again after that wait. The fastest we've recorded a person using an app is
 20 entries in a minute, so only a loop reaches it, and that's what it's for:
 every member keeps every entry for good.
 
+For data people change together, like a board or votes, put a `schema.sql`
+beside `index.html` and keep it in [the group's database](database.md).
+
 ## Read your friends' apps
 
 A carried app can read what your friends lend, such as their Jellyfin or
