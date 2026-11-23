@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! cr-sqlite, built from its source for the target and linked into
 //! svrngs-db as one object whose only global symbol is the shim SQLite calls
-//! as it starts ([`SHIM`]; `shim.c`, `/.cargo/config.toml`), so no Rust in
+//! as it opens each connection ([`SHIM`]; `shim.c`, `/.cargo/config.toml`), so no Rust in
 //! svrngs calls cr-sqlite. Its source is the submodule `vendor/cr-sqlite`,
 //! the fork's `svrngs` branch (svrn-docs `rings/current/APP_STATE.md` §8 q8),
 //! built as `app-state-diligence/b1-targets.md`, "What B1's `build.rs` must

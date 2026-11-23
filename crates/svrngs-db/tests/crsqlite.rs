@@ -1,4 +1,4 @@
-//! cr-sqlite on every connection, registered as SQLite starts by svrngs-db's
+//! cr-sqlite on every connection, loaded as SQLite opens it by svrngs-db's
 //! shim (build.rs, shim.c, /.cargo/config.toml), with no Rust calling it: a
 //! connection opened plainly has its functions, and a table made a CRR has
 //! its changes read.

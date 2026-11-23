@@ -1,8 +1,13 @@
-# SQLite, as rusqlite bundles it in svrngs-db, calls svrngs-db's shim once
-# as it starts (SQLITE_EXTRA_INIT), and the shim has cr-sqlite loaded on every
-# connection opened after: so no Rust in svrngs calls cr-sqlite, and nothing
-# is `unsafe` (crates/svrngs-db/shim.c, build.rs). A build that names no shim
-# here opens no database: svrngs-db refuses one without cr-sqlite, out loud.
+# SQLite, as rusqlite bundles it in svrngs-db, calls svrngs-db's shim as it
+# opens each connection, with its own built-in extensions
+# (SQLITE_EXTRA_AUTOEXT), so cr-sqlite is part of every open, from any thread,
+# with no step at SQLite's start to race. Registered at start instead
+# (SQLITE_EXTRA_INIT), which SQLite runs after it marks itself started, 3 of
+# 100 processes opening from 32 threads at once had connections without it,
+# W1's live tests' failure after a rebuild (crates/svrngs-db/tests/
+# first_open.rs). No Rust in svrngs calls cr-sqlite, and nothing is `unsafe`
+# (crates/svrngs-db/shim.c, build.rs). A build that names no shim here opens
+# no database: svrngs-db refuses one without cr-sqlite, out loud.
 # Set in the environment, the variable wins, as a plant does.
 # SQLITE_DEFAULT_MEMSTATUS=0: SQLite counts no allocations, so the many
 # databases one node opens don't take one lock around each allocation, which
@@ -11,4 +16,4 @@
 # threads-sample.txt). A heap limit (sqlite3_hard_heap_limit64) needs the
 # count, so a limit on an app's memory turns this back on.
 [env]
-LIBSQLITE3_FLAGS = "-DSQLITE_EXTRA_INIT=svrngs_crsqlite -DSQLITE_DEFAULT_MEMSTATUS=0"
+LIBSQLITE3_FLAGS = "-DSQLITE_EXTRA_AUTOEXT=svrngs_crsqlite -DSQLITE_DEFAULT_MEMSTATUS=0"

@@ -6,7 +6,7 @@
 //!
 //! cr-sqlite is built from its source, the submodule `vendor/cr-sqlite`, by
 //! `build.rs`, into one object linked here whose one global is a shim in C
-//! (`shim.c`). SQLite calls the shim as it starts, so cr-sqlite is loaded on
+//! (`shim.c`). SQLite calls the shim as it opens each connection, so cr-sqlite is loaded on
 //! every connection and no Rust in svrngs calls it: nothing here is `unsafe`.
 //! `tests/crsqlite.rs` holds that, with its plant; a database opened where
 //! cr-sqlite's functions are missing is refused ([`Refused::Unbuilt`]). A

@@ -3,7 +3,7 @@ name = "svrngs-db"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "An app's database in a group: SQLite tables beside the group's record, a copy on every member's computer, merged by cr-sqlite, which build.rs builds from its source in the submodule vendor/cr-sqlite and SQLite registers as it starts. Its tests hold the reference model every copy is checked against, and the seeded simulator of deliveries."
+description = "An app's database in a group: SQLite tables beside the group's record, a copy on every member's computer, merged by cr-sqlite, which build.rs builds from its source in the submodule vendor/cr-sqlite and SQLite loads as it opens each connection. Its tests hold the reference model every copy is checked against, and the seeded simulator of deliveries."
 
 [dependencies]
 # SQLite 3.54.1, bundled, its build told the shim by /.cargo/config.toml;
