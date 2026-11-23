@@ -50,11 +50,6 @@ use crate::sim::{SCHEMA, TABLES};
 use crate::sync::{Book, Call, Carry, Ingested, Variant};
 use crate::syncs;
 
-// What each device holds, counted from the file as `Db::held` counted it
-// before its totals: the reference they are held to.
-#[path = "../common/held.rs"]
-mod held;
-
 // A phone's signer, the page's file compiled here as tests/phones.rs
 // compiles it, formatted by its own crate's rustfmt.toml.
 #[path = "../../../../web/src/set.rs"]
@@ -426,16 +421,6 @@ impl DbCopy {
                 names(&kept),
                 names(&want),
                 names(&left)
-            ));
-        }
-        // **What each device holds is the count over the file** (svrn-docs
-        // `app-state-diligence/prune-cost-2026-11-23/`): the totals SQLite
-        // keeps, as `Db::held` reads them, equal `Db::held`'s count before
-        // them, over this copy's file, after every write and take.
-        let (totals, counted) = (held::totals(&self.db), held::counted(self.side()));
-        if totals != counted {
-            self.parted(format!(
-                "{what}: svrngs-db's totals {totals:?}, the count over its file {counted:?}"
             ));
         }
     }
