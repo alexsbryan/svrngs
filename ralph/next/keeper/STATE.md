@@ -306,22 +306,6 @@ names its part of it; read the spec's §2 and §3 before any row. Rows marked
 (keeper) are under `apps/` and uncounted. The rest spend CHARTER's release
 envelope.
 
-- [ ] avail-rehearse — depends [] — ONE UNIT, evidence: spec §5 row R0.
-  - xenia strangers (DeepSeek Flash, `--variant max`) on the availability
-    rehearsal (svrn-docs `rings/current/play-lend-give/prototype/availability/`,
-    not ours: run it, never edit it). Its strings are first corrected to
-    spec §2.1's (svrngs's voice, `AfterUnlock`) in a copy beside the runs.
-  - The plant runs first: the two choices' labels swapped. Then Hana ("you
-    restart tonight: make sure Cy can use coder tomorrow") and Ivo, two runs
-    each.
-  - Recorded in svrn-docs `rings/current/play-lend-give/runs/availability-<date>/`,
-    the way PLAY_LEND_GIVE_UX §4 records them.
-
-  read: PLAY_LEND_GIVE_UX §4; the rehearsal's README.
-  check: the plant is told apart from the real labels, or the round says
-  could-not-judge; each count is reported as a rehearsal, never a people
-  result.
-
 - [ ] avail-economize — depends [] — ONE UNIT, behaviour kept: spec §5 row
   R3.
   - The pass over `surface.rs`, `home.rs`, `cli.rs`, `lend.rs`, `uid.rs`,
@@ -372,25 +356,19 @@ envelope.
   - a failed write leaves the job running, unshared, and the next plan is
     `Reuse`.
 
-- [ ] avail-terminal — depends [avail-plan, avail-keeper-facts, avail-publish] — ONE UNIT: spec §2.4, §3.2; row R1.
+- [ ] avail-terminal — depends [avail-plan, avail-keeper-facts, avail-publish] — ONE UNIT: spec §2.4, §3.2; row R1, its code.
   - `plan/run.rs`, the executor at the edge: it replays at confirm, gives
     `ReviewAgain` with no side effects, and feeds each owner's answer back
     as a `Done` event.
   - `svrngs share` through the plan.
-  - svrngs-keeper built by `scripts/build-release.sh`, always installed by
-    `web/install.sh`, and in `packaging/arch`.
-  - The guides: models.md, lend.md and troubleshooting.md.
 
-  Demo, first: partial success. A planted failed write leaves "Running
-  here; not shared", and the next review shares it with no restart. Then
-  Sam's scene, three no-login reboots in the spike's VM
-  (`demo/runs/keeper/2026-11-22/`'s driver).
+  check, planted first: partial success. A failed write leaves "Running
+  here; not shared", and the next review shares it with no restart.
 
-- [ ] avail-page — depends [avail-terminal, avail-rehearse] — ONE UNIT:
+- [ ] avail-page — depends [avail-terminal] — ONE UNIT:
   spec §2.1, §2.2, §3.7 O3, O4; row R4.
   - The page renders the review and the result svrngs sends, through two
     routes. No string lives in the page.
-  - It follows avail-rehearse's findings.
 
   check:
   - O3, a lean rule: svrngs only reads jobs, and one module runs the
@@ -437,7 +415,33 @@ envelope.
 
   Demo: Actual on beefymac.
 
-- [ ] avail-proof — depends [avail-page, avail-containers, avail-mac-renew, avail-mac-containers] — ONE UNIT, evidence: spec §5 R9, the parts that are
+- [ ] avail-ship — depends [avail-page, avail-containers, avail-mac-containers] — ONE UNIT: shipping, after the code (the operator, 2026-11-22: "a lot of coding ahead of us before needing to talk about fit and finish").
+  - svrngs-keeper built by `scripts/build-release.sh`, always installed by
+    `web/install.sh`, and in `packaging/arch`.
+  - The guides: models.md, lend.md and troubleshooting.md, in spec §2's
+    words.
+
+  check: `scripts/release.sh build` lists the keeper's archives beside
+  svrngs's. install.sh, run on a scratch HOME, puts both on PATH. The Arch
+  package's file list names it.
+
+- [ ] avail-rehearse — depends [avail-ship] — ONE UNIT, evidence: spec §5 rows R0 and R9's strangers, on the built page.
+  - xenia strangers (DeepSeek Flash, `--variant max`) on the built home
+    page, served by xenia's world (svrn-docs `play-lend-give/world/`). The
+    availability rehearsal (`prototype/availability/`, not ours) is the
+    reference to compare against.
+  - The plant runs first: the two choices' labels swapped. Then Hana ("you
+    restart tonight: make sure Cy can use coder tomorrow") and Ivo, two runs
+    each.
+  - Recorded in svrn-docs `rings/current/play-lend-give/runs/availability-<date>/`,
+    the way PLAY_LEND_GIVE_UX §4 records them.
+
+  read: PLAY_LEND_GIVE_UX §4; the rehearsal's README.
+  check: the plant is told apart from the real labels, or the round says
+  could-not-judge; each count is reported as a rehearsal, never a people
+  result.
+
+- [ ] avail-proof — depends [avail-ship, avail-rehearse] — ONE UNIT, evidence: spec §5 R9, the parts that are
   automatic. In `demo/runs/available/<date>/`, predictions first, each case
   given one of the four verdicts:
   - the gated cases: a takeover interrupted at each stage, a VM power-cut
@@ -450,7 +454,9 @@ envelope.
     after. Stop sharing leaves Sam's app answering on localhost, and Alex's
     open stream ends within 2 s, with a test that plants the withdrawal
     itself (`tests/door/live.rs`, spec §3.5);
-  - the strangers again, on the built page.
+  - Sam's scene: three no-login reboots in the spike's VM
+    (`demo/runs/keeper/2026-11-22/`'s driver), with the page and the
+    terminal.
 
 - [ ] HUMAN-release-hosts — depends [avail-proof] — the operator. The
   release waits on this row (the operator, 2026-11-22: "release only after
