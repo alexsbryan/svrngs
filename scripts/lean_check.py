@@ -1031,10 +1031,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # HOLDER_APPROVAL section 1, measured). About +80 for the pass and stamp
 # checked at apply and in the wasm, so the cap to 26,901. It comes down to
 # where phones lands.
+# (2026-11-22) The operator's "Raise +44": the cap to 26,945. W1's phones
+# found the phone's signer refusing about one honest write in five (an
+# update of a row not there, several ops on one row), and the fix judges a
+# write by its net effect, +13. Slice D's answers to W7's trips took 31 of
+# the room phones had counted on (1c481255..61c800eb). It comes down to where
+# phones lands, and again by a fresh read of the phones code.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26901,
+    ".": 26945,
 
     "js": 8741,
 
