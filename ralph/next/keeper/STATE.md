@@ -956,6 +956,12 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     `check.sh` does.
   - It cleans up every scratch unit, agent, VM and folder, and says what
     it removed.
+  - **One candidate** (QA):
+    - every witness names the commit and build it ran, and all are the
+      same candidate; a mismatch is failed;
+    - one failed or unreachable host can never give a green total;
+    - the drivers run one after another, never with competing service
+      managers or VMs side by side.
   - **`docs/CHECKS.md`** gains "The release tier": what it runs, where,
     and that a release needs it to pass on the candidate. HUMAN-release-hosts
     runs it first, then the operator's reboots and the people sessions.
