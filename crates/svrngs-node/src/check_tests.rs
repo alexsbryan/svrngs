@@ -178,3 +178,36 @@ fn an_image_or_data_from_another_server_is_found_too() {
         "This page asks api.example.org for data, and apps load only their own files. That way, opening an app tells nobody outside your group you were here. To fix it, have a friend lend that service to your group, name its program in reads.txt beside index.html, and ask it through its lend: `svrngs guide` shows how."
     );
 }
+
+/// **A file the page loads that isn't there is said, by file and line**
+/// (docs/guide/build.md, "Rules for a folder app": `svrngs check` says what
+/// would leave a page blank): a script and a style sheet `index.html`
+/// names, missing from the folder, each with its fix; the same page with
+/// them saved is told nothing, a name's query and `./` read past, a `data:`
+/// image, a link out and a `data-src` left alone. Planted, watched failing:
+/// `missing` never chained into what is said, and the page passes.
+#[test]
+fn a_file_the_page_loads_that_isn_t_there_is_said() {
+    let page = r#"<!doctype html><title>Board</title>
+<link rel="stylesheet" href="./Style.css?v=2">
+<script type="module" src="index.js"></script>
+<img src="data:image/png;base64,AAAA" alt="" data-src="gone.png">
+<a href="notes.html">a link is a navigation, not a load</a>
+"#;
+    let missing = |f: &str| Refused::Missing(f.into());
+    assert_eq!(
+        said(&[("index.html", page)]),
+        [
+            ("index.html:2".to_string(), missing("Style.css")),
+            ("index.html:3".to_string(), missing("index.js")),
+        ]
+    );
+    let words = missing("index.js").words();
+    assert!(words.contains("Save index.js beside index.html"), "{words}");
+    let saved = [
+        ("index.html", page),
+        ("Style.css", "body {}\n"),
+        ("index.js", "\n"),
+    ];
+    assert_eq!(said(&saved), []);
+}
