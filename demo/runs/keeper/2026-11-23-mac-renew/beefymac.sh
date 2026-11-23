@@ -6,7 +6,8 @@ host=(ssh -o BatchMode=yes -o ConnectTimeout=10 beefymac)
 # A prior interrupted transfer may have left our archive here. The label
 # checks in run.py are independent and run before acting on any service.
 "${host[@]}" 'test -d "$HOME" && mkdir -p "$HOME/svrngs-keeper-scratch/repo"'
-git archive --format=tar.gz HEAD Cargo.toml Cargo.lock crates apps scripts web docs/guide/build.md "$demo" \
+git archive --format=tar.gz HEAD Cargo.toml Cargo.lock crates apps scripts web \
+    docs/guide/build.md docs/brand/favicon.svg "$demo" \
     | "${host[@]}" 'tar -xzf - -C "$HOME/svrngs-keeper-scratch/repo"'
 "${host[@]}" /bin/bash -se <<'REMOTE'
 cd "$HOME/svrngs-keeper-scratch/repo"
