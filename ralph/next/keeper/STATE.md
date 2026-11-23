@@ -334,7 +334,7 @@ envelope.
   terminal (release spec §5 R1; today's `crates/svrngs/src/cli.rs:888–925`
   approves and writes the share, with no preview branch).
 
-- [ ] avail-keeper-facts — depends [] — ONE UNIT (keeper): spec §3.4, §3.7
+- [x] avail-keeper-facts 009ecd0df — depends [] — ONE UNIT (keeper): spec §3.4, §3.7
   T1; row R2.
   - Facts as JSON with the keeper's own token; `--yes`; `list --json`;
     `restart`; `start` resets a failed unit; `Nice=10`.
