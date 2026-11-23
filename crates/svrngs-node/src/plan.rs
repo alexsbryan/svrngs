@@ -94,6 +94,7 @@ pub enum Job {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Done {
+    Unverified,
     Published { rev: u64 },
     NotPublished { why: String },
 }

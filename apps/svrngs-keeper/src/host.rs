@@ -45,6 +45,10 @@ pub fn llama_folder(pid: u32) -> Result<PathBuf, String> {
 }
 
 /// `GET /props` over HTTP/1.0. Bound the reply's size and the entire read.
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the local prefill probe sets its deadline at the edge"
+)]
 pub fn props(addr: &str, port: u16) -> Result<String, String> {
     let (status, body) = http(addr, port, "/props", true, Instant::now() + Duration::from_secs(3))?;
     if status != 200 {

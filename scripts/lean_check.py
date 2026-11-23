@@ -42,6 +42,7 @@ PLAN_IO = re.compile(
 # O3: app jobs are read here; only the executor may start the keeper. The
 # command's own restart is outside the node and acts on svrngs itself.
 NODE_COMMAND = {
+    "plan/run.rs": 'Command::new(path).args(["run",name,"--json"]).args(args).stdout(Stdio::piped()).kill_on_drop(true).spawn()',
     "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
     "home.rs": "Command::new(opener);",
     "network.rs": 'Command::new("/usr/sbin/scutil");',
@@ -976,10 +977,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # O3 pins the node's process calls and the executor's keeper entry at 25,513.
 # O4 keeps mechanism names out of the page's and planner's copy, at 25,521 and 8,651 JS.
 # Then avail-unmagic: cut the live takeover and add N1, to 25,336.
+# Then avail-run-linux: explicit Run and a fresh witness before saving a unit grant, to 25,424.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25337,
+    ".": 25425,
 
     "js": 8652,
 

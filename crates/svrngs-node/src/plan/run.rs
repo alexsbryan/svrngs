@@ -4,12 +4,40 @@ use super::{
     Terms,
 };
 use crate::{
+    door::bound,
     job,
     lend::{self, Answer, Audience, Credentials, Lend, Raw, Source},
     share::{self, Granted, Pid, ShareRefusal},
     uid::{Answering, Unread},
 };
-use std::path::Path;
+use std::{collections::BTreeSet, path::Path, process::Stdio};
+
+/// Run is local only; it takes no share witness or access terms.
+pub async fn native(name: &str, args: &[String]) -> Result<String, String> {
+    if !cfg!(target_os = "linux") {
+        return Err("Running a program with svrngs is available on Linux.".into());
+    }
+    let path = std::env::current_exe()
+        .map_err(|e| e.to_string())?
+        .with_file_name("svrngs-keeper");
+    let child = tokio::process::Command::new(path)
+        .args(["run", name, "--json"])
+        .args(args)
+        .stdout(Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .map_err(|e| format!("svrngs couldn't open its keeper: {e}"))?;
+    let out = tokio::time::timeout(std::time::Duration::from_secs(90), child.wait_with_output())
+        .await
+        .map_err(|_| "svrngs couldn't verify the start before the wait ended.")?
+        .map_err(|e| e.to_string())?;
+    tracing::debug!(target: "plan", status = %out.status, "plan: keeper Run answered");
+    let started = serde_json::from_slice(&out.stdout)
+        .ok()
+        .filter(|_| out.status.success())
+        .ok_or("svrngs couldn't verify the start.")?;
+    super::words::started(name, started)
+}
 
 pub enum Confirmation<T> {
     ReviewAgain(State, T),
@@ -103,6 +131,13 @@ impl Share<'_> {
     }
 
     pub fn execute(&self, ready: &Plan<'_>, witness: &Witness, secret: Credentials<'_>) -> Done {
+        let (approved, keep) = &witness.granted;
+        if keep
+            .as_ref()
+            .is_some_and(|keep| !bound::witnesses_job(ready.nature.port.get(), approved, keep))
+        {
+            return Done::Unverified;
+        }
         publish(
             self.dir,
             ready,
@@ -127,19 +162,13 @@ pub fn service_return(unit: &str) -> Return {
     }
 }
 
-type Groups = std::collections::BTreeSet<u64>;
-
-fn in_job(cgroups: &Groups, job: &job::Now) -> bool {
-    !cgroups.is_empty() && cgroups.is_subset(&job.cgroups)
-}
-
 fn deployment(
     answers: &[Answer],
-    cgroups: &Groups,
+    cgroups: &BTreeSet<u64>,
 ) -> (Runs, Return, Option<job::Keep>, Option<Pid>) {
     match answers {
         [Answer::Job { unit, .. }] => match job::now(unit) {
-            Ok(now) if in_job(cgroups, &now) => (
+            Ok(now) if !cgroups.is_empty() && cgroups.is_subset(&now.cgroups) => (
                 Runs::OwnService(now.keep.clone()),
                 service_return(unit),
                 Some(now.keep),

@@ -705,7 +705,9 @@ grant at an approval; `door::bound::renewed` renews with it.
 `plan.rs` folds the current app and door observations, chosen terms, share
 revision, and job or publication reports without reading the host. It reuses
 an observed service or shares just the listener that's running. `plan/run.rs`
-replays the review, then publishes its binding and any verified grant with
+asks the packaged keeper to handle explicit `svrngs run` on Linux, without
+publishing access. On explicit Share it replays the review and witnesses a
+unit's listeners and connection taker again before publishing its grant with
 the audience and limit through the same locked mutation
 as other declaration edits. The revision advances before the declaration is
 changed, so a failed write can spend a revision without publishing access.

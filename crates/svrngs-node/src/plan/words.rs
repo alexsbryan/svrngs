@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-use super::{Done, Job, Method, Plan, Reason, Report, Return};
+use super::{Done, Job, Method, Plan, Reason, Report, Return, Runs};
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -83,9 +83,36 @@ impl Plan<'_> {
             Report::Job(SetupChanged) => (format!("Closed until you review it: {name} changed since you shared it."), Some(REVIEW.into())),
             Report::Job(PortTaken { by }) => (format!("Closed: a program of the account {by} is on {name}’s port. It opens again by itself once {name} has it back."), None),
             Report::Job(SharingStopped) => (format!("{name} still runs here for you. {audience} can’t use it any more."), Some("Stop running it here".into())),
-            Report::Done(Published { .. }) => (format!("Shared with {audience}. {}", self.promise(&audience)), None),
+            Report::Done(Published { .. }) => {
+                let mut text = format!("Shared with {audience}. {}", self.promise(&audience));
+                if matches!(self.nature.runs, Runs::ByHand) {
+                    text += &format!("\nShared while you run it. To have svrngs run it: svrngs run {name} --port {} -- <the command you start it with>.", self.nature.port);
+                }
+                (text, None)
+            }
+            Report::Done(NotPublished { why }) if matches!(self.method, Method::Reuse(_)) => (format!("Running here; not shared. The share couldn’t be saved: {why}."), Some(REVIEW.into())),
             Report::Done(NotPublished { why }) => (format!("The share couldn’t be saved: {why}."), Some(REVIEW.into())),
+            Report::Done(Unverified) => (format!("Not shared; svrngs couldn't verify {name} is answering."), Some(REVIEW.into())),
         };
         Some(Line { text, button })
+    }
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub(super) enum Started {
+    Verified,
+    Unverified { running: bool, port: u16 },
+    Busy { why: String },
+}
+
+pub(super) fn started(name: &str, started: Started) -> Result<String, String> {
+    use Started::*;
+    tracing::debug!(target: "plan", ?started, "plan: keeper Run verdict");
+    match started {
+        Verified => Ok(format!("{name} is running here. Share it separately with `svrngs share`.\n")),
+        Unverified { running: true, port } => Err(format!("Not shared; {name} is running, but nothing answers on port {port} yet. Check the port in its command.")),
+        Unverified { running: false, .. } => Err(format!("Not shared; svrngs couldn't verify {name} is answering.")),
+        Busy { why } => Err(why),
     }
 }

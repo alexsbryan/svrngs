@@ -349,7 +349,9 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         .report_words(result.report.as_ref().unwrap())
         .unwrap();
     assert!(
-        words.text.starts_with("The share couldn’t be saved:")
+        words
+            .text
+            .starts_with("Running here; not shared. The share couldn’t be saved:")
             && words.text.contains(".json.partial"),
         "{words:?}"
     );

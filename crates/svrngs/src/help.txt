@@ -48,6 +48,9 @@ an app's page svrngs won't load, and what to change.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
+  svrngs run <name> --port <port> [--folder <folder>] -- <command>
+      Run a command here (Linux). Share it separately with svrngs share.
+
   svrngs share <port> --group <group>... [--plan] [--name <name>] [--program <name>] [--pid <id>@<start>] [--replace] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp] [--ask-after-restart]
       Lend what runs on <port> on this computer to everyone in each
       --group, by its name or the start of its id; say it again for more.

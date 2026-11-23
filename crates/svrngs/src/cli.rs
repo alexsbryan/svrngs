@@ -179,6 +179,7 @@ pub const SHIPPED: MeetAt = MeetAt::Svrngs;
 #[derive(Debug, PartialEq, Eq)]
 pub enum Verb {
     Run,
+    RunApp(String, Vec<String>),
     New {
         name: Name,
         person: Option<Name>,
@@ -283,6 +284,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let Some(verb) = it.next() else {
         return Ok(Verb::Run);
     };
+    if verb == "run" {
+        let name = it
+            .next()
+            .ok_or("run wants a name: `svrngs run <name> --port <port> -- <command>`")?;
+        return Ok(Verb::RunApp(name, it.collect()));
+    }
     let mut positional: Option<String> = None;
     let mut person = None;
     let (mut origin, mut relays) = (None, Vec::new());
@@ -596,6 +603,8 @@ refusal_from!(KeyError => Unjudged, ApiError => Unjudged, KeyFailure => Unjudged
 pub enum Refused {
     #[error("{0}")]
     SharePlan(String),
+    #[error("{0}")]
+    RunApp(String),
     #[error(
         "svrngs is already running on this computer ({0} is held); stop it, then run this again"
     )]
@@ -858,6 +867,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             update::Outcome::Packaged(words) => format!("{words}\n"),
         },
         Verb::Restart => restart(&root)?,
+        Verb::RunApp(name, args) => run::native(&name, &args).await.map_err(Refused::RunApp)?,
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {
             kind,

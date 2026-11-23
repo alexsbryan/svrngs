@@ -23,7 +23,7 @@ use crate::door::Using;
 use crate::iroh::{Duplex, Net, PortRead};
 use crate::lend::{Hold, Lend, LendError, LendName, Raw};
 use crate::uid::{Conn, Unread};
-use eudoxia_community::binding::{self, Chosen, Held, Read, Took};
+use eudoxia_community::binding::{self, Approved, Chosen, Held, Read, Took};
 
 /// How long a share's port has to take a connection; once connected, a
 /// body takes as long as it takes, as upstream's `forward_stream` bounded
@@ -119,9 +119,7 @@ pub(crate) fn renewed(
         let job = Some(job.map_err(another)?).filter(|job| job.keep == *keep);
         let job = job.ok_or((Hold::Changed, "its files changed since its lender kept it"))?;
         cgroup.ok_or(another("no connection's taker was read"))?;
-        let new = binding::approve(now, Some(&Chosen::Cgroups(job.cgroups))).ok();
-        let checked = |n: &_| binding::check(Some(n), now, took).is_ok();
-        let new = new.filter(|n| n.at == before.at && checked(n));
+        let new = job_approval(&job, now, took).filter(|n| n.at == before.at);
         new.ok_or(another("not all the unit's, or moved"))
     };
     let (mut carried, mut kept) = (false, None);
@@ -142,6 +140,36 @@ pub(crate) fn renewed(
     let renewed = stands.then_some(()).ok_or(Unsent::Held(hold));
     tracing::debug!(target: "door", lend = %lend.name, ?keep, why, ?kept, ?renewed, "door: a kept lend's unit renewed after a restart, or why not");
     renewed
+}
+
+pub(super) fn job_approval(job: &crate::job::Now, read: &Read, took: &Took) -> Option<Approved> {
+    let approved = binding::approve(read, Some(&Chosen::Cgroups(job.cgroups.clone()))).ok()?;
+    (matches!(took, Took::Cgroup(_)) && binding::check(Some(&approved), read, took).is_ok())
+        .then_some(approved)
+}
+
+pub(crate) fn witnesses_job(port: u16, approved: &Approved, keep: &crate::job::Keep) -> bool {
+    let peer = SocketAddr::new(approved.at, port);
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "dial: witness the unit before saving access"
+    )]
+    let socket = std::net::TcpStream::connect_timeout(&peer, CONNECT_WITHIN);
+    let fresh = || {
+        let socket = socket.ok()?;
+        let conn = Conn {
+            local: socket.local_addr().ok()?,
+            peer,
+        };
+        let (read, took) = crate::uid::port(Raw::Tcp, port, Some(conn)).ok()?;
+        let job = crate::job::now(&keep.unit)
+            .ok()
+            .filter(|j| j.keep == *keep)?;
+        job_approval(&job, &read, &took)
+    };
+    let witnessed = fresh().as_ref() == Some(approved);
+    tracing::debug!(target: "door", port, ?keep, witnessed, "door: unit witnessed at share save");
+    witnessed
 }
 
 /// [`bound`] with this computer's own readers, `lend` kept in `dir`: for a

@@ -1850,6 +1850,36 @@ fn in_unit(id: u64, cgroup: u64, boot: u64) -> (binding::Read, binding::Took) {
     (read, binding::Took::Cgroup(cgroup))
 }
 
+#[test]
+fn a_job_approval_requires_both_its_listeners_and_its_taker() {
+    let job = crate::job::Now {
+        keep: crate::job::Keep {
+            unit: "svrngs-keeper-coder.service".into(),
+            files: "f1".into(),
+        },
+        cgroups: [4, 5].into(),
+    };
+    let (read, _) = in_unit(1, 4, 1);
+    assert!(bound::job_approval(&job, &read, &binding::Took::Cgroup(4)).is_some());
+    assert_eq!(
+        bound::job_approval(&job, &read, &binding::Took::Cgroup(9)),
+        None,
+        "a foreign taker"
+    );
+    assert_eq!(
+        bound::job_approval(&job, &read, &binding::Took::Waiting),
+        None,
+        "an unknown taker"
+    );
+    let mut mixed = read;
+    mixed.sockets.extend(in_unit(2, 9, 1).0.sockets);
+    assert_eq!(
+        bound::job_approval(&job, &mixed, &binding::Took::Cgroup(4)),
+        None,
+        "a foreign listener beside the unit's"
+    );
+}
+
 /// **A lend kept to a unit is renewed after it restarts, and only then**
 /// (svrn-docs KEEP_SHARING_ON_RESTART §2): coder, kept to its unit,
 /// approved in cgroup 4 in boot 1. Its unit crashed (cgroup 5) and was

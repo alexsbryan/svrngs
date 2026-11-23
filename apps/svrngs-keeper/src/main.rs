@@ -195,8 +195,8 @@ fn json(value: &impl serde::Serialize) -> anyhow::Result<()> {
 fn terminal(question: &str) -> Option<bool> {
     use std::io::{IsTerminal, Write};
     std::io::stdin().is_terminal().then(|| {
-        print!("{question} Type y, then press Enter: ");
-        let _ = std::io::stdout().flush();
+        eprint!("{question} Type y, then press Enter: ");
+        let _ = std::io::stderr().flush();
         let mut line = String::new();
         let _ = std::io::stdin().read_line(&mut line);
         matches!(line.trim(), "y" | "yes")

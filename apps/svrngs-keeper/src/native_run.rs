@@ -10,7 +10,7 @@ use svrngs_keeper::{card::Card, host, kept, runtime::Name, systemd::SystemdUser,
 #[serde(tag = "kind", rename_all = "snake_case")]
 enum Outcome<'a> {
     Verified { unit: &'a str },
-    Unverified { running: bool },
+    Unverified { running: bool, port: u16 },
     Busy { why: String },
 }
 
@@ -48,11 +48,13 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
         }
         match outcome {
             Outcome::Verified { .. } => println!("{} is running here on port {port}.", name.as_str()),
-            Outcome::Unverified { running: true } => bail!(
+            Outcome::Unverified { running: true, .. } => bail!(
                 "{} is running, but nothing answers on port {port} yet. Check the port in its command.",
                 name.as_str()
             ),
-            Outcome::Unverified { running: false } => bail!("svrngs couldn't verify {} is answering", name.as_str()),
+            Outcome::Unverified { running: false, .. } => {
+                bail!("svrngs couldn't verify {} is answering", name.as_str())
+            }
             Outcome::Busy { why } => bail!("{why}"),
         }
         Ok(())
@@ -90,7 +92,7 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
         );
     }
     let kept = kept::keep_card(&systemd, &places, &text, &card, name.clone(), || {
-        kept::boot(&systemd, |question| if json { None } else { super::terminal(question) })
+        kept::boot(&systemd, super::terminal)
     })?;
     let llama = Path::new(command[0]).file_name().is_some_and(|p| p == "llama-server");
     let verified = host::wait_for_answer(port, llama, std::time::Duration::from_secs(30));
@@ -100,6 +102,6 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
         let state = systemd.show(&kept.unit, &["ActiveState"]);
         let running = state.as_ref().is_ok_and(|s| s.trim() == "ActiveState=active");
         tracing::debug!(%unit, ?state, "run: no verified answer");
-        say(Outcome::Unverified { running })
+        say(Outcome::Unverified { running, port })
     }
 }
