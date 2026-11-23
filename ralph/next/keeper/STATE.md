@@ -643,7 +643,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - Size: a few words and lines. Counted within the reserve; JavaScript
     +0 if possible, as 10 JS lines remain under the ceiling.
 
-- [ ] avail-run-stdio — depends [avail-run-page] — ONE UNIT: the keeper call's stdio, a CLI regression from d4765ba5 (QA oc-cruu42, 2026-11-23).
+- [x] avail-run-stdio f8d5f944c — depends [avail-run-page] — ONE UNIT: the keeper call's stdio, a CLI regression from d4765ba5 (QA oc-cruu42, 2026-11-23).
   - The shared `keeper()` in `plan/run.rs` uses Tokio's
     `Command::output()`. That pipes stderr while stdin stays inherited.
   - The keeper's boot consent prompt is written and flushed on stderr,
