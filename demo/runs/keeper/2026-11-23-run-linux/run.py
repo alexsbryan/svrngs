@@ -21,6 +21,8 @@ root, alex, terminal = demo.root, demo.alex, demo.terminal
 unit = "svrngs-keeper-coder.service"
 manager = "systemctl --user -M sam@.host"
 state = "/home/sam/.svrngs"
+unit_file = f"/home/sam/.config/systemd/user/{unit}"
+job_dir = "/home/sam/.local/share/svrngs-keeper/coder"
 start = "llama-server --model /home/sam/models/qwen2.5-0.5b.gguf --host 127.0.0.1 --port 8101 -c 4096"
 run = "svrngs run coder --port 8101 -- /usr/bin/" + start
 share = "svrngs share 8101 --program llama-server --name coder --group house"
@@ -39,6 +41,32 @@ def origin():
 
 def pid():
     return root(f"{manager} show --value -p MainPID {unit}").strip()
+
+
+def busy_witness():
+    def digest(command):
+        said = root(f"set -o pipefail; {command} | sha256sum && echo read").strip()
+        found = re.fullmatch(r"([0-9a-f]{64})  -\nread", said)
+        return found[1] if found else None
+
+    def presence(path):
+        return root(f"if test -e {path} || test -L {path}; then echo present; else echo absent; fi").strip()
+
+    sockets = root("ss -ltnpH 'sport = :8101'")
+    owners = sorted(set(map(int, re.findall(r"\bpid=(\d+),", sockets))))
+    listener = []
+    for owner in owners:
+        # comm (field 2) is parenthesized and may contain spaces or ')'.
+        fields = root(f"cat /proc/{owner}/stat").rpartition(") ")[2].split()
+        tick = fields[19] if len(fields) > 19 else ""
+        listener.append({"pid": owner, "start_ticks": int(tick) if tick.isdecimal() else None})
+    revision = root(f"cat {state}/locks/coder.rev").strip()
+    return dict(listener=listener,
+                health_sha256=digest("curl -fsS -m 2 http://127.0.0.1:8101/health"),
+                unit_file=presence(unit_file), job_record=presence(job_dir),
+                load_state=root(f"{manager} show -p LoadState {unit}").strip(),
+                declaration_sha256=digest(f"cat {state}/lends/coder.json"),
+                revision=int(revision) if revision.isdecimal() else None)
 
 
 def complete(lines):
@@ -64,10 +92,16 @@ def scene():
             alex("/usr/bin/python3 /home/alex/ask.py --play --out /home/alex/asks/play.jsonl --bound 25", 45)
             prove("Alex opens the terminal copy", complete(demo.ask("terminal.jsonl", 40)))
             saved_origin = origin()
+            before = busy_witness()
             code, said = terminal(run)
+            after = busy_witness()
+            unchanged = (len(before["listener"]) == 1 and before["listener"][0]["start_ticks"] is not None and
+                         before["health_sha256"] is not None and before["declaration_sha256"] is not None and
+                         before["revision"] is not None and before["unit_file"] == before["job_record"] == "absent" and
+                         before["load_state"] == "LoadState=not-found" and before == after)
             prove("a busy port leaves the terminal copy and its share alone", code != 0 and
                   "Port 8101 is in use by llama-server, the copy you started: stop it, then press Run." in said and
-                  llama.poll() is None and pid() == "0" and origin() == saved_origin, address=saved_origin)
+                  unchanged and origin() == saved_origin, before=before, after=after, address=saved_origin)
             llama.stdin.write(b"\x03")
             llama.stdin.flush()
             llama.wait(30)

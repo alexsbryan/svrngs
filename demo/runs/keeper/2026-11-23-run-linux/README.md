@@ -14,10 +14,14 @@ Use a new scratch path on each run. `W/run/` holds the transcript, summary,
 and sampled door logs; the driver shuts down the VM and discards its disk.
 Alex opens coder's
 terminal copy and keeps its address. While that copy listens, Run must
-refuse without installing a service or touching the share. Sam stops his
-copy, withdraws the old share, then runs the same command with svrngs. The
-first Share is made to fail by reserving the writer's partial-file name as
-a directory. It must leave no share and report the separate save failure.
+refuse without installing a service or touching the share. The JSONL
+records the listener PID and start tick, localhost `/health` body SHA-256,
+unit file and keeper card directory presence, systemd `LoadState`, and
+the existing declaration's SHA-256 and revision on both sides of Run.
+Sam stops his copy, withdraws the old share, then runs the same command
+with svrngs. The first Share is made to fail by reserving the writer's
+partial-file name as a directory. It must leave no share and report the
+separate save failure.
 After the obstruction is removed, Share must succeed with the same PID.
 
 The old address must answer health and chat after three distinct reboots
@@ -35,7 +39,7 @@ followed by the command above exited 0 in 1m35s. All nine cases passed
 | Case | Verdict | Observation |
 |---|---|---|
 | Alex opens the terminal copy | passed | Health and chat returned 200 through the shared address. |
-| Run while the port is busy | passed | Exit 1. The terminal copy stayed up, no keeper service started, and Alex's address was unchanged. |
+| Run while the port is busy | passed | Instrumented replay below: exit 1, same listener and response, no unit or keeper record, and the same share and address. |
 | Run after Sam stops the copy and withdraws its share | passed | Exit 0. Sam consented to unattended startup; PID 2073 started and no share was written. |
 | Share with the partial-file directory planted | passed | Exit 1. The declaration was absent and PID 2073 stayed up. |
 | Share after removing the obstruction | passed | Exit 0. The declaration named `svrngs-keeper-coder.service`; PID 2073 and Alex's original address were unchanged. Health and chat returned 200. |
@@ -64,5 +68,20 @@ boot 3's clock.
 
 The focused red/green runs are in `24bfe771` (busy listeners, readiness,
 and reset of a failed unit) and `d6069b2b` (foreign connection taker and
-the blocked-save retry). This is one scratch VM run; packaged hardware
-startup was not run here.
+the blocked-save retry). Packaged hardware startup was not run here.
+
+### Instrumented busy-port replay
+
+The red scratch replay used `W=/tmp/opencode/keeper-busy-witness-red` and
+temporarily wrote `compose.yaml` in the keeper's job directory immediately
+after the busy refusal. It exited 1: `run/events.jsonl:8` records `job_record`
+changing from `absent` to `present` even though the other witnesses agreed.
+
+With the plant removed, the focused green replay through successful Share
+exited 0 (`W=/tmp/opencode/keeper-busy-witness-green`, `run/events.jsonl:7–16`).
+Run refused with exit 1. Before and after, `ss` named PID 1420, started at
+tick 1408, and `/health` hashed to `a29ee2b15c49…`. The unit file and card
+directory were absent and systemd reported `LoadState=not-found` both
+times. The declaration hashed to `79c44220f73b…` at revision 1 both times,
+and Alex kept the same address. After Sam stopped his copy, Run verified
+the new managed listener (PID 2498) and the retry shared it at that address.
