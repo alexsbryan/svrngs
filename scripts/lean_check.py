@@ -979,12 +979,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then avail-unmagic: cut the live takeover and add N1, to 25,336.
 # Then avail-run-linux: explicit Run and a fresh witness before saving a unit grant, to 25,424.
 # Then avail-run-page's review and confirmation reuse the share executor, at 25,502 and 8,680 JS.
+# Both doors then share the same service review, at 25,484 and 8,682 JS.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25503,
+    ".": 25485,
 
-    "js": 8681,
+    "js": 8683,
 
     "swift": 1,
 }

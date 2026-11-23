@@ -275,8 +275,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
           return {
             token: 'reviewed',
             terms: '',
-            said: 'House can use this copy now.',
-            button: 'Share this run',
+            review: { promise: 'House can use this copy now.', button: 'Share this run' },
           };
         },
         'POST /running/confirm': (held, body) => {

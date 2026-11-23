@@ -14,7 +14,7 @@
     "run": "House can use this copy now. If it stops, you’ll need to share it again."
   },
   "impact": {
-    "reuse": "Coder keeps running as it does now.",
+    "reuse": "Shared from your service {service}. It stays shared when the service starts again.",
     "run": "svrngs won’t restart Coder."
   },
   "button": {"reuse": "Share Coder", "run": "Share this run"},

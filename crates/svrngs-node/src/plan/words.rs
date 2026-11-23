@@ -54,8 +54,8 @@ impl Plan<'_> {
             format!("svrngs can’t verify that sharing will come back by itself with this setup: {why}.")
         });
         let (impact, button) = match self.method {
-            Method::Reuse(_) => (
-                format!("{name} keeps running as it does now."),
+            Method::Reuse(job) => (
+                format!("Shared from your service {job}. It stays shared when the service starts again."),
                 format!("Share {name}"),
             ),
             Method::ThisRun => (
@@ -69,25 +69,6 @@ impl Plan<'_> {
             impact,
             button,
         }
-    }
-
-    pub(crate) fn page_review(&self, again: bool) -> (String, String) {
-        let Review {
-            promise,
-            reason,
-            mut impact,
-            button,
-        } = self.words();
-        if let Method::Reuse(job) = self.method {
-            impact = format!(
-                "Shared from your service {job}. It stays shared when the service starts again."
-            );
-        }
-        let prefix = if again { REVIEW_AGAIN } else { "" };
-        (
-            format!("{prefix} {promise} {} {impact}", reason.unwrap_or_default()),
-            button,
-        )
     }
 
     pub fn report_words(&self, report: &Report) -> Option<Line> {

@@ -258,7 +258,15 @@ fn p2_host_product_matches_the_written_plans_and_words() {
                             );
                             let words = plan.words();
                             assert_eq!(words.promise, cases["promise"][arrival], "{context:?}");
-                            assert_eq!(words.impact, cases["impact"][method], "{context:?}");
+                            let service = match runs {
+                                Runs::OwnService(_) => "coder.service",
+                                _ => "coder",
+                            };
+                            let impact = cases["impact"][method]
+                                .as_str()
+                                .unwrap()
+                                .replace("{service}", service);
+                            assert_eq!(words.impact, impact, "{context:?}");
                             assert_eq!(words.button, cases["button"][method], "{context:?}");
                             assert_eq!(words.reason, why.map(|key| format!("svrngs can’t verify that sharing will come back by itself with this setup: {}.", cases["reason"][key].as_str().unwrap())), "{context:?}");
                             match (method, &plan.method) {

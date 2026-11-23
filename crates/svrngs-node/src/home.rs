@@ -894,8 +894,8 @@ async fn lend_one(
             ));
         }
     }
-    let (said, button) = reviewed.page_review(confirming);
-    Ok(Json(serde_json::json!({"token": reviewed.token, "said": said, "terms": terms, "button": button})).into_response())
+    let said = confirming.then_some(plan::REVIEW_AGAIN);
+    Ok(Json(serde_json::json!({"token": reviewed.token, "said": said, "terms": terms, "review": reviewed.words()})).into_response())
 }
 
 /// A group's own terms for `word`, `text`, drawn for its lender before
