@@ -7,6 +7,11 @@ podman, every one pinned, in a rootless podman image. Its command runs `npm ci -
 then `scripts/check.sh`, in the checkout at `/work`; its output and exit are
 check.sh's.
 
+`keeper e2e` starts a private systemd user manager and D-Bus for each case
+inside the container, with a scratch home and a delegated cgroup. Its two
+WebKit cases use the built keeper beside the test binary. The third case
+restarts a test unit and checks the kernel's fresh listener and cgroup IDs.
+
 From a svrngs checkout:
 
     podman build -t svrngs-gate -f scripts/gate/Containerfile scripts/gate

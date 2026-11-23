@@ -126,6 +126,8 @@ relay_fallback=webrtc_page::the_channel_closed_mid_film_completes_over_the_relay
 step "browser" cargo test --quiet --workspace --test browser -- --skip playback:: --skip "$relay_fallback"
 # Cargo exits 0 on an empty selection; require both engine cases in this step.
 step "relay fallback" sh -c 'out=$(cargo test --quiet -p svrngs-node --test browser "$1" -- --test-threads=1); status=$?; printf "%s\n" "$out"; [ "$status" = 0 ] || exit "$status"; case $out in *"test result: ok. 2 passed;"*) ;; *) echo "never-ran: expected the Chromium and WebKit cases"; exit 1 ;; esac' sh "$relay_fallback"
+# The ignored keeper cases need WebKit, the built keeper and private user managers.
+step "keeper e2e" python3 -B crates/svrngs-node/tests/keeper_gate.py --test browser explicit_run_then_share_in_webkit run_prefill_waits_for_confirmation_in_webkit --lib uid::tests::a_unit_s_program_is_named_granted_and_renewed_after_it_restarts
 # The pages' types (jsconfig.json, and the service workers' in
 # jsconfig.workers.json, by scripts/types.mjs), checked against the wasm
 # glue's declaration built here, target/web/site/wasm/: the browser step
