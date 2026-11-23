@@ -177,8 +177,15 @@ impl Folders {
         let held = self.store.get_bytes(Hash::from(*hash.as_bytes())).await;
         let text = held.map_err(|e| e.to_string());
         let text = text.and_then(|b| String::from_utf8(b.to_vec()).map_err(|e| e.to_string()));
-        let states = &self.host.states;
-        let made = text.and_then(|t| states.carry(group, app, &t).map_err(|r| r.to_string()));
+        let (g, a) = (group.to_owned(), app.to_owned());
+        let carry = move |t: String| {
+            move |s: &svrngs_db::States| s.carry(&g, &a, &t).map_err(|r| r.to_string())
+        };
+        let made = match text {
+            Ok(t) => crate::ring_sync::off(&self.host.states, carry(t)).await,
+            Err(why) => Some(Err(why)),
+        };
+        let made = made.unwrap_or_else(|| Err("its task ended".into()));
         tracing::debug!(target: "folder", group, app, root = made.is_ok(), "synced: an app's schema carried here first, its database made the root every other copy is synced from");
         if let Err(why) = made {
             tracing::warn!(target: "folder", group, app, why, "synced: an app's schema carried here first, but its database couldn't be made, so its copies say syncing until one is");

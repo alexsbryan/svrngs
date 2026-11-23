@@ -679,7 +679,9 @@ impl Folders {
                 tracing::debug!(target: "folder", group, %app, key, refused = ?wide.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database made wider by the version a member runs, where it adds to it; or why not");
             }
         }
-        self.host.states.held(group)
+        let group = group.to_owned();
+        let held = crate::ring_sync::off(&self.host.states, move |s| s.held(&group));
+        held.await.unwrap_or_default()
     }
 
     /// The app `kind`'s database in `group`, for the key `key` of `people`,

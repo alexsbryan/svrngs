@@ -269,7 +269,10 @@ pub async fn ring_state(
         .map_err(|why| err(StatusCode::FORBIDDEN, why))?;
     // The one database the call names, opened alone, and only one already
     // on this disk: never another of the group's, nor a path the wire names.
-    let db = state.states.open(group, app, None).map_err(refused)?;
+    let (g, a) = (group.to_owned(), app.to_owned());
+    let db = crate::ring_sync::off(&state.states, move |s| s.open(&g, &a, None)).await;
+    let ended = || Err(svrngs_db::Refused::Fault("its task ended".into()));
+    let db = db.unwrap_or_else(ended).map_err(refused)?;
     let call: svrngs_db::Call = postcard::from_bytes(call).map_err(malformed)?;
     let (bound, from) = (
         crate::ring_sync::bound(&state.rail, group),
