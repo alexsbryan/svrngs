@@ -59,14 +59,15 @@ fn cards(db: &Db) -> Value {
 /// twin, and the one above every version she sealed found as the copy's,
 /// set aside, her file flagged and her writes refused, saying why. Made
 /// again once nothing else holds her file, never under a live connection,
-/// her copy has a site of its own, writes there, and names the sets
+/// her copy has a site of its own, hands a phone no place it handed
+/// before, writes there, and names the sets
 /// of the site it retired as twins, so Ben's copy, which pruned the copy's
 /// set at that place, takes hers there too. Every copy then holds every
 /// card. Plants, each watched failing: the own-site set above Ana's
 /// versions not looked for (her copy never flagged); a set at a place the
 /// call names a twin passed by where this copy pruned its pair (Ben's copy
 /// never has Ana's jam); the retired site's sets not named as twins (the
-/// same).
+/// same); the handed places left behind (the phone handed seq 1 again).
 #[test]
 fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     let (ana_dir, copy_dir, ben_dir) = (
@@ -96,6 +97,12 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     call(&copy, &ben);
     assert_eq!(cards(&ben), json!([{ "id": "c1", "title": "ham" }]));
 
+    let phone = svrngs_core::actor_of(&SigningKey::from_bytes(&[7; 32]));
+    let handed = |db: &Db| {
+        let answer = db.prepare(&put("c8", "fig"), (&phone, &bound())).unwrap();
+        serde_json::from_str::<Value>(answer["prepared"].as_str().unwrap()).unwrap()["seq"].clone()
+    };
+    assert_eq!(handed(&ana), json!(1), "a phone's first place, handed before");
     call(&copy, &ana);
     assert!(
         ana.copied(),
@@ -112,6 +119,7 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     drop(held);
     let ana = ana_states.remake(ana, SCHEMA, &bound()).unwrap();
     assert!(!ana.copied(), "made again");
+    assert_eq!(handed(&ana), json!(2), "and never handed again");
     call(&copy, &ana);
     write(&ana, put("c3", "pie")).unwrap();
     let marks = ana.ask().unwrap().marks;

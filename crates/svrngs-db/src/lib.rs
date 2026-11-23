@@ -313,6 +313,13 @@ impl States {
         new.ingest(&call, binds, None)?;
         let retire = "UPDATE svrngs_db SET retired = ?1";
         new.conn().execute(retire, [retired]).map_err(fault)?;
+        // And the places it handed its phones, so none is handed twice.
+        let conn = new.conn();
+        conn.execute("ATTACH DATABASE ?1 AS old", [path.to_string_lossy()])
+            .map_err(fault)?;
+        let homes = "INSERT INTO svrngs_homes SELECT * FROM old.svrngs_homes; DETACH DATABASE old;";
+        conn.execute_batch(homes).map_err(fault)?;
+        drop(conn);
         drop(new);
         for gone in ["db-wal", "db-shm"] {
             let _ = std::fs::remove_file(path.with_extension(gone));
