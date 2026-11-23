@@ -7,20 +7,29 @@
 //! database on her computer, and her group's record has no line from it.
 //! Then Magnets' own tests, the board's laws and its page in Chromium and in
 //! WebKit as an iPhone, pass against her real route as they pass against
-//! the stand-in (web/tests/route.mjs). This is the scene's first beat; the
-//! lid closing on computers is its second, the next slice's.
+//! the stand-in (web/tests/route.mjs). This is the scene's first beat.
 //!
 //! The invariant it relies on: **the database is never in the record**
 //! (APP_STATE §7, invariant 1): a move is a write by key to the app's own
 //! database, beside the record, kept across a restart.
+//!
+//! **The lid closes** ([`magnets_lid`]; MAGNETS_BUILD §3, slice B, proof 2
+//! on three computers) is its second beat: Ana moves a word, and once Bo's
+//! computer has it, Ana's lid closes. Cy joins through Bo's computer, opens
+//! the fridge there, and moves another word. Ana opens her lid and sees it.
+//! It relies on **a closing lid stranding no write** (APP_STATE §11, W2):
+//! every computer whose person runs Magnets keeps its database, a page
+//! opened there or not, and a computer about to sleep pushes what it holds
+//! to one awake.
 
 use std::path::Path;
 use std::process::Stdio;
+use std::time::Duration;
 
 use serde_json::{json, Value};
 
 use crate::harness::{browsers, repo, Engine};
-use crate::people::{sees, Person, Scene};
+use crate::people::{late, sees, Person, Scene};
 
 /// What Ana puts after the prompt.
 const WORDS: [&str; 3] = ["haunted", "lasagna", "situation"];
@@ -189,4 +198,102 @@ async fn magnets(engine: Engine) {
         "{said}"
     );
     drop(ana);
+}
+
+/// Ana's magnet, then Cy's, by their ids in Magnets' pack
+/// (apps/magnets/pack.json), each its word.
+const ANA_S: &str = "goose";
+const CY_S: &str = "moon";
+
+/// The magnet `id` put at `position`, as a tap writes it (board.js `put`).
+fn put(id: &str, position: i64) -> Value {
+    json!({ "write": [{ "insert": "magnets", "row": { "id": id, "position": position } }] })
+}
+
+/// The sentence on `who`'s computer as a page asks it, by magnet, and
+/// whether its copy says syncing.
+async fn board(who: &Person, origin: &str) -> (Vec<String>, bool) {
+    let read =
+        json!({ "sql": "SELECT id FROM magnets WHERE position IS NOT NULL ORDER BY position, id" });
+    let got = asked(who, origin, read).await;
+    let rows = got["rows"].as_array().into_iter().flatten();
+    let ids = rows.map(|r| r["id"].as_str().unwrap().to_string());
+    (ids.collect(), got.get("syncing").is_some())
+}
+
+/// Within two minutes, two of a round's minutes, `who`'s sentence is
+/// `want`, its copy synced; else the scene is late, saying what it shows.
+async fn shows(who: &Person, origin: &str, want: &[&str]) {
+    let want: Vec<String> = want.iter().map(|w| w.to_string()).collect();
+    for _ in 0..120 {
+        if board(who, origin).await == (want.clone(), false) {
+            return;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    let (now, syncing) = board(who, origin).await;
+    let log = who.log();
+    late(format!(
+        "{}'s fridge shows {now:?}, syncing {syncing}, never {want:?} synced; its log is {}",
+        who.name,
+        log.display()
+    ))
+    .await
+}
+
+scene!(
+    /// Planted, watched failing: the members' route answering no app
+    /// database (ring_routes.rs `ring_state` refusing each as not held), so
+    /// Bo's computer never has Ana's move.
+    magnets_lid
+);
+async fn magnets_lid(engine: Engine) {
+    let scene = Scene::new("magnets-lid", engine).await;
+    let (ana, fridge) = scene.founds("Ana", "Fridge").await;
+    carry(&ana.folder(&fridge).await);
+    let at_ana = ana.opens(&fridge, "magnets").await;
+    let bo = scene
+        .joins("Bo", &ana.invites(&fridge).await, "Fridge")
+        .await;
+    let at_bo = bo.opens(&fridge, "magnets").await;
+
+    // Ana moves a word, and once Bo's computer has it, her lid closes: the
+    // platform's hook asks her svrngs to push what it holds, then it sleeps.
+    assert_eq!(
+        asked(&ana, &at_ana, put(ANA_S, 1)).await,
+        json!({ "count": 1 })
+    );
+    shows(&bo, &at_bo, &[ANA_S]).await;
+    let pushed = scene.command(&ana, &["ask", "/v1/sleeps", "{}"], "").await;
+    let pushed: Value = serde_json::from_str(&pushed).unwrap();
+    assert_eq!(
+        pushed,
+        json!({ "took": 1, "groups": 1 }),
+        "Ana's push before her lid closes"
+    );
+    ana.lid(true);
+
+    // Cy joins through Bo's computer, opens the fridge there, Ana's word on
+    // it, and moves another word.
+    let cy = scene
+        .joins("Cy", &bo.invites(&fridge).await, "Fridge")
+        .await;
+    let at_cy = cy.opens(&fridge, "magnets").await;
+    shows(&cy, &at_cy, &[ANA_S]).await;
+    assert_eq!(
+        asked(&cy, &at_cy, put(CY_S, 2)).await,
+        json!({ "count": 1 })
+    );
+
+    // Ana opens her lid, and her fridge shows Cy's word after hers.
+    ana.lid(false);
+    shows(&ana, &at_ana, &[ANA_S, CY_S]).await;
+    let seen = sees(engine, "carried.mjs", json!({ "url": at_ana, "do": [] })).await;
+    eprintln!("Ana's fridge, her lid open: {seen:#}");
+    assert_eq!(
+        sentence(&seen),
+        [ANA_S, CY_S],
+        "Ana sees Cy's word: {seen:#}"
+    );
+    drop((ana, bo, cy));
 }

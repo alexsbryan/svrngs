@@ -343,6 +343,19 @@ impl Person {
         let _ = self.running.kill().await;
     }
 
+    /// Its computer's lid closed, its svrngs stopped where it stands as a
+    /// sleeping computer's is (`kill -STOP`), answering nothing and asking
+    /// nothing; or opened again, going on from there (`kill -CONT`), its
+    /// timers due as the time it slept passed.
+    pub fn lid(&self, closed: bool) {
+        let pid = self.running.id().expect("its svrngs runs").to_string();
+        let signal = if closed { "-STOP" } else { "-CONT" };
+        let sent = std::process::Command::new("kill")
+            .args([signal, &pid])
+            .status();
+        assert!(sent.unwrap().success(), "kill {signal} {pid}");
+    }
+
     /// Where its traces are.
     pub fn log(&self) -> PathBuf {
         self.home.join("svrngs.log")
