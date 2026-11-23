@@ -49,6 +49,12 @@ queue's Mac rows):
 **xenia** runs on DeepSeek Flash at `--variant max` (AGENTS.md, "Ralph
 model effort"), as PLAY_LEND_GIVE_UX §4's runs were.
 
+**The demo's model** is Qwen2.5-0.5B-Instruct Q4_K_M: in the spike VM at
+`~/models/qwen2.5-0.5b.gguf`, as `demo/runs/keeper/2026-11-22/README.md:26`
+records it, and on this host at `/tmp/keeper-demo/qwen2.5-0.5b.gguf`.
+Don't search for it anywhere else. A read outside the allowed folders is
+refused and ends the session.
+
 **Never touch the operator's real svrngs groups or lends.** svrngs runs for
 a check only as a scratch node: `SVRNGS_DIR` and `HOME` in a scratch
 folder, as svrn-docs LEND_SANDBOX §6 B5 does.
@@ -56,6 +62,17 @@ folder, as svrn-docs LEND_SANDBOX §6 B5 does.
 **Decisions:**
 - **A row's allowance is its estimate; the caps decide** (the operator,
   2026-11-19). For svrngs's half, the envelope is CHARTER's.
+- **A row runs an economizing pass before raising past 1.5× its counted
+  estimate** (keeper-lead, 2026-11-23, on the operator's steering through
+  QA: "treat budget as tight already").
+  - The CHARTER ceiling is the release's whole envelope, not one row's.
+  - The estimate is spec §5's counted figure. avail-run-linux's is +60,
+    and less again now that the `Unapproved`-with-grant arm is not built.
+  - Cut first: code a test could carry instead; a second render of words
+    `plan/words.rs` already has; a helper with one caller.
+  - If the row is still over 1.5× after the pass, stop with `needs-human`.
+    Give the per-file counts, what the pass cut, and why the rest is
+    needed.
 - **An advisory that blocks commits is judged by reachability** (675b0cc1).
   - If none of its affected functions is called, add a `deny.toml`
     exception whose reason gives that evidence, with a review date two

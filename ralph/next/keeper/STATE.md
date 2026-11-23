@@ -434,6 +434,42 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   Alex's link keeps working through three no-login reboots in the spike's
   VM and a kill -9. Then the busy-port refusal, and a failed save giving
   "not shared" with no second run.
+  - **Unjammed** (keeper-lead with QA oc-cruu42, 2026-11-23, after three
+    sessions ended with no commit; the operator: "clear up the jam").
+    - `24bfe771`, the keeper's half, stands.
+    - Sessions 2–4's uncommitted svrngs half was +325 counted against this
+      row's +60. It is saved, not applied, at
+      `ralph/next/keeper/ctl/avail-run-linux-wip.patch`. Take only what the
+      cuts below leave.
+  - **Two steps, literally** (QA's cuts; they supersede the earlier bullets
+    where they differ):
+    - `svrngs run <name> --port <port> -- <command>` runs the program and
+      shares nothing. Sharing stays the existing `svrngs share`.
+    - Re-running an app that is already shared keeps its reviewed terms
+      through the existing conditional publication. If carrying the terms
+      over costs more than a few lines, require an explicit Share instead.
+    - No second share flow in `cli.rs`: no `--group` and no audience on
+      Run.
+  - **No planner scaffolding.**
+    - Don't build a made-up `State` (dummy binding, unknown starts) to feed
+      the share planner.
+    - Add no `Event::Run` or `Method::Run` unless a concrete preview reads
+      them.
+    - Run is one concrete call into the keeper, not a generic executor and
+      save closure. Only an actual Share uses the revision and token
+      machinery.
+  - **The keeper call.** One bounded call in `plan/run.rs`, with its
+    `NODE_COMMAND` entry restored in the shape it had before 3c364618
+    (`git show 9599ab05:scripts/lean_check.py`, line 46). Use the
+    packaged sibling path, not a bare `Command::new("svrngs-keeper")` that
+    searches PATH.
+  - **The grant check is real.** The draft's `job_grant` has
+    `let belongs = true`. The real cgroup check must stand, with red and
+    green evidence in the commit.
+  - **Allowance: +90 counted, at most.** If the row can't fit, stop with
+    `needs-human` and per-file counts.
+  - The demo's model is at `/tmp/keeper-demo/qwen2.5-0.5b.gguf`. Search
+    nowhere else: a refused read ends the session.
 
 - [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses, unchanged:
   - the card (`compose.yaml` plus `x-svrngs`) and `card::check`;
