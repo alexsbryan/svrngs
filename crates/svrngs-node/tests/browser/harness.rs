@@ -164,16 +164,19 @@ fn traced() {
     ONCE.call_once(|| {
         let kept = repo().join("target/traces");
         std::fs::create_dir_all(&kept).unwrap();
-        let log =
-            std::fs::File::create(kept.join(format!("{}.log", env!("CARGO_CRATE_NAME")))).unwrap();
+        let log = std::fs::File::create(trace_log()).unwrap();
         tracing_subscriber::fmt()
             .with_env_filter(tracing_subscriber::EnvFilter::new(
-                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug,rails=debug,folder=debug,svrngs_node::ring_sync=debug,webrtc=debug",
+                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug,rails=debug,folder=debug,svrngs_node::ring_sync=debug,webrtc=debug,iroh::_events::path::abandoned=debug,iroh::_events::path::selected=debug",
             ))
             .with_writer(std::sync::Mutex::new(log))
             .with_ansi(false)
             .init();
     });
+}
+
+pub fn trace_log() -> PathBuf {
+    repo().join(format!("target/traces/{}.log", env!("CARGO_CRATE_NAME")))
 }
 
 /// iroh's relay server on 127.0.0.1, plain HTTP: no TLS, no QUIC, behind a

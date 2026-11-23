@@ -784,18 +784,13 @@ async fn pressed_on(node: &Node) -> String {
 /// a lender queue** (demo/runs/phone-home/2026-11-20, "What it found" 2):
 /// a relay holding Ada's computer to the share, 125,000 bytes a second
 /// (`crates/svrngs/src/relay.rs` `SHARE_RATE`; a 64 KiB burst in place of
-/// its 8 MiB, so the share holds from the first second), and Sam's dial
-/// through it, its connections built as the page builds `paths`, reading
-/// two answers on, a part of 2 MiB after another, as a player's lookahead
-/// asks them (`web/lend.js` `PART`); 12 s in, a seek asks a range, whose
-/// first bytes must come within 6 s: the 2.1 s a page's [`QUEUED`] takes
-/// at the share, and slack for the asks' round trips and a loaded host
-/// (2.2-4.1 s here, the whole file's tests at once among them).
+/// its 8 MiB), and Sam's dial through it, built as the page builds
+/// `paths`. Two lookahead ranges must both be flowing before the seek.
+/// Count the lookahead bytes delivered before the seek, allowing the
+/// connection window plus two windows for further reads and credit updates.
 /// Ada's group meets at its own plain-HTTP relay, her build's answering
 /// nowhere, so the share watch, which reads only the build's relay,
-/// refuses nothing. Planted, watched red: `QUEUED` ignored (iroh's
-/// 1.25 MB a stream), and the first bytes came after 12.4 s, the queue
-/// growing for as long as the lookahead reads (4.5 s at 4 s in, 8.5 s at 8).
+/// refuses nothing. Elapsed time is diagnostic only.
 ///
 /// [`QUEUED`]: svrngs_node::dial::QUEUED
 async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportConfig) {
@@ -816,27 +811,43 @@ async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportCo
             "GET /lend/{label}/ HTTP/1.1\r\nHost: x\r\nRange: {range}\r\nConnection: close\r\n\r\n"
         )
     };
-    for i in 0..2 {
-        tokio::spawn(read_on(conn.clone(), head(&format!("bytes={}-", i * PART))));
-    }
-    tokio::time::sleep(Duration::from_secs(12)).await;
-    let asked = Instant::now();
-    let (mut send, mut recv) = conn.open_bi().await.unwrap();
-    send.write_all(head("bytes=0-1").as_bytes()).await.unwrap();
-    let first = recv.read_chunk(64 * 1024).await.unwrap().unwrap();
-    let ms = asked.elapsed().as_millis();
-    eprintln!(
-        "the seek over {way}: its first bytes in {ms} ms ({} B)",
-        first.len()
-    );
-    assert!(
-        String::from_utf8_lossy(&first).starts_with("HTTP/1.1 206"),
-        "{first:?}"
-    );
-    assert!(
-        ms <= 6_000,
-        "the seek over {way} waited {ms} ms behind the lookahead"
-    );
+    let ask = async |range: &str| {
+        let (mut send, recv) = conn.open_bi().await.unwrap();
+        send.write_all(head(range).as_bytes()).await.unwrap();
+        (send, recv)
+    };
+    tokio::time::timeout(Duration::from_secs(45), async {
+        let (_first, mut first) = ask("bytes=0-").await;
+        let (_second, mut second) = ask(&format!("bytes={PART}-")).await;
+        let mut read = [0, 0];
+        while read.iter().any(|n| *n < PART / 4) {
+            // Read both to keep connection-level credit moving, even if
+            // the lender started sending on one stream before the other.
+            lookahead(&mut first, &mut second, &mut read).await;
+        }
+        let (_seek, mut seek) = ask("bytes=0-1").await;
+        let asked = Instant::now();
+        let mut ahead = [0, 0];
+        let reply = seek.read_to_end(4096);
+        tokio::pin!(reply);
+        let reply = loop {
+            tokio::select! {
+                biased;
+                reply = &mut reply => break reply.unwrap(),
+                () = lookahead(&mut first, &mut second, &mut ahead) => {
+                    let bytes = ahead.iter().sum::<usize>();
+                    assert!(bytes <= 3 * svrngs_node::dial::QUEUED as usize,
+                        "the seek over {way} did not overtake the lookahead: {bytes} B read ahead of it");
+                }
+            }
+        };
+        eprintln!("the seek over {way}: {ahead:?} B ahead of its answer, arrived in {} ms", asked.elapsed().as_millis());
+        let response = String::from_utf8(reply).unwrap();
+        assert!(response.starts_with("HTTP/1.1 206"), "{response:?}");
+        assert_eq!(response.split_once("\r\n\r\n").unwrap().1, "ok");
+    })
+    .await
+    .expect("lookahead and seek must make progress over the relay");
     dialer.close().await;
     node.endpoint().close().await;
 }
@@ -898,15 +909,21 @@ async fn sam_dialer(url: &str, paths: iroh::endpoint::QuicTransportConfig) -> ir
         .unwrap()
 }
 
-/// A player reading on over `conn`: `ask` sent, its answer read whole,
-/// and asked again, as a lookahead asks its parts one after another.
-async fn read_on(conn: iroh::endpoint::Connection, ask: String) {
-    while let Ok((mut send, mut recv)) = conn.open_bi().await {
-        if send.write_all(ask.as_bytes()).await.is_err() {
-            return;
-        }
-        while let Ok(Some(_)) = recv.read_chunk(64 * 1024).await {}
-    }
+/// Each lookahead has more bytes than the allowance being tested. Reading
+/// a chunk is cancel-safe when the seek wins the outer select.
+async fn lookahead(
+    first: &mut iroh::endpoint::RecvStream,
+    second: &mut iroh::endpoint::RecvStream,
+    read: &mut [usize; 2],
+) {
+    let (index, chunk) = tokio::select! {
+        chunk = first.read_chunk(16 * 1024) => (0, chunk),
+        chunk = second.read_chunk(16 * 1024) => (1, chunk),
+    };
+    read[index] += chunk
+        .unwrap()
+        .unwrap_or_else(|| panic!("lookahead {index} ended early: {read:?}"))
+        .len();
 }
 
 /// [`serving`], each connection answered on a task of its own, as a
@@ -920,11 +937,17 @@ async fn serving_each(big: usize) -> u16 {
         while let Ok((mut asked, _)) = listener.accept().await {
             tokio::spawn(async move {
                 let mut buf = vec![0u8; 4096];
-                let n = asked.read(&mut buf).await.unwrap_or(0);
-                let ranged = String::from_utf8_lossy(&buf[..n])
-                    .to_ascii_lowercase()
-                    .contains("range:");
-                let body = if ranged {
+                let mut n = 0;
+                while !buf[..n].ends_with(b"\r\n\r\n") && n < buf.len() {
+                    let read = asked.read(&mut buf[n..]).await.unwrap_or(0);
+                    if read == 0 {
+                        return;
+                    }
+                    n += read;
+                }
+                let head = String::from_utf8_lossy(&buf[..n]).to_ascii_lowercase();
+                let ranged = head.contains("range:");
+                let body = if ranged && !head.contains("range: bytes=0-1\r\n") {
                     vec![b'r'; big]
                 } else {
                     b"ok".to_vec()

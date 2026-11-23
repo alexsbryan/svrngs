@@ -16,7 +16,8 @@ reimplement authorization. Fast presentation tests are not signing/I/O evidence.
 | One real creator workflow | `cargo test -p svrngs --test scenes creator -- --test-threads=1` | Native publication/signing/version routes and computer/phone browsers |
 | That the shipped binary reaches svrngs's relay | `cargo test -p svrngs --test internet` (check.sh `internet`) | `relay.svrnme.sh` on the internet, the shipped `svrngs` as built; could-not-judge when it does not answer iroh alone |
 | That a browser decodes a lent film | `cargo test --test browser playback:: && cargo test --test conformance seeks_back_to_back:: && cargo test -p svrngs --test scenes night_played::` (check.sh `playback`) | Actual Chromium and WebKit media decoders, and Jellyfin's player on the night scene's TV through a lend's worker; the one place a test waits on playback |
-| That a film's bytes arrive over the relay after its WebRTC channel closes | `cargo test -p svrngs-node --test browser webrtc_page::the_channel_closed_mid_film_completes_over_the_relay:: -- --test-threads=1` (check.sh `relay fallback`) | Actual Chromium and WebKit, one at a time outside the parallel `browser` step; the unchanged 2,500–4,000 ms bound in `webrtc_page.rs` |
+| That a film's bytes arrive over the relay after its WebRTC channel closes | `cargo test --quiet --workspace --test browser -- --skip playback::` (check.sh `browser`) | Chromium and WebKit: selected WebRTC path, observed channel close, lender trace switching to the relay, and exact range and digest. Time is logged, with a hang guard on the fetch. |
+| That a seek overtakes queued lookahead | `cargo test -p svrngs-node --test relay_tiers a_seek_over_the_share` (check.sh `tests`) | A real rate-limited relay and two active lookahead ranges. Count bytes ahead of the seek response on both the page's ordinary dial and the data endpoint; no wall-clock performance bar. |
 | Run, prefill, Share and Linux renewal | `keeper e2e` in `scripts/check.sh` | `svrngs-gate` (rebuild from `scripts/gate/Containerfile`); two real WebKit scenes and a real systemd restart/cgroup test. Each exact selection must pass once. |
 | Every deterministic test a change reaches | `scripts/check.sh --touched` (or `--touched --files <path>...`) | The cheap steps, clippy, and each test `docs/seams.tsv` does not call fragile; no browser, scene, relay or service |
 | Complete regression gate | `scripts/check.sh` | Every tier, before shipping |
@@ -33,7 +34,7 @@ instrument changes are held to all their consumers. The whole gate remains the g
 ### The touched tier
 
 `--touched` runs no fragile test. `scripts/touched.py` folds each slow step
-that runs named test binaries (browser, relay fallback, keeper e2e, scenes, canaries, playback, internet...) into
+that runs named test binaries (browser, keeper e2e, scenes, canaries, playback, internet...) into
 `tests`; `touched.py --run` builds the binaries, lists each, and gives libtest
 `--exact --skip` for each test whose `docs/seams.tsv` row says `fragile`, the one
 decider: a row moved to `deterministic` joins with no second list. A test with
