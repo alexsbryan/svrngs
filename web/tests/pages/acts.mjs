@@ -55,4 +55,3 @@ await driving(args, async ({ page, origin }) => {
     lines: await page.evaluate(() => window.__lines ?? []),
   };
 });
-process.exit();
