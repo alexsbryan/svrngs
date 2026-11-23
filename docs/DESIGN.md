@@ -202,6 +202,10 @@ no declaration stands and leaves it behind. A confirmed plan can publish
 its binding, grant, audience and limit in one declaration write only at
 the reviewed revision. The executor (`plan::run::confirm`) rebuilds the
 plan before publishing and returns the current review on a token mismatch.
+On the home page, `/running` reviews a new share and `/running/confirm`
+publishes it with that same executor. The review binds the program and the
+terms shown as well as the audience and listener; it never replaces a
+share that already stands.
 `svrngs share --plan` prints the terminal review; at a
 terminal a yes is required before executing it. `--ask-after-restart`,
 and sharing without a terminal, share only the current run. A listener

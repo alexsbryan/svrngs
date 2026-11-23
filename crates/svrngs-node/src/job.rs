@@ -23,6 +23,12 @@ pub struct Keep {
     pub files: String,
 }
 
+impl std::fmt::Display for Keep {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.unit)
+    }
+}
+
 /// A unit as its user manager says now, to renew: its grant as one made
 /// now would be, and the cgroups of its subtree, this boot's ids.
 #[derive(Debug, Clone, PartialEq, Eq)]

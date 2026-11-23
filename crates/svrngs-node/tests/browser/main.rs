@@ -1998,7 +1998,7 @@ in_chromium!(
     /// home page looks for them only once she asks, its look knocking at
     /// every address here; then, under "Already running here", it names
     /// the first by the table with what it needs first (its own accounts,
-    /// and how to make one) and lends it in one tap; the second it lends only once she has
+    /// and how to make one) and lends it after review; the second it lends only once she has
     /// given it a name and said what it is, refusing it before. No
     /// terminal: each is declared through the page's `/running`, and the
     /// share line under "Done in a terminal" is gone. Then bo, on his own
@@ -2055,9 +2055,9 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             "read": "#lent h2",
             "timed": ["#lent h2", "#running li"],
             "all": "#running li, #running p",
-            "do": [look, tick(8096), press(8096), tick(chores.port()), press(chores.port()),
-                fill(chores.port(), "name", "chores"), fill(chores.port(), "kind", "chore-wheel"),
-                press(chores.port())],
+            "do": [look, tick(8096), press(8096), press(8096), tick(chores.port()), press(chores.port()),
+                 fill(chores.port(), "name", "chores"), fill(chores.port(), "kind", "chore-wheel"),
+                 press(chores.port()), press(chores.port())],
             // The running row answers before HOME's lending reread. An old
             // list still matches `#lent h2 ~ *` (grouped-home check.log).
             "after": ["#lent li", "chores: everyone in the groups you chose at once"],
@@ -2115,9 +2115,11 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         let line = after[i].to_string();
         assert!(line.contains(words), "{words}: {seen:#}");
     };
-    lent(1, "You lent jellyfin");
-    lent(2, "Give it a name and say which program it is first");
-    lent(3, "You lent chores");
+    lent(1, "Share this run");
+    lent(2, "You lent jellyfin");
+    lent(3, "Give it a name and say which program it is first");
+    lent(4, "Share this run");
+    lent(5, "You lent chores");
     let page = seen["text"].as_str().unwrap_or_default();
     assert!(
         !page.contains("svrngs share"),

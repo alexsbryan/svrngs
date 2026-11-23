@@ -71,6 +71,25 @@ impl Plan<'_> {
         }
     }
 
+    pub(crate) fn page_review(&self, again: bool) -> (String, String) {
+        let Review {
+            promise,
+            reason,
+            mut impact,
+            button,
+        } = self.words();
+        if let Method::Reuse(job) = self.method {
+            impact = format!(
+                "Shared from your service {job}. It stays shared when the service starts again."
+            );
+        }
+        let prefix = if again { REVIEW_AGAIN } else { "" };
+        (
+            format!("{prefix} {promise} {} {impact}", reason.unwrap_or_default()),
+            button,
+        )
+    }
+
     pub fn report_words(&self, report: &Report) -> Option<Line> {
         use {Done::*, Job::*};
         let name = &self.nature.name;

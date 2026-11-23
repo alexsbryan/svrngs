@@ -955,6 +955,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 terms: terms_plan.clone(),
                 pid: asked.pid,
                 replace: asked.replace,
+                contract: theirs,
                 door: if availability == Availability::Keep && kept_over(&root) {
                     run::service_return("svrngs.service")
                 } else {

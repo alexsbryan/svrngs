@@ -80,6 +80,7 @@ use crate::join::{Entered, NotJoined};
 use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
+use crate::plan::{self, run, Availability, Done, Report};
 use crate::share::{self, Share, ShareRefusal};
 
 /// The home page's host, before its port.
@@ -163,6 +164,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) ->
     .route("/reaching", get(reached).post(reaching))
     .route("/lent", get(lent).post(change))
     .route("/running", get(running).post(lend_one))
+    .route("/running/confirm", axum::routing::post(lend_one))
     .route("/link", axum::routing::post(link))
     .route("/connection", axum::routing::post(connection))
     .route("/publication", get(crate::publication::status).post(crate::publication::publish))
@@ -747,14 +749,14 @@ struct ToLend {
     /// share --pid <pid>@<start>` takes them (SHARE_BINDING §5.1).
     pid: Option<u32>,
     start: Option<u64>,
+    token: Option<String>,
 }
 
-/// `POST /running`: the lend decided as `svrngs share` decides one
-/// ([`share::lend_of`]: the table's kind and kept paths), lent only with a
-/// name and what it is unless the table knows its port, never in place of
-/// a lend of its name, then declared ([`lend::declare`]) and [`shown`].
+/// `POST /running` reviews a new share; `/running/confirm` replays that
+/// review before publishing. Neither replaces a share of the same name.
 async fn lend_one(
     State(at): State<Asking>,
+    path: axum::extract::MatchedPath,
     asked: Result<Json<ToLend>, JsonRejection>,
 ) -> Result<Response, Response> {
     // Each refusal in the person's words, traced with what refused it, the
@@ -765,7 +767,7 @@ async fn lend_one(
     };
     // What the page sent: a port that is none, 0 or past 65535, else a
     // body the page never sends.
-    let Json(ToLend { port, name, kind, groups, terms, pid, start }) = asked.map_err(|e| match e {
+    let Json(ToLend { port, name, kind, groups, terms, pid, start, token }) = asked.map_err(|e| match e {
         JsonRejection::JsonDataError(_) => refused("That is not something running on this computer: look again, then lend it from the list.", &e),
         _ => refused("This computer could not read what the page sent: reload the page, then try again.", &e),
     })?;
@@ -784,9 +786,10 @@ async fn lend_one(
     };
     // The audience is required and explicit (SCOPE_PARALLEL.md): an absent
     // selection is refused, never defaulted to all groups; every ID is
-    // checked against the groups this computer holds. A present empty list
-    // is a deliberate pause.
+    // checked against the groups this computer holds. Pause an existing
+    // share in its audience controls; a new share names its audience.
     let groups = groups
+        .filter(|g| !g.is_empty())
         .ok_or_else(|| refused("Choose which groups can open this first.", &"no selection"))?;
     chosen(&at, &groups)?;
     let asked = Share {
@@ -829,32 +832,70 @@ async fn lend_one(
         ShareRefusal::NoKind(_) => refused(unknown, &e),
         _ => refused(&e.to_string(), &e),
     };
-    let mut lend = share::lend_of(&asked, known, &terms).map_err(said)?;
-    // What answers, read through the transport, so a test says it; approved
-    // only as the page showed it, never as it answers at the press, so a
-    // page that read no program on the port lends nothing.
+    let lend = share::lend_of(&asked, known, &terms).map_err(said)?;
     let pid = crate::surface::process(pid, start)?;
     let read = (at.host.transport).answering(Raw::Tcp, port.get(), pid.map(|p| p.pid));
-    let approved = share::approve((port, Raw::Tcp), read.await, pid, None)
-        .map_err(said)?
-        .0;
+    let wire = read.await;
+    let groups = groups
+        .into_iter()
+        .map(|id| {
+            let name = crate::surface::seed_of(&at, &id)
+                .map_or_else(|| id.clone(), |s| s.name().to_string());
+            (id, name)
+        })
+        .collect();
+    let intent = run::Share {
+        dir,
+        lend: &lend,
+        pid,
+        replace: false,
+        contract: &terms,
+        terms: plan::Terms {
+            groups,
+            limit: None,
+            availability: Availability::Keep,
+        },
+        door: run::own_return(),
+    };
+    let (observed, witness) = intent.observe(|_| wire).map_err(said)?;
     let unshown = format!("svrngs can’t tell which program answers on port {port}, so it can’t be lent from here: `svrngs share {port} --group <group>` lends it.");
-    lend.terms.approved = Some(approved).filter(|_| pid.is_some());
-    if lend.terms.approved.is_none() {
+    let reviewed = plan::plan(&observed).expect("nonempty audience");
+    if pid.is_none() && !matches!(reviewed.method, plan::Method::Reuse(_)) {
         return Err(refused(&unshown, &port));
     }
-    let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
-    tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
-    let declared = stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None)));
     let name = &lend.name;
-    Ok(match declared {
-        Ok(Some(Ok(()))) => Json(shown(port, Some(&lend.kind), Some(name), &terms)).into_response(),
-        Ok(None) => refused(
+    if lend::read(dir, name)
+        .map_err(|e| LendRefusal::fault(e.to_string()))?
+        .is_some()
+    {
+        return Err(refused(
             &format!("You already lend something called {name}: give it another name."),
             name,
-        ),
-        Err(e) | Ok(Some(Err(e))) => LendRefusal::fault(e.to_string()),
-    })
+        ));
+    }
+    let confirming = path.as_str() == "/running/confirm";
+    if confirming {
+        let token = token.ok_or_else(|| LendRefusal::closed(plan::REVIEW_AGAIN))?;
+        let result = run::confirm(
+            &token,
+            || (observed.clone(), witness),
+            |w, p| intent.execute(p, w, lend::Credentials::Replace(None)),
+        );
+        if let run::Confirmation::Finished(result, _) = result {
+            let report = result.report.expect("confirmation reports a result");
+            if matches!(report, Report::Done(Done::Published { .. })) {
+                return Ok(Json(shown(port, Some(&lend.kind), Some(name), &terms)).into_response());
+            }
+            return Err(LendRefusal::closed(
+                reviewed
+                    .report_words(&report)
+                    .expect("the owner finished")
+                    .text,
+            ));
+        }
+    }
+    let (said, button) = reviewed.page_review(confirming);
+    Ok(Json(serde_json::json!({"token": reviewed.token, "said": said, "terms": terms, "button": button})).into_response())
 }
 
 /// A group's own terms for `word`, `text`, drawn for its lender before

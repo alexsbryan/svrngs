@@ -978,12 +978,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # O4 keeps mechanism names out of the page's and planner's copy, at 25,521 and 8,651 JS.
 # Then avail-unmagic: cut the live takeover and add N1, to 25,336.
 # Then avail-run-linux: explicit Run and a fresh witness before saving a unit grant, to 25,424.
+# Then avail-run-page's review and confirmation reuse the share executor, at 25,502 and 8,680 JS.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25425,
+    ".": 25503,
 
-    "js": 8652,
+    "js": 8681,
 
     "swift": 1,
 }

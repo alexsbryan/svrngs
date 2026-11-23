@@ -89,19 +89,17 @@ function Found({ r: shown, named, groups, home }) {
     !shown.kind &&
     FIELDS.map(
       ([name, words]) =>
-        html`<${Field} name=${name} words=${words} value=${state[name]} send=${send} />`,
+        html`<${Field} name=${name} words=${words} value=${state[name]} attrs=${{ disabled: state.at.lend === 'lending' }} send=${send} />`,
     );
   const busy = state.at.lend === 'lending' ? 'busy' : 'idle';
   const names = chosen(groups, state.groups);
-  const who = shown.kind ? `Who can open ${shown.kind}?` : 'Who can open it?';
-  const words = names.length
-    ? `Lend ${shown.kind ?? 'it'} to ${names.join(' and ')}`
-    : `Lend ${shown.kind ?? 'it'}`;
+  const kind = shown.kind ?? 'it';
+  const words = names.length ? `Lend ${kind} to ${names.join(' and ')}` : `Lend ${kind}`;
   return html`
     <li>
       ${said}
       ${fields}
-      <p>${who}</p>
+      <p>Who can open ${kind}?</p>
       <${GroupChoice}
         groups=${groups}
         ticked=${state.groups}
@@ -109,7 +107,7 @@ function Found({ r: shown, named, groups, home }) {
         send=${send}
       />
       <${Act}
-        words=${words}
+        words=${state.review?.button ?? words}
         doing=${{ state: busy }}
         on=${{ type: 'lend' }}
         send=${send}

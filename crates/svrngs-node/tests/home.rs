@@ -1658,10 +1658,48 @@ async fn what_the_page_lends_is_what_it_showed() {
     let pad = lend::LendName::parse("pad").unwrap();
     assert_eq!(lend::read(dir.path(), &pad).unwrap(), None, "nothing lent");
     on_wire::answers(&alex, port, Ok(svrngs_node::node::answering()));
+    let body = lent("pad", r#","pid":1,"start":1"#);
+    let review = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &body).await;
+    let token = review.json()["token"]
+        .as_str()
+        .expect("the page got a review")
+        .to_owned();
     assert_eq!(
-        lends(lent("pad", r#","pid":1,"start":1"#)).await,
-        (200, None)
+        lend::read(dir.path(), &pad).unwrap(),
+        None,
+        "the review alone shares nothing"
     );
+    lend::withdraw(dir.path(), &pad).unwrap();
+    let confirm = |token: &str| format!(r#"{},"token":"{token}"}}"#, body.trim_end_matches('}'));
+    let again = ask(
+        &Browser::of(&alex),
+        "POST",
+        &home,
+        "/running/confirm",
+        &own,
+        &confirm(&token),
+    )
+    .await;
+    assert_eq!(
+        lend::read(dir.path(), &pad).unwrap(),
+        None,
+        "a stale review never publishes"
+    );
+    let fresh = again.json()["token"]
+        .as_str()
+        .expect("a fresh review")
+        .to_owned();
+    assert_ne!(fresh, token);
+    let saved = ask(
+        &Browser::of(&alex),
+        "POST",
+        &home,
+        "/running/confirm",
+        &own,
+        &confirm(&fresh),
+    )
+    .await;
+    assert_eq!(saved.status, 200, "{}", saved.json());
     let approved = lend::read(dir.path(), &pad)
         .unwrap()
         .unwrap()

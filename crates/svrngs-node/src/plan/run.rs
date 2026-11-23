@@ -70,6 +70,7 @@ pub struct Share<'a> {
     pub pid: Option<Pid>,
     pub replace: bool,
     pub door: Return,
+    pub contract: &'a str,
 }
 
 type Read = Result<Answering, Unread>;
@@ -94,7 +95,8 @@ impl Share<'_> {
         };
         let (approved, answers) =
             share::approve((port, lend.raw()), read(self.pid), self.pid, None)?;
-        let binding = share::token(&approved);
+        let binding =
+            serde_json::json!([share::token(&approved), lend.kind, self.contract]).to_string();
         let select = self.terms.availability == Availability::Keep && lend.raw() != Raw::Udp;
         let (runs, app, keep, pid) = if select {
             deployment(&answers, &approved.cgroups)
@@ -146,6 +148,14 @@ impl Share<'_> {
             secret,
         )
     }
+}
+
+pub(crate) fn own_return() -> Return {
+    #[cfg(target_os = "linux")]
+    if let Some(Answer::Job { unit, .. }) = job::of(std::process::id(), crate::uid::mine().ok()) {
+        return service_return(&unit);
+    }
+    Return::Unknown
 }
 
 pub fn service_return(unit: &str) -> Return {
