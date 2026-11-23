@@ -387,3 +387,15 @@ gitlink gave `fatal: remote error: upload-pack: not our ref` (exit 128);
 the candidate's gitlink produced HEAD `c3062b8d802eb9bc44237f5a8b987885adf5d149`
 and the bundle manifest. The Mac driver stages and fetches those inputs
 under the scratch root and beefymac's gate lock before its offline builds.
+
+The existing main `.git` mount resolved the checkout's HEAD in the gate,
+but `git -C vendor/cr-sqlite/core rev-parse HEAD` exited 128 (`not a git
+repository: /work/vendor/cr-sqlite/../../../svrngs/.git/worktrees/svrngs-keeper/modules/vendor/cr-sqlite`).
+The `/work` user-manager fixture stays at `/work`. With the checkout also
+mounted at `/svrngs-keeper` and the same main `.git` at `/svrngs/.git`,
+Git resolved the submodule HEAD to `c3062b8d802eb9bc44237f5a8b987885adf5d149`,
+as it does on the host. An in-container `git submodule update` rewrote
+`core.worktree` for `/work`, making host `git status` fail. The original
+relative setting was restored. The preflight now initializes the gitlink
+on the host side and verifies it through read-only `.git` mounts inside
+the gate.
