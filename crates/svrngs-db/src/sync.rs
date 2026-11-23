@@ -360,8 +360,10 @@ impl Db {
             "DELETE FROM svrngs_sets WHERE rowid IN (SELECT s.rowid FROM svrngs_sets s \
             LEFT JOIN crsql_site_id o ON o.site_id = s.site WHERE s.kept = ?1 AND NOT EXISTS ({stands}))"
         );
+        let visited = "SELECT count(*) FROM svrngs_sets WHERE kept = ?1";
+        let visited: usize = conn.query_row(visited, [Kept::Taken], |r| r.get(0))?;
         let dropped = conn.execute(&sql, [Kept::Taken])?;
-        tracing::debug!(target: "state", group = self.group, app = self.app, dropped, "state: the sets none of whose values stands on this copy, dropped");
+        tracing::debug!(target: "state", group = self.group, app = self.app, visited, dropped, "state: the kept sets prune visited, and those of them none of whose values stands on this copy, dropped");
         Ok(dropped)
     }
 
