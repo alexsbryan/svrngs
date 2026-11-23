@@ -266,11 +266,12 @@ fn a_set_before_its_device_s_binding_is_dropped_and_taken_once_it_lands() {
 }
 
 /// **A fault holds its mark, and the copy says it is still syncing**: a set
-/// this copy can't apply, here one whose title a STRICT table refuses as
-/// SQLite applies it, a BLOB in a TEXT column, leaves the device's mark
-/// where it was and blocks adopting the member's mark for it; a call taken
-/// whole after clears it. The parse leaves a value's type to SQLite. Plant:
-/// a fault counted in the mark (the set never fetched again).
+/// this copy can't apply, here one a trigger of this copy's own aborts as
+/// SQLite applies it, as no set's own bytes can make one fail (the parse
+/// refuses those for good), leaves the device's mark where it was and
+/// blocks adopting the member's mark for it; a call taken whole after
+/// clears it. Plant: a fault counted in the mark (the set never fetched
+/// again).
 #[test]
 fn a_fault_holds_its_mark_and_is_said_syncing() {
     const CHECKED: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT) STRICT;";
@@ -280,11 +281,19 @@ fn a_fault_holds_its_mark_and_is_said_syncing() {
         states(1).carry("g", "board", CHECKED).unwrap(),
         states(2).open("g", "board", Some(CHECKED)).unwrap(),
     );
+    let local = rusqlite::Connection::open(dir.path().join("computer-2/state/g/board.db")).unwrap();
+    let abort = "WHEN NEW.title = 'gone' BEGIN SELECT RAISE(ABORT, 'this copy alone fails it'); END";
+    local
+        .execute_batch(&format!(
+            "CREATE TRIGGER fails BEFORE INSERT ON cards {abort}; CREATE TRIGGER fails_too BEFORE UPDATE ON cards {abort};"
+        ))
+        .unwrap();
+    svrngs_db::close(local).unwrap();
     write(&a, "c1", "milk");
     assert!(b.syncing(), "a new copy is syncing until its first full sync");
     let mut sent = call(&a, &b);
     let good = sent.sets[0].clone();
-    let gone = |c: &mut Change| c.val = Val::Blob(b"gone".into());
+    let gone = |c: &mut Change| c.val = Val::Text("gone".into());
     sent.sets[0] = remade(&good, &key(1), |c| {
         c.iter_mut().filter(|c| c.cid == "title").for_each(gone)
     });

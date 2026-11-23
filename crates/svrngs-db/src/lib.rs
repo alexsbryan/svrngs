@@ -958,18 +958,25 @@ fn drawn() -> Result<svrngs_core::set::Nonce, Refused> {
 }
 
 /// Each of the app's tables in `conn`, with its columns and key, as the
-/// write form names them, and its NOT NULL columns, as the parse reads them.
+/// write form names them, and its NOT NULL columns and each column's kind,
+/// as the parse reads them.
 fn tables_of(conn: &Connection) -> Result<BTreeMap<String, Table>, Refused> {
-    let each = "SELECT t.name, c.name, c.pk, c.\"notnull\" FROM sqlite_master AS t, pragma_table_info(t.name) AS c \
-        WHERE t.type = 'table' ORDER BY t.name, c.pk = 0, c.pk, c.cid";
+    let each = "SELECT t.name, c.name, c.pk, c.\"notnull\", c.type, l.strict FROM sqlite_master AS t, \
+        pragma_table_info(t.name) AS c, pragma_table_list(t.name) AS l \
+        WHERE t.type = 'table' AND l.schema = 'main' ORDER BY t.name, c.pk = 0, c.pk, c.cid";
     let mut stmt = conn.prepare(each).map_err(fault)?;
-    let columns = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)));
+    let columns = stmt.query_map([], |r| {
+        Ok(((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?), (r.get(4)?, r.get(5)?)))
+    });
     let mut tables = BTreeMap::<String, Table>::new();
     for column in columns.map_err(fault)? {
-        let (name, column, pk, not_null): (String, String, i64, bool) = column.map_err(fault)?;
+        let ((name, column, pk, not_null), (declared, strict)): ((String, String, i64, bool), (String, bool)) =
+            column.map_err(fault)?;
         let table = tables.entry(name).or_default();
         (pk > 0).then(|| table.key.push(column.clone()));
         not_null.then(|| table.not_null.push(column.clone()));
+        table.kinds.insert(column.clone(), parse::Kind::of(&declared, strict));
+        table.strict = strict;
         table.columns.push(column);
     }
     tables.retain(|name, _| !internal(name));

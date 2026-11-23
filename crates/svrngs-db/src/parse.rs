@@ -49,6 +49,65 @@ pub enum Unfit {
     Versions(String),
     #[error("{0} is NOT NULL, and this gives it NULL")]
     Null(String),
+    #[error(
+        "{0} takes only a value of its declared type, which every computer keeps as written: write it as that type, or declare the column TEXT, INTEGER, REAL or BLOB to fit what it holds"
+    )]
+    Kind(String),
+}
+
+/// What a column keeps a value as it is given: its declared type's
+/// affinity, or a STRICT table's type (sqlite.org `datatype3.html` §3.1,
+/// `stricttables.html`), read from the schema every copy holds. A value of
+/// another type is converted where it is kept, or refused in a STRICT
+/// table: a key kept so names one row by two keys, as cr-sqlite keys its
+/// clocks by the value the set carries, and a value compared with the one
+/// kept differs by the order sets come in. So a value only of its column's
+/// kind is taken ([`fit`]), and copies holding the same sets end alike.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Kind {
+    Integer,
+    Real,
+    Text,
+    Blob,
+    Any,
+}
+
+impl Kind {
+    /// The kind of a column declared `declared`, in a STRICT table where
+    /// `strict`: by SQLite's rules in their order, and NUMERIC's, as
+    /// `DATE` or `BOOLEAN` are, as an integer, the one type it keeps as
+    /// given whatever its value.
+    pub(crate) fn of(declared: &str, strict: bool) -> Self {
+        let t = declared.to_ascii_uppercase();
+        let has = |words: &[&str]| words.iter().any(|w| t.contains(w));
+        match () {
+            _ if strict && t == "ANY" => Self::Any,
+            _ if has(&["INT"]) => Self::Integer,
+            _ if has(&["CHAR", "CLOB", "TEXT"]) => Self::Text,
+            _ if strict && t == "BLOB" => Self::Blob,
+            _ if t.is_empty() || has(&["BLOB"]) => Self::Any,
+            _ if has(&["REAL", "FLOA", "DOUB"]) => Self::Real,
+            _ => Self::Integer,
+        }
+    }
+
+    /// Whether it keeps `v` as given, a key's value where `key`, in a table
+    /// STRICT where `strict`: NULL, and any value of its own type; a column
+    /// of no type any value, and one not STRICT a BLOB, which no affinity
+    /// converts; and an integer a REAL column, but for a key, as the real it
+    /// equals, which compares equal to it. A float that is no number SQLite
+    /// keeps as NULL.
+    fn keeps(self, v: &Sql, (key, strict): (bool, bool)) -> bool {
+        match (self, v) {
+            (_, Sql::Real(r)) if r.is_nan() => false,
+            (_, Sql::Null) | (Self::Any, _) => true,
+            (Self::Integer, Sql::Integer(_)) | (Self::Real, Sql::Real(_)) => true,
+            (Self::Text, Sql::Text(_)) | (Self::Blob, Sql::Blob(_)) => true,
+            (_, Sql::Blob(_)) => !strict,
+            (Self::Real, Sql::Integer(i)) => !key && i.unsigned_abs() <= 1 << 53,
+            _ => false,
+        }
+    }
 }
 
 /// `bytes`, a set's changes, as ones `tables` hold, or why not: postcard's
@@ -61,7 +120,8 @@ pub(crate) fn parse(bytes: &[u8], tables: &BTreeMap<String, Table>) -> Result<Va
 
 /// `changes` as ones `tables` hold, or the first that isn't: a table of the
 /// app's; a column of it that isn't a key column, or the sentinel; a key in
-/// cr-sqlite's packed form ([`unpack`]) with the table's key columns; a
+/// cr-sqlite's packed form ([`unpack`]) with the table's key columns; each
+/// value, of the key and of a column, one its column keeps ([`Kind`]); a
 /// `col_version` and causal length from 1 to [`BOUND`], a column's causal
 /// length odd, since cr-sqlite merges a change at an even one as its row's
 /// delete and no write makes one, so only a row's own change deletes it;
@@ -74,9 +134,17 @@ pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Res
         let (named, versions) = (|| format!("{}.{}", c.table, c.cid), 1..=BOUND);
         let column = c.cid == SENTINEL || t.columns.contains(&c.cid) && !t.key.contains(&c.cid);
         let key = unpack(&c.pk).filter(|k| k.len() == t.key.len());
+        let kept = |col: &String, v: &Sql, key: bool| t.kinds.get(col).is_some_and(|k| k.keeps(v, (key, t.strict)));
+        let keyed = key
+            .iter()
+            .flat_map(|k| t.key.iter().zip(k))
+            .map(|(col, v)| (col, v, true));
+        let value = (c.cid != SENTINEL).then_some((&c.cid, &c.val, false));
+        let wrong = keyed.chain(value).find(|(col, v, key)| !kept(col, v, *key));
         let why = match key {
             _ if !column => Unfit::NoColumn(named()),
             None => Unfit::Key(c.table.clone()),
+            _ if let Some((col, ..)) = wrong => Unfit::Kind(format!("{}.{col}", c.table)),
             _ if !versions.contains(&c.col_version) || !versions.contains(&c.cl) => Unfit::Versions(named()),
             _ if c.cid != SENTINEL && c.cl % 2 == 0 => Unfit::Unread,
             _ if c.val == Sql::Null && t.not_null.contains(&c.cid) => Unfit::Null(named()),

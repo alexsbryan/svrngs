@@ -142,8 +142,13 @@ await fetch(SQL, {
 ```
 
 It answers `{count}`, the rows it changed. A value is null, a number, a
-string, or `{base64: "..."}` for a BLOB. An `insert` names every key
-column. On a key that has a row it sets only the columns it names; on a
+string, or `{base64: "..."}` for a BLOB. Write each as its column's type:
+a string for `TEXT`, a whole number for `INTEGER`, any number for `REAL`.
+A column declared otherwise, such as `DATE` or `BOOLEAN`, takes whole
+numbers, and one with no type takes anything. A BLOB goes in any column of
+a table that isn't `STRICT`. Another type is refused, 422 `unkept`, naming
+the column: SQLite would keep it converted, and computers could then keep
+different values. An `insert` names every key column. On a key that has a row it sets only the columns it names; on a
 new row the rest are NULL, so a `DEFAULT` never applies and a `NOT NULL`
 column has to be named.
 

@@ -488,3 +488,97 @@ fn only_a_row_s_person_starts_it_anew_and_only_its_own_change_deletes_it() {
         "a column at an even causal length",
     );
 }
+
+/// `set`, computer 9's, as device `n`'s, its changes made by `f` and signed
+/// by `n`'s key: a member's own set, as any member can sign one.
+fn as_device(set: &Set, n: u8, app: &str, f: impl Fn(&mut Vec<Change>)) -> Set {
+    let mut theirs = set.clone();
+    theirs.head.device = svrngs_db::Device::parse(&svrngs_core::actor_of(&key(n))).unwrap();
+    remade(&theirs, &key(n), app, f)
+}
+
+/// **A key is kept as its column's type, so copies holding the same sets
+/// end alike** (svrn-docs `app-state-diligence/security-review-2026-11-23/`,
+/// M2): an INTEGER key for a TEXT key column, which SQLite keeps as TEXT
+/// while cr-sqlite keys its clocks by the INTEGER, is refused for good on
+/// every copy, and two copies taking it and an honest card of that key in
+/// either order end on the honest card. A STRICT table holds no key to its
+/// type either, as it keeps an INTEGER in a TEXT column as TEXT. Plant,
+/// watched failing: the parse reading no key's type (the review's P8: the
+/// copies end on "bad" and "honest").
+#[test]
+fn a_key_is_kept_as_its_column_s_type_so_copies_end_alike() {
+    const STRICT: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT) STRICT;";
+    for (n, schema) in [CARDS, STRICT].into_iter().enumerate() {
+        let dir = tempfile::tempdir().unwrap();
+        let honest = written(dir.path(), ("board", schema), card("5", "honest"));
+        let bad = as_device(&honest, 2, "board", |c| {
+            for c in c.iter_mut() {
+                c.pk = vec![1, (1 << 3) | 1, 5];
+                if c.cid == "title" {
+                    c.val = Val::Text("bad".into());
+                }
+            }
+        });
+        let (a, b) = (
+            db(dir.path(), 3, ("board", schema)),
+            db(dir.path(), 4, ("board", schema)),
+        );
+        let took_a = [
+            took(&a, std::slice::from_ref(&honest)),
+            took(&a, std::slice::from_ref(&bad)),
+        ];
+        let took_b = [
+            took(&b, std::slice::from_ref(&bad)),
+            took(&b, std::slice::from_ref(&honest)),
+        ];
+        let (all, card) = ("SELECT id, title FROM cards", json!([{ "id": "5", "title": "honest" }]));
+        assert_eq!((rows(&a, all), rows(&b, all)), (card.clone(), card), "schema {n}");
+        let refused = [vec![Took::Refused], vec![Took::Taken]];
+        assert_eq!((took_a, took_b), ([vec![Took::Taken], vec![Took::Refused]], refused));
+    }
+}
+
+/// **A value is kept as its column's type, so a set every copy would fail
+/// alike is refused for good** (svrn-docs
+/// `app-state-diligence/security-review-2026-11-23/`, L1): a BLOB for a
+/// STRICT table's TEXT column, which SQLite refuses on every copy where the
+/// change wins, is refused at the parse, counted and never fetched again,
+/// not a fault fetched every round with the copy said syncing. And a value
+/// SQLite would convert where it is kept, an INTEGER for a TEXT column,
+/// which a copy then compares as the TEXT it kept against a tie's, where
+/// cr-sqlite ranks an INTEGER above any TEXT, so two copies taking it and a
+/// tie of another device in either order part, is refused for good on
+/// both, and they end alike. Plants, each watched failing: the parse
+/// holding no value to its column's type (the BLOB a fault, the copy
+/// syncing; the copies on "6" and "5").
+#[test]
+fn a_value_is_kept_as_its_column_s_type_so_a_set_every_copy_fails_is_refused() {
+    const STRICT: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT) STRICT;";
+    let dir = tempfile::tempdir().unwrap();
+    let title = |n: u8, val: Val, base: &Set| {
+        as_device(base, n, "board", move |c| {
+            c.retain(|c| c.cid == "title");
+            (c[0].col_version, c[0].val) = (2, val.clone());
+        })
+    };
+    let strict = written(&dir.path().join("strict"), ("board", STRICT), card("c1", "milk"));
+    let blob = title(2, Val::Blob(vec![1]), &strict);
+    let synced = States::new(&dir.path().join("synced"), key(3));
+    let to = synced.carry("g", "board", STRICT).unwrap();
+    assert_eq!(took(&to, &[strict]), [Took::Taken]);
+    assert_eq!(took(&to, &[blob]), [Took::Refused], "a BLOB for TEXT");
+    assert!(!to.syncing(), "refused for good is no fault");
+
+    let base = written(dir.path(), ("board", CARDS), card("c1", "milk"));
+    let (five, six) = (title(2, Val::Integer(5), &base), title(3, Val::Text("6".into()), &base));
+    let (a, b) = (db(dir.path(), 4, ("board", CARDS)), db(dir.path(), 5, ("board", CARDS)));
+    for (to, order) in [(&a, [&five, &six]), (&b, [&six, &five])] {
+        for set in [&base, order[0], order[1]] {
+            took(to, std::slice::from_ref(set));
+        }
+    }
+    let (all, six) = ("SELECT title FROM cards", json!([{ "title": "6" }]));
+    assert_eq!((rows(&a, all), rows(&b, all)), (six.clone(), six));
+    assert_eq!(took(&a, &[five]), [Took::Held], "refused for good, counted");
+}

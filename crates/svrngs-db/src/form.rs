@@ -15,6 +15,7 @@ use rusqlite::types::Value as Sql;
 use serde_json::Value;
 
 use crate::Refused;
+use crate::parse::Kind;
 
 /// The form, as every refusal that names it ends.
 pub const FORM: &str = "A write goes as {write: [op, ...]}, each op one of \
@@ -24,12 +25,16 @@ pub const FORM: &str = "A write goes as {write: [op, ...]}, each op one of \
     each value null, a number, a string or {base64: \"...\"}.";
 
 /// A table as `pragma_table_info` names it: its columns, its key's in the
-/// key's order, and those that are NOT NULL.
+/// key's order, those that are NOT NULL, and each one's kind, by which the
+/// parse holds a value written there (`parse.rs`, [`Kind`]), as whether the
+/// table is STRICT does.
 #[derive(Debug, Default, Clone)]
 pub struct Table {
     pub columns: Vec<String>,
     pub key: Vec<String>,
     pub not_null: Vec<String>,
+    pub kinds: BTreeMap<String, Kind>,
+    pub strict: bool,
 }
 
 impl Table {
