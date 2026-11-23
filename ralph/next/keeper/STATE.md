@@ -856,6 +856,13 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - a real Fedora laptop: a GPU model before sign-in, a passphrase disk
     (`AfterUnlock`), and the login screen's idle suspend;
   - the people sessions (spec §5 R9, "People").
+    - The scene asks "which comes back after a restart?" and wants the
+      answer without any change.
+    - Score finding it, being right, and finishing, separately.
+    - If a newcomer can't find it, fix the page before the people bar
+      counts as passed. The xenia rehearsal timed out in both arms
+      (`demo/runs/available/strangers-2026-11-23/`), and the north star's
+      ladder has the fix's terms.
 
   No worker ticks this row, installs on the operator's own svrngs, or
   touches a real host but beefymac's scratch folders.
