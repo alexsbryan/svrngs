@@ -72,9 +72,6 @@ export function lines(text) {
   return [...seen].map(([thing, words]) => ({ thing, words }));
 }
 
-/** The most lines one paste lands, the 300 rows the guide says a write holds. */
-export const MOST_LINES = 300;
-
 /** A pasted list landed all at once: one write, a row a line, each back on the list if it was taken off. */
 export const paste = (plan, text) =>
   lines(text).map(({ thing, words }) => ({
@@ -141,14 +138,17 @@ export const SAID = {
 /** The board the route wouldn't read, in its words. */
 export const shut = (words) => `The board didn’t open: ${words}`;
 /** Something the page tried to save and couldn't, in the route's words. */
-export const unsaved = (what, words) => `${what} wasn’t saved: ${words}`;
+export const unsaved = (what, words) => `${what} didn’t go through: ${words}`;
 /** Why, where the route gave no words of its own. */
 export const NONE = 'None of your group’s computers answered.';
 export const answeredWith = (status) => `Your group’s computer answered ${status}.`;
 export const UNREAD = 'Its answer couldn’t be read.';
-/** A paste past MOST_LINES, said before anything is sent. */
-export const tooMany = (n) =>
-  `That list has ${n} things. Paste at most ${MOST_LINES} at once, then the rest.`;
+/**
+ * A write too large for the route to take at once, which it answers 413
+ * in words about an "act". How large is the route's to say: a paste is
+ * sent whole, and only its refusal said here.
+ */
+export const TOO_LONG = 'it’s too long to save at once. Paste part of it, then the rest.';
 /** A plan's total, said as a person reads it. */
 export const total = (n) => (n === 1 ? '1 vote' : `${n} votes`);
 /** Who brings a thing, said beside it. */

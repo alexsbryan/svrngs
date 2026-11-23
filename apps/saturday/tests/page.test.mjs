@@ -3,8 +3,9 @@
 // browser does with it. Ana on a computer (Chromium) and Bo on a phone
 // (WebKit as an iPhone) plan one Saturday and see each other's changes,
 // pushed, and what Ana is typing survives Bo's. The keyboard alone adds a
-// plan and votes. And the page says still syncing, unreachable and a write
-// refused in board.js's words. The board's reads and writes are
+// plan and votes. The page says still syncing, unreachable, a write
+// refused and a paste too long in board.js's words, and names a claimer
+// who joined after it opened. The board's reads and writes are
 // board.test.mjs's laws. Without Playwright or its browser this fails
 // naming the install; it never skips.
 
@@ -12,7 +13,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { launch } from '../../../web/tests/page.mjs';
-import { SAID, total, unsaved } from '../board.js';
+import { SAID, TOO_LONG, total, unsaved } from '../board.js';
 import { serve } from './standin.mjs';
 
 const WAIT = { timeout: 15_000 };
@@ -212,6 +213,65 @@ test('still syncing, unreachable and a refused write are said (chromium)', async
     await standin.set({ unreachable: false });
     await p.plan('Picnic').waitFor(WAIT);
     traced(p, ['svrngs refused', 'the write was refused', 'plans could not be read']);
+    assert.deepEqual(p.errors, []);
+  } finally {
+    await close();
+    standin.stop();
+  }
+});
+
+test('a paste too long to save at once is said, and nothing of it lands (chromium)', async () => {
+  const standin = await serve();
+  const { context, close } = await launch('chromium', OPEN);
+  try {
+    const p = await open(context, standin.at);
+    await p.shown();
+    await p.page.getByLabel('What').fill('Picnic');
+    await p.page.getByRole('button', { name: 'Add it to the board' }).click();
+    await p.plan('Picnic').waitFor(WAIT);
+    // 1,500 lines of 50 letters each: a write past what the route takes at once.
+    const list = Array.from({ length: 1500 }, (_, i) => `thing ${i} `.padEnd(50, 'x')).join('\n');
+    await p.plan('Picnic').getByText('Paste a list of things to bring').click();
+    await p.plan('Picnic').getByLabel('One thing a line').fill(list);
+    await p.plan('Picnic').getByRole('button', { name: 'Add these to the list' }).click();
+    await p.says(unsaved('The 1500 things to bring', TOO_LONG));
+    assert.equal(
+      await p.plan('Picnic').getByLabel('One thing a line').inputValue(),
+      list,
+      'the list is kept, to paste part of it',
+    );
+    const [{ rows }] = await standin.db.run([{ sql: 'SELECT count(*) AS n FROM things' }]);
+    assert.deepEqual(rows, [{ n: 0 }], 'nothing of it landed');
+    traced(p, ['the write is too large to take at once']);
+    assert.deepEqual(p.errors, []);
+  } finally {
+    await close();
+    standin.stop();
+  }
+});
+
+test('a claim by someone who joined after the page opened shows their name (chromium)', async () => {
+  const standin = await serve();
+  const { context, close } = await launch('chromium', OPEN);
+  try {
+    await standin.set({ unjoined: ['Cy'] });
+    const p = await open(context, standin.at);
+    await p.shown();
+    await p.page.getByLabel('What').fill('Picnic');
+    await p.page.getByRole('button', { name: 'Add it to the board' }).click();
+    await p.plan('Picnic').waitFor(WAIT);
+    // Cy joins, and Cy's computer writes a claim that reaches Ana's copy.
+    await standin.set({ unjoined: [] });
+    const [{ rows }] = await standin.db.run([{ sql: 'SELECT id FROM plans' }]);
+    await standin.db.run([
+      {
+        sql: "INSERT INTO claims (person_key, id, plan, what, withdrawn) VALUES ('key-cy', 'c9', ?, 'cake', 0)",
+        params: [rows[0].id],
+      },
+    ]);
+    await standin.set({});
+    await p.reads('Picnic', 'Cy: cake');
+    traced(p, ['names asked again']);
     assert.deepEqual(p.errors, []);
   } finally {
     await close();

@@ -32,16 +32,23 @@
 //   GET svrngs/sql?q=<one read>, Accept: text/event-stream: an event stream
 //   of that read's answers, at once and again each time those rows change.
 //
-// What it doesn't stand in for: limits, sync between copies, merges, and
+//   too large  a POST body past MOST_BYTES is answered 413 {error, kind:
+//              'path'} with x-svrngs-refused: path, as the real route
+//              answered one (a run on svrngs 1.13.3: 66,528 bytes taken,
+//              66,577 refused, "the act is too large, or came cut short")
+//
+// What it doesn't stand in for: limits but that one, sync between copies, merges, and
 // a removed person's rows. Its refusals are 400 {refused: 'form'}, 400
 // {refused: 'not-a-read'}, 400 {refused: 'sql'}, 403 {refused:
 // 'not-yours'}, 500 {refused: 'stand-in'}, and its switches (`set`):
 //   syncing      every read's answer says `syncing: true`
 //   unreachable  every request answered 503, and every open stream cut
 //   refusing     {status, refused, words}: every POST answered with it
+//   unjoined     names svrngs/acts leaves out of `people` and `spans`, as
+//                if they hadn't joined yet
 //
 // Alone, `node apps/saturday/tests/standin.mjs [port]` prints where each
-// person is served: Ana at the port given, Bo at the next.
+// person is served: Ana at the port given, Bo and Cy at the ports after.
 
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
@@ -55,8 +62,10 @@ const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 export const SCHEMA = join(APP, 'schema.sql');
 /** What the stand-in says unreachable with, as a route would. */
 export const AWAY = 'None of your group’s computers is on.';
+/** The largest POST body it takes, 65 KiB, between the real route's largest taken and smallest refused. */
+export const MOST_BYTES = 66_560;
 /** The people it serves, by name, each with a key of their own. */
-export const PEOPLE = { Ana: 'key-ana', Bo: 'key-bo' };
+export const PEOPLE = { Ana: 'key-ana', Bo: 'key-bo', Cy: 'key-cy' };
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -305,8 +314,9 @@ export function database(schema = SCHEMA) {
 }
 
 /** What `GET svrngs/acts` answers `name`: who asks, and the group's people. */
-function acts(name, link) {
-  const spans = Object.entries(PEOPLE).map(([person, person_key]) => ({
+function acts(name, link, unjoined) {
+  const joined = Object.entries(PEOPLE).filter(([person]) => !unjoined.includes(person));
+  const spans = joined.map(([person, person_key]) => ({
     person,
     person_key,
     joined: 1_763_800_000,
@@ -317,7 +327,7 @@ function acts(name, link) {
     you: name,
     you_key: PEOPLE[name],
     group: 'Test',
-    people: Object.keys(PEOPLE),
+    people: joined.map(([person]) => person),
     spans,
     link,
   };
@@ -332,7 +342,7 @@ function acts(name, link) {
 export async function serve({ port = 0, host = '127.0.0.1', link = null } = {}) {
   const policy = await carriedPolicy();
   const db = database();
-  const switches = { syncing: false, unreachable: false, refusing: null };
+  const switches = { syncing: false, unreachable: false, refusing: null, unjoined: [] };
   /** Each open stream, to its query and the last answer it was sent. */
   const streams = new Map();
   /** An answer as this copy gives it: `syncing: true` beside its rows while that switch is on. */
@@ -353,7 +363,7 @@ export async function serve({ port = 0, host = '127.0.0.1', link = null } = {}) 
       res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(body));
     if (url.pathname === '/svrngs/acts' && req.method === 'GET') {
       if (switches.unreachable) return json(503, { unreachable: true, words: AWAY });
-      return json(200, acts(name, link));
+      return json(200, acts(name, link, switches.unjoined));
     }
     if (url.pathname === '/svrngs/sql') {
       if (switches.unreachable) return json(503, { unreachable: true, words: AWAY });
@@ -378,6 +388,10 @@ export async function serve({ port = 0, host = '127.0.0.1', link = null } = {}) 
         }
         let body = '';
         for await (const chunk of req) body += chunk;
+        if (Buffer.byteLength(body) > MOST_BYTES) {
+          res.setHeader('x-svrngs-refused', 'path');
+          return json(413, { error: 'the act is too large, or came cut short', kind: 'path' });
+        }
         const answer = await posted(db, body, PEOPLE[name]);
         json(200, given(answer));
         if ('count' in answer) await push();

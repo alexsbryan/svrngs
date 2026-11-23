@@ -52,6 +52,27 @@ async function whoAsks() {
   return null;
 }
 
+/** How long a page waits before asking svrngs/acts again for a name it lacks. */
+const NAMES_MS = 10_000;
+let named = 0;
+
+/**
+ * Names asked again where a claim's person has none yet: someone who
+ * joined after the page opened. `people` holds names alone, so a row's
+ * person is named from `spans`, which pairs each name with its key.
+ */
+async function nameEveryone() {
+  const unnamed = seen.things.rows.filter((r) => r.person_key && !seen.names.has(r.person_key));
+  if (!unnamed.length || Date.now() - named < NAMES_MS) return;
+  named = Date.now();
+  trace('names asked again', unnamed.length);
+  try {
+    await whoAsks();
+  } catch (e) {
+    trace('names could not be read', String(e));
+  }
+}
+
 /** One read, `{rows}`, of `sql` with `params`; throws the route's words where it refuses. */
 async function read(sql, params = []) {
   const res = await fetch('svrngs/sql', {
@@ -134,7 +155,10 @@ async function save(what, ops) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ write: ops }),
     });
-    if (!res.ok) words = (await why(res)).words;
+    if (res.status === 413) {
+      trace('the write is too large to take at once', await res.text());
+      words = b.TOO_LONG;
+    } else if (!res.ok) words = (await why(res)).words;
   } catch (e) {
     trace('the write got no answer', String(e));
     words = b.NONE;
@@ -262,11 +286,6 @@ function planElement(id) {
     e.preventDefault();
     const form = e.currentTarget;
     const n = b.lines(form.elements.list.value).length;
-    if (n > b.MOST_LINES) {
-      seen.note = b.tooMany(n);
-      trace('a paste past the most lines', n);
-      return draw();
-    }
     if (
       n &&
       (await save(
@@ -382,7 +401,7 @@ async function start() {
     return draw();
   }
   listen('plans', b.PLANS, readMine);
-  listen('things', b.THINGS);
+  listen('things', b.THINGS, nameEveryone);
 }
 
 start();
