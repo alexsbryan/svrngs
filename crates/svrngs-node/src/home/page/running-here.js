@@ -205,7 +205,7 @@ function Running({ s, home }) {
   const busy = state.at.running === 'looking' ? 'busy' : 'idle';
   return html`<${RunForm} shares=${
     groups.length > 0
-      ? (run) => html`
+      ? (/** @type {Parameters<typeof found>[0]} */ run) => html`
       <p>${SAID[state.at.running](state)}</p>
       <p>
         <${Act}

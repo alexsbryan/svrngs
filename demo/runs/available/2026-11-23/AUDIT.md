@@ -313,3 +313,40 @@ Inside it, `git rev-parse HEAD` resolved `35881a4254428fdb0085acb9609ac61da34d19
 through the main `.git` mount, and `ss -V`, `node --version` and
 `rustc --version` reported iproute2-6.1.0, v24.22.3 and 1.95.0.
 The final full gate verdict is still owed.
+
+## Full gate at `69996642` — failed; type fix verified in isolation
+
+`REVIEW-audit-available-10.await.log:1–2` pins the same image and the
+revision. The unchanged full gate exited 1 after 1,620 s. `types` was the
+only failing step; the same run passed `browser`, `relay fallback`,
+`keeper e2e`, `typed lint`, `pages`, and `scenes`. The conformance canary's
+two WebKit worker-stop observations remained could-not-judge.
+
+Replayed the `types` step (`scripts/check.sh:137`) in the same locked gate
+container with `scripts/build-web.sh >/dev/null && node scripts/types.mjs`.
+Before the fix it reproduced the failure:
+
+```text
+crates/svrngs-node/src/home/page/running-here.js(208,10): error TS7006: Parameter 'run' implicitly has an 'any' type.
+types: 1 errors in 112 files
+```
+
+The tagged template does not contextually type the callback in its
+interpolation. The JSDoc annotation at `running-here.js:208` takes the
+parameter type from `found`, which consumes that callback. The same
+replay, followed by `node scripts/typed-lint.mjs`, exited 0:
+
+```text
+types: 0 errors in 112 files
+typed lint, jsconfig.json: 108 files, exit 0
+typed lint, jsconfig.workers.json: 3 files, exit 0
+```
+
+The annotation adds no counted lines. `lean_check.py` still reports
+3,471/3,539 core, 25,723/25,723 non-JS and 8,741/8,741 JS;
+`trust_check.py` reports 13 policies, 13 listeners and 17 gates. The
+CSP and trust-floor diffs against `789707dc` and the `scripts/check.sh`
+diff against `35881a42` all exited 0 with no output. The port comparison
+again rejected the in-memory omission of `launchd.rs:2`; the actual
+ledger matched all 67 tracked markers, with none missing or extra.
+The unchanged full gate is owed on the repaired revision.
