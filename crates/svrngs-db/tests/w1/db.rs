@@ -19,8 +19,9 @@
 //! (`Db::prepare`), the phone's own signer, the page's `web/src/set.rs`
 //! compiled here, checks and signs it as tests/phones.rs does, and the
 //! phone carries the set as its route takes one (`svrngs_db::asked`,
-//! `Db::carry`). Its sets are named in the simulator by their sites, a
-//! phone's by its home and epoch there (`Site::phone`), and the reference
+//! `Db::carry`). Its signer picks each place, at its home for its store
+//! (`Signer`). Its sets are named in the simulator by their sites, a
+//! phone's by its home and its store (`Site::phone`), and the reference
 //! trusts a phone site's mark from its home alone, as svrngs-db does
 //! (`sync.rs`, `Sync::vouched`).
 
@@ -101,17 +102,39 @@ const KEYS: &[(&str, &[&str])] = &[
     ("tiles", &["id"]),
 ];
 
-/// What a run's copies share: each device by its key, a computer's at its
-/// site in the simulator and a phone's at its number's (`sim::PHONE`), so
-/// the record binds each to its person; each database's real site, a
-/// phone's at each home and epoch, by its site in the simulator; and every
-/// set sealed in the run, as svrngs-db or the phone signed it, by its name
-/// in the simulator.
+/// What a run's copies share: its seed; each device by its key, a
+/// computer's at its site in the simulator and a phone's at its number's
+/// (`sim::PHONE`), so the record binds each to its person; each phone's
+/// signer's store; each database's real site, a phone's at each home for
+/// each store, by its site in the simulator; and every set sealed in the
+/// run, as svrngs-db or the phone signed it, by its name in the simulator.
 #[derive(Default)]
 pub struct Run {
+    seed: u64,
     devices: BTreeMap<String, Site>,
+    signers: BTreeMap<u8, Signer>,
     sites: BTreeMap<[u8; 16], Site>,
     sets: BTreeMap<SetId, svrngs_db::Set>,
+}
+
+/// A phone's signer's store, as web/sign.js keeps it in one record, so a
+/// clear takes all of it: which of the phone's stores it is in the run, the
+/// first 0, a cleared one the next, from which its id is pinned with the
+/// run's seed; and the seq it last signed at each computer, that set's home.
+#[derive(Default)]
+struct Signer {
+    store: u8,
+    counts: BTreeMap<Site, u64>,
+}
+
+impl Signer {
+    /// Its store's id in the run `seed`, for phone `p`.
+    fn id(&self, seed: u64, p: u8) -> [u8; 16] {
+        let mut id = [0; 16];
+        id[..8].copy_from_slice(&seed.to_be_bytes());
+        (id[8], id[9]) = (p, self.store);
+        id
+    }
 }
 
 /// svrngs-db's database, as one computer keeps it.
@@ -134,7 +157,7 @@ pub fn maker() -> impl Fn(Site) -> DbCopy {
 /// (`DbCopy::new`), the record binding `phones` phones too, each to a
 /// person of its own, from the run's start.
 pub fn phoned(seed: u64, phones: u8) -> impl Fn(Site) -> DbCopy {
-    let mut run = Run::default();
+    let mut run = Run { seed, ..Run::default() };
     for p in 0..phones {
         let device = svrngs_core::actor_of(&phone_keys(p).0);
         run.devices.insert(device, Site::of(PHONE + 1 + p));
@@ -586,11 +609,12 @@ impl Replica for DbCopy {
     /// prepares one: `Db::prepare` answers `{prepared, by, sig}`, and the
     /// phone's signer checks it, signing no set where nothing changes, else
     /// under the open's pass, which names the approver, a key of the phone's
-    /// own, and the approver signs. Its site, at this home and the epoch the
-    /// prepare names, is the run's from then on (`Site::phone`). Where the
-    /// signer refuses, its words, the place the prepare handed left as the
-    /// signer leaves it, unsigned.
-    fn prepare(&mut self, phone: u8, ops: &[Op], lapsed: bool) -> Result<Option<ChangeSet>, String> {
+    /// own, and the approver signs, at the place the signer picks: the seq
+    /// after the last it signed here, for its store, a cleared one first
+    /// where `cleared` (`Signer`). Its site, at this home for that store, is
+    /// the run's from then on (`Site::phone`). Where the signer refuses, its
+    /// words, and no place spent.
+    fn prepare(&mut self, phone: u8, ops: &[Op], (lapsed, cleared): (bool, bool)) -> Result<Option<ChangeSet>, String> {
         let (key, approver) = phone_keys(phone);
         let (device, ops) = (svrngs_core::actor_of(&key), form(ops));
         let answer = (self.db.prepare(&ops, (&device, &self.binds())))
@@ -604,6 +628,18 @@ impl Replica for DbCopy {
             UNTIL,
             Some(svrngs_core::actor_of(&approver)),
         );
+        let (store, at, seq) = {
+            let run = &mut *self.run.borrow_mut();
+            let signer = run.signers.entry(phone).or_default();
+            if cleared {
+                *signer = Signer {
+                    store: signer.store + 1,
+                    ..Signer::default()
+                };
+            }
+            let seq = signer.counts.get(&self.site).copied().unwrap_or(0) + 1;
+            (signer.id(run.seed, phone), signer.store, seq)
+        };
         let asked = signer::Asked {
             group: GROUP.into(),
             app: APP.into(),
@@ -613,6 +649,8 @@ impl Replica for DbCopy {
             sig: text("sig"),
             pass: pass.encode(),
             ts: STAMP,
+            store,
+            seq,
         };
         let Some((message, set, place)) = signer::signed(&label.to_string(), &asked)? else {
             return Ok(None);
@@ -625,18 +663,18 @@ impl Replica for DbCopy {
             message,
             "wire.rs's frame, as the signer signs it"
         );
-        let epoch = set.phone.as_ref().expect("a phone's set").epoch;
-        assert_eq!(place, format!("{}/{epoch}/{}", asked.by, set.head.seq.get()));
+        assert_eq!((place, set.head.seq.get()), (format!("{}/{seq}", asked.by), seq));
+        // Its count moves only with a set signed, so no refusal spends a place.
+        if let Some(signer) = self.run.borrow_mut().signers.get_mut(&phone) {
+            signer.counts.insert(self.site, seq);
+        }
         if lapsed {
             let phoned = set.phone.as_mut().expect("a phone's set");
             phoned.ts = UNTIL + 1;
             let sig = svrngs_core::sign_message(&approver, &phoned_message(&set.head, phoned.ts));
             set.head.sig = svrngs_db::Sig::parse(&sig).expect("a signature");
         }
-        // A home's epochs run on from one its file's nonce draws, so their
-        // low byte names each apart in a run of under 256.
-        let epoch = epoch.to_be_bytes()[7];
-        let site = Site::phone(PHONE + 1 + phone, self.site, epoch);
+        let site = Site::phone(PHONE + 1 + phone, self.site, at);
         let was = self.run.borrow_mut().sites.insert(real_site(&set), site);
         assert!(
             was.is_none_or(|w| w == site),
@@ -666,6 +704,7 @@ struct Phoned {
     runs: usize,
     carried: usize,
     lapsed: usize,
+    cleared: usize,
     declined: Vec<String>,
 }
 
@@ -674,6 +713,7 @@ impl Phoned {
         self.runs += 1;
         self.carried += v.phoned;
         self.lapsed += v.lapsed;
+        self.cleared += v.cleared;
         self.declined.extend(v.declined.iter().map(|d| format!("{run}: {d}")));
     }
 
@@ -684,10 +724,11 @@ impl Phoned {
             .first()
             .map_or(String::new(), |d| format!("; the first: {d}"));
         format!(
-            "phones: {} runs, {} sets carried, {} of them under a pass that doesn't hold; {} writes their signer refused to sign{first}",
+            "phones: {} runs, {} sets carried, {} of them under a pass that doesn't hold; {} signer's stores cleared; {} writes their signer refused to sign{first}",
             self.runs,
             self.carried,
             self.lapsed,
+            self.cleared,
             self.declined.len()
         )
     }
@@ -724,6 +765,7 @@ fn on_seeds(range: std::ops::Range<u64>) -> (Vec<String>, Phoned) {
             phoned.runs += p.runs;
             phoned.carried += p.carried;
             phoned.lapsed += p.lapsed;
+            phoned.cleared += p.cleared;
             phoned.declined.extend(p.declined);
         }
         phoned.declined.sort();
@@ -733,7 +775,8 @@ fn on_seeds(range: std::ops::Range<u64>) -> (Vec<String>, Phoned) {
 
 /// The seeds `range` on svrngs-db's copies, judged: each failure said, and
 /// what the phones did said and held to having run, a set whose pass
-/// doesn't hold among them, so neither check passes by never running.
+/// doesn't hold and a signer's store cleared among them, so no check
+/// passes by never running.
 fn held_on(range: std::ops::Range<u64>) {
     let (failed, phoned) = on_seeds(range);
     println!("{}", phoned.line());
@@ -741,7 +784,11 @@ fn held_on(range: std::ops::Range<u64>) {
         println!("REFUSED TO SIGN, {d}");
     }
     assert!(failed.is_empty(), "{} failed:\n{}", failed.len(), failed.join("\n"));
-    assert!(phoned.carried > 0 && phoned.lapsed > 0, "{}", phoned.line());
+    assert!(
+        phoned.carried > 0 && phoned.lapsed > 0 && phoned.cleared > 0,
+        "{}",
+        phoned.line()
+    );
 }
 
 /// **svrngs-db's sync is the reference's, at every call, on the gate's
@@ -758,16 +805,22 @@ fn held_on(range: std::ops::Range<u64>) {
 /// clock rows, a newcomer synced from it is equal to it, no copy keeps or
 /// counts a phone's set whose pass doesn't hold, and in the ten rounds after
 /// the meet nothing is passed, fetched again, sent again or taken late
-/// (invariants 3, 11 and 12). What the phones did is said, with each write
-/// their signer refused to sign, and held to having carried a set whose
-/// pass doesn't hold. Plants, each watched failing: the spike's
+/// (invariants 3, 11 and 12). Each phone's signer picks its places, and one
+/// write in twenty clears its store first, so it signs at a site of its own
+/// (svrn-docs `app-state-diligence/invariants-2026-11-22/`, change 5). What
+/// the phones did is said, with each write their signer refused to sign,
+/// and held to having carried a set whose pass doesn't hold and cleared a
+/// store. Plants, each watched failing: the spike's
 /// highest-taken mark in svrngs-db (`adopt` taking the mark to the seq
 /// counted); the ask naming no haves; svrngs-db's `claimed` trusting a
 /// site's device in place of its home (sync.rs, `from == Some(&device)`:
 /// 140 disagreements, a phone site's mark short at a copy the home called);
 /// the pass's lapse unread in wire.rs `Phoned::signer` (189, a lapsed set
 /// taken and counted); the reference's book trusting a phone site's mark
-/// from the site itself, as it did before phones (145).
+/// from the site itself, as it did before phones (145); wire.rs `nonce`
+/// derived from a phone's home alone, so a cleared store signs at its old
+/// site (both seeded tests failed: one real site named for two of the
+/// simulator's).
 #[test]
 fn svrngs_db_s_sync_is_the_reference_s_on_the_gate_s_seeds() {
     held_on(syncs::range("W1_DB_SEEDS", "0..100"));

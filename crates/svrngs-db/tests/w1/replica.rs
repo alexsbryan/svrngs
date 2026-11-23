@@ -76,9 +76,10 @@ pub trait Replica {
     /// the set the phone carries, or none where it changes nothing; or the
     /// signer's words, where it refuses to sign. Where `lapsed`, its stamp
     /// is past its pass's lapse, and its approver signs it so, so the pass
-    /// doesn't hold (`ChangeSet::lapsed`). Only svrngs-db's copies prepare
-    /// one.
-    fn prepare(&mut self, _phone: u8, _ops: &[Op], _lapsed: bool) -> Result<Option<ChangeSet>, String> {
+    /// doesn't hold (`ChangeSet::lapsed`); where `cleared`, the phone's
+    /// signer's store is cleared first, its count with it. Only svrngs-db's
+    /// copies prepare one.
+    fn prepare(&mut self, _phone: u8, _ops: &[Op], _how: (bool, bool)) -> Result<Option<ChangeSet>, String> {
         panic!("only svrngs-db's copies prepare a phone's write")
     }
 }

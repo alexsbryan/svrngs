@@ -374,7 +374,7 @@ test('a phone’s write to its database is prepared, signed by the group’s sig
       if (refusing) return port.postMessage({ error: 'This phone didn’t sign it.' });
       held.splice(0, held.length, ...held.filter(([at]) => !approve.set.confirmed.includes(at)));
       held.push([`ada/0/${asks.length}`, `set ${asks.length}`]);
-      port.postMessage({ sets: [...held], signed: true });
+      port.postMessage({ sets: [...held] });
     },
   };
   const phone = worker(opened(), taken, page, door);
@@ -409,74 +409,91 @@ test('a phone’s write to its database is prepared, signed by the group’s sig
   assert.equal(doors.length, 8, 'prepared, and nothing carried');
 });
 
-// The group's signer's own record of what it signed (sign.js `setsSigned`),
-// as the app's page relays every message to it and can send it a prepare
-// again, naming what it likes confirmed. A computer's prepare at a place is
-// signed once: asked again a second later, its place named confirmed, it is
-// no second set; asked again in the same second, its bytes the same, it is
-// the same set, said signed, and nothing more is kept; a place below the
-// newest signed at its computer and epoch is no set either, and the next
-// place, or one at another epoch, is signed. Plant, watched failing: the
-// place judged by the sets kept alone (the replay signed a second set at
-// ada/0/1). A prepare that changes nothing is no set, and nothing is kept
-// for it.
-test('the group’s signer never signs one place twice, whatever its page says was kept', async () => {
+// The group's signer picks each set's place (sign.js `setsSigned`; svrn-docs
+// app-state-diligence/invariants-2026-11-22/, change 5), in one record with
+// its store's id: at the computer that prepared it, the seq after the last
+// it signed there. The app's page relays every message, so it can send a
+// prepare again, or two at once: a prepare kept already is no second set;
+// two at once sign two places, the later signed again past the first; each
+// computer counts apart; a place the page names confirmed is let go; a
+// record cleared, as Safari may clear it, signs at a store of its own; and
+// a prepare that changes nothing is no set, and keeps nothing. Plant,
+// watched failing: the record put whether or not it moved since it was read
+// (the two at once both signed at ada/3).
+test('the group’s signer picks each place, so it never signs one twice', async () => {
   const records = new Map();
+  // As IndexedDB runs a transaction, a turn later and whole, so two at once
+  // both read before either writes.
   const stored = async (_name, _key, _mode, act) => {
+    await Promise.resolve();
     const objects = {
       get: (id) => ({ result: structuredClone(records.get(id)) }),
       put: (record) => records.set(record.id, structuredClone(record)),
     };
     const read = act(objects);
-    read.onsuccess();
+    read.onsuccess?.();
     return read.result;
   };
+  let drawn = 0;
   const { setsSigned } = runInNewContext(
-    [SIGN.constant('Told'), SIGN.defined('setsSigned'), '({ setsSigned })'].join('\n'),
+    [
+      SIGN.constant('Told'),
+      SIGN.constant('signedSets'),
+      SIGN.defined('lendOf'),
+      SIGN.defined('setsSigned'),
+      '({ setsSigned })',
+    ].join('\n'),
     {
       approver: async () => ({ key: 'approver' }),
-      // set.rs `signed`, its set the place and the stamp it was signed at,
-      // and none for a prepare that hands no place, as it changes nothing.
+      // set.rs `signed`, its set its place, its store's first byte and its
+      // stamp; none for a prepare that changes nothing.
       set_checked: (_label, text) => {
-        const { prepared, ts } = JSON.parse(text);
-        const { epoch, seq } = JSON.parse(prepared);
-        if (seq === undefined) return [];
-        return ['message', `ada/${epoch}/${seq} at ${ts}`, `ada/${epoch}/${seq}`];
+        const { prepared, ts, by, store, seq } = JSON.parse(text);
+        if (JSON.parse(prepared).none) return [];
+        return ['message', `${by}/${seq} of ${store[0]} at ${ts}`, `${by}/${seq}`];
       },
       set_sealed: (made, sig) => `${made} by ${sig}`,
-      crypto: { subtle: { sign: async () => new Uint8Array([7]) } },
+      crypto: {
+        subtle: { sign: async () => new Uint8Array([7]) },
+        getRandomValues: (bytes) => bytes.fill(++drawn),
+      },
       store: { stored, hex: (bytes) => Buffer.from(bytes).toString('hex') },
       Error,
       JSON,
-      Number,
       Object,
     },
   );
-  const lends = [{ label: LABEL, key: 'ada', group: 'g', kind: 'board' }];
-  // Its answer, read back in this realm, as the port copies it.
-  const sign = async (epoch, seq, now, confirmed = []) => {
-    const asked = { ops: [], prepared: JSON.stringify({ epoch, seq }), by: 'ada', sig: 's' };
-    const authority = { lends, pass: 'p' };
-    return structuredClone(await setsSigned({ ...asked, confirmed, authority }, LABEL, now));
+  const lends = [
+    { label: LABEL, key: 'ada', group: 'g', kind: 'board', lenders: [{ key: 'ben' }] },
+  ];
+  // Its answer's places, read back in this realm, as the port copies it.
+  const sign = async (by, sig, confirmed = [], prepared = '{}') => {
+    const asked = { ops: [], prepared, by, sig, confirmed, authority: { lends, pass: 'p' } };
+    return structuredClone(await setsSigned(asked, LABEL, 1000)).sets.map(([at, set]) => [at, set]);
   };
-  const first = await sign(0, 1, 1000);
-  assert.deepEqual(first, { sets: [['ada/0/1', 'ada/0/1 at 1000 by 07']], signed: true });
-  const replayed = await sign(0, 1, 1001, ['ada/0/1']);
-  assert.deepEqual(replayed, { sets: [], signed: false }, 'no second set at ada/0/1');
-  assert.deepEqual(await sign(0, 1, 1000), { sets: [], signed: true }, 'the same set');
-  assert.equal((await sign(0, 2, 1002)).signed, true, 'the next place');
+  assert.deepEqual(await sign('ada', 's1'), [['ada/1', 'ada/1 of 1 at 1000 by 07']]);
   assert.deepEqual(
-    (await sign(0, 1, 1003)).sets.map(([at]) => at),
-    ['ada/0/2'],
+    await sign('ada', 's1'),
+    [['ada/1', 'ada/1 of 1 at 1000 by 07']],
+    'no second set',
   );
-  assert.equal((await sign(0, 1, 1003)).signed, false, 'a place below the newest');
-  assert.equal((await sign(1, 1, 1004)).signed, true, 'another epoch, a site of its own');
+  const [three, four] = await Promise.all([sign('ada', 's3'), sign('ada', 's4')]);
+  assert.deepEqual(
+    [three.at(-1)[0], four.at(-1)[0]].sort(),
+    ['ada/2', 'ada/3'],
+    'two at once, two places',
+  );
+  assert.deepEqual(
+    (await sign('ben', 's5', ['ada/1', 'ada/2', 'ada/3'])).map(([at]) => at),
+    ['ben/1'],
+  );
+  records.clear();
+  assert.deepEqual(
+    await sign('ada', 's6'),
+    [['ada/1', 'ada/1 of 2 at 1000 by 07']],
+    'a store of its own',
+  );
   const kept = structuredClone(records.get('g/board'));
-  const none = await sign(undefined, undefined, 1005);
-  assert.deepEqual(
-    none,
-    { sets: [], signed: true },
-    'a write that changes nothing, checked: no set',
-  );
+  assert.deepEqual(await sign('ada', 's7', [], '{"none":true}'), [], 'no set');
   assert.deepEqual(records.get('g/board'), kept, 'and nothing kept for it');
 });

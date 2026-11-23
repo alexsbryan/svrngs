@@ -18,14 +18,14 @@ impl Site {
         Site([n; 16])
     }
 
-    /// A phone's site at its home, in its epoch there: its person's number
-    /// first, as a computer's site begins with its own, then its home's,
-    /// then the epoch, the rest zero. svrngs-db derives a phone's nonce from
-    /// its home and epoch (wire.rs `nonce`), so its site names its home
-    /// there as it does here.
-    pub fn phone(person: u8, home: Site, epoch: u8) -> Site {
+    /// A phone's site at its home, for its signer's store: its person's
+    /// number first, as a computer's site begins with its own, then its
+    /// home's, then which of the phone's stores it is, the rest zero.
+    /// svrngs-db derives a phone's nonce from its home and store (wire.rs
+    /// `nonce`), so its site names its home there as it does here.
+    pub fn phone(person: u8, home: Site, store: u8) -> Site {
         let mut bytes = [0; 16];
-        bytes[..3].copy_from_slice(&[person, home.0[0], epoch]);
+        bytes[..3].copy_from_slice(&[person, home.0[0], store]);
         Site(bytes)
     }
 

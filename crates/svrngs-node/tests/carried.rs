@@ -3948,7 +3948,8 @@ async fn a_phone_reads_through_any_computer_that_keeps_the_app_and_a_removed_one
 /// The set Bo's phone's signer (`web/src/set.rs`, compiled here) makes for
 /// `ops` in `group` as `prepared`, a prepare's answer, gave them back,
 /// under a pass Bo's phone signed naming its open's approver, `signing(10)`,
-/// which signs it, as `{carry}` holds it.
+/// which signs it at seq 1 of its store, the first place its signer picks
+/// there, as `{carry}` holds it.
 fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
     let text = |f: &str| prepared[f].as_str().unwrap().to_owned();
     let (group, app, ops) = (group.to_owned(), "Board".to_owned(), ops.clone());
@@ -3971,6 +3972,8 @@ fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
         sig: text("sig"),
         pass: pass.encode(),
         ts: 1_000,
+        store: [7; 16],
+        seq: 1,
     };
     let (message, set, _) = set::signed(&label, &asked)
         .unwrap()

@@ -82,7 +82,9 @@ impl<R: Replica> Net<R> {
     /// nowhere (`Replica::prepare`), its stamp past its pass's lapse where
     /// `lapsed`; and the set carried by the phone to each of `to` in turn.
     pub fn phone(&mut self, (phone, home): (u8, usize), ops: &[Op], (lapsed, to): (bool, &[usize])) -> ChangeSet {
-        let set = self.copies[home].prepare(phone, ops, lapsed).expect("the phone signs");
+        let set = self.copies[home]
+            .prepare(phone, ops, (lapsed, false))
+            .expect("the phone signs");
         let set = set.unwrap_or_else(|| panic!("the phone's {ops:?} changes something"));
         for &c in to {
             self.take(c, &Call::carried(&set));

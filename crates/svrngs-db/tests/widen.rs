@@ -3,7 +3,7 @@
 //! operator's review of `41d94397`): its file restored whole, never
 //! replayed from the sets it keeps, the wider schema made on the copy, and
 //! the copy put in its place only once it checks. So every row, clock,
-//! mark, kept set and handed place stays, a copy alone among offline ones
+//! mark and kept set stays, a copy alone among offline ones
 //! included, and a copy made wider is the copy made from the wider schema:
 //! the same text, columns, rows and clocks. At the database itself, with no
 //! node or route. Each test names the plant it was watched failing on.

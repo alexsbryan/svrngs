@@ -649,47 +649,6 @@ impl Db {
         Took::Over
     }
 
-    /// The place this computer, the home of the phone `phone` here, hands its
-    /// next set (svrn-docs `app-state-diligence/sync-simplify-2026-11-22/`,
-    /// change 4): in the phone's epoch here, the seq after every one handed
-    /// or counted, so none is handed twice; or the next epoch's first, a site
-    /// of its own, once a set of the site is counted above one missing here,
-    /// as the site's mark would stall on that gap for good. Handed and kept
-    /// in one transaction, so two prepares at once hand two places.
-    pub(crate) fn place(&self, phone: &str) -> rusqlite::Result<(u64, u64)> {
-        let mut conn = self.conn();
-        let nonce = conn.file.nonce;
-        let tx = conn.transaction_with_behavior(Immediate)?;
-        let was = "SELECT epoch, handed FROM svrngs_homes WHERE device = ?1";
-        let was = tx.query_row(was, [phone], |r| Ok((r.get(0)?, r.get(1)?))).optional()?;
-        // A phone's first epoch here is drawn from this file's nonce, so a
-        // file made again with a fresh one (`States::remake`) hands places at
-        // sites the file it was copied from never hands; below 2^52, so a
-        // page's JSON keeps it whole.
-        let first = u64::from_be_bytes(nonce[..8].try_into().expect("a nonce is 16 bytes")) >> 12;
-        let (epoch, handed): (u64, u64) = was.unwrap_or((first, 0));
-        let site = site(
-            &self.group,
-            &self.app,
-            phone,
-            &crate::wire::nonce(self.device.as_str(), epoch),
-        );
-        let counted = "SELECT coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0), \
-            EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1)";
-        let (mark, gap): (u64, bool) = tx.query_row(counted, [site], |r| Ok((r.get(0)?, r.get(1)?)))?;
-        let (epoch, next) = if gap {
-            (epoch + 1, 1)
-        } else {
-            (epoch, handed.max(mark) + 1)
-        };
-        tracing::debug!(target: "state", group = self.group, app = self.app, phone, epoch, next, gap, "state: the place this computer, a phone's home, hands its next set: past every one handed, or a fresh epoch past a gap");
-        let hand = "INSERT INTO svrngs_homes (device, epoch, handed) VALUES (?1, ?2, ?3) \
-            ON CONFLICT (device) DO UPDATE SET epoch = ?2, handed = ?3";
-        tx.execute(hand, params![phone, epoch, next])?;
-        tx.commit()?;
-        Ok((epoch, next))
-    }
-
     /// The mark `m` a full call claims for `site`, adopted up to the highest
     /// seq of the site this copy has counted and no further, so it fills the
     /// gaps below what this copy holds and passes nothing it hasn't counted;

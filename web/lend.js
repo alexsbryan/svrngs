@@ -1184,12 +1184,11 @@ const confirmed = [];
 
 // A write to a carried app's database is this phone's own (svrn-docs
 // APP_STATE §4, "Phones"): the computer that answers prepares it, the
-// group's signer checks every prepare and signs it, as no set where it
-// changes nothing (sign.js `setsSigned`), its count answered then as after
-// a set is carried; and each set the signer keeps is carried, the same bytes through whichever computer
-// answers, until one keeps it, 200, or none ever will, 422. Where the
-// signer already keeps a set at the place prepared, that set is carried,
-// and the person told to write again.
+// group's signer checks every prepare and signs it at a place it picks,
+// as no set where it changes nothing (sign.js `setsSigned`), and each set
+// the signer keeps is carried, the same bytes through whichever computer
+// answers, until one keeps it, 200, or none ever will, 422; then the
+// prepare's count is answered.
 /**
  * @param {Request} request
  * @param {Where} where
@@ -1212,9 +1211,7 @@ async function setWritten(request, where, ops) {
     if (took.ok || took.status === 422) confirmed.push(place);
     if (!took.ok) return took;
   }
-  if (signer.signed) return Response.json({ count: JSON.parse(prepared.prepared).count });
-  const words = 'This write wasn’t kept yet: this phone sent an earlier one first. Write it again.';
-  return Response.json({ refused: 'again', words }, { status: 503 });
+  return Response.json({ count: JSON.parse(prepared.prepared).count });
 }
 
 /**

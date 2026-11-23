@@ -288,10 +288,7 @@ impl States {
     /// `app-state-diligence/sync-simplify-2026-11-22/`, change 5): restored
     /// whole ([`Self::restored`]), then on the copy its own site made one it
     /// retired, another's to its clocks, kept as it was with its sets and
-    /// mark, and a new nonce's site in its place. Its phones' places it
-    /// leaves behind, since their first epoch is drawn from the new nonce
-    /// (`sync.rs`, `place`), so the file it was copied from, which hands
-    /// them on, and this one never hand one place twice.
+    /// mark, and a new nonce's site in its place.
     pub fn remake(&self, db: &Db) -> Result<(), Refused> {
         tracing::warn!(target: "state", group = db.group, app = db.app, "state: a database found copied from another computer's is made again with a fresh nonce");
         let (old, nonce) = (db.conn().file.site, drawn()?);
@@ -317,7 +314,6 @@ impl States {
                 "UPDATE svrngs_db SET nonce = ?1, copied = 0, retired = ?2",
                 &[&nonce, &old],
             )?;
-            run("DELETE FROM svrngs_homes", &[])?;
             tx.commit().map_err(fault)
         })
     }
@@ -343,8 +339,8 @@ impl States {
     /// `db`'s file restored whole, `change` made on the restored copy, and
     /// the copy put in its place once it opens as this computer's (svrn-docs
     /// `app-state-diligence/e-build-2026-11-22/`, from the operator's review
-    /// of `41d94397`): every row, clock, mark, kept set and handed place
-    /// carried as the file holds them, never replayed from the sets it
+    /// of `41d94397`): every row, clock, mark and kept set carried as the
+    /// file holds them, never replayed from the sets it
     /// keeps, which prune has thinned. All under `db`'s one lock, so no
     /// statement runs on the file between the copy and the swap, and every
     /// holder of `db`, a page's subscription among them, has the new file at
@@ -827,10 +823,11 @@ impl Db {
     /// rows changed, each op's row as it stood before them, null where there
     /// was none, so an op with no change row is a no-op only where its row
     /// already stood as the op would leave it (§4, "A no-op is told from a
-    /// missing effect"); and the place the phone, `phone`, signs the set at,
-    /// its epoch here and seq, null where there is no change row and so no
-    /// set. Refused, as a write is, where it changes an
-    /// owned row the record `binds` doesn't give the phone's person.
+    /// missing effect"). No place: the phone's signer picks the place it
+    /// signs the set at, as this computer, its home, keeps no count of the
+    /// phone's (svrn-docs `app-state-diligence/invariants-2026-11-22/`,
+    /// change 5). Refused, as a write is, where it changes an owned row the
+    /// record `binds` doesn't give the phone, `phone`, its person.
     pub fn prepare(&self, ops: &Value, (phone, binds): (&str, &Binds)) -> Result<Value, Refused> {
         let (made, stands, count, file) = self.run(ops, true, |tx, file, count, stands| {
             let seq = tx.query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0));
@@ -842,16 +839,11 @@ impl Db {
         // Its owned rows judged as every copy judges the phone's set again.
         let device = Device::parse(phone).ok_or_else(|| fault("a phone's key is lower-case hex"))?;
         owned::mine(&made, &file.tables, binds, &device)?;
-        // A place only for a set, so none is handed that no set fills.
-        let place = (!made.0.is_empty())
-            .then(|| self.place(phone))
-            .transpose()
-            .map_err(fault)?;
-        let (epoch, next) = place.unzip();
         let keys: BTreeMap<_, _> = file.tables.iter().map(|(t, table)| (t, &table.key)).collect();
         let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));
         let schema = STANDARD.encode(file.schema);
-        let text = json!({ "ops": ops, "changes": changes, "schema": schema, "keys": keys, "count": count, "stands": stands, "epoch": epoch, "seq": next });
+        let text =
+            json!({ "ops": ops, "changes": changes, "schema": schema, "keys": keys, "count": count, "stands": stands });
         let text = text.to_string();
         let sig = svrngs_core::sign_message(&self.key, &svrngs_core::set::prepared(&self.group, &self.app, &text));
         Ok(json!({ "prepared": text, "by": self.device, "sig": sig }))
@@ -899,8 +891,8 @@ impl Db {
 /// by site, seq and signature so two at one seq are both kept, and how each
 /// is kept (`sync.rs`, `Kept`), a refused one with no bytes; each site's
 /// mark, and the sets counted above a mark; each site's device and its home
-/// (`sync.rs`, `keep`); and each phone this computer is the home of, its
-/// epoch here and the last seq it handed it (`sync.rs`, `Db::place`). No
+/// (`sync.rs`, `keep`). No count of a phone's places: its signer keeps its
+/// own (svrn-docs `app-state-diligence/invariants-2026-11-22/`, change 5). No
 /// device is stored muted: one over its share is worked out from what it
 /// holds now (`sync.rs`, `Db::held`).
 const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL,
@@ -909,8 +901,7 @@ const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT 
       bytes BLOB, PRIMARY KEY (site, seq, sig));
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
     CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));
-    CREATE TABLE svrngs_sites (site BLOB PRIMARY KEY, device TEXT NOT NULL, home TEXT NOT NULL);
-    CREATE TABLE svrngs_homes (device TEXT PRIMARY KEY, epoch INTEGER NOT NULL, handed INTEGER NOT NULL);";
+    CREATE TABLE svrngs_sites (site BLOB PRIMARY KEY, device TEXT NOT NULL, home TEXT NOT NULL);";
 
 /// A new database's tables: `schema` made as `svrngs check` makes it
 /// (`schema.rs`, `made`), and svrngs's own made ([`OWN`]), with a

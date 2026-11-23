@@ -95,16 +95,17 @@ pub struct Set {
 
 /// What a phone's set carries beside its head (svrn-docs
 /// `rings/current/APP_STATE.md` §4, "Phones"; the operator's B′,
-/// 2026-11-22): its home, the computer that prepares its sets and applies
-/// them first, which vouches for its site's mark as a computer vouches for
-/// its own, and its epoch there, from which its nonce is derived
-/// ([`nonce`]; `app-state-diligence/sync-simplify-2026-11-22/`, change 4);
-/// the pass of the open it was written under, which names its signer, that
-/// open's approver; and the stamp it was signed at, by the phone's clock.
+/// 2026-11-22): its home, the computer that prepared it and applies it
+/// first, which vouches for its site's mark as a computer vouches for its
+/// own (`app-state-diligence/sync-simplify-2026-11-22/`, change 4); the id
+/// of the phone's signer's store that signed it, drawn with the store, so
+/// the nonce is derived from the two ([`nonce`]); the pass of the open it
+/// was written under, which names its signer, that open's approver; and
+/// the stamp it was signed at, by the phone's clock.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Phoned {
     pub home: Device,
-    pub epoch: u64,
+    pub store: Nonce,
     pub pass: String,
     pub ts: i64,
 }
@@ -117,14 +118,14 @@ impl Phoned {
     /// The key `head`, a phone's, is signed by, and what it signs, as a set
     /// of `app` in `group`, where its pass holds: signed by the set's device,
     /// opening that app's carried label, naming an approver, the stamp
-    /// within its lapse, and the nonce derived from the home and epoch. So
+    /// within its lapse, and the nonce derived from the home and store. So
     /// a leaked approver is worth one pass's scope, and its stamp can be
     /// backdated only within that pass's lapse (svrn-docs HOLDER_APPROVAL
     /// §2, rule 4).
     pub(crate) fn signer(&self, head: &Head, (group, app): (&str, &str)) -> Option<(String, Vec<u8>)> {
         let pass = svrngs_core::pass::Pass::decode(&self.pass)?;
         let opens = pass.app == svrngs_core::pass::Label::carried(app, group);
-        let homed = nonce(self.home.as_str(), self.epoch) == head.nonce;
+        let homed = nonce(self.home.as_str(), &self.store) == head.nonce;
         let holds = pass.signed() && pass.person == head.device.as_str() && opens && self.ts <= pass.until && homed;
         let mut message = PHONED.to_vec();
         message.extend(head.at((group, app)).message(&head.changes));
@@ -180,14 +181,15 @@ impl Set {
 }
 
 /// The nonce of a phone's database at its home, the computer `home` that
-/// prepares its sets and applies them first, in its `epoch` there (svrn-docs
-/// `rings/current/app-state-diligence/sync-simplify-2026-11-22/`, change 4):
-/// derived, never drawn, so a phone keeps no nonce to lose, and a set's home
-/// is read from the nonce its device signed.
-pub(crate) fn nonce(home: &str, epoch: u64) -> Nonce {
-    let mut bytes = b"svrngs/db-home/v1\0".to_vec();
+/// prepares its sets and applies them first, for its signer's `store`
+/// (svrn-docs `rings/current/app-state-diligence/sync-simplify-2026-11-22/`,
+/// change 4; `invariants-2026-11-22/`, change 5): derived, so a set's home
+/// is read from the nonce its device signed, and a store made anew, its
+/// count gone with it, is a site of its own at every home.
+pub(crate) fn nonce(home: &str, store: &Nonce) -> Nonce {
+    let mut bytes = b"svrngs/db-home/v2\0".to_vec();
     svrngs_core::field(&mut bytes, home.as_bytes());
-    bytes.extend_from_slice(&epoch.to_be_bytes());
+    bytes.extend_from_slice(store);
     svrngs_core::ContentHash::of(&bytes).as_bytes()[..16]
         .try_into()
         .expect("a hash is longer")

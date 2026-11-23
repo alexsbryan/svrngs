@@ -444,7 +444,7 @@ pub fn named(id: SetId) -> String {
 }
 
 /// A site by its device's number; a phone's, by its number, its home's and
-/// its epoch there (`Site::phone`), as `101@1.0`.
+/// its store (`Site::phone`), as `101@1.0`.
 pub fn sited(site: Site) -> String {
     match site.home() == site {
         true => site.0[0].to_string(),

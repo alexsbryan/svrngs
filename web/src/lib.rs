@@ -762,7 +762,7 @@ fn unsigned(
 /// A phone's write to the app at the label `label`, `asked` as JSON (set.rs
 /// `Asked`), checked: `[message, set, place]`, what its open's approver
 /// signs, the set its signature goes in (`set_sealed`) and its place, its
-/// home, epoch and seq; `[]` where it changes nothing, checked so, and is
+/// home and seq; `[]` where it changes nothing, checked so, and is
 /// no set; or `[null, words]`, why not, in words for the person
 /// (web/sign.js, which alone holds the approver).
 #[wasm_bindgen]

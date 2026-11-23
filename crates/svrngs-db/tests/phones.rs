@@ -5,6 +5,8 @@
 //! or route; the signer is the page's own, `web/src/set.rs`, compiled here.
 //! Each test names the plant it was watched failing on.
 
+use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
@@ -59,11 +61,27 @@ fn pass_until(until: i64) -> Pass {
     Pass::approvable(&bo().0, &"h".repeat(64), (app, vec![]), until, Some(approver))
 }
 
+/// Bo's phone's signer's store: its id, and the seq it last signed at each
+/// computer, its home there, as web/sign.js keeps them in one record.
+#[derive(Default)]
+struct Store {
+    id: [u8; 16],
+    counts: BTreeMap<String, u64>,
+}
+
+thread_local! {
+    /// Bo's phone's signer's store in this test, its id `[7; 16]` until a
+    /// test clears it.
+    static STORE: RefCell<Store> = RefCell::new(Store { id: [7; 16], ..Store::default() });
+}
+
 /// What Bo's phone's signer is asked for `ops`, as `answer`, a prepare's,
-/// gave them back, under his open's pass, stamped at 1,000.
+/// gave them back, under his open's pass, stamped at 1,000, at the place it
+/// picks: its store, and the seq after the last it signed at that computer.
 fn asked(ops: &Value, answer: &Value) -> set::Asked {
     let text = |f: &str| answer[f].as_str().unwrap().to_owned();
     let (group, app, ops) = ("g".into(), "board".into(), ops.clone());
+    let (store, seq) = STORE.with_borrow(|s| (s.id, s.counts.get(&text("by")).copied().unwrap_or(0) + 1));
     set::Asked {
         group,
         app,
@@ -73,15 +91,18 @@ fn asked(ops: &Value, answer: &Value) -> set::Asked {
         sig: text("sig"),
         pass: pass_until(2_000_000_000).encode(),
         ts: 1_000,
+        store,
+        seq,
     }
 }
 
 /// The set Bo's phone's signer makes for `asked`, framed by Board's own
-/// page, signed by its open's approver, postcard's bytes in base64; or its
-/// words for why not.
+/// page, signed by its open's approver, postcard's bytes in base64, its seq
+/// then the last it signed at that computer; or its words for why not.
 fn signed(asked: &set::Asked) -> Result<String, String> {
     let label = Label::carried("board", "g").to_string();
     let (message, set, _) = set::signed(&label, asked)?.ok_or("no set: it changes nothing")?;
+    STORE.with_borrow_mut(|s| s.counts.insert(asked.by.clone(), asked.seq));
     Ok(set::sealed(&set, &svrngs_core::sign_message(&approver(), &message)).unwrap())
 }
 
@@ -120,8 +141,8 @@ fn cards(db: &Db) -> Value {
 /// **A computer prepares a phone's write and keeps none of it** (§4,
 /// "Phones", step 1): Ana's computer prepares an update of her card and a
 /// new one, and answers them signed as hers, with the ops, each table's
-/// key in order, the rows changed, each op's row as it stood before, and
-/// the place Bo's phone signs at, its first there. Her board is as it was,
+/// key in order, the rows changed, and each op's row as it stood before,
+/// and no place, which Bo's phone's signer picks. Her board is as it was,
 /// and her next write takes the version the prepare didn't spend. Plant,
 /// watched failing: the prepare committing its transaction (Ana's board had
 /// the eggs and the jam).
@@ -155,9 +176,10 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
         json!([{ "id": "c1", "title": "milk", "col": null }, null]),
         "as they stood"
     );
-    assert_eq!(prepared["seq"], json!(1), "Bo's first place here");
-    let epoch = prepared["epoch"].as_u64().unwrap();
-    assert!(epoch < 1 << 52, "an epoch a page's JSON keeps whole: {epoch}");
+    assert!(
+        prepared.get("seq").is_none() && prepared.get("epoch").is_none(),
+        "no place: the phone's signer picks it"
+    );
     assert_eq!(prepared["schema"].as_str().unwrap().len(), 44, "a hash, in base64");
     assert_eq!(
         cards(&db),
@@ -175,7 +197,7 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
 /// **Every prepare is signed and checked, one that changes nothing too**
 /// (svrn-docs `app-state-diligence/invariants-2026-11-22/`, change 4): Ana's
 /// computer signs its prepare of a no-op, an update of her card to the title
-/// it has, with no change row and no place, and Bo's phone checks its ops
+/// it has, with no change row, and Bo's phone checks its ops
 /// against the card as it stood and signs no set. A computer whose rows for
 /// an insert came back empty signs that same shape, and the phone refuses
 /// it in words, where before it was answered its count unsigned, no signer
@@ -194,11 +216,7 @@ fn every_prepare_is_signed_and_checked_one_that_changes_nothing_too() {
     let rows: Vec<change::Change> =
         postcard::from_bytes(&STANDARD.decode(text["changes"].as_str().unwrap()).unwrap()).unwrap();
     assert!(rows.is_empty(), "no change row");
-    assert_eq!(
-        (&text["count"], &text["epoch"], &text["seq"]),
-        (&json!(1), &Value::Null, &Value::Null),
-        "its count, and no place handed"
-    );
+    assert_eq!(text["count"], json!(1), "its count");
     assert_eq!(
         set::signed(&label, &asked(&same, &answer)),
         Ok(None),
@@ -484,39 +502,52 @@ fn a_phone_s_site_is_vouched_for_by_its_home() {
     );
 }
 
-/// **A phone's home never hands one place twice, and moves it to a fresh
-/// site past a gap** (change 4, "Phone twins, prevented"): two prepares at
-/// Ana's computer with nothing carried between hand seqs 1 and 2. The
-/// second set reaches Ana's copy and the first never does, carried through
-/// Ben's computer instead, so Ana counts 2 above a missing 1, and her next
-/// prepare hands the next epoch's first place, a site of its own. Plant,
-/// watched failing: the place read from what is counted alone (the second
-/// prepare handing seq 1 again).
+/// **A phone's signer picks each place, so none is left unfilled and none
+/// signed twice** (svrn-docs `app-state-diligence/invariants-2026-11-22/`,
+/// change 5): Ana's computer, Bo's home, prepares three cards and hands no
+/// place. His signer signs the third, then the first, at seqs 1 and 2, and
+/// both are taken, where a place handed at prepare told the earlier one
+/// "write it again". The second's page closes before its signer sees it,
+/// and leaves nothing: Ana's copy counts Bo's site to 2, nothing above it,
+/// where a handed place left a have there for good. His signer's store
+/// cleared, its count with it, his next card is signed at seq 1 of a site
+/// of its own, and taken, no twin. Plant, watched failing: wire.rs `nonce`
+/// derived from the home alone (the cleared store's first set at Bo's old
+/// site, a twin of the third card's).
 #[test]
-fn a_phone_s_home_never_hands_a_place_twice() {
-    let ((_a, ana), (_b, ben)) = (board(1), board(2));
-    let place = |answer: &Value| {
-        let text: Value = serde_json::from_str(answer["prepared"].as_str().unwrap()).unwrap();
-        (text["epoch"].as_u64().unwrap(), text["seq"].as_u64().unwrap())
+fn a_phone_s_signer_picks_each_place_so_none_is_left_unfilled_or_signed_twice() {
+    let (_dir, ana) = board(1);
+    let card = |card: &str| json!([{ "insert": "cards", "row": { "id": card, "title": card } }]);
+    let [milk, _closed, jam] =
+        ["milk", "tea", "jam"].map(|c| (card(c), ana.prepare(&card(c), (&bo().1, &bound())).unwrap()));
+    let jam = signed(&asked(&jam.0, &jam.1)).unwrap();
+    let milk = signed(&asked(&milk.0, &milk.1)).unwrap();
+    let seq = |set: &str| {
+        postcard::from_bytes::<Set>(&STANDARD.decode(set).unwrap())
+            .unwrap()
+            .head
+            .seq
+            .get()
     };
-    let [one, two] = ["milk", "jam"].map(|card| {
-        let ops = json!([{ "insert": "cards", "row": { "id": card, "title": card } }]);
-        let answer = ana.prepare(&ops, (&bo().1, &bound())).unwrap();
-        (place(&answer), signed(&asked(&ops, &answer)).unwrap())
+    assert_eq!((seq(&jam), seq(&milk)), (1, 2), "in the order signed");
+    assert_eq!(carry(&ana, &milk), Took::Taken);
+    assert_eq!(carry(&ana, &jam), Took::Taken);
+    let (ask, site) = (ana.ask().unwrap(), site_of(&jam));
+    assert_eq!(ask.marks.get(&site).map(|m| m.get()), Some(2));
+    assert!(ask.haves.is_empty(), "no place left unfilled: {:?}", ask.haves);
+
+    STORE.with_borrow_mut(|s| {
+        *s = Store {
+            id: [9; 16],
+            ..Store::default()
+        }
     });
-    assert_eq!(
-        (one.0, two.0),
-        ((one.0.0, 1), (one.0.0, 2)),
-        "two places, though nothing came back between"
-    );
-    assert_eq!(carry(&ben, &one.1), Took::Taken, "the first through Ben's computer");
-    assert_eq!(carry(&ana, &two.1), Took::Taken);
-    let tea = json!([{ "insert": "cards", "row": { "id": "tea", "title": "tea" } }]);
-    assert_eq!(
-        place(&ana.prepare(&tea, (&bo().1, &bound())).unwrap()),
-        (one.0.0 + 1, 1),
-        "a fresh site past the gap"
-    );
+    let pie = card("pie");
+    let pie = signed(&asked(&pie, &ana.prepare(&pie, (&bo().1, &bound())).unwrap())).unwrap();
+    assert_eq!(seq(&pie), 1, "the cleared store's first");
+    assert_ne!(site_of(&pie), site, "a site of its own");
+    assert_eq!(carry(&ana, &pie), Took::Taken, "no twin");
+    assert_eq!(cards(&ana).as_array().unwrap().len(), 3);
 }
 
 /// **A phone's prepare refuses an owned row the record doesn't give its

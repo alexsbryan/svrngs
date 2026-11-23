@@ -59,16 +59,14 @@ fn cards(db: &Db) -> Value {
 /// twin, and the one above every version she sealed found as the copy's,
 /// set aside, her file flagged and her writes refused, saying why. Made
 /// again once nothing else holds her file, never under a live connection,
-/// her copy has a site of its own, hands a phone its place
-/// at a site the copy's file never hands, writes there, and names the sets
+/// her copy has a site of its own, writes there, and names the sets
 /// of the site it retired as twins, so Ben's copy, which pruned the copy's
 /// set at that place, takes hers there too. Every copy then holds every
 /// card. Plants, each watched failing: the own-site set above Ana's
 /// versions not looked for (her copy never flagged); a set at a place the
 /// call names a twin passed by where this copy pruned its pair (Ben's copy
 /// never has Ana's jam); the retired site's sets not named as twins (the
-/// same); a phone's first epoch fixed at 0 (the remade file hands the copy's
-/// epoch, so the original's places, again).
+/// same).
 #[test]
 fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     let (ana_dir, copy_dir, ben_dir) = (
@@ -98,14 +96,6 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     call(&copy, &ben);
     assert_eq!(cards(&ben), json!([{ "id": "c1", "title": "ham" }]));
 
-    let phone = svrngs_core::actor_of(&SigningKey::from_bytes(&[7; 32]));
-    let handed = |db: &Db| {
-        let answer = db.prepare(&put("c8", "fig"), (&phone, &bound())).unwrap();
-        let text: Value = serde_json::from_str(answer["prepared"].as_str().unwrap()).unwrap();
-        (text["epoch"].as_u64().unwrap(), text["seq"].as_u64().unwrap())
-    };
-    let first = handed(&ana);
-    assert_eq!(first.1, 1, "a phone's first place, handed before");
     call(&copy, &ana);
     assert!(
         ana.copied(),
@@ -114,11 +104,6 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     let site = ana.ask().unwrap();
     ana_states.remake(&ana).unwrap();
     assert!(!ana.copied(), "made again");
-    let after = handed(&ana);
-    assert_ne!(
-        after.0, first.0,
-        "a fresh epoch, from the fresh nonce, so no place the copy hands: {after:?}"
-    );
     call(&copy, &ana);
     write(&ana, put("c3", "pie")).unwrap();
     let marks = ana.ask().unwrap().marks;

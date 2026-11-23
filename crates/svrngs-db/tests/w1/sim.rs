@@ -122,12 +122,13 @@ struct Counts {
     refused: usize,
     stopped: usize,
     /// Phone sets carried, those carried again through another computer,
-    /// and those carried under a pass that doesn't hold; and writes the
-    /// phone's signer refused to sign.
+    /// and those carried under a pass that doesn't hold; writes the phone's
+    /// signer refused to sign; and the times its store was cleared.
     phoned: usize,
     retried: usize,
     lapsed: usize,
     declined: usize,
+    cleared: usize,
 }
 
 /// W1's failure, by what the standing copies show (MAGNETS_BUILD §3, slice B,
@@ -180,10 +181,11 @@ pub struct Verdict {
     /// Sets taken in those rounds, which the meet should have left none of.
     pub late: usize,
     /// What the run's phones did: sets carried, and of those, carried under
-    /// a pass that doesn't hold; and each write their signer refused to
-    /// sign, said.
+    /// a pass that doesn't hold; the times a signer's store was cleared; and
+    /// each write their signer refused to sign, said.
     pub phoned: usize,
     pub lapsed: usize,
+    pub cleared: usize,
     pub declined: Vec<String>,
 }
 
@@ -403,18 +405,21 @@ impl<R: Replica> Sim<R> {
     /// one time in ten carries it again through one more, its answer lost
     /// (APP_STATE §4, "Phones"). One set in twenty-five it carries instead
     /// with its stamp past its pass's lapse, re-signed by its approver, which
-    /// every copy drops as signed by no device's and none may count. Where
-    /// the signer refuses to sign, the write is said and goes no further,
-    /// and the place its home handed stays unfilled, as it would. A phone
-    /// reaches a computer itself, so a partition holds none of its carries.
+    /// every copy drops as signed by no device's and none may count. One
+    /// write in twenty, its signer's store is cleared first, as Safari may
+    /// clear a site's data, so its count goes with it and it signs at a site
+    /// of its own. Where the signer refuses to sign, the write is said and
+    /// goes no further, and no place is spent. A phone reaches a computer
+    /// itself, so a partition holds none of its carries.
     fn phone(&mut self) {
         let standing = self.standing();
         let p = self.rng.pick(usize::from(self.phones)) as u8;
         let home = standing[self.rng.pick(standing.len())];
         let n = if self.rng.chance(70) { 1 } else { 2 + self.rng.pick(2) };
         let ops: Vec<Op> = (0..n).map(|_| op(&mut self.rng, usize::from(PHONE + p))).collect();
-        let lapsed = self.rng.chance(4);
-        let set = match self.copies[home].prepare(p, &ops, lapsed) {
+        let (lapsed, cleared) = (self.rng.chance(4), self.rng.chance(5));
+        self.counts.cleared += usize::from(cleared);
+        let set = match self.copies[home].prepare(p, &ops, (lapsed, cleared)) {
             Ok(Some(set)) => set,
             Ok(None) => return,
             Err(words) => {
@@ -696,6 +701,7 @@ impl<R: Replica> Sim<R> {
         let mut v = Verdict {
             phoned: self.counts.phoned,
             lapsed: self.counts.lapsed,
+            cleared: self.counts.cleared,
             declined: self.declined.clone(),
             ..Verdict::default()
         };

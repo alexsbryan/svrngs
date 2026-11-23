@@ -4,9 +4,11 @@
 //! group's signer alone (web/sign.js), never by the app's page or its
 //! worker: a computer's prepare of the page's write list, taken only as a
 //! computer of the open signed it (svrngs-db `Db::prepare`), checked against
-//! that list, and signed as the phone's own set at the place the computer,
-//! its home there, hands it. Pure: the phone's key in, the set's bytes or
-//! the words for why not out. The set's form and its changes' are
+//! that list, and signed as the phone's own set at the place the signer
+//! picks, the seq after the last it signed at that computer, its home
+//! there, for its store (svrn-docs `app-state-diligence/invariants-2026-11-22/`,
+//! change 5). Pure: the phone's key in, the set's bytes or the words for
+//! why not out. The set's form and its changes' are
 //! svrngs-db's own files, compiled here (`wire.rs`, `change.rs`).
 //!
 //! Each change row must be one op's: its table, and its key packed as
@@ -39,7 +41,8 @@ use change::{cell, pack};
 
 /// What the signer is asked to sign: the page's write list, in the group and
 /// app the open names, and the computer's prepare of it, its text as `by`
-/// signed it with `sig`.
+/// signed it with `sig`; and the place the signer picked, its store's id
+/// and the seq it signs at `by`, its home.
 #[derive(Deserialize)]
 pub struct Asked {
     pub group: String,
@@ -50,6 +53,8 @@ pub struct Asked {
     pub sig: String,
     pub pass: String,
     pub ts: i64,
+    pub store: [u8; 16],
+    pub seq: u64,
 }
 
 /// A prepare's text (svrngs-db `Db::prepare`), as the phone reads it.
@@ -60,8 +65,6 @@ struct Prepared {
     schema: String,
     keys: BTreeMap<String, Vec<String>>,
     stands: Vec<Value>,
-    epoch: Option<u64>,
-    seq: Option<u64>,
 }
 
 /// One op of the write list, read for its rows: insert, update or delete
@@ -76,7 +79,7 @@ struct Op<'v> {
 
 /// For `asked`, under the label `label` of the app whose page asked: what
 /// its open's approver signs, the set that signature goes in ([`sealed`]),
-/// postcard's bytes in base64, and its place, `home/epoch/seq`; none where
+/// postcard's bytes in base64, and its place, `home/seq`; none where
 /// the computer's prepare holds no change row and the ops, so checked,
 /// change nothing; or the words for why not.
 pub fn signed(label: &str, asked: &Asked) -> Result<Option<(Vec<u8>, String, String)>, String> {
@@ -91,7 +94,7 @@ pub fn signed(label: &str, asked: &Asked) -> Result<Option<(Vec<u8>, String, Str
     if !ours || !svrngs_core::verify_hex(&asked.by, &message, &asked.sig) {
         return Err(why("what came back isn’t a computer’s prepare of it"));
     }
-    let (p, changes, rows, schema, seq) = read(&asked.prepared).ok_or_else(|| why("its prepare can’t be read"))?;
+    let (p, changes, rows, schema) = read(&asked.prepared).ok_or_else(|| why("its prepare can’t be read"))?;
     let listed = (p.ops == asked.ops).then(|| asked.ops.as_array()).flatten();
     let ops = listed.and_then(|l| l.iter().map(|o| op(o, &p.keys)).collect::<Option<Vec<_>>>());
     let ops = ops.ok_or_else(|| why("the computer prepared other ops than it asked"))?;
@@ -127,12 +130,10 @@ pub fn signed(label: &str, asked: &Asked) -> Result<Option<(Vec<u8>, String, Str
     if !whole {
         return Err(why("the computer left out a change it asked for"));
     }
-    // A write that changes nothing, every op checked so, is no set; one
-    // that changes rows is signed at the place its prepare hands.
+    // A write that changes nothing, every op checked so, is no set.
     if rows.is_empty() {
         return Ok(None);
     }
-    let (epoch, seq) = p.epoch.zip(seq).ok_or_else(|| why("its prepare can’t be read"))?;
     // The phone's device is its pass's person, and the open's approver
     // signs, where the pass holds as every copy checks it (wire.rs
     // `Phoned::signer`).
@@ -141,10 +142,12 @@ pub fn signed(label: &str, asked: &Asked) -> Result<Option<(Vec<u8>, String, Str
         .and_then(|p| wire::Device::parse(&p.person))
         .zip(wire::Device::parse(&asked.by));
     let (device, home) = device.ok_or_else(|| why("its open’s pass can’t be read"))?;
-    let mut set = wire::Set::unsigned(device, (wire::nonce(&asked.by, epoch), seq, schema), changes);
+    let seq = wire::Seq::new(asked.seq).ok_or_else(|| why("this phone’s place for it can’t be read"))?;
+    let at = (wire::nonce(&asked.by, &asked.store), seq, schema);
+    let mut set = wire::Set::unsigned(device, at, changes);
     let phoned = wire::Phoned {
         home,
-        epoch,
+        store: asked.store,
         pass: asked.pass.clone(),
         ts: asked.ts,
     };
@@ -152,7 +155,7 @@ pub fn signed(label: &str, asked: &Asked) -> Result<Option<(Vec<u8>, String, Str
     let (_, message) = signer.ok_or_else(|| why("its open’s pass doesn’t hold"))?;
     set.phone = Some(phoned);
     let set = postcard::to_allocvec(&set).expect("a set is written in memory");
-    let place = format!("{}/{epoch}/{}", asked.by, seq.get());
+    let place = format!("{}/{}", asked.by, asked.seq);
     Ok(Some((message, STANDARD.encode(set), place)))
 }
 
@@ -166,8 +169,8 @@ pub fn sealed(set: &str, sig: &str) -> Option<String> {
 }
 
 /// A prepare read: it, its changes as bytes and as rows, postcard's whole,
-/// its schema's hash, and the seq it hands the phone, if any.
-type Read = (Prepared, Vec<u8>, Vec<change::Change>, [u8; 32], Option<wire::Seq>);
+/// and its schema's hash.
+type Read = (Prepared, Vec<u8>, Vec<change::Change>, [u8; 32]);
 
 /// A prepare's `text`, read.
 fn read(text: &str) -> Option<Read> {
@@ -175,8 +178,7 @@ fn read(text: &str) -> Option<Read> {
     let changes = STANDARD.decode(&p.changes).ok()?;
     let (rows, rest) = postcard::take_from_bytes::<Vec<change::Change>>(&changes).ok()?;
     let schema = STANDARD.decode(&p.schema).ok()?.try_into().ok()?;
-    let seq = p.seq.map(|n| wire::Seq::new(n).ok_or(())).transpose().ok()?;
-    rest.is_empty().then_some((p, changes.clone(), rows, schema, seq))
+    rest.is_empty().then_some((p, changes.clone(), rows, schema))
 }
 
 /// `op`, of the write form, read against each table's key columns in
