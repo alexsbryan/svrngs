@@ -418,7 +418,8 @@ test('a phone’s write to its database is prepared, signed by the group’s sig
 // newest signed at its computer and epoch is no set either, and the next
 // place, or one at another epoch, is signed. Plant, watched failing: the
 // place judged by the sets kept alone (the replay signed a second set at
-// ada/0/1).
+// ada/0/1). A prepare that changes nothing is no set, and nothing is kept
+// for it.
 test('the group’s signer never signs one place twice, whatever its page says was kept', async () => {
   const records = new Map();
   const stored = async (_name, _key, _mode, act) => {
@@ -434,10 +435,12 @@ test('the group’s signer never signs one place twice, whatever its page says w
     [SIGN.constant('Told'), SIGN.defined('setsSigned'), '({ setsSigned })'].join('\n'),
     {
       approver: async () => ({ key: 'approver' }),
-      // set.rs `signed`, its set the place and the stamp it was signed at.
+      // set.rs `signed`, its set the place and the stamp it was signed at,
+      // and none for a prepare that hands no place, as it changes nothing.
       set_checked: (_label, text) => {
         const { prepared, ts } = JSON.parse(text);
         const { epoch, seq } = JSON.parse(prepared);
+        if (seq === undefined) return [];
         return ['message', `ada/${epoch}/${seq} at ${ts}`, `ada/${epoch}/${seq}`];
       },
       set_sealed: (made, sig) => `${made} by ${sig}`,
@@ -468,4 +471,12 @@ test('the group’s signer never signs one place twice, whatever its page says w
   );
   assert.equal((await sign(0, 1, 1003)).signed, false, 'a place below the newest');
   assert.equal((await sign(1, 1, 1004)).signed, true, 'another epoch, a site of its own');
+  const kept = structuredClone(records.get('g/board'));
+  const none = await sign(undefined, undefined, 1005);
+  assert.deepEqual(
+    none,
+    { sets: [], signed: true },
+    'a write that changes nothing, checked: no set',
+  );
+  assert.deepEqual(records.get('g/board'), kept, 'and nothing kept for it');
 });

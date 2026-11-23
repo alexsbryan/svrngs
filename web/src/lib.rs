@@ -762,16 +762,18 @@ fn unsigned(
 /// A phone's write to the app at the label `label`, `asked` as JSON (set.rs
 /// `Asked`), checked: `[message, set, place]`, what its open's approver
 /// signs, the set its signature goes in (`set_sealed`) and its place, its
-/// home, epoch and seq; or `[null, words]`, why not, in words for the
-/// person (web/sign.js, which alone holds the approver).
+/// home, epoch and seq; `[]` where it changes nothing, checked so, and is
+/// no set; or `[null, words]`, why not, in words for the person
+/// (web/sign.js, which alone holds the approver).
 #[wasm_bindgen]
 pub fn set_checked(label: String, asked: String) -> Result<js_sys::Array, JsError> {
     let asked: set::Asked = serde_json::from_str(&asked)?;
     Ok(match set::signed(&label, &asked) {
-        Ok((message, set, place)) => {
+        Ok(Some((message, set, place))) => {
             let message = js_sys::Uint8Array::from(message.as_slice());
             js_sys::Array::of3(&message.into(), &set.into(), &place.into())
         }
+        Ok(None) => js_sys::Array::new(),
         Err(words) => js_sys::Array::of2(&JsValue::NULL, &words.into()),
     })
 }

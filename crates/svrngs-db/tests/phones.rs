@@ -81,7 +81,7 @@ fn asked(ops: &Value, answer: &Value) -> set::Asked {
 /// words for why not.
 fn signed(asked: &set::Asked) -> Result<String, String> {
     let label = Label::carried("board", "g").to_string();
-    let (message, set, _) = set::signed(&label, asked)?;
+    let (message, set, _) = set::signed(&label, asked)?.ok_or("no set: it changes nothing")?;
     Ok(set::sealed(&set, &svrngs_core::sign_message(&approver(), &message)).unwrap())
 }
 
@@ -122,10 +122,9 @@ fn cards(db: &Db) -> Value {
 /// new one, and answers them signed as hers, with the ops, each table's
 /// key in order, the rows changed, each op's row as it stood before, and
 /// the place Bo's phone signs at, its first there. Her board is as it was,
-/// and her next write takes the version the prepare didn't spend. A no-op
-/// is answered its count alone, as nothing is to sign. Plant, watched
-/// failing: the prepare committing its transaction (Ana's board had the
-/// eggs and the jam).
+/// and her next write takes the version the prepare didn't spend. Plant,
+/// watched failing: the prepare committing its transaction (Ana's board had
+/// the eggs and the jam).
 #[test]
 fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
     let (_dir, db) = board(1);
@@ -173,13 +172,61 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
         Some(2),
         "no version spent"
     );
+}
 
+/// **Every prepare is signed and checked, one that changes nothing too**
+/// (svrn-docs `app-state-diligence/invariants-2026-11-22/`, change 4): Ana's
+/// computer signs its prepare of a no-op, an update of her card to the title
+/// it has, with no change row and no place, and Bo's phone checks its ops
+/// against the card as it stood and signs no set. A computer whose rows for
+/// an insert came back empty signs that same shape, and the phone refuses
+/// it in words, where before it was answered its count unsigned, no signer
+/// asked, and the write was lost. Plant, watched failing: the signer taking
+/// a prepare with no change row as no set before it checks every effect
+/// (the lost insert said to change nothing).
+#[test]
+fn every_prepare_is_signed_and_checked_one_that_changes_nothing_too() {
+    let (_dir, ana) = board(1);
+    let milk = json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    ana.write(&milk, &bound()).unwrap();
     let same = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "milk" } }]);
+    let answer = ana.prepare(&same, (&bo().1, &bound())).unwrap();
+    let label = Label::carried("board", "g").to_string();
+    let text: Value = serde_json::from_str(answer["prepared"].as_str().unwrap()).unwrap();
+    let rows: Vec<change::Change> =
+        postcard::from_bytes(&STANDARD.decode(text["changes"].as_str().unwrap()).unwrap()).unwrap();
+    assert!(rows.is_empty(), "no change row");
     assert_eq!(
-        db.prepare(&same, (&bo().1, &bound())).unwrap(),
-        json!({ "count": 1 }),
-        "a no-op: nothing to sign"
+        (&text["count"], &text["epoch"], &text["seq"]),
+        (&json!(1), &Value::Null, &Value::Null),
+        "its count, and no place handed"
     );
+    assert_eq!(
+        set::signed(&label, &asked(&same, &answer)),
+        Ok(None),
+        "checked, and no set"
+    );
+
+    // An insert whose rows came back empty, signed as Ana's computer signs.
+    let jam = json!([{ "insert": "cards", "row": { "id": "c2", "title": "jam" } }]);
+    let mut lost = text.clone();
+    lost["ops"] = jam.clone();
+    lost["stands"] = json!([null]);
+    let lost = lost.to_string();
+    let sig = svrngs_core::sign_message(
+        &SigningKey::from_bytes(&[1; 32]),
+        &svrngs_core::set::prepared("g", "board", &lost),
+    );
+    let refused = set::signed(
+        &label,
+        &set::Asked {
+            prepared: lost,
+            sig,
+            ..asked(&jam, &answer)
+        },
+    );
+    let words = "This phone didn’t sign board’s write, since the computer left out a change it asked for. Try again, or open it through another computer.";
+    assert_eq!(refused, Err(words.into()), "every effect missing");
 }
 
 /// **A phone signs only what its page asked** (§4, "Phones", step 2; W3):
@@ -558,7 +605,7 @@ fn a_phone_s_set_holds_only_under_its_open_s_pass() {
     assert_eq!(refused(late), holds, "a stamp past its lapse");
 
     let label = Label::carried("board", "g").to_string();
-    let (message, set, _) = set::signed(&label, &asked(&ops, &answer)).unwrap();
+    let (message, set, _) = set::signed(&label, &asked(&ops, &answer)).unwrap().unwrap();
     let by_device = set::sealed(&set, &svrngs_core::sign_message(&bo().0, &message)).unwrap();
     assert_eq!(
         carry(&ana, &by_device),

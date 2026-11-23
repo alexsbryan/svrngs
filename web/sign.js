@@ -224,6 +224,7 @@ async function answered(asked, port) {
 // below it is never given a second set (`signed` false, and the worker
 // carries what is kept first), so no seq is signed twice. The same set
 // asked again, its bytes the same, is no second set, and is said signed.
+// A prepare that changes nothing, its ops checked so, is no set at all.
 /**
  * @param {SetAsked} asked
  * @param {string} label
@@ -238,6 +239,8 @@ async function setsSigned(asked, label, now) {
   }
   Object.assign(asked, { group: lend.group, app: lend.kind, pass: asked.authority.pass, ts: now });
   const [message, made, place] = set_checked(label, JSON.stringify(asked));
+  // A write that changes nothing, checked so, signs no set.
+  if (message === undefined) return { sets: [], signed: true };
   if (!message) throw new Told(made);
   const signature = await crypto.subtle.sign('Ed25519', signer.key, message);
   const set = set_sealed(made, store.hex(new Uint8Array(signature)));

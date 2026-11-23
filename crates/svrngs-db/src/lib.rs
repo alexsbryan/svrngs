@@ -714,17 +714,19 @@ impl Db {
     /// copy (svrn-docs APP_STATE §4, "Phones"; MAGNETS_BUILD S2): run as
     /// [`Self::write`] runs one, in a whole transaction rolled back, never a
     /// savepoint in one that commits, which spends a version, so clocks and
-    /// `db_version` stay as they were. `{count}` alone where it changes
-    /// nothing; else `{prepared, by, sig}`: this computer's signature over
-    /// `prepared`, the text it is ([`svrngs_core::set::prepared`]), so the
-    /// signer takes it from a computer and never from the app's page. Its
+    /// `db_version` stay as they were. `{prepared, by, sig}`, whether or not
+    /// it changes anything: this computer's signature over `prepared`, the
+    /// text it is ([`svrngs_core::set::prepared`]), so the signer takes it
+    /// from a computer and never from the app's page, and checks every
+    /// prepare, one with no change rows too. Its
     /// text holds the ops, the set's changes as the parse every copy runs
     /// takes them, the schema's hash, each table's key columns in order, the
     /// rows changed, each op's row as it stood before them, null where there
     /// was none, so an op with no change row is a no-op only where its row
     /// already stood as the op would leave it (§4, "A no-op is told from a
     /// missing effect"); and the place the phone, `phone`, signs the set at,
-    /// its epoch here and seq. Refused, as a write is, where it changes an
+    /// its epoch here and seq, null where there is no change row and so no
+    /// set. Refused, as a write is, where it changes an
     /// owned row the record `binds` doesn't give the phone's person.
     pub fn prepare(&self, ops: &Value, (phone, binds): (&str, &Binds)) -> Result<Value, Refused> {
         let (made, stands, count) = self.run(ops, true, |tx, count, stands| {
@@ -732,15 +734,17 @@ impl Db {
             let made = self.changes(&tx, seq.map_err(fault)?).map_err(fault)?;
             Ok((made, stands, count))
         })?;
-        tracing::debug!(target: "state", group = self.group, app = self.app, rows = made.len(), count, "state: a phone's write prepared and rolled back whole, its rows for its signer");
-        if made.is_empty() {
-            return Ok(json!({ "count": count }));
-        }
+        tracing::debug!(target: "state", group = self.group, app = self.app, rows = made.len(), count, "state: a phone's write prepared and rolled back whole, its rows for its signer, none where it changes nothing");
         let made = parse::fit(made, &self.tables).map_err(Refused::Unkept)?;
         // Its owned rows judged as every copy judges the phone's set again.
         let device = Device::parse(phone).ok_or_else(|| fault("a phone's key is lower-case hex"))?;
         owned::mine(&made, &self.tables, binds, &device)?;
-        let (epoch, next) = self.place(phone).map_err(fault)?;
+        // A place only for a set, so none is handed that no set fills.
+        let place = (!made.0.is_empty())
+            .then(|| self.place(phone))
+            .transpose()
+            .map_err(fault)?;
+        let (epoch, next) = place.unzip();
         let keys: BTreeMap<_, _> = self.tables.iter().map(|(t, table)| (t, &table.key)).collect();
         let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));
         let schema = STANDARD.encode(self.schema);

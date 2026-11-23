@@ -583,8 +583,8 @@ impl Replica for DbCopy {
     }
 
     /// The phone's write prepared here, its home, as tests/phones.rs
-    /// prepares one: `Db::prepare` answers `{prepared, by, sig}`, or
-    /// `{count}` alone where nothing changes; the phone's signer checks it
+    /// prepares one: `Db::prepare` answers `{prepared, by, sig}`, and the
+    /// phone's signer checks it, signing no set where nothing changes, else
     /// under the open's pass, which names the approver, a key of the phone's
     /// own, and the approver signs. Its site, at this home and the epoch the
     /// prepare names, is the run's from then on (`Site::phone`). Where the
@@ -595,14 +595,6 @@ impl Replica for DbCopy {
         let (device, ops) = (svrngs_core::actor_of(&key), form(ops));
         let answer = (self.db.prepare(&ops, (&device, &self.binds())))
             .unwrap_or_else(|r| panic!("the prepare of {ops} is refused: {r}"));
-        if answer.get("prepared").is_none() {
-            assert_eq!(
-                answer.as_object().map(|a| a.len()),
-                Some(1),
-                "{{count}} alone: {answer}"
-            );
-            return Ok(None);
-        }
         let text = |f: &str| answer[f].as_str().expect("a prepare's text").to_owned();
         let label = Label::carried(APP, GROUP);
         let pass = Pass::approvable(
@@ -622,7 +614,9 @@ impl Replica for DbCopy {
             pass: pass.encode(),
             ts: STAMP,
         };
-        let (message, set, place) = signer::signed(&label.to_string(), &asked)?;
+        let Some((message, set, place)) = signer::signed(&label.to_string(), &asked)? else {
+            return Ok(None);
+        };
         let sealed = signer::sealed(&set, &svrngs_core::sign_message(&approver, &message)).expect("a sealed set");
         let bytes = STANDARD.decode(sealed).expect("base64");
         let mut set: svrngs_db::Set = postcard::from_bytes(&bytes).expect("a phone's set");

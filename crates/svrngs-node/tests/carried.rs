@@ -3972,7 +3972,9 @@ fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
         pass: pass.encode(),
         ts: 1_000,
     };
-    let (message, set, _) = set::signed(&label, &asked).unwrap();
+    let (message, set, _) = set::signed(&label, &asked)
+        .unwrap()
+        .expect("a set, as it changes rows");
     let sig = svrngs_core::sign_message(&signing(10), &message);
     json!({ "carry": set::sealed(&set, &sig).unwrap() })
 }
@@ -3989,7 +3991,8 @@ mod set;
 /// Bo's phone, under its pass for Board on Ana's computer, has a card
 /// prepared there, signed by Ana's computer; its signer signs the set as
 /// its own and it carries it, and Ana's copy takes it, the card shown; the
-/// same bytes again are held. A set whose signature isn't its device's is
+/// same bytes again are held. A write that changes nothing is prepared
+/// and signed too, for the phone's signer to check. A set whose signature isn't its device's is
 /// refused as not its device's, and
 /// bytes that are no set are refused saying what a carry is; neither
 /// reaches the copy. Bo's phone's write sent as a write is refused, as it
@@ -4063,6 +4066,18 @@ async fn a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed() {
     );
     let again = post(set).await.unwrap().json::<Value>().await.unwrap();
     assert_eq!(again, json!({ "took": "held" }), "a retry's same bytes");
+    let same = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "milk" } }]);
+    let unchanged: Value = post(json!({ "prepare": same }))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        (unchanged["by"].as_str(), unchanged["prepared"].is_string()),
+        (Some(actor_of(&signing(1)).as_str()), true),
+        "a write that changes nothing, prepared and signed for the phone to check, as every one is: {unchanged}"
+    );
     let wrote = post(json!({ "write": milk })).await.unwrap();
     assert_eq!(
         wrote.status(),

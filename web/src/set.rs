@@ -60,8 +60,8 @@ struct Prepared {
     schema: String,
     keys: BTreeMap<String, Vec<String>>,
     stands: Vec<Value>,
-    epoch: u64,
-    seq: u64,
+    epoch: Option<u64>,
+    seq: Option<u64>,
 }
 
 /// One op of the write list, read for its rows: insert, update or delete
@@ -76,9 +76,10 @@ struct Op<'v> {
 
 /// For `asked`, under the label `label` of the app whose page asked: what
 /// its open's approver signs, the set that signature goes in ([`sealed`]),
-/// postcard's bytes in base64, and its place, `home/epoch/seq`; or the
-/// words for why not.
-pub fn signed(label: &str, asked: &Asked) -> Result<(Vec<u8>, String, String), String> {
+/// postcard's bytes in base64, and its place, `home/epoch/seq`; none where
+/// the computer's prepare holds no change row and the ops, so checked,
+/// change nothing; or the words for why not.
+pub fn signed(label: &str, asked: &Asked) -> Result<Option<(Vec<u8>, String, String)>, String> {
     let why = |what| {
         format!(
             "This phone didn’t sign {}’s write, since {what}. Try again, or open it through another computer.",
@@ -126,6 +127,12 @@ pub fn signed(label: &str, asked: &Asked) -> Result<(Vec<u8>, String, String), S
     if !whole {
         return Err(why("the computer left out a change it asked for"));
     }
+    // A write that changes nothing, every op checked so, is no set; one
+    // that changes rows is signed at the place its prepare hands.
+    if rows.is_empty() {
+        return Ok(None);
+    }
+    let (epoch, seq) = p.epoch.zip(seq).ok_or_else(|| why("its prepare can’t be read"))?;
     // The phone's device is its pass's person, and the open's approver
     // signs, where the pass holds as every copy checks it (wire.rs
     // `Phoned::signer`).
@@ -134,10 +141,10 @@ pub fn signed(label: &str, asked: &Asked) -> Result<(Vec<u8>, String, String), S
         .and_then(|p| wire::Device::parse(&p.person))
         .zip(wire::Device::parse(&asked.by));
     let (device, home) = device.ok_or_else(|| why("its open’s pass can’t be read"))?;
-    let mut set = wire::Set::unsigned(device, (wire::nonce(&asked.by, p.epoch), seq, schema), changes);
+    let mut set = wire::Set::unsigned(device, (wire::nonce(&asked.by, epoch), seq, schema), changes);
     let phoned = wire::Phoned {
         home,
-        epoch: p.epoch,
+        epoch,
         pass: asked.pass.clone(),
         ts: asked.ts,
     };
@@ -145,8 +152,8 @@ pub fn signed(label: &str, asked: &Asked) -> Result<(Vec<u8>, String, String), S
     let (_, message) = signer.ok_or_else(|| why("its open’s pass doesn’t hold"))?;
     set.phone = Some(phoned);
     let set = postcard::to_allocvec(&set).expect("a set is written in memory");
-    let place = format!("{}/{}/{}", asked.by, p.epoch, p.seq);
-    Ok((message, STANDARD.encode(set), place))
+    let place = format!("{}/{epoch}/{}", asked.by, seq.get());
+    Ok(Some((message, STANDARD.encode(set), place)))
 }
 
 /// `set`, a set [`signed`] made, with its approver's signature `sig`: the
@@ -159,8 +166,8 @@ pub fn sealed(set: &str, sig: &str) -> Option<String> {
 }
 
 /// A prepare read: it, its changes as bytes and as rows, postcard's whole,
-/// its schema's hash, and the seq it hands the phone.
-type Read = (Prepared, Vec<u8>, Vec<change::Change>, [u8; 32], wire::Seq);
+/// its schema's hash, and the seq it hands the phone, if any.
+type Read = (Prepared, Vec<u8>, Vec<change::Change>, [u8; 32], Option<wire::Seq>);
 
 /// A prepare's `text`, read.
 fn read(text: &str) -> Option<Read> {
@@ -168,7 +175,7 @@ fn read(text: &str) -> Option<Read> {
     let changes = STANDARD.decode(&p.changes).ok()?;
     let (rows, rest) = postcard::take_from_bytes::<Vec<change::Change>>(&changes).ok()?;
     let schema = STANDARD.decode(&p.schema).ok()?.try_into().ok()?;
-    let seq = wire::Seq::new(p.seq)?;
+    let seq = p.seq.map(|n| wire::Seq::new(n).ok_or(())).transpose().ok()?;
     rest.is_empty().then_some((p, changes.clone(), rows, schema, seq))
 }
 
