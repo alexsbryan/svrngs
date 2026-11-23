@@ -562,7 +562,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   Otherwise sharing this run stays, and managed containers wait for the
   operator. The native baseline on Linux and macOS is unchanged.
 
-- [ ] avail-run-page — depends [avail-run-linux] — ONE UNIT: spec §2.1–§2.3, §5 row 4.
+- [x] avail-run-page e0db2d78f — depends [avail-run-linux] — ONE UNIT: spec §2.1–§2.3, §5 row 4.
   - The share line's two kinds; the form with its one command box and its
     prefill; the busy sentence; every state.
   - Two routes over `run.rs` `confirm`. The words come from `plan/words.rs`
