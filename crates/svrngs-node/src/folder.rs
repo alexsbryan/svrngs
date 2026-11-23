@@ -79,6 +79,22 @@ const SWEEP: Duration = Duration::from_secs(1);
 /// everything this time.
 type KeepAsk = oneshot::Sender<Option<HashSet<Hash>>>;
 
+/// The store's sweep's ask of what to keep, sent to [`Folders::keeper`];
+/// a sweep told nothing keeps everything.
+fn protect(ask_keep: mpsc::UnboundedSender<KeepAsk>) -> ProtectCb {
+    Arc::new(move |live| {
+        let (tx, rx) = oneshot::channel();
+        ask_keep.send(tx).ok();
+        Box::pin(async move {
+            let Ok(Some(keep)) = rx.await else {
+                return ProtectOutcome::Abort;
+            };
+            live.extend(keep);
+            ProtectOutcome::Continue
+        })
+    })
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum FolderError {
     #[error("the folder {0} cannot be read: {1}")]
@@ -170,24 +186,13 @@ impl Folders {
         nudge: Arc<Notify>,
     ) -> Result<(Self, (Store, EventSender), FsStore), String> {
         // The sweep runs on the store's own runtime and asks this node what
-        // to keep; a sweep told nothing keeps everything.
-        let (ask_keep, mut keep_asked) = mpsc::unbounded_channel::<KeepAsk>();
-        let protect: ProtectCb = Arc::new(move |live| {
-            let (tx, rx) = oneshot::channel();
-            ask_keep.send(tx).ok();
-            Box::pin(async move {
-                let Ok(Some(keep)) = rx.await else {
-                    return ProtectOutcome::Abort;
-                };
-                live.extend(keep);
-                ProtectOutcome::Continue
-            })
-        });
+        // to keep ([`protect`]), answered by its keeper ([`Self::keeper`]).
+        let (ask_keep, keep_asked) = mpsc::unbounded_channel::<KeepAsk>();
         let root = data_dir.join("blobs");
         let mut options = Options::new(&root);
         options.gc = Some(GcConfig {
             interval: SWEEP,
-            add_protected: Some(protect),
+            add_protected: Some(protect(ask_keep)),
         });
         let inline = options.inline.max_data_inlined;
         let fs = FsStore::load_with_opts(root.join("blobs.db"), options)
@@ -213,37 +218,42 @@ impl Folders {
             waiting: watch::Sender::new(BTreeMap::new()),
         };
         tracing::info!(target: "folder", untagged, "folder: the store is open");
-        let keeper = folders.clone();
-        tokio::spawn(folders.host.stopping.clone().run_until_cancelled_owned(async move {
-            let (mut last, mut read_at) = (None, None);
-            while let Some(answer) = keep_asked.recv().await {
-                // Each sweep reading every group's layout cost each node a
-                // whole record's admission a second: 25 nodes of 10,000 acts
-                // reached none of 24 in the ceiling's canary (syp-4).
-                #[expect(
-                    clippy::disallowed_methods,
-                    reason = "the sweep's adapter reads when it asks, so a lapse is read against it"
-                )]
-                let now = Instant::now();
-                let at = keeper.read_at(now);
-                if at.is_some() && at == read_at {
-                    tracing::debug!(target: "folder", "folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read");
-                    answer.send(None).ok();
-                    continue;
-                }
-                let keep = keeper.keep(now);
-                read_at = at.filter(|_| keep.is_some());
-                let sweep = keep.is_some() && keep != last;
-                if sweep {
-                    let kept = keep.as_ref().map_or(0, HashSet::len);
-                    tracing::debug!(target: "folder", kept, "folder: what the store keeps changed, so it drops every other version");
-                    last.clone_from(&keep);
-                }
-                answer.send(keep.filter(|_| sweep)).ok();
-            }
-        }));
+        let stopping = folders.host.stopping.clone();
+        tokio::spawn(stopping.run_until_cancelled_owned(folders.clone().keeper(keep_asked)));
         let blobs = provider(&store, folders.clone());
         Ok((folders, blobs, fs))
+    }
+
+    /// Each of the store's sweeps answered with what it keeps, `None` to
+    /// keep everything: none when no record and no directory moved since
+    /// the last answer, nor when what it keeps is as it was then.
+    async fn keeper(self, mut keep_asked: mpsc::UnboundedReceiver<KeepAsk>) {
+        let (mut last, mut read_at) = (None, None);
+        while let Some(answer) = keep_asked.recv().await {
+            // Each sweep reading every group's layout cost each node a
+            // whole record's admission a second: 25 nodes of 10,000 acts
+            // reached none of 24 in the ceiling's canary (syp-4).
+            #[expect(
+                clippy::disallowed_methods,
+                reason = "the sweep's adapter reads when it asks, so a lapse is read against it"
+            )]
+            let now = Instant::now();
+            let at = self.read_at(now);
+            if at.is_some() && at == read_at {
+                tracing::debug!(target: "folder", "folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read");
+                answer.send(None).ok();
+                continue;
+            }
+            let keep = self.keep(now);
+            read_at = at.filter(|_| keep.is_some());
+            let sweep = keep.is_some() && keep != last;
+            if sweep {
+                let kept = keep.as_ref().map_or(0, HashSet::len);
+                tracing::debug!(target: "folder", kept, "folder: what the store keeps changed, so it drops every other version");
+                last.clone_from(&keep);
+            }
+            answer.send(keep.filter(|_| sweep)).ok();
+        }
     }
 
     /// Every synced folder's files where the record of `group` places
