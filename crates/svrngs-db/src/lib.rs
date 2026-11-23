@@ -63,6 +63,8 @@ mod owned;
 mod parse;
 mod schema;
 mod sync;
+#[cfg(test)]
+mod tests;
 mod tidy;
 mod wire;
 pub use form::FORM;
@@ -384,18 +386,20 @@ impl States {
         // Then swapped in only once it opens in the live file's place: the
         // live file's WAL folded into it and gone, its connection kept open
         // on it in rollback mode, so the copy opens with WAL files of its
-        // own; the live file kept under another name meanwhile, and put back
+        // own; the live file kept under a second name meanwhile ([`moves`]),
+        // so the app's name always holds a whole database, and put back
         // where the copy doesn't open, its connection still on it. So `live`
         // always holds a connection that works, the old one or the copy's.
         let old = path.with_extension("db.old");
         let moved = made.and_then(|()| {
             live.execute_batch("PRAGMA journal_mode=DELETE").map_err(fault)?;
-            std::fs::rename(&path, &old).map_err(fault)
+            let _ = std::fs::remove_file(&old);
+            let mut moves = moves(&path, &copy, &old).into_iter();
+            moves.try_for_each(|(step, from, to)| step(from, to)).map_err(fault)
         });
-        let swapped = moved.clone().and_then(|()| {
-            std::fs::rename(&copy, &path).map_err(fault)?;
-            Db::open(&path, names, (None, false), self.key.clone())
-        });
+        let swapped = moved
+            .clone()
+            .and_then(|()| Db::open(&path, names, (None, false), self.key.clone()));
         tracing::debug!(target: "state", group = db.group, app = db.app, refused = ?swapped.as_ref().err(), "state: a database restored whole into a copy, changed there and opened as this computer's in its place, then swapped in under its lock; or left as it was, open, the copy refused");
         let new = swapped.inspect_err(|_| {
             if moved.is_ok() {
@@ -445,6 +449,21 @@ impl States {
         };
         opened.filter_map(said).collect()
     }
+}
+
+/// One step of a restore on disk, from one name to another.
+type Move = fn(&Path, &Path) -> std::io::Result<()>;
+
+/// A restore's moves on disk, in order (`States::restored`): the live file
+/// at `path` given a second name, `old`, then the restored `copy` renamed
+/// onto `path`, which is atomic. So after each, as after a crash between
+/// them, `path` names a whole database, the live one and then the copy, and
+/// a later restore drops what `old` still names.
+fn moves<'a>(path: &'a Path, copy: &'a Path, old: &'a Path) -> [(Move, &'a Path, &'a Path); 2] {
+    [
+        (|p, o| std::fs::hard_link(p, o), path, old),
+        (|c, p| std::fs::rename(c, p), copy, path),
+    ]
 }
 
 /// One app's database in one group on this computer: its device, the key
