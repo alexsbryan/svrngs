@@ -679,7 +679,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   run by svrngs; kill -9; a stop that stays stopped. Reboots and sign-ins
   are HUMAN-release-hosts'.
 
-- [ ] avail-run-mac-renew — depends [avail-run-mac, avail-publish] — ONE UNIT: spec §5 row 6.
+- [x] avail-run-mac-renew 8b0df3951 — depends [avail-run-mac, avail-publish] — ONE UNIT: spec §5 row 6.
   - A launch agent's grant: its label plus its plist's hash, judged by
     lineage.
   - No Podman-machine container witness: managed Mac containers are
