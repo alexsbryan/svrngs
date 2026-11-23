@@ -989,6 +989,46 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - **Size:** 0 counted. Anything that has to land in `scripts/` is
     measured; if it crosses the ceiling, park.
 
+- [ ] avail-robust-e2e — depends [avail-release-tier] — ONE UNIT (tests only, 0 counted): fix the gate's flaky tests with robust e2e assertions (the operator, 2026-11-23: "We just need to fix flaky tests. Just use e2e testing best practices for robust assertions and lets stop wasting our time with this").
+  - **The rule:** assert what happened (events, bytes, order), not how
+    fast. Time is only a generous hang guard (for example 20 s) that
+    fails a run that never finishes. Elapsed times are logged, never
+    asserted as a performance bar. No sleeps for ordering: wait on the
+    event.
+  - **`webrtc_page::the_channel_closed_mid_film_completes_over_the_relay`**
+    (both engines; `webrtc_page.rs:186`):
+    - it failed at 4,006, 4,007, 4,010 and 4,018 ms against `2500..=4000`;
+      the mechanism is 3 s of silence plus the relay dial;
+    - replace the window with assertions on the mechanism:
+      - the film rode the selected WebRTC path before the close (already
+        asserted);
+      - the close reached the channel, and the trace shows the direct path
+        given up;
+      - the rest arrived over the relay, with the exact range and SHA;
+      - all within the hang guard;
+    - log `fallbackMs`.
+    - Plant: a close that never reaches the channel (no fallback) must
+      still fail, by event, not by timing.
+  - **`navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit`:**
+    - the upstream Playwright 1.59.1 abort (microsoft/playwright#43067,
+      `WKPage._onTargetCreated`) is a harness crash before any svrngs
+      assertion;
+    - retry the browser half once, only on that exact signature, and log
+      the retry with the signature;
+    - any other failure fails at once.
+    - Plant: a different error is not retried.
+  - **`a_seek_over_the_share_on_a_pages_dial_waits_behind_what_it_lets_be_queued`**
+    (it failed 2 of 3 on main 789707dc in the same image): find the
+    timing or ordering assumption, and assert the order by events instead.
+    - Plant: the order it guards, broken, must fail.
+  - **Where needed, move each case back** into its ordinary step (for
+    example the relay case into `browser`) once it no longer depends on
+    timing. Keep `docs/seams.tsv` and `docs/CHECKS.md` true.
+  - **Prove it:** each fixed case passes 10 runs in a row in the gate
+    image, under the full gate's parallel load (inside the `browser` step,
+    not alone). Record the counts.
+  - Size: 0 counted. Tests and docs only.
+
 - [ ] HUMAN-release-hosts — depends [avail-proof] — the operator. The
   release waits on this row (the operator, 2026-11-22: "release only after
   packaged proofs"):
@@ -1009,7 +1049,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   No worker ticks this row, installs on the operator's own svrngs, or
   touches a real host but beefymac's scratch folders.
 
-- [ ] REVIEW-audit-available — depends [avail-proof, avail-webkit-alone, avail-page-prefill, avail-e2e-gate, avail-release-tier] — the unchanged full
+- [ ] REVIEW-audit-available — depends [avail-proof, avail-webkit-alone, avail-page-prefill, avail-e2e-gate, avail-release-tier, avail-robust-e2e] — the unchanged full
   `scripts/check.sh` in svrngs-gate, with the main `.git` mounted
   (PROMPT.addendum). It also checks:
   - `scripts/ports.py` lists every ported-from line;
