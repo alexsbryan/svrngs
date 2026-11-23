@@ -14,12 +14,14 @@ settings = "ralph/claude-settings.json"
 # The explicit final audit owns the full gate. No duplicate cadence audits.
 
 [models]
-# As relay-commons, the operator's latest choice for svrngs queues
-# (2026-11-19: "I want claude opus workers to finish out this program"):
-# Opus 5.5 at high in every role.
-worker = "claude-opus-5-5"
-review = "claude-opus-5-5"
-resolve = "claude-opus-5-5"
+# The operator, 2026-11-22: "after this row completes swap workers to Sol
+# 6.2 High". That is opencode's `openai/gpt-6.2-sol` at high in every role.
+# A provider/model id runs through opencode (ralph.py `client_for`), with
+# the repository's `.opencode/opencode.json` as its permissions. keeper-move
+# through avail-economize ran on Opus 5.5 at high.
+worker = "openai/gpt-6.2-sol"
+review = "openai/gpt-6.2-sol"
+resolve = "openai/gpt-6.2-sol"
 variant = "high"
 review_variant = "high"
 resolve_variant = "high"

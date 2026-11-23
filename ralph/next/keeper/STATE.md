@@ -433,8 +433,11 @@ envelope.
   - The plant runs first: the two choices' labels swapped. Then Hana ("you
     restart tonight: make sure Cy can use coder tomorrow") and Ivo, two runs
     each.
-  - Recorded in svrn-docs `rings/current/play-lend-give/runs/availability-<date>/`,
-    the way PLAY_LEND_GIVE_UX §4 records them.
+  - Recorded in this repository's `demo/runs/available/strangers-<date>/`,
+    the way PLAY_LEND_GIVE_UX §4 records them. Workers on opencode can't
+    edit `~/dev/svrn-docs` (`.opencode/opencode.json`), and the svrn-docs
+    folder `play-lend-give/runs/availability-2026-11-22/` is an earlier
+    session's start, left as it is.
 
   read: PLAY_LEND_GIVE_UX §4; the rehearsal's README.
   check: the plant is told apart from the real labels, or the round says
