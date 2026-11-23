@@ -20,8 +20,11 @@
 //!   what it takes by them: APP_STATE §4's, and the spike's rules each in
 //!   its place, kept as variants of the simulator's own.
 //! - `db`: svrngs-db's own database behind the same trait, its own sync held
-//!   at every call to the bookkeeping under §4's marks, on the gate's seeds,
-//!   W's sync cases and the review's case between computers.
+//!   at every call to the bookkeeping under §4's marks, on the gate's seeds
+//!   with one or two phones each, W's sync cases and the review's case
+//!   between computers.
+//! - `phones`: a phone's sets between svrngs-db's copies by hand, its site
+//!   vouched for by its home and a set whose pass doesn't hold.
 //!
 //! The tests, each beside the plant it was watched failing on:
 //! - `laws`: the join's laws over seeded histories;
@@ -42,6 +45,7 @@ mod change;
 mod db;
 mod laws;
 mod live;
+mod phones;
 mod reference;
 mod replica;
 mod review;

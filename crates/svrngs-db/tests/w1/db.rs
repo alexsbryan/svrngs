@@ -13,29 +13,86 @@
 //! clock rows, it keeps none that doesn't stand (`tests/sync.rs`,
 //! `cost_follows_what_is_live_on_each_copy`),
 //! and a newcomer synced from it ends equal to it.
+//!
+//! A seeded run has phones too (`sim::Shape::phoned`). A phone holds no
+//! copy: the computer it writes through, its home, prepares its write
+//! (`Db::prepare`), the phone's own signer, the page's `web/src/set.rs`
+//! compiled here, checks and signs it as tests/phones.rs does, and the
+//! phone carries the set as its route takes one (`svrngs_db::asked`,
+//! `Db::carry`). Its sets are named in the simulator by their sites, a
+//! phone's by its home and epoch there (`Site::phone`), and the reference
+//! trusts a phone site's mark from its home alone, as svrngs-db does
+//! (`sync.rs`, `Sync::vouched`).
 
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 use std::sync::Arc;
 
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use rusqlite::Connection;
 use rusqlite::types::ValueRef;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value as Json, json};
-use svrngs_db::{Ask, Db, SigningKey, States, Took};
+use svrngs_core::pass::{Label, Pass};
+use svrngs_db::{Ask, Asked, Db, SigningKey, States, Took};
 
 use crate::change::{Change, ChangeSet, SetId, Site, State, Val};
-use crate::live::named;
+use crate::live::{named, sited};
 use crate::replica::{Op, Replica};
 use crate::rule::Rule;
-use crate::sim::{self, Verdict};
+use crate::sim::{self, PHONE, Shape, Verdict};
 use crate::sim::{SCHEMA, TABLES};
 use crate::sync::{Book, Call, Carry, Ingested, Variant};
 use crate::syncs;
 
+// A phone's signer, the page's file compiled here as tests/phones.rs
+// compiles it, formatted by its own crate's rustfmt.toml.
+#[path = "../../../../web/src/set.rs"]
+#[allow(dead_code)]
+#[rustfmt::skip]
+mod signer;
+
 const GROUP: &str = "g";
 const APP: &str = "board";
+
+/// The lapse of every phone's open's pass, and the stamp an honest phone
+/// signs its sets at, within it (tests/phones.rs, `pass_until`, `asked`).
+const UNTIL: i64 = 2_000_000_000;
+const STAMP: i64 = 1_000;
+
+/// Phone `p`'s key, its number's in every byte as a computer's is
+/// (`DbCopy::new`), and its open's approver's, a key of its own.
+fn phone_keys(p: u8) -> (SigningKey, SigningKey) {
+    let n = PHONE + 1 + p;
+    (SigningKey::from_bytes(&[n; 32]), SigningKey::from_bytes(&[n + 100; 32]))
+}
+
+/// The site of the database `set` was written in, derived as every copy
+/// derives it (`svrngs_core::set::site`).
+fn real_site(set: &svrngs_db::Set) -> [u8; 16] {
+    svrngs_core::set::site(GROUP, APP, set.head.device.as_str(), &set.head.nonce)
+}
+
+/// What a phone's open's approver signs for its set's `head` at the stamp
+/// `ts`: wire.rs `Phoned::signer`'s frame, its domain then the set's own
+/// message then the stamp, written here so a test can sign a stamp the
+/// phone's signer refuses. `DbCopy::prepare` holds it to the signer's own.
+fn phoned_message(head: &svrngs_db::Head, ts: i64) -> Vec<u8> {
+    let at = svrngs_core::set::At {
+        group: GROUP,
+        app: APP,
+        device: head.device.as_str(),
+        nonce: &head.nonce,
+        seq: head.seq.get(),
+        schema: &head.schema,
+    };
+    let mut message = b"svrngs/db-phone-set/v1\0".to_vec();
+    message.extend(at.message(&head.changes));
+    message.extend(ts.to_be_bytes());
+    message
+}
 
 /// Each table's key columns, in key order, as `SCHEMA` declares them.
 const KEYS: &[(&str, &[&str])] = &[
@@ -44,9 +101,12 @@ const KEYS: &[(&str, &[&str])] = &[
     ("tiles", &["id"]),
 ];
 
-/// What a run's copies share: each device's site in the simulator by its
-/// key, each database's real site, and every set sealed in the run, as
-/// svrngs-db signed it, by its name in the simulator.
+/// What a run's copies share: each device by its key, a computer's at its
+/// site in the simulator and a phone's at its number's (`sim::PHONE`), so
+/// the record binds each to its person; each database's real site, a
+/// phone's at each home and epoch, by its site in the simulator; and every
+/// set sealed in the run, as svrngs-db or the phone signed it, by its name
+/// in the simulator.
 #[derive(Default)]
 pub struct Run {
     devices: BTreeMap<String, Site>,
@@ -66,7 +126,18 @@ pub struct DbCopy {
 
 /// Copies for one run, each of its own computer, sharing what the run sealed.
 pub fn maker() -> impl Fn(Site) -> DbCopy {
-    let run = Rc::new(RefCell::new(Run::default()));
+    phoned(0)
+}
+
+/// [`maker`], the record binding `phones` phones too, each to a person of
+/// its own, from the run's start.
+pub fn phoned(phones: u8) -> impl Fn(Site) -> DbCopy {
+    let mut run = Run::default();
+    for p in 0..phones {
+        let device = svrngs_core::actor_of(&phone_keys(p).0);
+        run.devices.insert(device, Site::of(PHONE + 1 + p));
+    }
+    let run = Rc::new(RefCell::new(run));
     move |site| DbCopy::new(site, &run)
 }
 
@@ -206,10 +277,11 @@ impl DbCopy {
         self.side.as_ref().expect("open until the copy drops")
     }
 
-    /// A real set as the simulator names it: its rows at its device's site
-    /// and its seq; and it noted, as the run's.
+    /// A real set as the simulator names it: its rows at its database's
+    /// site, a computer's or a phone's at its home, and its seq; and it
+    /// noted, as the run's.
     fn change_set(&self, set: &svrngs_db::Set) -> ChangeSet {
-        let site = self.run.borrow().devices[set.head.device.as_str()];
+        let site = self.run.borrow().sites[&real_site(set)];
         let rows: Vec<Row> = postcard::from_bytes(&set.changes).expect("a set's rows");
         let each = rows.into_iter().map(|r| Change {
             table: r.table,
@@ -238,8 +310,14 @@ impl DbCopy {
         self.db.missing(&Ask::default(), usize::MAX).expect("its sets").sets
     }
 
+    /// Whether svrngs-db says this copy has synced in full once
+    /// (`Db::syncing`).
+    pub fn synced(&self) -> bool {
+        !self.db.syncing()
+    }
+
     /// The real ask in the simulator's names: its marks, and its haves.
-    fn book(&self) -> (BTreeMap<Site, i64>, BTreeSet<SetId>) {
+    pub fn book(&self) -> (BTreeMap<Site, i64>, BTreeSet<SetId>) {
         let ask = self.db.ask().expect("its ask");
         let run = self.run.borrow();
         let marks = ask.marks.iter().map(|(s, m)| (run.sites[s], m.get() as i64)).collect();
@@ -275,6 +353,11 @@ fn ids(sets: &[ChangeSet]) -> Vec<SetId> {
 
 fn names(ids: &BTreeSet<SetId>) -> Vec<String> {
     ids.iter().map(|id| named(*id)).collect()
+}
+
+/// Marks, each as its site's name and its mark, `101@1.0 at 2`.
+fn marked(marks: &BTreeMap<Site, i64>) -> Vec<String> {
+    marks.iter().map(|(s, m)| format!("{} at {m}", sited(*s))).collect()
 }
 
 impl Replica for DbCopy {
@@ -347,8 +430,10 @@ impl Replica for DbCopy {
     }
 
     /// The call taken whole by svrngs-db, as a computer takes one: its sets
-    /// as svrngs-db signed them, and a call by marks full, one set carried
-    /// alone not. What it took, refused and passed by must be the
+    /// as svrngs-db or the phone signed them, and a call by marks full, one
+    /// set carried alone not. A phone's set carried alone is taken as its
+    /// route takes a phone's carry, `{carry}`, the same bytes. What it took,
+    /// refused, passed by and dropped as not its device's must be the
     /// reference's, and so must its marks and haves after.
     fn called(&mut self, call: &Call, out: &Ingested, book: &Book) {
         let real = {
@@ -379,10 +464,19 @@ impl Replica for DbCopy {
             from.and_then(|(d, _)| svrngs_db::Device::parse(d))
         };
         let binds = self.binds();
-        let got = self
-            .db
-            .ingest(&real, &binds, from.as_ref())
-            .expect("svrngs-db takes the call");
+        let got = match (&call.marks, &real.sets[..]) {
+            (None, [set]) if set.phone.is_some() => {
+                let bytes = STANDARD.encode(postcard::to_allocvec(set).expect("a set is written in memory"));
+                let Ok(Asked::Carry(set)) = svrngs_db::asked(&json!({ "carry": bytes })) else {
+                    panic!("a phone's set is a carry")
+                };
+                let place = (real_site(&set), set.head.seq);
+                vec![(place, self.db.carry(set, &binds).expect("svrngs-db takes the carry"))]
+            }
+            _ => (self.db)
+                .ingest(&real, &binds, from.as_ref())
+                .expect("svrngs-db takes the call"),
+        };
         let run = self.run.borrow();
         let of = |t: Took| -> BTreeSet<SetId> {
             got.iter()
@@ -396,6 +490,11 @@ impl Replica for DbCopy {
             ("took", &of(Took::Taken), &set(&out.taken)),
             ("refused", &of(Took::Refused), &set(&out.refused)),
             ("passed by", &of(Took::Held), &set(&out.held)),
+            (
+                "dropped as not its device's",
+                &of(Took::NotItsDevice),
+                &set(&out.dropped),
+            ),
         ] {
             if real != want {
                 wrong.push(format!(
@@ -407,15 +506,15 @@ impl Replica for DbCopy {
         }
         let other = got
             .iter()
-            .filter(|(_, t)| !matches!(t, Took::Taken | Took::Refused | Took::Held));
+            .filter(|(_, t)| !matches!(t, Took::Taken | Took::Refused | Took::Held | Took::NotItsDevice));
         wrong.extend(other.map(|((_, q), t)| format!("svrngs-db's set at seq {} ended {t:?}", q.get())));
         drop(run);
         let (marks, haves) = self.book();
         if marks != *book.marks() || haves != *book.above() {
-            let said = format!("{marks:?} above {:?}", names(&haves));
+            let said = format!("{:?} above {:?}", marked(&marks), names(&haves));
             wrong.push(format!(
                 "svrngs-db's marks {said}; the reference's {:?} above {:?}",
-                book.marks(),
+                marked(book.marks()),
                 names(book.above())
             ));
         }
@@ -449,7 +548,7 @@ impl Replica for DbCopy {
         let real: BTreeSet<SetId> = real
             .sets
             .iter()
-            .map(|s| (run.devices[s.head.device.as_str()], s.head.seq.get() as i64))
+            .map(|s| (run.sites[&real_site(s)], s.head.seq.get() as i64))
             .collect();
         let want: BTreeSet<SetId> = ids(&call.sets).into_iter().collect();
         drop(run);
@@ -463,25 +562,132 @@ impl Replica for DbCopy {
             self.parted(said);
         }
     }
+
+    /// The phone's write prepared here, its home, as tests/phones.rs
+    /// prepares one: `Db::prepare` answers `{prepared, by, sig}`, or
+    /// `{count}` alone where nothing changes; the phone's signer checks it
+    /// under the open's pass, which names the approver, a key of the phone's
+    /// own, and the approver signs. Its site, at this home and the epoch the
+    /// prepare names, is the run's from then on (`Site::phone`). Where the
+    /// signer refuses, its words, the place the prepare handed left as the
+    /// signer leaves it, unsigned.
+    fn prepare(&mut self, phone: u8, ops: &[Op], lapsed: bool) -> Result<Option<ChangeSet>, String> {
+        let (key, approver) = phone_keys(phone);
+        let (device, ops) = (svrngs_core::actor_of(&key), form(ops));
+        let answer = (self.db.prepare(&ops, (&device, &self.binds())))
+            .unwrap_or_else(|r| panic!("the prepare of {ops} is refused: {r}"));
+        if answer.get("prepared").is_none() {
+            assert_eq!(
+                answer.as_object().map(|a| a.len()),
+                Some(1),
+                "{{count}} alone: {answer}"
+            );
+            return Ok(None);
+        }
+        let text = |f: &str| answer[f].as_str().expect("a prepare's text").to_owned();
+        let label = Label::carried(APP, GROUP);
+        let pass = Pass::approvable(
+            &key,
+            &"h".repeat(64),
+            (label.clone(), vec![]),
+            UNTIL,
+            Some(svrngs_core::actor_of(&approver)),
+        );
+        let asked = signer::Asked {
+            group: GROUP.into(),
+            app: APP.into(),
+            ops,
+            prepared: text("prepared"),
+            by: text("by"),
+            sig: text("sig"),
+            pass: pass.encode(),
+            ts: STAMP,
+        };
+        let (message, set, place) = signer::signed(&label.to_string(), &asked)?;
+        let sealed = signer::sealed(&set, &svrngs_core::sign_message(&approver, &message)).expect("a sealed set");
+        let bytes = STANDARD.decode(sealed).expect("base64");
+        let mut set: svrngs_db::Set = postcard::from_bytes(&bytes).expect("a phone's set");
+        assert_eq!(
+            phoned_message(&set.head, STAMP),
+            message,
+            "wire.rs's frame, as the signer signs it"
+        );
+        let epoch = set.phone.as_ref().expect("a phone's set").epoch;
+        assert_eq!(place, format!("{}/{epoch}/{}", asked.by, set.head.seq.get()));
+        if lapsed {
+            let phoned = set.phone.as_mut().expect("a phone's set");
+            phoned.ts = UNTIL + 1;
+            let sig = svrngs_core::sign_message(&approver, &phoned_message(&set.head, phoned.ts));
+            set.head.sig = svrngs_db::Sig::parse(&sig).expect("a signature");
+        }
+        let epoch = u8::try_from(epoch).expect("under 256 epochs a run");
+        let site = Site::phone(PHONE + 1 + phone, self.site, epoch);
+        let was = self.run.borrow_mut().sites.insert(real_site(&set), site);
+        assert!(
+            was.is_none_or(|w| w == site),
+            "one site in the simulator for one real site"
+        );
+        let set = self.change_set(&set);
+        Ok(Some(if lapsed { set.lapsed() } else { set }))
+    }
 }
 
-/// One seeded run on svrngs-db's copies under `carry`, met and judged, and
-/// each copy's first disagreement with the reference's bookkeeping.
+/// One seeded run on svrngs-db's copies under `carry`, with one or two
+/// phones (`Shape::phoned`), met and judged, and each copy's first
+/// disagreement with the reference's bookkeeping.
 fn seeded(seed: u64, carry: Carry) -> (Verdict, Vec<String>) {
+    let shape = Shape::phoned(seed);
     watched(format!("seed {seed}, {}", carry.name()), || {
-        sim::one_synced(seed, Rule::default(), Variant::Vouched, carry, &maker())
+        let make = phoned(shape.phones);
+        sim::one_shaped((seed, shape), Rule::default(), (Variant::Vouched, carry), &make)
     })
 }
 
+/// What the phones did over a range of seeds: runs, sets carried, those
+/// under a pass that doesn't hold, and each write their signer refused to
+/// sign, said with its run.
+#[derive(Default)]
+struct Phoned {
+    runs: usize,
+    carried: usize,
+    lapsed: usize,
+    declined: Vec<String>,
+}
+
+impl Phoned {
+    fn add(&mut self, run: String, v: &Verdict) {
+        self.runs += 1;
+        self.carried += v.phoned;
+        self.lapsed += v.lapsed;
+        self.declined.extend(v.declined.iter().map(|d| format!("{run}: {d}")));
+    }
+
+    /// Said, with the first of the refused writes.
+    fn line(&self) -> String {
+        let first = self
+            .declined
+            .first()
+            .map_or(String::new(), |d| format!("; the first: {d}"));
+        format!(
+            "phones: {} runs, {} sets carried, {} of them under a pass that doesn't hold; {} writes their signer refused to sign{first}",
+            self.runs,
+            self.carried,
+            self.lapsed,
+            self.declined.len()
+        )
+    }
+}
+
 /// The seeds `range` on svrngs-db's copies, carried both ways, shared among
-/// the computer's threads: each failure, W1's or the bookkeeping's.
-fn on_seeds(range: std::ops::Range<u64>) -> Vec<String> {
+/// the computer's threads: each failure, W1's or the bookkeeping's, and what
+/// the phones did.
+fn on_seeds(range: std::ops::Range<u64>) -> (Vec<String>, Phoned) {
     let threads = std::thread::available_parallelism().map_or(1, |n| n.get() as u64);
     std::thread::scope(|s| {
         let each = (0..threads).map(|t| {
             let range = range.clone();
             s.spawn(move || {
-                let mut failed = Vec::new();
+                let (mut failed, mut phoned) = (Vec::new(), Phoned::default());
                 for seed in range.filter(|seed| seed % threads == t) {
                     for carry in Carry::ALL {
                         let (v, parted) = seeded(seed, carry);
@@ -490,36 +696,66 @@ fn on_seeds(range: std::ops::Range<u64>) -> Vec<String> {
                         if v.passed + v.refetched + v.resent + v.late > 0 {
                             failed.push(format!("seed {seed}, {}: {v:?}", carry.name()));
                         }
+                        phoned.add(format!("seed {seed}, {}", carry.name()), &v);
                     }
                 }
-                failed
+                (failed, phoned)
             })
         });
         let each: Vec<_> = each.collect();
-        each.into_iter()
-            .flat_map(|h| h.join().expect("a thread of seeds"))
-            .collect()
+        let (mut failed, mut phoned) = (Vec::new(), Phoned::default());
+        for (f, p) in each.into_iter().map(|h| h.join().expect("a thread of seeds")) {
+            failed.extend(f);
+            phoned.runs += p.runs;
+            phoned.carried += p.carried;
+            phoned.lapsed += p.lapsed;
+            phoned.declined.extend(p.declined);
+        }
+        phoned.declined.sort();
+        (failed, phoned)
     })
 }
 
+/// The seeds `range` on svrngs-db's copies, judged: each failure said, and
+/// what the phones did said and held to having run, a set whose pass
+/// doesn't hold among them, so neither check passes by never running.
+fn held_on(range: std::ops::Range<u64>) {
+    let (failed, phoned) = on_seeds(range);
+    println!("{}", phoned.line());
+    for d in &phoned.declined {
+        println!("REFUSED TO SIGN, {d}");
+    }
+    assert!(failed.is_empty(), "{} failed:\n{}", failed.len(), failed.join("\n"));
+    assert!(phoned.carried > 0 && phoned.lapsed > 0, "{}", phoned.line());
+}
+
 /// **svrngs-db's sync is the reference's, at every call, on the gate's
-/// seeds** (APP_STATE §11, W1, on computers), its first 100 here, 9 to 10 s
-/// on twelve threads, all 1,000 with `W1_DB_SEEDS=0..1000`, 105 s (svrn-docs
-/// `app-state-diligence/b-sync-build-2026-11-22/`): each seed's copies are
-/// svrngs-db's own databases, sending and taking by its own ask, carried a
-/// set at a time and by calls; at every call each sends what the
-/// reference's bookkeeping sends, takes, refuses and passes by what it
-/// does, and ends with its marks and haves; every copy ends on the
-/// reference, its kept sets cover its clock rows, a newcomer synced from it
-/// is equal to it, and in the ten rounds after the meet nothing is passed,
-/// fetched again, sent again or taken late (invariants 3, as far as it goes
-/// without prune, 11 and 12). Plants, each watched failing: the spike's
+/// seeds** (APP_STATE §11, W1, "the simulator drives computers and
+/// phones"), its first 100 here, all 1,000 with `W1_DB_SEEDS=0..1000`
+/// (svrn-docs `app-state-diligence/b-sync-build-2026-11-22/`, 105 s before
+/// phones): each seed's copies are svrngs-db's own databases, sending and
+/// taking by its own ask, carried a set at a time and by calls, beside one
+/// or two phones, each writing through a computer, its home, and carrying
+/// the set to it or to another (`Sim::phone`); at every call and carry each
+/// copy sends what the reference's bookkeeping sends, takes, refuses, passes
+/// by and drops as not its device's what it does, and ends with its marks
+/// and haves; every copy ends on the reference, its kept sets cover its
+/// clock rows, a newcomer synced from it is equal to it, no copy keeps or
+/// counts a phone's set whose pass doesn't hold, and in the ten rounds after
+/// the meet nothing is passed, fetched again, sent again or taken late
+/// (invariants 3, 11 and 12). What the phones did is said, with each write
+/// their signer refused to sign, and held to having carried a set whose
+/// pass doesn't hold. Plants, each watched failing: the spike's
 /// highest-taken mark in svrngs-db (`adopt` taking the mark to the seq
-/// counted); the ask naming no haves.
+/// counted); the ask naming no haves; svrngs-db's `claimed` trusting a
+/// site's device in place of its home (sync.rs, `from == Some(&device)`:
+/// 140 disagreements, a phone site's mark short at a copy the home called);
+/// the pass's lapse unread in wire.rs `Phoned::signer` (189, a lapsed set
+/// taken and counted); the reference's book trusting a phone site's mark
+/// from the site itself, as it did before phones (145).
 #[test]
 fn svrngs_db_s_sync_is_the_reference_s_on_the_gate_s_seeds() {
-    let failed = on_seeds(syncs::range("W1_DB_SEEDS", "0..100"));
-    assert!(failed.is_empty(), "{} failed:\n{}", failed.len(), failed.join("\n"));
+    held_on(syncs::range("W1_DB_SEEDS", "0..100"));
 }
 
 /// The soak on svrngs-db's copies, out of the gate: `W1_DB_SEEDS`, 0..100,000
@@ -527,8 +763,7 @@ fn svrngs_db_s_sync_is_the_reference_s_on_the_gate_s_seeds() {
 #[test]
 #[ignore = "the soak on svrngs-db's copies, not the gate's"]
 fn svrngs_db_s_sync_soak() {
-    let failed = on_seeds(syncs::range("W1_DB_SEEDS", "0..100000"));
-    assert!(failed.is_empty(), "{} failed:\n{}", failed.len(), failed.join("\n"));
+    held_on(syncs::range("W1_DB_SEEDS", "0..100000"));
 }
 
 /// W's sync cases on svrngs-db's copies, each held at every call: two sets

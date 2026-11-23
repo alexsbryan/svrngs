@@ -60,15 +60,17 @@ pub struct Sync {
     /// The ask names the sets above its marks this copy holds, so a member
     /// sends none of those again. Neither §4 nor the spike asks so.
     pub haves: bool,
-    /// svrngs-db's adoption: a member's mark for a device is taken only on
-    /// the word of that device's own copy, or into a copy not yet synced
-    /// from one that has, as a newcomer trusts its source (svrn-docs
+    /// svrngs-db's adoption: a member's mark for a site is taken only on
+    /// the word of the site's home, a computer's own copy for its site and a
+    /// phone site's home for it (`Site::home`; `sync-simplify-2026-11-22/`,
+    /// change 4), or into a copy not yet synced from one that has, as a
+    /// newcomer trusts its source (svrn-docs
     /// `app-state-diligence/b-sync-fixes-2026-11-22/`, D1), and only up to
     /// the highest seq of it this copy has counted, so it fills gaps and
     /// passes no set the copy would fetch (`sync-simplify-2026-11-22/`,
     /// change 2; svrngs-db sync.rs `claimed`). With sets pruned, a gap a
-    /// pruned set leaves at an established copy closes only on its own
-    /// device's word.
+    /// pruned set leaves at an established copy closes only on its home's
+    /// word.
     pub vouched: bool,
 }
 
@@ -332,6 +334,11 @@ pub struct Ingested {
     pub refused: Vec<SetId>,
     /// Sets after a refusal of their device's in the call, under `Refusal::Stops`.
     pub stopped: Vec<SetId>,
+    /// Sets signed as no device's, a phone's carried under a pass that
+    /// doesn't hold: dropped as if they never came, nothing counted, and no
+    /// mark of their site adopted from the call, as svrngs-db drops one
+    /// (`Took::NotItsDevice`).
+    pub dropped: Vec<SetId>,
 }
 
 /// The person whose device writes at `site` in the simulator: `person-0` at
@@ -398,16 +405,25 @@ impl Sync {
     }
 
     /// A call taken by `copy`: its sets in (device, seq) order (1135-1136),
-    /// each one counted here already passed by (1187-1189), each refused one
-    /// counted or stopping its device, each other one taken and counted; then,
-    /// where the sync adopts, the member's marks of each device not stopped.
+    /// each signed as no device's dropped, before anything else is read of
+    /// it, as svrngs-db checks a signature first; each one counted here
+    /// already passed by (1187-1189), each refused one counted or stopping
+    /// its device, each other one taken and counted; then, where the sync
+    /// adopts, the member's marks of each device not stopped and with no set
+    /// dropped.
     pub fn ingest<R: Replica>(self, copy: &mut R, book: &mut Book, call: &Call, removed: &BTreeSet<Site>) -> Ingested {
         let mut sets: Vec<&ChangeSet> = call.sets.iter().collect();
         sets.sort_by_key(|s| s.id());
         let mut out = Ingested::default();
         let mut stopped: BTreeSet<Site> = BTreeSet::new();
+        let mut unmoved: BTreeSet<Site> = BTreeSet::new();
         for set in sets {
             let id = set.id();
+            if !set.signed() {
+                out.dropped.push(id);
+                unmoved.insert(id.0);
+                continue;
+            }
             if stopped.contains(&id.0) {
                 out.stopped.push(id);
                 continue;
@@ -437,9 +453,9 @@ impl Sync {
         {
             let newcomer = call.synced && !book.synced;
             for (site, m) in theirs {
-                let vouched = !self.vouched || newcomer || call.from == Some(*site);
+                let vouched = !self.vouched || newcomer || call.from == Some(site.home());
                 let m = if self.vouched { (*m).min(book.top(*site)) } else { *m };
-                if !stopped.contains(site) && vouched {
+                if !stopped.contains(site) && !unmoved.contains(site) && vouched {
                     book.adopt(self.mark, *site, m);
                 }
             }

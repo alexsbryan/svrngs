@@ -15,13 +15,19 @@
 //! standing copies sync ten rounds more, each set sent again counted. A seed
 //! names a run under one sync as under one rule.
 //!
-//! Not yet, and each lands with what it needs: phones (slice C), a copy
-//! crashed mid-apply and two schema versions adopted at different times
-//! (they need svrngs-db's own storage and schema).
+//! On svrngs-db's copies, a run has one or two phones too (`Shape::phoned`),
+//! which hold no copy: each writes through a computer, its home, which
+//! prepares the set, and carries it to a computer itself, and from there it
+//! travels as any set does (`Sim::phone`). A run with none draws as before.
+//!
+//! Not yet, and each lands with what it needs: a copy crashed mid-apply and
+//! two schema versions adopted at different times (they need svrngs-db's own
+//! storage and schema).
 
 use std::collections::BTreeSet;
 
 use crate::change::{ChangeSet, Rng, SetId, Site, State, Val};
+use crate::live::named;
 use crate::reference;
 use crate::replica::{Op, Replica, Table};
 use crate::rule::Rule;
@@ -64,22 +70,39 @@ pub const TABLES: &[Table] = &[
     },
 ];
 
-/// How a run is shaped: its copies, and its steps before the meet.
+/// How a run is shaped: its copies, its steps before the meet, and its
+/// phones, which hold no copy.
 #[derive(Clone, Copy, Debug)]
 pub struct Shape {
     pub copies: usize,
     pub steps: usize,
+    pub phones: u8,
 }
 
 impl Shape {
-    /// A seed's shape: 2 to 6 copies, 60 to 359 steps.
+    /// A seed's shape: 2 to 6 copies, 60 to 359 steps, no phone.
     pub fn of(seed: u64) -> Shape {
         Shape {
             copies: 2 + (seed % 5) as usize,
             steps: 60 + (seed.wrapping_mul(37) % 300) as usize,
+            phones: 0,
+        }
+    }
+
+    /// A seed's shape with one or two phones, for copies that prepare a
+    /// phone's write (`Replica::prepare`): its copies and steps as `of`.
+    pub fn phoned(seed: u64) -> Shape {
+        Shape {
+            phones: 1 + (seed / 5 % 2) as u8,
+            ..Shape::of(seed)
         }
     }
 }
+
+/// Phone `p` writes as device `PHONE + p`, past every computer's number, so
+/// its person is `person-100` and on (`sync::person`), and its site begins
+/// with 101 and on (`Site::phone`).
+pub const PHONE: u8 = 100;
 
 /// What a run did, said with a failure.
 #[derive(Debug, Default)]
@@ -98,6 +121,13 @@ struct Counts {
     marked: usize,
     refused: usize,
     stopped: usize,
+    /// Phone sets carried, those carried again through another computer,
+    /// and those carried under a pass that doesn't hold; and writes the
+    /// phone's signer refused to sign.
+    phoned: usize,
+    retried: usize,
+    lapsed: usize,
+    declined: usize,
 }
 
 /// W1's failure, by what the standing copies show (MAGNETS_BUILD §3, slice B,
@@ -113,6 +143,9 @@ pub enum Class {
     Newcomer,
     /// A copy's clock rows name a set it doesn't keep (invariant 3).
     Uncovered,
+    /// A copy keeps or counts a set signed as no device's, a phone's whose
+    /// pass doesn't hold.
+    Unsigned,
 }
 
 impl Class {
@@ -122,6 +155,7 @@ impl Class {
             Class::Agree => "copies agree, off the reference",
             Class::Newcomer => "a newcomer differs",
             Class::Uncovered => "clock rows uncovered",
+            Class::Unsigned => "a set signed as no device's counted",
         }
     }
 }
@@ -145,6 +179,12 @@ pub struct Verdict {
     pub resent_gone: usize,
     /// Sets taken in those rounds, which the meet should have left none of.
     pub late: usize,
+    /// What the run's phones did: sets carried, and of those, carried under
+    /// a pass that doesn't hold; and each write their signer refused to
+    /// sign, said.
+    pub phoned: usize,
+    pub lapsed: usize,
+    pub declined: Vec<String>,
 }
 
 /// A run so far, as its later draws see it (`Sim::fingerprint`): the
@@ -154,8 +194,14 @@ pub type Fingerprint = (u64, Vec<Vec<SetId>>, Vec<(usize, usize, SetId)>);
 pub struct Sim<R> {
     rng: Rng,
     copies: Vec<R>,
-    /// Every set any device sealed.
+    /// Every set any device sealed, a phone's that its home prepared too.
     written: Vec<ChangeSet>,
+    /// The phones, which write through a computer; the sets they carried
+    /// under a pass that doesn't hold, which no copy may count; and each
+    /// write their signer refused to sign, said with its words.
+    phones: u8,
+    lapsed: Vec<ChangeSet>,
+    declined: Vec<String>,
     /// The sets each copy has written or taken.
     seen: Vec<BTreeSet<SetId>>,
     /// Sets in flight: from, to, set.
@@ -234,6 +280,9 @@ impl<R: Replica> Sim<R> {
             rng: Rng(seed),
             copies: (0..shape.copies).map(|i| make(site(i))).collect(),
             written: Vec::new(),
+            phones: shape.phones,
+            lapsed: Vec::new(),
+            declined: Vec::new(),
             seen: vec![BTreeSet::new(); shape.copies],
             wire: Vec::new(),
             sides: None,
@@ -311,8 +360,15 @@ impl<R: Replica> Sim<R> {
         (0..self.copies.len()).filter(|c| !self.removed.contains(c)).collect()
     }
 
+    /// Each step a write, a send, a delivery, a partition or a removal; in a
+    /// run with phones, one in five a phone's write before those are drawn,
+    /// so a run with none draws as it did before phones.
     pub fn run(&mut self, steps: usize) {
         for _ in 0..steps {
+            if self.phones > 0 && self.rng.chance(20) {
+                self.phone();
+                continue;
+            }
             match self.rng.below(100) {
                 0..=34 => self.write(),
                 35..=59 => self.send(),
@@ -336,6 +392,57 @@ impl<R: Replica> Sim<R> {
             self.seen[d].insert(set.id());
             self.written.push(set);
             self.counts.written += 1;
+        }
+    }
+
+    /// A phone writes one to three ops through a standing computer it picks,
+    /// its home for that write, which prepares them and keeps none of it
+    /// (svrngs-db `Db::prepare`); the phone signs the set under its open's
+    /// pass and carries it, the same bytes, to its home or one time in four
+    /// to another computer, as a retry through another computer does, and
+    /// one time in ten carries it again through one more, its answer lost
+    /// (APP_STATE §4, "Phones"). One set in twenty-five it carries instead
+    /// with its stamp past its pass's lapse, re-signed by its approver, which
+    /// every copy drops as signed by no device's and none may count. Where
+    /// the signer refuses to sign, the write is said and goes no further,
+    /// and the place its home handed stays unfilled, as it would. A phone
+    /// reaches a computer itself, so a partition holds none of its carries.
+    fn phone(&mut self) {
+        let standing = self.standing();
+        let p = self.rng.pick(usize::from(self.phones)) as u8;
+        let home = standing[self.rng.pick(standing.len())];
+        let n = if self.rng.chance(70) { 1 } else { 2 + self.rng.pick(2) };
+        let ops: Vec<Op> = (0..n).map(|_| op(&mut self.rng, usize::from(PHONE + p))).collect();
+        let lapsed = self.rng.chance(4);
+        let set = match self.copies[home].prepare(p, &ops, lapsed) {
+            Ok(Some(set)) => set,
+            Ok(None) => return,
+            Err(words) => {
+                self.counts.declined += 1;
+                self.declined.push(format!("{ops:?}: {words}"));
+                return;
+            }
+        };
+        // Two stand at least, as a removal leaves three or more.
+        let others = |not: usize| standing.iter().copied().filter(|&c| c != not).collect::<Vec<_>>();
+        let to = match self.rng.chance(75) {
+            true => home,
+            false => others(home)[self.rng.pick(standing.len() - 1)],
+        };
+        let again = self
+            .rng
+            .chance(10)
+            .then(|| others(to)[self.rng.pick(standing.len() - 1)]);
+        for to in std::iter::once(to).chain(again) {
+            self.offer(to, &set);
+        }
+        self.counts.phoned += 1;
+        self.counts.retried += usize::from(again.is_some());
+        if lapsed {
+            self.counts.lapsed += 1;
+            self.lapsed.push(set);
+        } else {
+            self.written.push(set);
         }
     }
 
@@ -586,7 +693,12 @@ impl<R: Replica> Sim<R> {
     /// did (`Verdict`): `judge`'s checks in `judge`'s order, then invariant
     /// 11's count and ten rounds more between the standing copies.
     pub fn verdict(&mut self, rule: Rule, make: &dyn Fn(Site) -> R) -> Verdict {
-        let mut v = Verdict::default();
+        let mut v = Verdict {
+            phoned: self.counts.phoned,
+            lapsed: self.counts.lapsed,
+            declined: self.declined.clone(),
+            ..Verdict::default()
+        };
         let standing = self.standing();
         let admissible: BTreeSet<SetId> = standing.iter().flat_map(|&c| self.seen[c].iter().copied()).collect();
         let admitted: Vec<&ChangeSet> = self.written.iter().filter(|s| admissible.contains(&s.id())).collect();
@@ -652,6 +764,19 @@ impl<R: Replica> Sim<R> {
                     v.failure = Some((Class::Newcomer, e));
                     break;
                 }
+            }
+        }
+        if v.failure.is_none() {
+            let counted = |c: usize, id: SetId| {
+                let kept = self.copies[c].kept().iter().any(|s| s.id() == id);
+                kept || self.synced.is_some() && self.books[c].holds(id)
+            };
+            let mut each = standing
+                .iter()
+                .flat_map(|&c| self.lapsed.iter().map(move |s| (c, s.id())));
+            if let Some((c, id)) = each.find(|&(c, id)| counted(c, id)) {
+                let e = format!("copy {c} keeps or counts {}, whose pass doesn't hold", named(id));
+                v.failure = Some((Class::Unsigned, e));
             }
         }
         v.held = standing
@@ -743,7 +868,16 @@ pub fn one_synced<R: Replica>(
     carry: Carry,
     make: &dyn Fn(Site) -> R,
 ) -> Verdict {
-    let shape = Shape::of(seed);
+    one_shaped((seed, Shape::of(seed)), rule, (variant, carry), make)
+}
+
+/// [`one_synced`], the run shaped as `shape`.
+pub fn one_shaped<R: Replica>(
+    (seed, shape): (u64, Shape),
+    rule: Rule,
+    (variant, carry): (Variant, Carry),
+    make: &dyn Fn(Site) -> R,
+) -> Verdict {
     let mut sim = Sim::synced(seed, shape, make, variant, carry);
     sim.run(shape.steps);
     sim.meet();

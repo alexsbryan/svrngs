@@ -47,11 +47,12 @@ fn add(key: Vec<Val>, pos: i64) -> Op {
     Op::insert("magnets", key, vec![("pos", Val::Integer(pos))])
 }
 
-/// A case's copies, each with its marks, under one sync.
-struct Net<R> {
+/// A case's copies, each with its marks, under one sync; `phones.rs`'s cases
+/// too.
+pub struct Net<R> {
     sync: Sync,
-    copies: Vec<R>,
-    books: Vec<Book>,
+    pub copies: Vec<R>,
+    pub books: Vec<Book>,
     /// The sets each copy took, and those it refused.
     took: Vec<BTreeSet<SetId>>,
     refused: Vec<BTreeSet<SetId>>,
@@ -59,7 +60,7 @@ struct Net<R> {
 }
 
 impl<R: Replica> Net<R> {
-    fn new(sync: Sync, n: u8, make: &dyn Fn(Site) -> R) -> Net<R> {
+    pub fn new(sync: Sync, n: u8, make: &dyn Fn(Site) -> R) -> Net<R> {
         Net {
             sync,
             copies: (1..=n).map(|i| make(Site::of(i))).collect(),
@@ -70,15 +71,27 @@ impl<R: Replica> Net<R> {
         }
     }
 
-    fn write(&mut self, c: usize, ops: &[Op], what: &str) -> ChangeSet {
+    pub fn write(&mut self, c: usize, ops: &[Op], what: &str) -> ChangeSet {
         let set = self.copies[c].write(ops).unwrap_or_else(|| panic!("{what}"));
         self.sync.wrote(&mut self.books[c], set.id());
         self.took[c].insert(set.id());
         set
     }
 
+    /// Phone `phone`'s write through copy `home`, prepared there and kept
+    /// nowhere (`Replica::prepare`), its stamp past its pass's lapse where
+    /// `lapsed`; and the set carried by the phone to each of `to` in turn.
+    pub fn phone(&mut self, (phone, home): (u8, usize), ops: &[Op], (lapsed, to): (bool, &[usize])) -> ChangeSet {
+        let set = self.copies[home].prepare(phone, ops, lapsed).expect("the phone signs");
+        let set = set.unwrap_or_else(|| panic!("the phone's {ops:?} changes something"));
+        for &c in to {
+            self.take(c, &Call::carried(&set));
+        }
+        set
+    }
+
     /// A call taken by `to`; the sets it carried.
-    fn take(&mut self, to: usize, call: &Call) -> Vec<SetId> {
+    pub fn take(&mut self, to: usize, call: &Call) -> Vec<SetId> {
         let got = self
             .sync
             .ingest(&mut self.copies[to], &mut self.books[to], call, &self.gone);
@@ -88,7 +101,7 @@ impl<R: Replica> Net<R> {
     }
 
     /// One call from `from` to `to` by `to`'s marks; the sets it carried.
-    fn call(&mut self, from: usize, to: usize) -> Vec<SetId> {
+    pub fn call(&mut self, from: usize, to: usize) -> Vec<SetId> {
         let (f, t) = (
             (&self.copies[from], &self.books[from]),
             (&self.copies[to], &self.books[to]),
@@ -98,7 +111,7 @@ impl<R: Replica> Net<R> {
     }
 
     /// The copies meet by calls until no book changes.
-    fn meet(&mut self, standing: &[usize]) {
+    pub fn meet(&mut self, standing: &[usize]) {
         for round in 0.. {
             assert!(round < 20, "the meet settles");
             let before = self.books.clone();

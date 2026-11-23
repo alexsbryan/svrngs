@@ -17,6 +17,26 @@ impl Site {
     pub fn of(n: u8) -> Site {
         Site([n; 16])
     }
+
+    /// A phone's site at its home, in its epoch there: its person's number
+    /// first, as a computer's site begins with its own, then its home's,
+    /// then the epoch, the rest zero. svrngs-db derives a phone's nonce from
+    /// its home and epoch (wire.rs `nonce`), so its site names its home
+    /// there as it does here.
+    pub fn phone(person: u8, home: Site, epoch: u8) -> Site {
+        let mut bytes = [0; 16];
+        bytes[..3].copy_from_slice(&[person, home.0[0], epoch]);
+        Site(bytes)
+    }
+
+    /// The computer whose word vouches for this site's mark: a phone site's
+    /// home, every other site's own computer (svrngs-db sync.rs `claimed`).
+    pub fn home(self) -> Site {
+        match self.0.iter().all(|b| *b == self.0[0]) {
+            true => self,
+            false => Site::of(self.0[1]),
+        }
+    }
 }
 
 /// A value as SQLite holds it. The test schemas declare each column's type
@@ -101,6 +121,10 @@ pub type SetId = (Site, i64);
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChangeSet {
     changes: Vec<Change>,
+    /// Whether it is signed as its device's, as every copy checks before
+    /// it reads a set (svrngs-db sync.rs `take`): not only for a phone's set
+    /// carried under a pass that doesn't hold (`Replica::prepare`).
+    signed: bool,
 }
 
 impl ChangeSet {
@@ -112,7 +136,17 @@ impl ChangeSet {
             changes.iter().all(|c| (c.site, c.db_version) == id),
             "one set is one transaction, at one site and one db_version"
         );
-        Some(ChangeSet { changes })
+        Some(ChangeSet { changes, signed: true })
+    }
+
+    /// The same set, carried under a pass that doesn't hold, so signed as no
+    /// device's: every copy drops it (svrngs-db `Took::NotItsDevice`).
+    pub fn lapsed(self) -> ChangeSet {
+        ChangeSet { signed: false, ..self }
+    }
+
+    pub fn signed(&self) -> bool {
+        self.signed
     }
 
     pub fn changes(&self) -> &[Change] {
