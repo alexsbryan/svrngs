@@ -49,12 +49,13 @@ def write(path, text):
     guest(f"install -d {shlex.quote(str(Path(path).parent))} && printf %s {shlex.quote(text)} > {shlex.quote(path)}")
 
 
-def install(split):
+def stage_svrngs(*programs):
     stage = vm.HERE / "stage"
+    binaries = ["svrngs", *programs]
     guest("install -d /root/stage")
-    subprocess.run(["scp", *vm.SCP, str(vm.BIN / "svrngs"), str(stage / "svrngs.service"),
+    subprocess.run(["scp", *vm.SCP, *(str(vm.BIN / p) for p in binaries), str(stage / "svrngs.service"),
                     str(stage / "svrngs-relay.service"), "root@127.0.0.1:/root/stage/"], check=True, timeout=30)
-    guest("install -m755 /root/stage/svrngs /usr/local/bin/ && "
+    guest("install -m755 " + " ".join(f"/root/stage/{p}" for p in binaries) + " /usr/local/bin/ && "
           "install -m644 /root/stage/svrngs.service /etc/systemd/user/ && "
           "install -m644 /root/stage/svrngs-relay.service /etc/systemd/system/ && "
           "systemctl enable --now svrngs-relay && loginctl enable-linger sam alex")
@@ -64,6 +65,10 @@ def install(split):
     if not guest("command -v podman", check=False):
         vm.say("packages", said=guest("dnf -y install podman passt", 180))
     vm.say("versions", said=guest("uname -r && rpm -q podman systemd passt"))
+
+
+def install(split):
+    stage_svrngs()
     vm.say("pull", said=guest(f"{SAM} podman pull --quiet {IMAGE}", 100))
     # The detached pod and mount are App::start's shape. The orderly stop is
     # only for this disposable pod on reboot; it says nothing about Proof 2.
@@ -127,8 +132,24 @@ def direct(args):
     return guest(shlex.join(args), check=False)
 
 
-def declaration():
-    return json.loads(guest("cat /home/sam/.svrngs/lends/recipes.json"))
+def declaration(name):
+    return json.loads(guest(f"cat /home/sam/.svrngs/lends/{name}.json"))
+
+
+def share(name):
+    code, said = vm.terminal("svrngs new house --as Sam --relay http://127.0.0.1:7900")
+    link = re.search(r"svrngs://join/\S+", said)
+    assert code == 0 and link
+    alex("svrngs", "join", link[0], "--as", "Alex")
+    code, _ = vm.terminal(f"RUST_LOG=door=debug,job=debug svrngs share {PORT} --name {name} --program {name} --group house")
+    assert code == 0
+    before = declaration(name)
+    vm.say("before declaration", keep=before.get("keep"), approved=before.get("approved"))
+    groups = json.loads(alex("svrngs", "ask", "/v1/groups"))["groups"]
+    lends = json.loads(alex("svrngs", "ask", "/v1/lends?namespace=" + groups[0]["id"]))["lent"]
+    row = next(lend for lend in lends if lend["name"] == name)
+    alex("svrngs", "ask", "/v1/play", json.dumps({"on": {"key": row["key"], "name": name}}))
+    return row["origin"].rstrip("/"), before
 
 
 def scene(split):
@@ -139,44 +160,42 @@ def scene(split):
     initial = sample("before")
     marker = uuid.uuid4().hex
     guest(f"{SAM} podman exec {APP} sh -c 'echo {marker} > /data/marker'")
-    code, said = vm.terminal("svrngs new house --as Sam --relay http://127.0.0.1:7900")
-    link = re.search(r"svrngs://join/\S+", said)
-    assert code == 0 and link
-    alex("svrngs", "join", link[0], "--as", "Alex")
-    code, _ = vm.terminal(f"RUST_LOG=door=debug,job=debug svrngs share {PORT} --name recipes --program recipes --group house")
-    assert code == 0
-    before = declaration()
-    vm.say("before declaration", keep=before.get("keep"), approved=before.get("approved"))
-    groups = json.loads(alex("svrngs", "ask", "/v1/groups"))["groups"]
-    lends = json.loads(alex("svrngs", "ask", "/v1/lends?namespace=" + groups[0]["id"]))["lent"]
-    row = next(lend for lend in lends if lend["name"] == "recipes")
-    alex("svrngs", "ask", "/v1/play", json.dumps({"on": {"key": row["key"], "name": "recipes"}}))
-    url = row["origin"].rstrip("/") + "/marker"
+    origin, before = share("recipes")
+    url = origin + "/marker"
     expected = marker + "\n\n200"
     seen = wait_for(url, lambda args: alex(*args, check=False))
     vm.verdict("Alex reads the marker before reboot", "passed" if seen == expected else "failed", url=url, body=seen)
     assert seen == expected
-    boot = guest("cat /proc/sys/kernel/random/boot_id")
-    vm.root("systemctl reboot", 15)
-    time.sleep(6)
-    assert vm.ssh_up(40)
-    assert guest("cat /proc/sys/kernel/random/boot_id") != boot
-    sessions = guest("loginctl list-sessions --no-legend").splitlines()
+    boot, sessions = reboot()
     local = wait_for(f"http://127.0.0.1:{PORT}/marker", direct)
     fresh = sample("after")
     seen = wait_for(url, lambda args: alex(*args, check=False) if local == expected else "", bound=5)
-    after = declaration()
-    door = guest("journalctl -b -q _UID=1000 _SYSTEMD_USER_UNIT=svrngs.service --no-pager "
-                 "-g 'unit renewed|what is on the lend.s port'")
-    (vm.OUT / "after-door.log").write_text(door + "\n")
-    renewed = ((before.get("keep") or {}).get("unit") == UNIT and before.get("keep") == after.get("keep")
-               and after.get("approved") != before.get("approved") and "renewed=Ok(())" in door)
+    renewed, after = renewal("recipes", before)
     ok = initial and fresh and local == expected and seen == expected and renewed and vm.no_login(sessions)
     vm.verdict("same marker at same address after reboot", "passed" if ok else "failed", split=split,
                url=url, boot_before=boot, boot_after=guest("cat /proc/sys/kernel/random/boot_id"),
                sessions=sessions, expected=marker, local=local, alex=seen,
                renewed=renewed, approved=after.get("approved"))
     return ok
+
+
+def reboot():
+    boot = guest("cat /proc/sys/kernel/random/boot_id")
+    vm.root("systemctl reboot", 15)
+    time.sleep(6)
+    assert vm.ssh_up(40)
+    assert guest("cat /proc/sys/kernel/random/boot_id") != boot
+    return boot, guest("loginctl list-sessions --no-legend").splitlines()
+
+
+def renewal(name, before):
+    after = declaration(name)
+    door = guest("journalctl -b -q _UID=1000 _SYSTEMD_USER_UNIT=svrngs.service --no-pager "
+                 "-g 'unit renewed|what is on the lend.s port'")
+    (vm.OUT / "after-door.log").write_text(door + "\n")
+    renewed = ((before.get("keep") or {}).get("unit") == UNIT and before.get("keep") == after.get("keep")
+               and after.get("approved") != before.get("approved") and "renewed=Ok(())" in door)
+    return renewed, after
 
 
 def with_vm(run):

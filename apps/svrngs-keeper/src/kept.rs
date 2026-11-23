@@ -186,13 +186,12 @@ pub fn keep(
 ) -> Result<Kept, KeptError> {
     let card = Card::parse(text)?;
     let name = Name::new(&name.map_or_else(|| name_of(&card.title), str::to_string))?;
-    keep_card(systemd, places, text, &card, name, boot)
+    keep_card(systemd, places, &card, name, boot)
 }
 
 pub fn keep_card(
     systemd: &SystemdUser,
     places: &Places,
-    text: &str,
     card: &Card,
     name: Name,
     boot: impl FnOnce() -> Boot,
@@ -201,10 +200,23 @@ pub fn keep_card(
         tracing::debug!(title = card.title, "refused: not a native card");
         return Err(KeptError::NotNative(card.title.clone()));
     };
+    let content = native(&name, card, program);
+    install(systemd, places, card, name, boot, &content)
+}
+
+pub fn install(
+    systemd: &SystemdUser,
+    places: &Places,
+    card: &Card,
+    name: Name,
+    boot: impl FnOnce() -> Boot,
+    content: &str,
+) -> Result<Kept, KeptError> {
     let boot = boot();
     let dir = places.card_dir(&name);
     let (path, previous) = (dir.join("compose.yaml"), dir.join("previous.yaml"));
     let before = std::fs::read_to_string(&path).ok();
+    let text = &card.text;
     let stored = match &before {
         None => Stored::New,
         Some(b) if b == text => Stored::Same,
@@ -222,12 +234,11 @@ pub fn keep_card(
         std::fs::write(&path, text).map_err(file(&path))?;
     }
     let (unit, unit_path) = (unit_name(&name), places.unit_path(&name));
-    let content = native(&name, card, program);
     let unit_before = std::fs::read_to_string(&unit_path).ok();
     let user_unit = UserUnit {
         name: &unit,
         path: &unit_path,
-        content: &content,
+        content,
         prefix: "svrngs-keeper",
         what: "programs it keeps",
     };

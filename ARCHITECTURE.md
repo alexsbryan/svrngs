@@ -988,8 +988,12 @@ suggestion as JSON. No live command or environment is copied. The keeper
 installs an explicitly supplied command with `run --port … -- <command>`
 (`src/native_run.rs`), using the same card renderer. It refuses a port
 with a listener on any address, and waits up to 30 s for a local HTTP
-answer (llama-server must finish loading). The keeper
-manages its services through the OS; `scripts/lean_check.py` guards against
+answer (llama-server must finish loading). `run --port … --card …` takes
+one volume-only HTTP container on Linux. `container_run.rs` installs a
+unit that waits for a container exit, independently of readiness. A pod
+is labelled at creation and reclaimed by ID only after the label matches;
+its named volumes stay. The keeper manages its services through the OS;
+`scripts/lean_check.py` guards against
 direct process signaling (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` N1).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a

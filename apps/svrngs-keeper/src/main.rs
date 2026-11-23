@@ -10,12 +10,15 @@ use svrngs_keeper::runtime::Name;
 use svrngs_keeper::systemd::SystemdUser;
 
 #[cfg(target_os = "linux")]
+mod container_run;
+#[cfg(target_os = "linux")]
 mod facts;
 #[cfg(target_os = "linux")]
 mod native_run;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
        svrngs-keeper run <name> --port <port> [--folder <folder>] [--json] -- <command>
+       svrngs-keeper run <name> --port <port> --card <compose.yaml> [--json]
        svrngs-keeper facts <port> [--name <name>]
        svrngs-keeper list [--json]
        svrngs-keeper stop|start|restart|remove <name>
@@ -69,6 +72,8 @@ fn run(args: &[String]) -> anyhow::Result<()> {
         ["facts", port, "--name", name] => return at_port(port, name),
         #[cfg(target_os = "linux")]
         ["run", name, rest @ ..] => return native_run::run(name, rest),
+        #[cfg(target_os = "linux")]
+        ["serve-card", rest @ ..] => return container_run::serve(rest),
         _ => (),
     }
     run_card(&SystemdUser::system(), &places()?, &args)
@@ -167,7 +172,7 @@ fn keep(systemd: &SystemdUser, places: &Places, card: &str, name: Option<&str>) 
         lock(places, &format!("port-{}", card.door.port))?,
         lock(places, &format!("name-{}", name.as_str()))?,
     );
-    let kept = kept::keep_card(systemd, places, &text, &card, name, || kept::boot(systemd, terminal))?;
+    let kept = kept::keep_card(systemd, places, &card, name, || kept::boot(systemd, terminal))?;
     let (name, port, unit) = (kept.name.as_str(), kept.port, &kept.unit);
     match kept.stored {
         Stored::New => println!("{name} is kept here now, for port {port}: the systemd unit {unit}."),

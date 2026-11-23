@@ -1,10 +1,17 @@
-//! Turn a command the person gave into the same native card `keep` installs.
+//! Install and verify an explicit Run, from a command or a container card.
 
-use std::{num::NonZeroU16, path::Path};
+use std::{num::NonZeroU16, path::Path, time::Duration};
 
 use anyhow::{Context, bail};
 use serde::Serialize;
 use svrngs_keeper::{card::Card, host, kept, runtime::Name, systemd::SystemdUser, unit};
+
+use super::container_run;
+
+enum Source<'a> {
+    Command(&'a [&'a str], Option<&'a Path>),
+    Card(&'a Path),
+}
 
 #[derive(Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -26,11 +33,8 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
     let name = Name::new(name)?;
     let mut options = args.splitn(2, |w| *w == "--");
     let mut flags = options.next().unwrap_or_default();
-    let command = options
-        .next()
-        .filter(|a| !a.is_empty())
-        .context("give a command after --")?;
-    let (mut port, mut folder, mut json) = (None, None, false);
+    let command = options.next().filter(|a| !a.is_empty());
+    let (mut port, mut folder, mut card_file, mut json) = (None, None, None, false);
     while !flags.is_empty() {
         flags = match flags {
             ["--port", value, rest @ ..] if port.is_none() => {
@@ -41,6 +45,10 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
                 folder = Some(Path::new(value));
                 rest
             }
+            ["--card", value, rest @ ..] if card_file.is_none() => {
+                card_file = Some(Path::new(value));
+                rest
+            }
             ["--json", rest @ ..] if !json => {
                 json = true;
                 rest
@@ -49,7 +57,12 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
             [] => unreachable!(),
         };
     }
-    let port = port.context("give the command's listening port with --port")?.get();
+    let source = match (command, card_file, folder) {
+        (Some(command), None, folder) => Source::Command(command, folder),
+        (None, Some(file), None) => Source::Card(file),
+        _ => bail!("give a command after --, or a compose.yaml with --card"),
+    };
+    let port = port.context("give the listening port with --port")?.get();
     let say = |outcome| {
         if json {
             return super::json(&outcome);
@@ -75,13 +88,29 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
     if let Some(outcome) = busy()? {
         return say(outcome);
     }
-    let folder = std::path::absolute(folder.unwrap_or(Path::new(".")))?;
-    let folder = folder.to_str().context("the folder's path is not UTF-8")?;
-    let text = serde_yaml::to_string(&serde_json::json!({"x-svrngs": {
-        "title": name.as_str(), "about": "Run with svrngs", "door": {"port": port, "protocol": "http"},
-        "state": [], "native": {"command": command, "folder": folder}
-    }}))?;
-    let card = Card::parse(&text)?;
+    let (card, llama) = match source {
+        Source::Card(file) => {
+            let card = container_run::card(file)?;
+            if port != card.door.port {
+                tracing::debug!(port, card_port = card.door.port, "run: port differs from the card");
+                bail!(
+                    "The card listens on port {}; give that port with --port.",
+                    card.door.port
+                );
+            }
+            (card, false)
+        }
+        Source::Command(command, folder) => {
+            let folder = std::path::absolute(folder.unwrap_or(Path::new(".")))?;
+            let folder = folder.to_str().context("the folder's path is not UTF-8")?;
+            let text = serde_yaml::to_string(&serde_json::json!({"x-svrngs": {
+                "title": name.as_str(), "about": "Run with svrngs", "door": {"port": port, "protocol": "http"},
+                "state": [], "native": {"command": command, "folder": folder}
+            }}))?;
+            let llama = Path::new(command[0]).file_name().is_some_and(|p| p == "llama-server");
+            (Card::parse(&text)?, llama)
+        }
+    };
     let (systemd, places) = (SystemdUser::system(), super::places()?);
     let _locks = (
         super::lock(&places, &format!("port-{port}"))?,
@@ -99,11 +128,16 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
             name.as_str()
         );
     }
-    let kept = kept::keep_card(&systemd, &places, &text, &card, name.clone(), || {
-        kept::boot(&systemd, super::terminal)
-    })?;
-    let llama = Path::new(command[0]).file_name().is_some_and(|p| p == "llama-server");
-    let ready = host::wait_for_answer(port, llama, std::time::Duration::from_secs(30));
+    let native = card.native.is_some();
+    let kept = if native {
+        kept::keep_card(&systemd, &places, &card, name.clone(), || {
+            kept::boot(&systemd, super::terminal)
+        })?
+    } else {
+        container_run::install(&systemd, &places, &card, name.clone())?
+    };
+    let ready =
+        host::wait_for_answer(port, llama, Duration::from_secs(30)) && (native || container_run::healthy(&card, &name));
     let shown = systemd.show(&kept.unit, &["ActiveState", "ControlGroup"]);
     let property = |key| shown.as_ref().ok()?.lines().find_map(|line| line.strip_prefix(key));
     let state = property("ActiveState=");

@@ -95,3 +95,42 @@ leaves the detached Podman workload for the next invocation to reclaim.
 The green run exited 0. Its journal shows both `status=9/KILL` events and
 the labelled pod IDs being stopped and removed by the next invocation.
 All three VM disks, including test units, pods and volumes, were discarded.
+
+## Installed adapter: Actual
+
+`actual.compose.yaml` pins the image and mounts one named volume. Sam
+runs the card, then shares it. The marker is a random scratch server
+password that Actual writes at bootstrap: Alex's login via the saved
+address must succeed again after boot, with no re-bootstrap or approval.
+The driver reports whether login returned a token, but never the token
+or the password itself. A host bind is refused before unit installation.
+
+```sh
+W=/tmp/opencode/keeper-actual-red-replay python3 -B demo/runs/keeper/2026-11-23-run-containers/actual.py --plant
+W=/tmp/opencode/keeper-actual-final-replay python3 -B demo/runs/keeper/2026-11-23-run-containers/actual.py
+```
+
+Selected output from `keeper-actual-marker-red/run/events.jsonl` (the
+earlier 18081 run), `keeper-actual-final/run/events.jsonl`, and the final
+`run/after-door.log:3–4`:
+
+```text
+RED Alex signs in with the marker before reboot: failed; plant=true status=["400","error",false]
+AssertionError
+GREEN host bind refused before install: passed; exit=1
+svrngs run test-actual --port 5006 --card /home/sam/actual.compose.yaml: exit=0
+test-actual is running here. Share it separately with `svrngs share`.
+before: LISTEN and established, pasta pid=1800, both in svrngs-keeper-test-actual.service
+Alex signs in with the marker before reboot: passed; status=["200","ok",true]
+after: LISTEN and established, pasta pid=1100, both in svrngs-keeper-test-actual.service
+boot_before=3b943075-7c69-4b96-8ede-67a833c15b59 boot_after=486a1ba0-2f4f-4e99-bc1e-2aa2131a7ad2
+TCP taker=Cgroup(5112) checked=Err(Held(Another)) renewed=Ok(())
+same Actual link and marker after reboot: passed; status=["200","ok",true] renewed=true
+installed foreground death recovers its pod: passed; old=a540f0bf81af new=99b226e7dd9a restarts=1 status=["200","ok",true]
+stop removes pod and keeps volume; remove takes out unit: passed
+```
+
+The final link was `http://9v2g3qr4tzw16kc1xrmvmmpu4g7a3z1ukzld4r0c27ztg5a1krsast5knzmhxk.localhost:43953`.
+Sam and Alex had only their linger managers after reboot. The final run
+exited 0, explicitly stopped and removed the scratch service, and
+discarded the VM disk with its retained volume.

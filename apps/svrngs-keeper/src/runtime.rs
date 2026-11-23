@@ -27,6 +27,10 @@ pub enum RunError {
     Native(String),
     #[error("Podman here runs as root; give keeps apps only in rootless Podman")]
     Rootful,
+    #[error("the pod named {0} does not belong to this setup; it was left alone")]
+    ForeignPod(String),
+    #[error("Podman did not return an object ID: {0}")]
+    ObjectId(String),
     #[error("{service} stopped, exit {code}. Its last lines:\n{logs}")]
     Exited { service: String, code: i32, logs: String },
     #[error("{service} was not healthy within {after:?}. Its last lines:\n{logs}")]
@@ -126,6 +130,16 @@ pub struct App<'a> {
     name: Name,
 }
 
+const OWNER: &str = "org.svrngs.keeper.owner";
+
+fn object_id(id: String) -> Result<String, RunError> {
+    if id.len() == 64 && id.bytes().all(|b| b.is_ascii_hexdigit()) {
+        Ok(id)
+    } else {
+        Err(RunError::ObjectId(id))
+    }
+}
+
 impl<'a> App<'a> {
     pub fn new(podman: &'a Podman, card: &'a Card, name: Name) -> App<'a> {
         App { podman, card, name }
@@ -170,6 +184,16 @@ impl<'a> App<'a> {
     /// Start the app with its door on `127.0.0.1:<at>`. Its volumes are made
     /// if they are not here, and kept as they are if they are.
     pub fn start(&self, at: u16, agreed: &Agreed) -> Result<(), RunError> {
+        self.launch(at, agreed, None).map(drop)
+    }
+
+    /// Keeper's start: label at creation, then use that pod's ID for the
+    /// detached launch. Return its container IDs for `podman wait`.
+    pub fn start_owned(&self, at: u16, owner: &str) -> Result<Vec<String>, RunError> {
+        self.launch(at, &Agreed::to(&[]), Some(owner))
+    }
+
+    fn launch(&self, at: u16, agreed: &Agreed, owner: Option<&str>) -> Result<Vec<String>, RunError> {
         if self.card.native.is_some() {
             tracing::debug!(title = self.card.title, "refused: a native card is not run in podman");
             return Err(RunError::Native(self.card.title.clone()));
@@ -193,26 +217,27 @@ impl<'a> App<'a> {
         for s in &self.card.services {
             pod.extend(["--add-host".into(), format!("{}:127.0.0.1", s.name)]);
         }
-        self.podman.run(&pod.iter().map(String::as_str).collect::<Vec<_>>())?;
+        if let Some(owner) = owner {
+            pod.extend(["--label".into(), format!("{OWNER}={owner}")]);
+        }
+        let id = self.podman.run(&pod.iter().map(String::as_str).collect::<Vec<_>>())?;
+        let id = owner.map(|_| object_id(id)).transpose()?;
+        let mut containers = Vec::new();
         for s in &self.card.services {
-            let args = self.run_args(s, agreed);
-            self.podman.run(&args.iter().map(String::as_str).collect::<Vec<_>>())?;
+            let args = self.run_args(id.as_deref().unwrap_or(name), s, agreed);
+            let container = self.podman.run(&args.iter().map(String::as_str).collect::<Vec<_>>())?;
+            if owner.is_some() {
+                containers.push(object_id(container)?);
+            }
             tracing::debug!(service = s.name, app = name, "started");
         }
-        Ok(())
+        Ok(containers)
     }
 
-    fn run_args(&self, s: &Service, agreed: &Agreed) -> Vec<String> {
-        let mut a: Vec<String> = [
-            "run",
-            "--detach",
-            "--pod",
-            self.name.as_str(),
-            "--name",
-            &self.container(s),
-        ]
-        .map(String::from)
-        .into();
+    fn run_args(&self, pod: &str, s: &Service, agreed: &Agreed) -> Vec<String> {
+        let mut a: Vec<String> = ["run", "--detach", "--pod", pod, "--name", &self.container(s)]
+            .map(String::from)
+            .into();
         for (k, v) in s.environment.iter().chain(&agreed.0) {
             a.extend(["--env".into(), format!("{k}={v}")]);
         }
@@ -493,20 +518,16 @@ impl<'a> App<'a> {
     /// state says. Real podman is held to both in tests/check.rs
     /// `the_stand_in_keeps_its_state_across_a_restore`; this, over
     /// tests/fake, in `a_paused_app_is_unpaused_then_stopped_and_removed`.
-    fn unpause(&self) -> Result<(), RunError> {
-        let name = self.name.as_str();
-        let pod = format!("pod={name}");
-        let paused = (self.podman).run(&[
-            "ps",
-            "--all",
-            "--filter",
-            &pod,
-            "--filter",
-            "status=paused",
-            "--format",
-            "{{.Names}}",
-        ])?;
-        tracing::debug!(app = name, paused, "the pod's paused containers, unpaused");
+    fn unpause(&self, target: &str, owned: bool) -> Result<(), RunError> {
+        let pod = format!("pod={target}");
+        let mut args = vec!["ps", "--all", "--filter", &pod, "--filter", "status=paused", "--format"];
+        if owned {
+            args.extend(["{{.ID}}", "--no-trunc"]);
+        } else {
+            args.push("{{.Names}}");
+        }
+        let paused = self.podman.run(&args)?;
+        tracing::debug!(app = target, paused, "the pod's paused containers, unpaused");
         for c in paused.lines().filter(|c| !c.is_empty()) {
             self.podman.run(&["unpause", c])?;
         }
@@ -520,7 +541,30 @@ impl<'a> App<'a> {
             tracing::debug!(app = name, "not running, so nothing to stop");
             return Ok(());
         }
-        self.unpause()?;
+        self.stop_pod(name, false)
+    }
+
+    /// A name can be reused between inspect and stop. Never use it for
+    /// keeper cleanup after the ownership check, even for the unpause step.
+    pub fn stop_owned(&self, owner: &str) -> Result<(), RunError> {
+        let name = self.name.as_str();
+        if !self.podman.answers(&["pod", "exists", name])? {
+            tracing::debug!(app = name, "no pod to reclaim");
+            return Ok(());
+        }
+        let format = format!("{{{{.Id}}}} {{{{index .Labels \"{OWNER}\"}}}}");
+        let view = self.podman.run(&["pod", "inspect", "--format", &format, name])?;
+        let Some((id, _)) = view.split_once(' ').filter(|(_, label)| *label == owner) else {
+            tracing::debug!(app = name, "refused cleanup: pod label did not match");
+            return Err(RunError::ForeignPod(name.to_owned()));
+        };
+        let id = object_id(id.to_owned())?;
+        tracing::debug!(app = name, %id, "reclaiming this setup's pod");
+        self.stop_pod(&id, true)
+    }
+
+    fn stop_pod(&self, target: &str, owned: bool) -> Result<(), RunError> {
+        self.unpause(target, owned)?;
         let grace = self
             .card
             .services
@@ -529,8 +573,8 @@ impl<'a> App<'a> {
             .max()
             .unwrap_or_default();
         self.podman
-            .run(&["pod", "stop", "--time", &grace.as_secs().to_string(), name])?;
-        self.podman.run(&["pod", "rm", name])?;
+            .run(&["pod", "stop", "--time", &grace.as_secs().to_string(), target])?;
+        self.podman.run(&["pod", "rm", target])?;
         Ok(())
     }
 
@@ -628,7 +672,7 @@ impl<'a> App<'a> {
             // 125 here on netavark's teardown ("nft" did not return
             // successfully) and left the pod, where stop then rm went
             // cleanly (podman 6.0.1 on a Mac, 2026-10-26).
-            self.unpause()?;
+            self.unpause(name, false)?;
             self.podman.run(&["pod", "stop", "--time", "0", name])?;
             self.podman.run(&["pod", "rm", name])?;
         }

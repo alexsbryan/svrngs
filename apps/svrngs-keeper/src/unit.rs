@@ -28,7 +28,31 @@ pub fn native(name: &Name, card: &Card, native: &Native) -> String {
         words.insert(1, word(argv0));
     }
     let exec = words.join(" ");
-    let mut text = format!(
+    let mut service = format!("WorkingDirectory={}\nExecStart={exec}\n", folder(&native.folder));
+    if !native.environment.is_empty() {
+        service += &format!("PassEnvironment={}\n", native.environment.join(" "));
+    }
+    render(name, &card.version, &service)
+}
+
+#[cfg(target_os = "linux")]
+pub fn container(name: &Name, card: &Card, program: &str, path: &str, owner: &str) -> String {
+    let name = name.as_str();
+    let call = format!(
+        "{} serve-card {name} {} {owner} {}",
+        word(program),
+        word(path),
+        card.version
+    );
+    // Group teardown killed Podman's infra and hung the unit (recover.py).
+    // Explicit stop lets Podman tear its own pod down; a dead main process
+    // leaves no MAINPID and recovery is done by the next start instead.
+    let service = format!("Type=exec\nKillMode=process\nExecStart={call}\nExecStop={call} --stop $MAINPID\n");
+    render(name, &card.version, &service)
+}
+
+fn render(name: &str, version: &str, service: &str) -> String {
+    format!(
         "# svrngs-keeper keeps {name} from its card, version {version}.\n\
          # svrngs-keeper keep writes this file again: change the card, not this file.\n\
          [Unit]\n\
@@ -38,22 +62,14 @@ pub fn native(name: &Name, card: &Card, native: &Native) -> String {
          \n\
          [Service]\n\
          Nice=10\n\
-         WorkingDirectory={folder}\n\
-         ExecStart={exec}\n",
-        version = card.version,
-        folder = folder(&native.folder),
-    );
-    if !native.environment.is_empty() {
-        text += &format!("PassEnvironment={}\n", native.environment.join(" "));
-    }
-    text += "Restart=on-failure\n\
+         {service}Restart=on-failure\n\
              RestartSec=2\n\
              # A program that dies of the SIGTERM a stop sends may exit 143: a stop.\n\
              SuccessExitStatus=143\n\
              \n\
              [Install]\n\
-             WantedBy=default.target\n";
-    text
+             WantedBy=default.target\n"
+    )
 }
 
 /// One word of `ExecStart=`, in double quotes: `%` doubled (a specifier),

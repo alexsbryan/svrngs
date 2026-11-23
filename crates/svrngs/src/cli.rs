@@ -287,7 +287,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     if verb == "run" {
         let name = it
             .next()
-            .ok_or("run wants a name: `svrngs run <name> --port <port> -- <command>`")?;
+            .ok_or("run wants a name: `svrngs run <name> --port <port> -- <command>` (or `--card <compose.yaml>`)")?;
         return Ok(Verb::RunApp(name, it.collect()));
     }
     let mut positional: Option<String> = None;

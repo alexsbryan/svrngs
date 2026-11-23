@@ -73,6 +73,7 @@ fn readiness_needs_an_answer_and_llama_must_finish_loading() {
 }
 
 #[test]
+#[expect(clippy::disallowed_methods, reason = "bound the test fixture's rendezvous")]
 fn a_foreign_answer_after_the_busy_check_does_not_verify_run() {
     use std::{
         fs,

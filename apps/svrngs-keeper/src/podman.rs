@@ -30,11 +30,15 @@ pub trait Runs: std::fmt::Debug + Send + Sync {
 
 /// A podman program, run with nothing on its input.
 #[derive(Debug)]
-struct Program(OsString);
+struct Program(OsString, bool);
 
 impl Runs for Program {
     fn run(&self, args: &[&str], env: &[(OsString, OsString)]) -> Result<(i32, String, String), String> {
-        let out = Command::new(&self.0)
+        let mut process = Command::new(&self.0);
+        if self.1 {
+            process.arg("--remote=false");
+        }
+        let out = process
             .args(args)
             .envs(env.iter().map(|(k, v)| (k, v)))
             .stdin(Stdio::null())
@@ -65,7 +69,12 @@ impl Default for Podman {
 
 impl Podman {
     pub fn at(program: impl Into<OsString>) -> Podman {
-        Podman::by(Arc::new(Program(program.into())))
+        Podman::by(Arc::new(Program(program.into(), false)))
+    }
+
+    /// The service's sockets must belong to this machine, not a remote engine.
+    pub fn local() -> Podman {
+        Podman::by(Arc::new(Program("/usr/bin/podman".into(), true)))
     }
 
     /// The podman `runs` answers for.
