@@ -11,8 +11,11 @@ use svrngs_keeper::systemd::SystemdUser;
 
 #[cfg(target_os = "linux")]
 mod facts;
+#[cfg(target_os = "linux")]
+mod native_run;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
+       svrngs-keeper run <name> --port <port> [--folder <folder>] [--json] -- <command>
        svrngs-keeper facts <port> [--name <name>]
        svrngs-keeper list [--json]
        svrngs-keeper stop|start|restart|remove <name>
@@ -64,6 +67,8 @@ fn run(args: &[String]) -> anyhow::Result<()> {
     match args.as_slice() {
         ["facts", port] => return at_port(port, "llama-server"),
         ["facts", port, "--name", name] => return at_port(port, name),
+        #[cfg(target_os = "linux")]
+        ["run", name, rest @ ..] => return native_run::run(name, rest),
         _ => (),
     }
     run_card(&SystemdUser::system(), &places()?, &args)
@@ -130,7 +135,7 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
             );
             Ok(())
         }
-        _ => anyhow::bail!("the commands are keep, facts, list, stop, start, restart and remove"),
+        _ => anyhow::bail!("the commands are run, keep, facts, list, stop, start, restart and remove"),
     }
 }
 

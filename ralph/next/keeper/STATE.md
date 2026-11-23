@@ -408,9 +408,11 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - `svrngs-keeper run <name> [--folder] -- <command>` writes a native card
     and its unit.
   - It refuses a busy port with spec §2.2's sentence.
-  - It emits llama-server's prefill, with `Nice=10` and the 30 s answer
-    check.
-  - `start` resets a failed unit (spec §7.8).
+  - Preserve llama-server's prefill (`facts.rs:26–36`) and `Nice=10`
+    (`unit.rs:40`); Run adds the 30 s answer check.
+  - Prove `start` resets a failed unit: already implemented in
+    `apps/svrngs-keeper/src/kept.rs:283–296` at `21dc739e` (spec §7.8
+    predates it).
   - svrngs gets `svrngs run` through the plan. **No new authorization
     mode** (QA, oc-cruu42, 2026-11-22). Run starts the unit, verifies that
     its listener answers (the 30 s check), and only then approves that
