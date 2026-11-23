@@ -165,7 +165,48 @@ passed the byte, digest and timing checks. Navigation hit Playwright's
 same navigation abort was reproduced on earlier main (see the flake record
 above); these few trials do not establish its frequency or a keeper effect.
 
-Next: one unchanged full gate at the rebase pin `789707dc`, in the same
-image, with the same mounts and worker count. It can demonstrate a matching
-base failure if one occurs; a single green base run cannot establish a
-keeper regression. The result on `2b1a7040` remains failed either way.
+## Same-image full gate at `789707dc` — passed
+
+`REVIEW-audit-available-5.await.log:1–3,435–545` records the detached base,
+the image `372d88c39c15eecf3b80ccf7deb501f1ee58fd649e57175450a0884830b46832`
+(also `-4.await.log:3`), the warm browser build, and the unchanged full gate:
+
+```text
+passed     tests (379 s)
+passed     browser (97 s)
+passed     pages (11 s)
+note       took 1400 s in all
+Full gate exit 0
+```
+
+Neither candidate browser failure reproduced in this main run. The two
+WebKit worker-stop observations are still could-not-judge (lines 513 and
+528); neither concerns the navigation target abort or the relay fallback.
+One green base run cannot establish a keeper regression; attribution of
+both candidate failures is unresolved. The gate prints
+browser's aggregate time on a pass, so this log cannot say how close the
+base came to the fallback bound. The candidate's failed full gate stands.
+
+Rechecked on the same candidate sources (`git diff --exit-code 2b1a7040
+0df95c6b`, excluding this audit and the queue state): the `789707dc` diffs
+for the gate, floor, floor checker and CSP still exited 0;
+`python3 scripts/trust_check.py` reported `13 policies, 13 listeners, 17
+gates`, and `python3 scripts/lean_check.py` reported 25,715/25,719 non-JS and
+8,731/8,731 JS, both within the charter ceilings.
+
+### Next diagnostic: browser-test overlap
+
+Run the browser tier once per trial, in the fixed order base/candidate/
+candidate/base under the same image and `TOKIO_WORKER_THREADS=4` (fresh
+container and shared browser pair per trial, no other heavy work under the
+gate lock). The diagnostic uses the browser tier's usual `--skip playback::`
+selection (`scripts/check.sh:114–123`); it only adds libtest JSON output and
+captures timestamps, case status, active test count and visible load. Record
+the Home case's span beside each WebKit case, and the relay's first direct
+selection, payload and timings. The new isolated Run/Share scenario is
+ignored in the normal tier; the existing Chromium Home case adds two Share
+confirmation clicks (`browser/main.rs:1984–1988,2193–2199`). If Home ends
+before the relay case starts, those clicks cannot overlap its measured
+fallback on that trial. Whole-test overlap would show opportunity for
+contention, not causation. Read the target abort separately from the timing
+miss. This diagnostic cannot qualify the release.
