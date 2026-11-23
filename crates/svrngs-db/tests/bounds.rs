@@ -1,10 +1,10 @@
 //! What a copy's ask may carry, and who fills it (svrn-docs
 //! `rings/current/APP_STATE.md` §4, "What travels"; §7, invariant 9): a set
-//! that waits is never sent on, and is judged again only when the record
-//! changes; every key the record binds has an equal share of the room a
-//! call's ask may fill beside its sets, and the keys it doesn't one share
-//! together; a device past its share is muted at that copy, named in its
-//! ask, so no member sends it more, and its sets before stand.
+//! that waits for its schema is never sent on; a key the record doesn't bind
+//! stores nothing and adds no row; every key the record binds has an equal
+//! share of the room a call's ask may fill beside its sets; a device past
+//! its share is muted at that copy, named in its ask, so no member sends it
+//! more, and its sets before stand.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -49,7 +49,7 @@ fn alone(sets: Vec<Set>) -> Call {
 /// `keys` bound, sharing a room of `rows` shares a key, as `Binds::share`
 /// counts them.
 fn binds(keys: &[u8], share: usize) -> Binds {
-    Binds::new(keys.iter().map(|n| actor(*n)), share * ROW_MOST * (keys.len() + 1))
+    Binds::new(keys.iter().map(|n| actor(*n)), share * ROW_MOST * keys.len())
 }
 
 fn took(to: &Db, call: &Call, binds: &Binds) -> Vec<Took> {
@@ -118,74 +118,39 @@ fn row_most_is_the_most_a_row_of_an_ask_costs() {
     }
 }
 
-/// **A set that waits is never sent on**: held here while the record
-/// doesn't bind its device, or under a schema this copy doesn't hold, it
-/// goes to no member that asks. Its own device's copy, or one that took
-/// it, sends it. Plant: `missing` sending every set with bytes (the one
-/// waiting for its schema sent on; one waiting for its key has no head,
-/// which `missing` joins).
+/// **A set waiting for its schema is never sent on**: held here under a
+/// schema this copy doesn't hold, it goes to no member that asks; its own
+/// device's copy, or one that took it, sends it. Plant: `missing` sending
+/// every set with bytes (the waiting one sent on).
 #[test]
-fn a_waiting_set_is_never_sent_on() {
-    let dir = tempfile::tempdir().unwrap();
-    let (a, b, c) = (board(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
-    write(&a, "c1", "milk");
-    assert_eq!(took(&b, &call(&a, &b), &binds(&[], 10)), [Took::Waits]);
-    assert!(call(&b, &c).sets.is_empty(), "not sent on as it waits");
-    assert_eq!(
-        took(&c, &call(&a, &c), &binds(&[1], 10)),
-        [Took::Taken],
-        "its device's copy sends it"
-    );
-
-    // One under a schema Dee's copy doesn't hold, its device bound.
+fn a_set_waiting_for_its_schema_is_never_sent_on() {
     const WIDER: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT);";
+    let dir = tempfile::tempdir().unwrap();
     let wider = States::new(&dir.path().join("computer-5"), key(5));
     let wider = wider.open("g", "board", Some(WIDER)).unwrap();
     write(&wider, "c2", "eggs");
-    let d = board(dir.path(), 4);
-    assert_eq!(took(&d, &call(&wider, &d), &binds(&[4, 5], 10)), [Took::Waits]);
+    let (c, d) = (board(dir.path(), 3), board(dir.path(), 4));
+    assert_eq!(took(&d, &call(&wider, &d), &binds(&[3, 4, 5], 10)), [Took::Waits]);
     assert!(call(&d, &c).sets.is_empty(), "not sent on as it waits for its schema");
 }
 
-/// **A set waiting for its key is judged again only when the record
-/// changes**: judged once by the keys bound now, not again while they
-/// stay the same, and applied once the record binds its key. Plant: the
-/// record's digest unread (judged again by the same keys).
+/// **A key the record doesn't bind stores nothing and adds no row to the
+/// ask**: sets signed by ten keys no record binds are each dropped as not
+/// bound yet, kept nowhere, counted nowhere and naming no device, however
+/// many come. Plant: such a set counted (a site's mark for each in Ben's
+/// ask).
 #[test]
-fn a_waiting_set_is_judged_again_only_when_the_record_changes() {
-    let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (board(dir.path(), 1), board(dir.path(), 2));
-    write(&a, "c1", "milk");
-    let unbound = binds(&[2], 10);
-    assert_eq!(took(&b, &call(&a, &b), &unbound), [Took::Waits]);
-    assert_eq!(b.rejudge(&unbound).unwrap(), Some(0), "judged by the keys bound now");
-    assert_eq!(b.rejudge(&unbound).unwrap(), None, "not again while they stay the same");
-    assert_eq!(
-        b.rejudge(&binds(&[1, 2], 10)).unwrap(),
-        Some(1),
-        "applied once its key is bound"
-    );
-}
-
-/// **The keys the record doesn't bind share one share of the room**: sets
-/// signed by keys no record binds wait, each in that one share, and past it
-/// are dropped as if they never came, counted nowhere, naming no device.
-/// Plant: that share unchecked (every one waits).
-#[test]
-fn keys_the_record_doesn_t_bind_share_one_share() {
+fn a_key_the_record_doesn_t_bind_stores_nothing_and_adds_no_row_to_the_ask() {
     let dir = tempfile::tempdir().unwrap();
     let (h, b) = (board(dir.path(), 9), board(dir.path(), 2));
     write(&h, "c1", "milk");
     let base = h.missing(&Ask::default(), BUDGET).unwrap().sets.remove(0);
     let throwaway = |i: u8| SigningKey::from_bytes(&[100 + i; 32]);
     let sets: Vec<Set> = (0..10).map(|i| signed(&base, &throwaway(i), |_| {})).collect();
-    let (share, room) = (6, binds(&[2, 9], 6));
-    let got = took(&b, &alone(sets), &room);
-    assert_eq!(got[..share], [Took::Waits; 6]);
-    assert_eq!(got[share..], [Took::Over; 4]);
-    let ask = b.ask().unwrap();
-    assert!(ask.muted.is_empty(), "no device named");
-    assert_eq!(ask.marks.len(), share, "the dropped ones counted nowhere");
+    assert_eq!(took(&b, &alone(sets), &binds(&[2, 9], 6)), [Took::NotYet; 10]);
+    assert_eq!(b.ask().unwrap(), Ask::default(), "no row of the ask");
+    let kept = b.missing(&Ask::default(), BUDGET).unwrap().sets;
+    assert!(kept.is_empty(), "nothing kept");
 }
 
 /// **A device past its share is muted at that copy, and its sets before
@@ -228,7 +193,7 @@ fn a_device_past_its_share_is_muted_and_its_sets_before_stand() {
         "a member keeping more of them sends Ben none"
     );
     assert!(
-        postcard::to_allocvec(&ask).unwrap().len() <= 6 * ROW_MOST * 3,
+        postcard::to_allocvec(&ask).unwrap().len() <= 6 * ROW_MOST * 2,
         "the ask within its room"
     );
 

@@ -558,8 +558,8 @@ type CaseOf = fn(crate::sync::Sync, &dyn Fn(Site) -> DbCopy) -> (String, Result<
 /// Every copy ends on Sam's 3, the reference over the three sets, and none
 /// on 1, the value before Jo's move. Plants, each watched failing: the
 /// spike's standing-now rule, the record binding Sam's key no more once he
-/// is removed (the offline computer holds his move as waiting, and shows
-/// Jo's 2); no prune (Jo's copy still keeps Jo's set).
+/// is removed (the offline computer drops his move as not bound, and shows
+/// 1); no prune (Jo's copy still keeps Jo's set).
 #[test]
 fn the_review_s_case_between_computers() {
     let make = maker();

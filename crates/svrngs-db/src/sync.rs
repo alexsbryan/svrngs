@@ -194,8 +194,12 @@ pub enum Took {
     Twin,
     /// Counted here already: passed by.
     Held,
-    /// Its device isn't in this copy's record yet: kept, held, counted, and
-    /// judged again by [`Db::rejudge`].
+    /// Its device isn't one this copy's record binds yet: dropped as if it
+    /// never came, its mark unmoved, so a member sends it again once the
+    /// record here binds it (the record's exchange runs first in a dial).
+    NotYet,
+    /// Written under a schema this copy doesn't hold: kept, held, counted,
+    /// never sent on.
     Waits,
     /// Refused for good, alike on every copy: counted, never applied.
     Refused,
@@ -220,9 +224,8 @@ pub const ROW_MOST: usize = 155;
 /// The keys a group's record binds, standing or cut, as a set's device is
 /// judged by them (APP_STATE §4, "A removed device"); and the room a call's
 /// ask may fill beside its sets. Every key the record binds has an equal
-/// share of the room, and the keys it doesn't, together, one more
-/// ([`Self::share`]), so no one device can fill what every copy's ask may
-/// carry and stall the app's sync for everyone.
+/// share of the room ([`Self::share`]), so no one device can fill what every
+/// copy's ask may carry and stall the app's sync for everyone.
 pub struct Binds {
     keys: BTreeSet<String>,
     room: usize,
@@ -244,46 +247,30 @@ impl Binds {
     /// Each one's share of the room, in rows of at most [`ROW_MOST`] bytes:
     /// so however full, the ask is at most the room.
     fn share(&self) -> u64 {
-        (self.room / ROW_MOST / (self.keys.len() + 1)) as u64
-    }
-
-    /// A digest of the keys, so [`Db::rejudge`] reads nothing again while
-    /// the record binds the same ones.
-    fn digest(&self) -> u64 {
-        let mut hasher = std::hash::DefaultHasher::new();
-        std::hash::Hash::hash(&self.keys, &mut hasher);
-        std::hash::Hasher::finish(&hasher)
+        (self.room / ROW_MOST / self.keys.len().max(1)) as u64
     }
 }
 
 /// What a call may still add to this copy's ask as it is taken, by the
-/// keys the record binds: the rows each device holds ([`Db::room`]), the
-/// sets that wait for a key it doesn't, and the devices muted here.
+/// keys the record binds: the rows each device holds ([`Db::room`]), and
+/// the devices muted here.
 struct Room<'b> {
     binds: &'b Binds,
     rows: BTreeMap<Device, u64>,
-    unbound: u64,
     muted: BTreeSet<Device>,
 }
 
 impl Room<'_> {
     /// Whether a set of `device`'s has room for the `adds` rows it brings:
-    /// for a device the record binds, unmuted, in its share with one row
-    /// left for its name should it be muted; for one it doesn't, a row in
-    /// their one share.
+    /// unmuted, in its share with one row left for its name should it be
+    /// muted.
     fn fits(&self, device: &Device, adds: u64) -> bool {
-        let (held, share) = (self.rows.get(device).copied().unwrap_or(0), self.binds.share());
-        match self.binds.binds(device) {
-            true => !self.muted.contains(device) && (adds == 0 || held + adds < share),
-            false => self.unbound < share,
-        }
+        let held = self.rows.get(device).copied().unwrap_or(0);
+        !self.muted.contains(device) && (adds == 0 || held + adds < self.binds.share())
     }
 
     fn add(&mut self, device: &Device, adds: u64) {
-        match self.binds.binds(device) {
-            true => *self.rows.entry(device.clone()).or_default() += adds,
-            false => self.unbound += 1,
-        }
+        *self.rows.entry(device.clone()).or_default() += adds;
     }
 }
 
@@ -295,8 +282,6 @@ enum Kept {
     /// Refused for good: its place and signature alone, no bytes, so a
     /// second set at its place is judged, never passed by as held.
     Refused,
-    /// Waiting for the record to bind its device.
-    Unbound,
     /// Waiting for this copy to hold the schema it was written under.
     Unschemed,
 }
@@ -306,9 +291,6 @@ impl ToSql for Kept {
         Ok((*self as i64).into())
     }
 }
-
-/// Where a kept set waits, either way, as SQL binds the two.
-const WAITING: [Kept; 2] = [Kept::Unbound, Kept::Unschemed];
 
 /// `sql`'s rows on `conn`, each read by `f`.
 fn rows<T>(
@@ -366,14 +348,9 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
     conn.execute(sql, params![site, seq, set.head.sig, kept, bytes])?;
     // The site's device, by which its share is counted, a muted device's
-    // sets are found and a word for its mark is trusted: kept for a set
-    // taken, refused or waiting for its schema here, never for one waiting
-    // for its key, so a key no record binds adds no row but the ones its
-    // share holds.
+    // sets are found and a word for its mark is trusted.
     let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device) VALUES (?1, ?2)";
-    if kept != Kept::Unbound {
-        conn.execute(sited, params![site, set.head.device])?;
-    }
+    conn.execute(sited, params![site, set.head.device])?;
     count(conn, (site, seq))
 }
 
@@ -590,21 +567,20 @@ impl Db {
                 Took::Fault
             });
             tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), ?took, "state: a set offered, and how it ended");
-            if matches!(took, Took::Waits | Took::NotItsDevice | Took::Fault | Took::Over) {
+            if matches!(
+                took,
+                Took::NotYet | Took::Waits | Took::NotItsDevice | Took::Fault | Took::Over
+            ) {
                 stopped.insert(place.0);
             }
             out.push((place, took));
         }
-        let waiting = rows(
-            &tx,
-            "SELECT site FROM svrngs_sets WHERE kept IN (?1, ?2)",
-            WAITING,
-            |r| r.get::<_, Site>(0),
-        );
+        let waiting = "SELECT site FROM svrngs_sets WHERE kept = ?1";
+        let waiting = rows(&tx, waiting, [Kept::Unschemed], |r| r.get::<_, Site>(0));
         stopped.extend(waiting.map_err(fault)?);
         let marks = call.ask.marks.iter();
         let adopting = marks.filter(|(s, _)| call.full && **s != self.site && !stopped.contains(*s));
-        tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature or waits");
+        tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature, isn't bound here yet or waits");
         for (s, m) in adopting {
             self.claimed(&tx, (*s, *m), (from, call.synced, &room)).map_err(fault)?;
         }
@@ -634,31 +610,22 @@ impl Db {
             UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
             AND t.seq = s.seq AND t.sig <> s.sig)) AS r JOIN svrngs_sites h USING (site) GROUP BY h.device";
         let held = BTreeMap::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
-        let unbound = "SELECT count(*) FROM svrngs_sets WHERE kept = ?1";
-        let unbound = conn.query_row(unbound, [Kept::Unbound], |r| r.get(0))?;
         let muted = BTreeSet::from_iter(rows(conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0))?);
         let rows = held;
-        Ok(Room {
-            binds,
-            rows,
-            unbound,
-            muted,
-        })
+        Ok(Room { binds, rows, muted })
     }
 
     /// `set`, past its share of what this copy's ask may carry, dropped as if
-    /// it never came; and, where the record binds its device, the device
-    /// muted here from then on, named in this copy's ask so that no member
-    /// sends it more, and no more of its sets taken here. Its sets before
-    /// stand. The seat's decision (svrn-docs APP_STATE Decisions,
-    /// 2026-11-22): no one device can fill what every copy's ask may carry,
-    /// and so stall the app's sync for everyone.
+    /// it never came; and its device muted here from then on, named in this
+    /// copy's ask so that no member sends it more, and no more of its sets
+    /// taken here. Its sets before stand. The seat's decision (svrn-docs
+    /// APP_STATE Decisions, 2026-11-22): no one device can fill what every
+    /// copy's ask may carry, and so stall the app's sync for everyone.
     fn over(&self, tx: &Transaction, set: &Set, room: &mut Room) -> rusqlite::Result<Took> {
         let (device, share) = (&set.head.device, room.binds.share());
-        let bound = room.binds.binds(device);
-        tracing::warn!(target: "state", group = self.group, app = self.app, %device, bound, share, "state: a device past its share of what this copy's ask may carry, so its set is dropped, and a device the record binds muted here, named in the ask so no member sends it more; its sets before stand");
+        tracing::warn!(target: "state", group = self.group, app = self.app, %device, share, "state: a device past its share of what this copy's ask may carry, so its set is dropped, and the device muted here, named in the ask so no member sends it more; its sets before stand");
         let muted = "INSERT OR IGNORE INTO svrngs_muted (device) VALUES (?1)";
-        if bound && room.muted.insert(device.clone()) {
+        if room.muted.insert(device.clone()) {
             tx.execute(muted, [device])?;
         }
         Ok(Took::Over)
@@ -667,12 +634,12 @@ impl Db {
     /// The mark `m` a full call claims for `site`, adopted up to the highest
     /// seq of the site this copy has counted and no further, so it fills the
     /// gaps below what this copy holds and passes nothing it hasn't counted;
-    /// and only where the record binds its device, unmuted here, and the
-    /// caller is trusted for it: the site's own computer, which vouches for
-    /// its own sets, or a synced caller into a copy not yet synced, as a
-    /// newcomer trusts its source (APP_STATE §4, "What travels"). So no word
-    /// takes a mark past a set this copy would fetch, and none makes an
-    /// established copy skip a set it hasn't fetched yet.
+    /// and only where its device is unmuted here, and the caller is trusted
+    /// for it: the site's own computer, which vouches for its own sets, or a
+    /// synced caller into a copy not yet synced, as a newcomer trusts its
+    /// source (APP_STATE §4, "What travels"). So no word takes a mark past a
+    /// set this copy would fetch, and none makes an established copy skip a
+    /// set it hasn't fetched yet.
     fn claimed(
         &self,
         tx: &Transaction,
@@ -686,9 +653,9 @@ impl Db {
             return Ok(());
         };
         let trusted = from == Some(&device) || synced && !self.synced.load(Relaxed);
-        let (bound, muted) = (room.binds.binds(&device), room.muted.contains(&device));
-        tracing::debug!(target: "state", group = self.group, app = self.app, %device, mark = m.get(), top, trusted, bound, muted, "state: a full call's mark for a site, adopted up to the highest seq of it this copy has counted, where the record binds its device, unmuted here, and its caller is trusted for it");
-        if !trusted || !bound || muted {
+        let muted = room.muted.contains(&device);
+        tracing::debug!(target: "state", group = self.group, app = self.app, %device, mark = m.get(), top, trusted, muted, "state: a full call's mark for a site, adopted up to the highest seq of it this copy has counted, where its device is unmuted here and its caller is trusted for it");
+        if !trusted || muted {
             return Ok(());
         }
         adopt(tx, (site, (m.get() as i64).min(top)))
@@ -703,6 +670,13 @@ impl Db {
         if !self.signed(set) {
             return Ok(Took::NotItsDevice);
         }
+        // One whose device the record here doesn't bind yet is dropped as if
+        // it never came, nothing of it kept or counted. The record's exchange
+        // runs first in every dial, so its key's admission travels ahead of
+        // it, and a call by marks sends it again once that lands here.
+        if !room.binds.binds(&set.head.device) {
+            return Ok(Took::NotYet);
+        }
         let sigs = "SELECT sig FROM svrngs_sets WHERE site = ?1 AND seq = ?2";
         let sigs: Vec<Sig> = rows(tx, sigs, params![site, set.head.seq], |r| r.get(0))?;
         let counted = "SELECT ?2 <= coalesce(mark, 0) OR EXISTS (SELECT 1 FROM svrngs_above WHERE site = ?1 AND seq = ?2), \
@@ -716,19 +690,17 @@ impl Db {
         }
         // What it adds to this copy's ask: a site new here, a set counted
         // above a gap, a set at a place that keeps one, the first making two
-        // rows of it. Past its device's share, or the share of keys the
-        // record doesn't bind, it is dropped ([`Self::over`]).
+        // rows of it. Past its device's share, it is dropped ([`Self::over`]).
         let device = &set.head.device;
         let adds = u64::from(!sited) + u64::from(set.head.seq.0 > mark + 1) + [0, 2, 1][sigs.len().min(2)];
         if !room.fits(device, adds) {
             return self.over(tx, set, room);
         }
-        // One whose device the record doesn't bind, or written under a schema
-        // this copy doesn't hold, waits, unparsed: its changes are read only
-        // against the tables of its own schema (APP_STATE §4, the four
-        // outcomes). Any other is parsed before cr-sqlite sees it.
-        let unbound = (!room.binds.binds(device)).then_some(Kept::Unbound);
-        let waits = unbound.or((set.head.schema != self.schema).then_some(Kept::Unschemed));
+        // One written under a schema this copy doesn't hold waits, unparsed:
+        // its changes are read only against the tables of its own schema
+        // (APP_STATE §4, the four outcomes). Any other is parsed before
+        // cr-sqlite sees it.
+        let waits = (set.head.schema != self.schema).then_some(Kept::Unschemed);
         let judged = waits.map_or_else(|| parse(&set.changes, &self.tables).map_err(|_| Kept::Refused), Err);
         if judged.is_ok() && !sigs.is_empty() {
             tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), "state: a second set at one site and seq, both taken: a copied or restored database runs beside its original");
@@ -744,62 +716,5 @@ impl Db {
         room.add(device, adds);
         let twin = took == Took::Taken && !sigs.is_empty();
         Ok(if twin { Took::Twin } else { took })
-    }
-
-    /// Each set waiting here whose device the record now binds, as `binds`
-    /// says, judged again: one whose schema this copy holds parsed, and
-    /// applied and no longer held, or refused for good, kept no more and
-    /// still counted; one under another schema waiting for its schema now.
-    /// How many it applied; none read, `None`, while the record binds the
-    /// same keys as when it last judged them.
-    pub fn rejudge(&self, binds: &Binds) -> Result<Option<usize>, Refused> {
-        let digest = binds.digest();
-        if self.judged.swap(digest, Relaxed) == digest {
-            return Ok(None);
-        }
-        let mut conn = self.conn();
-        let held = rows(
-            &conn,
-            "SELECT bytes FROM svrngs_sets WHERE kept IN (?1, ?2)",
-            WAITING,
-            |r| r.get::<_, Vec<u8>>(0),
-        );
-        let held = held
-            .map_err(fault)?
-            .into_iter()
-            .filter_map(|b| postcard::from_bytes::<Set>(&b).ok());
-        let mut taken = 0;
-        for set in held.filter(|s| binds.binds(&s.head.device)) {
-            let place = (self.site_of(&set.head), set.head.seq);
-            if set.head.schema != self.schema {
-                let unschemed = "UPDATE svrngs_sets SET kept = ?4 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
-                let at = params![place.0, place.1, set.head.sig, Kept::Unschemed];
-                conn.execute(unschemed, at).map_err(fault)?;
-                continue;
-            }
-            let parsed = parse(&set.changes, &self.tables);
-            let unheld = "UPDATE svrngs_sets SET kept = ?4 WHERE site = ?1 AND seq = ?2 AND sig = ?3";
-            let gone = "UPDATE svrngs_sets SET kept = ?4, bytes = NULL WHERE site = ?1 AND seq = ?2 AND sig = ?3";
-            let ((site, seq), sig) = (place, &set.head.sig);
-            let (at, was) = (
-                params![site, seq, sig, Kept::Taken],
-                params![site, seq, sig, Kept::Refused],
-            );
-            // Rolled back and released as it drops, unless all of it is written.
-            let sp = conn.savepoint().map_err(fault)?;
-            let judged = match &parsed {
-                Ok(valid) => keep(&sp, (&set, place.0), Some(valid), Kept::Taken).and_then(|()| sp.execute(unheld, at)),
-                Err(_) => sp.execute(gone, was),
-            };
-            let judged = judged.and_then(|_| sp.commit());
-            let applied = judged.is_ok() && parsed.is_ok();
-            tracing::debug!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), applied, refused = parsed.is_err(), written = judged.is_ok(), "state: a set that waited for its device, now bound, applied; refused for good as it doesn't parse; or held still, as this copy couldn't");
-            taken += usize::from(applied);
-        }
-        if taken > 0 {
-            self.prune(&conn).map_err(fault)?;
-            self.changed.send_modify(|n| *n += 1);
-        }
-        Ok(Some(taken))
     }
 }

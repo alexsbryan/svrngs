@@ -24,11 +24,6 @@ fn bound() -> svrngs_db::Binds {
     svrngs_db::Binds::new(keys, 4 << 20)
 }
 
-/// No key bound, in the same room.
-fn unbound() -> svrngs_db::Binds {
-    svrngs_db::Binds::new([], 4 << 20)
-}
-
 fn board(dir: &Path, n: u8) -> Arc<Db> {
     let states = States::new(&dir.join(format!("computer-{n}")), key(n));
     states.open("g", "board", Some(SCHEMA)).unwrap()
@@ -64,29 +59,32 @@ fn a_call_that_fails_leaves_no_transaction_open() {
     svrngs_db::close(side).unwrap();
 }
 
-/// **A set that waits is kept and counted together, or neither**: its count
-/// fails (a trigger from a second connection refusing every insert into
-/// svrngs's table of sets counted above a mark, the plant), so the set is a
-/// fault, and nothing of it is kept; once the trigger is gone, the next call
-/// keeps it as waiting, counted.
+/// **A set that waits is kept and counted together, or neither**: one
+/// written under a schema this copy doesn't hold, its count failing (a
+/// trigger from a second connection refusing every insert into svrngs's
+/// table of sets counted above a mark, the plant), is a fault, and nothing
+/// of it is kept; once the trigger is gone, the next call keeps it as
+/// waiting, counted.
 #[test]
 fn a_waiting_set_is_kept_and_counted_together_or_not_at_all() {
+    const WIDER: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT);";
     let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (board(dir.path(), 1), board(dir.path(), 2));
+    let a = States::new(&dir.path().join("computer-1"), key(1));
+    let (a, b) = (a.open("g", "board", Some(WIDER)).unwrap(), board(dir.path(), 2));
     a.write(&json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]))
         .unwrap();
     let sent = a.missing(&b.ask().unwrap(), BUDGET).unwrap();
     let side = side(dir.path(), 2);
     let plant = "CREATE TRIGGER aside BEFORE INSERT ON svrngs_above BEGIN SELECT RAISE(ABORT, 'planted'); END";
     side.execute_batch(plant).unwrap();
-    let got = b.ingest(&sent, &unbound(), None).unwrap();
+    let got = b.ingest(&sent, &bound(), None).unwrap();
     assert_eq!(got[0].1, Took::Fault);
     side.execute_batch("DROP TRIGGER aside").unwrap();
     let kept: i64 = side
         .query_row("SELECT count(*) FROM svrngs_sets", [], |r| r.get(0))
         .unwrap();
     assert_eq!(kept, 0, "a set kept, uncounted");
-    assert_eq!(b.ingest(&sent, &unbound(), None).unwrap()[0].1, Took::Waits);
+    assert_eq!(b.ingest(&sent, &bound(), None).unwrap()[0].1, Took::Waits);
     svrngs_db::close(side).unwrap();
 }
 

@@ -423,8 +423,10 @@ async fn state(
 /// in the group, it answers that set, signed by its own key; asked by Bo,
 /// who stands in another group only, or off the stream, it refuses, and
 /// takes nothing Bo offered; a database it keeps none of is 404; and a set
-/// that names Ada's device, signed by Bo's key, is dropped, her marks
-/// unmoved, while Bo's own set, carried by a standing member, is taken. Plants, each watched failing: the standing check skipped (Bo
+/// that names Ada's device, signed by Cy's key, is dropped, her marks
+/// unmoved, while Cy's own set, carried by a standing member, is taken. Bo's
+/// set, carried so, is dropped too, as the group's record doesn't bind his
+/// key. Plants, each watched failing: the standing check skipped (Bo
 /// served); the set's signature unchecked (the forged set counted).
 #[tokio::test]
 async fn the_state_route_serves_a_standing_member_alone() {
@@ -455,6 +457,15 @@ async fn the_state_route_serves_a_standing_member_alone() {
     bo_db.write(&card).unwrap();
     let offered = bo_db.missing(&Default::default(), 1 << 20).unwrap();
     let marks = db.ask().unwrap().marks;
+    let cy = SigningKey::from_bytes(&[14u8; 32]);
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
+    members.insert(Person::parse("Cy").unwrap(), vec![crate::actor_of(&cy)]);
+    rail.set_seed(NS, &Roster::new(members)).unwrap();
+    let cy_states = svrngs_db::States::new(&dir.path().join("cy"), cy);
+    let cy_db = cy_states.open(NS, "board", Some(SCHEMA)).unwrap();
+    cy_db.write(&card).unwrap();
+    let cy_s = cy_db.missing(&Default::default(), 1 << 20).unwrap();
     for dialer in [Some(&bo), None] {
         let (status, _) = state(inbound.clone(), dialer, (NS, "board"), &offered).await;
         assert_eq!(status, 403, "{:?} refused", dialer.map(crate::actor_of));
@@ -469,7 +480,7 @@ async fn the_state_route_serves_a_standing_member_alone() {
 
     // Carried on its own, vouching for nothing: a full call's marks are
     // its source's word for completeness (APP_STATE §4, "What travels").
-    let mut forged = offered.clone();
+    let mut forged = cy_s.clone();
     let ada = svrngs_db::Device::parse(&crate::actor_of(&key())).unwrap();
     (forged.sets[0].head.device, forged.full) = (ada, false);
     let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &forged).await;
@@ -479,12 +490,19 @@ async fn the_state_route_serves_a_standing_member_alone() {
         marks,
         "a set not its device's, dropped"
     );
-    let (status, _) = state(inbound, Some(&key()), (NS, "board"), &offered).await;
+    let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &offered).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        db.ask().unwrap().marks,
+        marks,
+        "Bo's set, his key unbound here"
+    );
+    let (status, _) = state(inbound, Some(&key()), (NS, "board"), &cy_s).await;
     assert_eq!(status, 200);
     assert_eq!(
         db.ask().unwrap().marks.len(),
         2,
-        "Bo's own set, from a standing member"
+        "Cy's own set, from a standing member"
     );
 }
 

@@ -289,8 +289,6 @@ pub struct Db {
     /// Whether it has synced in full once, and whether a set faulted since.
     synced: AtomicBool,
     faulted: AtomicBool,
-    /// The digest of the keys its waiting sets were last judged by.
-    judged: AtomicU64,
 }
 
 /// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
@@ -547,7 +545,6 @@ impl Db {
             changed: watch::Sender::new(0),
             synced: synced.into(),
             faulted: false.into(),
-            judged: 0.into(),
         })
     }
 

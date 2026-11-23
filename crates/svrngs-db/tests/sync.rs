@@ -241,22 +241,28 @@ fn a_set_not_its_device_s_is_dropped_and_its_mark_holds() {
     assert_eq!(marks(&b.ask().unwrap()), [2]);
 }
 
-/// **A set whose device the record doesn't bind yet waits**: kept, held,
-/// counted, never applied, and no member's mark adopted past its site; once
-/// the record binds the device, it is applied (`rejudge`). Plant: `rejudge`
-/// never applying a held set (the card never shows).
+/// **A new device's set that comes before its binding is dropped, and taken
+/// at the next call once the binding has landed**: Ana's first set reaches
+/// Ben in a full call from her synced copy before his record binds her key.
+/// It is dropped as if it never came, nothing of it kept or counted and no
+/// mark adopted for her site, so her next call sends it again, and once the
+/// record binds her key it is taken. Plant: such a set kept as refused for
+/// good (counted, so never sent again, and the card never shows).
 #[test]
-fn a_set_waits_for_its_device_and_applies_once_the_record_binds_it() {
+fn a_set_before_its_device_s_binding_is_dropped_and_taken_once_it_lands() {
     let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (board(dir.path(), 1), board(dir.path(), 2));
+    let (a, b) = (root(dir.path(), 1), board(dir.path(), 2));
     write(&a, "c1", "milk");
     let got = b.ingest(&call(&a, &b), &unbound(), None).unwrap();
-    assert_eq!(got[0].1, Took::Waits);
-    assert_eq!(cards(&b), json!([]), "held, not applied");
-    assert!(call(&a, &b).sets.is_empty(), "counted, so fetched no more");
-    assert_eq!(b.rejudge(&unbound()).unwrap(), Some(0), "still unbound, still held");
-    assert_eq!(b.rejudge(&bound()).unwrap(), Some(1));
-    assert_eq!(cards(&b), json!([{ "id": "c1", "title": "milk" }]));
+    assert_eq!(got[0].1, Took::NotYet);
+    assert_eq!(b.ask().unwrap(), Ask::default(), "nothing counted, no mark adopted");
+    assert_eq!(cards(&b), json!([]));
+    assert_eq!(
+        took(&b, &call(&a, &b)),
+        [Took::Taken],
+        "sent again, and taken once bound"
+    );
+    assert_eq!(cards(&b), cards(&a));
 }
 
 /// **A fault holds its mark, and the copy says it is still syncing**: a set

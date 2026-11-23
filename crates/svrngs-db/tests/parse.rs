@@ -37,11 +37,6 @@ fn bound() -> svrngs_db::Binds {
     svrngs_db::Binds::new(keys, 4 << 20)
 }
 
-/// No key bound, in the same room.
-fn unbound() -> svrngs_db::Binds {
-    svrngs_db::Binds::new([], 4 << 20)
-}
-
 /// Computer `n`'s database of `app` in `g`, made from `schema`.
 fn db(dir: &Path, n: u8, (app, schema): (&str, &str)) -> Arc<Db> {
     let states = States::new(&dir.join(format!("computer-{n}")), key(n));
@@ -177,26 +172,6 @@ fn a_key_cr_sqlite_cannot_unpack_is_refused_for_good_on_every_copy() {
         });
         refused_on_two_copies(dir.path(), ("board", CARDS), &bad, what);
     }
-}
-
-/// **A set that waits for its device is parsed when it is judged again**:
-/// held while the record doesn't bind its key, then refused for good once it
-/// does, and nothing of it reaches cr-sqlite.
-#[test]
-fn a_waiting_set_whose_key_cr_sqlite_cannot_unpack_is_refused_once_its_device_is_bound() {
-    let dir = tempfile::tempdir().unwrap();
-    let base = written(dir.path(), ("board", CARDS), card("c1", "milk"));
-    let bad = remade(&base, &key(9), "board", |c| c.iter_mut().for_each(|c| c.pk = vec![]));
-    let b = db(dir.path(), 2, ("board", CARDS));
-    let call = Call {
-        sets: vec![bad],
-        ..Default::default()
-    };
-    let got = b.ingest(&call, &unbound(), None).unwrap();
-    assert_eq!(got[0].1, Took::Waits);
-    assert_eq!(b.rejudge(&bound()).unwrap(), Some(0), "judged again, and refused");
-    assert_eq!(rows(&b, "SELECT * FROM cards"), json!([]));
-    assert_eq!(b.rejudge(&bound()).unwrap(), None, "and held no more");
 }
 
 /// **A key of the wrong shape for its table is refused for good, on every

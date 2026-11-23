@@ -651,9 +651,10 @@ pub const STATE_ROUTE: &str = "/internal/ring/state";
 /// now, or cut since, as a removed device's sets are taken like any (svrn-docs
 /// APP_STATE §4, "A removed device"), each with its share of the room an
 /// app database's ask has ([`crate::peer_wire::ASK_ROOM_BYTES`]). An
-/// unreadable record binds none, so sets wait, said at warn.
+/// unreadable record binds none, so every set offered is dropped, to be sent
+/// again once it reads, said at warn.
 pub(crate) fn bound(rail: &RingRail, group: &str) -> svrngs_db::Binds {
-    let read = rail.register(group).inspect_err(|e| warn!(namespace = group, error = %e, "ring state: the record is unreadable, so every set waits"));
+    let read = rail.register(group).inspect_err(|e| warn!(namespace = group, error = %e, "ring state: the record is unreadable, so every set offered is dropped, to be sent again once it reads"));
     let read = read.unwrap_or_default();
     let keys = read.members.into_keys().chain(read.removed.into_keys());
     svrngs_db::Binds::new(keys, crate::peer_wire::ASK_ROOM_BYTES)
@@ -662,18 +663,16 @@ pub(crate) fn bound(rail: &RingRail, group: &str) -> svrngs_db::Binds {
 /// Each app database this computer keeps in `group`
 /// ([`crate::folder::Folders::kept`]), exchanged with the member at `to`,
 /// after the record's in the same round (the app-state
-/// spike's `exchange`, svrn-docs `rings/current/app-state-spike/spike.patch:1355-1401`):
-/// its waiting sets judged again by the record, then a call a chunk, each
-/// giving what the member's last ask lacks and taking what the member's
-/// answer gives, until neither moves or the chunks are spent.
+/// spike's `exchange`, svrn-docs `rings/current/app-state-spike/spike.patch:1355-1401`),
+/// so a set's key the record's exchange just brought is bound here: a call
+/// a chunk, each giving what the member's last ask lacks and taking what the
+/// member's answer gives, until neither moves or the chunks are spent.
 async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>]) {
     let bound = Arc::new(bound(&host.rail, group));
     // The member called, the computer its sets are signed by, which a full
     // answer's marks for its own sites are taken on the word of.
     let from = svrngs_db::Device::parse(&key_actor(&to.1.key));
     for db in kept {
-        let judge = bound.clone();
-        let again = off(db, move |db| db.rejudge(&*judge)).await;
         let mut theirs: Option<svrngs_db::Ask> = None;
         for chunk in 1..=MAX_CHUNKS_PER_EXCHANGE {
             let asked = theirs.take();
@@ -699,13 +698,16 @@ async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>
                 None => None,
             };
             let (took, answer) = ingested.unzip();
-            debug!(namespace = group, app = db.app, chunk, ?again, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
+            debug!(namespace = group, app = db.app, chunk, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
             let moved = took.as_ref().is_some_and(|t| {
                 t.as_ref().is_ok_and(|t| {
                     t.iter().any(|(_, t)| {
                         !matches!(
                             t,
-                            svrngs_db::Took::Held | svrngs_db::Took::Fault | svrngs_db::Took::Over
+                            svrngs_db::Took::Held
+                                | svrngs_db::Took::NotYet
+                                | svrngs_db::Took::Fault
+                                | svrngs_db::Took::Over
                         )
                     })
                 })
