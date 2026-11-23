@@ -18,7 +18,7 @@ pub(crate) const STARTING: &str = "Starting…";
 pub(crate) const SHARED_WHILE: &str = "Shared while you run it.";
 
 pub(crate) fn shared_while(lend: &crate::lend::Lend) -> Option<(&'static str, &'static str)> {
-    (cfg!(target_os = "linux")
+    (cfg!(any(target_os = "linux", target_os = "macos"))
         && matches!(lend.source, crate::lend::Source::Port(_))
         && lend.terms.keep.is_none())
     .then_some((SHARED_WHILE, RUN))

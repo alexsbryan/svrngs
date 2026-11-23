@@ -24,7 +24,7 @@ pub fn read(port: u16, name: &str) -> Facts {
 }
 
 fn prefill(port: u16, name: &str) -> Result<String, String> {
-    let sockets = host::ss(port)?;
+    let sockets = host::listeners(port)?;
     let first = sockets.first().ok_or("nothing listens on this port")?;
     let pid = *first.pids.first().ok_or("the listener could not be named")?;
     if !sockets.iter().all(|s| s.pids.as_slice() == [pid]) {

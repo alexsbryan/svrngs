@@ -4,13 +4,16 @@ use std::{num::NonZeroU16, path::Path, time::Duration};
 
 use anyhow::{Context, bail};
 use serde::Serialize;
-use svrngs_keeper::{card::Card, host, kept, runtime::Name, systemd::SystemdUser, unit};
+use svrngs_keeper::{card::Card, host, kept::Places, runtime::Name};
+#[cfg(target_os = "linux")]
+use svrngs_keeper::{kept, systemd::SystemdUser, unit};
 
+#[cfg(target_os = "linux")]
 use super::container_run;
 
 enum Source<'a> {
     Command(&'a [&'a str], Option<&'a Path>),
-    Card(&'a Path),
+    Card(#[cfg_attr(target_os = "macos", allow(dead_code))] &'a Path),
 }
 
 #[derive(Serialize)]
@@ -102,6 +105,9 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
         return say(outcome);
     }
     let (card, llama) = match source {
+        #[cfg(target_os = "macos")]
+        Source::Card(_) => bail!("On this Mac, Run needs a native command, not a container card."),
+        #[cfg(target_os = "linux")]
         Source::Card(file) => {
             let card = container_run::card(file)?;
             if port != card.door.port {
@@ -124,7 +130,7 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
             (Card::parse(&text)?, llama)
         }
     };
-    let (systemd, places) = (SystemdUser::system(), super::places()?);
+    let places = super::places()?;
     let _locks = (
         super::lock(&places, &format!("port-{port}"))?,
         super::lock(&places, &format!("name-{}", name.as_str()))?,
@@ -132,6 +138,23 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
     if let Some(outcome) = busy()? {
         return say(outcome);
     }
+    let (unit, ready, owned, state) = install(&places, &card, name.clone(), llama)?;
+    if owned {
+        say(Outcome::Verified { unit: &unit, port })
+    } else {
+        say(Outcome::Unverified { state, ready, port })
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn install(
+    places: &Places,
+    card: &Card,
+    name: Name,
+    llama: bool,
+) -> anyhow::Result<(String, bool, bool, Option<String>)> {
+    let systemd = SystemdUser::system();
+    let port = card.door.port;
     let unit = unit::unit_name(&name);
     let loaded = systemd.show(&unit, &["LoadState"]).map_err(anyhow::Error::msg)?;
     if places.unit_path(&name).exists() || loaded.trim() != "LoadState=not-found" {
@@ -143,14 +166,14 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
     }
     let native = card.native.is_some();
     let kept = if native {
-        kept::keep_card(&systemd, &places, &card, name.clone(), || {
+        kept::keep_card(&systemd, places, card, name.clone(), || {
             kept::boot(&systemd, super::terminal)
         })?
     } else {
-        container_run::install(&systemd, &places, &card, name.clone())?
+        container_run::install(&systemd, places, card, name.clone())?
     };
     let ready =
-        host::wait_for_answer(port, llama, Duration::from_secs(30)) && (native || container_run::healthy(&card, &name));
+        host::wait_for_answer(port, llama, Duration::from_secs(30)) && (native || container_run::healthy(card, &name));
     let shown = systemd.show(&kept.unit, &["ActiveState", "ControlGroup"]);
     let property = |key| shown.as_ref().ok()?.lines().find_map(|line| line.strip_prefix(key));
     let state = property("ActiveState=");
@@ -172,13 +195,43 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
             })
         });
     tracing::debug!(%unit, ?shown, ready, owned, "run: installed unit and port observed");
-    if owned {
-        say(Outcome::Verified { unit: &kept.unit, port })
-    } else {
-        say(Outcome::Unverified {
-            state: state.map(str::to_owned),
-            ready,
-            port,
-        })
-    }
+    Ok((kept.unit, ready, owned, state.map(str::to_owned)))
+}
+
+#[cfg(target_os = "macos")]
+fn install(
+    places: &Places,
+    card: &Card,
+    name: Name,
+    llama: bool,
+) -> anyhow::Result<(String, bool, bool, Option<String>)> {
+    use svrngs_keeper::{kept::Running, launchd};
+    places.install_agent(card, &name)?;
+    let port = card.door.port;
+    let ready = host::wait_for_answer(port, llama, Duration::from_secs(30));
+    let shown = places.agent(&name)?.observe();
+    let state = shown.as_ref().ok().map(|(status, _)| {
+        match status.running {
+            Running::Since(_) => "running",
+            Running::Starting => "starting",
+            Running::Stopped | Running::Failed(_) => "stopped",
+        }
+        .to_owned()
+    });
+    let witness = shown
+        .as_ref()
+        .ok()
+        .and_then(|(_, pid)| *pid)
+        .filter(|_| ready)
+        .map(|pid| host::owns(port, pid));
+    let owned = matches!(witness, Some(Ok(true)));
+    tracing::debug!(
+        port,
+        ?shown,
+        ?witness,
+        ready,
+        owned,
+        "run: installed agent and port observed"
+    );
+    Ok((launchd::label(&name), ready, owned, state))
 }

@@ -9,9 +9,11 @@
 
 pub mod card;
 pub mod check;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 pub mod host;
 pub mod kept;
+#[cfg(target_os = "macos")]
+pub mod launchd;
 pub mod machine;
 pub mod podman;
 pub mod promote;

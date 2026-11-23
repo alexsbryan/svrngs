@@ -7,6 +7,9 @@
 //! and of `/sys/fs/cgroup`: read now, never kept but as a grant. Linux
 //! alone; elsewhere a unit is never named, so nothing is granted.
 
+#[cfg(any(target_os = "macos", test))]
+pub(crate) mod mac;
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};

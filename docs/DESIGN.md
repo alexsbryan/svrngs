@@ -213,15 +213,16 @@ started by hand is shared only while it runs; sharing does not adopt,
 stop or copy it. On Linux, an enabled unit pulled in by the login target
 is evidence for sign-in, not for unattended disk unlock. Running a program
 with svrngs is separate from sharing it: `svrngs run <name> --port <port>
--- <command>` (or `--card <compose.yaml>` for one volume-only HTTP
-container, using the port named by the card) asks the sibling keeper to
-start it on Linux and writes no share. The CLI shows the keeper's boot
-consent prompt on the terminal and reads the answer there. The page's Run
-and controls have no terminal input, so they cannot ask for or turn on
-unattended startup. Run verifies readiness only with
-listeners in its active unit's
-cgroup subtree; otherwise it reports manager state and port readiness
-separately (`native_run.rs`). The home page's native Run asks for a name,
+-- <command>` asks the sibling keeper to start it on Linux or macOS and
+writes no share. Linux also takes `--card <compose.yaml>` for one volume-only
+HTTP container, using the port named by the card. On Linux the CLI shows
+the keeper's boot consent prompt at the terminal. The page has no terminal
+input and cannot turn on unattended startup. On macOS the program starts
+at sign-in; Stop takes its plist out of the login set until Start. Run
+verifies readiness with listeners in its active unit's cgroup subtree or
+with holders descended from the active launch agent. Otherwise it reports
+manager state and port readiness separately (`native_run.rs`); neither
+read approves sharing. The home page's native Run asks for a name,
 port, folder and command; the keeper parses quoting without running a
 shell. After Run verifies the program, the page points to **Already running
 here** to share it; the terminal gives a Share command for its verified port.

@@ -1,13 +1,22 @@
-//! Read Linux listeners and ask a known program what model it is serving.
+//! Read local listeners and ask a known program what model it is serving.
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
+#[cfg(target_os = "linux")]
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
+#[cfg(target_os = "linux")]
 use crate::promote::{Listen, listens};
+#[cfg(target_os = "macos")]
+mod mac;
+#[cfg(target_os = "macos")]
+pub use mac::{busy, listeners, llama_folder, owns};
+#[cfg(target_os = "linux")]
+pub use ss as listeners;
 
 /// The sockets on `port`, including the kernel's socket cgroup witness.
+#[cfg(target_os = "linux")]
 pub fn ss(port: u16) -> Result<Vec<Listen>, String> {
     let out = std::process::Command::new("/usr/bin/ss")
         .args(["-ltnpH", "--cgroup", "sport", "=", &format!(":{port}")])
@@ -21,6 +30,7 @@ pub fn ss(port: u16) -> Result<Vec<Listen>, String> {
     Ok(listeners)
 }
 
+#[cfg(target_os = "linux")]
 pub fn busy(port: u16) -> Result<Option<String>, String> {
     Ok(ss(port)?.first().map(|s| {
         s.pids
@@ -33,6 +43,7 @@ pub fn busy(port: u16) -> Result<Option<String>, String> {
 }
 
 /// Recognize llama-server, and resolve a relative model path in its folder.
+#[cfg(target_os = "linux")]
 pub fn llama_folder(pid: u32) -> Result<PathBuf, String> {
     let link = |file| {
         let path = format!("/proc/{pid}/{file}");

@@ -5,15 +5,18 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use anyhow::Context;
-use svrngs_keeper::kept::{self, Boot, Places, Stored};
+use svrngs_keeper::kept::{self, Places};
+#[cfg(not(target_os = "macos"))]
+use svrngs_keeper::kept::{Boot, Stored};
 use svrngs_keeper::runtime::Name;
+#[cfg(not(target_os = "macos"))]
 use svrngs_keeper::systemd::SystemdUser;
 
 #[cfg(target_os = "linux")]
 mod container_run;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 mod facts;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 mod native_run;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
@@ -23,7 +26,7 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
        svrngs-keeper list [--json]
        svrngs-keeper stop|start|restart|remove <name>
 
-  keep: run a native card (a compose.yaml with x-svrngs.native, or the
+  keep (Linux): run a native card (a compose.yaml with x-svrngs.native, or the
   folder it is in) here for good, as the systemd user unit
   svrngs-keeper-<name>.service. It starts again if it stops, and when you
   log in; when this computer starts, too, if you let your account run with
@@ -31,9 +34,9 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
   unless --name gives one. The same card again changes nothing; a new one
   replaces it, and the one before is kept beside it as previous.yaml.
 
-  facts: suggest a llama-server card to review, as JSON (Linux only).
+  facts: suggest a llama-server card to review, as JSON.
   list: each card kept here, and whether it runs.
-  stop: stop it until you start it, at boot too. start: run it again.
+  stop: stop it until you start it, including after signing in. start: run it again.
   restart: restart it if it is running.
   remove: run it here no longer. Its card and its folder stay.";
 
@@ -58,11 +61,18 @@ fn main() -> ExitCode {
 fn places() -> anyhow::Result<Places> {
     let home = std::env::var_os("HOME").context("HOME is not set, so there is no folder to keep cards in")?;
     let var = |k: &str| std::env::var(k).ok();
-    Ok(Places::of(
-        &PathBuf::from(home),
+    let home = PathBuf::from(home);
+    let places = Places::of(
+        &home,
         var("XDG_DATA_HOME").as_deref(),
         var("XDG_CONFIG_HOME").as_deref(),
-    ))
+    );
+    #[cfg(target_os = "macos")]
+    let places = Places {
+        units: home.join("Library/LaunchAgents"),
+        ..places
+    };
+    Ok(places)
 }
 
 fn run(args: &[String]) -> anyhow::Result<()> {
@@ -70,16 +80,23 @@ fn run(args: &[String]) -> anyhow::Result<()> {
     match args.as_slice() {
         ["facts", port] => return at_port(port, "llama-server"),
         ["facts", port, "--name", name] => return at_port(port, name),
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         ["run", name, rest @ ..] => return native_run::run(name, rest),
         #[cfg(target_os = "linux")]
         ["serve-card", rest @ ..] => return container_run::serve(rest),
         _ => (),
     }
-    run_card(&SystemdUser::system(), &places()?, &args)
+    #[cfg(target_os = "macos")]
+    {
+        run_agent(&places()?, &args)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        run_card(&SystemdUser::system(), &places()?, &args)
+    }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 fn at_port(port: &str, name: &str) -> anyhow::Result<()> {
     let port = port
         .parse::<std::num::NonZeroU16>()
@@ -88,11 +105,52 @@ fn at_port(port: &str, name: &str) -> anyhow::Result<()> {
     json(&facts::read(port.get(), name.as_str()))
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 fn at_port(_: &str, _: &str) -> anyhow::Result<()> {
-    anyhow::bail!("facts needs Linux to read listeners and suggest a command")
+    anyhow::bail!("facts needs Linux or macOS to read listeners and suggest a command")
 }
 
+#[cfg(target_os = "macos")]
+fn run_agent(places: &Places, args: &[&str]) -> anyhow::Result<()> {
+    match args {
+        ["list"] | ["list", "--json"] => {
+            let rows = kept::listed(places, |name| {
+                let agent = places.agent(name).map_err(|e| e.to_string())?;
+                if agent.installed() {
+                    agent.observe().map(|(status, _)| Some(status))
+                } else {
+                    Ok(None)
+                }
+            })?;
+            if args.len() == 2 {
+                return json(&rows);
+            }
+            for row in rows {
+                println!("{row}");
+            }
+        }
+        [verb @ ("start" | "stop" | "restart" | "remove"), name] => {
+            let name = Name::new(name)?;
+            let _lock = lock(places, &format!("name-{}", name.as_str()))?;
+            let agent = places.agent(&name)?;
+            if !agent.installed() {
+                return Err(kept::KeptError::NotKept(name.as_str().into()).into());
+            }
+            match *verb {
+                "start" => agent.start(),
+                "stop" => agent.stop(),
+                "restart" => agent.restart(),
+                _ => agent.remove(),
+            }
+            .map_err(anyhow::Error::msg)?;
+            println!("{}: {verb} requested", name.as_str());
+        }
+        _ => anyhow::bail!("on this Mac, use run, facts, list, stop, start, restart or remove"),
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
 fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Result<()> {
     #[cfg(target_os = "linux")]
     let _lock = match args {
@@ -144,7 +202,7 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 fn lock(places: &Places, key: &str) -> anyhow::Result<std::fs::File> {
     // Card commands still serialize writes, without reading any live process.
     let dir = places.data.join("locks");
@@ -159,6 +217,7 @@ fn lock(places: &Places, key: &str) -> anyhow::Result<std::fs::File> {
     Ok(file)
 }
 
+#[cfg(not(target_os = "macos"))]
 fn keep(systemd: &SystemdUser, places: &Places, card: &str, name: Option<&str>) -> anyhow::Result<()> {
     let mut path = PathBuf::from(card);
     if path.is_dir() {
@@ -197,6 +256,7 @@ fn json(value: &impl serde::Serialize) -> anyhow::Result<()> {
 }
 
 /// Ask `question` if stdin is a terminal; `None` when it is not.
+#[cfg(not(target_os = "macos"))]
 fn terminal(question: &str) -> Option<bool> {
     use std::io::{IsTerminal, Write};
     std::io::stdin().is_terminal().then(|| {

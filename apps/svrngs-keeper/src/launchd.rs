@@ -1,102 +1,289 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0
-fn launchd_plist_path() -> Result<PathBuf, String> {
-    let home = dirs::home_dir().ok_or_else(|| "cannot resolve home directory".to_string())?;
-    Ok(home
-        .join("Library")
-        .join("LaunchAgents")
-        .join("com.svrnmesh.daemon.plist"))
+//! The login manager owns lifetime; only our own plist may be booted out.
+
+use std::{
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
+    process::{Command, Output},
+};
+
+use crate::{
+    card::Native,
+    kept::{Running, Starts, Status},
+    runtime::Name,
+};
+
+pub fn label(name: &Name) -> String {
+    format!("svrngs-keeper-{}", name.as_str())
 }
 
-/// PATH as seen by the shell that ran `install-service`: host-kit's
-/// (`host_kit::service::captured_path` says why it is captured).
-#[cfg(any(target_os = "macos", target_os = "linux"))]
-fn captured_path() -> String {
-    host_kit::service::captured_path()
-}
-
-// Both XML-carrying backends need this: the launchd plist and the Windows
-// task definition break identically on a path containing `&`. Gated to
-// macOS alone until the Windows backend landed, and the cross-compile gate
-// is what said so rather than a Windows user.
-#[cfg(any(target_os = "macos", target_os = "windows"))]
 fn xml_escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
+        .replace('\r', "&#13;")
 }
 
-#[cfg(target_os = "macos")]
-#[allow(clippy::disallowed_methods)] // real $HOME: fills the launchd plist's {HOME} placeholder
-fn install_launchd(bin_path: &Path) -> Result<(), String> {
-    // Remove any leftover legacy (com.sovereign.daemon) registration first so an
-    // upgrading user doesn't end up with two daemons fighting over the API port.
-    migrate_legacy_service();
-
-    let home = dirs::home_dir().ok_or_else(|| "cannot resolve home directory".to_string())?;
-    let plist_path = launchd_plist_path()?;
-
-    // Resolve the data root (prefers ~/.svrnmesh, falls back to a populated
-    // legacy ~/.sovereign). Using the resolved root for the daemon's logs +
-    // working dir means we never pre-create an empty ~/.svrnmesh here, which
-    // would otherwise defeat the startup data-dir migration's existence guard.
-    let data_dir = sovereign_contracts::rebrand::svrnmesh_root();
-
-    // Make sure logs directory exists — launchd refuses to start if
-    // StandardOutPath's parent is missing.
-    let logs_dir = data_dir.join("logs");
-    std::fs::create_dir_all(&logs_dir)
-        .map_err(|e| format!("create {}: {e}", logs_dir.display()))?;
-
-    let content = LAUNCHD_TEMPLATE
-        .replace("{BINARY}", &bin_path.to_string_lossy())
-        .replace("{DATA_DIR}", &data_dir.to_string_lossy())
-        .replace("{HOME}", &home.to_string_lossy())
-        .replace("{PATH}", &xml_escape(&captured_path()));
-
-    if let Some(parent) = plist_path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| format!("create {}: {e}", parent.display()))?;
-    }
-    std::fs::write(&plist_path, content)
-        .map_err(|e| format!("write {}: {e}", plist_path.display()))?;
-
-    // If the agent is already loaded (re-setup), unload first so load picks
-    // up the fresh binary path. Ignore errors — might not be loaded yet.
-    let _ = std::process::Command::new("launchctl")
-        .args(["unload", plist_path.to_string_lossy().as_ref()])
-        .output();
-
-    let out = std::process::Command::new("launchctl")
-        .args(["load", plist_path.to_string_lossy().as_ref()])
-        .output()
-        .map_err(|e| format!("launchctl load: {e}"))?;
-
-    if !out.status.success() {
-        let stderr = String::from_utf8_lossy(&out.stderr);
-        return Err(format!("launchctl load failed: {}", stderr.trim()));
-    }
-
-    Ok(())
+fn render(label: &str, native: &Native, home: &str, log: &str) -> Result<String, String> {
+    use std::os::unix::fs::PermissionsExt;
+    let path = |s: &str| match s {
+        "~" => home.to_owned(),
+        s => s
+            .strip_prefix("~/")
+            .map_or_else(|| s.to_owned(), |tail| format!("{home}/{tail}")),
+    };
+    let string = |s: &str| format!("<string>{}</string>", xml_escape(s));
+    let mut words = native.command.iter();
+    let bin = path(words.next().expect("card has a command"));
+    let folder = path(&native.folder);
+    let search = crate::systemd::captured_path();
+    // launchd's Program key takes an absolute path. Resolve a bare command
+    // in the caller's PATH once, without asking a shell to expand arguments.
+    let program = if bin.contains('/') {
+        Path::new(&folder).join(&bin)
+    } else {
+        std::env::split_paths(&search)
+            .map(|dir| Path::new(&folder).join(dir).join(&bin))
+            .find(|file| fs::metadata(file).is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0))
+            .ok_or_else(|| format!("cannot find {bin} in PATH; give its full path"))?
+    };
+    let program = program.to_str().ok_or("the program path is not UTF-8")?;
+    let args = std::iter::once(string(native.argv0.as_deref().unwrap_or(program)))
+        .chain(words.map(|word| string(&path(word))))
+        .collect::<String>();
+    Ok(format!(
+        include_str!("launchd.plist"),
+        label = string(label),
+        program = string(program),
+        args = args,
+        folder = string(&folder),
+        log = string(log),
+        path = string(&search),
+    ))
 }
 
-#[cfg(target_os = "macos")]
-fn uninstall_launchd() -> Result<(), String> {
-    let plist_path = launchd_plist_path()?;
-    if !plist_path.exists() {
-        return Ok(());
-    }
-
-    // Best-effort unload; failure is not fatal (might already be unloaded).
-    let _ = std::process::Command::new("launchctl")
-        .args(["unload", plist_path.to_string_lossy().as_ref()])
-        .output();
-
-    std::fs::remove_file(&plist_path)
-        .map_err(|e| format!("remove {}: {e}", plist_path.display()))?;
-
-    Ok(())
+pub struct Agent {
+    domain: String,
+    target: String,
+    label: String,
+    path: PathBuf,
+    parked: PathBuf,
 }
 
-// ─── Linux (systemd --user) ────────────────────────────────────────
+impl Agent {
+    pub fn new(agents: &Path, name: &Name) -> Result<Self, String> {
+        let uid = Command::new("/usr/bin/id")
+            .arg("-u")
+            .output()
+            .map_err(|e| e.to_string())?;
+        let uid = String::from_utf8_lossy(&uid.stdout);
+        let uid = uid.trim().parse::<u32>().map_err(|_| "cannot read the account id")?;
+        let label = label(name);
+        let domain = format!("gui/{uid}");
+        Ok(Self {
+            target: format!("{domain}/{label}"),
+            domain,
+            path: agents.join(format!("{label}.plist")),
+            parked: agents.join(format!("{label}.stopped")),
+            label,
+        })
+    }
 
-#[cfg(target_os = "linux")]
+    fn call(&self, args: &[&str]) -> Result<Output, String> {
+        let out = Command::new("/bin/launchctl")
+            .args(args)
+            .output()
+            .map_err(|e| format!("launchctl: {e}"))?;
+        tracing::debug!(?args, status = %out.status, "launchd:answered");
+        Ok(out)
+    }
+
+    fn checked(&self, args: &[&str]) -> Result<(), String> {
+        let out = self.call(args)?;
+        if out.status.success() {
+            Ok(())
+        } else {
+            Err(format!(
+                "launchctl {}: {}",
+                args[0],
+                String::from_utf8_lossy(&out.stderr).trim()
+            ))
+        }
+    }
+
+    fn show(&self) -> Result<Option<String>, String> {
+        let out = self.call(&["print", &self.target])?;
+        if out.status.success() {
+            Ok(Some(String::from_utf8_lossy(&out.stdout).into_owned()))
+        } else if out.status.code() == Some(113) {
+            Ok(None)
+        } else {
+            Err(format!(
+                "launchctl print: {}",
+                String::from_utf8_lossy(&out.stderr).trim()
+            ))
+        }
+    }
+
+    fn ours(&self) -> Result<Option<String>, String> {
+        let shown = self.show()?;
+        if let Some(shown) = &shown {
+            let path = value(shown, "path = ")
+                .map(Path::new)
+                .and_then(|p| p.canonicalize().ok());
+            if path.is_none() || path != self.path.canonicalize().ok() || !self.path.is_file() {
+                tracing::debug!(target = %self.target, ?path, "launchd:refused_foreign_registration");
+                return Err("that name is already registered from a different setup".into());
+            }
+        }
+        Ok(shown)
+    }
+
+    pub fn installed(&self) -> bool {
+        self.path.exists() || self.parked.exists()
+    }
+
+    pub fn require_new(&self) -> Result<(), String> {
+        if self.installed() || self.show()?.is_some() {
+            tracing::debug!(target = %self.target, "launchd:existing_setup");
+            return Err(
+                "this name already has a setup here; start it again, or remove it before running a new command".into(),
+            );
+        }
+        Ok(())
+    }
+
+    pub fn install(&self, native: &Native, dir: &Path) -> Result<(), String> {
+        use std::os::unix::fs::OpenOptionsExt;
+        let agents = self.path.parent().expect("agent has a directory");
+        let home = agents
+            .ancestors()
+            .nth(2)
+            .and_then(Path::to_str)
+            .ok_or("the home path is not UTF-8")?;
+        let log = dir.join("program.log");
+        let content = render(
+            &self.label,
+            native,
+            home,
+            log.to_str().ok_or("the log path is not UTF-8")?,
+        )?;
+        fs::create_dir_all(agents).map_err(|e| format!("create {}: {e}", agents.display()))?;
+        fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&self.path)
+            .and_then(|mut file| file.write_all(content.as_bytes()))
+            .map_err(|e| format!("write {}: {e}", self.path.display()))?;
+        self.start()
+    }
+
+    pub fn start(&self) -> Result<(), String> {
+        if self.ours()?.is_some() {
+            return Ok(());
+        }
+        if self.parked.exists() {
+            self.move_plist(&self.parked, &self.path)?;
+        }
+        let path = self.path.to_str().ok_or("the setup path is not UTF-8")?;
+        self.checked(&["bootstrap", &self.domain, path])
+    }
+
+    fn bootout(&self) -> Result<(), String> {
+        if self.ours()?.is_some() {
+            self.checked(&["bootout", &self.target])?;
+            // launchctl can return while teardown is still in flight (web/install.sh).
+            let step = std::time::Duration::from_millis(100);
+            for _ in 0..100 {
+                if self.show()?.is_none() {
+                    return Ok(());
+                }
+                std::thread::sleep(step);
+            }
+            return Err("launchd did not finish unregistering the program".into());
+        }
+        Ok(())
+    }
+
+    fn move_plist(&self, from: &Path, to: &Path) -> Result<(), String> {
+        if to.exists() {
+            return Err(format!("{} already exists", to.display()));
+        }
+        fs::rename(from, to).map_err(|e| format!("move {} to {}: {e}", from.display(), to.display()))
+    }
+
+    pub fn stop(&self) -> Result<(), String> {
+        self.bootout()?;
+        // No login plist and no persistent launchctl override to leave behind.
+        if self.path.exists() {
+            self.move_plist(&self.path, &self.parked)?;
+        }
+        Ok(())
+    }
+
+    pub fn restart(&self) -> Result<(), String> {
+        if self.observe()?.1.is_some() {
+            self.checked(&["kickstart", "-k", &self.target])?;
+        }
+        Ok(())
+    }
+
+    pub fn remove(&self) -> Result<(), String> {
+        self.bootout()?;
+        for path in [&self.path, &self.parked] {
+            if path.exists() {
+                fs::remove_file(path).map_err(|e| format!("remove {}: {e}", path.display()))?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn observe(&self) -> Result<(Status, Option<u32>), String> {
+        let Some(shown) = self.ours()? else {
+            let starts = if self.parked.is_file() && !self.path.exists() {
+                Starts::ByHand
+            } else {
+                return Err("its login setup is not loaded".into());
+            };
+            return Ok((
+                Status {
+                    running: Running::Stopped,
+                    starts,
+                    restarts: 0,
+                },
+                None,
+            ));
+        };
+        let state = value(&shown, "state = ").ok_or("launchctl gave no state")?;
+        let pid = value(&shown, "pid = ")
+            .and_then(|p| p.parse::<u32>().ok())
+            .filter(|p| *p > 0);
+        let runs = value(&shown, "runs = ")
+            .and_then(|p| p.parse::<u32>().ok())
+            .ok_or("launchctl gave no run count")?;
+        let running = match (state, pid) {
+            ("running", Some(_)) => Running::Since(None),
+            ("running", None) => return Err("launchctl gave no running pid".into()),
+            _ => Running::Starting,
+        };
+        tracing::debug!(target = %self.target, state, ?pid, runs, "launchd:observed");
+        Ok((
+            Status {
+                running,
+                starts: Starts::AtLogin,
+                restarts: runs.saturating_sub(1),
+            },
+            pid.filter(|_| state == "running"),
+        ))
+    }
+}
+
+fn value<'a>(shown: &'a str, key: &str) -> Option<&'a str> {
+    // Only the outer job properties, not a nested endpoint or resource.
+    shown
+        .lines()
+        .find_map(|line| line.strip_prefix('\t')?.strip_prefix(key))
+}

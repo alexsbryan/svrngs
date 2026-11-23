@@ -997,6 +997,12 @@ a live wrapper (`ExecStop`), and also cleans up after an exit (`ExecStopPost`)
 so canceling the pending restart cannot strand a serving pod. The keeper manages
 its services through the OS; `scripts/lean_check.py` guards against direct
 process signaling (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` N1).
+On macOS, `src/launchd.rs` installs a native command as a login agent; Stop
+boots it out and parks its plist under a non-login suffix. `src/host/mac.rs`
+uses a system-wide TCP listener read for the busy check and `lsof` and `ps`
+for holder, working folder and lineage observations. The readiness witness
+in the keeper does not grant renewal; the node reads its own agent's login
+registration in `job/mac.rs`.
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

@@ -28,7 +28,7 @@ pub(crate) async fn keeper<'a>(
     view: &RunView,
     args: impl IntoIterator<Item = &'a str>,
 ) -> Result<Vec<u8>, String> {
-    if !cfg!(target_os = "linux") {
+    if !cfg!(any(target_os = "linux", target_os = "macos")) {
         return Err(RUN_UNREAD.into());
     }
     let at = std::env::current_exe().map_err(|_| RUN_UNREAD)?;
@@ -176,11 +176,26 @@ impl Share<'_> {
 }
 
 pub(crate) fn own_return() -> Return {
+    #[cfg(target_os = "macos")]
+    if job::mac::door_at_login(Some(std::process::id())).is_some() {
+        return Return::SignIn;
+    }
     #[cfg(target_os = "linux")]
     if let Some(Answer::Job { unit, .. }) = job::of(std::process::id(), crate::uid::mine().ok()) {
         return service_return(&unit);
     }
     Return::Unknown
+}
+
+pub fn installed_door_return() -> Return {
+    #[cfg(target_os = "macos")]
+    {
+        job::mac::door_at_login(None).map_or(Return::Unknown, |()| Return::SignIn)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        service_return("svrngs.service")
+    }
 }
 
 pub fn service_return(unit: &str) -> Return {

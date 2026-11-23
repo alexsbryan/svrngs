@@ -32,6 +32,9 @@ pub enum KeptError {
     File { path: PathBuf, why: String },
     #[error("{0}")]
     Systemd(String),
+    #[cfg(target_os = "macos")]
+    #[error("{0}")]
+    Manager(String),
 }
 
 fn file(path: &Path) -> impl FnOnce(std::io::Error) -> KeptError + '_ {
@@ -72,6 +75,23 @@ impl Places {
 
     pub fn unit_path(&self, name: &Name) -> PathBuf {
         self.units.join(unit_name(name))
+    }
+
+    #[cfg(target_os = "macos")]
+    pub fn agent(&self, name: &Name) -> Result<crate::launchd::Agent, KeptError> {
+        crate::launchd::Agent::new(&self.units, name).map_err(KeptError::Manager)
+    }
+
+    #[cfg(target_os = "macos")]
+    pub fn install_agent(&self, card: &Card, name: &Name) -> Result<(), KeptError> {
+        let native = card
+            .native
+            .as_ref()
+            .ok_or_else(|| KeptError::NotNative(card.title.clone()))?;
+        let agent = self.agent(name)?;
+        agent.require_new().map_err(KeptError::Manager)?;
+        store(self, card, name)?;
+        agent.install(native, &self.card_dir(name)).map_err(KeptError::Manager)
     }
 }
 
@@ -213,26 +233,7 @@ pub fn install(
     content: &str,
 ) -> Result<Kept, KeptError> {
     let boot = boot();
-    let dir = places.card_dir(&name);
-    let (path, previous) = (dir.join("compose.yaml"), dir.join("previous.yaml"));
-    let before = std::fs::read_to_string(&path).ok();
-    let text = &card.text;
-    let stored = match &before {
-        None => Stored::New,
-        Some(b) if b == text => Stored::Same,
-        Some(_) => Stored::Changed {
-            previous: previous.clone(),
-            restarted: false,
-        },
-    };
-    tracing::debug!(name = name.as_str(), ?stored, "card read");
-    if stored != Stored::Same {
-        std::fs::create_dir_all(&dir).map_err(file(&dir))?;
-        if let Some(before) = &before {
-            std::fs::write(&previous, before).map_err(file(&previous))?;
-        }
-        std::fs::write(&path, text).map_err(file(&path))?;
-    }
+    let stored = store(places, card, &name)?;
     let (unit, unit_path) = (unit_name(&name), places.unit_path(&name));
     let unit_before = std::fs::read_to_string(&unit_path).ok();
     let user_unit = UserUnit {
@@ -267,6 +268,30 @@ pub fn install(
         port: card.door.port,
         stored,
     })
+}
+
+fn store(places: &Places, card: &Card, name: &Name) -> Result<Stored, KeptError> {
+    let dir = places.card_dir(name);
+    let (path, previous) = (dir.join("compose.yaml"), dir.join("previous.yaml"));
+    let before = std::fs::read_to_string(&path).ok();
+    let text = &card.text;
+    let stored = match &before {
+        None => Stored::New,
+        Some(b) if b == text => Stored::Same,
+        Some(_) => Stored::Changed {
+            previous: previous.clone(),
+            restarted: false,
+        },
+    };
+    tracing::debug!(name = name.as_str(), ?stored, "card read");
+    if stored != Stored::Same {
+        std::fs::create_dir_all(&dir).map_err(file(&dir))?;
+        if let Some(before) = &before {
+            std::fs::write(&previous, before).map_err(file(&previous))?;
+        }
+        std::fs::write(&path, text).map_err(file(&path))?;
+    }
+    Ok(stored)
 }
 
 /// A kept card, by name: its unit must be installed.
@@ -435,6 +460,24 @@ pub fn status(show: &str, lingers: Result<bool, String>) -> Result<Status, Strin
 
 /// Every card kept here, in name order.
 pub fn list(systemd: &SystemdUser, places: &Places) -> Result<Vec<Row>, KeptError> {
+    let lingers = systemd.lingers();
+    listed(places, |name| {
+        if !places.unit_path(name).exists() {
+            return Ok(None);
+        }
+        let mut properties = SHOWN.to_vec();
+        properties.push("ActiveEnterTimestamp");
+        systemd
+            .show(&unit_name(name), &properties)
+            .and_then(|show| status(&show, lingers.clone()))
+            .map(Some)
+    })
+}
+
+pub fn listed(
+    places: &Places,
+    observe: impl Fn(&Name) -> Result<Option<Status>, String>,
+) -> Result<Vec<Row>, KeptError> {
     let mut names = match std::fs::read_dir(&places.data) {
         Ok(entries) => entries
             .flatten()
@@ -445,14 +488,10 @@ pub fn list(systemd: &SystemdUser, places: &Places) -> Result<Vec<Row>, KeptErro
         Err(e) => return Err(file(&places.data)(e)),
     };
     names.sort();
-    let lingers = systemd.lingers();
-    Ok(names
-        .into_iter()
-        .map(|name| row(systemd, places, name, &lingers))
-        .collect())
+    Ok(names.into_iter().map(|name| row(places, name, &observe)).collect())
 }
 
-fn row(systemd: &SystemdUser, places: &Places, name: String, lingers: &Result<bool, String>) -> Row {
+fn row(places: &Places, name: String, observe: &impl Fn(&Name) -> Result<Option<Status>, String>) -> Row {
     let unread = |why: String| {
         tracing::debug!(name, why, "could not read");
         Row::Unread {
@@ -469,20 +508,13 @@ fn row(systemd: &SystemdUser, places: &Places, name: String, lingers: &Result<bo
         Ok(Err(why)) => return unread(why.to_string()),
         Err(why) => return unread(why.to_string()),
     };
-    if !places.unit_path(&n).exists() {
-        return Row::Removed { name, dir };
-    }
-    let mut properties = SHOWN.to_vec();
-    properties.push("ActiveEnterTimestamp");
-    match systemd
-        .show(&unit_name(&n), &properties)
-        .and_then(|show| status(&show, lingers.clone()))
-    {
-        Ok(status) => Row::Kept {
+    match observe(&n) {
+        Ok(Some(status)) => Row::Kept {
             name,
             port: card.door.port,
             status,
         },
+        Ok(None) => Row::Removed { name, dir },
         Err(why) => unread(why),
     }
 }

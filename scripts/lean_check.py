@@ -44,6 +44,7 @@ PLAN_IO = re.compile(
 NODE_COMMAND = {
     "plan/run.rs": 'Command::new(at.with_file_name("svrngs-keeper"))',
     "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
+    "job/mac.rs": 'Command::new("/bin/launchctl").args(["print",&target])',
     "home.rs": "Command::new(opener);",
     "network.rs": 'Command::new("/usr/sbin/scutil");',
     "update.rs": 'Command::new("tar")',
@@ -983,10 +984,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # avail-run-page-copy spends 10 non-JS of the release reserve on the shared
 # Run confirmation, its two next steps and the keeper's verified port.
 # avail-run-stdio spends 9 more on explicit stdio at that same keeper call.
+# avail-run-mac adds the read-only sign-in observation for svrngs's own agent.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25563,
+    ".": 25602,
 
     "js": 8732,
 
