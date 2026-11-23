@@ -360,6 +360,8 @@ Movie Night's startup is B's own: a module held in flight.
    its `main` through as_main.rs `installed_from` (`Scene::runs`), made
    from the tag by scenes/last-release.sh into `target/last-release/` or
    named by `SCENES_LAST_RELEASE`; with neither, the scene is never-ran.
+   It is `#[ignore]`d, so the scenes step lists it ignored and never runs
+   it: a release runs it by name, as DESIGN §7's recorded run.
    Sampled with `lsof` over the scenes step's whole process tree
    (demo/runs/flakes/2026-11-13): every scene's svrngs opened 421 sockets
    to loopback and 13 to this host's LAN address (night's room), none

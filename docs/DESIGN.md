@@ -3034,6 +3034,20 @@ never-ran.
 - Each with the open-files limit raised as `scripts/check.sh` raises it,
   since W1's seeds open more than a login's 1,024 at once.
 
+Beside them, each release records the mixed scene
+(`crates/svrngs/tests/scenes/mixed.rs`): one group where a computer runs
+v1.13.3, the last release with no app databases, beside two that run the
+release's commit, until it upgrades to it. It compares a release with the
+last one, so it runs once a release and not in every check, where it is
+ignored. It is recorded under `demo/runs/<version>/mixed/`, with its
+command and its verdict.
+1. `sh crates/svrngs/tests/scenes/last-release.sh` makes v1.13.3's binary
+   in `target/last-release/`, once a checkout; or `SCENES_LAST_RELEASE`
+   names one already made.
+2. `cargo test -p svrngs --test scenes mixed::mixed::chromium -- --ignored
+   --nocapture`, under the gate lock. Without the binary the scene is
+   never-ran, and says which command makes it.
+
 sign and page read the commit's `cli::SHIPPED` (§3, "Where a computer meets
 its groups"): a build at n0's relays they go on with and say so; a build at
 svrngs's they refuse while the relay `DEFAULT_RELAY` names does not answer

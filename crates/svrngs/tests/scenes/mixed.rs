@@ -25,7 +25,8 @@
 //!
 //! v1.13.3 runs as this build's people do: its own test binary as its
 //! src/main.rs's `main`, at the scenes' build relay on 127.0.0.1
-//! ([`last_release`]).
+//! ([`last_release`]). The scene runs once a release, by name, out of the
+//! gate (`mixed::chromium`).
 
 use std::path::PathBuf;
 use std::time::Duration;
@@ -248,16 +249,30 @@ fn runs_their_yes(who: &Person, from: u64, person: &str) -> bool {
     })
 }
 
-scene!(
-    /// Planted, each watched failing, in ring_sync.rs `states`: a member
-    /// that doesn't answer the state route asked again until it does
-    /// (`for chunk in 1..`, `None => continue`), and Ana's computer asked
-    /// Bo's 305,998 times in one round that never ended, so Cy's fridge
-    /// never showed goose; asked again within the round's chunks alone
-    /// (`None => continue`), and Ana's computer asked it at a round's
-    /// second chunk ([`rounds_go_on`]).
-    mixed
-);
+/// The scene played as `scene!` plays one, in its place
+/// `target/scenes/mixed-chromium`, but ignored: it compares a release with
+/// the last one, so it is a release's recorded run (docs/DESIGN.md §7,
+/// beside each target's tests), run by name with `--ignored`, and the
+/// gate's scenes step lists it ignored and never runs it.
+///
+/// Planted, each watched failing, in ring_sync.rs `states`: a member that
+/// doesn't answer the state route asked again until it does (`for chunk in
+/// 1..`, `None => continue`), and Ana's computer asked Bo's 305,998 times
+/// in one round that never ended, so Cy's fridge never showed goose; asked
+/// again within the round's chunks alone (`None => continue`), and Ana's
+/// computer asked it at a round's second chunk ([`rounds_go_on`]).
+#[expect(
+    clippy::module_inception,
+    reason = "named as scene! names a scene's test, <file>::<scene>::<engine>, which docs/seams.tsv and the gate's step read"
+)]
+mod mixed {
+    #[tokio::test(flavor = "multi_thread")]
+    #[ignore = "a release's recorded run (docs/DESIGN.md §7): last-release.sh, then this by name with --ignored"]
+    async fn chromium() {
+        let played = super::mixed(crate::harness::Engine::Chromium);
+        crate::people::judged("mixed-chromium".into(), played).await
+    }
+}
 async fn mixed(engine: Engine) {
     let scene = Scene::new("mixed", engine).await;
     let Some(last) = last_release(&scene) else {
