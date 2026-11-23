@@ -120,7 +120,12 @@ step "web rustfmt and clippy" scripts/build-web.sh --lint
 # Without Playwright or its browsers it fails naming the install command;
 # it never skips. A lent film here is its bytes through the lend's worker
 # (main.rs `film_answered`); its playing is the `playback` step's, below.
-step "browser" cargo test --quiet --workspace --test browser -- --skip playback::
+# The channel-close case measures a wall-clock fallback; give each engine
+# the browser to itself so the parallel suite doesn't spend its 4 s budget.
+relay_fallback=webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::
+step "browser" cargo test --quiet --workspace --test browser -- --skip playback:: --skip "$relay_fallback"
+step "relay fallback" cargo test --quiet -p svrngs-node --test browser "$relay_fallback" -- --test-threads=1
+! reached "relay fallback" || grep -qE '^test result: (ok\. 2 passed;|FAILED)' /tmp/svrngs-check.$$ || { echo "never-ran  relay fallback: expected the Chromium and WebKit cases"; failed=1; }
 # The pages' types (jsconfig.json, and the service workers' in
 # jsconfig.workers.json, by scripts/types.mjs), checked against the wasm
 # glue's declaration built here, target/web/site/wasm/: the browser step
