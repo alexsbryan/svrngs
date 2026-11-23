@@ -643,6 +643,28 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - Size: a few words and lines. Counted within the reserve; JavaScript
     +0 if possible, as 10 JS lines remain under the ceiling.
 
+- [ ] avail-run-stdio — depends [avail-run-page] — ONE UNIT: the keeper call's stdio, a CLI regression from d4765ba5 (QA oc-cruu42, 2026-11-23).
+  - The shared `keeper()` in `plan/run.rs` uses Tokio's
+    `Command::output()`. That pipes stderr while stdin stays inherited.
+  - The keeper's boot consent prompt is written and flushed on stderr,
+    and waits for an answer from the terminal (the keeper's `main.rs`
+    `terminal`). So an interactive `svrngs run`, with linger off, waits
+    unseen until the 90 s deadline.
+  - A page Run, from a node hosted on a terminal, could also read that
+    terminal.
+  - Restore explicit stdio at the one bounded call:
+    - the CLI's Run inherits stdin and stderr, and pipes stdout for the
+      JSON, through `spawn` and `wait_with_output`, as before;
+    - the page and its controls set stdin to null explicitly: no prompt,
+      no unattended change.
+  - No new process seam, no UI option.
+  - Checks:
+    - the CLI through a pty with linger off: the prompt is seen and
+      answered. Plant: today's `output()`, which hangs or times out;
+    - the page from a node hosted on a terminal: it never reads the
+      terminal and never prompts.
+  - Size: a small counted patch, in the reserve.
+
 - [ ] avail-run-mac — depends [avail-unmagic] — ONE UNIT (keeper): spec §5 row 5.
   - Fork commonwealth-ai `svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0`,
     lines 296–395, as `launchd.rs`: unchanged first, with ported-from lines.
