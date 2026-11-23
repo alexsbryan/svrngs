@@ -848,7 +848,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     plants the withdrawal itself (`tests/door/live.rs`);
   - a concurrent withdrawal; a failed save; the busy port.
 
-- [ ] avail-webkit-alone — depends [avail-proof] — ONE UNIT (the gate's instrument, 0 counted): run the timing-bound relay case alone, as `playback::` already is (keeper-lead, from principles, with QA oc-cruu42's evidence; the operator asked for the jam cleared, 2026-11-23).
+- [x] avail-webkit-alone ed7d76801 — depends [avail-proof] — ONE UNIT (the gate's instrument, 0 counted): run the timing-bound relay case alone, as `playback::` already is (keeper-lead, from principles, with QA oc-cruu42's evidence; the operator asked for the jam cleared, 2026-11-23).
   - `webrtc_page::the_channel_closed_mid_film_completes_over_the_relay`,
     in both engines, asserts a 2,500–4,000 ms fallback
     (`webrtc_page.rs:186`).
