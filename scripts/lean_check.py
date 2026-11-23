@@ -31,6 +31,27 @@ ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().pare
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
 # The one file whose one function may allow `unsafe_code` (its `kernel`).
 UNSAFE_HOME = "crates/svrngs-node/src/uid.rs"
+# The pure availability decision and renderer, not the executor beside them.
+PLAN_PURE = {"crates/svrngs-node/src/plan.rs", "crates/svrngs-node/src/plan/words.rs"}
+PLAN_IO = re.compile(
+    r"\b(?:async|await|SystemTime|Instant|SystemRandom|Command)\b"
+    r"|\b(?:fs|io|net|env|process|thread|time|rand|tokio|reqwest|run)\s*(?:::|[,}])"
+    r"|\b(?:include_bytes|include_str|env|option_env|print|println|eprint|eprintln)\s*!"
+    r"|\bjob\s*::\s*(?!Keep\b)\w+"
+)
+# O3: app jobs are read here; only the executor may start the keeper. The
+# command's own restart is outside the node and acts on svrngs itself.
+NODE_COMMAND = {
+    "plan/run.rs": 'Command::new(at.with_file_name("svrngs-keeper"))',
+    "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
+    "job/mac.rs": ('Command::new("/bin/launchctl").args(["print",&target])',
+                   'Command::new("/bin/launchctl").args(["print-disabled",&domain])'),
+    "home.rs": "Command::new(opener);",
+    "network.rs": 'Command::new("/usr/sbin/scutil");',
+    "update.rs": 'Command::new("tar")',
+}
+# N1: the keeper asks the OS to manage its own services, not individual processes.
+PROCESS_SIGNAL = re.compile(r'\b(?:pidfd_send_signal|kill_process(?:_group)?)\b|\bkill\s*\(|\bCommand\s*::\s*new\s*\(\s*"(?:[^"\n]*/)?kill"')
 # An exemption from the lint, however spelled: `allow`, `expect` or `warn`,
 # alone or among other lints, inner or outer, under a `cfg_attr` too.
 EXEMPT = re.compile(r"\b(allow|expect|warn)\s*\(([^()]*[,\s])?unsafe_code\b")
@@ -1083,12 +1104,60 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # +27 (of the operator's +28), the JSON aggregates refused +3. Cut first:
 # INERT and its function list, the CHECK toggle in keep, one refusal for each
 # kind, the node's callers from +25 to +12. The cap to 27,386, where it lands.
+# Then the keeper's economizing pass before svrngs-renew, each cut lowering
+# its caps to one past where it lands
+# (demo/runs/economize/2026-11-keeper/SURVEY.md): door/bound.rs 6, 24,511;
+# share.rs 16, 24,495; uid.rs 20, 24,475. JavaScript: lend-change.js 3, 8,690;
+# lent-row.js 8, 8,682.
+# Then svrngs-renew, within the operator's envelope for it (2026-11-22,
+# "Those resources work for me": at most +180 and +30 JavaScript over the
+# pass's counts, ralph/next/keeper/CHARTER.md "Budget"), each step raised
+# to one past where it lands: bound.rs's wait moved into `mutated`, 24,483;
+# the job named and the kept lend renewed (job.rs, bound.rs `renewed`,
+# `Net::job`, `share::kept`, `Terms::keep`, `Hold::Changed`, `Answer::Job`),
+# 24,655, the envelope's whole +180; JavaScript, the row's words, 8,688.
+# Then avail-economize's pass before the available-by-default release, each
+# cut lowering its caps to one past where it lands
+# (demo/runs/economize/2026-11-22-available/SURVEY.md): door/bound.rs 11,
+# 24,644; uid.rs 8, 24,636. JavaScript: lent-row.js 18, 8,650.
+# Then avail-plan: the pure deployment fold, words and purity check land at
+# 24,945 (+309 of the release's +435 envelope; CHARTER, "The release").
+# Then avail-plan-economize folds the start verdicts together: 24,942.
+# Sharing the return wording's template brings it to 24,940.
+# Then avail-publish reserves revisions under the existing lend lock and
+# makes the access write conditional: 25,064 (+124, within the +435 envelope).
+# Then avail-terminal's replay and ordered owner results: 25,094 (+30,
+# within the raised envelope in keeper CHARTER, "The release").
+# Its terminal and owner adapters land at 25,499 (25,521 ceiling).
+# O3 pins the node's process calls and the executor's keeper entry at 25,513.
+# O4 keeps mechanism names out of the page's and planner's copy, at 25,521 and 8,651 JS.
+# Then avail-unmagic: cut the live takeover and add N1, to 25,336.
+# Then avail-run-linux: explicit Run and a fresh witness before saving a unit grant, to 25,424.
+# Then avail-run-page's review and confirmation reuse the share executor, at 25,502 and 8,680 JS.
+# Both doors then share the same service review, at 25,484 and 8,682 JS.
+# avail-run-page-copy spends 10 non-JS of the release reserve on the shared
+# Run confirmation, its two next steps and the keeper's verified port.
+# avail-run-stdio spends 9 more on explicit stdio at that same keeper call.
+# avail-run-mac adds the read-only sign-in observation for svrngs's own agent.
+# avail-run-mac-renew spends 105 for a shared live grant witness and plist registration.
+# avail-mac-plist-read spends 11 to parse the door's login plist, leaving 10 for shipping.
+# avail-ship packs both binaries under one checksum and adds the uninstall notice.
+# avail-page-prefill uses the existing Run route and form: +6 non-JS, +10 JS.
+# (2026-11-23) The keeper branch, squashed onto main 05896fb0 (the
+# operator: "Squash, with an archive tag"; keeper-archive-2026-11-23 holds its
+# 195 commits from 789707dc). The caps sum main's with the keeper's approved
+# growth over 789707dc's (24,518 and 8,694 exclusive): the keeper CHARTER's
+# 25,727 and 8,741 ("The envelope now") are +1,210 and +48. So 27,386 + 1,210
+# and 8,748 + 48: 28,596 and 8,796, to come down to where the squash lands.
+# It lands at 28,590 and 8,795. Keeping the keeper's group-free Run and Stop
+# gave up #7's two-line saving in running-here.js (its gate moved to MEMBERS),
+# so two single-use bindings in `Running` were inlined, -2 JS.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 27386,
+    ".": 28591,
 
-    "js": 8748,
+    "js": 8796,
 
     "swift": 1,
 }
@@ -1133,6 +1202,17 @@ def code_lines(base, kinds=CODE):
     return n
 
 
+def process_signals(paths):
+    for f in paths:
+        rel = f.relative_to(ROOT).as_posix()
+        if TEST_FILE.search(rel) or "/tests/" in rel:
+            continue
+        text = f.read_text(errors="replace")
+        for site in PROCESS_SIGNAL.finditer(text):
+            line = text.count("\n", 0, site.start()) + 1
+            yield f"{rel}:{line}: direct process signaling ({site[0]}), use only keeper-owned services (KEEP_IT_RUNNING_RELEASE N1)"
+
+
 def main():
     broken = []
     lock = ROOT / "Cargo.lock"
@@ -1161,6 +1241,20 @@ def main():
             broken.append(f"{rel} links std: the core is no_std, so I/O, clocks and threads stay outside it")
         if rel.startswith("crates/svrngs-core/") and re.search(r"\basync\b|\.await\b", text):
             broken.append(f"{rel} is async: the core stays synchronous (RUST_ARCH §2, §4)")
+        if rel in PLAN_PURE and (site := PLAN_IO.search(text)):
+            broken.append(f"{rel} uses {site[0]}: the share planner is pure; put effects in plan/run.rs (KEEP_IT_RUNNING_RELEASE P4)")
+        if not TEST_FILE.search(rel) and '/tests/' not in rel:
+            if '"svrngs-keeper"' in text and rel != "crates/svrngs-node/src/plan/run.rs":
+                broken.append(f"{rel}: only plan/run.rs may run the keeper (KEEP_IT_RUNNING_RELEASE O3)")
+            if (node := rel.removeprefix("crates/svrngs-node/src/")) != rel:
+                code = re.sub(r"\s+", "", text)
+                allowed = NODE_COMMAND.get(node, ())
+                for call in (allowed,) if isinstance(allowed, str) else allowed:
+                    code = code.replace(call, "", 1)
+                if "Command::new(" in code:
+                    broken.append(f"{rel}: an unlisted process call; the node may only read app jobs (KEEP_IT_RUNNING_RELEASE O3)")
+    broken.extend(process_signals(sorted([*(ROOT / "crates").glob("*/src/**/*.rs"),
+                                         *(ROOT / "apps/svrngs-keeper/src").rglob("*.rs")])))
     core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")

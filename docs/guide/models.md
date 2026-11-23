@@ -37,6 +37,30 @@ You lend coder (port 8101) to the groups you chose, as many at once as want it. 
 They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, /lora-adapters, /metrics, /tools, /cors-proxy, /models: svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.
 ```
 
+## Run coder with svrngs
+
+Trying a model in a terminal is fine. A **Shared while you run it** copy
+doesn't start again by itself. To have svrngs run coder, look for your
+terminal copy under **Already running here** and choose **Run it with svrngs**
+on its row. Review the suggested model path and command, and add any flags
+you need. Stop the terminal copy, then press Run. Or stop the copy and run
+this in a terminal, using your model's full path and flags:
+
+```
+svrngs run coder --port 8101 -- /usr/bin/llama-server -m "$HOME/models/my-model.gguf" --host 127.0.0.1 --port 8101
+```
+
+Use the path where you installed `llama-server` (for example
+`/opt/homebrew/bin/llama-server` on an Apple silicon Mac). A busy port is
+refused; svrngs never stops your terminal copy for you. Once coder answers,
+[share it as `coder`](#lend-your-llama-server). If you shared the terminal
+copy before, stop lending that copy, then share this one under the same name.
+Run itself shares nothing. The Share review says when your friends can open
+it again after a restart. To stop coder, open your home page (`svrngs open`)
+and choose **Stop coder** under **Already running here**. Its setup and
+model files stay in place. [Lend](lend.md#run-it-with-svrngs-then-share-it)
+explains start times and how to stop lending it separately.
+
 ## What svrngs keeps back, and why
 
 `--program llama-server` tells svrngs what it is, so it closes these parts to your friends without you typing anything:

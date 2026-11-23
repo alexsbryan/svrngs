@@ -1,0 +1,158 @@
+#!/bin/bash
+# Sent over SSH with the candidate archive, so staging and teardown have one owner.
+set -euo pipefail
+umask 077
+candidate=$1 short=$2
+export SOURCE_DATE_EPOCH=$3 SVRNGS_COMMIT=$2 TOKIO_WORKER_THREADS=4
+export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0
+root=$HOME/svrngs-keeper-scratch
+export CARGO_TARGET_DIR=$root/repo/target
+domain=gui/$(id -u)
+tags=(avail-run-mac mac-proof-lineage mac-proof-ownership mac-proof-managed mac-renew mac-renew-door)
+label() { printf '%s/svrngs-keeper-test-%s' "$domain" "$1"; }
+result() { printf 'release-case %s %s %s\n' "$1" "$2" "$3"; }
+
+# Refuse to inherit a previous run's scratch or take over any registration.
+for tag in "${tags[@]}"; do
+    code=0
+    launchctl print "$(label "$tag")" >/dev/null 2>&1 || code=$?
+    if [[ $code != 113 ]]; then
+        printf 'Preflight: %s not available (launchctl print exit=%s)\n' "$(label "$tag")" "$code"
+        exit 125
+    fi
+done
+launchctl print "$domain" >/dev/null || exit 125
+mkdir "$root" || exit 125
+cleanup() {
+    code=0
+    for tag in "${tags[@]}"; do
+        job=$(label "$tag")
+        status=0
+        registration=$(launchctl print "$job" 2>&1) || status=$?
+        if [[ $status == 0 && $registration == *"path = $root/"* ]]; then
+            launchctl bootout "$job" || code=1
+            for ((i=0; i<40; i++)); do
+                status=0
+                launchctl print "$job" >/dev/null 2>&1 || status=$?
+                [[ $status != 113 ]] || break
+                sleep .25
+            done
+            printf 'Cleanup: unloaded test agent %s (launchctl print exit=%s)\n' "$job" "$status"
+        fi
+        if [[ $status != 113 ]]; then
+            printf 'Cleanup: could not verify removal of %s (exit=%s)\n' "$job" "$status"
+            code=1
+        fi
+    done
+    cd "$HOME"
+    if [[ $code == 0 ]]; then
+        # Finder can write .DS_Store during the recursive removal.
+        for attempt in 1 2 3; do
+            if rm -rf "$root" && [[ ! -e $root && ! -L $root ]]; then
+                printf 'Cleanup: all six test labels absent (exit 113); removed %s\n' "$root"
+                result mac-cleanup 0 launchd
+                return
+            fi
+            printf 'Cleanup: scratch removal attempt %s/3 did not verify: %s\n' "$attempt" "$root"
+        done
+    fi
+    result mac-cleanup 1 launchd
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' HUP TERM
+tar -xf - -C "$root"
+actual=$(git get-tar-commit-id <"$root/source.tar")
+printf 'release-candidate %s\n' "$actual"
+[[ $actual == "$candidate" ]] || exit 1
+mkdir "$root/repo" "$root/tests-home"
+tar -xf "$root/source.tar" -C "$root/repo"
+cd "$root/repo"
+uname -sm
+cargo --version
+shasum -a 256 Cargo.lock "$root/qwen2.5-0.5b.gguf"
+
+demo=demo/runs/keeper/2026-11-23
+renew=$demo-mac-renew
+python=/usr/bin/python3
+pair=target/debug
+build() {
+    cargo build --locked --offline -p svrngs -p svrngs-keeper || return
+    local version
+    version=$("$pair/svrngs" version) || return
+    printf 'Build version: %s\n' "$version"
+    if [[ $version != *" ($short)" ]]; then
+        printf 'Candidate mismatch: expected svrngs version (%s)\n' "$short"
+        return 1
+    fi
+    shasum -a 256 "$pair/svrngs" "$pair/svrngs-keeper" || return
+    build_id=$1:$(shasum -a 256 "$pair/svrngs" "$pair/svrngs-keeper" | shasum -a 256 | cut -d' ' -f1)
+}
+
+# Match the gate's Node version; npm ci uses the candidate's web lockfile.
+browser_tools() {
+    local node=node-v24.22.3-darwin-arm64
+    local sha=1d64136c8a43d648d1b3bad10797a4c995b1ca032d2bde8799de43b37f058fe5
+    /usr/bin/curl -q -fsSL --retry 2 --max-time 120 \
+        "https://nodejs.org/dist/v24.22.3/$node.tar.xz" -o "$root/$node.tar.xz" &&
+        (cd "$root" && printf '%s  %s.tar.xz\n' "$sha" "$node" | shasum -a 256 -c -) &&
+        tar -xf "$root/$node.tar.xz" -C "$root" || return
+    export PATH="$root/$node/bin:$PATH" PLAYWRIGHT_BROWSERS_PATH="$root/browsers"
+    node --version && npm ci --prefix web --ignore-scripts --no-audit --no-fund &&
+        npx --prefix web --no-install playwright install chromium webkit
+}
+
+suite() (
+    local log=$root/$1-test.log code=0
+    export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
+    export HOME="$root/tests-home" TMPDIR="$root/tests-home"
+    export CFFIXED_USER_HOME="$HOME" SVRNGS_DIR="$HOME/node" XDG_DATA_HOME="$HOME/data"
+    if [[ $1 == node ]] && ! browser_tools; then
+        printf 'Preflight: scratch Node/Playwright setup failed; the node suite did not run\n'
+        return 125
+    fi
+    cargo test --locked --offline -p "svrngs-$1" >"$log" 2>&1 || code=$?
+    cat "$log"
+    if [[ $code == 0 ]] && ! grep -Eq '^test result: ok\. [1-9]' "$log"; then return 125; fi
+    return "$code"
+)
+
+step() {
+    local name=$1 build=$2 code=0
+    shift 2
+    printf 'Running %s (%s)\n' "$name" "$build"
+    "$@" || code=$?
+    result "$name" "$code" "$build"
+}
+
+step mac-keeper-tests darwin-arm64/cargo-test/svrngs-keeper suite keeper
+step mac-node-tests darwin-arm64/cargo-test/svrngs-node suite node
+
+build_id=none
+if build native; then
+    step mac-run "$build_id" "$python" -Bu "$demo-run-mac/run.py"
+    # The lifecycle driver derives its scratch root from its own location.
+    cp "$demo-mac-proof/proof.py" "$root/proof.py"
+    for case in lineage ownership managed; do
+        step "mac-proof-$case" "$build_id" "$python" -Bu "$root/proof.py" "$root/repo/$pair/svrngs-keeper" "$case"
+    done
+else
+    result mac-run 1 native-build
+fi
+
+# These two saved drivers need different fixture instrumentation; derive
+# each from the same archive before applying its existing controls.
+tar -cf "$root/originals.tar" crates/svrngs/src/cli.rs crates/svrngs-node/src/{job/mac,door/bound,uid}.rs
+if "$python" -B "$renew/controls.py" test && build renewal-fixture; then
+    step mac-renew "$build_id" "$python" -Bu "$renew/run.py" all
+else
+    result mac-renew 1 renewal-fixture-build
+fi
+tar -xf "$root/originals.tar"
+if "$python" -B "$renew/controls.py" plist && build plist-fixture; then
+    for case in formatted binary absent wrong-root malformed wrong-type; do
+        step "mac-plist-$case" "$build_id" "$python" -Bu "$renew/run.py" "plist-$case"
+    done
+else
+    result mac-plist-formatted 1 plist-fixture-build
+fi

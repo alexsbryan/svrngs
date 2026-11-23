@@ -416,6 +416,15 @@ pub struct Terms {
     /// downgrade lends nothing unbound.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub approved: Option<Approved>,
+    /// The unit its lender approved, renewed through the unit's restarts
+    /// (svrn-docs KEEP_SHARING_ON_RESTART §2, door/bound.rs `renewed`):
+    /// none when what they approved runs in no unit of theirs, or they
+    /// asked to choose again after each. An svrngs from before refuses it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub keep: Option<crate::job::Keep>,
+    /// A disk snapshot for renewal, absent in a draft or during a concurrent edit.
+    #[serde(skip)]
+    pub revision: Option<u64>,
 }
 
 /// What a declaration says beside a lend's [`Terms`]: the port it is
@@ -659,6 +668,8 @@ pub enum Hold {
     Unjudged,
     /// Its lender approved nothing on its port yet.
     Unapproved,
+    /// The unit its lender kept it to restarted with its files changed.
+    Changed,
 }
 
 /// What holds a lend's port, as read to show its lender, never compared
@@ -679,10 +690,17 @@ pub enum Answer {
     Account {
         account: String,
     },
+    /// A unit of this account's user manager ([`crate::job`]).
+    Job {
+        unit: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+    },
 }
 
 impl std::fmt::Display for Answer {
-    /// "python3 in ~/dev/garden", or "a program of the account _resolve".
+    /// "python3 in ~/dev/garden", "a program of the account _resolve", or
+    /// "the service svrngs-keeper-coder.service (coder, kept by svrngs-keeper)".
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Answer::Program {
@@ -692,6 +710,12 @@ impl std::fmt::Display for Answer {
             } => write!(f, "{program} in {folder}"),
             Answer::Program { program, .. } => f.write_str(program),
             Answer::Account { account } => write!(f, "a program of the account {account}"),
+            Answer::Job { unit, description } => {
+                let about = description
+                    .as_ref()
+                    .map_or(String::new(), |d| format!(" ({d})"));
+                write!(f, "the service {unit}{about}")
+            }
         }
     }
 }
@@ -765,6 +789,10 @@ pub enum LendError {
         path: PathBuf,
         source: std::io::Error,
     },
+    #[error("{0} changed since you reviewed it")]
+    RevisionChanged(LendName),
+    #[error("{0} is not a readable share revision: {1}")]
+    BadRevision(PathBuf, String),
 }
 
 /// Where a computer keeps its lends' declarations.
@@ -815,7 +843,9 @@ fn keep(
     path: PathBuf,
     (header, value): (&str, &str),
 ) -> Result<(), LendError> {
-    let _held = lock_lend(data_dir, name)?;
+    let _held = lock_lend(data_dir, name, true)?;
+    let slot = lock_path(data_dir, name, "rev");
+    advance(&slot, revision_at(&slot)?)?;
     crate::declared::write_declared_in(&path, header, value)
         .map_err(|source| LendError::Unwritable { path, source })
 }
@@ -823,6 +853,24 @@ fn keep(
 /// The lend `name` as its declaration says, or `None` when this computer
 /// lends nothing by that name.
 pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError> {
+    let seen = stored(data_dir, name, None)?;
+    if seen.as_ref().is_none_or(|l| l.terms.keep.is_none()) {
+        return Ok(seen);
+    }
+    // Read the revision first: a later write can only make it stale, never
+    // pair the old declaration with a new revision. Busy does not authorize renewal.
+    match revision(data_dir, name) {
+        Ok(rev) => stored(data_dir, name, Some(rev)),
+        Err(LendError::Busy { .. }) => Ok(seen),
+        Err(e) => Err(e),
+    }
+}
+
+fn stored(
+    data_dir: &Path,
+    name: &LendName,
+    revision: Option<u64>,
+) -> Result<Option<Lend>, LendError> {
     let path = lends_dir(data_dir).join(format!("{name}.json"));
     let text = match std::fs::read_to_string(&path) {
         Ok(t) => t,
@@ -839,6 +887,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
     }
     let client = terms.sign_in_with_svrngs.map(SignInWithSvrngs::checked);
     terms.sign_in_with_svrngs = client.transpose()?;
+    terms.revision = revision;
     Ok(Some(Lend {
         name: name.clone(),
         source: raw.map_or(Source::Port(port), |r| Source::Raw(r, port)),
@@ -938,15 +987,27 @@ pub fn declare(
     lend: &Lend,
     secret: Option<(&str, &str)>,
 ) -> Result<(), LendError> {
+    let _held = lock_lend(data_dir, &lend.name, true)?;
+    let slot = lock_path(data_dir, &lend.name, "rev");
+    advance(&slot, revision_at(&slot)?)?;
+    replace_secret(data_dir, lend, secret)?;
+    write(data_dir, lend)?;
+    tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
+        limit = ?lend.terms.limit, refused = lend.terms.refused.len(), upload = ?lend.terms.upload.map(Upload::bps),
+        secret = secret.is_some(), asks = lend.terms.asks.is_some(),
+        "lend: declared");
+    Ok(())
+}
+
+type Header<'a> = (&'a str, &'a str);
+
+fn replace_secret(dir: &Path, lend: &Lend, secret: Option<Header<'_>>) -> Result<(), LendError> {
     if secret.is_some() && lend.terms.sign_in_with_svrngs.is_some() {
         tracing::debug!(target: "lend", lend = %lend.name,
             "lend: refused — a lend declares its own password or a sign-in with svrngs, never both");
         return Err(LendError::TwoSecrets);
     }
-    // Held from the secret to the declaration, as every change is, so a
-    // change that read the lend before never writes it back over this.
-    let _held = lock_lend(data_dir, &lend.name)?;
-    let secrets = secret_dir(data_dir, &lend.name);
+    let secrets = secret_dir(dir, &lend.name);
     if secrets.exists() {
         std::fs::remove_dir_all(&secrets).map_err(unwritable(&secrets))?;
     }
@@ -954,12 +1015,13 @@ pub fn declare(
         crate::declared::write_declared_in(&secrets, header, value)
             .map_err(unwritable(&secrets))?;
     }
-    write(data_dir, lend)?;
-    tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
-        limit = ?lend.terms.limit, refused = lend.terms.refused.len(), upload = ?lend.terms.upload.map(Upload::bps),
-        secret = secret.is_some(), asks = lend.terms.asks.is_some(),
-        "lend: declared");
     Ok(())
+}
+
+#[derive(Clone, Copy)]
+pub enum Credentials<'a> {
+    Keep,
+    Replace(Option<Header<'a>>),
 }
 
 /// Change the lend `name` in place: read it, let `edit` rewrite it, write it
@@ -972,26 +1034,118 @@ pub fn mutate(
     name: &LendName,
     edit: impl FnOnce(&mut Lend),
 ) -> Result<bool, LendError> {
-    let _held = lock_lend(data_dir, name)?;
-    let Some(mut lend) = read(data_dir, name)? else {
-        return Ok(false);
+    changed(data_dir, name, None, Credentials::Keep, |had| {
+        had.map(|mut lend| {
+            edit(&mut lend);
+            lend
+        })
+    })
+    .map(|rev| rev.is_some())
+}
+
+/// Publish the complete declaration at the reviewed revision. The existing
+/// credential and choice files are outside this change.
+pub(crate) fn publish(
+    dir: &Path,
+    lend: Lend,
+    if_rev: u64,
+    secret: Credentials<'_>,
+) -> Result<u64, LendError> {
+    changed(dir, &lend.name.clone(), Some(if_rev), secret, |_| {
+        Some(lend)
+    })
+    .map(|rev| rev.expect("publication supplies a declaration"))
+}
+
+fn changed(
+    dir: &Path,
+    name: &LendName,
+    if_rev: Option<u64>,
+    secret: Credentials<'_>,
+    edit: impl FnOnce(Option<Lend>) -> Option<Lend>,
+) -> Result<Option<u64>, LendError> {
+    let _held = lock_lend(dir, name, true)?;
+    let slot = lock_path(dir, name, "rev");
+    let rev = revision_at(&slot)?;
+    if if_rev.is_some_and(|expected| expected != rev) {
+        tracing::debug!(target: "lend", %name, ?if_rev, rev, "lend: publication refused at a stale revision");
+        return Err(LendError::RevisionChanged(name.clone()));
+    }
+    let Some(lend) = edit(stored(dir, name, Some(rev))?) else {
+        return Ok(None);
     };
-    edit(&mut lend);
-    write(data_dir, &lend).map(|()| true)
+    let rev = advance(&slot, rev)?;
+    if let Credentials::Replace(secret) = secret {
+        replace_secret(dir, &lend, secret)?;
+    }
+    write(dir, &lend)?;
+    Ok(Some(rev))
+}
+
+/// The current revision of this name, even when it was withdrawn. Observe
+/// this before reading other preview facts; a subsequent edit invalidates it.
+pub fn revision(dir: &Path, name: &LendName) -> Result<u64, LendError> {
+    let Some(_held) = lock_lend(dir, name, false)? else {
+        return Ok(0);
+    };
+    revision_at(&lock_path(dir, name, "rev"))
+}
+
+fn lock_path(dir: &Path, name: &LendName, ext: &str) -> PathBuf {
+    dir.join("locks").join(format!("{name}.{ext}"))
+}
+
+fn revision_at(path: &Path) -> Result<u64, LendError> {
+    crate::declared::read_json(path)
+        .map(|rev| rev.unwrap_or(0))
+        .map_err(|why| LendError::BadRevision(path.into(), why))
+}
+
+// Invalidate previews before touching access. If the subsequent write fails,
+// the revision is spent, but the declaration is still the old one or absent.
+fn advance(path: &Path, rev: u64) -> Result<u64, LendError> {
+    let next = rev
+        .checked_add(1)
+        .ok_or_else(|| LendError::BadRevision(path.into(), "counter exhausted".into()))?;
+    crate::declared::write_secret(path, next.to_string().as_bytes())
+        .map_err(|(path, source)| LendError::Unwritable { path, source })?;
+    // A withdrawal must not outlast its new counter after a power loss.
+    #[cfg(unix)]
+    for dir in path.ancestors().skip(1).take(2) {
+        std::fs::File::open(dir)
+            .and_then(|f| f.sync_all())
+            .map_err(unwritable(dir))?;
+    }
+    tracing::debug!(target: "lend", file = %path.display(), rev = next, "lend: revision advanced");
+    Ok(next)
 }
 
 /// Hold the per-lend lock while a read/modify/write of `name`'s
 /// declaration runs; let it go when the returned [`Held`] drops. The
-/// standard library's `File::try_lock`, as `cli::claim` uses it: no new
+/// standard library's file locks, as `cli::claim` uses them: no new
 /// lock crate (LENDING_SCOPE). A held lock is a visible busy, never a lost
-/// update.
-fn lock_lend(data_dir: &Path, name: &LendName) -> Result<Held, LendError> {
-    let dir = data_dir.join("locks");
-    std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
-    let path = dir.join(format!("{name}.lock"));
-    let file = std::fs::File::create(&path).map_err(unwritable(&path))?;
-    match file.try_lock() {
-        Ok(()) => Ok(Held(file)),
+/// update. A read never creates a lock; absence precedes all versioned writes.
+fn lock_lend(data_dir: &Path, name: &LendName, writing: bool) -> Result<Option<Held>, LendError> {
+    let path = lock_path(data_dir, name, "lock");
+    let file = if writing {
+        let dir = path.parent().expect("lock has a folder");
+        std::fs::create_dir_all(dir).map_err(unwritable(dir))?;
+        std::fs::File::create(&path).map_err(unwritable(&path))?
+    } else {
+        match std::fs::File::open(&path) {
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            read => read.map_err(|source| LendError::Unreadable {
+                path: path.clone(),
+                source,
+            })?,
+        }
+    };
+    match if writing {
+        file.try_lock()
+    } else {
+        file.try_lock_shared()
+    } {
+        Ok(()) => Ok(Some(Held(file))),
         Err(source) => {
             let source = match source {
                 std::fs::TryLockError::WouldBlock => {
@@ -1078,7 +1232,9 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
 /// every change ([`mutate`]), so a change read before it cannot write the
 /// lend back; busy while another holds it.
 pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
-    let _held = lock_lend(data_dir, name)?;
+    let _held = lock_lend(data_dir, name, true)?;
+    let slot = lock_path(data_dir, name, "rev");
+    advance(&slot, revision_at(&slot)?)?;
     let path = lends_dir(data_dir).join(format!("{name}.json"));
     let declared = removed(std::fs::remove_file(&path), &path)?;
     let choices = choices_path(data_dir, name);

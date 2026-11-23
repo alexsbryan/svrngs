@@ -17,7 +17,9 @@ import { ArrivalLinks, Choices, Notice, exposes } from './grouped.js?v=__VERSION
 const PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
 // The places drawn only once the person is in a group: in none, the page
 // offers joining, then making, alone.
-const MEMBERS = ['acts', 'open', 'running', 'lent'];
+// `running` is not a member place: Run, Stop and Start are there before a
+// group (running-here.js `Running`; its group-free test in home.test.mjs).
+const MEMBERS = ['acts', 'open', 'lent'];
 
 /** @type {Record<State['at']['said'], (q: Said, u: string, grouped: boolean) => string>} */
 const SAID = {

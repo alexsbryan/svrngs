@@ -3,7 +3,13 @@
 # message, `Trust floor: <the reason>` (the floor's head). The pre-commit
 # step reads no message, so a change staged whole is judged here
 # (scripts/trust_check.py rule 7); the history check judges every commit after.
-git diff --cached --quiet -- scripts/trust_floor.txt && exit 0
-grep -q '^Trust floor: [^[:space:]]' "$1" && exit 0
-echo "trust floor: this commit changes scripts/trust_floor.txt, and its message has no 'Trust floor: <the reason, and what was tried first>' line" >&2
+git diff --cached --quiet -- scripts/trust_floor.txt ||
+grep -q '^Trust floor: [^[:space:]]' "$1" || { echo "trust floor: this commit changes scripts/trust_floor.txt, and its message has no 'Trust floor: <the reason, and what was tried first>' line" >&2; exit 1; }
+# A change to a permission file (.opencode/, ralph/claude-settings.json,
+# .githooks/) is never a worker's: from a ralph session (RALPH_QUEUE is set,
+# even empty, by ralph.py session_env) it is refused outright; otherwise its
+# message says why on a `Permissions: <the reason>` line.
+git diff --cached --quiet -- .opencode ralph/claude-settings.json .githooks && exit 0
+[ -z "${RALPH_QUEUE+x}" ] && grep -q '^Permissions: [^[:space:]]' "$1" && exit 0
+echo "permissions: a ralph worker never changes .opencode/, ralph/claude-settings.json or .githooks/; the operator's change says why on a 'Permissions: <the reason>' line" >&2
 exit 1

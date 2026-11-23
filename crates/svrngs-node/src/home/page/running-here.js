@@ -2,12 +2,13 @@
 // "Already running here" on the home page, once the person is in a group:
 // what the look says (running-look.js RUNNING), its button, and each
 // program it found, a row of its own (`Found`).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { html, useEffect, useMachine, useRef, useState } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LEND } from './lend-found.js?v=__VERSION__';
 import { GroupChoice } from './group-choice.js?v=__VERSION__';
 import { answered, needs, RUNNING } from './running-look.js?v=__VERSION__';
+import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import { Shown, State } from './running-look.js?v=__VERSION__' */
@@ -43,7 +44,7 @@ const FIELDS = [
 /**
  * A program found: it, the kinds the table knows by name alone, HOME's
  * groups to lend it to, and HOME's `dispatch`, told once it is lent.
- * @typedef {{ r: Shown, named: string[], groups: Choice[], home: Home }} FoundProps
+ * @typedef {{ r: Shown, named: string[], groups: Choice[], home: Home, run: Drawn }} FoundProps
  */
 
 // The names of the groups ticked, "House, Trip", for the lend's button.
@@ -63,7 +64,7 @@ const shownProcess = ({ answer }) => ({ pid: answer?.pid ?? null, start: answer?
 const runs = ({ answer }) => (answer ? ` It is ${answered(answer)}.` : '');
 
 /** @param {FoundProps} props */
-function Found({ r: shown, named, groups, home }) {
+function Found({ r: shown, named, groups, home, run }) {
   const [state, send] = useMachine(() =>
     machine('LEND', LEND(home), {
       at: { lend: 'unlent' },
@@ -89,19 +90,17 @@ function Found({ r: shown, named, groups, home }) {
     !shown.kind &&
     FIELDS.map(
       ([name, words]) =>
-        html`<${Field} name=${name} words=${words} value=${state[name]} send=${send} />`,
+        html`<${Field} name=${name} words=${words} value=${state[name]} attrs=${{ disabled: state.at.lend === 'lending' }} send=${send} />`,
     );
   const busy = state.at.lend === 'lending' ? 'busy' : 'idle';
   const names = chosen(groups, state.groups);
-  const who = shown.kind ? `Who can open ${shown.kind}?` : 'Who can open it?';
-  const words = names.length
-    ? `Lend ${shown.kind ?? 'it'} to ${names.join(' and ')}`
-    : `Lend ${shown.kind ?? 'it'}`;
+  const kind = shown.kind ?? 'it';
+  const words = names.length ? `Lend ${kind} to ${names.join(' and ')}` : `Lend ${kind}`;
   return html`
     <li>
-      ${said}
+      ${said}${run}
       ${fields}
-      <p>${who}</p>
+      <p>Who can open ${kind}?</p>
       <${GroupChoice}
         groups=${groups}
         ticked=${state.groups}
@@ -109,7 +108,7 @@ function Found({ r: shown, named, groups, home }) {
         send=${send}
       />
       <${Act}
-        words=${words}
+        words=${state.review?.button ?? words}
         doing=${{ state: busy }}
         on=${{ type: 'lend' }}
         send=${send}
@@ -119,55 +118,106 @@ function Found({ r: shown, named, groups, home }) {
   `;
 }
 
-/**
- * "Already running here": HOME's groups to lend one to, and its `dispatch`,
- * which each lend tells.
- * @typedef {{ groups: Choice[], home: Home }} RunningProps
- */
+/** @typedef {{ name: string, text: string, port?: number, action?: 'start' | 'stop', button?: string }} RunRow */
+/** @typedef {{ run: string, starting: string, fields: [string, string][], rows: RunRow[] }} RunView */
 
-/** @param {RunningProps} props */
-function Running({ groups, home }) {
+/** @param {{ shares: ((run: (port: number) => Drawn) => Drawn) | null }} props */
+function RunForm({ shares }) {
+  const [view, set] = useState(/** @type {RunView | null} */ (null));
+  const [said, say] = useState('');
+  const [busy, wait] = useState(false);
+  const asked = useRef(0);
+  const refresh = () => get('/run').then(set);
+  /** @param {Error} error */
+  const refused = (error) => say(error.message);
+  useEffect(() => void refresh().catch(refused), []);
+  /** @param {string} path @param {unknown} body */
+  const act = (path, body) => {
+    wait(true);
+    say(path === '/run' ? (view?.starting ?? '') : '');
+    return post(path, body)
+      .then((answer) => say(answer ?? ''), refused)
+      .then(() => refresh().catch(refused))
+      .finally(() => wait(false));
+  };
+  /** @param {import('../ui/view.js?v=__VERSION__').Targeted<HTMLFormElement>} event */
+  const submit = (event) => {
+    event.preventDefault();
+    const { name, port, folder, command } = Object.fromEntries(new FormData(event.currentTarget));
+    void act('/run', { name, port: Number(port), folder, command });
+  };
+  /** @param {number} port */
+  const suggest = async (port) => {
+    const form = /** @type {HTMLFormElement | null} */ (document.querySelector('#run-form form'));
+    if (!form || busy) return;
+    form.reset();
+    form.closest('details')?.setAttribute('open', '');
+    // Selecting a row or typing in the form gives the next ticket to that act.
+    const ticket = ++asked.current;
+    const got = await get(`/run?prefill=${port}`).catch(() => null);
+    if (ticket !== asked.current || got?.kind !== 'prefill' || got.port !== port) return;
+    for (const input of form.querySelectorAll('input')) input.value = got[input.name] ?? '';
+  };
+  if (shares === null && (view?.rows.length ?? 0) === 0) return null;
+  return html`<section id="running"><h2>Already running here</h2><div id="run-form">
+    ${
+      view !== null &&
+      html`<details><summary>${view.run}</summary>
+      <form onSubmit=${submit} onInput=${() => asked.current++}><fieldset disabled=${busy}>
+        ${view.fields.map(([key, label]) => html`<label>${label} <input name=${key} required /></label>`)}
+        <button>${view.run}</button>
+      </fieldset></form>
+    </details>`
+    }
+    <p role="status">${said}</p>
+    ${view?.rows.map(
+      ({ name, port, text, action, button }) => html`<p key=${name}>
+      ${name} ${port} · ${text}
+      ${action !== undefined && html`<button disabled=${busy} onClick=${() => act('/run/action', [name, action])}>${button}</button>`}
+    </p>`,
+    )}
+  </div>${shares?.((port) => view && !view.rows.some((row) => row.port === port) && html`<a href="#run-form" onClick=${() => suggest(port)}>${view.run}</a>`)}</section>`;
+}
+
+/** @param {HOME.PlaceProps} props */
+function Running({ s, home }) {
+  const groups = /** @type {Choice[]} */ (s.groups);
   const [state, send] = useMachine(() =>
     machine('RUNNING', RUNNING, { at: { running: 'unlooked' } }),
   );
   // Each row's key carries its look's number, so a look again draws each
   // program it finds as a new row, with nothing typed or said in it.
-  const look = state.asked?.running;
-  const found =
+  /** @param {(port: number) => Drawn} run */
+  const found = (run) =>
     state.at.running === 'looked' &&
     /** @type {Shown[]} */ (state.found).map(
       (row) =>
         html`<${Found}
-          key=${`${look}:${row.port}`}
+          key=${`${state.asked?.running}:${row.port}`}
           r=${row}
           named=${state.named}
           groups=${groups}
           home=${home}
+          run=${run(row.port)}
         />`,
     );
-  const busy = state.at.running === 'looking' ? 'busy' : 'idle';
-  return html`
-    <section id="running">
-      <h2>Already running here</h2>
+  return html`<${RunForm} shares=${
+    groups.length > 0
+      ? (/** @type {Parameters<typeof found>[0]} */ run) => html`
       <p>${SAID[state.at.running](state)}</p>
       <p>
         <${Act}
           words="Look for programs running on this computer"
-          doing=${{ state: busy }}
+          doing=${{ state: state.at.running === 'looking' ? 'busy' : 'idle' }}
           on=${{ type: 'look' }}
           send=${send}
         />
       </p>
-      <ul>${found}</ul>
-    </section>
-  `;
-}
-
-// Drawn once the person is in a group (home-page.js `MEMBERS`).
-/** @param {HOME.PlaceProps} props */
-function RunningPlace({ s: state, home }) {
-  return html`<${Running} groups=${/** @type {Choice[]} */ (state.groups)} home=${home} />`;
+      <ul>${found(run)}</ul>
+   `
+      : null
+  } />`;
 }
 
 /** @type {{ running: (props: HOME.PlaceProps) => Drawn }} */
-export const view = { running: RunningPlace };
+export const view = { running: Running };

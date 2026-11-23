@@ -1,0 +1,24 @@
+passed linux-build: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; svrngs 1.13.3 (43cf1743); linux-build.log; svrngs=96edad7496d11766125000f36c6c9cf8f84b5b021020d180f16f69564969d74c svrngs-keeper=b7efc7b81ff24d8b4247d81e47bcd9fb3c38cd8edc15947a589f6156c23d8a3d
+passed fedora-package: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; fedora-package.log
+passed linux-native: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; linux-native.log
+passed linux-container-plain: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; linux-container-plain.log
+passed linux-container-recover: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; linux-container-recover.log
+passed linux-container-actual: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; linux-container-actual.log
+passed linux-container-stop-gap: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; linux-container-stop-gap.log
+passed linux-stdio: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; linux-stdio.log
+passed linux-ship: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-linux-x86_64.tar.gz@1bc5338172d2301b9cd374e1d4bb205e0a493ff407933a4cc6e57818015adc5f; exit=0; linux-ship.log
+passed linux-page-stdio: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=svrngs-gate/debug run-page-gate browser and keeper; exit=0; linux-page-stdio.log
+passed mac-keeper-tests: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=darwin-arm64/cargo-test/svrngs-keeper; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-node-tests: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=darwin-arm64/cargo-test/svrngs-node; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-run: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=native:1ebc3f276a7505573f43c2fb240eeeece0b38d8b3819dc21935576c9b55f3d0c; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-proof-lineage: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=native:1ebc3f276a7505573f43c2fb240eeeece0b38d8b3819dc21935576c9b55f3d0c; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-proof-ownership: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=native:1ebc3f276a7505573f43c2fb240eeeece0b38d8b3819dc21935576c9b55f3d0c; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-proof-managed: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=native:1ebc3f276a7505573f43c2fb240eeeece0b38d8b3819dc21935576c9b55f3d0c; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-renew: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=renewal-fixture:16afc9a87ade94d6063e54df5aa6ae8f7e3c107618a8d63e1f3c4ec673ed6def; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-plist-formatted: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=plist-fixture:b4c55347885f6df7d0a738862463fe967dab4d25fe36c336d2148d964d382eb2; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-plist-binary: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=plist-fixture:b4c55347885f6df7d0a738862463fe967dab4d25fe36c336d2148d964d382eb2; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-plist-absent: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=plist-fixture:b4c55347885f6df7d0a738862463fe967dab4d25fe36c336d2148d964d382eb2; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-plist-wrong-root: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=plist-fixture:b4c55347885f6df7d0a738862463fe967dab4d25fe36c336d2148d964d382eb2; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-plist-malformed: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=plist-fixture:b4c55347885f6df7d0a738862463fe967dab4d25fe36c336d2148d964d382eb2; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-plist-wrong-type: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=plist-fixture:b4c55347885f6df7d0a738862463fe967dab4d25fe36c336d2148d964d382eb2; SSH exit=0; transfer exit=0; beefymac.log
+passed mac-cleanup: commit=43cf174314755d910f294d7d560044c537d8d4f4 build=launchd; SSH exit=0; transfer exit=0; beefymac.log

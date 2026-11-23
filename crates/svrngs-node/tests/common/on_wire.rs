@@ -342,6 +342,20 @@ pub fn reads(node: &Node, port: u16, read: svrngs_node::iroh::PortRead) {
     WIRE.with(|w| w.reads(node.net().id(), port, read));
 }
 
+/// `node`'s computer's user manager says `read` of `unit` from here on, as
+/// a kept lend's renewal reads it ([`Wire::jobs`]).
+#[allow(dead_code, reason = "only the binaries that renew a kept lend ask it")]
+pub fn jobs(node: &Node, unit: &str, read: svrngs_node::job::Read) {
+    WIRE.with(|w| w.jobs(node.net().id(), unit, read));
+}
+
+/// Each unit `node`'s computer read to renew a lend, with the cgroup that
+/// took the door's connection, in order ([`Wire::asked_jobs`]).
+#[allow(dead_code, reason = "only the binaries that renew a kept lend ask it")]
+pub fn asked_jobs(node: &Node) -> Vec<(String, Option<u64>)> {
+    WIRE.with(|w| w.asked_jobs(node.net().id()))
+}
+
 /// `node`'s computer reads `read` on a port it approves from here on
 /// ([`Wire::answers`]).
 pub fn answers(node: &Node, port: u16, read: svrngs_node::iroh::PortAnswer) {

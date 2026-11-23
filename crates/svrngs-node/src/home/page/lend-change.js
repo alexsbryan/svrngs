@@ -111,6 +111,18 @@ const changing = (state, effect) => {
  */
 const change = (state, to) => changing(state, { run: 'change', to, failed: 'refused' });
 
+// A change made: HOME told to read the groups and the list again, and
+// `why` it changed said.
+/**
+ * @param {HOME.PlaceProps['home']} home
+ * @param {string} why
+ * @returns {() => Message}
+ */
+const again = (home, why) => () => {
+  home({ type: 'again' });
+  return { type: 'changed', why };
+};
+
 /**
  * @param {string} lend
  * @param {HOME.PlaceProps['home']} home
@@ -119,20 +131,13 @@ const change = (state, to) => changing(state, { run: 'change', to, failed: 'refu
 export const CHANGE = (lend, home) => ({
   states: { change: ['idle', 'changing', 'refused'] },
   io: {
-    change: ({ to }) =>
-      post('/lent', { lend, to }).then(() => {
-        home({ type: 'again' });
-        return { type: 'changed', why: 'the groups read again' };
-      }),
+    change: ({ to }) => post('/lent', { lend, to }).then(again(home, 'the groups read again')),
     // Keep sharing it: what answers now approved only as it was listed, by
     // its token, with the process shown and its start (SHARE_BINDING §5.4),
     // and nothing else of it changed. A pid and start left undefined are
     // left out of the JSON, so with no process shown the token goes alone.
     approve: ({ shown }) =>
-      post(`/v1/lends/${lend}/approve`, shown).then(() => {
-        home({ type: 'again' });
-        return { type: 'changed', why: 'what answers approved' };
-      }),
+      post(`/v1/lends/${lend}/approve`, shown).then(again(home, 'what answers approved')),
     sign: () =>
       post('/lent', { lend, to: 'sign-in' }).then((signIn) => ({
         type: 'signed',

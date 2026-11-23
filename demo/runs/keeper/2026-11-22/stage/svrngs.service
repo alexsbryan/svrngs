@@ -1,0 +1,12 @@
+# svrngs at login, as packaging/arch/svrngs.service has it, with the
+# decisions the run reads in the journal.
+[Unit]
+Description=svrngs
+
+[Service]
+ExecStart=/usr/local/bin/svrngs
+Environment=RUST_LOG=info,door=debug,share=debug,uid=debug,job=debug
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

@@ -57,33 +57,25 @@ async function range({ lend, path, range }) {
 // In the lend's page: `close.path`'s range read whole, with the window's
 // channel closed once `close.after` datagrams have crossed it
 // (`__svrngsCloseWebrtc`, shim.js) — a wire-side count, so the close
-// lands mid-film however far the page's reading runs behind — and the
-// longest stall between its reads, which is the fallback: the bytes after
-// the close arrive over the relay within `fallbackMs` (webrtc-page).
-async function closedFetch({ path, range, after }) {
+// lands mid-film however far the page's reading runs behind. The fallback
+// case also observes the actual close; time from close to EOF is diagnostic.
+async function closedFetch({ path, range, after, fallback }) {
   const src = document.querySelector('video')?.currentSrc || document.querySelector('video')?.src;
   try {
-    const signal = AbortSignal.timeout(60_000);
+    const signal = AbortSignal.timeout(fallback ? 30_000 : 60_000);
     globalThis.__svrngsCloseWebrtc = after;
     const res = await fetch(new URL(path, location.href), { headers: { range }, signal });
     const reader = res.body.getReader();
     const parts = [];
     let bytes = 0;
-    let gap = 0;
-    let stall = 0;
-    let last = performance.now();
     for (;;) {
       const { value, done } = await reader.read();
-      const now = performance.now();
-      if (now - last > gap) {
-        gap = now - last;
-        stall = last;
-      }
-      last = now;
       if (done) break;
       parts.push(value);
       bytes += value.byteLength;
     }
+    const closed = globalThis.__closedFilmChannel;
+    const fallbackMs = closed ? Math.round(performance.now() - closed.at) : null;
     const all = new Uint8Array(bytes);
     let at = 0;
     for (const part of parts) {
@@ -100,8 +92,8 @@ async function closedFetch({ path, range, after }) {
       contentRange: res.headers.get('content-range'),
       bytes,
       sha,
-      gapMs: Math.round(gap),
-      fallbackMs: stall === 0 ? null : Math.round(performance.now() - stall),
+      closed: closed ? { wireBytes: closed.wireBytes, state: closed.channel.readyState } : null,
+      fallbackMs,
     };
   } catch (e) {
     return { src: src ?? null, error: String(e) };
@@ -119,6 +111,26 @@ const logs = [];
 const watch = (context) => context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
   watch(context);
+  if (args.fallback)
+    await context.addInitScript(() => {
+      const create = RTCPeerConnection.prototype.createDataChannel;
+      const close = RTCPeerConnection.prototype.close;
+      const channels = new WeakMap();
+      RTCPeerConnection.prototype.createDataChannel = function (...args) {
+        const channel = create.apply(this, args);
+        const record = { channel, wireBytes: 0 };
+        channels.set(this, record);
+        channel.addEventListener('message', (event) => (record.wireBytes += event.data.byteLength));
+        return channel;
+      };
+      RTCPeerConnection.prototype.close = function () {
+        const record = channels.get(this);
+        const open = record?.channel.readyState === 'open';
+        close.call(this);
+        if (open && this.signalingState === 'closed')
+          globalThis.__closedFilmChannel = { ...record, at: performance.now() };
+      };
+    });
   if (args.withhold) await context.addInitScript(() => (globalThis.__svrngsNoWebrtc = true));
   let page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
@@ -158,7 +170,7 @@ try {
   // through (`closedFetch`, webrtc-page).
   const look = (page) => {
     if (args.seeks) return page.evaluate(play, { at: null, within: 15_000 });
-    if (args.close) return page.evaluate(closedFetch, args.close);
+    if (args.close) return page.evaluate(closedFetch, { ...args.close, fallback: args.fallback });
     return page.evaluate(fetched, args.film);
   };
   const first = await look(page);
@@ -179,7 +191,7 @@ try {
   const seeks = [];
   for (const at of args.seeks?.slice(0, -1) ?? [])
     seeks.push(await page.evaluate(play, { at, within: 15_000 }));
-  // The browser stops the worker mid-play; the next range must still
+  // Except in the fallback scene, stop the worker; the next range must still
   // answer. Chromium stops it through DevTools, the page left playing.
   // Playwright cannot reach WebKit's worker, so WebKit's browser is closed
   // and opened again, as a phone's is when it ends a browser left in the
@@ -187,12 +199,12 @@ try {
   // lend's address, where the worker it starts serves it.
   let reopened = null;
   let replayed = null;
-  if (cdp) {
+  if (!args.fallback && cdp) {
     await cdp.send('ServiceWorker.stopAllWorkers');
     const stopped = Date.now();
     while (!runs.includes('stopped') && Date.now() - stopped < 10_000)
       await new Promise((r) => setTimeout(r, 50));
-  } else {
+  } else if (!args.fallback) {
     await close();
     ({ context, close } = await launch(args.engine, { profile }));
     watch(context);
@@ -207,7 +219,7 @@ try {
   if (args.seeks) seeks.push(await page.evaluate(play, { at: args.seeks.at(-1), within: 15_000 }));
   // Chromium's worker, stopped with the page left open: the film's range
   // asked again starts it again, as a seek's would.
-  else if (cdp) replayed = await look(page);
+  else if (cdp && !args.fallback) replayed = await look(page);
   const other = args.other ? await page.evaluate(range, args.other) : null;
   console.log(
     JSON.stringify({

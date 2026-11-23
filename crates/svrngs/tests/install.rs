@@ -126,7 +126,7 @@ async fn host(site: PathBuf) -> u16 {
 }
 
 /// The site: install.sh at its root, and under get/ this build's svrngs
-/// and a stand-in for Give's program, each as this computer's tarball, beside
+/// with a stand-in for its keeper, plus a stand-in for Give, beside
 /// `sums`, or their true SHA256SUMS. The stand-in is a script that says it
 /// ran: install.sh only fetches, checks, places and keeps it, and Give's
 /// own tests run the program itself (apps/give/tests/).
@@ -155,12 +155,16 @@ fn site_of(stand_in: Option<&str>, sums: Option<&str>) -> tempfile::TempDir {
             bin
         }
     };
+    std::fs::write(site.path().join("svrngs-keeper"), "#!/bin/sh\nexit 0\n").unwrap();
     let made = std::process::Command::new("tar")
         .arg("-czf")
         .arg(get.join(tarball()))
         .arg("-C")
         .arg(bin.parent().unwrap())
         .arg("svrngs")
+        .arg("-C")
+        .arg(site.path())
+        .arg("svrngs-keeper")
         .status()
         .unwrap();
     assert!(made.success());
@@ -1093,21 +1097,20 @@ fn install_sh_says_a_refused_open_in_svrngs_s_words() {
     assert!(!err.contains("did not start"), "{err}");
 }
 
-/// A tarball in `dir` holding `program`, a script `script`: a release
-/// someone checked, as they give it to the line.
-fn checked(dir: &Path, program: &str, script: &str) -> PathBuf {
+/// A tarball in `dir`: a release someone checked, as they give it to the line.
+fn checked(dir: &Path, program: &str, members: &[(&str, &str)]) -> PathBuf {
     let made = dir.join(program);
     std::fs::create_dir_all(&made).unwrap();
-    std::fs::write(made.join(program), script).unwrap();
-    let exec = std::os::unix::fs::PermissionsExt::from_mode(0o755);
-    std::fs::set_permissions(made.join(program), exec).unwrap();
+    for (name, script) in members {
+        std::fs::write(made.join(name), script).unwrap();
+    }
     let tarball = dir.join(format!("checked {program}.tar.gz"));
     let tar = std::process::Command::new("tar")
         .arg("-czf")
         .arg(&tarball)
         .arg("-C")
         .arg(&made)
-        .arg(program)
+        .args(members.iter().map(|(name, _)| name))
         .status();
     assert!(tar.unwrap().success());
     tarball
@@ -1134,9 +1137,14 @@ fn install_sh_installs_the_archive_it_is_given_and_never_the_page_s() {
     let site = site_of(Some(&format!("{STAND_IN}# the page's\n")), None);
     let given = tempfile::tempdir().unwrap();
     let ours = format!("{STAND_IN}# the release you checked\n");
-    let archive = checked(given.path(), "svrngs", &ours);
+    let keeper = "#!/bin/sh\necho 'keeper from checked archive'\n";
+    let archive = checked(
+        given.path(),
+        "svrngs",
+        &[("svrngs", &ours), ("svrngs-keeper", keeper)],
+    );
     let give = "#!/bin/sh\necho \"checked give $*\"\n";
-    let give_archive = checked(given.path(), "give", give);
+    let give_archive = checked(given.path(), "give", &[("give", give)]);
     let (a, g) = (archive.display(), give_archive.display());
     let after = format!(" --archive '{a}' --give --give-archive '{g}'");
     // Before the link, as a caller that checked the release writes it.
@@ -1150,6 +1158,10 @@ fn install_sh_installs_the_archive_it_is_given_and_never_the_page_s() {
         assert!(out.status.success(), "{more}: {said}{err}");
         let bin = home.path().join(".local/bin");
         assert_eq!(std::fs::read_to_string(bin.join("svrngs")).unwrap(), ours);
+        assert_eq!(
+            std::fs::read_to_string(bin.join("svrngs-keeper")).unwrap(),
+            keeper
+        );
         let used = format!("Using svrngs from {a}, the file you gave, in place of the page's.");
         assert!(said.contains(&used), "not said: {used}\n{said}");
         if gave {
@@ -1204,12 +1216,14 @@ fn install_sh_refuses_an_archive_it_cannot_use_and_installs_nothing() {
     let given = tempfile::tempdir().unwrap();
     let junk = given.path().join("junk.tar.gz");
     std::fs::write(&junk, "not a tarball").unwrap();
-    let give = checked(given.path(), "give", "#!/bin/sh\n");
+    let give = checked(given.path(), "give", &[("give", "#!/bin/sh\n")]);
+    let missing_keeper = checked(given.path(), "svrngs", &[("svrngs", STAND_IN)]);
     let gone = given.path().join("gone.tar.gz");
     let refusals = [
         (format!(" --archive '{}'", gone.display()), format!("{} is not a file you can read, so nothing was installed: give --archive the release you checked.", gone.display())),
         (" --archive".into(), "--archive wants the file of the release you checked, as svrngs-linux-x86_64.tar.gz is.".into()),
-        (format!(" --archive '{}'", junk.display()), format!("{} holds no svrngs program, so nothing was installed.", junk.display())),
+        (format!(" --archive '{}'", junk.display()), format!("{} must hold each of these programs: svrngs svrngs-keeper. Nothing was installed.", junk.display())),
+        (format!(" --archive '{}'", missing_keeper.display()), format!("{} must hold each of these programs: svrngs svrngs-keeper. Nothing was installed.", missing_keeper.display())),
         (format!(" --give-archive '{}'", give.display()), "--give-archive is the file of Give's program, which only --give installs: add --give after the link.".into()),
     ];
     for (more, words) in refusals {
@@ -1398,6 +1412,7 @@ fn install_sh_installs_and_keeps_give_beside_svrngs_only_when_asked() {
         let without = line(site.path(), PAGE, "", home.path(), uname, None);
         let said = String::from_utf8_lossy(&without.stdout);
         assert!(without.status.success(), "{uname:?}: {said}");
+        assert!(bin.join("svrngs-keeper").is_file(), "{uname:?}: {said}");
         assert!(
             !bin.join("give").exists(),
             "{uname:?}: Give's program, unasked"
@@ -1519,7 +1534,12 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
             Some(_) => vec![agents.join("svrngs.service"), agents.join("give.service")],
         };
         let placed: Vec<PathBuf> = (kept.into_iter())
-            .chain([bin.join("svrngs"), bin.join("give"), opener.clone()])
+            .chain([
+                bin.join("svrngs"),
+                bin.join("svrngs-keeper"),
+                bin.join("give"),
+                opener.clone(),
+            ])
             .collect();
         for p in &placed {
             assert!(p.exists(), "{uname:?}: not installed: {}", p.display());
@@ -1547,6 +1567,11 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
         let said = String::from_utf8_lossy(&out.stdout);
         let err = String::from_utf8_lossy(&out.stderr);
         assert!(out.status.success(), "{uname:?}: {said}{err}");
+        let stop = "To stop an app, open your home page and choose Stop before uninstalling.";
+        let (while_installed, after_remove) = said.split_once("Stopped svrngs,").unwrap();
+        assert!(while_installed.contains(stop), "{said}");
+        assert!(!after_remove.contains("choose Stop"), "{said}");
+        assert!(!said.contains("svrngs-keeper"), "{said}");
         for p in &placed {
             assert!(!p.exists(), "{uname:?}: left: {}", p.display());
         }
@@ -1561,6 +1586,10 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
             "Stopped give, and took it off what runs when you log in".into(),
             format!("Removed svrngs from {}.", bin.display()),
             format!("Removed give from {}.", bin.display()),
+            "Uninstalling svrngs does not stop your apps or remove their setup or files.".into(),
+            "Native apps may still start.".into(),
+            "Managed Linux containers need svrngs installed to start and stop.".into(),
+            "If you've already uninstalled, reinstall svrngs to manage your apps again.".into(),
             format!("Removed the svrngs opener, {}.", opener.display()),
             format!(".zshrc still adds {}", bin.display()),
             format!("Kept {}: your key and your groups' copies.", data.display()),
@@ -1589,6 +1618,11 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
             "{said}"
         );
         assert!(said.contains("svrngs is uninstalled."), "{said}");
+        assert!(!said.contains("choose Stop"), "{said}");
+        assert!(
+            said.contains("reinstall svrngs to manage your apps again."),
+            "{said}"
+        );
     }
 }
 

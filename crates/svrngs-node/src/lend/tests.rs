@@ -139,6 +139,8 @@ fn lend(name: &str, port: u16) -> Lend {
             asks: None,
             sends: Vec::new(),
             approved: None,
+            keep: None,
+            revision: None,
         },
     }
 }
@@ -643,6 +645,92 @@ fn a_withdrawal_while_a_change_holds_the_lend_is_busy_never_undone() {
         None,
         "and it stays withdrawn"
     );
+}
+
+#[test]
+fn w1_a_tombstone_is_not_a_declaration() {
+    let root = tempfile::tempdir().unwrap();
+    let shelf = lend("shelf", 9);
+    let other = lend("pad", 10);
+    declare(root.path(), &shelf, None).unwrap();
+    declare(root.path(), &other, None).unwrap();
+    let before = revision(root.path(), &shelf.name).unwrap();
+    assert!(withdraw(root.path(), &shelf.name).unwrap());
+    let listed = all(root.path()).unwrap();
+    assert_eq!(
+        listed.len(),
+        1,
+        "a tombstone must not enter the listing: {listed:?}"
+    );
+    assert_eq!(listed[0].as_ref().unwrap().name, other.name);
+    assert_eq!(revision(root.path(), &shelf.name).unwrap(), before + 1);
+}
+
+#[test]
+fn w1_a_concurrent_withdrawal_wins() {
+    let root = tempfile::tempdir().unwrap();
+    let shelf = lend("shelf", 9);
+    declare(root.path(), &shelf, None).unwrap();
+    let (ready, racing) = std::sync::mpsc::sync_channel(0);
+    let (release, withdrawn) = std::sync::mpsc::sync_channel(0);
+    std::thread::scope(|scope| {
+        let (dir, draft) = (root.path(), &shelf);
+        let confirmation = scope.spawn(move || {
+            let previewed = revision(dir, &draft.name).unwrap();
+            ready.send(()).unwrap();
+            withdrawn.recv().unwrap();
+            publish(dir, draft.clone(), previewed, Credentials::Keep)
+        });
+        racing.recv().unwrap();
+        let stopped = withdraw(root.path(), &shelf.name);
+        release.send(()).unwrap();
+        assert!(stopped.unwrap());
+        let result = confirmation.join().unwrap();
+        assert!(
+            matches!(result, Err(LendError::RevisionChanged(_))),
+            "withdrawal lost: {result:?}"
+        );
+    });
+    assert!(read(root.path(), &shelf.name).unwrap().is_none());
+}
+
+#[test]
+fn w1_stale_publication_cannot_resurrect_or_overwrite_a_share() {
+    let root = tempfile::tempdir().unwrap();
+    let mut shelf = lend("shelf", 9);
+    let path = root.path();
+    let lagged = revision(path, &shelf.name).unwrap();
+    // Stop sharing can race even the first confirmation for this name.
+    assert!(!withdraw(path, &shelf.name).unwrap());
+    let expect_stale = |draft: &Lend, at| {
+        let result = publish(path, draft.clone(), at, Credentials::Keep);
+        assert!(
+            matches!(result, Err(LendError::RevisionChanged(_))),
+            "stale publication was not refused: {result:?}"
+        );
+    };
+    expect_stale(&shelf, lagged);
+    let fresh = revision(path, &shelf.name).unwrap();
+    let published = publish(path, shelf.clone(), fresh, Credentials::Keep).unwrap();
+    let previewed = revision(path, &shelf.name).unwrap();
+    assert_eq!(published, previewed);
+    assert!(withdraw(path, &shelf.name).unwrap());
+    expect_stale(&shelf, previewed);
+    assert!(read(path, &shelf.name).unwrap().is_none());
+
+    // Even a byte-for-byte redeclaration does not restore the old revision.
+    declare(path, &shelf, None).unwrap();
+    expect_stale(&shelf, previewed);
+    let before_edit = revision(path, &shelf.name).unwrap();
+    set_audience(path, &shelf.name, vec!["house".into()]).unwrap();
+    shelf.terms.limit = NonZeroU16::new(5);
+    expect_stale(&shelf, before_edit);
+    let kept = read(path, &shelf.name).unwrap().unwrap();
+    assert_eq!(
+        kept.terms.audience,
+        Audience::Selected(vec!["house".into()])
+    );
+    assert_ne!(kept.terms.limit, shelf.terms.limit);
 }
 
 /// A re-declaration is serialized with every other change to the lend

@@ -159,6 +159,13 @@ pub fn start(pid: u32) -> Option<u64> {
     start
 }
 
+#[cfg(target_os = "macos")]
+pub(crate) fn descends(from: Process, root: Process) -> bool {
+    let up = mac::up(from.0);
+    up.first().is_some_and(|p| p.1 == from.1)
+        && up.iter().any(|&(pid, start, _)| (pid, start) == root)
+}
+
 /// A socket's local address and the one it is connected to.
 #[cfg(any(target_os = "macos", test))]
 type Ends = (SocketAddr, SocketAddr);
@@ -200,10 +207,8 @@ fn waited<T, E>(mut look: impl FnMut() -> Result<Option<T>, E>) -> Result<Option
 fn read(at: SocketAddr, to: SocketAddr) -> Result<Owner, &'static str> {
     let states = !(1 << 6);
     let listed = diag::dump(Raw::Tcp, states, at.port())?;
-    let mut uids = listed
-        .iter()
-        .filter(|d| same(d.local, at) && same(d.peer, to))
-        .map(|d| d.uid);
+    let end = |d: &&diag::Diag| same(d.local, at) && same(d.peer, to);
+    let mut uids = listed.iter().filter(end).map(|d| d.uid);
     match uids.next() {
         None => Err("no socket at that end on this computer"),
         Some(uid) if uids.all(|u| u == uid) => Ok(Owner::Uid(uid)),
@@ -240,12 +245,11 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
     let found = found.map_err(Unread::Failed)?;
     let found = found.ok_or(Unread::Failed("the connection's server end isn't listed"))?;
     let file = |at: &str| std::fs::read_to_string(at).unwrap_or_default();
+    let bound = || lists_bound(&file("/proc/sys/kernel/osrelease"));
     let took = match found.cgroup {
         _ if !cgroups_v2(&file("/proc/self/cgroup")) => Err("this computer doesn't keep its programs in cgroup v2, so which one took the connection can't be told"),
         Some(cgroup) => Ok(Took::Cgroup(cgroup)),
-        None if found.state == 3 && lists_bound(&file("/proc/sys/kernel/osrelease")) => {
-            Ok(Took::Waiting)
-        }
+        None if found.state == 3 && bound() => Ok(Took::Waiting),
         None if found.state == 3 => Err("the program waits for data before it takes a connection, and this kernel, before 6.8, can't list every socket that could take it"),
         None => Err("the connection's cgroup can't be read"),
     };
@@ -272,9 +276,8 @@ fn cgroups_v2(cgroups: &str) -> bool {
 /// socket is judged as one no flow names.
 #[cfg(any(target_os = "linux", test))]
 fn peer(d: &diag::Diag, raw: Raw, cgroups: &str, me: Option<u32>) -> Peer {
-    let apart = cgroups
-        .lines()
-        .any(|l| l.starts_with("0::") && l.trim() != "0::/");
+    let own = |l: &str| l.starts_with("0::") && l.trim() != "0::/";
+    let apart = cgroups.lines().any(own);
     match d.peer {
         _ if raw != Raw::Udp || !apart || me != Some(d.uid) => Peer::Unread,
         at if at.port() != 0 => Peer::To(SocketAddr::new(at.ip().to_canonical(), at.port())),
@@ -286,9 +289,8 @@ fn peer(d: &diag::Diag, raw: Raw, cgroups: &str, me: Option<u32>) -> Peer {
 /// lists a TCP socket bound to a port and not listening: 6.8 and later.
 #[cfg(any(target_os = "linux", test))]
 fn lists_bound(release: &str) -> bool {
-    let mut v = release
-        .split(['.', '-'])
-        .map(|n| n.trim().parse::<u32>().unwrap_or(0));
+    let number = |n: &str| n.trim().parse::<u32>().unwrap_or(0);
+    let mut v = release.split(['.', '-']).map(number);
     (v.next().unwrap_or(0), v.next().unwrap_or(0)) >= (6, 8)
 }
 
@@ -320,29 +322,25 @@ mod linux {
     /// holds a socket of, of those asked.
     pub(super) type Procs = BTreeMap<u32, (u32, u64, BTreeSet<u64>)>;
 
+    /// A port read ([`read`]): its sockets, the processes holding them, and
+    /// each as sock_diag listed it.
+    pub(super) type Listed = (Read, Procs, Vec<diag::Diag>);
+
     /// `raw`'s sockets on `port`, as sock_diag lists them in this boot: a
     /// TCP socket listening or bound and not listening, a UDP socket bound in
     /// any state; with the processes holding each, and those processes, when
     /// `held`.
-    pub(super) fn read(
-        raw: Raw,
-        port: u16,
-        held: bool,
-    ) -> Result<(Read, Procs, Vec<diag::Diag>), Unread> {
+    pub(super) fn read(raw: Raw, port: u16, held: bool) -> Result<Listed, Unread> {
         let boot = std::fs::read_to_string("/proc/sys/kernel/random/boot_id").unwrap_or_default();
         let boot =
             super::boot(&boot).ok_or(Unread::Failed("this computer's boot can't be read"))?;
-        let on = if raw == Raw::Tcp {
-            diag::LISTEN | diag::BOUND
-        } else {
-            u32::MAX
+        let on = match raw {
+            Raw::Tcp => diag::LISTEN | diag::BOUND,
+            Raw::Udp => u32::MAX,
         };
         let listed = diag::dump(raw, on, port).map_err(Unread::Failed)?;
-        let procs = if held {
-            procs(&listed.iter().map(|d| d.inode).collect())
-        } else {
-            Procs::new()
-        };
+        let inodes = || listed.iter().map(|d| d.inode).collect();
+        let procs = if held { procs(&inodes()) } else { Procs::new() };
         let holders = |d: &diag::Diag| -> BTreeSet<Process> {
             let holding = procs.iter().filter(|(_, p)| p.2.contains(&d.inode));
             holding.map(|(pid, p)| (*pid, p.1)).collect()
@@ -380,18 +378,11 @@ mod linux {
     fn procs(inodes: &BTreeSet<u64>) -> Procs {
         let listed = |dir: String| std::fs::read_dir(dir).into_iter().flatten().flatten();
         let socket = |l: std::path::PathBuf| {
-            let inode = l
-                .to_str()?
-                .strip_prefix("socket:[")?
-                .strip_suffix(']')?
-                .parse()
-                .ok();
-            inode.filter(|i| inodes.contains(i))
+            let inode = l.to_str()?.strip_prefix("socket:[")?.strip_suffix(']')?;
+            inode.parse().ok().filter(|i| inodes.contains(i))
         };
-        let holds = |pid: u32| {
-            listed(format!("/proc/{pid}/fd"))
-                .filter_map(|f| socket(std::fs::read_link(f.path()).ok()?))
-        };
+        let link = |f: std::fs::DirEntry| socket(std::fs::read_link(f.path()).ok()?);
+        let holds = |pid: u32| listed(format!("/proc/{pid}/fd")).filter_map(link);
         let pids =
             listed("/proc".into()).filter_map(|d| d.file_name().to_str()?.parse::<u32>().ok());
         let read = |pid| {
@@ -402,12 +393,17 @@ mod linux {
     }
 }
 
-/// What a process is shown as: its executable's file name, an update's
+/// What a process is shown as: on Linux the unit of this account's user
+/// manager it runs in, when one does ([`crate::job::of`]); else its executable's file name, an update's
 /// rename over it aside (Linux's ` (deleted)`), and its folder: Linux's
 /// `/proc/<pid>/exe` and `cwd`, a Mac's `proc_pidpath` and
 /// `PROC_PIDVNODEPATHINFO`, each read only to be shown.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 fn shown((pid, start): Process) -> Answer {
+    #[cfg(target_os = "linux")]
+    if let Some(job) = crate::job::of(pid, mine().ok()) {
+        return job;
+    }
     #[cfg(target_os = "linux")]
     let (path, cwd) = {
         let at = |f: &str| std::fs::read_link(format!("/proc/{pid}/{f}")).ok();
@@ -502,11 +498,10 @@ mod diag {
         };
         let socket = Socket::new(NETLINK_SOCK_DIAG).map_err(failed)?;
         let mut found = Vec::new();
+        let kernel = Kernel::new(0, 0);
         for family in [2, 10] {
             let asked = request(family, raw, states, port);
-            socket
-                .send_to(&asked, &Kernel::new(0, 0), 0)
-                .map_err(failed)?;
+            socket.send_to(&asked, &kernel, 0).map_err(failed)?;
             let mut done = false;
             while !done {
                 let mut answer = Vec::with_capacity(64 * 1024);
@@ -609,7 +604,7 @@ mod diag {
 fn read(at: SocketAddr, to: SocketAddr) -> Result<Owner, &'static str> {
     let me = mine()?;
     match mac::scan(me, Raw::Tcp, None, Some((at, to))) {
-        Ok(scan) if scan.took.is_some() => Ok(Owner::Uid(me)),
+        Ok(scan) if !scan.took.is_empty() => Ok(Owner::Uid(me)),
         Ok(_) => Ok(Owner::NotMine),
         Err(e) => {
             tracing::debug!(target: "uid", %at, error = %e, "uid: this account's processes can't be read");
@@ -643,7 +638,11 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
     let socket = |(&id, (at, dual, _, pids)): (&u64, &mac::On)| binding::Socket {
         id,
         cgroup: None,
-        holders: pids.iter().filter_map(named).collect(),
+        holders: pids
+            .iter()
+            .map(named)
+            .collect::<Option<_>>()
+            .unwrap_or_default(),
         at: *at,
         dual: *dual,
         peer: Peer::Unread,
@@ -656,14 +655,15 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
     };
     let up = scan
         .took
-        .map(|pid| mac::up(pid.unsigned_abs()))
-        .unwrap_or_default();
+        .first()
+        .filter(|_| scan.took.len() == 1)
+        .map_or_else(Vec::new, |pid| mac::up(pid.unsigned_abs()));
     let lineage: Vec<Process> = up.into_iter().map(|(pid, start, _)| (pid, start)).collect();
     match (conn, lineage) {
         (None, _) => Ok((read, Took::Datagram)),
         (Some(_), took) if !took.is_empty() => Ok((read, Took::Lineage(took))),
         (Some(_), _) => Err(Unread::Failed(
-            "no program of this account that took the connection can be read",
+            "no single program of this account can be read taking the connection",
         )),
     }
 }
@@ -898,9 +898,7 @@ mod record {
     pub(super) fn cwd(vnode: &[u8]) -> Option<std::path::PathBuf> {
         let path = vnode.get(CWD..).filter(|_| vnode.len() == VNODE_LEN)?;
         let path = &path[..path.iter().position(|b| *b == 0)?];
-        Some(std::path::PathBuf::from(
-            String::from_utf8_lossy(path).into_owned(),
-        ))
+        Some(String::from_utf8_lossy(path).into_owned().into())
     }
 
     /// The 32-bit word at `at` in `bytes`, in this computer's byte order.
@@ -1047,14 +1045,8 @@ mod record {
         let at = |b: &[u8]| -> Option<SocketAddr> {
             let port = u16::from_be_bytes([b[2], b[3]]);
             match (b[0], b[1]) {
-                (16, 2) => Some(SocketAddr::from((
-                    <[u8; 4]>::try_from(&b[4..8]).ok()?,
-                    port,
-                ))),
-                (28, 30) => Some(SocketAddr::from((
-                    <[u8; 16]>::try_from(&b[8..24]).ok()?,
-                    port,
-                ))),
+                (16, 2) => Some((<[u8; 4]>::try_from(&b[4..8]).ok()?, port).into()),
+                (28, 30) => Some((<[u8; 16]>::try_from(&b[8..24]).ok()?, port).into()),
                 _ => None,
             }
         };
@@ -1089,8 +1081,8 @@ mod mac {
     pub(super) struct Scan {
         /// Each socket on the port, by its generation count.
         pub on: BTreeMap<u64, On>,
-        /// The process holding the end asked for, if found.
-        pub took: Option<i32>,
+        /// Every process holding the end asked for.
+        pub took: BTreeSet<i32>,
     }
 
     /// The `raw` sockets of `me`'s processes on `port`, TCP's connected to
@@ -1108,7 +1100,7 @@ mod mac {
         if end.is_none() {
             return once(me, raw, port, None);
         }
-        let found = waited(|| once(me, raw, port, end).map(|s| s.took.is_some().then_some(s)))?;
+        let found = waited(|| once(me, raw, port, end).map(|s| (!s.took.is_empty()).then_some(s)))?;
         Ok(found.unwrap_or_default())
     }
 
@@ -1120,7 +1112,7 @@ mod mac {
         // scene's Jellyfin, while it streamed).
         let gone = |e: &std::io::Error| matches!(e.raw_os_error(), Some(3 | 9 | 38));
         let int = |b: &[u8]| Some(i32::from_ne_bytes(b.get(..4)?.try_into().ok()?));
-        let (mut on, mut took) = (BTreeMap::<u64, On>::new(), None);
+        let mut scan = Scan::default();
         for pid in kernel(Ask::Pids(me))?.chunks_exact(4).filter_map(int) {
             let failed = |ask: Ask, e: std::io::Error| {
                 tracing::debug!(target: "uid", ?ask, error = %e, "uid: libproc failed for one of this account's processes");
@@ -1153,14 +1145,14 @@ mod mac {
                 };
                 holds |= end.is_some_and(|(at, to)| same(local, at) && same(foreign, to));
                 if Some(local.port()) == port && (raw == Raw::Udp || foreign.port() == 0) {
-                    let at = on.entry(gencnt);
+                    let at = scan.on.entry(gencnt);
                     let made = || (local.ip(), dual, record::reuses(&socket), BTreeSet::new());
                     at.or_insert_with(made).3.insert(pid);
                 }
             }
-            took = took.or(holds.then_some(pid));
+            scan.took.extend(holds.then_some(pid));
         }
-        Ok(Scan { on, took })
+        Ok(scan)
     }
 
     /// Process `pid`, then its parent and theirs, each by its id with its

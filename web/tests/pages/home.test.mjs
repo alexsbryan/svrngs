@@ -602,6 +602,20 @@ test('nothing the page does is left to a terminal', () => {
   assert.ok(!/svrngs (remove|leave|new|share)/.test(INDEX), 'no line to type');
 });
 
+test('home can stop a managed app without a group', async () => {
+  const page = await home({
+    ...ada({ groups: [] }),
+    'GET /run': {
+      fields: [],
+      rows: [
+        { name: 'coder', port: 8101, text: 'Run by svrngs', action: 'stop', button: 'Stop coder' },
+      ],
+    },
+  });
+  assert.deepEqual(page.text('#run-form p button'), ['Stop coder']);
+  assert.doesNotMatch(page.text().join('\n'), /Look for programs running on this computer/);
+});
+
 // browser::the_home_page_s_links_say_what_they_open and
 // ::the_home_page_shows_less_to_puzzle_over: the index's link names the
 // lend and its kind, in a tab of its own, under what opening it does; its
@@ -958,6 +972,29 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
     unjudged.text('#lent li button').filter((b) => b === 'Keep sharing it'),
     [],
   );
+});
+
+// A held lend names the jobs without the manager's vocabulary, including
+// a description from a unit written before the availability page.
+test('a kept lend whose setup changed says so, and names the programs', async () => {
+  const unit = 'svrngs-keeper-coder.service';
+  const answers = [
+    { unit, description: 'coder, kept by svrngs-keeper' },
+    { unit: 'recipes.service' },
+  ];
+  const page = await home(
+    ada({
+      lent: [lend('coder', { answering: true, held: 'changed', answers, token: '00c0ffee' })],
+    }),
+  );
+  const line = page.text('#lent li details summary')[0];
+  assert.ok(
+    line.includes(
+      'What runs coder changed since you chose to keep sharing it when it starts again, so coder is closed for now. Now answering: coder and recipes.',
+    ),
+    line,
+  );
+  assert.ok(page.text('#lent li button').includes('Keep sharing it'));
 });
 
 // Keep sharing it is offered by the token alone, which svrngs lists only

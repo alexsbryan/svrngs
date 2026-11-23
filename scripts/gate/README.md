@@ -11,6 +11,11 @@ worktree: a worktree's git, its submodule's among it, lives outside
 `/work`, where neither the fetch nor svrngs-db's build, which reads the
 submodule's commit, can reach it.
 
+`keeper e2e` starts a private systemd user manager and D-Bus for each case
+inside the container, with a scratch home and a delegated cgroup. Its two
+WebKit cases use the built keeper beside the test binary. The third case
+restarts a test unit and checks the kernel's fresh listener and cgroup IDs.
+
 From a svrngs checkout:
 
     podman build -t svrngs-gate -f scripts/gate/Containerfile scripts/gate

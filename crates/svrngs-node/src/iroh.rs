@@ -115,6 +115,10 @@ pub struct IrohTransport {
     /// contact carries its own addrs, both are merged.
     #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
     known_addrs: std::sync::Mutex<HashMap<[u8; 32], Vec<SocketAddr>>>,
+    /// Each unit read to renew a lend, by the cgroup that took the door's
+    /// connection ([`Net::job`]).
+    #[expect(clippy::disallowed_types, reason = "the transport's unit cache")]
+    jobs: std::sync::Mutex<std::collections::BTreeMap<(String, u64), crate::job::Read>>,
     /// One connection per computer and protocol, kept while it stays open
     /// ([`Self::kept`]), the one rule for a member's requests and a folder's
     /// fetches (#177): each request is a bi-stream of it, as the phone's
@@ -144,6 +148,7 @@ impl IrohTransport {
             known_addrs: std::sync::Mutex::new(HashMap::new()),
             conns: tokio::sync::watch::Sender::new(Connections::new()),
             accepted: Accepted::default(),
+            jobs: Default::default(),
         }
     }
 
@@ -298,6 +303,11 @@ pub trait Net: Fetch + std::any::Any {
     /// What answers on a share's `port`, to approve, and the start now of
     /// `pid` ([`crate::uid::answering`]): read off the async runtime.
     fn answering(&self, raw: Raw, port: u16, pid: Option<u32>) -> Later<'_, PortAnswer>;
+    /// The user unit `unit` now ([`crate::job::now`]), to renew a lend kept
+    /// to it: read off the async runtime in the product, and kept for the
+    /// cgroup `took` names, the door's connection's taker, so friends'
+    /// requests to one held lend ask its user manager once.
+    fn job(&self, unit: String, took: Option<u64>) -> Later<'_, crate::job::Read>;
 }
 
 /// A share's port as [`Net::answering`] reads it.
@@ -473,6 +483,20 @@ impl Net for IrohTransport {
         let read = tokio::task::spawn_blocking(move || crate::uid::answering(raw, port, pid));
         let stopped = crate::uid::Unread::Failed("the read stopped");
         Box::pin(async move { read.await.unwrap_or(Err(stopped)) })
+    }
+    fn job(&self, unit: String, took: Option<u64>) -> Later<'_, crate::job::Read> {
+        let (at, jobs) = (took.map(|c| (unit.clone(), c)), &self.jobs);
+        let cached = |at: &(String, u64)| jobs.lock().ok()?.get(at).cloned();
+        let kept = at.as_ref().and_then(cached);
+        let read =
+            tokio::task::spawn_blocking(|| kept.unwrap_or_else(move || crate::job::now(&unit)));
+        Box::pin(async move {
+            let read = read.await.unwrap_or(Err("the read stopped"));
+            // One a restart, each a few dozen bytes: kept for the node's life.
+            at.zip(jobs.lock().ok())
+                .map(|(at, mut jobs)| jobs.insert(at, read.clone()));
+            read
+        })
     }
 }
 

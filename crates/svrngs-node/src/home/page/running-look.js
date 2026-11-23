@@ -33,14 +33,21 @@ import { get } from './routes.js?v=__VERSION__';
 
 /**
  * What holds a port, as svrngs read it to show its lender (lend.rs
- * `Answer`): a program, by its process and start, or another account.
- * @typedef {{ pid?: number, start?: number, program?: string, folder?: string, account?: string }} Answer
+ * `Answer`): a program, by its process and start, another account, or a
+ * systemd unit of this account's, by its name and description.
+ * @typedef {{ pid?: number, start?: number, program?: string, folder?: string, account?: string, unit?: string, description?: string }} Answer
  */
 
-// What answers, as its lender reads it: "python3 in ~/dev/garden".
+// The job's description, or its name without the system's filename suffix.
+// Old jobs carry a generated suffix in the description; it isn't a name.
 /** @param {Answer} answer */
-export const answered = ({ account, program, folder }) =>
-  account ? `a program of the account ${account}` : `${program}${folder ? ` in ${folder}` : ''}`;
+export const answered = ({ account, program, folder, unit, description }) => {
+  if (unit)
+    return description?.replace(/, kept by svrngs-keeper$/, '') ?? unit.replace(/\.service$/, '');
+  return account
+    ? `a program of the account ${account}`
+    : `${program}${folder ? ` in ${folder}` : ''}`;
+};
 
 /**
  * RUNNING's state: where its look is, what it found and the kinds the

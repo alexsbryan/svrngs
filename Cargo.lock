@@ -1240,7 +1240,7 @@ dependencies = [
 [[package]]
 name = "eudoxia"
 version = "0.1.0"
-source = "git+https://github.com/alexsbryan/eudoxia?rev=a0d3b0e5049f2dd84bdd7322d63518264704447d#a0d3b0e5049f2dd84bdd7322d63518264704447d"
+source = "git+https://github.com/alexsbryan/eudoxia?rev=fdc96b175ae47b20dadcbb7437f91ce2a6486712#fdc96b175ae47b20dadcbb7437f91ce2a6486712"
 dependencies = [
  "ed25519-dalek 2.2.0",
  "serde",
@@ -1251,7 +1251,7 @@ dependencies = [
 [[package]]
 name = "eudoxia-community"
 version = "0.1.0"
-source = "git+https://github.com/alexsbryan/eudoxia?rev=a0d3b0e5049f2dd84bdd7322d63518264704447d#a0d3b0e5049f2dd84bdd7322d63518264704447d"
+source = "git+https://github.com/alexsbryan/eudoxia?rev=fdc96b175ae47b20dadcbb7437f91ce2a6486712#fdc96b175ae47b20dadcbb7437f91ce2a6486712"
 dependencies = [
  "eudoxia",
  "serde",
@@ -1606,6 +1606,7 @@ dependencies = [
  "ring",
  "serde_json",
  "serde_yaml",
+ "svrngs-keeper",
  "tar",
  "thiserror 2.0.21",
  "tracing",
@@ -4663,6 +4664,7 @@ dependencies = [
  "iroh-relay",
  "mimalloc",
  "n0-future",
+ "plist",
  "rcgen",
  "reqwest 0.12.28",
  "ring",
@@ -4714,6 +4716,23 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.21",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "svrngs-keeper"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "shlex",
+ "tar",
+ "tempfile",
+ "thiserror 2.0.21",
  "tracing",
  "tracing-subscriber",
 ]

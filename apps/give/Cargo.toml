@@ -1,7 +1,7 @@
 # Give: a group keeps an app on one member's computer at a time, from the
 # app's own published image, in rootless podman (svrn-docs
-# rings/current/GIVE.md §7a). This crate is its keeper program and the
-# runtime under it.
+# rings/current/GIVE.md §7a). This crate is its keeper program; the runtime
+# under it is svrngs-keeper's (../svrngs-keeper).
 #
 # It links no svrngs crate and takes nothing from the workspace's tables, so
 # it reaches svrngs through its public surface alone and moves to a
@@ -23,6 +23,8 @@ anyhow = "1"
 blake3 = "1.8"
 # Give's one fold, which its page runs too (fold/Cargo.toml).
 give-fold = { path = "fold" }
+# The card and the runtime that keeps it on this computer, which know no group.
+svrngs-keeper = { path = "../svrngs-keeper" }
 # A clean stop on SIGINT and SIGTERM: the keeper program's last snapshot.
 # Each challenge of svrngs's proof (record.rs `challenge`), as svrngs draws
 # its own: the version the lock already holds for svrngs-node.

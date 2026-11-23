@@ -196,7 +196,51 @@ it. Every change to a declaration — its groups, its limit, turning on
 sign-in, stopping it, sharing it again — holds that lend's lock (`locks/<lend>.lock`, `File::try_lock`)
 from its read to its write (`lend::mutate`), so no change writes back
 what another narrowed; one made while another holds it is refused, busy
-(409 on the home page), and changes nothing. A group taken away is
+(409 on the home page), and changes nothing. The lock also protects a
+per-name revision in `locks/<lend>.rev`. Withdrawal advances it even when
+no declaration stands and leaves it behind. A confirmed plan can publish
+its binding, grant, audience and limit in one declaration write only at
+the reviewed revision. The audience keeps its selection order; its IDs
+must match the ones reviewed, regardless of order. The executor
+(`plan::run::confirm`) rebuilds the plan before publishing and returns the
+current review on a token mismatch.
+On the home page, `/running` reviews a new share and `/running/confirm`
+publishes it with that same executor. The review binds the program and the
+terms shown as well as the audience and listener; it never replaces a
+share that already stands.
+`svrngs share --plan` prints the terminal review; at a
+terminal a yes is required before executing it. `--ask-after-restart`,
+and sharing without a terminal, share only the current run. A listener
+started by hand is shared only while it runs; sharing does not adopt,
+stop or copy it. On Linux, an enabled unit pulled in by the login target
+is evidence for sign-in, not for unattended disk unlock. Running a program
+with svrngs is separate from sharing it: `svrngs run <name> --port <port>
+-- <command>` asks the sibling keeper to start it on Linux or macOS and
+writes no share. Linux also takes `--card <compose.yaml>` for one volume-only
+HTTP container, with `--port` matching the card. On Linux the CLI shows
+the keeper's boot consent prompt at the terminal. The page has no terminal
+input and cannot turn on unattended startup. On macOS the program starts
+at sign-in; Stop takes its plist out of the login set until Start. Lifecycle
+changes require the keeper's saved card and a regular live or parked plist;
+a loaded agent must also match the live plist's path (`launchd.rs`). Run
+verifies readiness with listeners in its active unit's cgroup subtree or
+with holders descended from the active launch agent. Otherwise it reports
+manager state and port readiness separately (`native_run.rs`); neither
+read approves sharing. The home page's native Run asks for a name,
+port, folder and command; the keeper parses quoting without running a
+shell. Choosing Run on an unmanaged listener's row opens that same form.
+The home page's read-only `/run?prefill=<port>` passes through the keeper's
+llama-server suggestion, when available, without replacing edits or
+submitting the form. After Run verifies the program, the page points to
+**Already running here** to share it; the terminal gives a Share command
+for its verified port.
+The page's Start and Stop controls use only the keeper's observed jobs
+and leave sharing alone. The share review is still a separate act.
+When Share would grant a running service, it
+dials without sending bytes and checks the listeners and connection taker against
+that service and the reviewed approval before the conditional save
+(svrn-docs `rings/current/KEEP_IT_RUNNING_RELEASE.md`).
+A group taken away is
 refused at the next request, and what already streams to its people is
 cut within two seconds: every second the door re-reads the declaration
 for each answer still streaming to a member or pass holder and each
@@ -327,6 +371,36 @@ listens anew after it starts again, and a share made before this, wait on
 that approval; a share of a name already shared from another port or
 protocol is refused unless it is given `--replace`; a lend file from
 V1.12.2 written again keeps what V1.12.2 wrote.
+**A lend kept to a unit is renewed through its restarts** (svrn-docs
+`rings/current/KEEP_SHARING_ON_RESTART.md` §2). On Linux a holder that runs
+in a service of this account's user manager is handed to the front ends as
+that job (its name and `Description`, `job.rs`), not its executable. The
+home page uses the job's description or name without the manager's terms
+(`running-look.js`, checked by `vocab_check.py`). Approving one unit's
+job alone, by `svrngs share`, `svrngs approve` or Keep sharing it, grants
+it (`Terms::keep`: the unit and a hash of its files under `~/.config`),
+unless `--ask-after-restart`; a transient unit, or one with no file there,
+is never granted. Where a kept TCP lend's request is held as another's,
+the door reads the unit now (`/usr/bin/systemctl`, never `PATH`) and
+approves afresh from that same read with `Chosen::Cgroups`, its subtree's
+cgroups this boot: only when the lend isn't held, the unit's files hash to
+the grant (else `Hold::Changed`, and its lender is asked again), a
+connection's taker was read, every socket there and that taker are the
+unit's, at the address approved before, and only over the revision and
+approval it judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
+stopped lend stays stopped.
+On macOS, Share looks for the keeper's exact label from the share name.
+It grants renewal only with both login registrations verified: the svrngs
+door and the app, whose regular plist must be registered in the GUI domain,
+set to start at sign-in and not disabled (`job/mac.rs`). The CLI parses the
+door's login plist and checks that its `EnvironmentVariables.SVRNGS_DIR`
+names the same canonical data directory; only a parsed plist without that
+key may use `~/.svrngs` (`cli.rs` `kept_over`). The grant pins
+the label and plist hash. The same door check at Share and renewal requires
+every listener holder and the connection taker to trace to the current
+agent PID and start time. The name alone never confers access. Approve on
+a Mac approves only the current run; to renew again, Share under the Run
+name. Mac containers and other launch agents still share the current run.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.
 
@@ -2944,7 +3018,8 @@ page gives one line to paste in a terminal, `curl -fsSL <page>install.sh |
 sh -s -- '<link>'`, composed in the page from the link's `#` part, so the
 token reaches no server. The host that serves the page serves the rest
 beside it, so any host a group names serves it too: `install.sh` at the
-page's address, and under `get/` a tarball of `svrngs` for each platform
+page's address, and under `get/` a tarball of `svrngs` and its sibling
+`svrngs-keeper` for each platform
 built — macOS on Apple silicon and on Intel, Linux on x86_64 and aarch64 as
 static-pie musl binaries with full RELRO
 (`demo/runs/hardening/2026-11-18/`), cross-built by zig (cargo-zigbuild)
@@ -2959,7 +3034,7 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
   release, from its signature, installs exactly that; the page then only
   joins and is kept for links, and cannot choose the program. The release
   kept for `svrngs update` is that file's sum. A file it cannot read or
-  that holds no program is refused, and nothing is installed;
+  that lacks a required program is refused, and nothing is installed;
 - installs into `~/.local/bin`, never with `sudo`, and puts it on the PATH
   of the person's login shell when that is zsh or bash, once, in the
   profile a new terminal window reads, and says so;
@@ -2971,7 +3046,13 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
 Run again, it updates in place and joins nothing twice. With `--uninstall`
 where the link goes, it stops and takes away what it kept at login, the
 programs and the opener, and keeps the data dir and the profile's PATH line,
-saying each and how to remove it. The person is named
+saying each and how to remove it. Before removing svrngs it points to
+**Stop** on the home page, which shows jobs created by Run even without
+a group; afterward, it points to reinstalling. Stop leaves the app's
+setup and files in place. Uninstall leaves those jobs and their data:
+native jobs run their programs directly, while Linux container jobs
+need the keeper at their next start or stop (`apps/svrngs-keeper/src/unit.rs`).
+The person is named
 as their computer shows them: the full name of the account `$USER` names,
 else `$USER`. *A founder's line* has the page's address where the link goes:
 it does all of the above but join, and the home page it opens is where they
@@ -3010,6 +3091,8 @@ why and the fix, and `svrngs update` says the same and exits 1. The install
 line checks no signature: it runs whatever the page serves, unless it is
 given a release already checked (`--archive`, above); pacman checks the
 release key itself (`packaging/arch`).
+`svrngs update` replaces only `svrngs`; paste the install line again to
+install or update both binaries together, or update via pacman if it owns them.
 
 *A computer that keeps apps* gets Give's program from the same line, with
 `--give` after the link or the page's address. The page host serves it

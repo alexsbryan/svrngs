@@ -1,0 +1,1799 @@
+[
+ {
+  "who": "Hana",
+  "at": 1363,
+  "sense": {
+   "kind": "look"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 6.923076923076923
+  },
+  "clock": 6.923076923076923,
+  "left": 120,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2695
+   }
+  ],
+  "read": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at",
+    "at": 2621
+   }
+  ],
+  "taps": 8,
+  "faults": [],
+  "heard": [
+   {
+    "from": "Cy",
+    "channel": "the house chat",
+    "text": "After you restart your laptop tonight and sign back in, which of coder and notes can I open tomorrow without you doing anything else? Just tell me here; no need to change anything.",
+    "said": 0,
+    "clock": 0
+   }
+  ],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 5756,
+  "sense": {
+   "kind": "scroll",
+   "dir": "down"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 6.923076923076923
+  },
+  "clock": 16.846153846153847,
+  "left": 90,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2695
+   },
+   {
+    "text": "Check the connection now",
+    "at": 2760
+   },
+   {
+    "text": "Your home page, the same address each time svrngs starts:",
+    "at": 2764
+   },
+   {
+    "text": "http://127.0.0.1:54291",
+    "at": 2774
+   },
+   {
+    "text": "/",
+    "at": 2775
+   },
+   {
+    "text": "To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.",
+    "at": 2776
+   }
+  ],
+  "read": [
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple",
+    "at": 2695
+   }
+  ],
+  "taps": 6,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 11475,
+  "sense": {
+   "kind": "scroll",
+   "dir": "down"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 6.923076923076923
+  },
+  "clock": 26.76923076923077,
+  "left": 60,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2695
+   },
+   {
+    "text": "Check the connection now",
+    "at": 2760
+   },
+   {
+    "text": "Your home page, the same address each time svrngs starts:",
+    "at": 2764
+   },
+   {
+    "text": "http://127.0.0.1:54291",
+    "at": 2774
+   },
+   {
+    "text": "/",
+    "at": 2775
+   },
+   {
+    "text": "To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.",
+    "at": 2776
+   }
+  ],
+  "read": [
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2695
+   },
+   {
+    "text": "Check the connection now",
+    "at": 2760
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "This page lists the programs running on this",
+    "at": 2590
+   }
+  ],
+  "taps": 6,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 13603,
+  "sense": {
+   "kind": "scroll",
+   "dir": "up"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 6.230769230769231
+  },
+  "clock": 36,
+  "left": 33,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2695
+   }
+  ],
+  "read": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2695
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   }
+  ],
+  "taps": 8,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 24718,
+  "sense": {
+   "kind": "tap",
+   "text": "coder"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0.528,
+   "read": 2.076923076923077
+  },
+  "clock": 41.60492307692308,
+  "left": 23.775999999999996,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2643
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   }
+  ],
+  "read": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2643
+   }
+  ],
+  "taps": 8,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 28336,
+  "sense": {
+   "kind": "scroll",
+   "dir": "down"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 5.3076923076923075
+  },
+  "clock": 49.912615384615385,
+  "left": 0.7759999999999962,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2643
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "How many people at once:",
+    "at": 2652
+   },
+   {
+    "text": "Let in this many",
+    "at": 2657
+   },
+   {
+    "text": "Who can open it:",
+    "at": 2661
+   },
+   {
+    "text": "Maple St house (yours, since 31 Oct) (ticked)",
+    "at": 2665
+   },
+   {
+    "text": "Film club (Kim’s, since 31 Oct) (not ticked)",
+    "at": 2672
+   },
+   {
+    "text": "Family (Sam’s, since 31 Oct) (not ticked)",
+    "at": 2678
+   },
+   {
+    "text": "Save who can open this",
+    "at": 2683
+   },
+   {
+    "text": "Sign people in with svrngs",
+    "at": 2688
+   },
+   {
+    "text": "Stop lending",
+    "at": 2693
+   },
+   {
+    "text": "notes: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2695
+   },
+   {
+    "text": "Check the connection now",
+    "at": 2760
+   },
+   {
+    "text": "Your home page, the same address each time svrngs starts:",
+    "at": 2764
+   },
+   {
+    "text": "http://127.0.0.1:54291",
+    "at": 2774
+   },
+   {
+    "text": "/",
+    "at": 2775
+   },
+   {
+    "text": "To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.",
+    "at": 2776
+   },
+   {
+    "text": "",
+    "at": -1
+   }
+  ],
+  "read": [
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "How many people at once:",
+    "at": 2652
+   },
+   {
+    "text": "Let in this many",
+    "at": 2657
+   },
+   {
+    "text": "Maple St house (yours, since 31 Oct) (ticked)",
+    "at": 2665
+   },
+   {
+    "text": "Film club (Kim’s, since 31 Oct)",
+    "at": 2672
+   }
+  ],
+  "taps": 13,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 32915,
+  "sense": {
+   "kind": "scroll",
+   "dir": "up"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 53.912615384615385,
+  "left": 0.7759999999999962,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2643
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   }
+  ],
+  "read": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2643
+   }
+  ],
+  "taps": 8,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 35325,
+  "sense": {
+   "kind": "tap",
+   "text": "What acts as you"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0.575,
+   "read": 1
+  },
+  "clock": 58.48761538461539,
+  "left": 0.17600000000000193,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Reads and writes for you",
+    "at": 2409
+   },
+   {
+    "text": "Maple St house",
+    "at": 2414
+   },
+   {
+    "text": "Money reads and writes who owes whom, and for what, when you open it.",
+    "at": 2417
+   },
+   {
+    "text": "Events reads and writes the get-togethers people post, and who’s coming, when you open it.",
+    "at": 2431
+   },
+   {
+    "text": "House rules reads and writes the rules your house agrees, and how you agree them, when you open it.",
+    "at": 2446
+   },
+   {
+    "text": "give reads and writes this app’s shared entries, when you open it.",
+    "at": 2465
+   },
+   {
+    "text": "Film club",
+    "at": 2477
+   },
+   {
+    "text": "Movie Night reads and writes the films your friends lend, and who has each, when you open it.",
+    "at": 2479
+   },
+   {
+    "text": "Knows who you are",
+    "at": 2497
+   }
+  ],
+  "read": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   }
+  ],
+  "taps": 3,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 39026,
+  "sense": {
+   "kind": "scroll",
+   "dir": "down"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 62.48761538461539,
+  "left": 0.17600000000000193,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "Knows who you are",
+    "at": 2497
+   },
+   {
+    "text": "What you open knows your name.",
+    "at": 2501
+   },
+   {
+    "text": "Direct connections",
+    "at": 2507
+   },
+   {
+    "text": "Can decide for you",
+    "at": 2509
+   },
+   {
+    "text": "Maple St house, Film club and Family: This computer.",
+    "at": 2513
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2643
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "How many people at once:",
+    "at": 2652
+   },
+   {
+    "text": "Let in this many",
+    "at": 2657
+   },
+   {
+    "text": "",
+    "at": -1
+   }
+  ],
+  "read": [
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "How many people at once:",
+    "at": 2652
+   },
+   {
+    "text": "Let in this many",
+    "at": 2657
+   }
+  ],
+  "taps": 8,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 47122,
+  "sense": {
+   "kind": "scroll",
+   "dir": "up"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 66.4876153846154,
+  "left": 0.17600000000000193,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   },
+   {
+    "text": "What you share, and what can act as you, across your groups.",
+    "at": 25
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "Reads and writes for you",
+    "at": 2409
+   },
+   {
+    "text": "Maple St house",
+    "at": 2414
+   },
+   {
+    "text": "Money reads and writes who owes whom, and for what, when you open it.",
+    "at": 2417
+   },
+   {
+    "text": "Events reads and writes the get-togethers people post, and who’s coming, when you open it.",
+    "at": 2431
+   },
+   {
+    "text": "House rules reads and writes the rules your house agrees, and how you agree them, when you open it.",
+    "at": 2446
+   },
+   {
+    "text": "give reads and writes this app’s shared entries, when you open it.",
+    "at": 2465
+   },
+   {
+    "text": "Film club",
+    "at": 2477
+   },
+   {
+    "text": "Movie Night reads and writes the films your friends lend, and who has each, when you open it.",
+    "at": 2479
+   },
+   {
+    "text": "Knows who you are",
+    "at": 2497
+   }
+  ],
+  "read": [
+   {
+    "text": "All your groups",
+    "at": 18
+   },
+   {
+    "text": "This computer",
+    "at": 21
+   },
+   {
+    "text": "What acts as you",
+    "at": 2405
+   },
+   {
+    "text": "This computer",
+    "at": 23
+   }
+  ],
+  "taps": 3,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 50495,
+  "sense": {
+   "kind": "scroll",
+   "dir": "down"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 70.4876153846154,
+  "left": 0.17600000000000193,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "Knows who you are",
+    "at": 2497
+   },
+   {
+    "text": "What you open knows your name.",
+    "at": 2501
+   },
+   {
+    "text": "Direct connections",
+    "at": 2507
+   },
+   {
+    "text": "Can decide for you",
+    "at": 2509
+   },
+   {
+    "text": "Maple St house, Film club and Family: This computer.",
+    "at": 2513
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "notes",
+    "at": 2582
+   },
+   {
+    "text": "8099",
+    "at": 2583
+   },
+   {
+    "text": "·",
+    "at": 2584
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2585
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2590
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "What you lend",
+    "at": 2618
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2643
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "How many people at once:",
+    "at": 2652
+   },
+   {
+    "text": "Let in this many",
+    "at": 2657
+   },
+   {
+    "text": "",
+    "at": -1
+   }
+  ],
+  "read": [
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "Stop notes",
+    "at": 2588
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2611
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2621
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2648
+   },
+   {
+    "text": "How many people at once:",
+    "at": 2652
+   },
+   {
+    "text": "Let in this many",
+    "at": 2657
+   }
+  ],
+  "taps": 8,
+  "faults": [],
+  "heard": [],
+  "end": null
+ },
+ {
+  "who": "Hana",
+  "at": 52661,
+  "sense": {
+   "kind": "tap",
+   "text": "notes"
+  },
+  "charge": {
+   "act": 3,
+   "surface": 0.526,
+   "read": 1
+  },
+  "clock": 75.01361538461539,
+  "left": -0.031999999999996476,
+  "url": "http://127.0.0.1:54291/?view=computer",
+  "screen": "This computer",
+  "shown": [
+   {
+    "text": "Knows who you are",
+    "at": 2497
+   },
+   {
+    "text": "What you open knows your name.",
+    "at": 2501
+   },
+   {
+    "text": "Direct connections",
+    "at": 2507
+   },
+   {
+    "text": "Can decide for you",
+    "at": 2509
+   },
+   {
+    "text": "Maple St house, Film club and Family: This computer.",
+    "at": 2513
+   },
+   {
+    "text": "Already running here",
+    "at": 2562
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   },
+   {
+    "text": "This rehearsal does not change any shares or programs.",
+    "at": 2582
+   },
+   {
+    "text": "notes",
+    "at": 2591
+   },
+   {
+    "text": "8099",
+    "at": 2592
+   },
+   {
+    "text": "·",
+    "at": 2593
+   },
+   {
+    "text": "Run by svrngs.",
+    "at": 2594
+   },
+   {
+    "text": "Stop notes",
+    "at": 2597
+   },
+   {
+    "text": "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+    "at": 2599
+   },
+   {
+    "text": "Look for programs running on this computer",
+    "at": 2620
+   },
+   {
+    "text": "What you lend",
+    "at": 2627
+   },
+   {
+    "text": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Maple St house (yours, since 31 Oct).",
+    "at": 2630
+   },
+   {
+    "text": "Shared while you run it.",
+    "at": 2652
+   },
+   {
+    "text": "Run it with svrngs",
+    "at": 2657
+   },
+   {
+    "text": "",
+    "at": -1
+   }
+  ],
+  "read": [
+   {
+    "text": "Run it with svrngs",
+    "at": 2565
+   }
+  ],
+  "taps": 6,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 59206,
+  "sense": {
+   "kind": "look"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 76.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 62463,
+  "sense": {
+   "kind": "back"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 77.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 75823,
+  "sense": {
+   "kind": "scroll",
+   "dir": "down"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 78.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 105886,
+  "sense": {
+   "kind": "say",
+   "channel": "the house chat",
+   "text": "notes — it's run by svrngs, so it'll be up after I sign back in. coder isn't running and I'd have to start it myself, so it won't be open tomorrow unless I do that."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 79.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 109369,
+  "sense": {
+   "kind": "tell",
+   "words": "I was looking at the svrngs \"This computer\" page to answer Cy's question about which of coder and notes would be available after a restart. I found that notes is already running on port 8099 and is \"Run by svrngs\", while coder is not running and says \"Shared while you run it\" with a \"Run it with svrngs\" action. So my answer was going to be: notes will be open after signing back in, coder will not be unless I start it. But while inspecting the page I tapped \"notes\" and the interface switched to \"You've given up.\" I didn't get to send the answer to Cy in the house chat — say now returns the same message."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 80.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 113255,
+  "sense": {
+   "kind": "tell",
+   "words": "I think the \"This computer\" page is where I manage what my laptop shares with my groups: which programs are lent out, who can open them, and what's currently running here. In this case I was using it to check whether coder and notes would still be up after a restart, so I could tell Cy which one he could open without me doing anything."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 81.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 117374,
+  "sense": {
+   "kind": "tell",
+   "words": "What didn't fit together was that I couldn't find a clear setting saying svrngs itself starts when I sign in. The page showed notes already running \"by svrngs\" and coder as \"Shared while you run it\" with a \"Run it with svrngs\" button, which made notes look like the automatic one and coder the manual one. But then tapping \"notes\" in the running list dropped me to \"You've given up\" before I could answer Cy, so I never got to send the message or verify the startup behavior directly."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 82.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 120497,
+  "sense": {
+   "kind": "tell",
+   "words": "I tapped \"What acts as you\" expecting settings about startup, but it showed a permissions breakdown by group instead. Then I tapped \"notes\" under \"Already running here\" expecting to open notes or see its details, and the screen changed to \"You've given up\" — after that, \"back\", \"look\", and \"say\" all just repeated that message, so I couldn't get back to the page or send Cy an answer."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 83.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ },
+ {
+  "who": "Hana",
+  "at": 123630,
+  "sense": {
+   "kind": "tell",
+   "words": "I stopped on the \"You've given up\" screen, not by choice — the interface switched to it after I tapped \"notes\" in the running-programs list, and I couldn't get back to the page. My intended last step was to answer Cy in the house chat: notes is run by svrngs and already running, so he should be able to open it tomorrow after I sign back in; coder is shared only while I run it, so he couldn't open that one unless I start it."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 84.01361538461539,
+  "left": -0.031999999999996476,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "spent"
+ }
+]

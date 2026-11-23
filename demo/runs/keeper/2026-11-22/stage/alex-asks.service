@@ -1,0 +1,10 @@
+# Alex's request after each boot, made from Alex's account, at boot.
+[Unit]
+Description=Alex asks for coder after a boot
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/alex/ask.py --boot
+
+[Install]
+WantedBy=default.target

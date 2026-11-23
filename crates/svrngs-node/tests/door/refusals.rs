@@ -951,7 +951,7 @@ async fn a_lend_s_port_is_carried_only_to_what_its_lender_approved() {
     assert_eq!(back.status, 200, "the approved socket back alone");
     let shelf = LendName::parse("shelf").unwrap();
     let approval = svrngs_node::node::approval();
-    svrngs_node::share::reapproved(world.dir.path(), &shelf, approval).unwrap();
+    svrngs_node::share::reapproved(world.dir.path(), &shelf, (approval, None)).unwrap();
     assert_eq!(ask(bo, "GET", "/lend/shelf/whoami", "").await.status, 200);
     let reply = ask(bo, "GET", "/lend/old/whoami", "").await;
     let words = "ada’s old is closed for now: ada hasn’t chosen which program it shares. Try again once ada chooses what it shares.";
@@ -977,4 +977,108 @@ async fn a_lend_s_port_is_carried_only_to_what_its_lender_approved() {
         told.contains(&("old", none.clone(), none.clone())),
         "{lends:#}"
     );
+}
+
+/// The socket `id` alone on a share's port, made in `cgroup`, which took
+/// the door's connection: a unit's program, as a test says it.
+fn in_unit(id: u64, cgroup: u64) -> svrngs_node::iroh::PortRead {
+    let (mut read, _) = on_wire::socket(id).unwrap();
+    read.sockets[0].cgroup = Some(cgroup);
+    Ok((read, svrngs_node::binding::Took::Cgroup(cgroup)))
+}
+
+/// **A lend kept to a unit is carried after the unit restarts, and another
+/// program gets nothing** (svrn-docs KEEP_SHARING_ON_RESTART §2, §4): ada
+/// kept coder to its unit, approved in cgroup 4, and plain to nothing.
+/// Coder's unit crashed (cgroup 5): bo's request is renewed and carried, the
+/// service heard it, and the unit read once, for the cgroup that took it.
+/// Another unit on the port (cgroup 9): 502 in the words of a program ada
+/// didn't choose, the service hears nothing. Its unit back with its files
+/// changed (cgroup 10): 502, what runs it changed, nothing heard. Plain, on
+/// the same port: held, and no unit read for it. Planted, watched
+/// failing: the renewal skipped in `bound::judged` (the crash's request
+/// answered 502).
+#[tokio::test]
+async fn a_kept_lend_is_carried_after_its_unit_restarts_and_another_gets_nothing() {
+    use svrngs_node::job::{Keep, Now};
+    answer_at_a();
+    let (origin, heads) = origins::head_origin().await;
+    let (port, unit) = (origin.port(), "svrngs-keeper-coder.service");
+    let world = World::on_wire(|dir| {
+        let lends = lend::lends_dir(dir);
+        std::fs::create_dir_all(&lends).unwrap();
+        let approved = r#""approved":{"sockets":[1],"cgroups":[4],"at":"127.0.0.1"}"#;
+        let keep = format!(r#","keep":{{"unit":"{unit}","files":"f1"}}"#);
+        for (name, more) in [("coder", keep.as_str()), ("plain", "")] {
+            let body =
+                format!(r#"{{"port":{port},"kind":"k","groups":["{NS}"],{approved}{more}}}"#);
+            std::fs::write(lends.join(format!("{name}.json")), body).unwrap();
+        }
+    })
+    .await;
+    let bo = world.as_key(2, Alpn::Member).await;
+    let job = |files: &str, cgroups: &[u64]| {
+        let keep = Keep {
+            unit: unit.into(),
+            files: files.into(),
+        };
+        on_wire::jobs(
+            &world.a,
+            unit,
+            Ok(Now {
+                keep,
+                scope: svrngs_node::job::Scope::Cgroups(cgroups.iter().copied().collect()),
+            }),
+        );
+    };
+    on_wire::reads(&world.a, port, in_unit(1, 4));
+    assert_eq!(ask(bo, "GET", "/lend/coder/whoami", "").await.status, 200);
+    assert!(
+        on_wire::asked_jobs(&world.a).is_empty(),
+        "no unit read while it is what ada approved"
+    );
+    on_wire::reads(&world.a, port, in_unit(2, 5));
+    job("f1", &[3, 5]);
+    let heard = heads.lock().unwrap().len();
+    assert_eq!(
+        ask(bo, "GET", "/lend/coder/whoami", "").await.status,
+        200,
+        "renewed"
+    );
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        heard + 1,
+        "the service heard it"
+    );
+    assert_eq!(on_wire::asked_jobs(&world.a), [(unit.to_string(), Some(5))]);
+    let coder = lend::read(world.dir.path(), &LendName::parse("coder").unwrap());
+    let approved = coder.unwrap().unwrap().terms.approved.unwrap();
+    assert_eq!(
+        (approved.sockets, approved.cgroups),
+        ([2].into(), [5].into())
+    );
+    let heard = heads.lock().unwrap().len();
+    on_wire::reads(&world.a, port, in_unit(3, 9));
+    let reply = ask(bo, "GET", "/lend/coder/whoami", "").await;
+    let words = "ada’s coder is closed for now: a program ada didn’t choose was on its port";
+    refused(&reply, 502, "away", words);
+    on_wire::reads(&world.a, port, in_unit(4, 10));
+    job("f2", &[10]);
+    let reply = ask(bo, "GET", "/lend/coder/whoami", "").await;
+    let words = "ada’s coder is closed for now: what runs it changed since ada chose it.";
+    refused(&reply, 502, "away", words);
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        heard,
+        "the service heard nothing"
+    );
+    let asked = on_wire::asked_jobs(&world.a).len();
+    let reply = ask(bo, "GET", "/lend/plain/whoami", "").await;
+    refused(&reply, 502, "away", "a program ada didn’t choose");
+    assert_eq!(
+        on_wire::asked_jobs(&world.a).len(),
+        asked,
+        "no unit read for plain"
+    );
+    world.a.net().close().await;
 }

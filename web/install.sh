@@ -32,8 +32,8 @@
 # It gets svrngs for this computer from the page's address the link names
 # (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, or
 # takes it from --archive's file as given, asking the page for no sums: a
-# release checked by its signature is installed exactly, and the page then
-# only joins and is kept for links, so it cannot choose the program. It puts
+# release checked by its signature supplies both svrngs and its keeper; the
+# page then only joins and is kept for links, so it cannot choose them. It puts
 # it in ~/.local/bin with no sudo, and on the PATH of the person's login
 # shell when it is zsh or bash, joins the link as `svrngs join` does
 # when there is one, keeps the page it came from in the data dir (where a
@@ -144,6 +144,7 @@ by_hand() {
 # PATH line, which other programs in $bin may need: each said, with how to
 # remove it. A relay's Linux system unit is root's, so said and left.
 if [ -n "$uninstall" ]; then
+  [ ! -x "$bin/svrngs" ] || say "Uninstalling svrngs does not stop your apps or remove their setup or files. Native apps may still start. Managed Linux containers need svrngs installed to start and stop. To stop an app, open your home page and choose Stop before uninstalling."
   for kept_as in sh.svrnme.svrngs:svrngs sh.svrnme.svrngs.relay:svrngs-relay sh.svrnme.give:give; do
     label="${kept_as%%:*}" unit="${kept_as#*:}"
     at
@@ -154,8 +155,8 @@ if [ -n "$uninstall" ]; then
   done
   [ "$os" = darwin ] || systemctl --user daemon-reload 2>/dev/null || :
   by_hand ""
-  for program in svrngs give; do
-    [ ! -e "$bin/$program" ] || { rm -f "$bin/$program" && say "Removed $program from $bin."; }
+  for program in svrngs svrngs-keeper give; do
+    [ ! -e "$bin/$program" ] || { rm -f "$bin/$program" && { [ "$program" = svrngs-keeper ] || say "Removed $program from $bin."; }; }
   done
   [ ! -e "$opener" ] || { rm -rf "$opener" && say "Removed the svrngs opener, $opener."; }
   relay_unit=/etc/systemd/system/svrngs-relay.service
@@ -167,7 +168,7 @@ if [ -n "$uninstall" ]; then
   if [ -d "$dir" ]; then
     say "Kept $dir: your key and your groups' copies. To delete them too: rm -rf '$dir'"
   fi
-  say "svrngs is uninstalled. It left none of your groups: to leave one, run svrngs leave <group> before you uninstall."
+  say "svrngs is uninstalled. If you've already uninstalled, reinstall svrngs to manage your apps again. It left none of your groups: to leave one, run svrngs leave <group> before you uninstall."
   exit 0
 fi
 
@@ -187,21 +188,22 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
 sum=sha256sum && command -v sha256sum >/dev/null 2>&1 || sum="shasum -a 256"
-# Program $1 for this computer, unpacked in $tmp, its tarball's sum in $want:
-# from the file $2 when one is given, copied first so the bytes summed are
+# Programs $3 onward, unpacked from the archive named by $3, its sum in $want:
+# from the file $1 when given, copied first so the bytes summed are
 # the bytes installed; else from the page's get/ (scripts/build-release.sh),
 # refused unless it is the one SHA256SUMS there lists.
 get() {
-  tarball="$1-$os-$arch.tar.gz"
-  if [ -n "$2" ]; then
-    [ -f "$2" ] && [ -r "$2" ] && cp -- "$2" "$tmp/$tarball" ||
-      no "$2 is not a file you can read, so nothing was installed: give --$3archive the release you checked."
-    say "Using $1 from $2, the file you gave, in place of the page's."
+  file=$1 flag=$2 program=$3; shift 2
+  tarball="$program-$os-$arch.tar.gz"
+  if [ -n "$file" ]; then
+    [ -f "$file" ] && [ -r "$file" ] && cp -- "$file" "$tmp/$tarball" ||
+      no "$file is not a file you can read, so nothing was installed: give --${flag}archive the release you checked."
+    say "Using $program from $file, the file you gave, in place of the page's."
     want="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
   else
     [ -f "$tmp/SHA256SUMS" ] || curl -fsSL "${from}get/SHA256SUMS" -o "$tmp/SHA256SUMS" ||
       no "could not get ${from}get/SHA256SUMS to check it against, so nothing was installed."
-    say "Getting $1 for this computer from ${from}get/$tarball"
+    say "Getting $program for this computer from ${from}get/$tarball"
     curl -fsSL "${from}get/$tarball" -o "$tmp/$tarball" ||
       no "could not get ${from}get/$tarball, so nothing was installed."
     want="$(awk -v f="$tarball" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS")"
@@ -210,13 +212,13 @@ get() {
       no "$tarball is not the one the release lists, so it was refused and nothing was installed."
     say "Checked: $tarball is the one the release lists, unchanged on its way here."
   fi
-  tar -xzf "$tmp/$tarball" -C "$tmp" "$1" && chmod 755 "$tmp/$1" ||
-    no "${2:-$tarball} holds no $1 program, so nothing was installed."
+  (cd "$tmp" && tar -xzf "$tarball" "$@" && chmod 755 "$@") ||
+    no "${file:-$tarball} must hold each of these programs: $*. Nothing was installed."
 }
-# Both are checked before either is installed, so a refusal installs nothing.
-get svrngs "$archive" ""
+# Every archive is checked before anything is installed.
+get "$archive" "" svrngs svrngs-keeper
 svrngs_sum="$want"
-[ -z "$give" ] || get give "$give_archive" give-
+[ -z "$give" ] || get "$give_archive" give- give
 
 # A svrngs kept running holds its data, which joining needs: stopped
 # first, started again below on the new one. One started by hand holds it
@@ -231,9 +233,10 @@ mkdir -p "$bin" "$dir"
 printf '%s' "$from" >"$dir/origin"
 put() {
   if [ -e "$bin/$1" ]; then done="Updated"; else done="Installed"; fi
-  mv -f "$tmp/$1" "$bin/$1" && say "$done $1 in $bin."
+  mv -f "$tmp/$1" "$bin/$1" && { [ "$1" = svrngs-keeper ] || say "$done $1 in $bin."; }
 }
 put svrngs
+put svrngs-keeper
 # What this computer installed, for the home page's update (svrngs-node
 # update.rs `RELEASE_FILE`; tests/install.rs reads it by that constant).
 printf '%s' "$svrngs_sum" >"$dir/release"
