@@ -136,6 +136,10 @@ svrngs-core = { workspace = true, features = ["test-support"] }
 # turn its test support on here.
 svrngs-node = { path = ".", features = ["test-support"] }
 tempfile = "3"
+# The state route's tests make and spoil a SQLite file through SQLite as
+# svrngs-db links it, so they need no `sqlite3` program, which a Linux host
+# and the gate image lack.
+rusqlite = { version = "=0.41.0", features = ["bundled"] }
 # The tests' own HTTP client, to a node's record API and through a splice
 # (src/node/tests_support.rs); the product asks on the stream (arch-peer).
 reqwest = { version = "0.12", default-features = false, features = ["json"] }

@@ -91,31 +91,24 @@ fn a_waiting_set_is_kept_and_counted_together_or_not_at_all() {
     svrngs_db::close(side).unwrap();
 }
 
-fn sqlite3(path: &Path, sql: &str) -> String {
-    let out = std::process::Command::new("sqlite3")
-        .arg(path)
-        .arg(sql)
-        .output()
-        .unwrap();
-    String::from_utf8_lossy(&out.stdout).trim().to_owned()
-}
-
 /// **A database is opened only by a plain name, under its group's
 /// directory**: a name that is a path, absolute or climbing out, or holds a
-/// separator, opens nothing, and a SQLite file elsewhere is left as it was:
-/// its tables, and its journal mode. Plant: a name with a `/` taken (the
-/// other file gains cr-sqlite's tables).
+/// separator, opens nothing, and a SQLite file elsewhere is left as it was,
+/// byte for byte, with no WAL beside it: its tables, and its journal mode.
+/// The file is made by SQLite as this crate links it, so the test needs no
+/// `sqlite3` program, which a Linux host may lack (svrn-docs
+/// `app-state-diligence/e-opening-2026-11-22/`). Plant: a name with a `/`
+/// taken (the other file gains svrngs's tables and a WAL).
 #[test]
 fn a_database_is_opened_only_by_a_plain_name() {
     let dir = tempfile::tempdir().unwrap();
     let elsewhere = dir.path().join("elsewhere");
     std::fs::create_dir_all(&elsewhere).unwrap();
     let other = elsewhere.join("other.db");
-    let made = std::process::Command::new("sqlite3")
-        .arg(&other)
-        .arg("CREATE TABLE notes (x);")
-        .status();
-    assert!(made.unwrap().success());
+    let made = Connection::open(&other).unwrap();
+    made.execute_batch("CREATE TABLE notes (x);").unwrap();
+    svrngs_db::close(made).unwrap();
+    let before = std::fs::read(&other).unwrap();
     let states = States::new(&dir.path().join("computer-1"), key(1));
     let absolute = elsewhere.join("other");
     let names = [
@@ -135,12 +128,8 @@ fn a_database_is_opened_only_by_a_plain_name() {
             }
         }
     }
-    assert_eq!(
-        sqlite3(&other, ".tables"),
-        "notes",
-        "the other file's tables, untouched"
-    );
-    assert_eq!(sqlite3(&other, "PRAGMA journal_mode"), "delete", "and its journal mode");
+    assert!(std::fs::read(&other).unwrap() == before, "the other file, untouched");
+    assert!(!elsewhere.join("other.db-wal").exists(), "and no WAL beside it");
     assert!(opened.is_empty(), "opened: {opened:?}");
     assert!(states.open("g", "board", Some(SCHEMA)).is_ok(), "a plain name opens");
 }

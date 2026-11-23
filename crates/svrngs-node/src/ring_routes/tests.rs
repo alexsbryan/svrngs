@@ -590,7 +590,9 @@ async fn a_call_with_a_key_cr_sqlite_cannot_unpack_is_answered_and_its_set_refus
 /// file elsewhere is left as it was. Either line holds alone: the wire's
 /// name parsed as a plain one, and the database found among those held.
 /// Plant: both taken away, a name taking any text and the database opened
-/// by the wire's name (the other file gains cr-sqlite's tables).
+/// by the wire's name (the other file is turned to WAL, so its bytes
+/// change). The file is made through SQLite as svrngs-db links it, so the
+/// test needs no `sqlite3` program, which a Linux host may lack.
 #[tokio::test]
 async fn the_state_route_serves_only_a_database_this_computer_holds() {
     let dir = tempfile::tempdir().unwrap();
@@ -598,26 +600,18 @@ async fn the_state_route_serves_only_a_database_this_computer_holds() {
     let mut inbound = inbound(rail.clone(), live);
     inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
     let other = dir.path().join("other.db");
-    let made = std::process::Command::new("sqlite3")
-        .arg(&other)
-        .arg("CREATE TABLE notes (x);")
-        .status()
-        .unwrap();
-    assert!(made.success());
+    let made = rusqlite::Connection::open(&other).unwrap();
+    made.execute_batch("CREATE TABLE notes (x);").unwrap();
+    svrngs_db::close(made).unwrap();
+    let before = std::fs::read(&other).unwrap();
     let absolute = dir.path().join("other");
     for app in [absolute.to_str().unwrap(), "../../../other"] {
         let asked = svrngs_db::Call::default();
         let (status, _) = state(inbound.clone(), Some(&key()), (NS, app), &asked).await;
         assert_ne!(status, 200, "{app} served");
     }
-    let tables = std::process::Command::new("sqlite3")
-        .arg(&other)
-        .arg(".tables")
-        .output()
-        .unwrap();
-    assert_eq!(
-        String::from_utf8_lossy(&tables.stdout).trim(),
-        "notes",
+    assert!(
+        std::fs::read(&other).unwrap() == before,
         "the other file, untouched"
     );
 }
@@ -663,12 +657,12 @@ async fn the_state_route_reads_no_call_before_standing_and_says_no_words_of_its_
     assert_eq!(status, 403, "refused for standing, its call unread");
 
     // A kept set this computer can't read back: its own fault.
-    let spoilt = std::process::Command::new("sqlite3")
-        .arg(dir.path().join(format!("ada/state/{NS}/board.db")))
-        .arg("UPDATE svrngs_sets SET bytes = x'ff';")
-        .status()
+    let spoilt =
+        rusqlite::Connection::open(dir.path().join(format!("ada/state/{NS}/board.db"))).unwrap();
+    spoilt
+        .execute_batch("UPDATE svrngs_sets SET bytes = x'ff';")
         .unwrap();
-    assert!(spoilt.success());
+    svrngs_db::close(spoilt).unwrap();
     let asked = postcard::to_allocvec(&((NS, "board"), svrngs_db::Call::default())).unwrap();
     let (status, said) = state_said(inbound, &key(), asked).await;
     assert_eq!(status, 500);
