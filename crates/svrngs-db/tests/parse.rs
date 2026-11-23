@@ -2,7 +2,8 @@
 //! `rings/current/APP_STATE.md` §4, the four outcomes): each change names one
 //! of the app's tables, a column of it or the row's sentinel, a key in
 //! cr-sqlite's packed form with the table's key columns and no NULL, and a
-//! `col_version` and causal length from 1 to 2^53. A set that doesn't parse
+//! `col_version` and causal length from 1 to 2^53, a column's causal length
+//! odd. A set that doesn't parse
 //! is refused for good, the same on every copy, and counted, so it is
 //! fetched once; a set written under a schema this copy doesn't hold, naming
 //! what it lacks, is dropped and sent again.
@@ -436,4 +437,54 @@ fn a_write_past_the_bound_is_refused_at_the_write_in_words() {
     assert!(refused.to_string().contains("BLOB key"), "{refused}");
     assert_eq!(refused.said(), (422, "unkept"));
     h.write(&key(127), &bound()).unwrap();
+}
+
+/// **Only a row's person starts it anew, and only a row's own change
+/// deletes it** (svrn-docs
+/// `app-state-diligence/security-review-2026-11-23/`, R): a column change
+/// at a causal length past its row's brings the row into its next life,
+/// every other column at its default, on every copy that takes it. On a
+/// row a person owns, a set signed by any other person's device is refused
+/// for good, so no member starts another's row anew. A column change at an
+/// even causal length, which cr-sqlite merges as the row's delete and no
+/// write makes, is refused for good on every copy. Plants, each watched
+/// failing: owned rows judged by their own change alone (the other's change
+/// taken, the note wiped); the parse taking any causal length (the card's
+/// title at 2 taken, the card deleted).
+#[test]
+fn only_a_row_s_person_starts_it_anew_and_only_its_own_change_deletes_it() {
+    const VOTES: &str = "CREATE TABLE votes (person_key TEXT NOT NULL, film TEXT NOT NULL, yes INTEGER, \
+        note TEXT, PRIMARY KEY (person_key, film)) STRICT;";
+    let dir = tempfile::tempdir().unwrap();
+    let nine = svrngs_core::actor_of(&key(9));
+    let row = json!({ "person_key": nine, "film": "f1", "yes": 1, "note": "loved it" });
+    let mine = written(
+        &dir.path().join("votes"),
+        ("votes", VOTES),
+        json!([{ "insert": "votes", "row": row }]),
+    );
+    let mut theirs = mine.clone();
+    theirs.head.device = svrngs_db::Device::parse(&svrngs_core::actor_of(&key(2))).unwrap();
+    let anew = remade(&theirs, &key(2), "votes", |c| {
+        c.retain(|c| c.cid == "yes");
+        (c[0].cl, c[0].val) = (3, Val::Integer(0));
+    });
+    let to = db(dir.path(), 3, ("votes", VOTES));
+    assert_eq!(took(&to, &[mine]), [Took::Taken]);
+    assert_eq!(took(&to, &[anew]), [Took::Refused], "another's row started anew");
+    assert_eq!(
+        rows(&to, "SELECT yes, note FROM votes"),
+        json!([{ "yes": 1, "note": "loved it" }])
+    );
+
+    let base = written(dir.path(), ("board", CARDS), card("c1", "milk"));
+    let deletes = remade(&base, &key(9), "board", |c| {
+        c.iter_mut().filter(|c| c.cid == "title").for_each(|c| c.cl = 2)
+    });
+    refused_on_two_copies(
+        dir.path(),
+        ("board", CARDS),
+        &deletes,
+        "a column at an even causal length",
+    );
 }

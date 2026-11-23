@@ -62,8 +62,11 @@ pub(crate) fn parse(bytes: &[u8], tables: &BTreeMap<String, Table>) -> Result<Va
 /// `changes` as ones `tables` hold, or the first that isn't: a table of the
 /// app's; a column of it that isn't a key column, or the sentinel; a key in
 /// cr-sqlite's packed form ([`unpack`]) with the table's key columns; a
-/// `col_version` and causal length from 1 to [`BOUND`]; and no NULL for a
-/// NOT NULL column, which SQLite would refuse on every copy alike.
+/// `col_version` and causal length from 1 to [`BOUND`], a column's causal
+/// length odd, since cr-sqlite merges a change at an even one as its row's
+/// delete and no write makes one, so only a row's own change deletes it;
+/// and no NULL for a NOT NULL column, which SQLite would refuse on every
+/// copy alike.
 pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Result<Valid, Unfit> {
     let mut keys = Vec::with_capacity(changes.len());
     for c in &changes {
@@ -75,6 +78,7 @@ pub(crate) fn fit(changes: Vec<Change>, tables: &BTreeMap<String, Table>) -> Res
             _ if !column => Unfit::NoColumn(named()),
             None => Unfit::Key(c.table.clone()),
             _ if !versions.contains(&c.col_version) || !versions.contains(&c.cl) => Unfit::Versions(named()),
+            _ if c.cid != SENTINEL && c.cl % 2 == 0 => Unfit::Unread,
             _ if c.val == Sql::Null && t.not_null.contains(&c.cid) => Unfit::Null(named()),
             Some(key) => {
                 keys.push(key);
