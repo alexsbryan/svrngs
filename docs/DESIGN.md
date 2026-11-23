@@ -2189,6 +2189,7 @@ Cellular is never direct, and meets the share.
 | **apps (rngapps)** | anything served on localhost; app-specific code lives only in `apps/<app>/` | the surface in §3, and nothing else |
 | **sovereign (svrn)** | local AI on a member's computer | its OpenAI-compatible endpoint on loopback |
 | **commonwealth-ai** | the mesh for one owner's machines, and the ring code svrngs forked | nothing at runtime; `scripts/ports.py` pairs each forked file with its original |
+| **Corrosion** (superfly/corrosion) | Fly's CRDT SQLite, which an app's database learns from | nothing at runtime; each function forked carries `ported from superfly/corrosion <path>@<commit>`, which `scripts/ports.py` pairs with its original beside commonwealth-ai's |
 
 **The fork.** svrngs owns the group's code, forked from commonwealth-ai's
 ring slice at `e1a43bcd2`: the record (`commonwealth-rail-core`), the
@@ -3027,6 +3028,34 @@ release's signature (`scripts/release.sh`):
    `svrngs-release-key.asc` in a keyring of its own, refuses a site without a
    valid signature, publishes one with it, and leaves none of the Vercel
    CLI's files in the site.
+
+Between build and sign, each release records svrngs-db's tests on each of
+the four targets it ships, since the gate runs on one computer and the
+database runs on all four. They are recorded under `demo/runs/<version>/targets/`,
+each with its command and its verdict: passed, failed, could-not-judge or
+never-ran.
+- macOS on Apple silicon, natively: `cargo test -p svrngs-db`.
+- macOS on Intel, under Rosetta: its test binaries, built for
+  `x86_64-apple-darwin`. A Rosetta that hangs makes this could-not-judge.
+- Linux x86_64 and aarch64: the test binaries `cargo zigbuild -p svrngs-db
+  --tests --target <triple>-unknown-linux-musl` builds. They run on a Linux
+  x86_64 computer, and in an aarch64 kernel such as a podman machine's.
+- Each with the open-files limit raised as `scripts/check.sh` raises it,
+  since W1's seeds open more than a login's 1,024 at once.
+
+Beside them, each release records the mixed scene
+(`crates/svrngs/tests/scenes/mixed.rs`): one group where a computer runs
+v1.13.3, the last release with no app databases, beside two that run the
+release's commit, until it upgrades to it. It compares a release with the
+last one, so it runs once a release and not in every check, where it is
+ignored. It is recorded under `demo/runs/<version>/mixed/`, with its
+command and its verdict.
+1. `sh crates/svrngs/tests/scenes/last-release.sh` makes v1.13.3's binary
+   in `target/last-release/`, once a checkout; or `SCENES_LAST_RELEASE`
+   names one already made.
+2. `cargo test -p svrngs --test scenes mixed::mixed::chromium -- --ignored
+   --nocapture`, under the gate lock. Without the binary the scene is
+   never-ran, and says which command makes it.
 
 sign and page read the commit's `cli::SHIPPED` (§3, "Where a computer meets
 its groups"): a build at n0's relays they go on with and say so; a build at

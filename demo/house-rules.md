@@ -25,9 +25,12 @@ person. The times are from canon-run, a house of four on one computer
 ## Before you start
 
 You need a copy of svrngs with its program built, and Node.js 24 or
-later. In a terminal, in your copy:
+later. In a terminal, in your copy (the first two lines get cr-sqlite's
+source and its crates, once):
 
 ```
+git submodule update --init
+cargo fetch --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml
 cargo build -p svrngs
 ```
 

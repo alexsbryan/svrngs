@@ -8,9 +8,14 @@ description = "A group's journal on disk: one append-only JSONL log per group, t
 
 [dependencies]
 svrngs-core = { workspace = true }
+# An app database's calls between members, as svrngs-db writes them.
+postcard = { version = "1.1.3", default-features = false, features = ["alloc"] }
 # The community profile decides who may use a lend and what an app may write.
 eudoxia-community = { git = "https://github.com/alexsbryan/eudoxia", rev = "a0d3b0e5049f2dd84bdd7322d63518264704447d" }
 svrngs-runtime = { workspace = true }
+# Each carried app's database in each group, which the node owns as it owns
+# the runtime (svrn-docs rings/current/APP_STATE.md §10).
+svrngs-db = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -132,6 +137,10 @@ svrngs-core = { workspace = true, features = ["test-support"] }
 # turn its test support on here.
 svrngs-node = { path = ".", features = ["test-support"] }
 tempfile = "3"
+# The state route's tests make and spoil a SQLite file through SQLite as
+# svrngs-db links it, so they need no `sqlite3` program, which a Linux host
+# and the gate image lack.
+rusqlite = { version = "=0.41.0", features = ["bundled"] }
 # The tests' own HTTP client, to a node's record API and through a splice
 # (src/node/tests_support.rs); the product asks on the stream (arch-peer).
 reqwest = { version = "0.12", default-features = false, features = ["json"] }

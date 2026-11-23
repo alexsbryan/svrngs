@@ -2745,6 +2745,7 @@ dependencies = [
 name = "svrngs-web"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "bytes",
  "futures-util",
  "hex",
@@ -2756,6 +2757,8 @@ dependencies = [
  "n0-future",
  "n0-watcher",
  "noq-udp",
+ "postcard",
+ "serde",
  "serde_json",
  "svrngs-core",
  "thiserror 2.0.20",

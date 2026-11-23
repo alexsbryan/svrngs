@@ -76,10 +76,12 @@ use svrngs_core::pass::Label;
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
 use crate::folder::carried::Handled;
+use crate::iroh::Contact;
 use crate::join::{Entered, NotJoined};
 use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
+use crate::origin::Serving;
 use crate::share::{self, Share, ShareRefusal};
 
 /// The home page's host, before its port.
@@ -151,7 +153,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) ->
         "/question.js" "text/javascript" "home/question.js"
         "/look.css" "text/css" "home/look.css"
         "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
-        "/page/" "home/page/" ["acting" "acts" "acts-read" "asked" "asking" "direct" "door" "folder" "folders" "group" "group-choice" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "groups-left" "home-page" "home-reading" "index" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lending" "lent-read" "lent-row" "link-box" "link-copy" "make" "make-form" "offered" "on-screen" "open-link" "people" "play" "reach" "routes" "running-here" "running-look" "shelf" "update" "update-line" "visit" "visits" "what-you-lend" "wifi"];
+        "/page/" "home/page/" ["acting" "acts" "acts-read" "asked" "asking" "direct" "door" "folder" "folders" "group" "group-choice" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "groups-left" "home-page" "home-reading" "index" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lending" "lent-read" "lent-row" "link-box" "make" "make-form" "offered" "on-screen" "open-link" "people" "play" "reach" "routes" "running-here" "running-look" "shelf" "update" "update-line" "visit" "visits" "what-you-lend" "wifi"];
         "/page/" "home/page/" ["grouped"];
         "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
         "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]
@@ -1173,10 +1175,11 @@ struct Of {
 
 /// `GET /choices?lend=`: the person's choices on a lend, asked of its door now.
 async fn choices(State(at): State<Asking>, Query(Of { lend }): Query<Of>) -> Response {
-    if let Ok(crate::origin::Serving::Own) = crate::origin::serving(&at, &lend).await {
-        return own_choices(&at.door, &lend);
+    match crate::origin::serving(&at, &lend).await {
+        Ok(Serving::Own) => own_choices(&at.door, &lend),
+        Ok(Serving::At(contact, _)) => at_door(&at, &contact, &lend, None, None).await,
+        Err(refused) => refused,
     }
-    at_door(&at, &lend, None, None).await
 }
 
 /// `said` of `app` on `lend`, kept by this computer's door for its own
@@ -1191,40 +1194,36 @@ pub(crate) async fn say(
     pass: Option<HeaderValue>,
 ) -> Response {
     tracing::debug!(target: "home", %lend, %app, ?said, by_app = pass.is_some(), "home: a choice said");
-    if let Ok(crate::origin::Serving::Own) = crate::origin::serving(at, lend).await {
-        return own_choose(&at.door, lend, app, said).await;
-    }
+    let contact = match crate::origin::serving(at, lend).await {
+        Ok(Serving::Own) => return own_choose(&at.door, lend, app, said).await,
+        Ok(Serving::At(contact, _)) => contact,
+        Err(refused) => return refused,
+    };
     let body = match pass {
         Some(_) => serde_json::json!({ "said": said }),
         None => serde_json::json!(Saying { app, said }),
     };
-    at_door(at, lend, Some(body), pass).await
+    at_door(at, &contact, lend, Some(body), pass).await
 }
 
-/// `/choices/<lend>` at the lender's door, dialled as this computer's key
-/// ([`crate::origin::serving`]; its own lend is not dialled): posting
-/// `body`, else asking; with `pass` for an app's stop. Its answer, svrngs's
-/// mark kept.
+/// `/choices/<lend>` at the lender's door, `contact`, dialled as this
+/// computer's key (who serves it is [`crate::origin::serving`]'s, asked once
+/// by the caller; its own lend is not dialled): posting `body`, else asking;
+/// with `pass` for an app's stop. Its answer, svrngs's mark kept.
 async fn at_door(
     at: &Asking,
+    contact: &Contact,
     lend: &Label,
     body: Option<Value>,
     pass: Option<HeaderValue>,
 ) -> Response {
-    let contact = match crate::origin::serving(at, lend).await {
-        Ok(crate::origin::Serving::At(contact, _)) => contact,
-        Ok(crate::origin::Serving::Own) => {
-            return LendRefusal::fault("this computer's own lend is not dialled")
-        }
-        Err(refused) => return refused,
-    };
     let method = body.as_ref().map_or(Method::GET, |_| Method::POST);
     let ask = axum::http::Request::builder();
     let ask = (pass.into_iter()).fold(ask, |a, p| a.header(PASS_HEADER, p));
     let ask = ask.method(method).uri(format!("/choices/{lend}"));
     let ask = ask.header(header::CONTENT_TYPE, "application/json");
     let answer = match ask.body(body.map_or_else(Default::default, |b| b.to_string().into())) {
-        Ok(ask) => (at.host.transport.fetch(&contact, ask).await).map_err(|e| e.to_string()),
+        Ok(ask) => (at.host.transport.fetch(contact, ask).await).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),
     };
     let Ok(answer) = answer.inspect_err(|error| {

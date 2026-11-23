@@ -930,12 +930,165 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # another Bearer as no code left unused: `oidc::provider::bearer`, one
 # caller's, read in userinfo (5), and `holds_the_token`'s Bearer arm (2).
 # No raise was available; lowered to where it lands.
+# (2026-11-22) The shared database's ceiling, pre-approved by the operator
+# for its whole build, slices A to E (svrn-docs rings/current/MAGNETS_BUILD.md
+# §3): +1,450 of all code but JavaScript and +80 of JavaScript, the core's
+# +25 to +40 inside its own free lines ("A) +1,450 / +80 JS", over the
+# estimate's middle). 2026-11-19's ceiling was raised whole and other work
+# spent it, so this one is a pool, drawn by the seat. Each slice runs an
+# economizing pass over the files it touches. Then the caps rise by what
+# the slice needs, the caps come down to where it lands, and the pool's
+# balance is written here. Only the database's own commits draw on it; other
+# work asks for its own raise. Drawn so far: none. Left: +1,450 and +80.
+# (2026-11-22) Slice A, Magnets on one laptop, draws +620 of all code but
+# JavaScript. Its pass, over carried.rs, surface.rs, node.rs, lib.rs and
+# door.rs, found nothing to cut. No item is unused, and each repeat costs as
+# many lines to fold as it saves: the Retry-After refusal (carried.rs:635,
+# door.rs:1847), the pass decode (door.rs:1360, :1434), "nothing is lent
+# here" (surface.rs:502, :515, :725). All code but JavaScript 24,518 ->
+# 25,138. Then +40 more, to the +660 its worker projects once cr-sqlite
+# builds for Linux too (8ff2a8fd, 21985308): 25,178. A landed at 25,171,
+# from 24,517: +654 of all code but JavaScript and none of JavaScript, and
+# the cap comes down to it. Drawn so far: +654 (slice A). Left: +796 and +80.
+# (2026-11-22) Slice B draws +23 for two fixes in svrngs-db: build.rs names
+# cr-sqlite's archive by its object's hash, so a cache never links the engine
+# before a fork bump (+3); a Db's connection closes as it drops, cr-sqlite's
+# statements finalized first (+20). Their pass over svrngs-db's src/ and
+# build.rs cut the w1 harness's flush of rusqlite's statement cache, which
+# `Connection::close` already does, and found nothing else to cut. Drawn so
+# far: +677 (A +654, B +23). Left: +773 and +80.
+# (2026-11-22) Slice B draws +14 more: a new database's schema and its
+# tables made CRRs in one transaction, so a refused schema keeps nothing and
+# stays refused (lib.rs, `new_tables`). Its pass over svrngs-db found no
+# unused item. Drawn so far: +691 (A +654, B +37). Left: +759 and +80.
+# (2026-11-22) Slice B's sync and apply draw +485, to the top of their
+# worker's estimate (+375 to +483 by file, the core's +30 to +38 inside its
+# own free lines), before the build, so its commits land as it goes; the cap
+# comes down to where it lands. Its pass over form.rs, ring_routes.rs,
+# ring_sync.rs, the core's sig.rs, lib.rs, carried.rs and node.rs cut
+# form.rs's one-line `refused` wrapper (-3, 58573586) and found no unused
+# item else. From 25,205: the cap to 25,691. Drawn so far: +1,173 (A +654,
+# B +519). Left: +277 and +80.
+# (2026-11-22) Slice B's sync draws +50 more: the core and svrngs-db landed
+# at +435 (5ed069a8, 7828cb73), the node's route and round at +94 more, so the
+# half lands near +529 against the +483 estimated. rustfmt lays the core's
+# signed message and svrngs-db's struct literals out a field a line, and
+# waiting sets are held and judged again (about 30). The cuts left would
+# undo a design choice: waiting sets refetched each round, or a page's reads
+# kept on the runtime's threads. The cap to 25,741. Drawn so far: +1,223
+# (A +654, B +569). Left: +227 and +80.
+# (2026-11-22) Slice B's first half, sets, sync and apply, lands at 25,734
+# (5ed069a8..200d0ad3), and the cap comes down to it. B so far: +563 from
+# slice A's 25,171. Drawn so far: +1,217 (A +654, B +563). Left: +233 and
+# +80.
+# (2026-11-22) A pass that unwinds complexity, outside the database's files
+# (d5a96cd8..f8135755: who serves a lend decided once a request, our relays'
+# order in one place, legacy declarations found by Audience, the home page's
+# member places named once, a group's section, Copy and UPDATE), lands at
+# 25,717 and 8,670, and the caps come down to it: -17 and -23. Then the
+# outside review's fixes to slice B's sync draw the pool's +233 whole
+# (svrn-docs app-state-diligence/b-sync-fixes-2026-11-22/, estimated +195
+# to +275); a build past it comes back to the operator. From 25,717: the cap
+# to 25,951. Drawn so far: +1,450 (A +654, B +796). Left: none, and +80.
+# (2026-11-22) The operator's second ceiling for the shared database:
+# +700 of all code but JavaScript and +60 of JavaScript, for the review's
+# fixes past the first pool and slices B's second half to E, drawn the
+# same way (svrn-docs APP_STATE.md, Decisions). The review's fixes, at
+# 25,945 after steps 1 to 6 (2b3bd031..145eda7e), draw +199 for the rest,
+# estimated +125 to +175 by file (R8, R4, N2 and H1, H3, the bounds and
+# the self-heal), to come down to where they land. The cap to 26,150.
+# The second pool: +199 drawn, +501 and +60 left; the first's +80 of
+# JavaScript also stands.
+# (2026-11-22) The review's fixes land at 26,147 (2b3bd031..14ea09b3), +430
+# over 25,717, the self-heal not built, and the cap comes down to it. The
+# second pool: +197 drawn, +503 and +60 left.
+# (2026-11-22) Slice B's second half (every computer whose person said yes
+# keeps an app's database, prune, the push before sleep, WAL truncation and
+# vacuum, the write refill, the lid) draws +250 before its build, so its
+# commits land as it goes, to come down to where it lands. The cap to
+# 26,398. The second pool: +447 drawn, +253 and +60 left.
+# (2026-11-22) Slice B's second half lands at 26,322 (e5805a2d..2014ae99,
+# rebased), +174 over 26,148, and the cap comes down to it. The second
+# pool: +372 drawn, +328 and +60 left.
+# (2026-11-22) One cap for the shared database's build, in place of a draw
+# per slice: the second ceiling whole, 26,651 (+700 over 25,951), and
+# JavaScript at 8,741 (+60, and the operator's +10 for a phone's signed
+# write, "A: frame signs"). It comes down once, to where the build lands.
+# (2026-11-22) The operator's raise for a phone's signed write, "Raise +170
+# now": the cap to 26,821. Phones came to about +360 over 26,456, against
+# +160 estimated: the phone's check of every change against its op before it
+# signs (web/src/set.rs, 130), the home remembering each place it handed so a
+# set carried after its prepare is never signed twice (+38), and the copied
+# file's rebuild with twins (+40). The economizing first: the push before
+# sleep (-35, d9118b3e), signed heads (-30, 86bbaff1) and sets kept waiting
+# for a binding (-73, 1d411099). Phones' own cuts, in set.rs and the
+# prepare, land in its commits. The rest is the phone's check, which is what
+# keeps a computer between a phone and its group from signing for it. It
+# comes down to where phones lands.
+# (2026-11-22) The operator's B', "pass signs": a phone's set is signed by
+# its open's approver and carries the pass that names it, since WebKit gives
+# the framed signer a store of its own, without the person's key (svrn-docs
+# HOLDER_APPROVAL section 1, measured). About +80 for the pass and stamp
+# checked at apply and in the wasm, so the cap to 26,901. It comes down to
+# where phones lands.
+# (2026-11-22) The operator's "Raise +44": the cap to 26,945. W1's phones
+# found the phone's signer refusing about one honest write in five (an
+# update of a row not there, several ops on one row), and the fix judges a
+# write by its net effect, +13. Slice D's answers to W7's trips took 31 of
+# the room phones had counted on (1c481255..61c800eb). It comes down to where
+# phones lands, and again by a fresh read of the phones code.
+# (2026-11-22) The operator's raise for slice E, the release, "Raise +200":
+# the cap to 27,145. Measured from the code there is (svrn-docs
+# app-state-diligence/e-opening-2026-11-22/): the widest schema by a rebuild
+# of the copy, a set whose schema a copy lacks dropped and sent again, the
+# size cap with a share per device, and each bound's number in one home, about
+# +110 to +250. It comes down to where E lands.
+# (2026-11-22) The operator's yes to the signer picking a phone's places
+# (svrn-docs app-state-diligence/invariants-2026-11-22/, change 5): one
+# party decides a place, which retires the home handing places, the
+# signer's twice-signed refusal, the rows a place handed and never signed
+# leaves, and "write it again". JavaScript to 8,751, down to where it lands.
+# (2026-11-23) From the operator's overnight pool (+100 code, +10
+# JavaScript, drawn only after economizing): +43 for a value held to its
+# column's type at parse, on every copy alike, so copies holding the same
+# sets can't end apart by arrival order. Its pass cut 7 first (one refusal's
+# per-type words, a wrapped signature); the rest is the column-type rule.
+# The cap to 27,188. The pool: +43 drawn, +57 and +10 left.
+# (2026-11-23) +15 more from the pool for each device's bytes and rows kept
+# as running totals in the transaction that keeps or drops a set, so a write's
+# size-share check reads one row however much the copy keeps (+24, after cuts
+# in held, Room and the trigger loop prune shares). The cap to 27,203. The
+# pool: +58 drawn, +42 and +10 left.
+# (2026-11-23) +36 more from the pool: the security review's phone and parse
+# fixes (a phone signs only what its ops make, a column change at an even
+# causal length refused, a carry through the person's refill, +26) and a
+# value held to its column's type (+53, after its pass cut 7) come to +79
+# over 27,159. The cap to 27,239. The pool: +94 drawn, +6 and +10 left.
+# (2026-11-23) The operator's raise, +43, past the pool: the review's schema
+# fixes (one decider for what a version may keep +9, a schema.sql that only
+# declares +10, a value bound read by SQLite and the parse alike +13, a
+# restore that keeps a working connection +7, SQLite off the runtime's
+# threads +4). Their pass cut first: check uses scratch, columns and texts
+# read through sync::rows, one refusal for WITHOUT ROWID and GENERATED, the
+# per-scratch bound and the DEFAULT probe dropped. The cap to 27,282.
+# JavaScript lands at 8,747 with the phone's signer fixes in: its cap down
+# to 8,748.
+# (2026-11-23) The operator's raise for the delta review's fixes, the file
+# column and a read without the JSON aggregates, landed at +104 over 27,281:
+# a schema.sql that only declares +25, a key compared as SQLite orders it +3,
+# every version through the one decider +4, a restore's swap whole at every
+# step +9, a read's bounds put back on every path 0, a row that fits one
+# answer, 32 columns and 128 KiB a value +16, a database opened outside the
+# lock +5, its node callers off the runtime's threads +12, the file column
+# +27 (of the operator's +28), the JSON aggregates refused +3. Cut first:
+# INERT and its function list, the CHECK toggle in keep, one refusal for each
+# kind, the node's callers from +25 to +12. The cap to 27,386, where it lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24518,
+    ".": 27386,
 
-    "js": 8694,
+    "js": 8748,
 
     "swift": 1,
 }

@@ -9,6 +9,8 @@ description = "The svrngs command: a computer's device key, a group's link, and 
 
 [dependencies]
 svrngs-node = { workspace = true }
+# `svrngs check` holds an app's schema.sql to the rule its database is made by.
+svrngs-db = { workspace = true }
 base64 = "0.22"
 blake3 = { workspace = true }
 # `--joined` and the refusal that names it say a time on this computer's

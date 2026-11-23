@@ -33,7 +33,8 @@
 //! svrngs relay <name> [--open] [--staging] a relay, for the groups this computer is in
 //!                                          or everyone ([`crate::relay`])
 //! svrngs guide                             print the guide to building an app
-//! svrngs check <folder>                    what in an app's page the policy refuses
+//! svrngs check <folder> [<earlier>]        what in an app's page the policy refuses, and
+//!                                          its schema.sql, by the version it follows
 //! svrngs ask <route> [<json>]              svrngs's answer to a route, asked as you
 //! ```
 //!
@@ -251,8 +252,9 @@ pub enum Verb {
     Help,
     /// `guide`: the guide to building an app, as this build holds it.
     Guide,
-    /// `check`: what in the app at that folder the policy refuses.
-    Check(PathBuf),
+    /// `check`: what in the app at that folder the policy refuses, and its
+    /// `schema.sql`, beside the folder of the version it follows, if named.
+    Check(PathBuf, Option<PathBuf>),
     /// `ask` ("Never send the key", V1.13.3): svrngs's answer to a route,
     /// the JSON given posted there, else got, asked as the person, so any
     /// language asks svrngs by running it.
@@ -387,7 +389,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
-            other if verb == "room" || verb == "ask" => more.push(other.to_string()),
+            other if matches!(verb.as_str(), "room" | "ask" | "check") => more.push(other.to_string()),
             other => return Err(format!("unexpected argument `{other}`")),
         }
     }
@@ -533,8 +535,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "restart" => Ok(Verb::Restart),
         "guide" => Ok(Verb::Guide),
         "check" => {
-            let dir = positional.ok_or("check wants an app's folder: `svrngs check <folder>`")?;
-            Ok(Verb::Check(dir.into()))
+            let usage = "check wants an app's folder, then the folder of the version it follows, if any: `svrngs check <folder> [<earlier>]`";
+            let dir = positional.filter(|_| more.len() < 2).ok_or(usage)?;
+            Ok(Verb::Check(dir.into(), more.pop().map(PathBuf::from)))
         }
         "ask" => {
             let usage = "ask wants a route on svrngs, then one JSON body or none: `svrngs ask /v1/groups`, or `svrngs ask <route> '<json>'` to post it there";
@@ -821,7 +824,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             None => format!("svrngs {}\n", env!("CARGO_PKG_VERSION")),
         },
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
-        Verb::Check(dir) => checked(&dir)?,
+        Verb::Check(dir, was) => checked(&dir, was.as_deref())?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Approve(name, pid, token) => approve(here, &name, pid, token)?,
@@ -959,21 +962,63 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
 }
 
 /// `check`: what in the app at `dir` the policy every app's answer carries
-/// refuses, each by file and line, refused when anything is, so an agent's
-/// loop reads it by the exit code (svrn-docs
-/// `rings/current/EXTENSION_POINT.md` §7, G3).
-fn checked(dir: &Path) -> Result<String, Refusal> {
+/// refuses, each by file and line (svrn-docs `rings/current/EXTENSION_POINT.md`
+/// §7, G3), and what svrngs-db refuses of its `schema.sql`, made as a
+/// database is made from it and, where `was` names the folder of the version
+/// it follows, held to only adding to that one's (`svrngs_db::check`); refused
+/// when anything is, so an agent's loop reads it by the exit code. Its
+/// all-clear names each table, owned or shared, and each file column.
+fn checked(dir: &Path, was: Option<&Path>) -> Result<String, Refusal> {
     let shown = dir.display();
-    let none = format!("{shown} holds no index.html: an app is a folder with an index.html in it");
-    let found = svrngs_node::folder::check::check(dir).ok_or(Refused::Unfit(none))?;
-    let said: Vec<_> = (found.iter())
+    let none = |d: &Path| {
+        format!(
+            "{} holds no index.html: an app is a folder with an index.html in it",
+            d.display()
+        )
+    };
+    let found = svrngs_node::folder::check::check(dir).ok_or(Refused::Unfit(none(dir)))?;
+    let mut said: Vec<_> = (found.iter())
         .map(|(file, line, r)| format!("{file}:{line}: {}", r.words()))
         .collect();
-    let fix = "this page asks for what apps can't load, so it won't work as it is";
-    match said.is_empty() {
-        true => Ok(format!("Nothing in {shown} that apps can't load.\n")),
-        false => Err(Refused::Unfit(format!("{fix}:\n{}", said.join("\n"))).into()),
+    let schema = |d: &Path| match std::fs::read_to_string(d.join(svrngs_db::SCHEMA)) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        read => read.map(Some).map_err(|e| {
+            Refused::Unfit(format!("{}'s schema.sql can't be read: {e}", d.display()))
+        }),
+    };
+    let earlier = was.map(|w| {
+        w.join("index.html")
+            .is_file()
+            .then_some(w)
+            .ok_or(Refused::Unfit(none(w)))
+    });
+    let earlier = earlier.transpose()?.map(schema).transpose()?.flatten();
+    let made = schema(dir)?.map(|s| svrngs_db::check(&s, earlier.as_deref()));
+    tracing::debug!(target: "cli", dir = %shown, page = said.len(), schema = ?made, follows = earlier.is_some(), "cli: check — the page held to the policy, and its schema.sql to svrngs-db's rule");
+    if let Some(Err(r)) = &made {
+        said.push(format!("schema.sql: {r}"));
     }
+    let fix = "this page asks for what apps can't load, so it won't work as it is";
+    if !said.is_empty() {
+        return Err(Refused::Unfit(format!("{fix}:\n{}", said.join("\n"))).into());
+    }
+    let tables = made.and_then(Result::ok).unwrap_or_default();
+    let named = |files: &[String]| -> String {
+        files
+            .iter()
+            .map(|f| format!(" {f} names a file."))
+            .collect()
+    };
+    let each = tables.into_iter().map(|(t, owned, files)| match owned {
+        true => format!(" {t}, each row its person's own.{}", named(&files)),
+        false => format!(" {t}, any member's to change.{}", named(&files)),
+    });
+    let each: String = each.collect();
+    let each = (!each.is_empty()).then(|| format!(" Its database's tables:{each} A column you add stays in every copy of your group for good, so try a new one in a group of your own first."));
+    Ok(format!(
+        "Nothing in {shown} that apps can't load.{}\n",
+        each.unwrap_or_default()
+    ))
 }
 
 /// `share --folder --group`, asked of the node running here

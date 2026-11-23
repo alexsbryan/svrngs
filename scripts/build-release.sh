@@ -52,6 +52,11 @@ TARGETS=(
 # flags, so a Linux binary that is not DYN is refused below.
 export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
 export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
+# cr-sqlite's source, the submodule at this commit's pin, and its crates,
+# which svrngs-db's build.rs takes with no network (README.md, "Work on
+# svrngs"): fetched here, so a fresh worktree, as ../svrngs-release is, builds.
+git submodule update --init --quiet && cargo fetch --quiet --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml \
+  || { echo "build-release: cr-sqlite's source or its crates did not fetch, so nothing was built. Check the network, then run this again" >&2; exit 1; }
 # `svrngs version` names the commit each binary is built from.
 SVRNGS_COMMIT="$(git rev-parse --short HEAD)$(git diff --quiet HEAD || echo -dirty)"
 export SVRNGS_COMMIT

@@ -1626,16 +1626,22 @@ pub(crate) async fn lend_for(
             let route = AppRoute::of(&service_path);
             // An app that ever read others' lends is a reader for good,
             // through a Stop or a later version: what it read may still sit
-            // in its storage. Reads and the record stay apart.
-            if route == AppRoute::Acts && req.method() != Method::GET {
+            // in its storage. Reads and the record stay apart, and so do
+            // reads and the group's database: its POST is a read or a write,
+            // which only its route can tell by its form, so the kernel's
+            // verdict is handed there, where a write is refused by it.
+            let mut wrote = Ok(());
+            if matches!(route, AppRoute::Acts | AppRoute::Sql) && req.method() != Method::GET {
                 let reached = choices::reaching(door, &Label::carried(carried.as_str(), group))?;
                 let class = reached.map_or(app::Class::Record, |_| app::Class::Connector);
-                let wrote = app::writes(&door.key, (group, actor), carried.as_str(), class);
-                tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, ?class, ?wrote, "door: a carried app's write, refused for an app that reads others' lends by the kernel's check of its class");
-                wrote.map_err(|why| LendRefusal::closed(why.to_string()))?;
+                wrote = app::writes(&door.key, (group, actor), carried.as_str(), class);
+                tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, ?class, ?wrote, "door: a carried app's write, refused for an app that reads others' lends by the kernel's check of its class: here to the record, at its database's route by its form");
+                if route == AppRoute::Acts {
+                    wrote.map_err(|why| LendRefusal::closed(why.to_string()))?;
+                }
             }
-            let opened =
-                (door.folders).open(&lend, (asker.device.as_str(), &service_path, route), req);
+            let at = (asker.device.as_str(), service_path.as_str(), route, wrote);
+            let opened = (door.folders).open(&lend, at, req);
             return Ok(opened.await);
         }
         Source::Raw(..) => {

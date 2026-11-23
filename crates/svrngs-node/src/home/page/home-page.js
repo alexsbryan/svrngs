@@ -15,6 +15,9 @@ import { ArrivalLinks, Choices, Notice, exposes } from './grouped.js?v=__VERSION
 
 // The page's places after the groups, in the order they are drawn.
 const PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
+// The places drawn only once the person is in a group: in none, the page
+// offers joining, then making, alone.
+const MEMBERS = ['acts', 'open', 'running', 'lent'];
 
 /** @type {Record<State['at']['said'], (q: Said, u: string, grouped: boolean) => string>} */
 const SAID = {
@@ -156,7 +159,6 @@ export function Home({ store, flows, places }) {
           me=${state.key}
           round=${state.round}
           places=${places}
-          flows=${flows}
           home=${home}
           grouped=${grouped}
           hidden=${grouped && query.group !== group.id}
@@ -164,11 +166,12 @@ export function Home({ store, flows, places }) {
         />
       `,
     );
+  const member = groups.length > 0;
   // "What you lend" waits until "What acts as you" is read, which draws
   // above it, so the two never trade places as they load.
   const after = PLACES.map((place) => {
     const waiting = place === 'lent' && flows.acts.holds(state);
-    const drawn = !waiting && Place(place);
+    const drawn = !waiting && (member || !MEMBERS.includes(place)) && Place(place);
     return grouped
       ? html`<div data-home-place=${place} hidden=${!exposes(state, place)}>${drawn}</div>`
       : drawn;

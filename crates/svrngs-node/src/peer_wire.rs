@@ -50,6 +50,13 @@ pub const MAX_REQUEST_BODY_BYTES: usize = 8 * 1024 * 1024;
 /// reported a complete and empty ring.
 pub const RING_SYNC_OPS_BUDGET_BYTES: usize = MAX_REQUEST_BODY_BYTES / 2;
 
+/// The room an app database's call has for its ask beside its sets: what a
+/// request holds past one budget of them, derived, never retyped. Every key
+/// a group's record binds has an equal share of it (`svrngs_db::Binds`), so
+/// no one device fills what every copy's ask may carry and stalls the app's
+/// sync at the body limit.
+pub const ASK_ROOM_BYTES: usize = MAX_REQUEST_BODY_BYTES - RING_SYNC_OPS_BUDGET_BYTES;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RingSyncRequest {
     /// Which ring's journal. Named explicitly because this is peer-to-peer

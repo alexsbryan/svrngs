@@ -24,6 +24,7 @@ New here? Read [How it works](how-it-works.md) (five minutes), then
 | Invite someone, add my phone, have a guest, remove someone, leave | [People](people.md) |
 | See how the examples are made, run one, change one | [Examples](examples.md) |
 | Build an app for my group | [Build an app](build.md) |
+| Keep an app's shared data, like a board or votes | [The group's database](database.md) |
 | Run a relay for my group | [Run a relay](relays.md) |
 | Fix something that isn't working | [Troubleshooting](troubleshooting.md) |
 

@@ -150,7 +150,16 @@ pub struct Folders {
     fresh: watch::Sender<Vec<TempTag>>,
     /// How many files no member gave, by each folder's writer (synced.rs).
     waiting: watch::Sender<synced::Waiting>,
+    /// Each person's app writes' and reads' due time, by group, app, first
+    /// key and budget (carried.rs `Folders::refill`).
+    sealed: watch::Sender<BTreeMap<(Asker, &'static str), i64>>,
+    /// How many subscriptions each person has opened of an app here
+    /// (carried.rs `SUBSCRIPTIONS_MOST`).
+    pub(crate) opened: watch::Sender<BTreeMap<Asker, u64>>,
 }
+
+/// A group, an app of it, and a person's first key.
+pub(crate) type Asker = (String, String, String);
 
 /// A group's synced folders' files where its record places them, what
 /// runs of the apps it carries (`svrngs_core::Runs`), the set of the
@@ -221,6 +230,8 @@ impl Folders {
             carried: watch::Sender::new(BTreeMap::new()),
             fresh: watch::Sender::new(Vec::new()),
             waiting: watch::Sender::new(BTreeMap::new()),
+            sealed: watch::Sender::new(BTreeMap::new()),
+            opened: watch::Sender::new(BTreeMap::new()),
         };
         tracing::info!(target: "folder", untagged, "folder: the store is open");
         let stopping = folders.host.stopping.clone();

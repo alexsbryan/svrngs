@@ -529,13 +529,17 @@ pub enum Unsent {
     Failed(String),
 }
 
-/// `answer` read whole, within [`ANSWERED_WITHIN`].
+/// `answer` read whole, within [`ANSWERED_WITHIN`], and no more of it than
+/// a request may be ([`crate::peer_wire::MAX_REQUEST_BODY_BYTES`]): a
+/// member's answer is a budget of what the asker lacks beside its own
+/// digest or ask, as a request is, so a longer one is no answer.
 pub(crate) async fn whole(
     answer: impl Future<Output = Result<Streamed, Unsent>>,
 ) -> Result<Whole, Unsent> {
-    use http_body_util::BodyExt;
+    use http_body_util::{BodyExt, Limited};
     let read = async {
         let (head, body) = answer.await?.into_parts();
+        let body = Limited::new(body, crate::peer_wire::MAX_REQUEST_BODY_BYTES);
         let body = body.collect().await.map_err(|e| e.to_string());
         Ok(Whole::from_parts(
             head,

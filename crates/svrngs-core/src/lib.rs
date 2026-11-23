@@ -101,6 +101,7 @@ mod record;
 mod register;
 pub mod relay;
 pub mod seed;
+pub mod set;
 mod sig;
 mod sync;
 mod synced;

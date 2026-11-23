@@ -56,7 +56,7 @@ use svrngs_core::pass::{Label, Whose};
 
 use crate::door::choices;
 use crate::door::LendRefusal;
-use crate::folder::carried::{Handled, ACTS, SENDS};
+use crate::folder::carried::{Handled, ACTS, SENDS, SQL};
 use crate::group::Namesake;
 use crate::lend::{Program, SendRow, Source};
 use crate::node::{Asking, Groups, Lending, Unlisted};
@@ -118,6 +118,8 @@ pub const LEND_PATH: &str = "/svrngs-lend";
 pub(crate) enum AppRoute {
     /// [`ACTS`]: a carried app's own part of the record.
     Acts,
+    /// [`SQL`]: its own database in its group.
+    Sql,
     /// [`READS_PATH`]: the lends it reads ([`reads`]).
     Reads,
     /// `<READS_PATH>/<label><STOP_SUFFIX>`: its own stop of that lend.
@@ -139,6 +141,7 @@ impl AppRoute {
         let stop = stop.and_then(|p| Label::parse(p.strip_suffix(STOP_SUFFIX)?));
         match path {
             ACTS => Self::Acts,
+            SQL => Self::Sql,
             READS_PATH => Self::Reads,
             TO_PATH => Self::To,
             _ if path.starts_with(LEND_PATH) => {
@@ -487,13 +490,17 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
 /// could-not-judge, never read as lending nothing: refused `away` where the
 /// answer hangs on it, named where it is one of many (onair-economize (a)).
 /// Known by person, so a lend not found whose person has a computer that
-/// did not say is `away`, never "not lent".
+/// did not say is `away`, never "not lent". Last, whether `app` is mine,
+/// this computer's own: a computer's lend it serves itself, as
+/// [`crate::origin::serving`] decided it here, once a request ([`said_of`]).
 async fn read_by(
     at: &Asking,
     app: &Label,
-) -> Result<(Vec<Lending>, Unlisted, Vec<String>), Response> {
+) -> Result<(Vec<Lending>, Unlisted, Vec<String>, bool), Response> {
     let serving = crate::origin::serving(at, app).await?;
     let reader = serving.dialled(&at.host.actor).1.to_owned();
+    let mine =
+        matches!(app.whose(), Whose::Computer(_)) && matches!(serving, crate::origin::Serving::Own);
     let host = &at.host;
     let (mut groups, own) = host.shared_with(&reader)?;
     groups.retain(|(_, s)| s.contains_key(&host.actor));
@@ -516,7 +523,7 @@ async fn read_by(
     };
     let read: Vec<_> = reads_among(app, reading, &lent, &groups).cloned().collect();
     tracing::debug!(target: "surface", %app, group = ?reading.offered.group, read = read.len(), "surface: what the page reads, its kinds, a carried app's only in its own group");
-    Ok((read, unlisted, silent))
+    Ok((read, unlisted, silent, mine))
 }
 
 /// What the lend `reading`, whose label is `app`, reads among `lent`: each
@@ -590,14 +597,15 @@ fn named(l: &Lending) -> Option<Label> {
 }
 
 /// What the person said of `app` reaching others' lends: `None` for this
-/// computer's own app, which reads what its person declared; a carried app
-/// is its group's code, not this computer's person's, so it reaches on
-/// their yes, as another computer's app does.
-async fn said_of(at: &Asking, app: &Label) -> Result<Option<Option<choices::Choice>>, Response> {
-    let serving = crate::origin::serving(at, app).await?;
-    let own =
-        matches!(app.whose(), Whose::Computer(_)) && matches!(serving, crate::origin::Serving::Own);
-    let reaching = (!own).then(|| choices::reaching(&at.door, app));
+/// computer's own app (`mine`, [`read_by`]), which reads what its person
+/// declared; a carried app is its group's code, not this computer's
+/// person's, so it reaches on their yes, as another computer's app does.
+fn said_of(
+    at: &Asking,
+    app: &Label,
+    mine: bool,
+) -> Result<Option<Option<choices::Choice>>, Response> {
+    let reaching = (!mine).then(|| choices::reaching(&at.door, app));
     reaching.transpose()
 }
 
@@ -617,10 +625,10 @@ pub(crate) async fn reaches(
     label: &Label,
     send: bool,
 ) -> Result<(), Response> {
-    let (read, unlisted, silent) = read_by(at, app).await?;
+    let (read, unlisted, silent, mine) = read_by(at, app).await?;
     let reads = read.iter().any(|l| named(l).as_ref() == Some(label));
     // The person's yes is read only for a lend the page reads.
-    let said = if reads { said_of(at, app).await? } else { None };
+    let said = if reads { said_of(at, app, mine)? } else { None };
     let yes = said.map(|c| c.map_or((false, false), |c| (c.names(label), c.sends_to(label))));
     // A carried app's computers are each listed or not: none stands for it.
     let lender = match label.whose() {
@@ -647,8 +655,8 @@ pub(crate) async fn reaches(
 /// needs none to ask, and the address is all it builds on.
 pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Response> {
     let host = &at.host;
-    let (lent, Unlisted { unanswered, .. }, ..) = read_by(at, label).await?;
-    let said = said_of(at, label).await?;
+    let (lent, Unlisted { unanswered, .. }, _, mine) = read_by(at, label).await?;
+    let said = said_of(at, label, mine)?;
     let yes = said.as_ref().and_then(Option::as_ref);
     // This computer's own app reads what its person declared, so every
     // lend is named; another's, those its person's yes names ([`reaches`]).

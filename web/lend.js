@@ -726,9 +726,9 @@ async function lent(request, url, where, signs = false) {
   if (!held) return unheldAt(request, url);
   const lend = held.lends.find((one) => one.label === where.label);
   if (!lend) return closed();
-  if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts') {
-    return actsPosted(request, lend, signs);
-  }
+  const own =
+    request.method === 'POST' && lend.group ? await owned(request, where, lend, signs) : null;
+  if (own) return own;
   if (where.read && request.mode === 'navigate') return opening(held, where);
   return proxied(
     {
@@ -757,6 +757,27 @@ function unheldAt(request, url) {
     `${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&back=${back}`,
     302,
   );
+}
+
+// A group's lend's post that this phone writes as its own, from a page that
+// may name acts: its acts, posted as JSON (`writing`), and a body naming a
+// write to its database (`setWritten`), which the computer that prepares
+// it holds to the write form; any other post to its acts refused, and none
+// else, which goes to the lend's door.
+/**
+ * @param {Request} request
+ * @param {Where} where
+ * @param {Passed} lend
+ * @param {boolean} signs
+ * @returns {Promise<Response | null>}
+ */
+async function owned(request, where, lend, signs) {
+  if (where.path === '/svrngs/acts') return actsPosted(request, lend, signs);
+  if (!signs || where.path !== '/svrngs/sql') return null;
+  const body = request.clone();
+  /** @type {{ write?: unknown } | null} */
+  const asked = await body.json().catch(() => null);
+  return asked?.write === undefined ? null : setWritten(request, where, asked.write);
 }
 
 // A group's lend's acts, posted as JSON by a page that may name them, are
@@ -1123,36 +1144,81 @@ function signed(...args) {
 // How long, in ms, the group's signer has to approve a line.
 const APPROVING = 15_000;
 
-// `line`, unsigned, approved by the group's signer, which a page of this
-// lend's frames (shim.js): the pass that permits it, or why not, thrown.
+// What the group's signer, which a page of this lend's frames (shim.js),
+// answers `asked` (sign.js `answered`): its answer, or why not, thrown.
 /**
- * @param {string} group
- * @param {string} line
+ * @param {object} asked
+ * @returns {Promise<any>}
  */
-async function approved(group, line) {
+async function signerAnswer(asked) {
   const pages = await scope.clients.matchAll({ type: 'window' });
   const client = pages.find((one) => new URL(one.url).origin === SCOPE.origin);
   if (!client) throw new Error('no app page is open to ask the trusted signer');
   const channel = new MessageChannel();
-  /** @type {Promise<string>} */
   const answer = new Promise((yes, no) => {
     const why = walled
       ? `This app’s page (${walled}) may keep out your group’s signer, so this wasn’t saved.`
       : 'the trusted signer did not answer';
     const timeout = setTimeout(() => no(new Error(why)), APPROVING);
-    // The signer's answer (sign.js `answered`): the pass, or why not.
-    channel.port1.onmessage = (
-      /** @type {MessageEvent<{ pass?: string, error?: string }>} */ { data },
-    ) => {
+    channel.port1.onmessage = (/** @type {MessageEvent<{ error?: string }>} */ { data }) => {
       clearTimeout(timeout);
-      if (data.pass) yes(data.pass);
-      else no(new Error(data.error));
+      if (data.error) no(new Error(data.error));
+      else yes(data);
     };
   });
-  const authority = { ...JSON.parse(openMessage(handed)), proof: handed.proof };
-  const approve = { group, reach: handed.pass, line, authority };
-  client.postMessage({ approve, signer: SIGNER }, [channel.port2]);
+  client.postMessage({ approve: asked, signer: SIGNER }, [channel.port2]);
   return answer;
+}
+
+// The open this worker holds, as the signer checks it was its group page's.
+const authority = () => ({ ...JSON.parse(openMessage(handed)), proof: handed.proof });
+
+// `line`, unsigned, approved by the group's signer: the pass that permits
+// it, or why not, thrown.
+/**
+ * @param {string} group
+ * @param {string} line
+ */
+async function approved(group, line) {
+  const { pass } = await signerAnswer({ group, reach: handed.pass, line, authority: authority() });
+  return pass;
+}
+
+// The places of the sets the group's signer keeps that a computer has kept
+// since, or none ever will, told it with the next write so it lets them go.
+/** @type {string[]} */
+const confirmed = [];
+
+// A write to a carried app's database is this phone's own (svrn-docs
+// APP_STATE §4, "Phones"): the computer that answers prepares it, the
+// group's signer checks every prepare and signs it at a place it picks,
+// as no set where it changes nothing (sign.js `setsSigned`), and each set
+// the signer keeps is carried, the same bytes through whichever computer
+// answers, until one keeps it, 200, or none ever will, 422; then the
+// prepare's count is answered.
+/**
+ * @param {Request} request
+ * @param {Where} where
+ * @param {unknown} ops
+ * @returns {Promise<Response>}
+ */
+async function setWritten(request, where, ops) {
+  const toDoor = (/** @type {object} */ body) =>
+    lent(new Request(request, { body: JSON.stringify(body) }), new URL(request.url), where, true);
+  const answer = await toDoor({ prepare: ops });
+  if (!answer.ok) return answer;
+  const prepared = await answer.json();
+  const set = { ...prepared, ops, confirmed, authority: authority() };
+  const signer = await signerAnswer({ set }).catch((/** @type {Error} */ error) => error);
+  if (signer instanceof Error) {
+    return Response.json({ refused: 'unsigned', words: signer.message }, { status: 403 });
+  }
+  for (const [place, bytes] of signer.sets) {
+    const took = await toDoor({ carry: bytes });
+    if (took.ok || took.status === 422) confirmed.push(place);
+    if (!took.ok) return took;
+  }
+  return Response.json({ count: JSON.parse(prepared.prepared).count });
 }
 
 /**

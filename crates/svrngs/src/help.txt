@@ -7,7 +7,9 @@ writes its entries with fetch('svrngs/acts'). Every file in the group's
 folder goes to every member and stays in the group's record for good, as
 every entry does, so try things in a group of your own first (`svrngs new`).
 `svrngs guide` prints the whole guide; `svrngs check <folder>` says what in
-an app's page svrngs won't load, and what to change.
+an app's page svrngs won't load, and what in its schema.sql makes no
+database, and what to change. Name the folder of the version it follows
+after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs
       Run for every group you are in. Leave it running.

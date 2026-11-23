@@ -62,6 +62,8 @@ pub struct RingInbound {
     pub rail: Arc<RingRail>,
     pub live: Arc<LiveBuffer>,
     pub wake: Arc<tokio::sync::Notify>,
+    /// This computer's app databases, whose sets [`ring_state`] exchanges.
+    pub states: Arc<svrngs_db::States>,
 }
 
 /// The sync and live routes, as a router (upstream's was a `RouteBundle`
@@ -74,6 +76,10 @@ pub fn router(state: RingInbound) -> axum::Router {
             post(ring_sync).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
         .route("/internal/ring/live", post(ring_live))
+        .route(
+            crate::ring_sync::STATE_ROUTE,
+            post(ring_state).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+        )
         .with_state(state)
 }
 
@@ -229,6 +235,58 @@ pub async fn ring_sync(
         [(axum::http::header::CONTENT_TYPE, "application/json")],
         bytes,
     )
+        .into_response())
+}
+
+/// `POST /internal/ring/state`: a member's call for one app's database in a
+/// group, taken, and answered with this copy's call of what the member lacks
+/// (the app-state spike's `answer`, svrn-docs
+/// `rings/current/app-state-spike/spike.patch:1410-1455`); only to a dialer
+/// standing in the group, as the record's sync is, so a removed device's
+/// computer is refused. Of the body, the group and app alone are read before
+/// the dialer is found standing, and the call after. A database this
+/// computer doesn't hold is 404: it is opened by its plain name
+/// (`svrngs_db::Name`), only where its file is on this disk, never by a path
+/// the wire names, and no other database of the group is opened for it. The call is taken off the runtime's
+/// threads, as the page's reads are; a refusal answers its short name alone,
+/// and its words are said here, at debug.
+pub async fn ring_state(
+    State(state): State<RingInbound>,
+    dialer: Option<Extension<Dialer>>,
+    body: axum::body::Bytes,
+) -> Result<Response, Response> {
+    let malformed =
+        |e: postcard::Error| err(StatusCode::BAD_REQUEST, format!("malformed body: {e}"));
+    let refused = |r: svrngs_db::Refused| {
+        let (status, name) = r.said();
+        err(StatusCode::from_u16(status).expect("a status"), name)
+    };
+    let ((group, app), call): ((svrngs_db::Name, svrngs_db::Name), &[u8]) =
+        postcard::take_from_bytes(&body).map_err(malformed)?;
+    let (group, app) = (group.as_str(), app.as_str());
+    let dialer = dialer.map(|Extension(d)| d);
+    let (asker, _) = standing_asker(&state.rail, dialer, "state", group)
+        .map_err(|why| err(StatusCode::FORBIDDEN, why))?;
+    // The one database the call names, opened alone, and only one already
+    // on this disk: never another of the group's, nor a path the wire names.
+    let (g, a) = (group.to_owned(), app.to_owned());
+    let db = crate::ring_sync::off(&state.states, move |s| s.open(&g, &a, None)).await;
+    let ended = || Err(svrngs_db::Refused::Fault("its task ended".into()));
+    let db = db.unwrap_or_else(ended).map_err(refused)?;
+    let call: svrngs_db::Call = postcard::from_bytes(call).map_err(malformed)?;
+    let (bound, from) = (
+        crate::ring_sync::bound(&state.rail, group),
+        svrngs_db::Device::parse(&asker),
+    );
+    let offered = call.sets.len();
+    let answer = tokio::task::spawn_blocking(move || {
+        db.ingest(&call, &bound, from.as_ref())
+            .and(db.missing(&call.ask, RING_SYNC_OPS_BUDGET_BYTES))
+    });
+    let answer = (answer.await).unwrap_or_else(|e| Err(svrngs_db::Refused::Fault(e.to_string())));
+    tracing::debug!(target: "rails", group, app, asker, offered, refused = ?answer.as_ref().err(), "ring state: a member's call taken and answered, or refused, its words said here alone");
+    Ok(postcard::to_allocvec(&answer.map_err(refused)?)
+        .expect("a call is written in memory")
         .into_response())
 }
 

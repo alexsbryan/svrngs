@@ -9,7 +9,12 @@
 // approves an app's exact entry while the open's pass is live, by its own
 // clock. Every refusal tells the person to open the app again from the
 // group's page.
-import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, {
+  actor,
+  approve_line,
+  set_checked,
+  set_sealed,
+} from './wasm/svrngs_web.js?v=__VERSION__';
 import {
   base64url,
   ed25519,
@@ -167,10 +172,11 @@ class Told extends Error {}
 const AGAIN = 'Open this app again from your group’s page to write in it.';
 
 // What the app framing this signer `asked`, answered on `port`: its open
-// adopted, or an entry approved; anything else refused, by a throw.
+// adopted, a write to its database signed, or an entry approved; anything
+// else refused, by a throw.
 /**
- * @param {MessageEvent<{ opening?: Handoff, saved?: string } | null>} asked an open to adopt, else an
- *   entry, which `entryAsked` reads
+ * @param {MessageEvent<{ opening?: Handoff, saved?: string, set?: SetAsked } | null>} asked an open
+ *   to adopt, a set to sign, else an entry, which `entryAsked` reads
  * @param {MessagePort} port
  */
 async function answered(asked, port) {
@@ -187,7 +193,113 @@ async function answered(asked, port) {
     port.postMessage({ opened: true });
     return;
   }
+  if (asked.data?.set) {
+    port.postMessage(await setsSigned(asked.data.set, label, now));
+    return;
+  }
   port.postMessage({ pass: await entryApproved(asked.data, label, now) });
+}
+
+// A computer's prepare of the framing app's write to its own database, as
+// lend.js `setWritten` hands it on: the open it is under, the page's ops,
+// the prepare's text, the computer that signed it and how, and the places
+// of the sets a computer has kept since.
+/**
+ * @typedef {{ authority: Handoff, ops: unknown, prepared: string, by: string, sig: string,
+ *   confirmed: string[] }} SetAsked
+ */
+
+// The lend of `asked`'s open for `label`, the app that frames this signer,
+// where it names the computer that prepared `asked`; else thrown.
+/**
+ * @param {SetAsked} asked
+ * @param {string} label
+ */
+function lendOf(asked, label) {
+  const lend = asked.authority.lends.find((one) => one.label === label);
+  const computers = [lend?.key, ...(lend?.lenders ?? []).map((one) => one.key)];
+  if (!lend?.group || !computers.includes(asked.by)) {
+    throw new Error(`${asked.by} is no computer of this open`);
+  }
+  return lend;
+}
+
+// What this signer keeps for one app of a group, in one record, so
+// whatever clears any of it clears it all: its store's id, drawn as the
+// record is made; the seq it last signed at each computer, the home of
+// that set; and each set it signed, by its place, with the signature of the
+// prepare it was signed for, until a computer confirms it.
+/**
+ * @typedef {{ id: string, store: number[], counts: Record<string, number>,
+ *   sets: [string, string, string][] }} Signed
+ */
+
+// This origin's records of the sets it signed (`Signed`), by an app's group
+// and kind.
+/**
+ * @template T
+ * @param {IDBTransactionMode} mode
+ * @param {(store: IDBObjectStore) => IDBRequest<T>} act
+ */
+const signedSets = (mode, act) => store.stored('svrngs-sets', 'id', mode, act);
+
+// The framing app's write to its own database, signed for this phone by
+// its open's approver, as an entry is approved (svrn-docs
+// rings/current/APP_STATE.md §4, "Phones"; the operator's B′, 2026-11-22):
+// under a live open this browser's group page issued for the app, prepared
+// by a computer that open names, and checked against the page's ops by
+// svrngs's own wasm (web/src/set.rs, `set_checked`), which stamps it by this
+// signer's clock and puts in the open's pass, which names the approver
+// every copy checks it by. This signer picks its place (svrn-docs
+// app-state-diligence/invariants-2026-11-22/, change 5): at the computer
+// that prepared it, its home, the seq after the last it signed there, for
+// its store, so no place is signed twice while the record holds, and a
+// record made anew is a site of its own. Two writes at once each sign at
+// the next seq, and one is kept only where nothing moved the record since
+// it was read; the other signs again at the seq after. Each set is kept
+// until a computer confirms it, and every answer gives the kept ones back
+// to carry. A prepare kept already, the page relaying it again, is no
+// second set, and one that changes nothing, its ops checked so, no set.
+/**
+ * @param {SetAsked} asked
+ * @param {string} label
+ * @param {number} now in seconds
+ * @returns {Promise<{ sets: Signed['sets'] }>}
+ */
+async function setsSigned(asked, label, now) {
+  const signer = await approver(label, asked.authority, now);
+  const lend = lendOf(asked, label);
+  Object.assign(asked, { group: lend.group, app: lend.kind, pass: asked.authority.pass, ts: now });
+  const id = `${lend.group}/${lend.kind}`;
+  /** @param {Signed} record */
+  const unconfirmed = (record) => record.sets.filter(([at]) => !asked.confirmed.includes(at));
+  const drawn = () => [...crypto.getRandomValues(new Uint8Array(16))];
+  for (;;) {
+    /** @type {Signed | undefined} */
+    const found = await signedSets('readonly', (objects) => objects.get(id));
+    const was = found ?? { id, store: drawn(), counts: {}, sets: [] };
+    if (was.sets.some(([, , sig]) => sig === asked.sig)) return { sets: unconfirmed(was) };
+    const at = { store: was.store, seq: (was.counts[asked.by] ?? 0) + 1 };
+    const [message, made, place] = set_checked(label, JSON.stringify({ ...asked, ...at }));
+    if (message === undefined) return { sets: [] };
+    if (message === null) throw new Told(made);
+    const signature = await crypto.subtle.sign('Ed25519', signer.key, message);
+    const set = set_sealed(made, store.hex(new Uint8Array(signature)));
+    /** @type {Signed['sets']} */
+    const sets = [...unconfirmed(was), [place, set, asked.sig]];
+    const record = { ...was, counts: { ...was.counts, [asked.by]: at.seq }, sets };
+    const same = (/** @type {Signed | undefined} */ read) =>
+      JSON.stringify(read) === JSON.stringify(found);
+    // The record as the write read it: put only where it was still `found`.
+    const over = await signedSets('readwrite', (objects) => {
+      const read = /** @type {IDBRequest<Signed | undefined>} */ (objects.get(id));
+      read.onsuccess = () => {
+        if (same(read.result)) objects.put(record);
+      };
+      return read;
+    });
+    if (same(over)) return { sets };
+  }
 }
 
 // The entry asked, `data`, approved under a grant the open kept for

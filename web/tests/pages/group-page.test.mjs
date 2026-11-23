@@ -230,7 +230,7 @@ async function opened(fragment, { kept = [house], fine = false, windows = false 
     configurable: true,
     writable: true,
   });
-  const copy = machine('COPY', COPY, { at: { copy: 'idle' }, said: [] });
+  const copy = machine('COPY', COPY, { at: { copy: 'idle' } });
   const io = {
     ...parts.io,
     look: (f) => ({

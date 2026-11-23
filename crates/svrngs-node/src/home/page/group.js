@@ -9,13 +9,11 @@
 import { html } from '../ui/view.js?v=__VERSION__';
 import { whose } from '../question.js?v=__VERSION__';
 import { GroupRead } from './group-read.js?v=__VERSION__';
-/** @import { Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Lend, Named, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
 /** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
-/** @import { Effect, Message, Round, State } from './group-reading.js?v=__VERSION__' */
-/** @import { Flows } from './offered.js?v=__VERSION__' */
+/** @import { Round, State } from './group-reading.js?v=__VERSION__' */
 /** @import { PlaceName } from './group-read.js?v=__VERSION__' */
 
 /**
@@ -88,12 +86,11 @@ const BACKUP = {
 
 /**
  * What each place of a group's section is drawn with: the group, GROUP's
- * state and its `dispatch`, HOME's `dispatch`, this computer's key, and
- * the group just joined here, by name (`?joined=`).
+ * state, HOME's `dispatch`, this computer's key, and the group just joined
+ * here, by name (`?joined=`).
  * @typedef {object} PlaceProps
  * @property {Group} g
  * @property {State} s
- * @property {Store<State, Message>['dispatch']} send
  * @property {Home} home
  * @property {string} me
  * @property {string} [joined]
@@ -112,7 +109,6 @@ const BACKUP = {
  * @property {Group} g
  * @property {Round} round
  * @property {Partial<Record<PlaceName, (props: PlaceProps) => Drawn>>} places
- * @property {Flows<State, Effect>} flows
  * @property {Home} home
  * @property {string} me
  * @property {string} [joined]

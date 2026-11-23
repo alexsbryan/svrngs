@@ -691,6 +691,40 @@ Elsewhere `Owner::NoReader`. `uid::mine` is this process's own uid.
 `socket_fdinfo` and `proc_bsdinfo` records, and this computer's own
 sockets, a late accept among them.
 
+**`crates/svrngs-db`**: an app's database in a group, beside the record and
+never in it (PLAN §1, "Persistence for carried apps"). `build.rs` builds
+cr-sqlite from its source, the submodule `vendor/cr-sqlite`, into one object
+whose one global symbol is `shim.c`'s, checked by `nm`, for the release's
+four targets and the Linux gate's; SQLite, as rusqlite
+bundles it, calls that shim as it starts (`SQLITE_EXTRA_INIT`,
+`.cargo/config.toml`), so cr-sqlite is on every connection and no Rust calls
+it (`tests/crsqlite.rs`). `src/lib.rs` is a computer's copy: `States`
+opens one file per group and app under `<data dir>/state/`, from the
+`schema.sql` that runs as the person asking, and makes its tables
+cr-sqlite's, refusing out loud where cr-sqlite's functions are missing
+(`Refused::Unbuilt`). `Db::read` runs a page's SQL under SQLite's
+authorizer (`page_rule`, the one decider of what SQL may do) and a progress
+handler that stops it at `QUERY_MOST`, each installed once at open and told
+the statement at hand by a `Gate`, and refuses a statement that writes in
+words that name the write form. `Db::write` takes that form, a list of ops
+each naming its row by key, made statements in `form.rs` from the names
+`pragma_table_info` gives, every value bound, and runs them as one
+transaction (`tests/db.rs`). The node owns it, one `States` on its `Host`,
+and serves it at each carried app's origin, `svrngs/sql`
+(`svrngs-node/src/carried.rs`): a POST's read or write, a write as this
+computer's person alone and never as an app that reads others' lends, whose
+verdict the door hands it, and a GET's subscription, the read again each time
+the database changes. A read is said `syncing` while another computer of the
+group stands, since no copy syncs yet. Change sets, their signing and their sync are not
+built yet. Its
+tests came first. `tests/w1/` holds the
+reference model every copy of a database is checked against (`reference.rs`,
+the join of every admissible change set); the model copy, cr-sqlite's
+merge as Fly's fork does it (`replica.rs`), behind the trait the database's
+own copies will meet; and a seeded simulator of deliveries (`sim.rs`). The
+gate runs 1,000 of its seeds, and `seeds::soak`, ignored, runs as many as
+it is given.
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its

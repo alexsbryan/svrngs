@@ -188,7 +188,7 @@ const out = (v) => {
   if (Array.isArray(v)) return v.map(out).join('');
   if (typeof v !== 'object') return String(v);
   // A part with a machine of its own (ui/view.js `useMachine`) as it is first drawn.
-  if (v.type === Copy) return out(drawn({ at: { copy: 'idle' }, said: [] }, () => {}, v.props));
+  if (v.type === Copy) return out(drawn({ at: { copy: 'idle' } }, () => {}, v.props));
   const a = Object.entries(v.props)
     .filter(([k, x]) => k !== 'children' && x != null && x !== false && typeof x !== 'function')
     .map(([k, x]) => (x === true ? k : `${k}="${x}"`));

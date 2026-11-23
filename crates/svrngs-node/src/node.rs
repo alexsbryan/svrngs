@@ -333,6 +333,9 @@ pub struct Host {
     /// under it, the folders' sweep and synced directories: none outlives
     /// the node.
     pub(crate) stopping: tokio_util::sync::CancellationToken,
+    /// Each carried app's database here, by group and app, at its origin's
+    /// `/svrngs/sql` (`crate::folder::carried`).
+    pub(crate) states: Arc<svrngs_db::States>,
 }
 
 impl Node {
@@ -464,12 +467,14 @@ impl Node {
             minting: Default::default(),
             meeting: Default::default(),
             stopping: Default::default(),
+            states: Arc::new(svrngs_db::States::new(&data_dir, rail.signer().clone())),
         });
         let (folders, blobs, store) =
             crate::folder::Folders::start((&data_dir, places), host.clone(), nudge.clone())
                 .await
                 .map_err(NodeError::Endpoint)?;
         let (woken, changed) = (folders.woken.clone(), nudge.clone());
+        let round_folders = folders.clone();
         rail.on_write(move |ns| {
             tracing::debug!(target: "node", namespace = ns, "node: journal changed; folder application and sync woken");
             woken.send_modify(|m| *m.entry(ns.into()).or_default() += 1);
@@ -571,6 +576,7 @@ impl Node {
             rail: rail.clone(),
             live,
             wake: nudge.clone(),
+            states: host.states.clone(),
         };
         let members = ring_routes::router(inbound.clone())
             .merge(crate::door::router(asking.door.clone()))
@@ -601,7 +607,7 @@ impl Node {
                 None => Admit::Refuse,
             },
         ));
-        let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
+        let round = spawn_ring_sync_loop(round_folders, every, nudge, rounds);
         Ok(Self {
             _folders: Stop(store, host.clone()),
             host,

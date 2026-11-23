@@ -1,0 +1,44 @@
+[package]
+name = "svrngs-db"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "An app's database in a group: SQLite tables beside the group's record, a copy on every member's computer, merged by cr-sqlite, which build.rs builds from its source in the submodule vendor/cr-sqlite and SQLite loads as it opens each connection. Its tests hold the reference model every copy is checked against, and the seeded simulator of deliveries."
+
+[dependencies]
+# SQLite 3.54.1, bundled, its build told the shim by /.cargo/config.toml;
+# `hooks` for the authorizer and the progress handler (svrn-docs APP_STATE §4,
+# "What SQL may do"). 0.41, not the spike's 0.35, which RUSTSEC-2026-0459
+# flags (APP_STATE §8 q8). `fallible_uint` binds a set's seq, a u64, and
+# refuses one past i64::MAX; `limits` bounds each value a page's statement
+# makes (`lib.rs`, `Db::read`).
+rusqlite = { version = "=0.41.0", features = ["bundled", "hooks", "fallible_uint", "limits"] }
+# A page's statements and rows as JSON, a BLOB as base64, its refusals'
+# words, and who is told the database changed: the crates and versions the
+# node's lock already holds.
+serde_json = { workspace = true }
+base64 = "0.22"
+thiserror = { workspace = true }
+tokio = { version = "1", default-features = false, features = ["sync"] }
+tracing = { workspace = true }
+# What a device signs for a change set, and the site and schema hash every
+# copy derives alike (svrngs-core `set.rs`); a set's changes, a kept set and
+# what travels, as postcard's bytes, the version iroh's already in the lock;
+# a new database's nonce, drawn where it is made.
+svrngs-core = { workspace = true }
+serde = { workspace = true }
+postcard = { version = "1.1.3", default-features = false, features = ["alloc"] }
+getrandom = "0.3"
+# Who may change an owned row, Eudoxia's rule (svrn-docs APP_STATE §4, "Who
+# may write which row"), at the pin svrngs-node and svrngs-core hold.
+eudoxia-community = { git = "https://github.com/alexsbryan/eudoxia", rev = "a0d3b0e5049f2dd84bdd7322d63518264704447d" }
+
+[build-dependencies]
+# cr-sqlite's four C files and the shim, by the target's C compiler.
+cc = "1"
+
+[dev-dependencies]
+tempfile = "3"
+# What prune says it visited, heard at debug (tests/prune.rs), the version
+# the lock already holds.
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }

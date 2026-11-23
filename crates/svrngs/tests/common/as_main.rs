@@ -72,7 +72,14 @@ pub fn installed(dir: &Path) -> PathBuf {
 /// scenes' is the browser harness's relay, behind its TLS front, so a
 /// phone's page can reach a computer's home relay there (scenes/main.rs).
 pub fn installed_at(dir: &Path, relay: &str) -> PathBuf {
-    let exe = std::env::current_exe().unwrap();
+    installed_from(dir, &std::env::current_exe().unwrap(), relay)
+}
+
+/// [`installed_at`], of `exe` in place of this binary: a test binary of
+/// another build that names its own [`main`] in an ignored [`NAME`], as
+/// v1.13.3's do, whose copy of this file is this one but for this function
+/// (scenes/mixed.rs, the last release).
+pub fn installed_from(dir: &Path, exe: &Path, relay: &str) -> PathBuf {
     let path = dir.join("svrngs");
     let script = format!(
         "#!/bin/sh\n{BUILD}='{relay}' exec '{}' --exact --ignored --nocapture --quiet {NAME} -- \"$@\"\n",

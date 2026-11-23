@@ -10,11 +10,11 @@ import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
 /** @import { Drawn } from './view.js?v=__VERSION__' */
 
 /**
- * A Copy's state: where its copy is, and each answer said, in turn.
+ * A Copy's state: where its copy is, and the last answer said.
  * @typedef {object} CopyState
  * @property {{ copy: 'idle' | 'copying' | 'copied' | 'unwritten' }} at
  * @property {Record<string, number>} [asked]
- * @property {('copied' | 'unwritten')[]} said
+ * @property {'copied' | 'unwritten'} [said]
  */
 
 /**
@@ -32,8 +32,9 @@ import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
 
 /** @type {CopyState['at']['copy'][]} */
 const AGAIN = ['idle', 'copied', 'unwritten'];
-// `said` is each answer in turn, by state: a second " Copied." after the
-// first, both kept (web/tests/copy.test.mjs, "with beside").
+// `said` is the last answer, which takes the place of the one before: a
+// person presses again and again as they send a link to one place after
+// another (web/tests/copy.test.mjs, "with beside").
 /**
  * @param {CopyState} state
  * @param {Extract<CopyMessage, { type: 'copied' | 'unwritten' }>} message
@@ -41,7 +42,7 @@ const AGAIN = ['idle', 'copied', 'unwritten'];
  */
 const answered = (state, message) =>
   state.at.copy === 'copying'
-    ? go(state, { copy: message.type }, { said: [...state.said, message.type] })
+    ? go(state, { copy: message.type }, { said: message.type })
     : no(state, `${message.type} answers no copy, as none is being written`);
 /** @type {Machine<CopyState, CopyMessage, CopyEffect>} */
 export const COPY = {
@@ -64,7 +65,7 @@ export const COPY = {
 };
 
 /** @type {CopyState} */
-const FIRST = { at: { copy: 'idle' }, said: [] };
+const FIRST = { at: { copy: 'idle' } };
 /** @param {CopyProps} props */
 export function Copy(props) {
   const [state, send] = useMachine(() => machine('COPY', COPY, FIRST));
@@ -73,9 +74,9 @@ export function Copy(props) {
 
 // `words` is the button's and each answer's: { copy, copied, unwritten }.
 // Without `beside`, the answer is the button's word in its place, as the
-// phone's #copy says it; with it, each answer is said after the button, past
-// what `beside` draws there (`true`, nothing), as the home page's links say
-// them (web/tests/copy.test.mjs).
+// phone's #copy says it; with it, the last answer is said after the button,
+// past what `beside` draws there (`true`, nothing), as the home page's links
+// say it (web/tests/copy.test.mjs).
 /**
  * The words a Copy says: its button's, `copy`, and each answer's, by the
  * state it answers in.
@@ -84,7 +85,7 @@ export function Copy(props) {
 
 /**
  * A Copy's props: its button's `id`, the `text` it writes, its `words`,
- * and what `beside` draws after the button, when its answers are said
+ * and what `beside` draws after the button, when its answer is said
  * there.
  * @typedef {object} CopyProps
  * @property {string} [id]
@@ -104,10 +105,9 @@ export function drawn(state, send, { id, text, words, beside }) {
   const press = () => send({ type: 'copy', text });
   if (beside === undefined)
     return html`<button id=${id} onClick=${press}>${words[state.at.copy] ?? words.copy}</button>`;
-  const answers = state.said.map((said) => words[said]);
   return html`
     <button id=${id} onClick=${press}>${words.copy}</button>
     ${beside}
-    ${answers}
+    ${state.said && words[state.said]}
   `;
 }

@@ -4,8 +4,12 @@
 here is what it needs on a Linux computer that has none of it: Rust and cargo-deny, Node,
 Playwright's Chromium and WebKit, the wasm tools, Jellyfin, Redis and
 podman, every one pinned, in a rootless podman image. Its command runs `npm ci --prefix web`,
-then `scripts/check.sh`, in the checkout at `/work`; its output and exit are
-check.sh's.
+then fetches cr-sqlite's source and crates as README.md's "Work on svrngs"
+says, then runs `scripts/check.sh`, in the checkout at `/work`; its output
+and exit are check.sh's. The checkout is a clone of its own, not a
+worktree: a worktree's git, its submodule's among it, lives outside
+`/work`, where neither the fetch nor svrngs-db's build, which reads the
+submodule's commit, can reach it.
 
 From a svrngs checkout:
 

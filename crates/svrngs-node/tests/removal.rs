@@ -669,3 +669,37 @@ mod leave_race {
         assert!(cut(2), "and the key that signed the leave");
     }
 }
+
+/// Bo's computer's call for the board's database in [`NS`] at `to`'s
+/// `/internal/ring/state`, dialled on the members' protocol: its status.
+async fn state_as_bo(to: &Node) -> u16 {
+    let bridge = on_wire::bridge_as(&signing(3), to, svrngs_core::alpn::Alpn::Member).await;
+    let call = ((NS, "board"), svrngs_db::Call::default());
+    let body = postcard::to_allocvec(&call).unwrap();
+    let url = format!("http://{}/internal/ring/state", bridge.local_addr());
+    http()
+        .post(url)
+        .body(body)
+        .send()
+        .await
+        .unwrap()
+        .status()
+        .as_u16()
+}
+
+/// **A removed computer is refused an app's database** (svrn-docs
+/// `rings/current/APP_STATE.md` §7, invariant 6): Bo's computer, standing,
+/// passes the state route's gate at Sam's (404 there, as Sam keeps no such
+/// database); once Sam cuts Bo, it is refused, 403, as the record's sync
+/// refuses it, and nothing of what it sends is taken. Plant: the route's
+/// standing check skipped (Bo's call answered 404 after the cut).
+#[tokio::test]
+async fn a_removed_computer_is_refused_an_app_s_database() {
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let [sam, _ana, bo] = three(&dirs).await;
+    assert_eq!(state_as_bo(&sam).await, 404, "served while Bo stands");
+    assert_eq!(ask(&sam, REMOVALS_ROUTE, "bo").await, (200, Outcome::Out));
+    assert!(!stands(&sam, 3), "Bo is out on Sam's copy");
+    assert_eq!(state_as_bo(&sam).await, 403, "refused once cut");
+    drop(bo);
+}

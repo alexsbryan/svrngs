@@ -1,8 +1,15 @@
 // Magnets' board, as MAGNETS.md's "The whole app" has it, run under Node
-// against the stand-in's route in SQLite (standin.mjs `posted`, sqlite.py):
-// each read and each tap sent as the text the page sends. Each law is a
-// check that returns why it broke, or null, and the second test plants one
-// broken board, or one broken route, per law and watches its check catch it.
+// against the stand-in's route in SQLite (standin.mjs `posted`, sqlite.py),
+// or, where SVRNGS_ROUTE names one, the real route on a computer's svrngs
+// (web/tests/route.mjs): JSON `{origin, port, token, db}`, the app's origin
+// there, that svrngs's port and token from its data folder (`api`, `token`)
+// and the app's database file, `state/<group>/magnets.db`, as svrngs's own
+// scene crates/svrngs/tests/scenes/magnets.rs sets it. Unset, it runs on the
+// stand-in alone. Each read and each tap is sent as the text the page
+// sends. Each law is a check that returns why it broke, or null, and the
+// second test plants one broken board, or one broken route, per law and
+// watches its check catch it, always on the stand-in, whose route a plant
+// can break.
 
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -12,12 +19,15 @@ import { isDeepStrictEqual } from 'node:util';
 import { test } from 'node:test';
 
 import * as board from '../board.js';
+import * as route from '../../../web/tests/route.mjs';
 import { database, posted, Refused, SCHEMA } from './standin.mjs';
 
 const PACK = JSON.parse(readFileSync(new URL('../pack.json', import.meta.url), 'utf8'));
 // The board, its pack and schema, and the stand-in's database and route, so
-// a plant can break any one of them.
-const APP = { ...board, pack: PACK, schema: SCHEMA, database, posted };
+// a plant can break any one of them; and the board on the route the run
+// names, the real one where it names one.
+const STANDIN = { ...board, pack: PACK, schema: SCHEMA, database, posted };
+const APP = route.real ? { ...STANDIN, database: route.database, posted: route.posted } : STANDIN;
 const differ = (got, want, what) =>
   isDeepStrictEqual(got, want)
     ? null
@@ -65,7 +75,7 @@ export const LAWS = {
     const db = app.database(app.schema);
     const post = (body) => app.posted(db, JSON.stringify(body));
     const read = async () => post({ sql: app.BOARD });
-    // A tap as app.js `move` sends one: one op, a put at the position `next`
+    // A tap as index.js `move` sends one: one op, a put at the position `next`
     // reads from the board the page holds, or a back.
     const tap = async (id) => post({ write: [app.put(id, app.next((await read()).rows))] });
     const all = async () =>
@@ -169,14 +179,14 @@ export const LAWS = {
   /** Each table has a NOT NULL primary key, no other UNIQUE and no foreign key. */
   async 'the schema is one cr-sqlite takes'(app) {
     // Read unchecked, as the stand-in reads its own schema: the route takes
-    // no PRAGMA as a read.
-    const tables = (
-      await unchecked(app, "SELECT name AS id FROM sqlite_schema WHERE type = 'table'")
-    ).map((r) => r.id);
+    // no PRAGMA as a read. Which tables are the app's, beside cr-sqlite's
+    // and svrngs's own in a real database, its database says (`tables`).
+    const db = app.database(app.schema);
+    const tables = await db.tables().finally(db.stop);
     if (!tables.length) return 'the schema makes no table';
     for (const t of tables) {
       const [columns, indexes, keys] = await Promise.all(
-        [`table_info("${t}")`, `index_list("${t}")`, `foreign_key_list("${t}")`].map((p) =>
+        [`table_info('${t}')`, `index_list('${t}')`, `foreign_key_list('${t}')`].map((p) =>
           unchecked(app, `SELECT * FROM pragma_${p}`),
         ),
       );
@@ -254,7 +264,7 @@ test('each law catches its plant', async () => {
   };
   for (const [name, plants] of Object.entries(PLANTS))
     for (const { why, ...plant } of [plants].flat())
-      assert.match(String(await LAWS[name]({ ...APP, ...plant })), why, `${name}, planted`);
+      assert.match(String(await LAWS[name]({ ...STANDIN, ...plant })), why, `${name}, planted`);
   for (const [planted, why] of [
     ['CREATE TABLE magnets (id TEXT PRIMARY KEY, position INTEGER);', /key may be NULL/],
     [
@@ -267,7 +277,9 @@ test('each law catches its plant', async () => {
     ],
   ])
     assert.match(
-      String(await LAWS['the schema is one cr-sqlite takes']({ ...APP, schema: schema(planted) })),
+      String(
+        await LAWS['the schema is one cr-sqlite takes']({ ...STANDIN, schema: schema(planted) }),
+      ),
       why,
       planted,
     );

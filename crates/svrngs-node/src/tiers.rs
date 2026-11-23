@@ -178,19 +178,11 @@ impl Host {
         loop {
             every.tick().await;
             let Held { meeting, tier, .. } = self.held.borrow().clone();
-            // The tier that comes first: the group's own HTTPS relay when
-            // a group names one, else the build's (self-host).
-            let own_https = meeting.own_https();
-            let first_is_build = own_https.is_empty();
-            let first = if first_is_build {
-                meeting.build().clone()
-            } else {
-                own_https
-            };
-            let at_first = if first_is_build {
-                matches!(tier, Tier::Fallback | Tier::Unowned)
-            } else {
+            let (first, _, first_is_own) = tiers(&meeting);
+            let at_first = if first_is_own {
                 tier == Tier::Own
+            } else {
+                matches!(tier, Tier::Fallback | Tier::Unowned)
             };
             let holding = !at_first && held_for > 0;
             if holding {
@@ -253,13 +245,7 @@ impl Host {
     /// [`Self::check`] goes on as it was.
     pub(crate) async fn check_now(&self) -> &'static str {
         let meeting = self.held.borrow().meeting.clone();
-        let own_https = meeting.own_https();
-        let first_is_own = !own_https.is_empty();
-        let first = if first_is_own {
-            own_https
-        } else {
-            meeting.build().clone()
-        };
+        let (first, _, first_is_own) = tiers(&meeting);
         let answered = first.is_empty() || any_answers(&*self.transport, &first).await;
         let answer = match answered {
             true => Answer::First,
@@ -285,10 +271,7 @@ impl Host {
     /// asked once, else neither, and n0's comes in (the audit,
     /// RELAY_COMMONS 2).
     async fn second(&self, meeting: &Meeting) -> Answer {
-        let second = match meeting.own_https().is_empty() {
-            true => meeting.own().clone(),
-            false => meeting.build().clone(),
-        };
+        let (_, second, _) = tiers(meeting);
         let answers = !second.is_empty() && any_answers(&*self.transport, &second).await;
         tracing::debug!(target: "tiers", second = second.len(), answers, "tiers: the first tier silent, whether the other of ours answers; n0's only while neither does");
         if answers {
@@ -422,6 +405,20 @@ pub(crate) fn behind() -> Vec<Url> {
         .into_iter()
         .map(Into::into)
         .collect()
+}
+
+/// The tiers of ours asked, in order, and whether the first is the group's
+/// own: the group's own HTTPS relays when a group names one, since a page
+/// may take them, then the build's; else the build's, then the group's own,
+/// a plain-HTTP one a page cannot take (self-host), as [`Meeting::decide`]
+/// orders them. The one decider of [`Host::check`], [`Host::check_now`]
+/// and [`Host::second`].
+fn tiers(meeting: &Meeting) -> (BTreeSet<Url>, BTreeSet<Url>, bool) {
+    let own_https = meeting.own_https();
+    match own_https.is_empty() {
+        true => (meeting.build().clone(), meeting.own().clone(), false),
+        false => (own_https, meeting.build().clone(), true),
+    }
 }
 
 /// Whether any of `relays` answers `net`'s ask ([`answers`]), all asked

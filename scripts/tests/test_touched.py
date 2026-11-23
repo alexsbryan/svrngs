@@ -47,7 +47,7 @@ class Plans(unittest.TestCase):
     def test_core_reaches_its_dependents_and_the_wasm(self):
         steps, tests = plan("crates/svrngs-core/src/pass.rs")
         self.assertEqual(steps, {"web rustfmt and clippy", "clippy", "tests"})
-        self.assertTrue(tests.startswith("-p svrngs -p svrngs-core -p svrngs-node -p svrngs-runtime --lib --bins --test"))
+        self.assertTrue(tests.startswith("-p svrngs -p svrngs-core -p svrngs-db -p svrngs-node -p svrngs-runtime --lib --bins --test"))
         self.assertLessEqual(SITE | {"canaries", "scale", "carried"}, binaries(tests))
 
     def test_the_command_s_crate_leaves_the_node_s_binaries_out(self):
@@ -89,7 +89,7 @@ class Plans(unittest.TestCase):
             with self.subTest(path=path):
                 steps, tests = plan(path)
                 self.assertEqual(steps, EVERY)
-                self.assertTrue(tests.startswith("-p give -p give-fold -p svrngs -p svrngs-core -p svrngs-node -p svrngs-runtime --lib --bins"))
+                self.assertTrue(tests.startswith("-p give -p give-fold -p svrngs -p svrngs-core -p svrngs-db -p svrngs-node -p svrngs-runtime --lib --bins"))
                 self.assertLessEqual(SITE | {"canaries", "scale", "internet", "cases"}, binaries(tests))
                 self.assertNotIn("xenia", binaries(tests))  # no step of the gate runs it
         self.assertLessEqual(SITE, binaries(plan("web/tests/nothing-names-this.mjs")[1]))

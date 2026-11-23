@@ -42,6 +42,8 @@ mod dial;
 #[path = "../../crates/svrngs-node/src/version.rs"]
 #[allow(dead_code)]
 mod version;
+// A phone's set, checked and signed for the group's signer (web/sign.js).
+mod set;
 
 use iroh::RelayUrl;
 use svrngs_core::alpn::Alpn;
@@ -762,6 +764,32 @@ fn unsigned(
         grant,
     };
     Ok(svrngs_core::unsigned_act(actor, &group, ts as i64, kind))
+}
+
+/// A phone's write to the app at the label `label`, `asked` as JSON (set.rs
+/// `Asked`), checked: `[message, set, place]`, what its open's approver
+/// signs, the set its signature goes in (`set_sealed`) and its place, its
+/// home and seq; `[]` where it changes nothing, checked so, and is
+/// no set; or `[null, words]`, why not, in words for the person
+/// (web/sign.js, which alone holds the approver).
+#[wasm_bindgen]
+pub fn set_checked(label: String, asked: String) -> Result<js_sys::Array, JsError> {
+    let asked: set::Asked = serde_json::from_str(&asked)?;
+    Ok(match set::signed(&label, &asked) {
+        Ok(Some((message, set, place))) => {
+            let message = js_sys::Uint8Array::from(message.as_slice());
+            js_sys::Array::of3(&message.into(), &set.into(), &place.into())
+        }
+        Ok(None) => js_sys::Array::new(),
+        Err(words) => js_sys::Array::of2(&JsValue::NULL, &words.into()),
+    })
+}
+
+/// `set`, as `set_checked` made it, with its approver's signature `sig`,
+/// hex: the set a phone carries, postcard's bytes in base64.
+#[wasm_bindgen]
+pub fn set_sealed(set: String, sig: String) -> Result<String, JsError> {
+    set::sealed(&set, &sig).ok_or_else(|| JsError::new("not a set and its signature"))
 }
 
 /// The act, JSON, an app `kind`'s page asks for with `body`, as the door

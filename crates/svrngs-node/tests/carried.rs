@@ -1424,6 +1424,58 @@ async fn a_computer_writes_nothing_as_a_phone_s_person() {
     assert_eq!(live(&read), Vec::<Value>::new(), "nothing written as bo");
 }
 
+/// **An app is told the link a member opens it by** (svrn-docs
+/// MAGNETS_BUILD S7): a carried page doesn't know its group's ordinary link,
+/// and on a computer its own address is loopback, so `svrngs/acts` gives
+/// `link`, the group's page opening the app's label, `<page>#open=<label>`,
+/// as a phone's group page opens a lend (`web/app.js`); none while no page
+/// is kept. Plant, watched failing: the link built on the page's own origin,
+/// and it names the loopback address.
+#[tokio::test]
+async fn an_app_is_told_the_link_a_member_opens_it_by() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 10, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    carry(&synced_in(ana, root.path(), &group).await, "Money");
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&seen, "Money").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let money = &of_kind(&seen, "Money")[0];
+    let origin = money["origin"].as_str().unwrap().to_string();
+    let link = || async {
+        let read: Value = at(ana, &origin, "GET", "/svrngs/acts", None)
+            .await
+            .json()
+            .await
+            .unwrap();
+        read["link"].clone()
+    };
+    assert_eq!(link().await, Value::Null, "no page kept, no link");
+    std::fs::write(
+        ana.rail().root().join("origin"),
+        "https://computers.example.org/",
+    )
+    .unwrap();
+    let label = svrngs_core::pass::Label::carried("Money", &group);
+    let said = format!("https://computers.example.org/#open={}", label.as_str());
+    assert_eq!(link().await, said.as_str());
+    let at_label = format!("http://{}.", label.as_str());
+    assert!(
+        origin.starts_with(&at_label),
+        "{origin}: the label it opens at here"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
 /// **An app is told the page its group's https links print on**
 /// (give-page-host (a)): Give's install line names the page this
 /// computer's svrngs came from, not always ours, so the carried route says
@@ -3007,6 +3059,1686 @@ async fn a_carried_page_is_told_each_lend_it_reads_at_its_own_origin() {
     .await;
     assert_eq!(answer.status(), 200, "{:?}", answer.text().await);
     assert_eq!(asked.lock().unwrap().len(), 1);
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// Board, an app with a schema.sql of one table, `cards(id, title)`,
+/// carried in `group`'s folder on `ana`, once she lists it: its origin, and
+/// the folder.
+async fn board(ana: &Node, group: &str) -> (String, PathBuf) {
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), group).await;
+    carry(&at_ana, "Board");
+    let schema = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT);\n";
+    std::fs::write(at_ana.join("apps/Board/schema.sql"), schema).unwrap();
+    std::mem::forget(root);
+    for _ in 0..30 {
+        if let Some(board) = of_kind(&lends(ana, group).await, "Board").first() {
+            return (board["origin"].as_str().unwrap().to_string(), at_ana);
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    panic!("Board is never listed");
+}
+
+/// `body` posted to Board's database at `origin` on `node`: its status and
+/// answer.
+async fn sql(node: &Node, origin: &str, body: Value) -> (u16, Value) {
+    let answer = at(node, origin, "POST", "/svrngs/sql", Some(body)).await;
+    (answer.status().as_u16(), answer.json().await.unwrap())
+}
+
+/// The lines of `group`'s record on `node`.
+async fn record(node: &Node, group: &str) -> usize {
+    let url = format!("http://{}/v1/rail/log?namespace={group}", node.api_addr());
+    let log: Value = http()
+        .get(url)
+        .asked_as_you()
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    log["ops"].as_array().unwrap().len()
+}
+
+/// The next event of a subscription's stream, its `data:` as JSON, within 10 s.
+async fn next_event(body: &mut axum::body::Body) -> Value {
+    use http_body_util::BodyExt;
+    let mut text = String::new();
+    let event = async {
+        loop {
+            let frame = body.frame().await.expect("the stream goes on").unwrap();
+            text.push_str(std::str::from_utf8(&frame.into_data().unwrap()).unwrap());
+            if let Some((event, _)) = text.split_once("\n\n") {
+                return serde_json::from_str(event.strip_prefix("data: ").unwrap()).unwrap();
+            }
+        }
+    };
+    tokio::time::timeout(Duration::from_secs(10), event)
+        .await
+        .expect("an event within 10 s")
+}
+
+/// **An app keeps its own database at its own origin** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "What a page can do"; invariants 1 and
+/// 10): Board, carried on Ana's computer in a group of one, writes cards by
+/// key, `{count}`, and reads them by SQL; a write sent as SQL is refused
+/// naming the write form; its subscription has the rows now and again
+/// after a write; its writes add no line to the group's record; an app with
+/// no schema.sql keeps no database; and once Ana's yes lets Board read
+/// others' lends, its write is refused and its reads still answered; and
+/// alone in its group, its copy is never said to be syncing.
+/// A write past the most the route reads is refused as the route's own,
+/// `too-large`, saying to send it in parts.
+/// Plants, each watched failing: the route also writing through the
+/// record's `append_act` (the record gains its lines); the route reading
+/// none of the door's verdict (the reader's write answered 200); no word
+/// to the subscription of a write (no event within 10 s); the body's limit
+/// said as an act's (413 `{error, kind}`, no `refused`).
+#[tokio::test]
+async fn an_app_keeps_its_own_database_at_its_origin() {
+    let (nodes, dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 70, ana, &[]);
+    round(ana).await;
+    let (origin, folder) = board(ana, &group).await;
+    let lines = record(ana, &group).await;
+
+    let host = origin.trim_start_matches("http://").trim_end_matches('/');
+    let q = "SELECT%20id%2C%20title%20FROM%20cards%20ORDER%20BY%20id";
+    let ask = http().get(format!("http://{}/svrngs/sql?q={q}", ana.api_addr()));
+    let ask = ask
+        .header("host", host)
+        .header("accept", "text/event-stream");
+    let stream = ask.asked_as_you().sent().await.unwrap();
+    assert_eq!(stream.status(), 200);
+    let mut events = stream.into_body();
+    let fresh = next_event(&mut events).await;
+    assert_eq!(
+        fresh,
+        json!({ "rows": [], "more": false }),
+        "a fresh board, not syncing"
+    );
+
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(sql(ana, &origin, milk).await, (200, json!({ "count": 1 })));
+    let pushed = next_event(&mut events).await;
+    assert_eq!(
+        pushed["rows"],
+        json!([{ "id": "c1", "title": "milk" }]),
+        "pushed: {pushed}"
+    );
+    let read = json!({ "sql": "SELECT title FROM cards WHERE id = ?", "params": ["c1"] });
+    let (status, answer) = sql(ana, &origin, read.clone()).await;
+    let rows = json!({ "rows": [{ "title": "milk" }], "more": false });
+    assert_eq!(
+        (status, &answer),
+        (200, &rows),
+        "no other computer to sync with"
+    );
+    let as_sql = json!({ "sql": "UPDATE cards SET title = 'eggs'" });
+    let (status, refused) = sql(ana, &origin, as_sql).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (400, &json!("not-a-read")),
+        "{refused}"
+    );
+    assert!(
+        refused["words"]
+            .as_str()
+            .unwrap()
+            .contains("{write: [op, ...]}"),
+        "{refused}"
+    );
+    for _ in 0..3 {
+        round(ana).await;
+    }
+    assert_eq!(
+        record(ana, &group).await,
+        lines,
+        "no line of the database in the record"
+    );
+    // A write past the most the route reads is refused in its own shape,
+    // nothing of it kept.
+    let rows = (0..2_000).map(|i| json!({ "insert": "cards", "row": { "id": format!("c{i:04}"), "title": "a long pasted line" } }));
+    let (status, refused) = sql(ana, &origin, json!({ "write": rows.collect::<Vec<_>>() })).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (413, &json!("too-large")),
+        "{refused}"
+    );
+    assert_eq!(refused["words"], "This is more than 65 KiB, the most svrngs/sql takes at once, so nothing of it was kept. Send a long list in parts, a write of fewer rows each.");
+    let count = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+    assert_eq!(
+        sql(ana, &origin, count).await.1["rows"],
+        json!([{ "n": 1 }]),
+        "nothing of it kept"
+    );
+
+    carry(&folder, "Plain");
+    let mut listed = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&listed, "Plain").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        listed = lends(ana, &group).await;
+    }
+    let plain = of_kind(&listed, "Plain")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let (status, said) = sql(ana, &plain, read.clone()).await;
+    assert_eq!(status, 404, "{said}");
+    assert_eq!(
+        said["error"],
+        "this app keeps no database: it has no schema.sql"
+    );
+
+    // Ana's yes to Board reading others' lends makes it a reader for good.
+    let app = host.split('.').next().unwrap();
+    let yes = json!({ actor_of(&signing(1)): { app: { "said": "yes", "at": 1, "lends": [] } } });
+    std::fs::write(dirs[0].path().join("reaching.json"), yes.to_string()).unwrap();
+    let eggs = json!({ "write": [{ "insert": "cards", "row": { "id": "c2", "title": "eggs" } }] });
+    let (status, refused) = sql(ana, &origin, eggs).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (403, &json!("reads")),
+        "{refused}"
+    );
+    assert_eq!(
+        refused["words"],
+        "Board reads your friends’ apps, so it can’t write in your group’s database: what it read stays apart from what the group keeps."
+    );
+    let (status, answer) = sql(ana, &origin, read).await;
+    assert_eq!(
+        (status, &answer["rows"]),
+        (200, &json!([{ "title": "milk" }])),
+        "a reader reads"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A page writes only its own person's rows of an owned table**
+/// (svrn-docs APP_STATE §4, "Who may write which row"; invariant 13): Votes,
+/// a table whose key begins with `person_key`, takes Ana's vote under the
+/// `you_key` `svrngs/acts` gives her page, and refuses one under another
+/// key, `not-yours`, in words that say what to write instead. The route
+/// judges it by the group's record. Plant, watched failing: the route
+/// passing a record that binds no key, and Ana's own vote is refused.
+#[tokio::test]
+async fn a_page_writes_only_its_own_person_s_rows() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 71, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), &group).await;
+    carry(&at_ana, "Votes");
+    let schema = "CREATE TABLE votes (person_key TEXT NOT NULL, film TEXT NOT NULL, yes INTEGER, PRIMARY KEY (person_key, film)) STRICT;\n";
+    std::fs::write(at_ana.join("apps/Votes/schema.sql"), schema).unwrap();
+    let mut listed = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&listed, "Votes").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        listed = lends(ana, &group).await;
+    }
+    let origin = of_kind(&listed, "Votes")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let acts: Value = at(ana, &origin, "GET", "/svrngs/acts", None)
+        .await
+        .json()
+        .await
+        .unwrap();
+    let vote = |person: &Value| json!({ "write": [{ "insert": "votes", "row": { "person_key": person, "film": "f1", "yes": 1 } }] });
+    assert_eq!(
+        sql(ana, &origin, vote(&acts["you_key"])).await,
+        (200, json!({ "count": 1 }))
+    );
+    let (status, refused) = sql(ana, &origin, vote(&json!(actor_of(&signing(2))))).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (403, &json!("not-yours")),
+        "{refused}"
+    );
+    assert_eq!(refused["words"], "This write changes a row of votes whose person_key isn't yours, and only that person's own devices change it. To fix it, give the row your own you_key, from svrngs/acts, as its person_key.");
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A write to an app's database is its own computer's alone**, as an
+/// act is (capability-signed; DESIGN §6, "An entry's author is its
+/// signer"): Ben's write reaching Ana's door is refused, saying where to
+/// write, and his read is answered. A phone's own is prepared here and
+/// signed on the phone (`a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed`).
+/// **And the copy made as the app is
+/// carried is the root, synced from the start** (APP_STATE §7, invariant
+/// 8): Ana carried Board, so her copy says nothing syncing, to her or to
+/// Ben, though another computer stands in the group. Plants, each watched
+/// failing: the route's `elsewhere` taken out (Ben's write answered 200);
+/// the carry step making no root (both reads said syncing).
+#[tokio::test]
+async fn a_write_to_an_app_s_database_is_its_own_computer_s_alone() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 71, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin, _) = board(ana, &group).await;
+    let label = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let bridge = bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let route = format!("http://{}/lend/{label}/svrngs/sql", bridge.local_addr());
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    let wrote = http().post(&route).json(&milk).send().await.unwrap();
+    assert_eq!(
+        wrote.status(),
+        403,
+        "Ana's computer writes nothing as Ben's"
+    );
+    let said: Value = wrote.json().await.unwrap();
+    assert_eq!(said["refused"], "elsewhere", "{said}");
+    assert_eq!(
+        said["words"],
+        "Board writes only from your own computer for now, so this isn’t kept. Open Board from your computer’s home page to write in it."
+    );
+    let read = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+    let read = http().post(&route).json(&read).send().await.unwrap();
+    assert_eq!(read.status(), 200, "Ana's copy answers Ben's reads");
+    let synced = json!({ "rows": [{ "n": 0 }], "more": false });
+    assert_eq!(
+        read.json::<Value>().await.unwrap(),
+        synced,
+        "nothing written, from the root, said synced"
+    );
+    let (status, read) = sql(
+        ana,
+        &origin,
+        json!({ "sql": "SELECT count(*) AS n FROM cards" }),
+    )
+    .await;
+    assert_eq!(
+        (status, read),
+        (200, synced),
+        "Ana's own read, from the root she carried"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// Board's origin on `node`, once it lends it in `group`.
+async fn board_on(node: &Node, group: &str) -> String {
+    for _ in 0..30 {
+        if let Some(board) = of_kind(&lends(node, group).await, "Board").first() {
+            return board["origin"].as_str().unwrap().to_string();
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    panic!("Board is never listed");
+}
+
+/// **An app's database syncs between the group's computers** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "What travels"; invariant 8): Board,
+/// carried on Ana's computer, reaches Ben's folder, and each computer keeps
+/// its own copy, Ben's from his round, synced there with Ana's. Ana writes a
+/// card. A round later Ben's copy has her card and is said syncing no more;
+/// his card reaches hers the same way. (A copy said syncing until it first
+/// syncs in full is the next test's.) Plants, each watched
+/// failing: the round leaving the databases out (Ben never has Ana's card);
+/// a copy's first full sync never kept (Ben's still said syncing).
+#[tokio::test]
+async fn an_app_s_database_syncs_between_the_group_s_computers() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 72, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    drop(folder);
+    let origin_b = board_on(ben, &group).await;
+    round(ben).await;
+
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let (_, ben_first) = sql(ben, &origin_b, read.clone()).await;
+    assert_eq!(
+        ben_first,
+        json!({ "rows": [], "more": false }),
+        "Ben's copy, kept from his round, the group's before Ana wrote"
+    );
+    let milk_row = json!([{ "id": "c1", "title": "milk" }]);
+    let synced = || async {
+        let (_, b) = sql(ben, &origin_b, read.clone()).await;
+        b["rows"] == milk_row && b.get("syncing").is_none()
+    };
+    let mut took = false;
+    for _ in 0..10 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        if synced().await {
+            took = true;
+            break;
+        }
+    }
+    let (_, ben_now) = sql(ben, &origin_b, read.clone()).await;
+    assert!(took, "Ben's copy has Ana's card, synced: {ben_now}");
+
+    let eggs = json!({ "write": [{ "insert": "cards", "row": { "id": "c2", "title": "eggs" } }] });
+    assert_eq!(
+        sql(ben, &origin_b, eggs).await,
+        (200, json!({ "count": 1 }))
+    );
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let both = json!({ "rows": [{ "id": "c1", "title": "milk" }, { "id": "c2", "title": "eggs" }], "more": false });
+    assert_eq!(
+        sql(ana, &origin_a, read).await,
+        (200, both),
+        "Ben's card on Ana's copy, synced"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// The sets an app may seal as one person on a computer at once
+/// (`carried.rs` `SETS_AN_HOUR`), said here apart so a change to it fails here.
+const SETS_AN_HOUR: usize = 1_800;
+
+/// **An app's writes to its database are counted in sets** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "What SQL may do": "a write refill per
+/// person that counts change sets"): Ana's Board pastes 300 cards in one
+/// write, one set, then eight loops write a card each at a time as fast as
+/// they can until refused. Every write taken, the paste's one among them,
+/// is within an hour's budget and the refill since; each loop is refused
+/// 429 `limit`, its words naming the rate, with `Retry-After`. Plant,
+/// watched failing: the refill counting nothing (no loop is refused).
+#[tokio::test]
+async fn an_app_s_writes_to_its_database_are_counted_in_sets() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 77, ana, &[]);
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let started = std::time::Instant::now();
+    let paste: Vec<Value> = (0..300)
+        .map(|n| json!({ "insert": "cards", "row": { "id": format!("p{n}"), "title": "pasted" } }))
+        .collect();
+    let pasted = sql(ana, &origin, json!({ "write": paste })).await;
+    assert_eq!(
+        pasted,
+        (200, json!({ "count": 300 })),
+        "a paste is one write"
+    );
+    let origin = origin.as_str();
+    let one = |w: usize| async move {
+        for n in 0.. {
+            let card =
+                json!({ "insert": "cards", "row": { "id": format!("w{w}-{n}"), "title": "fast" } });
+            let answer = at(
+                ana,
+                origin,
+                "POST",
+                "/svrngs/sql",
+                Some(json!({ "write": [card] })),
+            )
+            .await;
+            if !answer.status().is_success() {
+                let after = answer
+                    .headers()
+                    .get("retry-after")
+                    .map(|v| v.to_str().unwrap().to_owned());
+                let said: Value = answer.json().await.unwrap();
+                return (n, after, said);
+            }
+            assert!(n < SETS_AN_HOUR, "loop {w} is never refused");
+        }
+        unreachable!()
+    };
+    let loops = n0_future::join_all((0..8).map(one)).await;
+    let wrote = 1 + loops.iter().map(|(n, ..)| n).sum::<usize>();
+    let most = SETS_AN_HOUR + started.elapsed().as_secs() as usize / 2 + 1;
+    assert!(
+        (SETS_AN_HOUR..=most).contains(&wrote),
+        "an hour's sets, and the refill since: wrote {wrote}, at most {most}"
+    );
+    for (_, after, said) in loops {
+        assert_eq!(said["refused"], "limit", "{said}");
+        let words = said["words"].as_str().unwrap();
+        assert!(
+            words.contains(&format!("about {} writes a minute", SETS_AN_HOUR / 60)),
+            "the words name the rate: {words}"
+        );
+        assert!(
+            after.is_some_and(|s| s.parse::<u64>().is_ok_and(|s| s > 0)),
+            "{said}"
+        );
+    }
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A phone's carried sets are counted as its writes are** (svrn-docs
+/// `app-state-diligence/security-review-2026-11-23/`, L4): Bo's phone
+/// carries one set to Ana's computer from eight loops at once, as fast as
+/// they can, until refused. Every carry taken or held is within an hour's
+/// sets and the refill since, and each loop is refused 429 `limit`, its
+/// words naming the rate; a prepare after is still answered, its budget
+/// its own. Plant, watched failing: `{carry}` passing no refill (no loop
+/// is refused).
+#[tokio::test]
+async fn a_phone_s_carried_sets_are_counted_as_its_writes_are() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 78, ana, &[]);
+    phone(ana, &group, 7, "bo");
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let (route, pass) = as_phone(ana, &origin, 7, 9).await;
+    let post = |body: Value| {
+        http()
+            .post(&route)
+            .header("x-svrngs-pass", &pass)
+            .json(&body)
+            .send()
+    };
+    let milk = json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    let prepared: Value = post(json!({ "prepare": milk }))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let set = carried(&group, &milk, &prepared);
+    let started = std::time::Instant::now();
+    let one = |_| async {
+        for n in 0.. {
+            let answer = post(set.clone()).await.unwrap();
+            if !answer.status().is_success() {
+                return (n, answer.status(), answer.json::<Value>().await.unwrap());
+            }
+            assert!(n < SETS_AN_HOUR, "a loop is never refused");
+        }
+        unreachable!()
+    };
+    let loops = n0_future::join_all((0..8).map(one)).await;
+    let carried = loops.iter().map(|(n, ..)| n).sum::<usize>();
+    let most = SETS_AN_HOUR + started.elapsed().as_secs() as usize / 2 + 1;
+    assert!(
+        (SETS_AN_HOUR..=most).contains(&carried),
+        "an hour's sets, and the refill since: carried {carried}, at most {most}"
+    );
+    for (_, status, said) in loops {
+        assert_eq!(
+            (status.as_u16(), &said["refused"]),
+            (429, &json!("limit")),
+            "{said}"
+        );
+        let words = said["words"].as_str().unwrap();
+        assert!(
+            words.contains(&format!("about {} writes a minute", SETS_AN_HOUR / 60)),
+            "{words}"
+        );
+    }
+    let tea = json!([{ "insert": "cards", "row": { "id": "c2", "title": "tea" } }]);
+    let again = post(json!({ "prepare": tea })).await.unwrap();
+    assert_eq!(again.status(), 200, "a prepare's budget is its own");
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A write that seals a set wakes the round** (the seat's decision,
+/// 2026-11-22: a lid closed within the round's minute stranded a move, on
+/// every platform): Ben's copy keeps
+/// Board, synced, and no round is asked after Ana writes a card, but Ben's
+/// copy has it within 10 s, not the 60 s interval. Plant, watched failing:
+/// the route's nudge taken out (Ben's copy lacks the card).
+#[tokio::test]
+async fn a_write_that_seals_a_set_wakes_the_round() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 78, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, _folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(ben, &group).await;
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    assert_eq!(
+        sql(ben, &origin_b, read.clone()).await,
+        (200, json!({ "rows": [], "more": false })),
+        "Ben's copy, synced, before Ana writes"
+    );
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let card = json!({ "rows": [{ "id": "c1", "title": "milk" }], "more": false });
+    let mut seen = Value::Null;
+    for _ in 0..100 {
+        seen = sql(ben, &origin_b, read.clone()).await.1;
+        if seen == card {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(
+        seen, card,
+        "Ana's card on Ben's copy within 10 s, by the round her write woke"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **Leaving a group closes its app databases and keeps their files,** as
+/// leaving keeps the group's other files: held here, none of it live
+/// (removal.rs `leave`). Ben's computer keeps Board's database from its
+/// round, open with its WAL beside it. Ben leaves, and after his next round
+/// the database is closed, its WAL folded in and gone as SQLite's last
+/// connection closes, and its file is still on his disk. Plant, watched
+/// failing: the round leaving a left group's databases open (Ben's WAL
+/// still there).
+#[tokio::test]
+async fn leaving_a_group_closes_its_app_databases_and_keeps_their_files() {
+    use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
+    let (nodes, dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 75, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, _folder) = board(ana, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let kept = dirs[1].path().join("state").join(&group).join("Board.db");
+    let wal = kept.with_extension("db-wal");
+    for node in [ben, ana, ben] {
+        round(node).await;
+    }
+    assert!(
+        wal.exists(),
+        "Ben's copy open, its WAL beside it: {}",
+        wal.display()
+    );
+    let left = http()
+        .post(format!("http://{}{LEAVES_ROUTE}", ben.api_addr()))
+        .asked_as_you()
+        .json(&LeaveAsk {
+            group: group.clone(),
+        })
+        .send();
+    let left = left.await.unwrap().json::<Outcome>().await.unwrap();
+    assert_eq!(left, Outcome::Left);
+    round(ben).await;
+    assert!(
+        kept.exists() && !wal.exists(),
+        "Ben's copy closed and kept: file {}, WAL {}",
+        kept.exists(),
+        wal.exists()
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **Every computer whose person said yes to an app keeps its database,
+/// a page opened there or not** (svrn-docs `rings/current/APP_STATE.md`,
+/// Decisions, 2026-11-22): the yes is the consent to its schema. Ana brings
+/// Board without a schema; Ben says yes to it as it is. Ana adds its
+/// `schema.sql`, which runs as everyone who never said yes, Ana and Cy, and
+/// as Ben only after a yes to it. Ana writes a card, and a round later Cy's
+/// computer has it, though Cy never opened Board, while Ben's holds no copy.
+/// Ana's lid closes, and Ben says yes: his computer keeps a copy at once,
+/// said syncing while no synced copy answers it (invariant 8), and Cy's
+/// round brings it Ana's card. Plant, watched failing: the round opening no
+/// database for a yes (Cy's first read is a fresh copy, syncing, no card).
+#[tokio::test]
+async fn every_computer_whose_person_said_yes_keeps_the_app_s_database() {
+    let (nodes, dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 74, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let mut folders = Vec::new();
+    for (node, root) in [ana, ben, cy].into_iter().zip(&roots) {
+        folders.push(synced_in(node, root.path(), &group).await);
+    }
+    carry(&folders[0], "Board");
+    let all = [ana, ben, cy];
+    let has = |f: &str| {
+        folders
+            .iter()
+            .all(|d| d.join("apps/Board").join(f).exists())
+    };
+    assert!(
+        until(&all, || has("index.html")).await,
+        "Board reaches every folder"
+    );
+    let said = on_home(ben, "/runs", &json!([group, "Board"])).await;
+    assert!(said.status().is_success(), "{:?}", said.text().await);
+    let schema = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT);\n";
+    std::fs::write(folders[0].join("apps/Board/schema.sql"), schema).unwrap();
+    assert!(
+        until(&all, || has("schema.sql")).await,
+        "its schema reaches every folder"
+    );
+    let origin_a = board_on(ana, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    for node in [cy, ana, ben] {
+        round(node).await;
+    }
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let card = json!({ "rows": [{ "id": "c1", "title": "milk" }], "more": false });
+    let origin_c = board_on(cy, &group).await;
+    assert_eq!(
+        sql(cy, &origin_c, read.clone()).await,
+        (200, card.clone()),
+        "Cy's computer kept Ana's card, synced, before any page of his asked"
+    );
+    let bens = dirs[1].path().join("state").join(&group).join("Board.db");
+    assert!(
+        !bens.exists(),
+        "no copy on Ben's computer before his yes to its schema"
+    );
+
+    on_wire::asleep(ana.net().id());
+    on_wire::part(ben, cy);
+    let said = on_home(ben, "/runs", &json!([group, "Board"])).await;
+    assert!(said.status().is_success(), "{:?}", said.text().await);
+    round(ben).await;
+    assert!(
+        bens.exists(),
+        "a copy on Ben's computer once he says yes to its schema"
+    );
+    let origin_b = board_on(ben, &group).await;
+    assert_eq!(
+        sql(ben, &origin_b, read.clone()).await,
+        (200, json!({ "rows": [], "more": false, "syncing": true })),
+        "Ben's copy, before it meets a synced one"
+    );
+    round(cy).await;
+    assert_eq!(
+        sql(ben, &origin_b, read).await,
+        (200, card),
+        "Ben's copy has Ana's card, synced, from Cy's computer"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// A phone of `bo`'s admitted to `group` by Ana's computer, its key
+/// `signing(seed)`, as `a_computer_writes_nothing_as_a_phone_s_person`
+/// admits one.
+fn phone(ana: &Node, group: &str, seed: u8, bo: &str) -> String {
+    use svrngs_node::{Device, Person, Redemption};
+    let append = |act| {
+        let fixture = svrngs_core::tests_support::Fixture { act };
+        ana.rail().commit(group, &fixture).unwrap().unwrap().lines()[0].clone()
+    };
+    let link = signing(seed + 100);
+    let invite = append(RailAct::Invite {
+        key: actor_of(&link),
+        until: i64::MAX,
+        device_of: None,
+    });
+    let bo = Person::parse(bo).unwrap();
+    let redeemed = Redemption::sign(&signing(seed), group, &invite.id, &bo, Device::Browser);
+    append(RailAct::Admit {
+        invite: Some(redeemed),
+        person: bo,
+        key: actor_of(&signing(seed)),
+    });
+    actor_of(&signing(seed))
+}
+
+/// Where the holder `holder` of a pass `phone` signs for the carried lend at
+/// `origin` on `node` asks the app's database, and the pass.
+async fn as_phone(node: &Node, origin: &str, phone: u8, holder: u8) -> (String, String) {
+    use svrngs_core::pass::{Label, Pass};
+    let label = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let until = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 600;
+    let app = (Label::parse(label).unwrap(), vec![]);
+    let pass = Pass::sign(&signing(phone), &actor_of(&signing(holder)), app, until).encode();
+    let bridge = bridge_as(&signing(holder), node, svrngs_core::alpn::Alpn::Lend).await;
+    (
+        format!("http://{}/lend/{label}/svrngs/sql", bridge.local_addr()),
+        pass,
+    )
+}
+
+/// **A phone reads and subscribes through any computer that keeps the
+/// app, and a removed device's phone through none** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "Phones" and "A removed device";
+/// MAGNETS_BUILD §3, slice C): Board carried on Ana's computer reaches
+/// Ben's, which keeps a copy of its own. Bo's phone, under its pass for
+/// Ben's lend of Board, reads Ana's card through Ben's computer, and its
+/// subscription there is pushed her next card once Ben's copy takes it.
+/// Ana removes Bo's phone; once each computer's record holds that, its open
+/// subscription ends as the database next changes, and neither computer
+/// answers its read or a new subscription, each saying why. Plant, watched
+/// failing: the stream reading none of its asker's standing (the removed
+/// phone is pushed Ana's card written after the removal).
+#[tokio::test]
+async fn a_phone_reads_through_any_computer_that_keeps_the_app_and_a_removed_one_through_none() {
+    use http_body_util::BodyExt;
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 75, ana, &[(ben, 2)]);
+    let bo = phone(ana, &group, 7, "bo");
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    drop(folder);
+    let origin_b = board_on(ben, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let milk_row = json!([{ "id": "c1", "title": "milk" }]);
+    for _ in 0..10 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        if sql(ben, &origin_b, read.clone()).await.1["rows"] == milk_row {
+            break;
+        }
+    }
+
+    let (route, pass) = as_phone(ben, &origin_b, 7, 9).await;
+    let asked = http()
+        .post(&route)
+        .header("x-svrngs-pass", &pass)
+        .json(&read);
+    let answer = asked.send().await.unwrap();
+    assert_eq!(
+        answer.status(),
+        200,
+        "Bo's phone reads through Ben's computer"
+    );
+    let answer: Value = answer.json().await.unwrap();
+    assert_eq!(
+        answer["rows"], milk_row,
+        "Ana's card, through Ben's copy: {answer}"
+    );
+    let q = "SELECT%20id%2C%20title%20FROM%20cards%20ORDER%20BY%20id";
+    let ask = http()
+        .get(format!("{route}?q={q}"))
+        .header("x-svrngs-pass", &pass);
+    let stream = ask
+        .header("accept", "text/event-stream")
+        .sent()
+        .await
+        .unwrap();
+    assert_eq!(
+        stream.status(),
+        200,
+        "Bo's phone subscribes through Ben's computer"
+    );
+    let mut events = stream.into_body();
+    assert_eq!(next_event(&mut events).await["rows"], milk_row);
+    let eggs = json!({ "write": [{ "insert": "cards", "row": { "id": "c2", "title": "eggs" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, eggs).await,
+        (200, json!({ "count": 1 }))
+    );
+    for node in [ana, ben] {
+        round(node).await;
+    }
+    let both = json!([{ "id": "c1", "title": "milk" }, { "id": "c2", "title": "eggs" }]);
+    assert_eq!(
+        next_event(&mut events).await["rows"],
+        both,
+        "pushed through Ben's computer"
+    );
+
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: RailAct::Remove {
+            key: bo.clone(),
+            through: vec![],
+        },
+    };
+    ana.rail().commit(&group, &fixture).unwrap().unwrap();
+    for node in [ana, ben] {
+        round(node).await;
+    }
+    let jam = json!({ "write": [{ "insert": "cards", "row": { "id": "c3", "title": "jam" } }] });
+    assert_eq!(sql(ana, &origin_a, jam).await, (200, json!({ "count": 1 })));
+    for node in [ana, ben] {
+        round(node).await;
+    }
+    let ended = tokio::time::timeout(Duration::from_secs(10), events.frame()).await;
+    let ended = ended.expect("the stream ends within 10 s");
+    assert!(
+        ended.is_none(),
+        "the removed phone's open subscription ends: {ended:?}"
+    );
+    for (node, origin) in [(ben, &origin_b), (ana, &origin_a)] {
+        let (route, pass) = as_phone(node, origin, 7, 9).await;
+        let asked = http()
+            .post(&route)
+            .header("x-svrngs-pass", &pass)
+            .json(&read);
+        let refused = asked.send().await.unwrap();
+        let status = refused.status();
+        let words = refused.text().await.unwrap();
+        assert_eq!(status, 403, "a removed phone's read refused: {words}");
+        let said = json!({ "error": "You are no longer in this group, so nothing of it is open to you.", "kind": "removed" });
+        assert_eq!(serde_json::from_str::<Value>(&words).unwrap(), said);
+        let ask = http()
+            .get(format!("{route}?q={q}"))
+            .header("x-svrngs-pass", &pass);
+        let stream = ask
+            .header("accept", "text/event-stream")
+            .sent()
+            .await
+            .unwrap();
+        assert_eq!(
+            stream.status(),
+            403,
+            "a removed phone's subscription refused"
+        );
+    }
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// The set Bo's phone's signer (`web/src/set.rs`, compiled here) makes for
+/// `ops` in `group` as `prepared`, a prepare's answer, gave them back,
+/// under a pass Bo's phone signed naming its open's approver, `signing(10)`,
+/// which signs it at seq 1 of its store, the first place its signer picks
+/// there, as `{carry}` holds it.
+fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
+    let text = |f: &str| prepared[f].as_str().unwrap().to_owned();
+    let (group, app, ops) = (group.to_owned(), "Board".to_owned(), ops.clone());
+    use svrngs_core::pass::{Label, Pass};
+    let carried = Label::carried(&app, &group);
+    let (label, approver) = (carried.to_string(), actor_of(&signing(10)));
+    let pass = Pass::approvable(
+        &signing(7),
+        &"h".repeat(64),
+        (carried, vec![]),
+        i64::MAX,
+        Some(approver),
+    );
+    let asked = set::Asked {
+        group,
+        app,
+        ops,
+        prepared: text("prepared"),
+        by: text("by"),
+        sig: text("sig"),
+        pass: pass.encode(),
+        ts: 1_000,
+        store: [7; 16],
+        seq: 1,
+    };
+    let (message, set, _) = set::signed(&label, &asked)
+        .unwrap()
+        .expect("a set, as it changes rows");
+    let sig = svrngs_core::sign_message(&signing(10), &message);
+    json!({ "carry": set::sealed(&set, &sig).unwrap() })
+}
+
+// The phone's signer, the page's file compiled here, formatted by its own
+// crate's rustfmt.toml.
+#[path = "../../../web/src/set.rs"]
+#[allow(dead_code)]
+#[rustfmt::skip]
+mod set;
+
+/// **A phone's write is prepared by a computer and carried back signed as
+/// the phone's own** (svrn-docs `rings/current/APP_STATE.md` §4, "Phones"):
+/// Bo's phone, under its pass for Board on Ana's computer, has a card
+/// prepared there, signed by Ana's computer; its signer signs the set as
+/// its own and it carries it, and Ana's copy takes it, the card shown; the
+/// same bytes again are held. A write that changes nothing is prepared
+/// and signed too, for the phone's signer to check. A set whose signature isn't its device's is
+/// refused as not its device's, and
+/// bytes that are no set are refused saying what a carry is; neither
+/// reaches the copy. Bo's phone's write sent as a write is refused, as it
+/// signs its own. Plant, watched failing: the route answering a carry as
+/// no database here (404 for the forged set's 422).
+#[tokio::test]
+async fn a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 76, ana, &[]);
+    phone(ana, &group, 7, "bo");
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let (route, pass) = as_phone(ana, &origin, 7, 9).await;
+    let post = |body: Value| {
+        http()
+            .post(&route)
+            .header("x-svrngs-pass", &pass)
+            .json(&body)
+            .send()
+    };
+    let milk = json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    let prepared = post(json!({ "prepare": milk })).await.unwrap();
+    assert_eq!(prepared.status(), 200);
+    let prepared: Value = prepared.json().await.unwrap();
+    assert_eq!(
+        prepared["by"],
+        actor_of(&signing(1)),
+        "prepared and signed by Ana's computer"
+    );
+    let message =
+        svrngs_core::set::prepared(&group, "Board", prepared["prepared"].as_str().unwrap());
+    assert!(svrngs_core::verify_hex(
+        &actor_of(&signing(1)),
+        &message,
+        prepared["sig"].as_str().unwrap()
+    ));
+
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    let set = carried(&group, &milk, &prepared);
+    let bytes = STANDARD.decode(set["carry"].as_str().unwrap()).unwrap();
+    let mut forged: svrngs_db::Set = postcard::from_bytes(&bytes).unwrap();
+    forged.head.sig = svrngs_db::Sig::parse(&"0".repeat(128)).unwrap();
+    let forged = json!({ "carry": STANDARD.encode(postcard::to_allocvec(&forged).unwrap()) });
+    let forged = post(forged).await.unwrap();
+    assert_eq!(forged.status(), 422);
+    assert_eq!(
+        forged.json::<Value>().await.unwrap()["refused"],
+        "not-its-device"
+    );
+    let junk = post(json!({ "carry": "bm90IGEgc2V0" })).await.unwrap();
+    assert_eq!(junk.status(), 400, "bytes that are no set");
+    let read = json!({ "sql": "SELECT id, title FROM cards" });
+    assert_eq!(
+        sql(ana, &origin, read.clone()).await.1["rows"],
+        json!([]),
+        "neither reached the copy"
+    );
+
+    let took = post(set.clone()).await.unwrap();
+    assert_eq!(took.status(), 200);
+    assert_eq!(
+        took.json::<Value>().await.unwrap(),
+        json!({ "took": "taken" })
+    );
+    let card = json!([{ "id": "c1", "title": "milk" }]);
+    assert_eq!(
+        sql(ana, &origin, read).await.1["rows"],
+        card,
+        "Bo's card, on Ana's copy"
+    );
+    let again = post(set).await.unwrap().json::<Value>().await.unwrap();
+    assert_eq!(again, json!({ "took": "held" }), "a retry's same bytes");
+    let same = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "milk" } }]);
+    let unchanged: Value = post(json!({ "prepare": same }))
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(
+        (unchanged["by"].as_str(), unchanged["prepared"].is_string()),
+        (Some(actor_of(&signing(1)).as_str()), true),
+        "a write that changes nothing, prepared and signed for the phone to check, as every one is: {unchanged}"
+    );
+    let wrote = post(json!({ "write": milk })).await.unwrap();
+    assert_eq!(
+        wrote.status(),
+        403,
+        "a phone's write goes prepared, and signed by it"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **Every computer takes the widest version a member runs, an author's
+/// draft among them** (svrn-docs `rings/current/APP_STATE.md` §4, "Every
+/// computer takes the widest"; W5; the seat's decision 4 for slice E):
+/// Board, carried on Ana's computer with one table, reaches Ben's, and Ana
+/// writes a card. Ana adds a note to its schema.sql, her own change, which
+/// runs for her at once. Her page's next ask makes her copy wider, her card
+/// kept, its note NULL, and she writes a note. Ben's person runs the
+/// version he had, yet his copy is made wider at his round by the version
+/// Ana runs, and takes her note. Plant, watched failing: the round making
+/// a copy wider by this computer's own person's version alone (Ben's copy
+/// never has a note).
+#[tokio::test]
+async fn every_computer_takes_the_widest_version_a_member_runs() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 79, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(ben, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(sql(ana, &origin_a, milk).await.0, 200);
+
+    let wider = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT, note TEXT);\n";
+    std::fs::write(folder.join("apps/Board/schema.sql"), wider).unwrap();
+    let read = json!({ "sql": "SELECT * FROM cards ORDER BY id" });
+    let noted = json!([{ "id": "c1", "title": "milk", "note": null }]);
+    let mut wide = false;
+    for _ in 0..20 {
+        if sql(ana, &origin_a, read.clone()).await.1["rows"] == noted {
+            wide = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    assert!(
+        wide,
+        "Ana's copy made wider, her card kept: {}",
+        sql(ana, &origin_a, read.clone()).await.1
+    );
+    let note = json!({ "write": [{ "update": "cards", "key": { "id": "c1" }, "set": { "note": "two" } }] });
+    assert_eq!(sql(ana, &origin_a, note).await.0, 200);
+
+    let both = json!([{ "id": "c1", "title": "milk", "note": "two" }]);
+    let mut took = false;
+    for _ in 0..15 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        if sql(ben, &origin_b, read.clone()).await.1["rows"] == both {
+            took = true;
+            break;
+        }
+    }
+    assert!(
+        took,
+        "Ben's copy made wider by Ana's version, her note on it: {}",
+        sql(ben, &origin_b, read).await.1
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// The reads a person may make of an app's database at once, and the
+/// subscriptions they keep open of it (`carried.rs` `READS_AN_HOUR`,
+/// `SUBSCRIPTIONS_MOST`), said here apart so a change to either fails here.
+const READS_AN_HOUR: usize = 3_600;
+const SUBSCRIPTIONS_MOST: usize = 8;
+
+/// **A person's subscriptions to an app and their reads of its database are
+/// bounded** (svrn-docs `rings/current/APP_STATE.md` §4, "What SQL may do";
+/// invariant 9's plants, "a page opening 500 subscriptions" and "a read
+/// loop"): Ana's Board opens nine subscriptions. Her first ends as the ninth
+/// opens, the oldest past the most, and her second is still pushed her
+/// next card. Then eight loops read as fast as they can until refused:
+/// every read taken, the subscriptions' among them, is within an hour's
+/// reads and the refill since, and each loop is refused 429 `limit`, its
+/// words naming the rate, with `Retry-After`. Plants, each watched failing:
+/// the oldest subscription never ended (the first still open); no read
+/// refill (a loop never refused).
+#[tokio::test]
+async fn a_person_s_subscriptions_and_reads_are_bounded() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 81, ana, &[]);
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let started = std::time::Instant::now();
+    let host = origin.trim_start_matches("http://").trim_end_matches('/');
+    let q = "SELECT%20id%20FROM%20cards%20ORDER%20BY%20id";
+    let mut streams = Vec::new();
+    for _ in 0..=SUBSCRIPTIONS_MOST {
+        let ask = http().get(format!("http://{}/svrngs/sql?q={q}", ana.api_addr()));
+        let ask = ask
+            .header("host", host)
+            .header("accept", "text/event-stream");
+        let mut events = ask.asked_as_you().sent().await.unwrap().into_body();
+        assert_eq!(next_event(&mut events).await["rows"], json!([]));
+        streams.push(events);
+    }
+    use http_body_util::BodyExt;
+    let ended = tokio::time::timeout(Duration::from_secs(10), streams[0].frame()).await;
+    assert!(matches!(ended, Ok(None)), "the oldest ended: {ended:?}");
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(sql(ana, &origin, milk).await.0, 200);
+    assert_eq!(
+        next_event(&mut streams[1]).await["rows"],
+        json!([{ "id": "c1" }])
+    );
+
+    let origin = origin.as_str();
+    let one = |_| async move {
+        let read = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+        for n in 0.. {
+            let answer = at(ana, origin, "POST", "/svrngs/sql", Some(read.clone())).await;
+            if !answer.status().is_success() {
+                let after = answer
+                    .headers()
+                    .get("retry-after")
+                    .map(|v| v.to_str().unwrap().to_owned());
+                return (n, after, answer.json::<Value>().await.unwrap());
+            }
+            assert!(n < READS_AN_HOUR, "a loop is never refused");
+        }
+        unreachable!()
+    };
+    let loops = n0_future::join_all((0..8).map(one)).await;
+    let read = SUBSCRIPTIONS_MOST + 1 + loops.iter().map(|(n, ..)| n).sum::<usize>();
+    let most = READS_AN_HOUR + started.elapsed().as_secs() as usize + 1;
+    assert!(
+        (READS_AN_HOUR..=most).contains(&read),
+        "an hour's reads, and the refill since: read {read}, at most {most}"
+    );
+    for (_, after, said) in loops {
+        assert_eq!(said["refused"], "limit", "{said}");
+        let words = said["words"].as_str().unwrap();
+        assert!(
+            words.contains(&format!("about {} reads a minute", READS_AN_HOUR / 60)),
+            "{words}"
+        );
+        assert!(
+            after.is_some_and(|s| s.parse::<u64>().is_ok_and(|s| s > 0)),
+            "{said}"
+        );
+    }
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// Where each run of Ana's computer in the kill loop is killed, drawn from
+/// this seed, so a seed names a loop.
+const KILLED_SEED: u64 = 0x5eed_0b0a;
+/// How many times the kill loop kills Ana's computer.
+const KILLS: usize = 12;
+
+/// splitmix64's next draw from `state`, below `below`.
+fn drawn(state: &mut u64, below: u64) -> u64 {
+    *state = state.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    (z ^ (z >> 31)) % below
+}
+
+/// The cards write `n` of run `run` inserts: one to three, each its own id.
+fn killed_cards(run: usize, n: usize) -> Vec<String> {
+    (0..=n % 3)
+        .map(|i| format!("k{run:02}-{n:03}-{i}"))
+        .collect()
+}
+
+/// Write `n` of run `run`, in the write form: [`killed_cards`], each titled
+/// by its write.
+fn killed_write(run: usize, n: usize) -> Value {
+    let cards = killed_cards(run, n)
+        .into_iter()
+        .map(|id| json!({ "insert": "cards", "row": { "id": id, "title": format!("{run}.{n}") } }));
+    json!({ "write": cards.collect::<Vec<_>>() })
+}
+
+/// Not a check: Ana's computer in a process of its own, which the test
+/// below starts and kills. Over `KILLED_DIR`, on a wire of its own, it
+/// writes Board's cards one write after another as a page does, and says
+/// `acked <n>` on stdout as write `n` is answered 200, before it sends the
+/// next; for any other answer it says `refused <n>` and the answer, and
+/// stops. Without `KILLED_DIR`, nothing.
+#[tokio::test]
+#[ignore = "Ana's computer, which the kill loop below starts and kills"]
+async fn writing_until_killed() {
+    let Some(dir) = std::env::var_os("KILLED_DIR") else {
+        return;
+    };
+    let run: usize = std::env::var("KILLED_RUN").unwrap().parse().unwrap();
+    let group = std::env::var("KILLED_GROUP").unwrap();
+    let ana = start(1, Path::new(&dir)).await;
+    let origin = board_on(&ana, &group).await;
+    for n in 0.. {
+        let (status, said) = sql(&ana, &origin, killed_write(run, n)).await;
+        if status != 200 {
+            println!("refused {n} {status} {said}");
+            return;
+        }
+        println!("acked {n}");
+    }
+}
+
+/// **A write answered 200 is kept through `kill -9`, and reaches another
+/// computer** (svrn-docs `rings/current/APP_STATE.md` §11, W2, "Nothing
+/// acknowledged is lost"): Ana and Ben keep Board, synced. Then Ana's
+/// computer runs in a process of its own ([`writing_until_killed`]),
+/// writing cards one write after another as a page does, and is killed by
+/// SIGKILL [`KILLS`] times, each at a point drawn from [`KILLED_SEED`]:
+/// after 1 to 12 writes are answered, and up to 2 ms more, so the kill lands
+/// anywhere in a write, its commit among them. Each time she starts again
+/// over her data dir. Then, started here: every card of every write
+/// answered 200 is in her copy, with its title; any other is of the one
+/// write each run had in flight, whole or not there at all; she writes on.
+/// At the next rounds Ben's copy holds exactly hers, and only sets travel,
+/// so each write's set was kept with it. On a wire in each process, no
+/// socket: a child process killed is not a seam (docs/CHECKS.md, "Seam
+/// migration ledger"), so wherever a kill lands, the verdict is the same.
+/// Plants, each watched failing: the route answering 200 before the write
+/// commits (a card of an answered write missing); the set kept in a
+/// transaction of its own after the write's commits (Ben's copy lacks a
+/// card Ana's holds).
+#[cfg(unix)]
+#[tokio::test]
+async fn a_write_answered_is_kept_through_kill_9_and_reaches_another_computer() {
+    use std::collections::BTreeSet;
+    use std::io::BufRead as _;
+    use std::os::unix::process::ExitStatusExt as _;
+    use std::sync::mpsc::RecvTimeoutError;
+    let root = tempfile::tempdir().unwrap();
+    let (ana_dir, ben_dir) = (root.path().join("ana"), root.path().join("ben"));
+    let ana = start(1, &ana_dir).await;
+    let ben = start(2, &ben_dir).await;
+    let group = found("house", 83, &ana, &[(&ben, 2)]);
+    for node in [&ben, &ana] {
+        round(node).await;
+    }
+    let (_, _folder) = board(&ana, &group).await;
+    let at_ben = synced_in(&ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[&ana, &ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(&ben, &group).await;
+    round(&ben).await;
+    ana.net().close().await;
+    drop(ana);
+
+    let mut seed = KILLED_SEED;
+    let (mut acked, mut in_flight) = (BTreeSet::new(), Vec::new());
+    for run in 0..KILLS {
+        let (after, wait) = (1 + drawn(&mut seed, 12), drawn(&mut seed, 2_000));
+        let log = root.path().join(format!("run-{run}.log"));
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "writing_until_killed",
+                "--ignored",
+                "--nocapture",
+            ])
+            .env("KILLED_DIR", &ana_dir)
+            .env("KILLED_RUN", run.to_string())
+            .env("KILLED_GROUP", &group)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::fs::File::create(&log).unwrap())
+            .spawn()
+            .unwrap();
+        let out = child.stdout.take().unwrap();
+        let (said, heard) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            for line in std::io::BufReader::new(out).lines().map_while(Result::ok) {
+                if said.send(line).is_err() {
+                    return;
+                }
+            }
+        });
+        let mut answered = 0;
+        loop {
+            let line = match heard.recv_timeout(Duration::from_secs(60)) {
+                Ok(line) => line,
+                Err(RecvTimeoutError::Disconnected) => break,
+                Err(RecvTimeoutError::Timeout) => {
+                    let _ = child.kill();
+                    panic!(
+                        "run {run}: Ana's computer said nothing for 60 s; its log is {}",
+                        log.display()
+                    );
+                }
+            };
+            if let Some(n) = line.strip_prefix("acked ") {
+                assert_eq!(
+                    n,
+                    answered.to_string(),
+                    "run {run}: writes answered in turn"
+                );
+                acked.extend(killed_cards(run, answered));
+                answered += 1;
+                if answered as u64 == after {
+                    std::thread::sleep(Duration::from_micros(wait));
+                    child.kill().unwrap();
+                }
+            } else if line.starts_with("refused") {
+                let _ = child.kill();
+                panic!("run {run}: {line}");
+            }
+        }
+        let ended = child.wait().unwrap();
+        let log = std::fs::read_to_string(&log).unwrap_or_default();
+        assert_eq!(
+            ended.signal(),
+            Some(9),
+            "run {run} wrote until killed: {ended:?}\n{log}"
+        );
+        in_flight.push(killed_cards(run, answered));
+    }
+
+    let ana = start(1, &ana_dir).await;
+    let origin_a = board_on(&ana, &group).await;
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let (status, kept) = sql(&ana, &origin_a, read.clone()).await;
+    assert_eq!((status, &kept["more"]), (200, &json!(false)), "{kept}");
+    let held: BTreeSet<String> = (kept["rows"].as_array().unwrap().iter())
+        .map(|r| r["id"].as_str().unwrap().to_owned())
+        .collect();
+    let lost: Vec<_> = acked.difference(&held).collect();
+    assert!(
+        lost.is_empty(),
+        "every card of a write answered 200 kept through {KILLS} kills; lost: {lost:?}"
+    );
+    for cards in &in_flight {
+        let there = cards.iter().filter(|c| held.contains(*c)).count();
+        assert!(there == 0 || there == cards.len(), "a write in flight as Ana's computer was killed kept whole or not at all: {cards:?}, {there} there");
+    }
+    let unasked: Vec<_> = (held.iter())
+        .filter(|c| !acked.contains(*c) && !in_flight.iter().flatten().any(|f| f == *c))
+        .collect();
+    assert!(unasked.is_empty(), "no card no write made: {unasked:?}");
+    for row in kept["rows"].as_array().unwrap() {
+        let id = row["id"].as_str().unwrap();
+        let (run, n) = (&id[1..3], &id[4..7]);
+        let title = format!(
+            "{}.{}",
+            run.parse::<usize>().unwrap(),
+            n.parse::<usize>().unwrap()
+        );
+        assert_eq!(row["title"], title, "each card as its write wrote it");
+    }
+    let after = sql(&ana, &origin_a, killed_write(KILLS, 0)).await;
+    assert_eq!(
+        after.0, 200,
+        "Ana's computer writes on after the kills: {}",
+        after.1
+    );
+    let (_, kept) = sql(&ana, &origin_a, read.clone()).await;
+
+    let mut seen = Value::Null;
+    for _ in 0..15 {
+        for node in [&ana, &ben] {
+            round(node).await;
+        }
+        seen = sql(&ben, &origin_b, read.clone()).await.1;
+        if seen == kept {
+            break;
+        }
+    }
+    let theirs: BTreeSet<_> = (seen["rows"].as_array().into_iter().flatten())
+        .filter_map(|r| r["id"].as_str())
+        .collect();
+    let missing: Vec<_> = held
+        .iter()
+        .filter(|c| !theirs.contains(c.as_str()))
+        .collect();
+    assert_eq!(
+        seen, kept,
+        "Ben's copy holds exactly Ana's, synced; missing there: {missing:?}"
+    );
+    for node in [&ana, &ben] {
+        node.net().close().await;
+    }
+}
+
+/// **A member's version whose schema.sql runs an expression or makes rows
+/// is refused on every computer, and each keeps working on the version it
+/// holds** (svrn-docs `rings/current/APP_STATE.md` §4, "Its schema": one
+/// decider, svrngs-db's, for every copy): Board, carried on Ana's computer,
+/// reaches Ben's, and Ana writes a card. Ana changes Board's schema.sql, her
+/// own change, which runs for her at once: first a version whose new table
+/// has a DEFAULT that calls randomblob, then one that inserts a row. Each
+/// time her page's read is refused `schema`, 422, in words naming
+/// schema.sql; Ben's round refuses to make his copy wider by it, said at
+/// debug, and his copy works on as it was: a card he writes is read back
+/// with the columns it had, and reaches Ana's copy. Once she puts the
+/// version back, her page reads every card, no row schema.sql made and no
+/// column it added, as Ben's does. Plants, each watched failing: the node's
+/// call site taking a member's version without asking svrngs-db
+/// (`Folders::database` not calling `States::widen`: Ana's read answered
+/// 200); svrngs-db's schema rule letting every function and insert through
+/// (Ana's copy made wider by her version, her read answered 200).
+#[tokio::test]
+async fn a_member_s_version_that_runs_an_expression_or_makes_rows_is_refused_everywhere() {
+    use std::collections::BTreeSet;
+    let (said, _heard) = heard("folder=debug");
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 84, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(ben, &group).await;
+    round(ben).await;
+    let card = |id: &str, by: &str| json!({ "write": [{ "insert": "cards", "row": { "id": id, "title": by } }] });
+    assert_eq!(sql(ana, &origin_a, card("c1", "ana")).await.0, 200);
+
+    let read = json!({ "sql": "SELECT * FROM cards ORDER BY id" });
+    let first = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT);\n";
+    let versions = [
+        format!("{first}CREATE TABLE tags (id TEXT NOT NULL PRIMARY KEY, mark BLOB DEFAULT (randomblob(16)));\n"),
+        format!("{first}INSERT INTO cards (id, title) VALUES ('s1', 'made by schema.sql');\n"),
+    ];
+    // Ben's computer alone judges Ana's version as a member's: hers, while
+    // her own is refused, judges none of the others'.
+    let ana_key = actor_of(&signing(1));
+    let refusals = || {
+        let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+        let of_ana = |l: &&str| {
+            l.contains("made wider by the version a member runs") && l.contains(&ana_key)
+        };
+        let refused = |l: &str| {
+            Some(
+                l.split_once("refused=")?
+                    .1
+                    .split(" key=")
+                    .next()?
+                    .to_owned(),
+            )
+        };
+        let lines: Vec<_> = traced.lines().filter(of_ana).filter_map(refused).collect();
+        lines
+            .into_iter()
+            .filter(|r| r.contains("Schema("))
+            .collect::<BTreeSet<_>>()
+    };
+    for (n, version) in versions.iter().enumerate() {
+        std::fs::write(folder.join("apps/Board/schema.sql"), version).unwrap();
+        let mut answer = (0, Value::Null);
+        for _ in 0..20 {
+            answer = sql(ana, &origin_a, read.clone()).await;
+            if answer.0 != 200 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+        let (status, refused) = answer;
+        assert_eq!(
+            (status, &refused["refused"]),
+            (422, &json!("schema")),
+            "version {n}: {refused}"
+        );
+        let words = refused["words"].as_str().unwrap();
+        assert!(
+            words.contains("schema.sql") && words.contains("To fix it"),
+            "{words}"
+        );
+
+        let mut judged = false;
+        for _ in 0..15 {
+            for node in [ana, ben] {
+                round(node).await;
+            }
+            if refusals().len() == n + 1 {
+                judged = true;
+                break;
+            }
+        }
+        assert!(
+            judged,
+            "version {n} refused on Ben's computer, said at debug: {:?}",
+            refusals()
+        );
+        let mine = format!("b{n}");
+        assert_eq!(
+            sql(ben, &origin_b, card(&mine, "ben")).await.0,
+            200,
+            "Ben's copy takes his card"
+        );
+        let (status, rows) = sql(ben, &origin_b, read.clone()).await;
+        assert_eq!(status, 200, "{rows}");
+        let rows = rows["rows"].as_array().unwrap().clone();
+        assert!(
+            rows.iter()
+                .all(|r| r.as_object().unwrap().keys().eq(["id", "title"].iter())),
+            "Ben's copy holds the columns it had: {rows:?}"
+        );
+        assert!(rows.iter().any(|r| r["id"] == mine.as_str()), "{rows:?}");
+        assert!(
+            rows.iter().all(|r| r["id"] != "s1"),
+            "no row schema.sql made: {rows:?}"
+        );
+    }
+
+    std::fs::write(folder.join("apps/Board/schema.sql"), first).unwrap();
+    let every = json!([
+        { "id": "b0", "title": "ben" },
+        { "id": "b1", "title": "ben" },
+        { "id": "c1", "title": "ana" },
+    ]);
+    let mut seen = Value::Null;
+    for _ in 0..20 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        seen = sql(ana, &origin_a, read.clone()).await.1;
+        if seen["rows"] == every {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    assert_eq!(
+        seen["rows"], every,
+        "Ana's copy, her version back, every card and nothing schema.sql made: {seen}"
+    );
+    assert_eq!(sql(ben, &origin_b, read).await.1["rows"], every);
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A value far past any bound is refused at write, and nothing of it
+/// kept** (svrn-docs `rings/current/APP_STATE.md` §4, "What SQL may do";
+/// W4): Board's page writes one card whose title is 8 MiB. It is refused,
+/// named and in words, and Board holds no card. Today the route's own cap
+/// on what it reads refuses it, `too-large`, before svrngs-db's parse would
+/// (`Unfit::Long`); either holds. Plant, watched failing: the route reading
+/// any body and the parse taking any value (the card kept, 200).
+#[tokio::test]
+async fn a_value_far_past_any_bound_is_refused_at_write() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 85, ana, &[]);
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let big = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "x".repeat(8 << 20) } }] });
+    let (status, refused) = sql(ana, &origin, big).await;
+    assert!((400..500).contains(&status), "refused: {status}");
+    assert!(refused["refused"].is_string(), "{refused}");
+    assert!(
+        refused["words"].as_str().is_some_and(|w| !w.is_empty()),
+        "{refused}"
+    );
+    let count = json!({ "sql": "SELECT count(*) AS n FROM cards" });
+    assert_eq!(
+        sql(ana, &origin, count).await,
+        (200, json!({ "rows": [{ "n": 0 }], "more": false })),
+        "nothing of it kept"
+    );
     for node in &nodes {
         node.net().close().await;
     }
