@@ -573,6 +573,39 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     change a command, stop running it with svrngs and Run again.
 
   Demo: the first demo again, from the page, in WebKit.
+  - **Answer to the park** (keeper-lead, with QA oc-cruu42's allowance,
+    2026-11-23). `5ab554fb` and `03f2fe26` stand.
+    - **The whole row may add +120 counted and +85 JavaScript** since
+      `a0698aa1`. That leaves +60 and +54 from `03f2fe26`. Over that, cut
+      further, or park with measured deltas. Never borrow the Mac rows'
+      margin.
+    - **Don't take `/tmp/opencode/avail-run-page-measured.patch`
+      wholesale.**
+  - **The form is explicit and native.** No automatic model or command
+    prefill on the page this release: no Prefill branch, no facts JSON
+    shuttle, no card-to-command round trip, no `run_form` or `plan.rs`
+    export.
+    - The page's HTTP decodes only a typed `{name, port, folder,
+      command}`.
+    - It forwards those fixed fields through the same packaged keeper call
+      as the CLI, with one argv-quoting parse in the keeper. The CLI
+      already gets argv from its shell.
+    - No raw argv and no arbitrary keeper verb from the page. Keep the
+      local home route's user authorization, and its test refusing a
+      request from elsewhere.
+  - **States:**
+    - project the keeper's existing `list --json` onto the existing
+      running rows;
+    - show only what the keeper observed;
+    - keep Stop (running) apart from Unshare (sharing);
+    - Start and Stop send closed actions to the keeper's owned verbs.
+    - Deferred: a Remove control, richer status copy (a bad command gets
+      the existing terminal recovery instruction), Restart and Change.
+  - **Demo, in WebKit, in the gate container** (PROMPT.addendum, "From
+    the toolbox, Podman and browsers are on the host"):
+    - one native Run, verify, then the existing Share;
+    - a busy or failed Run that publishes nothing;
+    - one Start and Stop.
 
 - [ ] avail-run-stop-gap — depends [avail-run-containers] — ONE UNIT (keeper): a Stop during the wrapper's restart gap leaves the pod serving (QA oc-cruu42 at b94aa922).
   - `serve-card … --stop` with no MAINPID returns early. `KillMode=process`
