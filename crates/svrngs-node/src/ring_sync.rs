@@ -706,7 +706,7 @@ async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>
                 None => None,
             };
             let (took, answer) = ingested.unzip();
-            debug!(namespace = group, app = db.app, chunk, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
+            debug!(namespace = group, app = db.app, peer = %to.1.key, chunk, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
             let moved = took.as_ref().is_some_and(|t| {
                 t.as_ref().is_ok_and(|t| {
                     t.iter().any(|(_, t)| {
