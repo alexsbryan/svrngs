@@ -911,7 +911,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
       after a confirming press. Plant: the form submits without the
       press, which must fail.
 
-- [ ] avail-e2e-gate — depends [avail-page-prefill] — ONE UNIT: the end-to-end tests the gate never runs (the operator, 2026-11-23: "Have we added sufficient e2e tests to ensure we won't regress this system?" Then: "Yes queue them").
+- [x] avail-e2e-gate 64de69c98 — depends [avail-page-prefill] — ONE UNIT: the end-to-end tests the gate never runs (the operator, 2026-11-23: "Have we added sufficient e2e tests to ensure we won't regress this system?" Then: "Yes queue them").
   - Today these are `#[ignore]` and run only by hand or by a demo
     wrapper:
     - `explicit_run_then_share_in_webkit` (`crates/svrngs-node/tests/browser/main.rs:2049`);
