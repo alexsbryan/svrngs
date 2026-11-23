@@ -690,13 +690,17 @@ impl Folders {
             return Ok(told(413, "too-large", words));
         };
         let body = serde_json::from_slice(&body).unwrap_or_default();
-        let answered = match svrngs_db::asked(&body) {
+        let asked = svrngs_db::asked(&body);
+        // A phone's write is prepared here for its own signer (APP_STATE §4,
+        // "Phones"), held to the same refusals and refill as a write.
+        let prepare = matches!(asked, Ok(svrngs_db::Asked::Prepare(_)));
+        let answered = match asked {
             Ok(svrngs_db::Asked::Read(sql, params)) => {
                 read(&db, sql.into(), params.to_vec(), others).await
             }
-            Ok(svrngs_db::Asked::Write(ops)) => {
-                let elsewhere = key != self.host.actor;
-                tracing::debug!(target: "folder", group, %app, elsewhere, ?wrote, "carried: a write to an app's database, refused for an app that reads others' lends, and from any device but this computer");
+            Ok(svrngs_db::Asked::Write(ops) | svrngs_db::Asked::Prepare(ops)) => {
+                let elsewhere = key != self.host.actor && !prepare;
+                tracing::debug!(target: "folder", group, %app, elsewhere, prepare, ?wrote, "carried: a write to an app's database, or a phone's prepared, refused for an app that reads others' lends, and a write from any device but this computer");
                 if wrote.is_err() {
                     let words = format!("{app} reads your friends’ apps, so it can’t write in your group’s database: what it read stays apart from what the group keeps.");
                     return Ok(told(403, "reads", words));
@@ -715,7 +719,12 @@ impl Folders {
                 // person, as every copy judges them again (svrngs-db `owned.rs`).
                 let bound = crate::ring_sync::bound(&self.host.rail, group);
                 let (db, ops) = (db.clone(), ops.clone());
-                let wrote = tokio::task::spawn_blocking(move || db.write(&ops, &bound)).await;
+                // A phone's prepare seals nothing, and so wakes nothing.
+                let wrote = tokio::task::spawn_blocking(move || match prepare {
+                    true => db.prepare(&ops).map(|answer| (answer, None)),
+                    false => db.write(&ops, &bound),
+                });
+                let wrote = wrote.await;
                 let wrote = wrote.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())));
                 // A write that sealed a set wakes the round, so a member holds
                 // it within the round's own seconds, not its minute, on every

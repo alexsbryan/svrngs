@@ -44,6 +44,10 @@ impl Table {
 /// One op as one statement, and the values it binds.
 pub type Statement = (String, Vec<Sql>);
 
+/// One op's statement, and the read of its row by key, which a phone's
+/// prepare answers beside it (svrn-docs APP_STATE §4, "Phones").
+pub type Op = (Statement, Statement);
+
 /// Columns named, each by its table's own name for it, to bound values.
 type Named<'t> = Vec<(&'t String, Sql)>;
 
@@ -95,9 +99,9 @@ fn listed<'n>(names: impl IntoIterator<Item = &'n String>, each: impl Fn(String)
     names.into_iter().map(|n| each(quoted(n))).collect::<Vec<_>>().join(by)
 }
 
-/// `op`, the `at`th of a write, as one statement on `tables`; refused in
-/// words that say what to change.
-pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Result<Statement, Refused> {
+/// `op`, the `at`th of a write, as one statement on `tables`, and its row's
+/// read; refused in words that say what to change.
+pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Result<Op, Refused> {
     let (at, o) = (format!("write[{at}]"), op.as_object().cloned().unwrap_or_default());
     let kind = ["insert", "update", "delete"].into_iter().find(|k| o.contains_key(*k));
     let fields: &[&str] = match kind {
@@ -149,10 +153,10 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
             "INSERT INTO {into} ({all}) VALUES ({}) ON CONFLICT ({key}) DO {upsert}",
             holes.join(", ")
         );
-        return Ok((
-            sql,
-            table.columns.iter().map(|c| given(c).unwrap_or(Sql::Null)).collect(),
-        ));
+        let keyed = table.key.iter().map(|k| (k, given(k).unwrap_or(Sql::Null)));
+        let row = read(&into, keyed.collect());
+        let values = table.columns.iter().map(|c| given(c).unwrap_or(Sql::Null));
+        return Ok(((sql, values.collect()), row));
     }
     let key = columns(&o["key"], it, &format!("{at}'s key"))?;
     if key.len() != table.key.len() || !key.iter().all(|(c, _)| keyed(c)) {
@@ -164,12 +168,13 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
             "{at}'s key names {named}: a key of {name} names every key column, {all}, and no other."
         )));
     }
-    let matched = listed(key.iter().map(|(c, _)| *c), |c| format!("{c} = ?"), " AND ");
+    let (matched, row) = (
+        listed(key.iter().map(|(c, _)| *c), |c| format!("{c} = ?"), " AND "),
+        read(&into, key.clone()),
+    );
     if kind == Some("delete") {
-        return Ok((
-            format!("DELETE FROM {into} WHERE {matched}"),
-            key.into_iter().map(|(_, v)| v).collect(),
-        ));
+        let delete = format!("DELETE FROM {into} WHERE {matched}");
+        return Ok(((delete, key.into_iter().map(|(_, v)| v).collect()), row));
     }
     let set = columns(&o["set"], it, &format!("{at}'s set"))?;
     if let Some((c, _)) = set.iter().find(|(c, _)| keyed(c)) {
@@ -187,5 +192,14 @@ pub fn statement(op: &Value, tables: &BTreeMap<String, Table>, at: usize) -> Res
         "UPDATE {into} SET {} WHERE {matched}",
         listed(set.iter().map(|(c, _)| *c), |c| format!("{c} = ?"), ", ")
     );
-    Ok((sql, set.into_iter().chain(key).map(|(_, v)| v).collect()))
+    Ok(((sql, set.into_iter().chain(key).map(|(_, v)| v).collect()), row))
+}
+
+/// The read of the row of `into`, quoted, whose key is `key`.
+fn read(into: &str, key: Named<'_>) -> Statement {
+    let matched = listed(key.iter().map(|(c, _)| *c), |c| format!("{c} = ?"), " AND ");
+    (
+        format!("SELECT * FROM {into} WHERE {matched}"),
+        key.into_iter().map(|(_, v)| v).collect(),
+    )
 }

@@ -32,7 +32,7 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use crate::sig::{SCHEMA_DOMAIN, SET_DOMAIN, SITE_DOMAIN};
+use crate::sig::{PREPARED_DOMAIN, SCHEMA_DOMAIN, SET_DOMAIN, SITE_DOMAIN};
 use crate::{field, sign_message, verify_hex, ContentHash, SigningKey};
 
 /// What a device makes with each database it keeps, so the database's site
@@ -92,6 +92,18 @@ pub fn site(group: &str, app: &str, device: &str, nonce: &Nonce) -> Site {
     }
     let hash = ContentHash::of(&bytes);
     hash.as_bytes()[..16].try_into().expect("a hash is longer")
+}
+
+/// What the computer that prepares a phone's write to `app` in `group`
+/// signs, its answer's `text` (svrn-docs `rings/current/APP_STATE.md` §4,
+/// "Phones"): so the phone's signer takes the changes it checks from a
+/// computer of the group, never from the app's own page.
+pub fn prepared(group: &str, app: &str, text: &str) -> Vec<u8> {
+    let mut msg = PREPARED_DOMAIN.to_vec();
+    for part in [group, app, text] {
+        field(&mut msg, part.as_bytes());
+    }
+    msg
 }
 
 /// The hash of a set's changes, as its head signs them.

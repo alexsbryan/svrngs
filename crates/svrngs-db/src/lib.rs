@@ -150,10 +150,12 @@ impl Refused {
 }
 
 /// What a page's POST asks: one read, `{sql, params}`, or a write in the
-/// form, `{write: [op, ...]}`.
+/// form, `{write: [op, ...]}`; or what a phone's worker asks.
 pub enum Asked<'a> {
     Read(&'a str, &'a [Value]),
     Write(&'a Value),
+    /// A phone's write, `{prepare: [op, ...]}`, for its signer ([`Db::prepare`]).
+    Prepare(&'a Value),
 }
 
 /// The POST `body` as what it asks; refused naming both, for anything else.
@@ -166,6 +168,7 @@ pub fn asked(body: &Value) -> Result<Asked<'_>, Refused> {
         .map_or(Some(&[][..]), |p| p.as_array().map(Vec::as_slice));
     match (fields.as_deref(), body["sql"].as_str(), params) {
         (Some(["write"]), ..) => Ok(Asked::Write(&body["write"])),
+        (Some(["prepare"]), ..) => Ok(Asked::Prepare(&body["prepare"])),
         (Some(["sql"] | ["params", "sql"]), Some(sql), Some(params)) => Ok(Asked::Read(sql, params)),
         _ => Err(Refused::Form(format!(
             "svrngs/sql takes {{sql, params}}, one read, its params a list of values, or {{write: [op, ...]}}, not {body}. {FORM}"
@@ -617,6 +620,66 @@ impl Db {
     /// where it changes an owned row the record `binds` doesn't give this
     /// computer's person (`owned.rs`).
     pub fn write(&self, ops: &Value, binds: &Binds) -> Result<(Value, Option<Seq>), Refused> {
+        let (sealed, count) = self.run(ops, |tx, count, _| {
+            // Its set sealed in its own transaction (APP_STATE §4): refused,
+            // the write is rolled back with it.
+            let sealed = self.seal(&tx, binds)?;
+            tx.commit().map_err(fault)?;
+            Ok((sealed, count))
+        })?;
+        if count > 0 {
+            self.changed.send_modify(|n| *n += 1);
+        }
+        Ok((json!({ "count": count }), sealed))
+    }
+
+    /// A phone's write, `ops`, prepared for its signer, as a phone holds no
+    /// copy (svrn-docs APP_STATE §4, "Phones"; MAGNETS_BUILD S2): run as
+    /// [`Self::write`] runs one, in a whole transaction rolled back, never a
+    /// savepoint in one that commits, which spends a version, so clocks and
+    /// `db_version` stay as they were. `{count}` alone where it changes
+    /// nothing; else `{prepared, by, sig}`: this computer's signature over
+    /// `prepared`, the text it is ([`svrngs_core::set::prepared`]), so the
+    /// signer takes it from a computer and never from the app's page. Its
+    /// text holds the ops, the set's changes as the parse every copy runs
+    /// takes them, the schema's hash, each table's key columns in order, the
+    /// rows changed, and each op's row as it stands after them all, null
+    /// where there is none, so an op with no change row is told a no-op.
+    pub fn prepare(&self, ops: &Value) -> Result<Value, Refused> {
+        let (made, stands, count) = self.run(ops, |tx, count, statements| {
+            let seq = tx.query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0));
+            let made = self.changes(&tx, seq.map_err(fault)?).map_err(fault)?;
+            let stands = statements.iter().map(|(_, (sql, key))| {
+                let mut row = tx.prepare(sql).map_err(said)?;
+                Ok(rows(&mut row, key)?.0.into_iter().next())
+            });
+            Ok((made, stands.collect::<Result<Vec<_>, Refused>>()?, count))
+        })?;
+        tracing::debug!(target: "state", group = self.group, app = self.app, rows = made.len(), count, "state: a phone's write prepared and rolled back whole, its rows for its signer");
+        if made.is_empty() {
+            return Ok(json!({ "count": count }));
+        }
+        let made = parse::fit(made, &self.tables).map_err(Refused::Unkept)?;
+        let keys: BTreeMap<_, _> = self.tables.iter().map(|(t, table)| (t, &table.key)).collect();
+        let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));
+        let schema = self.schema.iter().map(|b| format!("{b:02x}")).collect::<String>();
+        let text =
+            json!({ "ops": ops, "changes": changes, "schema": schema, "keys": keys, "count": count, "stands": stands });
+        let text = text.to_string();
+        let sig = svrngs_core::sign_message(&self.key, &svrngs_core::set::prepared(&self.group, &self.app, &text));
+        Ok(json!({ "prepared": text, "by": self.device, "sig": sig }))
+    }
+
+    /// `ops`, in the write form, run whole in one transaction, which `then`
+    /// is handed with the rows they changed and each op's statements, to
+    /// commit or drop; rolled back as it drops on any refusal, or a COMMIT
+    /// that fails (rusqlite 0.41 `transaction.rs:220-229`), so no write
+    /// leaves its transaction open.
+    fn run<T>(
+        &self,
+        ops: &Value,
+        then: impl FnOnce(rusqlite::Transaction<'_>, usize, &[form::Op]) -> Result<T, Refused>,
+    ) -> Result<T, Refused> {
         let listed = ops.as_array().filter(|o| !o.is_empty());
         let listed =
             listed.ok_or_else(|| Refused::Form(format!("write takes a list of one or more ops, not {ops}. {FORM}")))?;
@@ -625,22 +688,12 @@ impl Db {
         tracing::debug!(target: "state", group = self.group, app = self.app, ops = listed.len(), refused = ?statements.as_ref().err(), "state: a write's ops made statements by key, or refused");
         let statements = statements?;
         let mut conn = self.conn();
-        // Rolled back as it drops, on any refusal below or a COMMIT that
-        // fails (rusqlite 0.41 `transaction.rs:220-229`), so no write leaves
-        // its transaction open.
         let tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
-        let ran = (statements.iter()).map(|(sql, values)| tx.execute(sql, rusqlite::params_from_iter(values)));
+        let ran = (statements.iter()).map(|((sql, values), _)| tx.execute(sql, rusqlite::params_from_iter(values)));
         let ran = ran.sum::<Result<usize, _>>();
-        tracing::debug!(target: "state", group = self.group, app = self.app, ?ran, "state: a write run whole and committed, or rolled back whole as SQLite refused it");
+        tracing::debug!(target: "state", group = self.group, app = self.app, ?ran, "state: a write run whole, or rolled back whole as SQLite refused it");
         let count = ran.map_err(said)?;
-        // Its set sealed in its own transaction (APP_STATE §4): refused, the
-        // write is rolled back with it.
-        let sealed = self.seal(&tx, binds)?;
-        tx.commit().map_err(fault)?;
-        if count > 0 {
-            self.changed.send_modify(|n| *n += 1);
-        }
-        Ok((json!({ "count": count }), sealed))
+        then(tx, count, &statements)
     }
 }
 

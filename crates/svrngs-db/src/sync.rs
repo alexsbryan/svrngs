@@ -432,22 +432,7 @@ impl Db {
         let seq: Seq = conn
             .query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0))
             .map_err(fault)?;
-        let changes = "SELECT \"table\", pk, cid, val, col_version, cl, seq FROM crsql_changes \
-            WHERE db_version = ?1 AND site_id = crsql_site_id() ORDER BY seq";
-        let made = rows(conn, changes, [seq], |r| {
-            let (table, pk, cid, val) = (r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?);
-            let (col_version, cl, seq) = (r.get(4)?, r.get(5)?, r.get(6)?);
-            Ok(Change {
-                table,
-                pk,
-                cid,
-                val,
-                col_version,
-                cl,
-                seq,
-            })
-        });
-        let made = made.map_err(fault)?;
+        let made = self.changes(conn, seq).map_err(fault)?;
         // Its own mark counts every version it sealed, a set pruned since too.
         let reused = "SELECT ?2 <= coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0) \
             OR EXISTS (SELECT 1 FROM svrngs_sets WHERE site = ?1 AND seq = ?2)";
@@ -485,6 +470,26 @@ impl Db {
         keep(conn, (&Set { head, changes }, self.site), None, Kept::Taken).map_err(fault)?;
         self.prune(conn).map_err(fault)?;
         Ok(Some(seq))
+    }
+
+    /// Within a write's transaction on `conn`: its `crsql_changes` rows at
+    /// this database's site and the transaction's version `seq`.
+    pub(crate) fn changes(&self, conn: &Connection, seq: Seq) -> rusqlite::Result<Vec<Change>> {
+        let changes = "SELECT \"table\", pk, cid, val, col_version, cl, seq FROM crsql_changes \
+            WHERE db_version = ?1 AND site_id = crsql_site_id() ORDER BY seq";
+        rows(conn, changes, [seq], |r| {
+            let (table, pk, cid, val) = (r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?);
+            let (col_version, cl, seq) = (r.get(4)?, r.get(5)?, r.get(6)?);
+            Ok(Change {
+                table,
+                pk,
+                cid,
+                val,
+                col_version,
+                cl,
+                seq,
+            })
+        })
     }
 
     /// What this copy holds, as it asks a member ([`Ask`]).
