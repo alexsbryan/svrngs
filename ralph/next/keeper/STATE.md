@@ -471,7 +471,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - The demo's model is at `/tmp/keeper-demo/qwen2.5-0.5b.gguf`. Search
     nowhere else: a refused read ends the session.
 
-- [ ] avail-run-busy-witness — depends [avail-run-linux] — ONE UNIT (keeper, plus the demo): fix Run's false success, then close QA's busy-port evidence gap (oc-cruu42, 2026-11-23). At fabda979, `demo/runs/keeper/2026-11-23-run-linux/run.py:57–70` samples `/health` only before Run. It checks the SSH child's liveness, the managed unit's MainPID (0) and Alex's origin. None of those shows the original listener untouched, or nothing written. Patch that scene, with no new harness, to record in its JSONL, before and after the refused Run:
+- [x] avail-run-busy-witness 7295df83a — depends [avail-run-linux] — ONE UNIT (keeper, plus the demo): fix Run's false success, then close QA's busy-port evidence gap (oc-cruu42, 2026-11-23). At fabda979, `demo/runs/keeper/2026-11-23-run-linux/run.py:57–70` samples `/health` only before Run. It checks the SSH child's liveness, the managed unit's MainPID (0) and Alex's origin. None of those shows the original listener untouched, or nothing written. Patch that scene, with no new harness, to record in its JSONL, before and after the refused Run:
   - the port owner's PID and start time, from `ss` and `/proc/<pid>/stat`;
   - the hash of a stable localhost response body;
   - that the unit file and the keeper's job record are absent, and
