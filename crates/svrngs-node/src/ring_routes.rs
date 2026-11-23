@@ -245,8 +245,9 @@ pub async fn ring_sync(
 /// standing in the group, as the record's sync is, so a removed device's
 /// computer is refused. Of the body, the group and app alone are read before
 /// the dialer is found standing, and the call after. A database this
-/// computer doesn't hold is 404, found among those it holds by its name,
-/// never by a path the wire names. The call is taken off the runtime's
+/// computer doesn't hold is 404: it is opened by its plain name
+/// (`svrngs_db::Name`), only where its file is on this disk, never by a path
+/// the wire names, and no other database of the group is opened for it. The call is taken off the runtime's
 /// threads, as the page's reads are; a refusal answers its short name alone,
 /// and its words are said here, at debug.
 pub async fn ring_state(
@@ -266,11 +267,9 @@ pub async fn ring_state(
     let dialer = dialer.map(|Extension(d)| d);
     let (asker, _) = standing_asker(&state.rail, dialer, "state", group)
         .map_err(|why| err(StatusCode::FORBIDDEN, why))?;
-    let mut held = state.states.held(group).into_iter();
-    let db = held
-        .find(|db| db.app == app)
-        .ok_or(svrngs_db::Refused::NotHere);
-    let db = db.map_err(refused)?;
+    // The one database the call names, opened alone, and only one already
+    // on this disk: never another of the group's, nor a path the wire names.
+    let db = state.states.open(group, app, None).map_err(refused)?;
     let call: svrngs_db::Call = postcard::from_bytes(call).map_err(malformed)?;
     let (bound, from) = (
         crate::ring_sync::bound(&state.rail, group),

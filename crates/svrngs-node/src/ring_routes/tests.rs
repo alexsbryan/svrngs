@@ -588,7 +588,8 @@ async fn a_call_with_a_key_cr_sqlite_cannot_unpack_is_answered_and_its_set_refus
 /// plain name**: a standing member's call naming an app by a path, absolute
 /// or climbing out of the group's directory, is not served, and a SQLite
 /// file elsewhere is left as it was. Either line holds alone: the wire's
-/// name parsed as a plain one, and the database found among those held.
+/// name parsed as a plain one, and the database opened only where its file
+/// is on this disk, under the group's directory.
 /// Plant: both taken away, a name taking any text and the database opened
 /// by the wire's name (the other file is turned to WAL, so its bytes
 /// change). The file is made through SQLite as svrngs-db links it, so the
@@ -669,5 +670,31 @@ async fn the_state_route_reads_no_call_before_standing_and_says_no_words_of_its_
     assert!(
         !said.contains("couldn"),
         "this computer's own words, said to a member: {said}"
+    );
+}
+
+/// **The state route opens only the database a call names**: Ada's computer
+/// keeps two app databases in the group, each closed, and a standing
+/// member's call for one opens that one alone, so a call does only the
+/// work it asks for. Plant, watched failing: the database found among every
+/// one the group keeps here, as before (both opened).
+#[tokio::test]
+async fn the_state_route_opens_only_the_database_a_call_names() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    for app in ["board", "lists"] {
+        drop(inbound.states.open(NS, app, Some(SCHEMA)).unwrap());
+    }
+    assert_eq!(inbound.states.close(NS), 2, "both made, then closed");
+    let asked = svrngs_db::Call::default();
+    let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &asked).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        inbound.states.close(NS),
+        1,
+        "the one the call names, opened alone"
     );
 }
