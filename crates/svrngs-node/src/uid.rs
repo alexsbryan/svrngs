@@ -159,6 +159,13 @@ pub fn start(pid: u32) -> Option<u64> {
     start
 }
 
+#[cfg(target_os = "macos")]
+pub(crate) fn descends(from: Process, root: Process) -> bool {
+    let up = mac::up(from.0);
+    up.first().is_some_and(|p| p.1 == from.1)
+        && up.iter().any(|&(pid, start, _)| (pid, start) == root)
+}
+
 /// A socket's local address and the one it is connected to.
 #[cfg(any(target_os = "macos", test))]
 type Ends = (SocketAddr, SocketAddr);
@@ -597,7 +604,7 @@ mod diag {
 fn read(at: SocketAddr, to: SocketAddr) -> Result<Owner, &'static str> {
     let me = mine()?;
     match mac::scan(me, Raw::Tcp, None, Some((at, to))) {
-        Ok(scan) if scan.took.is_some() => Ok(Owner::Uid(me)),
+        Ok(scan) if !scan.took.is_empty() => Ok(Owner::Uid(me)),
         Ok(_) => Ok(Owner::NotMine),
         Err(e) => {
             tracing::debug!(target: "uid", %at, error = %e, "uid: this account's processes can't be read");
@@ -631,7 +638,11 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
     let socket = |(&id, (at, dual, _, pids)): (&u64, &mac::On)| binding::Socket {
         id,
         cgroup: None,
-        holders: pids.iter().filter_map(named).collect(),
+        holders: pids
+            .iter()
+            .map(named)
+            .collect::<Option<_>>()
+            .unwrap_or_default(),
         at: *at,
         dual: *dual,
         peer: Peer::Unread,
@@ -644,14 +655,15 @@ fn sockets(raw: Raw, port: u16, conn: Option<Conn>) -> Result<(Read, Took), Unre
     };
     let up = scan
         .took
-        .map(|pid| mac::up(pid.unsigned_abs()))
-        .unwrap_or_default();
+        .first()
+        .filter(|_| scan.took.len() == 1)
+        .map_or_else(Vec::new, |pid| mac::up(pid.unsigned_abs()));
     let lineage: Vec<Process> = up.into_iter().map(|(pid, start, _)| (pid, start)).collect();
     match (conn, lineage) {
         (None, _) => Ok((read, Took::Datagram)),
         (Some(_), took) if !took.is_empty() => Ok((read, Took::Lineage(took))),
         (Some(_), _) => Err(Unread::Failed(
-            "no program of this account that took the connection can be read",
+            "no single program of this account can be read taking the connection",
         )),
     }
 }
@@ -1069,8 +1081,8 @@ mod mac {
     pub(super) struct Scan {
         /// Each socket on the port, by its generation count.
         pub on: BTreeMap<u64, On>,
-        /// The process holding the end asked for, if found.
-        pub took: Option<i32>,
+        /// Every process holding the end asked for.
+        pub took: BTreeSet<i32>,
     }
 
     /// The `raw` sockets of `me`'s processes on `port`, TCP's connected to
@@ -1088,7 +1100,7 @@ mod mac {
         if end.is_none() {
             return once(me, raw, port, None);
         }
-        let found = waited(|| once(me, raw, port, end).map(|s| s.took.is_some().then_some(s)))?;
+        let found = waited(|| once(me, raw, port, end).map(|s| (!s.took.is_empty()).then_some(s)))?;
         Ok(found.unwrap_or_default())
     }
 
@@ -1100,7 +1112,7 @@ mod mac {
         // scene's Jellyfin, while it streamed).
         let gone = |e: &std::io::Error| matches!(e.raw_os_error(), Some(3 | 9 | 38));
         let int = |b: &[u8]| Some(i32::from_ne_bytes(b.get(..4)?.try_into().ok()?));
-        let (mut on, mut took) = (BTreeMap::<u64, On>::new(), None);
+        let mut scan = Scan::default();
         for pid in kernel(Ask::Pids(me))?.chunks_exact(4).filter_map(int) {
             let failed = |ask: Ask, e: std::io::Error| {
                 tracing::debug!(target: "uid", ?ask, error = %e, "uid: libproc failed for one of this account's processes");
@@ -1133,14 +1145,14 @@ mod mac {
                 };
                 holds |= end.is_some_and(|(at, to)| same(local, at) && same(foreign, to));
                 if Some(local.port()) == port && (raw == Raw::Udp || foreign.port() == 0) {
-                    let at = on.entry(gencnt);
+                    let at = scan.on.entry(gencnt);
                     let made = || (local.ip(), dual, record::reuses(&socket), BTreeSet::new());
                     at.or_insert_with(made).3.insert(pid);
                 }
             }
-            took = took.or(holds.then_some(pid));
+            scan.took.extend(holds.then_some(pid));
         }
-        Ok(Scan { on, took })
+        Ok(scan)
     }
 
     /// Process `pid`, then its parent and theirs, each by its id with its

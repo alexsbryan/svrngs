@@ -1402,10 +1402,10 @@ fn a_unit_s_program_is_named_granted_and_renewed_after_it_restarts() {
     assert_eq!(keep.unit, unit);
     let read = now(unit).unwrap();
     assert_eq!(read.keep, keep);
+    let crate::job::Scope::Cgroups(cgroups) = read.scope;
     assert!(
-        approved.cgroups.is_subset(&read.cgroups),
-        "{approved:?} in {:?}",
-        read.cgroups
+        approved.cgroups.is_subset(&cgroups),
+        "{approved:?} in {cgroups:?}",
     );
     let pid = systemctl(&["show", "-p", "MainPID", "--value", unit]);
     assert!(std::process::Command::new("kill")
@@ -1427,7 +1427,8 @@ fn a_unit_s_program_is_named_granted_and_renewed_after_it_restarts() {
     );
     let read = now(unit).unwrap();
     assert_eq!(read.keep, keep, "its files unchanged by a restart");
-    let chosen = binding::Chosen::Cgroups(read.cgroups);
+    let crate::job::Scope::Cgroups(cgroups) = read.scope;
+    let chosen = binding::Chosen::Cgroups(cgroups);
     let renewed = binding::approve(&after, Some(&chosen)).unwrap();
     assert_eq!(
         binding::check(Some(&renewed), &after, &took),

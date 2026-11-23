@@ -21,6 +21,7 @@ use tokio::net::UdpSocket;
 
 use crate::door::Using;
 use crate::iroh::{Duplex, Net, PortRead};
+use crate::job::{Keep, Now, Scope};
 use crate::lend::{Hold, Lend, LendError, LendName, Raw};
 use crate::uid::{Conn, Unread};
 use eudoxia_community::binding::{self, Approved, Chosen, Held, Read, Took};
@@ -92,7 +93,7 @@ pub(crate) async fn judged((net, dir, lend): Judged<'_>, read: PortRead) -> Resu
                 _ => None,
             };
             let job = net.job(keep.unit.clone(), took).await;
-            renewed(dir, lend, (keep, took), (&read, job))
+            renewed(dir, lend, keep, (&read, job))
         }
         (checked, ..) => checked,
     }
@@ -109,8 +110,8 @@ pub(crate) async fn judged((net, dir, lend): Judged<'_>, read: PortRead) -> Resu
 pub(crate) fn renewed(
     dir: &Path,
     lend: &Lend,
-    (keep, cgroup): (&crate::job::Keep, Option<u64>),
-    ((now, took), job): (&(Read, Took), Result<crate::job::Now, &'static str>),
+    keep: &Keep,
+    ((now, took), job): (&(Read, Took), crate::job::Read),
 ) -> Result<(), Unsent> {
     let fresh = || {
         let another = |why| (Hold::Another, why);
@@ -118,9 +119,8 @@ pub(crate) fn renewed(
         let before = before.ok_or(another("held: only its lender approves again"))?;
         let job = Some(job.map_err(another)?).filter(|job| job.keep == *keep);
         let job = job.ok_or((Hold::Changed, "its files changed since its lender kept it"))?;
-        cgroup.ok_or(another("no connection's taker was read"))?;
         let new = job_approval(&job, now, took).filter(|n| n.at == before.at);
-        new.ok_or(another("not all the unit's, or moved"))
+        new.ok_or(another("not all the service's, or moved"))
     };
     let (mut carried, mut kept) = (false, None);
     let (hold, why) = match fresh() {
@@ -138,14 +138,34 @@ pub(crate) fn renewed(
     };
     let stands = carried && matches!(kept, Some(Ok(true)));
     let renewed = stands.then_some(()).ok_or(Unsent::Held(hold));
-    tracing::debug!(target: "door", lend = %lend.name, ?keep, why, ?kept, ?renewed, "door: a kept lend's unit renewed after a restart, or why not");
+    tracing::debug!(target: "door", lend = %lend.name, ?keep, why, ?kept, ?renewed, "door: a kept lend renewed after a restart, or why not");
     renewed
 }
 
-pub(super) fn job_approval(job: &crate::job::Now, read: &Read, took: &Took) -> Option<Approved> {
-    let approved = binding::approve(read, Some(&Chosen::Cgroups(job.cgroups.clone()))).ok()?;
-    (matches!(took, Took::Cgroup(_)) && binding::check(Some(&approved), read, took).is_ok())
-        .then_some(approved)
+pub(super) fn job_approval(job: &Now, read: &Read, took: &Took) -> Option<Approved> {
+    let approved = match (&job.scope, took) {
+        (Scope::Cgroups(ids), Took::Cgroup(_)) => {
+            binding::approve(read, Some(&Chosen::Cgroups(ids.clone()))).ok()?
+        }
+        #[cfg(target_os = "macos")]
+        (Scope::Agent(root), Took::Lineage(up)) if up.contains(root) => {
+            let approved = binding::approve(read, None).ok()?;
+            let on = read
+                .sockets
+                .iter()
+                .filter(|s| approved.sockets.contains(&s.id));
+            if !on.into_iter().all(|s| {
+                !s.holders.is_empty() && s.holders.iter().all(|&p| crate::uid::descends(p, *root))
+            }) {
+                return None;
+            }
+            approved
+        }
+        _ => return None,
+    };
+    binding::check(Some(&approved), read, took)
+        .ok()
+        .map(|()| approved)
 }
 
 pub(crate) fn witnesses_job(port: u16, approved: &Approved, keep: &crate::job::Keep) -> bool {

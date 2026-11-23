@@ -700,7 +700,7 @@ pub enum Answer {
 
 impl std::fmt::Display for Answer {
     /// "python3 in ~/dev/garden", "a program of the account _resolve", or
-    /// "the systemd unit svrngs-keeper-coder.service (coder, kept by svrngs-keeper)".
+    /// "the service svrngs-keeper-coder.service (coder, kept by svrngs-keeper)".
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Answer::Program {
@@ -714,7 +714,7 @@ impl std::fmt::Display for Answer {
                 let about = description
                     .as_ref()
                     .map_or(String::new(), |d| format!(" ({d})"));
-                write!(f, "the systemd unit {unit}{about}")
+                write!(f, "the service {unit}{about}")
             }
         }
     }

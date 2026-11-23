@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The systemd user unit a program runs in (svrn-docs
+//! The service a program runs in (svrn-docs
 //! KEEP_SHARING_ON_RESTART §2): read to name the job on a lend's port
 //! ([`crate::lend::Answer::Job`]), to grant a lend renewal through the
 //! unit's restarts ([`Keep`]), and to renew it ([`now`], door/bound.rs
-//! `renewed`). Asked of `/usr/bin/systemctl --user`, never through `PATH`,
-//! and of `/sys/fs/cgroup`: read now, never kept but as a grant. Linux
-//! alone; elsewhere a unit is never named, so nothing is granted.
+//! `renewed`). Read from the OS, never kept but as a grant.
 
 #[cfg(any(target_os = "macos", test))]
 pub(crate) mod mac;
@@ -37,7 +35,14 @@ impl std::fmt::Display for Keep {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Now {
     pub keep: Keep,
-    pub cgroups: BTreeSet<u64>,
+    pub scope: Scope,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Scope {
+    Cgroups(BTreeSet<u64>),
+    #[cfg(target_os = "macos")]
+    Agent(eudoxia_community::binding::Process),
 }
 
 /// A unit read now to renew, or why it can't be.
@@ -68,6 +73,7 @@ pub fn of(pid: u32, uid: Option<u32>) -> Option<crate::lend::Answer> {
 /// `unit` now: the grant an approval of its job makes now, and its
 /// subtree's cgroups; or why it can't be granted or renewed: transient,
 /// with no file of its lender's, or not running.
+#[cfg(not(target_os = "macos"))]
 pub fn now(unit: &str) -> Read {
     let mut said = show(unit)?;
     if said.get("Transient").map(String::as_str) != Some("no") {
@@ -98,8 +104,14 @@ pub fn now(unit: &str) -> Read {
         let subs = std::fs::read_dir(&dir).into_iter().flatten().flatten();
         stack.extend(subs.filter_map(|e| e.file_type().ok()?.is_dir().then(|| e.path())));
     }
-    Ok(Now { keep, cgroups })
+    Ok(Now {
+        keep,
+        scope: Scope::Cgroups(cgroups),
+    })
 }
+
+#[cfg(target_os = "macos")]
+pub use mac::now;
 
 /// What `/usr/bin/systemctl --user show` says of `unit`, by property, each
 /// read traced.

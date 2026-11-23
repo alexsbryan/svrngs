@@ -691,8 +691,8 @@ Elsewhere `Owner::NoReader`. `uid::mine` is this process's own uid.
 `socket_fdinfo` and `proc_bsdinfo` records, and this computer's own
 sockets, a late accept among them.
 
-The systemd user unit a lend's program runs in is `job.rs` (svrn-docs
-KEEP_SHARING_ON_RESTART §2), Linux's alone: `job::of` names a holder by
+The service a lend's program runs in is `job.rs` (svrn-docs
+KEEP_SHARING_ON_RESTART §2). On Linux `job::of` names a holder by
 its `/proc/<pid>/cgroup` when it lies in a service of this account's user
 manager (`lend::Answer::Job`, with its `Description`), and `job::now`
 reads a unit through `/usr/bin/systemctl --user show`: refused when
@@ -700,14 +700,17 @@ transient, without a file under `~/.config` or not running, else the grant
 (`job::Keep`, a hash of those files) and its subtree's cgroup ids, the
 inodes under `/sys/fs/cgroup`. `Net::job` reads it off the runtime, kept
 for the cgroup that took the door's connection. `share::kept` makes the
-grant at an approval; `door::bound::renewed` renews with it.
+grant at a Linux approval. On macOS `job/mac.rs` reads the exact keeper
+label named by the share and hashes the registered plist. `door::bound`
+witnesses the agent's current lineage on explicit Share and at renewal;
+legacy Approve on Mac grants only the current listener.
 
 `plan.rs` folds the current app and door observations, chosen terms, share
 revision, and job or publication reports without reading the host. It reuses
 an observed service or shares just the listener that's running. `plan/run.rs`
-asks the packaged keeper to handle explicit `svrngs run` on Linux, without
+asks the packaged keeper to handle explicit `svrngs run`, without
 publishing access. On explicit Share it replays the review and witnesses a
-unit's listeners and connection taker again before publishing its grant with
+service's listeners and connection taker again before publishing its grant with
 the audience and limit through the same locked mutation
 as other declaration edits. The revision advances before the declaration is
 changed, so a failed write can spend a revision without publishing access.
@@ -1001,8 +1004,8 @@ On macOS, `src/launchd.rs` installs a native command as a login agent; Stop
 boots it out and parks its plist under a non-login suffix. `src/host/mac.rs`
 uses a system-wide TCP listener read for the busy check and `lsof` and `ps`
 for holder, working folder and lineage observations. The readiness witness
-in the keeper does not grant renewal; the node reads its own agent's login
-registration in `job/mac.rs`.
+in the keeper does not grant renewal; the node verifies its own and the app's
+login registrations in `job/mac.rs` and reads sockets via libproc.
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

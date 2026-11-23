@@ -1857,7 +1857,7 @@ fn a_job_approval_requires_both_its_listeners_and_its_taker() {
             unit: "svrngs-keeper-coder.service".into(),
             files: "f1".into(),
         },
-        cgroups: [4, 5].into(),
+        scope: crate::job::Scope::Cgroups([4, 5].into()),
     };
     let (read, _) = in_unit(1, 4, 1);
     assert!(bound::job_approval(&job, &read, &binding::Took::Cgroup(4)).is_some());
@@ -1921,15 +1921,11 @@ fn a_lend_kept_to_a_unit_is_renewed_after_it_restarts_and_only_then() {
         };
         Ok(Now {
             keep,
-            cgroups: cgroups.iter().copied().collect(),
+            scope: crate::job::Scope::Cgroups(cgroups.iter().copied().collect()),
         })
     };
     let renewed = |lend: &Lend, read: &(binding::Read, binding::Took), job| {
-        let took = match read.1 {
-            binding::Took::Cgroup(c) => Some(c),
-            _ => None,
-        };
-        bound::renewed(dir.path(), lend, (&keep, took), (read, job))
+        bound::renewed(dir.path(), lend, &keep, (read, job))
     };
     let another = Err(Unsent::Held(Hold::Another));
     let crashed = in_unit(2, 5, 1);

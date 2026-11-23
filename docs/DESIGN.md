@@ -230,9 +230,9 @@ shell. After Run verifies the program, the page points to **Already running
 here** to share it; the terminal gives a Share command for its verified port.
 The page's Start and Stop controls use only the keeper's observed jobs
 and leave sharing alone. The share review is still a separate act.
-When Share would grant a running unit, it
+When Share would grant a running service, it
 dials without sending bytes and checks the listeners and connection taker against
-that unit and the reviewed approval before the conditional save
+that service and the reviewed approval before the conditional save
 (svrn-docs `rings/current/KEEP_IT_RUNNING_RELEASE.md`).
 A group taken away is
 refused at the next request, and what already streams to its people is
@@ -383,6 +383,15 @@ connection's taker was read, every socket there and that taker are the
 unit's, at the address approved before, and only over the revision and
 approval it judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
 stopped lend stays stopped.
+On macOS, Share looks for the keeper's exact label from the share name.
+It grants renewal only with both login registrations verified: the svrngs
+door and the app, whose regular plist must be registered in the GUI domain,
+set to start at sign-in and not disabled (`job/mac.rs`). The grant pins
+the label and plist hash. The same door check at Share and renewal requires
+every listener holder and the connection taker to trace to the current
+agent PID and start time. The name alone never confers access. Approve on
+a Mac approves only the current run; to renew again, Share under the Run
+name. Mac containers and other launch agents still share the current run.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.
 

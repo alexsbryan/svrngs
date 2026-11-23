@@ -44,7 +44,8 @@ PLAN_IO = re.compile(
 NODE_COMMAND = {
     "plan/run.rs": 'Command::new(at.with_file_name("svrngs-keeper"))',
     "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
-    "job/mac.rs": 'Command::new("/bin/launchctl").args(["print",&target])',
+    "job/mac.rs": ('Command::new("/bin/launchctl").args(["print",&target])',
+                   'Command::new("/bin/launchctl").args(["print-disabled",&domain])'),
     "home.rs": "Command::new(opener);",
     "network.rs": 'Command::new("/usr/sbin/scutil");',
     "update.rs": 'Command::new("tar")',
@@ -985,10 +986,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Run confirmation, its two next steps and the keeper's verified port.
 # avail-run-stdio spends 9 more on explicit stdio at that same keeper call.
 # avail-run-mac adds the read-only sign-in observation for svrngs's own agent.
+# avail-run-mac-renew spends 105 for a shared live grant witness and plist registration.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25602,
+    ".": 25707,
 
     "js": 8732,
 
@@ -1081,7 +1083,10 @@ def main():
                 broken.append(f"{rel}: only plan/run.rs may run the keeper (KEEP_IT_RUNNING_RELEASE O3)")
             if (node := rel.removeprefix("crates/svrngs-node/src/")) != rel:
                 code = re.sub(r"\s+", "", text)
-                if "Command::new(" in code.replace(NODE_COMMAND.get(node, ""), "", 1):
+                allowed = NODE_COMMAND.get(node, ())
+                for call in (allowed,) if isinstance(allowed, str) else allowed:
+                    code = code.replace(call, "", 1)
+                if "Command::new(" in code:
                     broken.append(f"{rel}: an unlisted process call; the node may only read app jobs (KEEP_IT_RUNNING_RELEASE O3)")
     broken.extend(process_signals(sorted([*(ROOT / "crates").glob("*/src/**/*.rs"),
                                          *(ROOT / "apps/svrngs-keeper/src").rglob("*.rs")])))

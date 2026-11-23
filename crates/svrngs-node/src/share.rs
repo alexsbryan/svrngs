@@ -395,7 +395,10 @@ pub fn approve(
 /// file of theirs ([`crate::job::now`]), that unit; else none.
 pub fn kept(answers: &[Answer], ask: bool) -> Option<Keep> {
     let keep = match answers {
-        [Answer::Job { unit, .. }] if !ask => Some(crate::job::now(unit).map(|now| now.keep)),
+        // Mac reapproval is instance-only; Share alone verifies the agent before saving.
+        [Answer::Job { unit, .. }] if !ask && !cfg!(target_os = "macos") => {
+            Some(crate::job::now(unit).map(|now| now.keep))
+        }
         _ => None,
     };
     tracing::debug!(target: "share", ?answers, ask, ?keep, "share: the grant an approval makes, one unit's job renewed through its restarts, or none");

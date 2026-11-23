@@ -1,4 +1,12 @@
-# Mac renewal on beefymac, 2026-11-23: prototype evidence
+# Mac renewal on beefymac, 2026-11-23
+
+The first evidence below is the prototype at `b3a2ce78`; its `run.py`
+is available at that revision. The current `beefymac.sh` exercises the
+first Share with both login services registered under scratch names, then
+each independent plant and the restored implementation. Its plants and
+the in-flight withdrawal barrier change only the Mac's scratch archive.
+
+## Prototype evidence
 
 `run.py` uses two scratch svrngs nodes, one group they create for the
 run, and the native `svrngs-keeper-test-mac-renew` launch agent. A child
@@ -45,3 +53,21 @@ B2: independent implementation plants for the refusal branches and the
 installed Share path are still owed. Reboot and sign-in were not run.
 The test agent was unloaded, the test plist and both scratch nodes were
 removed with `~/svrngs-keeper-scratch`, and no containers were started.
+
+## Projected login is not a running PID
+
+Toolbox: `TOKIO_WORKER_THREADS=4 cargo test --locked -p svrngs-node --lib job::mac::tests`.
+With the `runatload` predicate removed, the otherwise well-formed reply for
+PID 37 was accepted without login registration:
+
+```text
+assertion failed: !registered(&good.replace(" | runatload", ""), path, Some(37))
+test result: FAILED. 0 passed; 1 failed
+```
+
+Restored:
+
+```text
+test job::mac::tests::only_the_installed_agent_and_the_asking_daemon_match ... ok
+test result: ok. 1 passed; 0 failed
+```

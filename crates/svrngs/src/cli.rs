@@ -959,7 +959,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 replace: asked.replace,
                 contract: theirs,
                 door: if availability == Availability::Keep && kept_over(&root) {
-                    run::installed_door_return()
+                    run::door_return(None)
                 } else {
                     plan::Return::Unknown
                 },

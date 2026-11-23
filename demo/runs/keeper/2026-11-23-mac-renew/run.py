@@ -4,11 +4,13 @@ import http.client
 import json
 import os
 from pathlib import Path
+import plistlib
 import pty
 import re
 import select
 import socket
 import subprocess as sp
+import sys
 import tempfile
 import time
 from urllib.parse import urlsplit
@@ -18,6 +20,14 @@ svr, keeper = (scratch / 'repo/target/debug' / n for n in ('svrngs', 'svrngs-kee
 name = 'test-mac-renew'
 label = 'svrngs-keeper-' + name
 target = f'gui/{os.getuid()}/{label}'
+door_label = label + '-door'
+domain = f'gui/{os.getuid()}'
+door_target = f'{domain}/{door_label}'
+cases = ('changed', 'holder', 'taker', 'held', 'withdrawn')
+case = sys.argv[1]
+assert case in ('all', *cases)
+plant = sys.argv[2] if len(sys.argv) > 2 else ''
+assert not plant or plant == case in cases
 
 
 def until(test):
@@ -31,12 +41,15 @@ def until(test):
 with tempfile.TemporaryDirectory(dir=scratch) as tmp:
     work = Path(tmp)
     kids = []
+    race = work / 'race'
 
     def env(who):
         home = work / who
         home.mkdir(exist_ok=True)
         return dict(os.environ, HOME=str(home), SVRNGS_DIR=str(home / 'node'),
-                    XDG_DATA_HOME=str(home / 'data'), TOKIO_WORKER_THREADS='4', RUST_LOG='error,door=debug,job=debug')
+                    XDG_DATA_HOME=str(home / 'data'), TOKIO_WORKER_THREADS='4',
+                    RUST_LOG='error,door=debug,job=debug', SVRNGS_TEST_CONTROL=plant,
+                    SVRNGS_TEST_RACE=str(race))
 
     def call(who, *args, check=True, answer=None):
         out = sp.run(args, cwd=work, env=env(who), text=True, input=answer,
@@ -79,8 +92,8 @@ with tempfile.TemporaryDirectory(dir=scratch) as tmp:
                 child.wait(10)
             os.close(master)
 
-    def show():
-        return call('sam', '/bin/launchctl', 'print', target, check=False)
+    def show(job=target):
+        return call('sam', '/bin/launchctl', 'print', job, check=False)
 
     def pid():
         found = re.search(r'^\tpid = (\d+)$', show().stdout, re.M)
@@ -113,26 +126,61 @@ with tempfile.TemporaryDirectory(dir=scratch) as tmp:
     # Child holds the listener and takes the connection, not launchd's main PID.
     server = work / 'server.py'
     server.write_text('''
-import os, socket, sys
+import socket, sys
 from pathlib import Path
-s = socket.create_server(('127.0.0.1', int(sys.argv[1])))
-mark = Path(sys.argv[2]); mark.touch()
-while True:
-    conn, _ = s.accept()
+
+port, marker, data, route, role = sys.argv[1:]
+mark = Path(marker)
+def serve(conn):
     with conn:
         got = conn.recv(65536)
         if got:
             with mark.open('ab') as log: log.write(got)
-            conn.sendall(b'HTTP/1.1 200 OK\\r\\nContent-Length: 6\\r\\nConnection: close\\r\\n\\r\\nkeeper')
+            body = Path(data).read_bytes()
+            conn.sendall(b'HTTP/1.1 200 OK\\r\\nContent-Length: ' + str(len(body)).encode()
+                         + b'\\r\\nConnection: close\\r\\n\\r\\n' + body)
+handoff = Path(route)
+if role == 'taker':
+    with socket.socket(socket.AF_UNIX) as channel:
+        channel.bind(route)
+        channel.listen()
+        mark.touch()
+        while True:
+            link, _ = channel.accept()
+            with link:
+                _, fds, _, _ = socket.recv_fds(link, 1, 1)
+                serve(socket.socket(fileno=fds[0]))
+else:
+    s = socket.create_server(('0.0.0.0' if role == 'holder' else '127.0.0.1', int(port)), reuse_port=True)
+    mark.touch()
+    while True:
+        conn, _ = s.accept()
+        if role == 'app' and handoff.exists():
+            with conn, socket.socket(socket.AF_UNIX) as channel:
+                channel.connect(route)
+                socket.send_fds(channel, [b'x'], [conn.fileno()])
+        else:
+            serve(conn)
 ''')
     wrapper = work / 'wrapper.sh'
     wrapper.write_text('/usr/bin/python3 "$@" &\nwait\n')
     mark, foreign = work / 'good.bytes', work / 'foreign.bytes'
+    data, route = work / 'data', work / 'fds'
+    data.write_text('the saved data')
+    expected = (200, data.read_text())
     active = work / 'sam/Library/LaunchAgents' / f'{label}.plist'
-    lend = work / 'sam/node/lends/coder.json'
-    assert show().returncode == 113
+    door_plist = active.with_name(f'{door_label}.plist')
+    lend = work / 'sam/node/lends' / f'{name}.json'
+    assert show().returncode == show(door_target).returncode == 113
     try:
-        start('sam', svr)
+        active.parent.mkdir(parents=True)
+        door_plist.write_bytes(plistlib.dumps(dict(Label=door_label,
+            ProgramArguments=[str(svr)], RunAtLoad=True,
+            EnvironmentVariables={k: v for k, v in env('sam').items() if k in (
+                'HOME', 'SVRNGS_DIR', 'XDG_DATA_HOME', 'TOKIO_WORKER_THREADS', 'RUST_LOG',
+                'SVRNGS_TEST_CONTROL', 'SVRNGS_TEST_RACE')},
+            StandardOutPath=str(work / 'sam.log'), StandardErrorPath=str(work / 'sam.log'))))
+        call('sam', '/bin/launchctl', 'bootstrap', domain, door_plist)
         start('alex', svr)
         for who in ('sam', 'alex'):
             until(lambda: ask(who, '/v1/groups', check=False))
@@ -141,71 +189,98 @@ while True:
         call('alex', svr, 'join', link, '--as', 'Alex', '--no-run')
         group = ask('alex', '/v1/groups')['groups'][0]['id']
         call('sam', svr, 'run', name, '--port', port, '--folder', work, '--',
-             '/bin/sh', wrapper, server, port, mark)
+              '/bin/sh', wrapper, server, port, mark, data, route, 'app')
         first = pid()
         assert first and active.is_file()
-        print(confirm(svr, 'share', port, '--program', 'mac-fixture', '--name', 'coder', '--group', 'Scratch'))
-        # The scratch node is not the installed login service. Reapprove the
-        # running share so this run can test renewal without claiming login.
-        print(confirm(svr, 'approve', 'coder'))
+        share = (svr, 'share', port, '--program', 'mac-fixture', '--name', name, '--group', 'Scratch')
+        print(confirm(*share))
         before = json.loads(lend.read_text())
         original = active.read_bytes()
         got = before.get('keep')
-        print(f'Approve: launchd pid={first} grant label={got and got["unit"]}')
-        assert got and got['unit'] == label, 'the observed launch agent must be granted'
+        assert got and got['unit'] == label, 'first Share must grant the verified login service'
         assert got['files'] == hashlib.sha256(original).hexdigest()
+        for job in (door_target, target):
+            print('\n'.join(l.strip() for l in show(job).stdout.splitlines()
+                            if l.startswith(('gui/', '\tpath = ', '\tproperties = ', '\tpid = '))))
+        print(f'Share: label={got["unit"]}, plist hash matches={True}')
 
         def listed():
             rows = ask('alex', f'/v1/lends?namespace={group}')['lent']
-            return next((row for row in rows if row['name'] == 'coder'), None)
+            return next((row for row in rows if row['name'] == name), None)
 
         row = until(listed)
         origin = row['origin']
-        ask('alex', '/v1/play', json.dumps({'on': {'key': row['key'], 'name': 'coder'}}))
-        assert request() == (200, 'keeper')
-        call('sam', keeper, 'restart', name)
-        successor = until(lambda: pid() if pid() != first else None)
-        until(listening)
+        ask('alex', '/v1/play', json.dumps({'on': {'key': row['key'], 'name': name}}))
+        assert request() == expected
+
+        def restart():
+            was = pid()
+            call('sam', keeper, 'restart', name)
+            new = until(lambda: pid() if pid() != was else None)
+            until(listening)
+            return new
+
+        successor = restart()
         reply = request()
         after = json.loads(lend.read_text())
         print(f'Restart: pid {first} -> {successor}; same address {reply[0]}; approval changed={after["approved"] != before["approved"]}')
-        assert reply == (200, 'keeper') and after['approved'] != before['approved']
+        assert reply == expected and after['approved'] != before['approved']
         assert {k: v for k, v in after.items() if k != 'approved'} == {k: v for k, v in before.items() if k != 'approved'}
 
-        def refused(case, counter, words):
-            before_count = counter.stat().st_size
+        def count():
+            return tuple(f.stat().st_size if f.exists() else 0 for f in (mark, foreign))
+
+        for control in cases if case == 'all' else (case,):
+            restart()
+            stray = None
+            if control == 'changed':
+                active.write_bytes(original + b'\n')
+            if control in ('holder', 'taker'):
+                foreign.unlink(missing_ok=True)
+                stray = start('foreign', '/usr/bin/python3', server, port, foreign,
+                              data, route, control)
+                until(foreign.exists)
+            if control == 'held':
+                doc = json.loads(lend.read_text())
+                doc['approved']['held'] = True
+                lend.write_text(json.dumps(doc))
             saved = lend.read_bytes()
-            status, text = request()
-            n = counter.stat().st_size - before_count
-            print(f'{case}: HTTP {status}; bytes={n}; share unchanged={lend.read_bytes() == saved}; {text[:130]}')
-            assert status == 502 and words in text and n == 0 and lend.read_bytes() == saved
-
-        call('sam', keeper, 'restart', name)
-        until(lambda: pid() if pid() != successor else None)
-        active.write_bytes(original + b'\n')
-        until(listening)
-        refused('Changed plist', mark, 'changed')
-        active.write_bytes(original)
-        assert request() == (200, 'keeper')
-
-        call('sam', keeper, 'stop', name)
-        stray = start('foreign', '/usr/bin/python3', server, port, foreign)
-        until(foreign.exists)
-        refused('Unrelated holder', foreign, 'didn’t choose')
-        stray.terminate()
-        stray.wait(10)
-        call('sam', keeper, 'start', name)
-        until(listening)
-        doc = json.loads(lend.read_text())
-        doc['approved']['held'] = True
-        lend.write_text(json.dumps(doc))
-        refused('Already held', mark, 'didn’t choose')
-        call('sam', svr, 'unshare', 'coder')
-        call('sam', keeper, 'restart', name)
-        status, _ = request()
-        print(f'Withdrawn: HTTP {status}; no declaration={not lend.exists()}')
-        assert status != 200 and not lend.exists() and pid()
-    except BaseException:
+            received = count()
+            if control == 'withdrawn':
+                from concurrent.futures import ThreadPoolExecutor
+                race.touch()
+                with ThreadPoolExecutor(1) as pending:
+                    reply = pending.submit(request)
+                    until(race.with_suffix('.judged').exists)
+                    call('sam', svr, 'unshare', name)
+                    race.unlink()
+                    result = reply.result(timeout=15)
+                same = not lend.exists()
+            else:
+                result = request()
+                same = lend.read_bytes() == saved
+            got = tuple(a - b for a, b in zip(count(), received))
+            print(f'{control}: HTTP {result[0]}; bytes (app,foreign)={got}; state unchanged={same}')
+            if plant:
+                assert result == expected and sum(got) > 0, 'plant did not exercise its targeted refusal'
+                print('RED: forwarding occurred despite the violated invariant')
+                raise SystemExit(5)
+            assert result[0] == 502 and got == (0, 0) and same, 'refusal did not hold'
+            assert ('changed' if control == 'changed' else 'didn’t choose') in result[1]
+            if stray:
+                stray.terminate()
+                stray.wait(10)
+                route.unlink(missing_ok=True)
+            if control != 'withdrawn':
+                active.write_bytes(original)
+                lend.write_bytes(saved if control != 'held' else json.dumps(after).encode())
+                assert request() == expected, 'control recovery'
+        if case == 'all':
+            print(confirm(*share))
+            print(confirm(svr, 'approve', name))
+            assert json.loads(lend.read_text()).get('keep') is None, 'Mac Approve granted renewal'
+            print('Approve: instance-only')
+    except Exception:
         for log in work.glob('*.log'):
             print(log.name, log.read_text()[-7000:])
         raise
@@ -214,9 +289,9 @@ while True:
             if kid.poll() is None:
                 kid.terminate()
             kid.wait(10)
-        registration = show()
-        if registration.returncode == 0:
-            assert str(active) in registration.stdout, 'not our registration'
-            call('sam', '/bin/launchctl', 'bootout', target)
-            until(lambda: show().returncode == 113)
-        print(f'Cleanup: launchctl print exits {show().returncode}')
+        for job, path in ((target, active), (door_target, door_plist)):
+            if (registration := show(job)).returncode == 0:
+                assert str(path) in registration.stdout, 'not our registration'
+                call('sam', '/bin/launchctl', 'bootout', job)
+                until(lambda: show(job).returncode == 113)
+            print(f'Cleanup {job}: launchctl print exits {show(job).returncode}')

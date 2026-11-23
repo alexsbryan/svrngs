@@ -128,6 +128,22 @@ impl Share<'_> {
         } else {
             (Runs::Transient, Return::Unknown, None, None)
         };
+        #[cfg(target_os = "macos")]
+        let (runs, app, keep) =
+            match select.then(|| job::now(&format!("{}{}", job::mac::PREFIX, lend.name))) {
+                Some(Ok(job::Now {
+                    keep: grant,
+                    scope: job::Scope::Agent(root),
+                })) if !approved.processes.is_empty()
+                    && approved
+                        .processes
+                        .iter()
+                        .all(|&p| crate::uid::descends(p, root)) =>
+                {
+                    (Runs::Kept(grant.clone()), Return::SignIn, Some(grant))
+                }
+                _ => (runs, app, keep),
+            };
         let platform = if cfg!(target_os = "macos") {
             Platform::Mac
         } else {
@@ -175,26 +191,18 @@ impl Share<'_> {
     }
 }
 
-pub(crate) fn own_return() -> Return {
-    #[cfg(target_os = "macos")]
-    if job::mac::door_at_login(Some(std::process::id())).is_some() {
-        return Return::SignIn;
-    }
-    #[cfg(target_os = "linux")]
-    if let Some(Answer::Job { unit, .. }) = job::of(std::process::id(), crate::uid::mine().ok()) {
-        return service_return(&unit);
-    }
-    Return::Unknown
-}
-
-pub fn installed_door_return() -> Return {
+pub fn door_return(pid: Option<u32>) -> Return {
     #[cfg(target_os = "macos")]
     {
-        job::mac::door_at_login(None).map_or(Return::Unknown, |()| Return::SignIn)
+        job::mac::door_at_login(pid).map_or(Return::Unknown, |()| Return::SignIn)
     }
     #[cfg(not(target_os = "macos"))]
-    {
-        service_return("svrngs.service")
+    match pid {
+        None => service_return("svrngs.service"),
+        Some(pid) => match job::of(pid, crate::uid::mine().ok()) {
+            Some(Answer::Job { unit, .. }) => service_return(&unit),
+            _ => Return::Unknown,
+        },
     }
 }
 
@@ -207,10 +215,9 @@ pub fn service_return(unit: &str) -> Return {
     let wanted = show
         .get("WantedBy")
         .is_some_and(|v| v.split_whitespace().any(|t| t == "default.target"));
-    if enabled && wanted {
-        Return::SignIn
-    } else {
-        Return::Unknown
+    match (enabled, wanted) {
+        (true, true) => Return::SignIn,
+        _ => Return::Unknown,
     }
 }
 
@@ -220,10 +227,13 @@ fn deployment(
 ) -> (Runs, Return, Option<job::Keep>, Option<Pid>) {
     match answers {
         [Answer::Job { unit, .. }] => match job::now(unit) {
-            Ok(now) if !cgroups.is_empty() && cgroups.is_subset(&now.cgroups) => (
-                Runs::OwnService(now.keep.clone()),
+            Ok(job::Now {
+                keep,
+                scope: job::Scope::Cgroups(ids),
+            }) if !cgroups.is_empty() && cgroups.is_subset(&ids) => (
+                Runs::OwnService(keep.clone()),
                 service_return(unit),
-                Some(now.keep),
+                Some(keep),
                 None,
             ),
             _ => (Runs::Transient, Return::Unknown, None, None),

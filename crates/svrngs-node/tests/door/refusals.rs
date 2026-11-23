@@ -1027,7 +1027,7 @@ async fn a_kept_lend_is_carried_after_its_unit_restarts_and_another_gets_nothing
             unit,
             Ok(Now {
                 keep,
-                cgroups: cgroups.iter().copied().collect(),
+                scope: svrngs_node::job::Scope::Cgroups(cgroups.iter().copied().collect()),
             }),
         );
     };

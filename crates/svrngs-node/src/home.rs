@@ -898,7 +898,7 @@ async fn lend_one(
             limit: None,
             availability: Availability::Keep,
         },
-        door: run::own_return(),
+        door: run::door_return(Some(std::process::id())),
     };
     let (observed, witness) = intent.observe(|_| wire).map_err(said)?;
     let unshown = format!("svrngs can’t tell which program answers on port {port}, so it can’t be lent from here: `svrngs share {port} --group <group>` lends it.");
