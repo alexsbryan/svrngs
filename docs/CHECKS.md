@@ -53,6 +53,40 @@ one after another is most of `tests`: 104 s at a load of 35, of which 41 s the
 browser binary's one deterministic test, which builds the page. Before, the
 change reached every slow step, about 25 min.
 
+## The release tier
+
+Before releasing the keeper, run the field proofs in order against the clean
+candidate checkout. On the Fedora host (from the toolbox, use
+`flatpak-spawn --host` before `python3`):
+
+```sh
+python3 -B demo/runs/release/run.py /tmp/opencode/keeper-release-candidate
+```
+
+Use a new evidence directory for each run. It holds `summary.txt` and the
+individual transcripts. The command builds one Linux x86-64 release archive
+in the toolbox, verifies the `svrngs version` commit, and uses that archive or
+its extracted pair for every Fedora VM replay: packaged reboot and unchanged
+link/data, busy port, failed save, concurrent withdrawal and Stop sharing;
+native Run; plain Podman, recovery, Actual, and Stop during restart delay;
+terminal consent; and installation, Home Stop and uninstall. The prepared
+Fedora guest and model are in `/tmp/keeper-demo`; the WebKit checks run in
+`svrngs-gate` under its lock (Ship uses `/tmp/keeper-audit/gate.sh`).
+
+On `beefymac`, the archived candidate is checked before the scratch build.
+The native keeper and node suites, native Run and the lifecycle proofs use
+unmodified source. Renewal and the six plist cases use the recorded scratch
+instrumentation, with separate build fingerprints. The tier uses only its
+scratch folder and named test agents and does not reboot or sign out.
+
+Each case reports `passed`, `failed`, `could-not-judge` or `never-ran` with
+its commit, build, and transcript. Candidate mismatch is a failure; missing
+work (including an unreachable host) is `never-ran`. Either makes the command
+nonzero. A `could-not-judge` is not a pass; review any evidence still owed.
+The release needs this tier on the final candidate as well as the complete
+regression gate. The operator then records the physical-host reboots and the
+people sessions separately.
+
 ## Structural classification
 
 Node tests that require a browser/service use `*.integration.test.mjs`.
