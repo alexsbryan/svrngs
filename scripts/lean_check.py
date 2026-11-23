@@ -1007,10 +1007,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # vacuum, the write refill, the lid) draws +250 before its build, so its
 # commits land as it goes, to come down to where it lands. The cap to
 # 26,398. The second pool: +447 drawn, +253 and +60 left.
+# (2026-11-22) Slice B's second half lands at 26,322 (e5805a2d..2014ae99,
+# rebased), +174 over 26,148, and the cap comes down to it. The second
+# pool: +372 drawn, +328 and +60 left.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26398,
+    ".": 26323,
 
     "js": 8671,
 
