@@ -27,18 +27,16 @@ impl Plan<'_> {
     }
 
     fn promise(&self, audience: &str) -> String {
-        match self.when {
-            Return::Startup => format!(
-                "{audience} can open it again after this computer starts, even before you sign in."
-            ),
-            Return::AfterUnlock => {
-                format!("{audience} can open it again after you unlock the disk.")
+        let after = match self.when {
+            Return::Startup => "this computer starts, even before you sign in.",
+            Return::AfterUnlock => "you unlock the disk.",
+            Return::SignIn => "you sign in.",
+            Return::ThisRun | Return::Unknown => {
+                let now = "can use this copy now. If it stops, you’ll need to share it again.";
+                return format!("{audience} {now}");
             }
-            Return::SignIn => format!("{audience} can open it again after you sign in."),
-            Return::ThisRun | Return::Unknown => format!(
-                "{audience} can use this copy now. If it stops, you’ll need to share it again."
-            ),
-        }
+        };
+        format!("{audience} can open it again after {after}")
     }
 
     pub fn words(&self) -> Review<'_> {

@@ -957,10 +957,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then avail-plan: the pure deployment fold, words and purity check land at
 # 24,945 (+309 of the release's +435 envelope; CHARTER, "The release").
 # Then avail-plan-economize folds the start verdicts together: 24,942.
+# Sharing the return wording's template brings it to 24,940.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24943,
+    ".": 24941,
 
     "js": 8651,
 
