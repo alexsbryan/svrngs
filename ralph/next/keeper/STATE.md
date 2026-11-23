@@ -358,7 +358,7 @@ envelope.
   check: `cargo test -p svrngs-node --test availability_plan` green after
   each cut; P4's lean rule; fresh lean counts.
 
-- [ ] avail-publish — depends [avail-economize, avail-plan-economize] — ONE UNIT: spec §3.2, §3.7
+- [x] avail-publish 9629f16d1 — depends [avail-economize, avail-plan-economize] — ONE UNIT: spec §3.2, §3.7
   W1, W2; row R-publish.
   - A share's revision, with tombstones on withdrawal.
   - One conditional publish through `lend::mutate`: binding, grant,
