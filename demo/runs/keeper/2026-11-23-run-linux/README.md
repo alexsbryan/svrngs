@@ -39,7 +39,7 @@ followed by the command above exited 0 in 1m35s. All nine cases passed
 | Case | Verdict | Observation |
 |---|---|---|
 | Alex opens the terminal copy | passed | Health and chat returned 200 through the shared address. |
-| Run while the port is busy | passed | Instrumented replay below: exit 1, same listener and response, no unit or keeper record, and the same share and address. |
+| Run while the port is busy | passed | Full instrumented replay below: exit 1, same listener and response, no unit or keeper record, and the same share and address. |
 | Run after Sam stops the copy and withdraws its share | passed | Exit 0. Sam consented to unattended startup; PID 2073 started and no share was written. |
 | Share with the partial-file directory planted | passed | Exit 1. The declaration was absent and PID 2073 stayed up. |
 | Share after removing the obstruction | passed | Exit 0. The declaration named `svrngs-keeper-coder.service`; PID 2073 and Alex's original address were unchanged. Health and chat returned 200. |
@@ -85,3 +85,20 @@ directory were absent and systemd reported `LoadState=not-found` both
 times. The declaration hashed to `79c44220f73b…` at revision 1 both times,
 and Alex kept the same address. After Sam stopped his copy, Run verified
 the new managed listener (PID 2498) and the retry shared it at that address.
+
+The full instrumented replay exited 0 in 1m29s with all nine cases passed:
+
+```sh
+env W=/tmp/opencode/keeper-busy-witness-full python3 -B demo/runs/keeper/2026-11-23-run-linux/run.py
+```
+
+Run refused with exit 1. Both JSONL samples recorded PID 1419 at start tick
+1309, `/health` SHA-256 `a29ee2b15c49…`, `unit_file: absent`,
+`job_record: absent`, `LoadState=not-found`, and declaration SHA-256
+`5b8a0bc3fe42…` at revision 1. Alex's address stayed the same.
+Managed Run, the failed save, and the successful Share retry all kept
+PID 2468. On the three distinct no-login boots the original address
+answered health at 7.41, 7.66, and 7.46 s uptime and chat returned 200 on
+each. After SIGKILL it returned 200 again; PID 872 changed to 1453 and
+`NRestarts=1` (`avail-run-busy-witness-1.await.log:7–29`; scratch
+`run/events.jsonl` and `run/summary.json`).
