@@ -736,7 +736,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
 
 - [x] avail-run-mac-containers — depends [avail-run-mac-renew] — DEFERRED, not built (QA oc-cruu42's recommendation, adopted overnight 2026-11-23, for the operator to reverse). Managed Mac containers add the Podman machine's lifecycle, and an endpoint-identity proof beyond native macOS. A Mac container stays shareable while it runs. The native baseline on Linux and macOS is unchanged. No commit.
 
-- [ ] avail-run-mac-proof — depends [avail-run-mac] — ONE UNIT (keeper only, counted +0): two Mac controls QA found missing at ad9406ef (oc-cruu42, 2026-11-23).
+- [x] avail-run-mac-proof a27e047b8 — depends [avail-run-mac] — ONE UNIT (keeper only, counted +0): two Mac controls QA found missing at ad9406ef (oc-cruu42, 2026-11-23).
   - **A foreign answer after the busy check.**
     - The Run code requires HTTP readiness, plus a running registered
       agent PID, plus `lsof` holders descended from that PID
