@@ -69,3 +69,32 @@ Not cut, each tried and laid out no shorter by the formatter:
 - job.rs otherwise: `Keep { unit, files }` and `Answer::Job { unit,
   description }` are named first so each literal fits rustfmt's
   `struct_lit_width` (18).
+
+## The cuts
+
+Each its own commit, named by its file (`git log --oneline --
+demo/runs/economize/2026-11-22-available`), its caps lowered to one past
+where it lands.
+
+| File | Cut | All but JavaScript | JavaScript |
+|---|---:|---:|---:|
+| door/bound.rs | 11 (as thought) | 24,644 | 8,668 |
+| uid.rs | 8 (`cwd` 2, `described` 6) | 24,636 | 8,668 |
+| lent-row.js | 18 (as thought) | 24,636 | 8,650 |
+
+job.rs: none.
+
+## Close
+
+`python3 scripts/lean_check.py` at the last cut, exit 0:
+
+```
+  the core (svrngs-core)     3,471   most   3,539
+  all code but JavaScript   24,636   most  24,636
+  JavaScript                 8,650   most   8,650
+```
+
+All but JavaScript −19 (bound.rs 11, uid.rs 8), JavaScript −18. The
+release's envelope (at most about +435 and +30 JavaScript, CHARTER "The
+release: available by default") is measured from these: 25,071 and 8,680
+at most.
