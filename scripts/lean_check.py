@@ -1043,12 +1043,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # of the copy, a set whose schema a copy lacks dropped and sent again, the
 # size cap with a share per device, and each bound's number in one home, about
 # +110 to +250. It comes down to where E lands.
+# (2026-11-22) The operator's yes to the signer picking a phone's places
+# (svrn-docs app-state-diligence/invariants-2026-11-22/, change 5): one
+# party decides a place, which retires the home handing places, the
+# signer's twice-signed refusal, the rows a place handed and never signed
+# leaves, and "write it again". JavaScript to 8,751, down to where it lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
     ".": 27145,
 
-    "js": 8741,
+    "js": 8751,
 
     "swift": 1,
 }
