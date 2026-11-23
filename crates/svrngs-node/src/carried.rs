@@ -812,6 +812,15 @@ impl Folders {
         told(status, took.as_str().unwrap_or_default(), words.into())
     }
 
+    /// A read of `app` by `asker`, in its person's budget of reads; or the
+    /// refusal that says how long it waits.
+    fn read_refill(&self, asker: &Asker, app: &AppName) -> Option<Response> {
+        let wait = self.refill(asker, ("reads", READS_AN_HOUR));
+        let words = format!("{app} is reading faster than an app may here, about {} reads a minute. It can read again in {wait} seconds.", READS_AN_HOUR / 60);
+        let refused = [(header::RETRY_AFTER, wait.to_string())];
+        (wait > 0).then(|| (refused, told(429, "limit", words)).into_response())
+    }
+
     /// The seconds before a write of the app `app` in `group` by the person
     /// whose first key is `person` is in [`SETS_AN_HOUR`]'s budget; none if
     /// it is now, and then counted, so writes in flight at once can't pass
@@ -857,17 +866,6 @@ pub(crate) const READS_AN_HOUR: i64 = 3_600;
 /// the oldest ended past it: this number's one home. Provisional: a page
 /// keeps one, and a person a few tabs and a phone or two.
 pub(crate) const SUBSCRIPTIONS_MOST: u64 = 8;
-
-impl Folders {
-    /// A read of `app` by `asker`, in its person's budget of reads; or the
-    /// refusal that says how long it waits.
-    fn read_refill(&self, asker: &Asker, app: &AppName) -> Option<Response> {
-        let wait = self.refill(asker, ("reads", READS_AN_HOUR));
-        let words = format!("{app} is reading faster than an app may here, about {} reads a minute. It can read again in {wait} seconds.", READS_AN_HOUR / 60);
-        let refused = [(header::RETRY_AFTER, wait.to_string())];
-        (wait > 0).then(|| (refused, told(429, "limit", words)).into_response())
-    }
-}
 
 /// A refusal of an app's database, as its page reads one: `{refused,
 /// words}`, its short name and what to do.

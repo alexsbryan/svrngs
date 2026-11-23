@@ -45,6 +45,19 @@ fn call(from: &Db, to: &Db) {
         .unwrap();
 }
 
+/// The board under `from` copied to `to` as a disk's clone or a rolled-back
+/// snapshot copies it, keeping the identity its own file records, so it is
+/// found only by what it writes, the detector's case: a file with no
+/// identity recorded takes its own at its first open (`Db::open`).
+fn cloned(from: &Path, to: &Path) {
+    let at = |dir: &Path| dir.join("state/g/board.db");
+    std::fs::create_dir_all(at(to).parent().unwrap()).unwrap();
+    std::fs::copy(at(from), at(to)).unwrap();
+    let side = rusqlite::Connection::open(at(to)).unwrap();
+    side.execute("UPDATE svrngs_db SET file = NULL", []).unwrap();
+    svrngs_db::close(side).unwrap();
+}
+
 /// Every card on `db`, by id.
 fn cards(db: &Db) -> Value {
     db.read("SELECT id, title FROM cards ORDER BY id", &[]).unwrap()["rows"].clone()
@@ -81,9 +94,7 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     )
     .unwrap();
     drop(first);
-    let at = |dir: &Path| dir.join("state/g/board.db");
-    std::fs::create_dir_all(at(copy_dir.path()).parent().unwrap()).unwrap();
-    std::fs::copy(at(ana_dir.path()), at(copy_dir.path())).unwrap();
+    cloned(ana_dir.path(), copy_dir.path());
     let (ana_states, copy_states, ben_states) = (
         states(ana_dir.path(), 1),
         states(copy_dir.path(), 1),
@@ -205,9 +216,7 @@ fn a_copied_file_is_made_again_while_its_person_s_page_holds_it() {
     write(&ana, put("c1", "milk")).unwrap();
     drop(ana);
     ana_states.close("g");
-    let at = |dir: &Path| dir.join("state/g/board.db");
-    std::fs::create_dir_all(at(copy_dir.path()).parent().unwrap()).unwrap();
-    std::fs::copy(at(ana_dir.path()), at(copy_dir.path())).unwrap();
+    cloned(ana_dir.path(), copy_dir.path());
     let copy_states = states(copy_dir.path(), 1);
     let copy = board(&copy_states);
     write(&copy, put("c2", "tea")).unwrap();
@@ -230,4 +239,89 @@ fn a_copied_file_is_made_again_while_its_person_s_page_holds_it() {
     let all = json!([{ "id": "c1", "title": "milk" }, { "id": "c2", "title": "tea" }, { "id": "c3", "title": "pie" }]);
     assert_eq!(cards(&page), all);
     assert_eq!(cards(&subscription), all, "the subscription's hold, the same file");
+}
+
+/// **A file restored from a backup loses no write it takes after** (svrn-docs
+/// `app-state-diligence/invariants-2026-11-22/` §2.4 and §5, finding (a)):
+/// Ana's board is backed up at her first card. She changes it twice; Ben's
+/// copy takes the last, then outranks it with his own, so every set of hers
+/// after the backup is pruned at his. Her file is then restored from the
+/// backup, as a restore makes one, a new file in the old one's place, and
+/// her computer opens it with every other computer off, and writes a card.
+/// Ben's copy takes it at their next call. Plant, watched failing: no
+/// identity checked at open (her card at a place Ben counted, passed by as
+/// held: lost, and said nowhere).
+#[test]
+fn a_file_restored_from_a_backup_loses_no_write_it_takes_after() {
+    let (ana_dir, ben_dir, backup) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let (ana_states, ben_states) = (states(ana_dir.path(), 1), states(ben_dir.path(), 2));
+    let ana = ana_states.carry("g", "board", SCHEMA).unwrap();
+    write(&ana, put("c1", "milk")).unwrap();
+    drop(ana);
+    ana_states.close("g");
+    let at = ana_dir.path().join("state/g/board.db");
+    std::fs::copy(&at, backup.path().join("board.db")).unwrap();
+    let ana = board(&ana_states);
+    for title in ["tea", "jam"] {
+        write(&ana, put("c1", title)).unwrap();
+    }
+    let ben = board(&ben_states);
+    call(&ana, &ben);
+    write(&ben, put("c1", "ben")).unwrap();
+    call(&ben, &ana);
+    drop(ana);
+    ana_states.close("g");
+    drop(ana_states);
+    for gone in ["board.db", "board.db-wal", "board.db-shm"] {
+        let _ = std::fs::remove_file(ana_dir.path().join("state/g").join(gone));
+    }
+    std::fs::copy(backup.path().join("board.db"), &at).unwrap();
+    let ana_states = states(ana_dir.path(), 1);
+    let ana = board(&ana_states);
+    write(&ana, put("c2", "pie")).unwrap();
+    call(&ana, &ben);
+    let pie = cards(&ben).as_array().unwrap().iter().any(|c| c["id"] == "c2");
+    assert!(pie, "Ben's copy has her card: {}", cards(&ben));
+}
+
+/// **A copy beside its original starts at a site of its own** (svrn-docs
+/// `app-state-diligence/invariants-2026-11-22/` §2.4): Ana's board is
+/// copied to another of her computers as a copy of a data directory makes
+/// one, a new file, and each writes three cards in lockstep, at the same
+/// versions. The copy's file isn't the one that minted its site, so it is
+/// made again as it opens, before its first write: Ben's copy, taking both,
+/// holds no twin and every card. Plant, watched failing: no identity checked
+/// at open (each pair at one site and version, twins at Ben's).
+#[test]
+fn a_copy_beside_its_original_starts_at_a_site_of_its_own() {
+    let (ana_dir, copy_dir, ben_dir) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let ana_states = states(ana_dir.path(), 1);
+    write(&ana_states.carry("g", "board", SCHEMA).unwrap(), put("c0", "milk")).unwrap();
+    ana_states.close("g");
+    let at = |dir: &Path| dir.join("state/g/board.db");
+    std::fs::create_dir_all(at(copy_dir.path()).parent().unwrap()).unwrap();
+    std::fs::copy(at(ana_dir.path()), at(copy_dir.path())).unwrap();
+    let copy_states = states(copy_dir.path(), 1);
+    let (ana, copy) = (board(&ana_states), board(&copy_states));
+    for n in 1..4 {
+        write(&ana, put(&format!("a{n}"), "tea")).unwrap();
+        write(&copy, put(&format!("b{n}"), "jam")).unwrap();
+    }
+    let ben = board(&states(ben_dir.path(), 2));
+    call(&ana, &ben);
+    call(&copy, &ben);
+    assert!(
+        ben.ask().unwrap().twins.is_empty(),
+        "no twin: {:?}",
+        ben.ask().unwrap().twins
+    );
+    assert_eq!(cards(&ben).as_array().unwrap().len(), 7, "every card: {}", cards(&ben));
 }

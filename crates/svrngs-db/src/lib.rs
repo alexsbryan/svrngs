@@ -48,7 +48,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering::Relaxed};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, UNIX_EPOCH};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use rusqlite::hooks::{AuthAction, AuthContext, Authorization};
@@ -278,6 +278,7 @@ impl States {
         }
         std::fs::create_dir_all(&dir).map_err(fault)?;
         let db = Arc::new(Db::open(&path, (group, app), (schema, root), key)?);
+        db.copied().then(|| self.remake(&db)).transpose()?;
         tracing::debug!(target: "state", group, app, "state: an app's database opened, its schema applied and its tables made CRRs");
         dbs.insert((group.into(), app.into()), db.clone());
         Ok(db)
@@ -357,7 +358,12 @@ impl States {
         let made = (|| {
             live.execute("VACUUM INTO ?1", [copy.to_string_lossy()])
                 .map_err(fault)?;
-            change(&Open(Some(Connection::open(&copy).map_err(fault)?)))?;
+            let restored = Open(Some(Connection::open(&copy).map_err(fault)?));
+            change(&restored)?;
+            // The copy's own identity, taken as it is first opened (`Db::open`).
+            let own = restored.execute_batch("UPDATE svrngs_db SET file = NULL");
+            own.map_err(fault)?;
+            drop(restored);
             drop(Db::open(&copy, names, (None, false), self.key.clone())?);
             let closed = !copy.with_extension("db.new-wal").exists();
             closed
@@ -699,6 +705,15 @@ impl Db {
             Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get::<_, Vec<u8>>(3)?, r.get(4)?))
         });
         let (nonce, hash, synced, site, copied): ([u8; 16], [u8; 32], bool, _, bool) = own.map_err(fault)?;
+        // The file's own identity: one that isn't the one recorded as it was
+        // made, or as svrngs last swapped one in (`States::restored`), was
+        // copied, restored or moved, and is made again before it serves
+        // anything (`States::made`; svrn-docs
+        // `app-state-diligence/invariants-2026-11-22/` §2.4). One with none
+        // recorded takes its own.
+        let same = "UPDATE svrngs_db SET file = coalesce(file, ?1) RETURNING file = ?1";
+        let same: bool = conn.query_row(same, [identity(path)?], |r| r.get(0)).map_err(fault)?;
+        let copied = copied || !same;
         let derived = svrngs_core::set::site(group, app, &device, &nonce);
         tracing::debug!(target: "state", group, app, own = site == derived, "state: a database's site is its own, derived from this computer's key and the nonce it was made with, or it was made under another key");
         if site != derived {
@@ -896,7 +911,7 @@ impl Db {
 /// device is stored muted: one over its share is worked out from what it
 /// holds now (`sync.rs`, `Db::held`).
 const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL,
-      copied INTEGER NOT NULL DEFAULT 0, retired BLOB);
+      copied INTEGER NOT NULL DEFAULT 0, retired BLOB, file TEXT);
     CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, kept INTEGER NOT NULL,
       bytes BLOB, PRIMARY KEY (site, seq, sig));
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
@@ -919,6 +934,18 @@ fn new_tables(conn: &mut Connection, (schema, root): (&str, bool), names: (&str,
     conn.execute("UPDATE crsql_site_id SET site_id = ?1 WHERE ordinal = 0", [site])
         .map_err(fault)
         .map(drop)
+}
+
+/// The identity of the file at `path`: its inode, and its birth time where
+/// the filesystem keeps one, so a copy, a restore that makes a new file or a
+/// move is a file of its own. A file overwritten in place, a disk's clone or
+/// a rolled-back snapshot keeps both, and is found by what it writes
+/// (`sync.rs`, `take`).
+fn identity(path: &Path) -> Result<String, Refused> {
+    use std::os::unix::fs::MetadataExt as _;
+    let meta = std::fs::metadata(path).map_err(fault)?;
+    let born = meta.created().map(|t| t.duration_since(UNIX_EPOCH).unwrap_or_default());
+    Ok(format!("{}:{}", meta.ino(), born.unwrap_or_default().as_nanos()))
 }
 
 /// A nonce for a database made, or made again, drawn where it is made.

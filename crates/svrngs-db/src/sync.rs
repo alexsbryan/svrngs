@@ -635,20 +635,6 @@ impl Db {
         Ok((held, size, over))
     }
 
-    /// `set`, past its share of what this copy's ask may carry, or of the
-    /// database, dropped as if it never came; its device named over in this
-    /// copy's ask while what it holds here is past its share, so no member
-    /// sends it more, and no more of its sets taken in this call. Its sets
-    /// before stand. The seat's decision (svrn-docs APP_STATE Decisions,
-    /// 2026-11-22): no one device can fill what every copy's ask may carry,
-    /// and so stall the app's sync for everyone.
-    fn over(&self, set: &Set, room: &mut Room) -> Took {
-        let (device, share) = (&set.head.device, room.binds.share());
-        tracing::warn!(target: "state", group = self.group, app = self.app, %device, share, "state: a device past its share of what this copy's ask may carry, or of the database, so its set is dropped, and the device named over in the ask while it holds that much here; its sets before stand");
-        room.muted.insert(device.clone());
-        Took::Over
-    }
-
     /// The mark `m` a full call claims for `site`, adopted up to the highest
     /// seq of the site this copy has counted and no further, so it fills the
     /// gaps below what this copy holds and passes nothing it hasn't counted;
@@ -732,12 +718,21 @@ impl Db {
         }
         // What it adds to this copy's ask: a site new here, a set counted
         // above a gap, a set at a place that keeps one, the first making two
-        // rows of it. Past its device's share, it is dropped ([`Self::over`]).
+        // rows of it. Past its device's share, it is dropped (below).
         let device = &set.head.device;
         let adds = u64::from(!sited) + u64::from(set.head.seq.0 > mark + 1) + [0, 2, 1][sigs.len().min(2)];
         let adds = (adds, set.changes.len() as u64 + SITE_COST * u64::from(!sited));
+        // Past its share of what this copy's ask may carry, or of the
+        // database, dropped as if it never came; its device named over in
+        // this copy's ask while what it holds here is past its share, so no
+        // member sends it more, and no more of its sets taken in this call.
+        // Its sets before stand. The seat's decision (svrn-docs APP_STATE
+        // Decisions, 2026-11-22): no one device can fill what every copy's
+        // ask may carry, and so stall the app's sync for everyone.
         if !room.fits(device, adds) {
-            return Ok(self.over(set, room));
+            tracing::warn!(target: "state", group = self.group, app = self.app, %device, share = room.binds.share(), "state: a device past its share of what this copy's ask may carry, or of the database, so its set is dropped, and the device named over in the ask while it holds that much here; its sets before stand");
+            room.muted.insert(device.clone());
+            return Ok(Took::Over);
         }
         // Parsed before cr-sqlite sees it. One written under another schema
         // that names a table or column this copy lacks waits for the widest

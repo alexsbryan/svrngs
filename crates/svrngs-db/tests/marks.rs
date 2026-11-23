@@ -332,6 +332,11 @@ fn a_copy_never_adopts_a_mark_for_its_own_site() {
     let (from, to) = (dir.path().join("computer-1"), dir.path().join("copy"));
     std::fs::create_dir_all(to.join("state/g")).unwrap();
     std::fs::copy(from.join("state/g/board.db"), to.join("state/g/board.db")).unwrap();
+    // As a disk's clone copies it, keeping the identity its file records, so
+    // only what it writes finds it (svrngs-db `Db::open`, `identity`).
+    let side = rusqlite::Connection::open(to.join("state/g/board.db")).unwrap();
+    side.execute("UPDATE svrngs_db SET file = NULL", []).unwrap();
+    svrngs_db::close(side).unwrap();
     let a = board(dir.path(), 1);
     let copy = States::new(&to, key(1)).open("g", "board", None).unwrap();
     write(&copy, "c3", "jam");
