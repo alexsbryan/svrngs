@@ -411,25 +411,74 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - It emits llama-server's prefill, with `Nice=10` and the 30 s answer
     check.
   - `start` resets a failed unit (spec §7.8).
-  - svrngs gets `svrngs run` through the plan, and the
-    `Unapproved`-with-grant arm, loopback only, planted (§3.4).
+  - svrngs gets `svrngs run` through the plan. **No new authorization
+    mode** (QA, oc-cruu42, 2026-11-22). Run starts the unit, verifies that
+    its listener answers (the 30 s check), and only then approves that
+    listener through the existing `share::approve`, with its `Terms::keep`
+    grant, in the same press. The spec's `Unapproved`-with-grant arm and
+    grant-before-bind are not built.
+  - **Only the unit's own listener is approved,** read fresh at the save:
+    every socket on the port, and what took the dial, must lie in the
+    unit's cgroup (as renewal judges, `door/bound.rs`). So a different
+    listener between verification and the save is refused, never approved.
+  - **Two failures, said apart** (QA, 2026-11-22):
+    - verified running, then the save failed: "Running here; not shared",
+      and a retry of Share makes no lifecycle call;
+    - verification failed: "Not shared; svrngs couldn't verify coder is
+      answering", unless the service manager separately reports it
+      running.
 
   Demo, first: Sam stops his terminal copy and runs coder with svrngs, and
   Alex's link keeps working through three no-login reboots in the spike's
   VM and a kill -9. Then the busy-port refusal, and a failed save giving
   "not shared" with no second run.
 
-- [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper): spec §5 row 3.
-  - A rootless Podman container or pod, run by svrngs as a `.container` or
-    `.pod` Quadlet from its own `podman inspect`.
-  - Reuse `git stash@{0}`'s `containers.rs` (its inspect, its pinned
-    digest, its published port), and drop the netns identity only the
-    takeover needed.
-  - The stash itself is left as it is. Read it with `git show
-    'stash@{0}^3:apps/svrngs-keeper/src/containers.rs'`.
+- [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses, unchanged:
+  - the card (`compose.yaml` plus `x-svrngs`) and `card::check`;
+  - `runtime::App` (`pull`, `start`, `wait_healthy`, `health`, `stop`);
+  - `machine` and `podman`.
 
-  Demo: Actual and an Immich-shaped pod. Refused while Sam's container
-  runs; run by svrngs after `podman stop`; through a reboot.
+  None of Give's custody policy (`keep.rs:585–611`) is taken.
+
+  Kept off this row: the import of a hand-run container (`stash@{0}`),
+  Quadlet translation, and host binds (`card.rs:543`, which is the
+  operator's to decide).
+  - **Proof 1, first, before any adapter is budgeted.** In the spike's VM,
+    after a real reboot, fresh reads tie both the published listener and
+    the accepted connection to the managed job's cgroup. Checked through
+    Alex's unchanged link, with a marker written before the reboot and
+    read after it.
+    - If plain Podman started from a unit breaks that, measure the smallest
+      OS delegation option (`--cgroups=split`, `Delegate=yes`).
+    - Then stop and report with `needs-human`. Don't add an engine witness
+      by default.
+  - **Proof 2.** Kill the foreground adapter after the detached pod
+    starts, and check the restart.
+    - `App::start` makes the pod by name, and `App::stop`
+      (`runtime.rs:517`) removes a pod by name. So a leftover pod must
+      neither wedge recovery nor let cleanup touch a foreign pod of the
+      same name.
+    - Do it at two moments: once the pod is ready, and after the detached
+      start but before readiness. Each time, the next invocation recovers
+      only its own pod and keeps its volumes, though the normal stop path
+      never ran.
+    - Prove ownership before any cleanup, and show no volume is lost. A
+      foreign pod of the same name is the negative control: it stays
+      running and untouched.
+    - Liveness is not readiness: a single unhealthy or unreadable result
+      never tears down a running pod.
+  - **Only if both hold:** the adapter, a unit whose main process is
+    `svrngs-keeper serve-card <name>`.
+    - Readiness gates publication, not restarts, so a slow or briefly
+      unhealthy app is never torn down.
+    - The container's own exit is the restart signal where the OS can see
+      it.
+    - One restart owner. No retry loop or migration policy in the adapter.
+
+  Demo, only if both proofs hold: one named volume-only app (Actual, if
+  its card fits) by the same link and a data marker, through a reboot.
+  Otherwise sharing this run stays, and managed containers wait for the
+  operator. The native baseline on Linux and macOS is unchanged.
 
 - [ ] avail-run-page — depends [avail-run-linux] — ONE UNIT: spec §2.1–§2.3, §5 row 4.
   - The share line's two kinds; the form with its one command box and its
