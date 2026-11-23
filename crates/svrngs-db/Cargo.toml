@@ -38,3 +38,6 @@ cc = "1"
 
 [dev-dependencies]
 tempfile = "3"
+# What prune says it visited, heard at debug (tests/prune.rs), the version
+# the lock already holds.
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }

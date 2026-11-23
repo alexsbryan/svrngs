@@ -1,0 +1,4 @@
+$ cargo test -p svrngs-db --test measure -- --nocapture   # prune-cost tree on c7c630c2 with the prune fix, Darwin arm64, debug profile (deps at opt-level 2), 2026-11-23 00:09
+MEASURE 16 rows: a tap's write µs best/median/slowest (358, 428, 724); BOARD read µs (23, 23, 80) (QUERY_MOST 250000 µs); answer 493 B (ANSWER_MOST 4194304 B, ROWS_MOST 1000)
+MEASURE 10000 rows: a tap's write µs best/median/slowest (344, 7709, 27560); BOARD read µs (1675, 1710, 1893) (QUERY_MOST 250000 µs); answer 30912 B (ANSWER_MOST 4194304 B, ROWS_MOST 1000)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 69.92s

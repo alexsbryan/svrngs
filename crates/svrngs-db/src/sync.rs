@@ -326,6 +326,11 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     let bytes = (kept != Kept::Refused).then(|| postcard::to_allocvec(set).expect("a set is written in memory"));
     let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
     conn.execute(sql, params![site, seq, set.head.sig, kept, bytes])?;
+    // Visited by the prune after it too, as a set all of whose changes lost
+    // stands nowhere here, and is dropped (`Db::prune`).
+    if kept == Kept::Taken {
+        conn.execute("INSERT INTO temp.svrngs_was VALUES (?1, ?2)", params![site, seq])?;
+    }
     // The site's device, by which its share is counted and a muted device's
     // sets are found; and its home, from whom alone a word for its mark is
     // trusted: a phone's, as its set names it, else the device's own.
@@ -345,8 +350,12 @@ impl Db {
     /// sets at one place stay while either's values stand. Its place stays
     /// counted, so a copy that never took it is vouched past it by its
     /// site's own computer, once that copy counts a set above it. A set
-    /// refused holds no value here and is kept as it is. How many it
-    /// dropped.
+    /// refused holds no value here and is kept as it is. A set stops
+    /// standing only where a cell it holds is outranked, so prune visits
+    /// only the sets at the places the changes since it last ran outranked,
+    /// as SQLite outranked them (`lib.rs`, `outranked`), and each set taken
+    /// since (`keep`): its work follows what a write or a call changes, never
+    /// all a copy keeps. How many it dropped.
     fn prune(&self, conn: &Connection, tables: &BTreeMap<String, Table>) -> rusqlite::Result<usize> {
         let clock = |t: &String| format!("\"{}__crsql_clock\"", t.replace('"', "\"\""));
         let stands = tables.keys().map(|t| {
@@ -356,14 +365,15 @@ impl Db {
             )
         });
         let stands = stands.collect::<Vec<_>>().join(" UNION ALL ");
-        let sql = format!(
-            "DELETE FROM svrngs_sets WHERE rowid IN (SELECT s.rowid FROM svrngs_sets s \
-            LEFT JOIN crsql_site_id o ON o.site_id = s.site WHERE s.kept = ?1 AND NOT EXISTS ({stands}))"
-        );
-        let visited = "SELECT count(*) FROM svrngs_sets WHERE kept = ?1";
-        let visited: usize = conn.query_row(visited, [Kept::Taken], |r| r.get(0))?;
+        // From each place to the sets at it, so no other set is read.
+        let at = "FROM temp.svrngs_was w CROSS JOIN svrngs_sets s ON s.site = w.site AND s.seq = w.seq \
+            LEFT JOIN crsql_site_id o ON o.site_id = s.site WHERE s.kept = ?1";
+        let sql = format!("DELETE FROM svrngs_sets WHERE rowid IN (SELECT s.rowid {at} AND NOT EXISTS ({stands}))");
+        let visited = format!("SELECT count(DISTINCT s.rowid) {at}");
+        let visited: usize = conn.query_row(&visited, [Kept::Taken], |r| r.get(0))?;
         let dropped = conn.execute(&sql, [Kept::Taken])?;
-        tracing::debug!(target: "state", group = self.group, app = self.app, visited, dropped, "state: the kept sets prune visited, and those of them none of whose values stands on this copy, dropped");
+        conn.execute("DELETE FROM temp.svrngs_was", [])?;
+        tracing::debug!(target: "state", group = self.group, app = self.app, visited, dropped, "state: the kept sets prune visited, those at a place a change outranked or a set taken since it last ran, and those of them none of whose values stands on this copy, dropped");
         Ok(dropped)
     }
 

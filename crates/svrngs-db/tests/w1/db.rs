@@ -12,7 +12,9 @@
 //! transaction, so invariant 3 holds here whole: its kept sets cover its
 //! clock rows, it keeps none that doesn't stand (`tests/sync.rs`,
 //! `cost_follows_what_is_live_on_each_copy`),
-//! and a newcomer synced from it ends equal to it.
+//! and a newcomer synced from it ends equal to it. After every write and
+//! take, what its prune kept is held to what the full prune that read every
+//! kept set keeps (`DbCopy::pruned_whole`).
 //!
 //! A seeded run has phones too (`sim::Shape::phoned`). A phone holds no
 //! copy: the computer it writes through, its home, prepares its write
@@ -367,6 +369,62 @@ impl DbCopy {
         (marks, haves)
     }
 
+    /// The sets this copy keeps whole, as svrngs-db's own table holds them:
+    /// `kept` 0, `Kept::Taken` (sync.rs).
+    fn whole(&self) -> BTreeSet<SetId> {
+        let mut stmt = (self
+            .side()
+            .prepare_cached("SELECT site, seq FROM svrngs_sets WHERE kept = 0"))
+        .unwrap();
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, [u8; 16]>(0)?, r.get::<_, i64>(1)?)));
+        let run = self.run.borrow();
+        rows.unwrap()
+            .map(|r| r.unwrap())
+            .map(|(s, q)| (run.sites[&s], q))
+            .collect()
+    }
+
+    /// **Prune's result is the full prune's** (svrn-docs
+    /// `app-state-diligence/prune-cost-2026-11-23/`): after a write or a
+    /// take that kept `new`, the sets kept whole are those kept `before` and
+    /// `new` whose values stand here, as svrngs-db's prune chose them when
+    /// it read every kept set; and the full prune, its own statement read on
+    /// this copy's clocks, finds none left to drop. The reference beside the
+    /// prune that visits only the sets a change outranked or kept.
+    fn pruned_whole(&self, before: BTreeSet<SetId>, new: BTreeSet<SetId>, what: &str) {
+        let stands = TABLES.iter().map(|t| {
+            format!(
+                "SELECT 1 FROM \"{}__crsql_clock\" c WHERE c.site_id = o.ordinal AND c.db_version = s.seq",
+                t.name
+            )
+        });
+        let full = format!(
+            "SELECT s.site, s.seq FROM svrngs_sets s LEFT JOIN crsql_site_id o ON o.site_id = s.site \
+            WHERE s.kept = 0 AND NOT EXISTS ({})",
+            stands.collect::<Vec<_>>().join(" UNION ALL ")
+        );
+        let mut stmt = self.side().prepare_cached(&full).unwrap();
+        let left = stmt.query_map([], |r| Ok((r.get::<_, [u8; 16]>(0)?, r.get::<_, i64>(1)?)));
+        let left: BTreeSet<SetId> = {
+            let run = self.run.borrow();
+            left.unwrap()
+                .map(|r| r.unwrap())
+                .map(|(s, q)| (run.sites[&s], q))
+                .collect()
+        };
+        let standing = self.standing();
+        let want: BTreeSet<SetId> = before.union(&new).filter(|id| standing.contains(id)).copied().collect();
+        let kept = self.whole();
+        if kept != want || !left.is_empty() {
+            self.parted(format!(
+                "{what}: svrngs-db keeps {:?} whole, the full prune {:?}, and would drop {:?} more",
+                names(&kept),
+                names(&want),
+                names(&left)
+            ));
+        }
+    }
+
     /// The first disagreement with the reference, said once a run.
     fn parted(&self, what: String) {
         let run = RUN.with_borrow(String::clone);
@@ -410,13 +468,16 @@ impl Replica for DbCopy {
     fn write(&mut self, ops: &[Op]) -> Option<ChangeSet> {
         let last = "SELECT coalesce(max(rowid), 0) FROM svrngs_sets";
         let before: i64 = self.side().query_row(last, [], |r| r.get(0)).unwrap();
-        let binds = self.binds();
+        let (binds, whole) = (self.binds(), self.whole());
         self.db
             .write(&form(ops), &binds)
             .unwrap_or_else(|r| panic!("the write {ops:?} is refused: {r}"));
         let sealed = "SELECT bytes FROM svrngs_sets WHERE rowid > ?1";
         let sealed: Option<Vec<u8>> = self.side().query_row(sealed, [before], |r| r.get(0)).ok();
-        sealed.map(|b| self.change_set(&postcard::from_bytes(&b).expect("a kept set")))
+        let sealed = sealed.map(|b| self.change_set(&postcard::from_bytes(&b).expect("a kept set")));
+        let new = sealed.iter().map(ChangeSet::id).collect();
+        self.pruned_whole(whole, new, &format!("writing {ops:?}"));
+        sealed
     }
 
     fn take(&mut self, set: &ChangeSet) {
@@ -505,7 +566,7 @@ impl Replica for DbCopy {
             let from = run.devices.iter().find(|(_, s)| Some(**s) == call.from);
             from.and_then(|(d, _)| svrngs_db::Device::parse(d))
         };
-        let binds = self.binds();
+        let (binds, whole) = (self.binds(), self.whole());
         let got = match (&call.marks, &real.sets[..]) {
             (None, [set]) if set.phone.is_some() => {
                 let bytes = STANDARD.encode(postcard::to_allocvec(set).expect("a set is written in memory"));
@@ -550,7 +611,13 @@ impl Replica for DbCopy {
             .iter()
             .filter(|(_, t)| !matches!(t, Took::Taken | Took::Refused | Took::Held | Took::NotItsDevice));
         wrong.extend(other.map(|((_, q), t)| format!("svrngs-db's set at seq {} ended {t:?}", q.get())));
+        let new = of(Took::Taken).union(&of(Took::Twin)).copied().collect();
         drop(run);
+        self.pruned_whole(
+            whole,
+            new,
+            &format!("taking {:?}", names(&ids(&call.sets).into_iter().collect())),
+        );
         let (marks, haves) = self.book();
         if marks != *book.marks() || haves != *book.above() {
             let said = format!("{:?} above {:?}", marked(&marks), names(&haves));
@@ -820,7 +887,10 @@ fn held_on(range: std::ops::Range<u64>) {
 /// from the site itself, as it did before phones (145); wire.rs `nonce`
 /// derived from a phone's home alone, so a cleared store signs at its old
 /// site (both seeded tests failed: one real site named for two of the
-/// simulator's).
+/// simulator's); a prune that misses a place a change outranked, each of
+/// lib.rs `outranked`'s three triggers taken out and `keep`'s own place
+/// (190 to 199 runs parted from the full prune, svrn-docs
+/// `app-state-diligence/prune-cost-2026-11-23/plants.log`).
 #[test]
 fn svrngs_db_s_sync_is_the_reference_s_on_the_gate_s_seeds() {
     held_on(syncs::range("W1_DB_SEEDS", "0..100"));
