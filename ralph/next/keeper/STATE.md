@@ -762,7 +762,36 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     `svrngs-keeper-test-*`, removed at the end, and no reboot. Each case
     red first, then green.
 
-- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-renew, avail-run-mac-proof] — ONE UNIT: spec §5 row 8.
+- [ ] avail-mac-plist-read — depends [avail-run-mac-renew] — ONE UNIT: the node reads its own Mac login plist by text, a blocker for qualifying Mac renewal (QA oc-cruu42, 2026-11-23).
+  - `crates/svrngs/src/cli.rs:1205–1210` (`kept_over`, from 68291fc0)
+    splits the plist's text on `SVRNGS_DIR`, and so needs the literal
+    `<key>SVRNGS_DIR</key><string>` spelling of `web/install.sh`.
+  - Since 06facd88, Share's start-chain check depends on it. A valid plist
+    with ordinary XML whitespace, or one macOS re-serialized, silently
+    stops counting as the verified start chain. The first Share then
+    grants no renewal.
+  - avail-run-mac-renew's driver matched the installer's spelling to get
+    past this. That is positive evidence, not the fix.
+  - Fix: replace only the macOS text extraction in `kept_over` with a real
+    read of `EnvironmentVariables.SVRNGS_DIR`.
+    - Use the `plist` crate version already in `Cargo.lock`, on the Mac
+      target only. Check the lock, its features and the delta.
+    - Keep the canonical root comparison.
+    - An unreadable or malformed plist, or a value of the wrong type,
+      fails closed. Only a parsed plist where the key is truly absent may
+      use the existing default.
+    - Leave the node's app-plist hash alone: it hashes raw bytes, and is
+      not a parse.
+  - Plants:
+    - the ordinary formatted plist that failed in
+      avail-run-mac-renew-4.await.log. Red today; green when the first CLI
+      Share grants through it;
+    - a wrong root, which is refused;
+    - a malformed plist, which fails closed.
+  - Size: aim within +11 counted, keeping avail-ship's +10. If it can't
+    fit, park with the measured delta. Never weaken the identity check.
+
+- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-renew, avail-run-mac-proof, avail-mac-plist-read] — ONE UNIT: spec §5 row 8.
   - `build-release.sh`, `install.sh` (always) and the Arch package, as
     Give's lines are.
   - Uninstall says what svrngs still runs.
