@@ -13,12 +13,22 @@
       "~/.cache/llama.cpp/*": "allow",
       "~/.npm/*": "allow",
       "~/.rustup/toolchains/*": "allow",
+      "~/.cargo/*": "allow",
       "~/.config/*": "deny",
       "~/.ssh/*": "deny",
       "~/.gnupg/*": "deny",
       "~/.local/share/*": "deny",
       "~/.cache/huggingface/*": "deny",
       "~/dev/*/.env*": "deny"
+    },
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.cargo/credentials*": "deny",
+      "*/.netrc": "deny",
+      "*id_rsa*": "deny",
+      "*id_ed25519*": "deny"
     },
     "edit": {
       "*": "allow",
