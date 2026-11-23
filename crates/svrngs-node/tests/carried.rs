@@ -3347,6 +3347,84 @@ async fn an_app_s_database_syncs_between_the_group_s_computers() {
     }
 }
 
+/// The sets an app may seal as one person on a computer at once
+/// (`carried.rs` `SETS_AN_HOUR`), said here apart so a change to it fails here.
+const SETS_AN_HOUR: usize = 1_800;
+
+/// **An app's writes to its database are counted in sets** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "What SQL may do": "a write refill per
+/// person that counts change sets"): Ana's Board pastes 300 cards in one
+/// write, one set, then eight loops write a card each at a time as fast as
+/// they can until refused. Every write taken, the paste's one among them,
+/// is within an hour's budget and the refill since; each loop is refused
+/// 429 `limit`, its words naming the rate, with `Retry-After`. Plant,
+/// watched failing: the refill counting nothing (no loop is refused).
+#[tokio::test]
+async fn an_app_s_writes_to_its_database_are_counted_in_sets() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 77, ana, &[]);
+    round(ana).await;
+    let (origin, _folder) = board(ana, &group).await;
+    let started = std::time::Instant::now();
+    let paste: Vec<Value> = (0..300)
+        .map(|n| json!({ "insert": "cards", "row": { "id": format!("p{n}"), "title": "pasted" } }))
+        .collect();
+    let pasted = sql(ana, &origin, json!({ "write": paste })).await;
+    assert_eq!(
+        pasted,
+        (200, json!({ "count": 300 })),
+        "a paste is one write"
+    );
+    let origin = origin.as_str();
+    let one = |w: usize| async move {
+        for n in 0.. {
+            let card =
+                json!({ "insert": "cards", "row": { "id": format!("w{w}-{n}"), "title": "fast" } });
+            let answer = at(
+                ana,
+                origin,
+                "POST",
+                "/svrngs/sql",
+                Some(json!({ "write": [card] })),
+            )
+            .await;
+            if !answer.status().is_success() {
+                let after = answer
+                    .headers()
+                    .get("retry-after")
+                    .map(|v| v.to_str().unwrap().to_owned());
+                let said: Value = answer.json().await.unwrap();
+                return (n, after, said);
+            }
+            assert!(n < SETS_AN_HOUR, "loop {w} is never refused");
+        }
+        unreachable!()
+    };
+    let loops = n0_future::join_all((0..8).map(one)).await;
+    let wrote = 1 + loops.iter().map(|(n, ..)| n).sum::<usize>();
+    let most = SETS_AN_HOUR + started.elapsed().as_secs() as usize / 2 + 1;
+    assert!(
+        (SETS_AN_HOUR..=most).contains(&wrote),
+        "an hour's sets, and the refill since: wrote {wrote}, at most {most}"
+    );
+    for (_, after, said) in loops {
+        assert_eq!(said["refused"], "limit", "{said}");
+        let words = said["words"].as_str().unwrap();
+        assert!(
+            words.contains(&format!("about {} writes a minute", SETS_AN_HOUR / 60)),
+            "the words name the rate: {words}"
+        );
+        assert!(
+            after.is_some_and(|s| s.parse::<u64>().is_ok_and(|s| s > 0)),
+            "{said}"
+        );
+    }
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
 /// **A closing lid strands no write** (svrn-docs `rings/current/APP_STATE.md`
 /// §11, W2): Ben's computer keeps Board's database, synced. Ana writes a
 /// card; 50 ms later her computer is told it will sleep, as the platform's

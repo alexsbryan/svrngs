@@ -130,6 +130,9 @@ pub struct Folders {
     carried: watch::Sender<blob::Carried>,
     /// How many files no member gave, by each folder's writer (synced.rs).
     waiting: watch::Sender<synced::Waiting>,
+    /// Each person's app writes' due time, by group, app and first key
+    /// (carried.rs `Folders::seals`).
+    sealed: watch::Sender<BTreeMap<(String, String, String), i64>>,
 }
 
 /// A group's synced folders' files where its record places them, what
@@ -211,6 +214,7 @@ impl Folders {
             woken: watch::Sender::new(BTreeMap::new()),
             carried: watch::Sender::new(BTreeMap::new()),
             waiting: watch::Sender::new(BTreeMap::new()),
+            sealed: watch::Sender::new(BTreeMap::new()),
         };
         tracing::info!(target: "folder", untagged, "folder: the store is open");
         let keeper = folders.clone();

@@ -682,6 +682,12 @@ impl Folders {
                     let words = format!("{app} writes only from your own computer for now, so this isn’t kept. Open {app} from your computer’s home page to write in it.");
                     return Ok(told(403, "elsewhere", words));
                 }
+                let wait = self.seals((group, app.as_str()), &people[key].person_key);
+                if wait > 0 {
+                    let words = format!("{app} is writing faster than an app may here, about {} writes a minute, as every computer of your group takes each one. It can write again in {wait} seconds.", SETS_AN_HOUR / 60);
+                    let refused = [(header::RETRY_AFTER, wait.to_string())];
+                    return Ok((refused, told(429, "limit", words)).into_response());
+                }
                 let (db, ops) = (db.clone(), ops.clone());
                 let wrote = tokio::task::spawn_blocking(move || db.write(&ops)).await;
                 wrote.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())))
@@ -702,6 +708,41 @@ pub(crate) async fn sleeps(State(f): State<Folders>) -> Json<Value> {
     let (took, groups) = crate::ring_sync::before_sleep(&f.host).await;
     Json(json!({ "took": took, "groups": groups }))
 }
+
+impl Folders {
+    /// The seconds before a write of the app `app` in `group` by the person
+    /// whose first key is `person` is in [`SETS_AN_HOUR`]'s budget; none if
+    /// it is now, and then counted, so writes in flight at once can't pass
+    /// it between count and write. Each write is counted as the one set it
+    /// seals at most, never by its ops or rows, so a paste of 300 is one
+    /// (svrn-docs `app-state-diligence/app-fit.md`, N5). Kept in memory, so a
+    /// restart refills it; the acts' refill reads the record (`spent`).
+    fn seals(&self, (group, app): (&str, &str), person: &str) -> i64 {
+        let now = crate::door::unix_now().unwrap_or(i64::MAX / 2);
+        let (mut wait, at) = (0, (now, SETS_AN_HOUR));
+        let key = (group.to_owned(), app.to_owned(), person.to_owned());
+        self.sealed.send_if_modified(|due| {
+            let was = due.get(&key).copied().unwrap_or(0);
+            wait = wait_at(was, at);
+            (wait == 0)
+                .then(|| due.insert(key, due_after(was, now, at)))
+                .is_some()
+        });
+        tracing::debug!(target: "folder", group, app, person, wait, "carried: a write to an app's database, counted in its person's sets an hour, or the seconds it waits");
+        wait
+    }
+}
+
+/// How many change sets an app may seal as one person on this computer at
+/// once, and, one refilling every `3600 / SETS_AN_HOUR` seconds, in an hour:
+/// this number's one home. One every 2 s is xenia's clock for a tap
+/// (`demo/runs/magnets/2026-11-17-xenia-ten/README.md:90`), so a person
+/// tapping that fast for good never waits, and an hour's worth fit at once;
+/// a page writing as fast as it can stops within seconds. The app-state
+/// spike kept no refill (svrn-docs `app-state-spike/README.md:251`), so
+/// this stands until slice E sets it from Magnets' recorded taps and a page
+/// writing for 60 seconds (APP_STATE §4, "What SQL may do").
+pub(crate) const SETS_AN_HOUR: i64 = 1_800;
 
 /// A refusal of an app's database, as its page reads one: `{refused,
 /// words}`, its short name and what to do.
@@ -818,11 +859,22 @@ pub(crate) fn spent(read: &Admission, app: &str, key: &str, more: usize) -> i64 
 /// pass no budget, so they can overdraw it; an empty budget is as far as it
 /// goes, or a bulk import would hold the app's page back for days.
 pub(crate) fn wait_after(stamps: impl Iterator<Item = i64>, now: i64) -> i64 {
-    let each = 3600 / WRITES_AN_HOUR;
-    let empty_at = |ts: i64| ts + WRITES_AN_HOUR * each;
-    let next = |due: i64, ts: i64| (due.max(ts.min(now)) + each).min(empty_at(ts.min(now)));
-    let due = stamps.fold(0, next);
-    (due - now - (WRITES_AN_HOUR - 1) * each).max(0)
+    let at = (now, WRITES_AN_HOUR);
+    wait_at(stamps.fold(0, |due, ts| due_after(due, ts, at)), at)
+}
+
+/// GCRA's due time after `due` and an entry at `ts`, read at `now`, of a
+/// budget refilling `per_hour` an hour, one every `3600 / per_hour` seconds,
+/// a stamp ahead of `now` counted as now, and an empty budget as far as it
+/// goes ([`wait_after`]).
+fn due_after(due: i64, ts: i64, (now, per_hour): (i64, i64)) -> i64 {
+    let (each, ts) = (3600 / per_hour, ts.min(now));
+    (due.max(ts) + each).min(ts + per_hour * each)
+}
+
+/// The seconds before an entry whose due time is `due` is in budget at `now`.
+fn wait_at(due: i64, (now, per_hour): (i64, i64)) -> i64 {
+    (due - now - (per_hour - 1) * (3600 / per_hour)).max(0)
 }
 
 /// The person told [`WRITES_AN_HOUR`] is spent, in words a developer can
