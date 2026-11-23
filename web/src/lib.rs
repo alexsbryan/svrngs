@@ -649,8 +649,11 @@ pub fn actor(key: Vec<u8>) -> Result<String, JsError> {
     Ok(svrngs_core::actor_of(&signing(key)?))
 }
 
-fn signing(key: Vec<u8>) -> Result<svrngs_core::SigningKey, JsError> {
+fn signing(mut key: Vec<u8>) -> Result<svrngs_core::SigningKey, JsError> {
     let bytes = <[u8; 32]>::try_from(key.as_slice()).map_err(|_| JsError::new("a key is 32 bytes"))?;
+    // Its copy here wiped, so a key outlives in this memory only the
+    // signing key made of it (web/sign.js wipes its own).
+    key.fill(0);
     Ok(svrngs_core::SigningKey::from_bytes(&bytes))
 }
 
@@ -760,19 +763,13 @@ fn unsigned(
 }
 
 /// The set the phone whose key is `key` signs for `asked`, JSON (set.rs
-/// `Asked`), asked from the page at the label `label`: `[set, home, epoch,
-/// seq]`, the set as postcard's bytes in base64; or why not, in words for
-/// the person (web/sign.js, which alone holds the key).
+/// `Asked`), asked from the page at the label `label`: postcard's bytes in
+/// base64, or why not, in words for the person (web/sign.js, which alone
+/// holds the key).
 #[wasm_bindgen]
-pub fn set_signed(key: Vec<u8>, label: String, asked: String) -> Result<js_sys::Array, JsError> {
+pub fn set_signed(key: Vec<u8>, label: String, asked: String) -> Result<String, JsError> {
     let asked = serde_json::from_str(&asked)?;
-    let (set, (home, epoch, seq)) = set::signed(&signing(key)?, &label, &asked).map_err(|e| JsError::new(&e))?;
-    Ok(js_sys::Array::of4(
-        &set.into(),
-        &home.into(),
-        &(epoch as f64).into(),
-        &(seq as f64).into(),
-    ))
+    set::signed(&signing(key)?, &label, &asked).map_err(|e| JsError::new(&e))
 }
 
 /// The act, JSON, an app `kind`'s page asks for with `body`, as the door

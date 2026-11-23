@@ -89,7 +89,7 @@ page signer-host web/vercel.json { "value":
   frame-ancestors https: | sign.html alone is framed, by a lent app at a name under the page's host, which no header a static host sends can spell for every host; sign.js answers only a parent whose origin, as the browser sets it, is a lend's label directly under its own host (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D)
 page signer web/sign.html <meta http-equiv="Content-Security-Policy" content=
   default-src 'none'
-  script-src 'self' 'wasm-unsafe-eval' | svrngs's own wasm, to check an app's entry against the grants its open issued before the signer approves it; no app code runs here, and the person's key is never loaded
+  script-src 'self' 'wasm-unsafe-eval' | svrngs's own wasm, to check an app's entry against the grants its open issued before the signer approves it, and a computer's prepare of the app's write to its own database against the page's write list before the signer signs it; no app code runs here, and the person's key is loaded only to sign a set of the framing app's own database (one group, one app, under the set domain), after that check, and wiped as the signing ends: the app never sees the key, and gets no power on a phone it lacks on a computer (the operator's "A: frame signs", 2026-11-22)
   connect-src 'self' | the wasm, from the page's own origin
   base-uri 'none'
   form-action 'none'

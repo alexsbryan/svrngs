@@ -64,7 +64,7 @@ fn asked(ops: &Value, answer: &Value) -> set::Asked {
 /// page, postcard's bytes in base64; or its words for why not.
 fn signed(asked: &set::Asked) -> Result<String, String> {
     let label = Label::carried("board", "g").to_string();
-    set::signed(&bo().0, &label, asked).map(|(set, _)| set)
+    set::signed(&bo().0, &label, asked)
 }
 
 /// `ops`, prepared on `db` for Bo's phone and signed there.
