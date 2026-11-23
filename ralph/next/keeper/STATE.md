@@ -927,5 +927,13 @@ Windows.
         bound by 6 ms.
       - Replay each alone at base 789707dc and at the tip, in the same
         image, and give the counts. Don't change any timing threshold.
-      - QA is doing the isolated relay comparison.
+      - QA's isolated relay comparison (CARGO_BUILD_JOBS=4,
+        TOKIO_WORKER_THREADS=4) passed the same focused test at both
+        pins. First bytes came at 2,458 ms on the keeper branch
+        (66bbc060) and 3,253 ms on main (789707dc), 1,423 B each. The full
+        container gate took 6,469 ms
+        (`~/.local/share/agent-mail/jobs/1795436306833-99aeb0.log:15–18,39–42`).
+        That points to an intermittent timing miss, not a slowdown from
+        this branch. One pair is not a rate: the same-image replay is
+        still the gate's evidence.
     - **Room:** 8 counted, 14 JS. JSDoc and tests are not counted.
