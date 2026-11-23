@@ -117,10 +117,10 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
         "her writes refused, saying why"
     );
     let site = ana.ask().unwrap();
-    let held = ana_states.remake(ana.clone(), SCHEMA, &bound()).unwrap();
+    let held = ana_states.remake(ana.clone()).unwrap();
     assert!(held.copied(), "never made again under a live connection");
     drop(held);
-    let ana = ana_states.remake(ana, SCHEMA, &bound()).unwrap();
+    let ana = ana_states.remake(ana).unwrap();
     assert!(!ana.copied(), "made again");
     let after = handed(&ana);
     assert_ne!(
@@ -146,4 +146,66 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
     for db in [&ana, &copy, &ben] {
         assert_eq!(cards(db), all);
     }
+}
+
+/// **A database made again keeps all it held, its marks among it** (the
+/// operator's review of `41d94397`, (b)): Ana's copy, alone, every other
+/// computer offline, writes a card twice, so her first set is pruned,
+/// outranked, and her site's mark counts both. Made again, her copy holds
+/// the card, the one set it kept, her retired site's mark at 2 with nothing
+/// kept above it, and its synced flag, and still does once restarted. Her
+/// next write is at a site of its own. Plant, watched failing: the copy made
+/// again by replaying the sets it keeps (the retired site's mark at 0, seq
+/// 2 kept above a gap that prune made).
+#[test]
+fn a_database_made_again_keeps_its_rows_marks_and_sets() {
+    let dir = tempfile::tempdir().unwrap();
+    let ana_states = states(dir.path(), 1);
+    let ana = ana_states.carry("g", "board", SCHEMA).unwrap();
+    write(&ana, put("c1", "milk")).unwrap();
+    write(&ana, put("c1", "tea")).unwrap();
+    let (asked, kept) = (
+        ana.ask().unwrap(),
+        ana.missing(&Default::default(), 4 << 20).unwrap().sets,
+    );
+    let marks: Vec<u64> = asked.marks.values().map(|m| m.get()).collect();
+    assert_eq!((marks, kept.len()), (vec![2], 1), "the first set pruned, both counted");
+    let tea = json!([{ "id": "c1", "title": "tea" }]);
+    let same = |ana: &Db| {
+        assert_eq!(cards(ana), tea);
+        assert_eq!(ana.ask().unwrap().marks, asked.marks, "the retired site's mark");
+        assert!(ana.ask().unwrap().haves.is_empty(), "nothing kept above a gap");
+        assert_eq!(ana.missing(&Default::default(), 4 << 20).unwrap().sets, kept);
+        assert!(!ana.syncing(), "its synced flag");
+    };
+    let ana = ana_states.remake(ana).unwrap();
+    same(&ana);
+    drop((ana, ana_states));
+    let ana = board(&states(dir.path(), 1));
+    same(&ana);
+    write(&ana, put("c2", "jam")).unwrap();
+    let marks = ana.ask().unwrap().marks;
+    assert_eq!(marks.len(), 2, "a site of its own beside the retired one: {marks:?}");
+}
+
+/// **A restore that fails leaves the file as it was**: Ana's copy made
+/// again where its restored copy can't be written (a directory stands at
+/// the copy's path) is refused, and her board, its rows and its mark, is
+/// still hers, open, and after a restart. Plant, watched failing: the old
+/// file taken away before the copy is checked (her card gone).
+#[test]
+fn a_restore_that_fails_leaves_the_file_as_it_was() {
+    let dir = tempfile::tempdir().unwrap();
+    let ana_states = states(dir.path(), 1);
+    let ana = ana_states.carry("g", "board", SCHEMA).unwrap();
+    write(&ana, put("c1", "milk")).unwrap();
+    let asked = ana.ask().unwrap();
+    std::fs::create_dir(dir.path().join("state/g/board.db.new")).unwrap();
+    assert!(ana_states.remake(ana).is_err(), "the restore refused");
+    let milk = json!([{ "id": "c1", "title": "milk" }]);
+    let ana = board(&ana_states);
+    assert_eq!((cards(&ana), ana.ask().unwrap()), (milk.clone(), asked.clone()));
+    drop((ana, ana_states));
+    let ana = board(&states(dir.path(), 1));
+    assert_eq!((cards(&ana), ana.ask().unwrap()), (milk, asked));
 }

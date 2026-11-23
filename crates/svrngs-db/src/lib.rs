@@ -280,46 +280,87 @@ impl States {
 
     /// `db`, a file found copied ([`Db::copied`]), made again with a fresh
     /// nonce, so a site of its own (svrn-docs
-    /// `app-state-diligence/sync-simplify-2026-11-22/`, change 5): never
-    /// under a live connection, so only once nothing but this computer's
-    /// map holds it, else given back as it is, refusing writes, to make at a
-    /// later open. A new file beside it takes every set the old one keeps,
-    /// as a call that isn't full, by the record `binds`, the old site's as
-    /// another's, keeps the old file's synced flag and the site it retires,
-    /// and is renamed into its place only once whole: a crash leaves the old
-    /// file, still flagged, to make again.
-    pub fn remake(&self, db: Arc<Db>, schema: &str, binds: &Binds) -> Result<Arc<Db>, Refused> {
+    /// `app-state-diligence/sync-simplify-2026-11-22/`, change 5): restored
+    /// whole ([`Self::restored`]), then on the copy its own site made one it
+    /// retired, another's to its clocks, kept as it was with its sets and
+    /// mark, and a new nonce's site in its place. Its phones' places it
+    /// leaves behind, since their first epoch is drawn from the new nonce
+    /// (`sync.rs`, `place`), so the file it was copied from, which hands
+    /// them on, and this one never hand one place twice.
+    pub fn remake(&self, db: Arc<Db>) -> Result<Arc<Db>, Refused> {
+        tracing::warn!(target: "state", group = db.group, app = db.app, "state: a database found copied from another computer's is made again with a fresh nonce");
+        let (old, nonce) = (db.site, drawn()?);
+        let new = svrngs_core::set::site(&db.group, &db.app, db.device.as_str(), &nonce);
+        self.restored(db, |conn| {
+            let tables = tables_of(conn)?;
+            let tx = conn.unchecked_transaction().map_err(fault)?;
+            let next = "SELECT max(ordinal) + 1 FROM crsql_site_id";
+            let next: i64 = tx.query_row(next, [], |r| r.get(0)).map_err(fault)?;
+            let run = |sql: &str, p: &[&dyn rusqlite::ToSql]| tx.execute(sql, p).map(drop).map_err(fault);
+            run("UPDATE crsql_site_id SET site_id = ?1 WHERE ordinal = 0", &[&new])?;
+            run(
+                "INSERT INTO crsql_site_id (site_id, ordinal) VALUES (?1, ?2)",
+                &[&old, &next],
+            )?;
+            for t in tables.keys().map(|t| t.replace('"', "\"\"")) {
+                run(
+                    &format!("UPDATE \"{t}__crsql_clock\" SET site_id = ?1 WHERE site_id = 0"),
+                    &[&next],
+                )?;
+            }
+            run(
+                "UPDATE svrngs_db SET nonce = ?1, copied = 0, retired = ?2",
+                &[&nonce, &old],
+            )?;
+            run("DELETE FROM svrngs_homes", &[])?;
+            tx.commit().map_err(fault)
+        })
+    }
+
+    /// `db`'s file restored whole, `change` made on the restored copy, and
+    /// the copy put in its place once it opens as this computer's (svrn-docs
+    /// `app-state-diligence/e-build-2026-11-22/`, from the operator's review
+    /// of `41d94397`): every row, clock, mark, kept set and handed place
+    /// carried as the file holds them, never replayed from the sets it
+    /// keeps, which prune has thinned. Only once nothing but this
+    /// computer's map holds `db`, so no write lands between the copy and the
+    /// swap, else given back as it is, to restore at a later open. On any
+    /// failure the old file stays, open as it was, and the copy goes.
+    fn restored(
+        &self,
+        db: Arc<Db>,
+        change: impl FnOnce(&Connection) -> Result<(), Refused>,
+    ) -> Result<Arc<Db>, Refused> {
         let at = (db.group.clone(), db.app.clone());
         let mut dbs = self.dbs.lock().expect("the databases' lock");
         let held = Arc::strong_count(&db) > 2;
-        tracing::warn!(target: "state", group = at.0, app = at.1, held, "state: a database found copied from another computer's is made again with a fresh nonce, or waits while a connection holds it");
-        if held {
-            return Ok(db);
-        }
-        dbs.remove(&at);
         let path = self.dir.join(&at.0).join(format!("{}.db", at.1));
-        let fresh = path.with_extension("db.new");
-        let _ = std::fs::remove_file(&fresh);
-        let kept = "SELECT bytes FROM svrngs_sets WHERE bytes IS NOT NULL";
-        let kept: Vec<Vec<u8>> = sync::rows(&db.conn(), kept, [], |r| r.get(0)).map_err(fault)?;
-        let sets = kept.iter().map(|b| postcard::from_bytes(b).map_err(fault));
-        let call = Call {
-            sets: sets.collect::<Result<_, _>>()?,
-            ..Call::default()
+        let copy = path.with_extension("db.new");
+        let _ = std::fs::remove_file(&copy);
+        let made = (!held).then(|| {
+            db.conn()
+                .execute("VACUUM INTO ?1", [copy.to_string_lossy()])
+                .map_err(fault)?;
+            change(&Open(Some(Connection::open(&copy).map_err(fault)?)))?;
+            drop(Db::open(&copy, (&at.0, &at.1), (None, false), self.key.clone())?);
+            let closed = !copy.with_extension("db.new-wal").exists();
+            closed
+                .then_some(())
+                .ok_or_else(|| fault("the restored copy's WAL stayed open"))
+        });
+        tracing::debug!(target: "state", group = at.0, app = at.1, held, refused = ?made.as_ref().and_then(|m| m.as_ref().err()), "state: a database restored whole into a copy, changed there and opened as this computer's, then put in its place; or left as it was, while a connection holds it or the copy is refused");
+        let Some(Ok(())) = made else {
+            let _ = std::fs::remove_file(&copy);
+            return made.unwrap_or(Ok(())).map(|()| db);
         };
-        let (retired, synced) = (db.site, db.synced.load(Relaxed));
+        dbs.remove(&at);
         drop(db);
-        let new = Db::open(&fresh, (&at.0, &at.1), (Some(schema), synced), self.key.clone())?;
-        new.ingest(&call, binds, None)?;
-        let retire = "UPDATE svrngs_db SET retired = ?1";
-        new.conn().execute(retire, [retired]).map_err(fault)?;
-        drop(new);
         for gone in ["db-wal", "db-shm"] {
             let _ = std::fs::remove_file(path.with_extension(gone));
         }
-        std::fs::rename(&fresh, &path).map_err(fault)?;
+        std::fs::rename(&copy, &path).map_err(fault)?;
         drop(dbs);
-        self.made(&at.0, &at.1, (Some(schema), false))
+        self.made(&at.0, &at.1, (None, false))
     }
 
     /// Each database of `group` this computer has open closed, as it drops,
@@ -811,13 +852,7 @@ const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT 
 fn new_tables(conn: &mut Connection, (schema, root): (&str, bool), names: (&str, &str, &str)) -> Result<(), Refused> {
     let (group, app, device) = names;
     schema::made(conn, schema)?;
-    let mut nonce = [0; 16];
-    #[expect(
-        clippy::disallowed_methods,
-        reason = "a new database's nonce is drawn where it is made"
-    )]
-    let drawn = getrandom::fill(&mut nonce);
-    drawn.map_err(fault)?;
+    let nonce = drawn()?;
     let site = svrngs_core::set::site(group, app, device, &nonce);
     conn.execute_batch(OWN).map_err(fault)?;
     let own = "INSERT INTO svrngs_db (nonce, schema, synced) VALUES (?1, ?2, ?3)";
@@ -826,6 +861,14 @@ fn new_tables(conn: &mut Connection, (schema, root): (&str, bool), names: (&str,
     conn.execute("UPDATE crsql_site_id SET site_id = ?1 WHERE ordinal = 0", [site])
         .map_err(fault)
         .map(drop)
+}
+
+/// A nonce for a database made, or made again, drawn where it is made.
+fn drawn() -> Result<svrngs_core::set::Nonce, Refused> {
+    let mut nonce = [0; 16];
+    #[expect(clippy::disallowed_methods, reason = "a database's nonce is drawn where it is made")]
+    let drawn = getrandom::fill(&mut nonce);
+    drawn.map(|()| nonce).map_err(fault)
 }
 
 /// Each of the app's tables in `conn`, with its columns and key, as the

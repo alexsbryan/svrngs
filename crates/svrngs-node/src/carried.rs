@@ -633,12 +633,9 @@ impl Folders {
         let schema = String::from_utf8_lossy(&schema.ok_or(NO_SCHEMA)?).into_owned();
         let db = self.host.states.open(group, app.as_str(), Some(&schema));
         // One found copied from another computer's is made again, once
-        // nothing else holds it, by the record's binding (svrngs-db `remake`).
+        // nothing else holds it, restored whole (svrngs-db `remake`).
         match db {
-            Ok(db) if db.copied() => {
-                let bound = crate::ring_sync::bound(&self.host.rail, group);
-                Ok(self.host.states.remake(db, &schema, &bound))
-            }
+            Ok(db) if db.copied() => Ok(self.host.states.remake(db)),
             db => Ok(db),
         }
     }
