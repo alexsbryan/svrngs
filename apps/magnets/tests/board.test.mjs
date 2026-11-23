@@ -71,7 +71,7 @@ export const LAWS = {
     const db = app.database(app.schema);
     const post = (body) => app.posted(db, JSON.stringify(body));
     const read = async () => post({ sql: app.BOARD });
-    // A tap as app.js `move` sends one: one op, a put at the position `next`
+    // A tap as index.js `move` sends one: one op, a put at the position `next`
     // reads from the board the page holds, or a back.
     const tap = async (id) => post({ write: [app.put(id, app.next((await read()).rows))] });
     const all = async () =>

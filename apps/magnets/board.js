@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Magnets' board apart from the page (app.js): the read it subscribes to,
+// Magnets' board apart from the page (index.js): the read it subscribes to,
 // the writes a tap sends, the sentence and tray it draws from the rows, and
 // every sentence it says. Nothing here reads the page or the network, so its
 // laws run in Node (tests/board.test.mjs).
