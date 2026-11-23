@@ -3960,7 +3960,7 @@ fn carried(group: &str, ops: &Value, prepared: &Value) -> Value {
         by: text("by"),
         sig: text("sig"),
     };
-    json!({ "carry": set::signed(&signing(7), &label, &asked).unwrap() })
+    json!({ "carry": set::signed(&signing(7), &label, &asked).unwrap().0 })
 }
 
 // The phone's signer, the page's file compiled here, formatted by its own

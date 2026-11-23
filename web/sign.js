@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The group's signer (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D),
-// framed by a lent app's pages at the group's origin. It runs no app code,
-// and loads the person's key only to sign a set of the framing app's own
-// database (`setsSigned`). It holds one approver per app, the key
+// framed by a lent app's pages at the group's origin. It runs no app code
+// and never loads the person's key. It holds one approver per app, the key
 // the group's page minted for that app's open: adopted on the app's first
 // ask from the open's seal and the `__Host-` cookie the page left, kept in
 // this origin's own store by the app's label, the cookie then deleted. With
@@ -10,7 +9,7 @@
 // approves an app's exact entry while the open's pass is live, by its own
 // clock. Every refusal tells the person to open the app again from the
 // group's page.
-import init, { actor, approve_line, set_signed } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import {
   base64url,
   ed25519,
@@ -168,11 +167,10 @@ class Told extends Error {}
 const AGAIN = 'Open this app again from your group’s page to write in it.';
 
 // What the app framing this signer `asked`, answered on `port`: its open
-// adopted, a write to its database signed, or an entry approved; anything
-// else refused, by a throw.
+// adopted, or an entry approved; anything else refused, by a throw.
 /**
- * @param {MessageEvent<{ opening?: Handoff, saved?: string, set?: SetAsked } | null>} asked an open
- *   to adopt, a set to sign, else an entry, which `entryAsked` reads
+ * @param {MessageEvent<{ opening?: Handoff, saved?: string } | null>} asked an open to adopt, else an
+ *   entry, which `entryAsked` reads
  * @param {MessagePort} port
  */
 async function answered(asked, port) {
@@ -189,76 +187,7 @@ async function answered(asked, port) {
     port.postMessage({ opened: true });
     return;
   }
-  if (asked.data?.set) {
-    port.postMessage(await setsSigned(asked.data.set, label, now));
-    return;
-  }
   port.postMessage({ pass: await entryApproved(asked.data, label, now) });
-}
-
-// A computer's prepare of the framing app's write to its own database, as
-// lend.js `setWritten` hands it on: the open it is under, the page's ops,
-// the prepare's text, the computer that signed it and how, and the places
-// of the sets a computer has confirmed since.
-/**
- * @typedef {{ authority: Handoff, ops: unknown, prepared: string, by: string, sig: string,
- *   confirmed: string[] }} SetAsked
- */
-
-// The framing app's write to its own database, signed as this phone (svrn-docs
-// rings/current/APP_STATE.md §4, "Phones"; the operator's "A: frame signs",
-// 2026-11-22): under a live open this browser's group page issued for the
-// app, prepared by a computer that open names, checked against the page's
-// ops by svrngs's own wasm (web/src/set.rs, `set_signed`), and signed with
-// the person's key in its group, unsealed for that signing alone and wiped
-// as it ends. The app never holds the key, and gets no power on a phone it
-// lacks on a computer: a set of its own database, in its own group, as its
-// person. Each set signed is kept here by its place, its computer, epoch
-// and seq, until a computer confirms it, and every answer gives the kept
-// ones back to carry; a place already kept is never signed again (`signed`
-// false), so the worker carries the kept set there first.
-/**
- * @param {SetAsked} asked
- * @param {string} label
- * @param {number} now in seconds
- */
-async function setsSigned(asked, label, now) {
-  await approver(label, asked.authority, now);
-  const lend = asked.authority.lends.find((one) => one.label === label);
-  const computers = [lend?.key, ...(lend?.lenders ?? []).map((one) => one.key)];
-  if (!lend?.group || !computers.includes(asked.by)) {
-    throw new Error(`${asked.by} is no computer of this open`);
-  }
-  const { epoch, seq } = JSON.parse(asked.prepared);
-  const [id, place] = [`${lend.group}/${lend.kind}`, `${asked.by}/${epoch}/${seq}`];
-  const signing = JSON.stringify({ ...asked, group: lend.group, app: lend.kind });
-  const group = (await store.groups()).find((one) => one.id === lend.group);
-  const key = await store.unseal(/** @type {NonNullable<typeof group>} */ (group));
-  /** @type {{ sets: [string, string][], signed: boolean, refused?: string }} */
-  const answer = { sets: [], signed: false };
-  try {
-    await store.stored('svrngs-sets', 'id', 'readwrite', (objects) => {
-      const read = objects.get(id);
-      read.onsuccess = () => {
-        /** @type {[string, string][]} */
-        const kept = read.result?.sets ?? [];
-        const sets = kept.filter(([at]) => !asked.confirmed.includes(at));
-        const signed = !sets.some(([at]) => at === place);
-        try {
-          if (signed) sets.push([place, set_signed(key, label, signing)]);
-          Object.assign(answer, { sets, signed });
-        } catch (/** @type {any} */ error) {
-          answer.refused = error.message;
-        }
-        objects.put({ id, sets: answer.sets });
-      };
-      return read;
-    });
-  } finally {
-    key.fill(0);
-  }
-  if (answer.refused) throw new Told(answer.refused);
-  return { sets: answer.sets, signed: answer.signed };
 }
 
 // The entry asked, `data`, approved under a grant the open kept for

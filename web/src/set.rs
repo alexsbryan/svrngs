@@ -70,9 +70,10 @@ struct Op<'v> {
     named: Vec<(&'v String, Sql)>,
 }
 
-/// The set `key` signs for `asked`, postcard's bytes in base64, under the
-/// label `label` of the app whose page asked, or the words for why not.
-pub fn signed(key: &SigningKey, label: &str, asked: &Asked) -> Result<String, String> {
+/// The set `key` signs for `asked`, its place `(home, epoch, seq)` beside
+/// it, under the label `label` of the app whose page asked, or the words
+/// for why not.
+pub fn signed(key: &SigningKey, label: &str, asked: &Asked) -> Result<(String, (String, u64, u64)), String> {
     let why = |what| {
         format!(
             "This phone didn’t sign {}’s write, since {what}. Try again, or open it through another computer.",
@@ -104,7 +105,7 @@ pub fn signed(key: &SigningKey, label: &str, asked: &Asked) -> Result<String, St
         p.epoch,
     ));
     let set = postcard::to_allocvec(&set).expect("a set is written in memory");
-    Ok(STANDARD.encode(set))
+    Ok((STANDARD.encode(set), (asked.by.clone(), p.epoch, p.seq)))
 }
 
 /// A prepare read: it, its changes as bytes and as rows, postcard's whole,
