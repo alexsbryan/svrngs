@@ -574,6 +574,19 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
 
   Demo: the first demo again, from the page, in WebKit.
 
+- [ ] avail-run-stop-gap — depends [avail-run-containers] — ONE UNIT (keeper): a Stop during the wrapper's restart gap leaves the pod serving (QA oc-cruu42 at b94aa922).
+  - `serve-card … --stop` with no MAINPID returns early. `KillMode=process`
+    leaves the pod behind on purpose, so Stop pressed after the wrapper
+    dies, and before systemd restarts it, would leave Actual serving after
+    Sam stopped it. That breaks C3: stopped stays stopped.
+  - Fix: an explicit Stop cleans the owned pod by its label and full ID
+    (`runtime::stop_owned`), whether or not there is a MAINPID.
+  - Plant: kill the wrapper, then Stop before the restart. Today the pod
+    still answers (red). After the fix, the pod is gone, the unit stays
+    stopped through a restart of the user manager, its volume and marker
+    are kept, and a same-name foreign pod is untouched (green).
+  - Size: keeper only. Counted: none expected.
+
 - [ ] avail-run-mac — depends [avail-unmagic] — ONE UNIT (keeper): spec §5 row 5.
   - Fork commonwealth-ai `svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0`,
     lines 296–395, as `launchd.rs`: unchanged first, with ported-from lines.
