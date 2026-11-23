@@ -311,7 +311,8 @@ function drawPlan(plan) {
   el.querySelector('.votes').textContent = b.total(plan.votes);
   const vote = el.querySelector('.vote');
   vote.setAttribute('aria-pressed', String(plan.yours));
-  vote.setAttribute('aria-describedby', el.querySelector('.title').id);
+  for (const named of [vote, el.querySelector('.off')])
+    named.setAttribute('aria-describedby', el.querySelector('.title').id);
   el.querySelector('.nothing').hidden = plan.things.length + plan.others.length > 0;
   fill(
     el.querySelector('.things'),
@@ -350,6 +351,8 @@ function draw() {
   const ids = new Set(plans.map((p) => p.id));
   for (const [id, el] of shown)
     if (!ids.has(id)) {
+      // Focus in a plan that left goes to the list's heading, not the page's top.
+      if (el.contains(document.activeElement)) $('plans-heading').focus();
       el.remove();
       shown.delete(id);
     }

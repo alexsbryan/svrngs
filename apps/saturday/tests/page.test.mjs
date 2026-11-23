@@ -3,7 +3,7 @@
 // browser does with it. Ana on a computer (Chromium) and Bo on a phone
 // (WebKit as an iPhone) plan one Saturday and see each other's changes,
 // pushed, and what Ana is typing survives Bo's. The keyboard alone adds a
-// plan and votes. The page says still syncing, unreachable, a write
+// plan, votes and takes it off, focus kept on the page. The page says still syncing, unreachable, a write
 // refused and a paste too long in board.js's words, and names a claimer
 // who joined after it opened. The board's reads and writes are
 // board.test.mjs's laws. Without Playwright or its browser this fails
@@ -151,7 +151,7 @@ test('Ana on a computer and Bo on a phone plan one Saturday', async () => {
   }
 });
 
-test('the keyboard alone adds a plan and votes, focus drawn where it is (chromium)', async () => {
+test('the keyboard alone adds a plan, votes and takes it off, focus drawn where it is (chromium)', async () => {
   const standin = await serve();
   const { context, close } = await launch('chromium', OPEN);
   try {
@@ -173,6 +173,11 @@ test('the keyboard alone adds a plan and votes, focus drawn where it is (chromiu
     );
     const ring = await vote.evaluate((el) => getComputedStyle(el).outlineStyle);
     assert.notEqual(ring, 'none', 'focus is drawn');
+    // Taken off by keyboard, the plan goes and focus lands on the list's heading.
+    await p.plan('Breakfast').getByRole('button', { name: 'Take this plan off the board' }).focus();
+    await p.page.keyboard.press('Enter');
+    await p.plan('Breakfast').waitFor({ state: 'detached', ...WAIT });
+    assert.equal(await p.page.evaluate(() => document.activeElement.id), 'plans-heading');
     assert.deepEqual(p.errors, []);
   } finally {
     await close();
