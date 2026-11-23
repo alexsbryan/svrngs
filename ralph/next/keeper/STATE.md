@@ -344,7 +344,21 @@ envelope.
   check, each planted first: an interruption at each stage is reconciled on
   this host, and a retry never stops a second process (T1).
 
-- [ ] avail-publish — depends [avail-economize] — ONE UNIT: spec §3.2, §3.7
+- [ ] avail-plan-economize — depends [avail-plan] — ONE UNIT, behaviour kept: an economizing pass over the planner avail-plan landed (`crates/svrngs-node/src/plan.rs`, `plan/words.rs`, and their wiring in `lib.rs` and `lean_check.py`). The operator, 2026-11-22: "Do it", after avail-plan landed +309 counted lines against the spec's ~+140 (befdaf97's `Size:`), leaving 126 of the envelope's +435 for publish (~+40), terminal (~+65), page (~+30) and Mac renewal (~+150).
+  - Preserving cuts only, each its own commit, each ratcheting the caps:
+    repeated shapes folded, enums and matches that say the same thing
+    twice, words built from one table.
+  - The table test (`tests/availability_plan.rs`, P1, P2) and P4 hold
+    unchanged throughout.
+  - Recorded in `demo/runs/economize/<date>-plan/SURVEY.md`, which ends by
+    re-estimating the remaining rows against what is left. It names the
+    spec's cuts that would close any gap (spec §6: the Mac container
+    witness −60, Restart −10).
+
+  check: `cargo test -p svrngs-node --test availability_plan` green after
+  each cut; P4's lean rule; fresh lean counts.
+
+- [ ] avail-publish — depends [avail-economize, avail-plan-economize] — ONE UNIT: spec §3.2, §3.7
   W1, W2; row R-publish.
   - A share's revision, with tombstones on withdrawal.
   - One conditional publish through `lend::mutate`: binding, grant,
