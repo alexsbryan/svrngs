@@ -18,6 +18,7 @@ publish = false
 # The `svrngs-keeper` command's errors (src/main.rs), as Give's.
 anyhow = "1"
 blake3 = "1.8"
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # The card is the app's own compose.yaml. serde_yaml 0.9 is marked
 # deprecated by its author and still the YAML reader the registry here

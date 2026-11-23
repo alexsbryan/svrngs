@@ -165,7 +165,14 @@ impl SystemdUser {
             let stderr = String::from_utf8_lossy(&out.stderr);
             return Err(format!("loginctl show-user {user} failed: {}", stderr.trim()));
         }
-        Ok(linger_is_enabled(&String::from_utf8_lossy(&out.stdout)))
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        if linger_is_enabled(&stdout) {
+            Ok(true)
+        } else if stdout.lines().any(|line| line.trim() == "Linger=no") {
+            Ok(false)
+        } else {
+            Err(format!("loginctl gave no Linger state for {user}"))
+        }
     }
 
     /// `systemctl --user show-environment`: the environment the user's

@@ -70,8 +70,16 @@ impl Places {
         self.data.join(name.as_str())
     }
 
-    fn unit_path(&self, name: &Name) -> PathBuf {
+    pub fn unit_path(&self, name: &Name) -> PathBuf {
         self.units.join(unit_name(name))
+    }
+
+    pub fn takeover_path(&self, name: &Name) -> PathBuf {
+        self.card_dir(name).join("takeover.json")
+    }
+
+    pub fn interrupted_path(&self, name: &Name) -> PathBuf {
+        self.card_dir(name).join("interrupted")
     }
 }
 
@@ -185,12 +193,23 @@ pub fn keep(
     boot: impl FnOnce() -> Boot,
 ) -> Result<Kept, KeptError> {
     let card = Card::parse(text)?;
+    let name = Name::new(&name.map_or_else(|| name_of(&card.title), str::to_string))?;
+    keep_card(systemd, places, text, &card, name, boot)
+}
+
+pub fn keep_card(
+    systemd: &SystemdUser,
+    places: &Places,
+    text: &str,
+    card: &Card,
+    name: Name,
+    boot: impl FnOnce() -> Boot,
+) -> Result<Kept, KeptError> {
     let Some(program) = &card.native else {
         tracing::debug!(title = card.title, "refused: not a native card");
-        return Err(KeptError::NotNative(card.title));
+        return Err(KeptError::NotNative(card.title.clone()));
     };
     let boot = boot();
-    let name = Name::new(&name.map_or_else(|| name_of(&card.title), str::to_string))?;
     let dir = places.card_dir(&name);
     let (path, previous) = (dir.join("compose.yaml"), dir.join("previous.yaml"));
     let before = std::fs::read_to_string(&path).ok();
@@ -211,7 +230,7 @@ pub fn keep(
         std::fs::write(&path, text).map_err(file(&path))?;
     }
     let (unit, unit_path) = (unit_name(&name), places.unit_path(&name));
-    let content = native(&name, &card, program);
+    let content = native(&name, card, program);
     let unit_before = std::fs::read_to_string(&unit_path).ok();
     let user_unit = UserUnit {
         name: &unit,
@@ -221,6 +240,7 @@ pub fn keep(
         what: "programs it keeps",
     };
     systemd.install(&user_unit, true).map_err(KeptError::Systemd)?;
+    clear_interrupted(places, &name)?;
     if boot == Boot::TurnOn {
         systemd.ensure_linger(user_unit.prefix, user_unit.what);
     }
@@ -271,10 +291,38 @@ pub fn stop(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name, 
 /// Start it, and at each boot again: `enable --now`.
 pub fn start(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name, KeptError> {
     let (name, unit) = kept(places, name)?;
+    let active = systemd.show(&unit, &["ActiveState"]).map_err(KeptError::Systemd)?;
+    if active.trim() == "ActiveState=failed" {
+        tracing::debug!(unit, "kept:start_reset_failed");
+        systemd
+            .ctl(&["--user", "reset-failed", &unit])
+            .map_err(KeptError::Systemd)?;
+    } else {
+        tracing::debug!(unit, state = active.trim(), "kept:start_without_reset");
+    }
     systemd
         .ctl(&["--user", "enable", "--now", &unit])
         .map_err(KeptError::Systemd)?;
+    clear_interrupted(places, &name)?;
     Ok(name)
+}
+
+/// Restart a running unit. Only an explicit `start` undoes a stop.
+pub fn restart(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name, KeptError> {
+    let (name, unit) = kept(places, name)?;
+    systemd
+        .ctl(&["--user", "try-restart", &unit])
+        .map_err(KeptError::Systemd)?;
+    Ok(name)
+}
+
+fn clear_interrupted(places: &Places, name: &Name) -> Result<(), KeptError> {
+    let path = places.interrupted_path(name);
+    match std::fs::remove_file(&path) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(file(&path)(e)),
+    }
 }
 
 /// Run it here no longer: its unit is stopped and deleted. Its card stays,
@@ -284,11 +332,13 @@ pub fn remove(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Path
     systemd
         .uninstall(&unit, &places.unit_path(&name))
         .map_err(KeptError::Systemd)?;
+    clear_interrupted(places, &name)?;
     Ok(places.card_dir(&name))
 }
 
 /// Whether a kept card's unit runs, as systemd answered.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Running {
     /// `active`, since the time systemd gave (`HH:MM`), if it gave one.
     Since(Option<String>),
@@ -301,7 +351,8 @@ pub enum Running {
 }
 
 /// When a kept card's unit starts.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Starts {
     /// Enabled, and the user's manager lingers: at boot, before login.
     AtBoot,
@@ -314,7 +365,7 @@ pub enum Starts {
 }
 
 /// A kept card's unit, as `systemctl --user show` reads it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Status {
     pub running: Running,
     pub starts: Starts,
@@ -322,7 +373,8 @@ pub struct Status {
 }
 
 /// What `list` shows of one card in the data folder.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Row {
     Kept {
         name: String,
@@ -338,6 +390,11 @@ pub enum Row {
     Unread {
         name: String,
         why: String,
+    },
+    Interrupted {
+        name: String,
+        port: u16,
+        stage: String,
     },
 }
 
@@ -429,6 +486,17 @@ fn row(systemd: &SystemdUser, places: &Places, name: String, lingers: &Result<bo
     if !places.unit_path(&n).exists() {
         return Row::Removed { name, dir };
     }
+    match std::fs::read_to_string(places.interrupted_path(&n)) {
+        Ok(stage) => {
+            return Row::Interrupted {
+                name,
+                port: card.door.port,
+                stage,
+            };
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return unread(e.to_string()),
+    }
     let mut properties = SHOWN.to_vec();
     properties.push("ActiveEnterTimestamp");
     match systemd
@@ -478,6 +546,10 @@ impl std::fmt::Display for Row {
                 dir.display()
             ),
             Row::Unread { name, why } => write!(f, "{name}   could not be read: {why}"),
+            Row::Interrupted { name, stage, .. } => write!(
+                f,
+                "{name}   isn't running: moving it didn't finish ({stage}). Start it with svrngs-keeper start {name}"
+            ),
         }
     }
 }

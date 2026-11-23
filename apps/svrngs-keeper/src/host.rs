@@ -7,7 +7,6 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::os::unix::process::CommandExt;
-use std::path::Path;
 use std::time::{Duration, Instant};
 
 use rustix::process::{Pid, PidfdFlags, Signal, pidfd_open, pidfd_send_signal};
@@ -80,7 +79,7 @@ pub fn process(pid: u32) -> Result<Proc, String> {
             })
         })
     };
-    Ok(Proc {
+    let proc = Proc {
         pid,
         stat,
         exe: link(pid, "exe")?,
@@ -89,7 +88,25 @@ pub fn process(pid: u32) -> Result<Proc, String> {
         env,
         cgroup,
         typing: tty && reading(),
-    })
+    };
+    if started(pid)? != Some(stat.start) {
+        return Err(format!("pid {pid} changed while it was read"));
+    }
+    Ok(proc)
+}
+
+pub fn started(pid: u32) -> Result<Option<u64>, String> {
+    let path = format!("/proc/{pid}/stat");
+    let raw = match std::fs::read_to_string(&path) {
+        Ok(raw) => raw,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(format!("{path}: {e}")),
+    };
+    let parsed = stat(&raw).ok_or_else(|| format!("cannot read {path}"))?;
+    let state = raw
+        .rsplit_once(')')
+        .and_then(|(_, fields)| fields.split_whitespace().next());
+    Ok((state != Some("Z")).then_some(parsed.start))
 }
 
 /// The port's one listening process, and each parent that comes with it.
@@ -152,13 +169,31 @@ fn connect(at: &str) -> Result<TcpStream, String> {
 
 /// `GET <path>` over HTTP/1.0: the status and the body.
 pub fn get(addr: &str, port: u16, path: &str) -> Result<(u16, String), String> {
+    http(addr, port, path, true)
+}
+
+#[expect(clippy::disallowed_methods, reason = "the host adapter bounds the whole HTTP probe")]
+fn http(addr: &str, port: u16, path: &str, body: bool) -> Result<(u16, String), String> {
     let at = format!("{addr}:{port}");
     let mut s = connect(&at)?;
-    s.set_read_timeout(Some(Duration::from_secs(3)))
+    let end = Instant::now() + Duration::from_secs(3);
+    s.set_write_timeout(Some(Duration::from_secs(3)))
         .map_err(|e| e.to_string())?;
     write!(s, "GET {path} HTTP/1.0\r\nHost: {at}\r\n\r\n").map_err(|e| format!("{at}: {e}"))?;
     let mut got = Vec::new();
-    let _ = s.read_to_end(&mut got);
+    let mut buf = [0; 8192];
+    loop {
+        let left = end.saturating_duration_since(Instant::now());
+        if left.is_zero() || got.len() >= 1_048_576 {
+            return Err(format!("{at} did not finish a bounded HTTP reply"));
+        }
+        s.set_read_timeout(Some(left)).map_err(|e| e.to_string())?;
+        let n = s.read(&mut buf).map_err(|e| format!("{at}: {e}"))?;
+        got.extend_from_slice(&buf[..n]);
+        if n == 0 || (!body && got.windows(2).any(|w| w == b"\r\n")) {
+            break;
+        }
+    }
     let got = String::from_utf8_lossy(&got);
     let (head, body) = got.split_once("\r\n\r\n").unwrap_or((&got, ""));
     let status = head
@@ -173,7 +208,7 @@ pub fn get(addr: &str, port: u16, path: &str) -> Result<(u16, String), String> {
 /// otherwise.
 pub fn answers(addr: &str, port: u16, http: bool) -> bool {
     if http {
-        return get(addr, port, "/").is_ok();
+        return self::http(addr, port, "/", false).is_ok();
     }
     connect(&format!("{addr}:{port}")).is_ok()
 }
@@ -200,77 +235,104 @@ pub fn within(secs: u64, mut ready: impl FnMut() -> bool) -> bool {
 /// checked against the one read, then SIGTERM goes to the adopted process
 /// first and down to the port's. What still holds the port after 10 s is
 /// sent SIGKILL.
-pub fn stop(procs: &[Proc], port: u16) -> Result<(), String> {
+pub fn stop(procs: &[Identity], port: u16) -> Result<(), String> {
+    let listener = procs.first().ok_or("no listener was recorded")?;
     let mut fds = Vec::new();
     for p in procs.iter().rev() {
         let pid = i32::try_from(p.pid).ok().and_then(Pid::from_raw).ok_or("pid 0")?;
         let fd = pidfd_open(pid, PidfdFlags::empty()).map_err(|e| format!("pid {} is gone ({e})", p.pid))?;
-        let now = stat(&text(p.pid, "stat")?).map(|s| s.start);
-        if now != Some(p.stat.start) {
+        let now = started(p.pid)?;
+        if now != Some(p.start) {
             tracing::debug!(
                 pid = p.pid,
                 ?now,
-                read = p.stat.start,
+                read = p.start,
                 "refused: another process has its pid now"
             );
             return Err(format!("pid {} is another process now, so nothing was stopped", p.pid));
         }
         fds.push(fd);
     }
+    let sockets = ss(port)?;
+    if !owns(&sockets, |pid| {
+        pid == listener.pid && started(pid) == Ok(Some(listener.start))
+    }) {
+        return Err(format!("another process took port {port} before the stop"));
+    }
     for fd in &fds {
         let _ = pidfd_send_signal(fd, Signal::TERM);
     }
-    let free = || ss(port).is_ok_and(|s| s.is_empty());
-    if within(10, free) {
+    let gone = || procs.iter().all(|p| started(p.pid).is_ok_and(|s| s != Some(p.start)));
+    if within(10, gone) {
         return Ok(());
     }
-    tracing::debug!(port, "still held 10 s after SIGTERM: SIGKILL");
+    tracing::debug!(port, "takeover:original_still_alive_sigkill");
     for fd in &fds {
         let _ = pidfd_send_signal(fd, Signal::KILL);
     }
-    if within(2, free) {
+    if within(2, gone) {
         Ok(())
     } else {
-        Err(format!("port {port} is still held after SIGKILL"))
+        Err(format!(
+            "the original process for port {port} is still alive after SIGKILL"
+        ))
     }
 }
 
-/// Whether `port` is held by `unit`'s own process running `exe`, and
-/// answers.
-pub fn held_by(port: u16, unit: &str, exe: &str, addr: &str, http: bool) -> bool {
-    let Ok(sockets) = ss(port) else { return false };
-    let pids: Vec<u32> = sockets.iter().flat_map(|s| s.pids.clone()).collect();
-    let ours = !pids.is_empty()
-        && pids
+/// Every socket has only holders that were read and match.
+pub fn owns(sockets: &[Listen], mut matches: impl FnMut(u32) -> bool) -> bool {
+    !sockets.is_empty()
+        && sockets
             .iter()
-            .all(|pid| process(*pid).is_ok_and(|p| p.exe == exe && p.cgroup.ends_with(&format!("/{unit}"))));
-    ours && answers(addr, port, http)
+            .all(|s| !s.pids.is_empty() && s.pids.iter().copied().all(&mut matches))
 }
 
-/// Start `top` again as it was: its program under its first argument, its
-/// arguments, its folder and its whole environment, in a process group of
-/// its own, its output appended to `log`.
-pub fn start_again(top: &Proc, log: &Path) -> Result<u32, String> {
-    let out = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(log)
-        .map_err(|e| format!("{}: {e}", log.display()))?;
-    let err = out.try_clone().map_err(|e| e.to_string())?;
-    let mut cmd = std::process::Command::new(&top.exe);
-    if let Some(argv0) = top.argv.first() {
-        cmd.arg0(argv0);
+pub fn in_group(pid: u32, group: &str, exe: &str) -> bool {
+    link(pid, "exe").is_ok_and(|p| p == exe)
+        && text(pid, "cgroup").is_ok_and(|groups| {
+            groups
+                .lines()
+                .filter_map(|l| l.strip_prefix("0::"))
+                .any(|g| g == group || g.strip_prefix(group).is_some_and(|s| s.starts_with('/')))
+        })
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Identity {
+    pub pid: u32,
+    pub start: u64,
+}
+
+impl From<&Proc> for Identity {
+    fn from(p: &Proc) -> Self {
+        Self {
+            pid: p.pid,
+            start: p.stat.start,
+        }
     }
-    let child = cmd
-        .args(top.argv.iter().skip(1))
-        .current_dir(&top.cwd)
-        .env_clear()
-        .envs(top.env.iter().flatten().map(|(k, v)| (k, v)))
-        .stdin(std::process::Stdio::null())
-        .stdout(out)
-        .stderr(err)
-        .process_group(0)
-        .spawn()
-        .map_err(|e| format!("start {}: {e}", top.exe))?;
-    Ok(child.id())
+}
+
+/// The adopted command and its exact inputs, held only in the private journal.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Original {
+    pub exe: String,
+    pub argv: Vec<String>,
+    pub cwd: String,
+    pub env: Vec<(String, String)>,
+}
+
+impl Original {
+    /// The scope's helper execs, so it leaves no supervisor behind.
+    pub fn exec(&self) -> std::io::Error {
+        let mut cmd = std::process::Command::new(&self.exe);
+        if let Some(argv0) = self.argv.first() {
+            cmd.arg0(argv0);
+        }
+        cmd.args(self.argv.iter().skip(1))
+            .current_dir(&self.cwd)
+            .env_clear()
+            .envs(self.env.iter().map(|(k, v)| (k, v)))
+            .stdin(std::process::Stdio::null())
+            .exec()
+    }
 }

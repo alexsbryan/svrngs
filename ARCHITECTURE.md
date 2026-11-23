@@ -974,15 +974,19 @@ changed, under upstream's stock rustfmt and one clippy allowance
 (`src/lib.rs`). A native card (`x-svrngs.native`, refused by the runtime)
 renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
 `src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
-starts and removes one, and supervises nothing. `tests/host.sh` proves it
+starts, restarts and removes one, and supervises nothing. `tests/host.sh` proves it
 under a real user manager. `keep <port>` keeps what runs on a port:
 `src/promote.rs` decides, purely, from `ss -ltnpH` and `/proc` text which
 process to adopt (a wrapper up to the terminal's shell), what it declines, and
 the card: llama-server's from `cards/llama-server` and its `/props`, anything
-else copied with no environment. `src/host.rs` reads the host, stops the
-original by pidfd, checks the unit's own process answers within 30 s, and
-otherwise starts the original again as it was; `tests/promote.sh` proves it
-on a host.
+else copied with no environment. `src/facts.rs` gives this draft and its
+confirmation token as JSON. `src/host.rs` reads the host and signals only
+recorded pid@start pairs through pidfds. `src/takeover.rs` serializes a move
+by port and name, keeps its recovery recipe in a private durable journal,
+and enables the service only once it owns the port and answers. Each call
+reconciles unfinished moves; a same-boot rollback restores the original in
+its own systemd scope. `tests/takeover.py` kills the command at each handover
+edge; `tests/promote.sh` proves promotion on a host.
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

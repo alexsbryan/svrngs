@@ -37,6 +37,7 @@ pub fn native(name: &Name, card: &Card, native: &Native) -> String {
          StartLimitBurst=4\n\
          \n\
          [Service]\n\
+         Nice=10\n\
          WorkingDirectory={folder}\n\
          ExecStart={exec}\n",
         version = card.version,

@@ -27,6 +27,7 @@ StartLimitIntervalSec=60
 StartLimitBurst=4
 
 [Service]
+Nice=10
 WorkingDirectory=%h/models
 ExecStart="/usr/bin/llama-server" "-m" "%h/models/q.gguf" "--alias" "50%% \"$$HOME\" \\n" "--port" "8101"
 PassEnvironment=HIP_VISIBLE_DEVICES
@@ -289,8 +290,16 @@ fn stop_and_start_last_past_a_boot() {
         "coder"
     );
     assert_eq!(here.argv(), ["--user disable --now svrngs-keeper-coder.service"]);
+    std::fs::write(here.root.join("show.txt"), "ActiveState=failed\n").unwrap();
     kept::start(&here.systemd, &here.places, "coder").unwrap();
-    assert_eq!(here.argv(), ["--user enable --now svrngs-keeper-coder.service"]);
+    assert_eq!(
+        here.argv(),
+        [
+            "--user show svrngs-keeper-coder.service -p ActiveState",
+            "--user reset-failed svrngs-keeper-coder.service",
+            "--user enable --now svrngs-keeper-coder.service"
+        ]
+    );
 }
 
 #[test]

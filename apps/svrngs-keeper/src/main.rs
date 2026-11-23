@@ -2,8 +2,9 @@
 //!
 //!   svrngs-keeper keep [--name <name>] <card>
 //!   svrngs-keeper keep <port> [--lend <lend>] [--name <name>]
-//!   svrngs-keeper list
-//!   svrngs-keeper stop|start|remove <name>
+//!   svrngs-keeper facts <port> [--name <name>]
+//!   svrngs-keeper list [--json]
+//!   svrngs-keeper stop|start|restart|remove <name>
 //!
 //! RUST_LOG=debug shows every decision, each refusal with what refused it.
 
@@ -12,12 +13,20 @@ use std::process::ExitCode;
 
 use anyhow::Context;
 use svrngs_keeper::kept::{self, Boot, Places, Stored};
+use svrngs_keeper::runtime::Name;
 use svrngs_keeper::systemd::SystemdUser;
+
+#[cfg(target_os = "linux")]
+mod facts;
+#[cfg(target_os = "linux")]
+mod takeover;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
        svrngs-keeper keep <port> [--lend <lend>] [--name <name>]
-       svrngs-keeper list
-       svrngs-keeper stop|start|remove <name>
+       svrngs-keeper facts <port> [--name <name>]
+       svrngs-keeper keep <port> [--name <name>] --yes --token <token>
+       svrngs-keeper list [--json]
+       svrngs-keeper stop|start|restart|remove <name>
 
   keep: run a native card (a compose.yaml with x-svrngs.native, or the
   folder it is in) here for good, as the systemd user unit
@@ -36,8 +45,10 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
   (unless --name does) and then runs svrngs approve <lend>, so the lend
   follows the kept copy.
 
+  facts: review a port as JSON. --yes needs the token from that review.
   list: each card kept here, and whether it runs.
   stop: stop it until you start it, at boot too. start: run it again.
+  restart: restart it if it is running.
   remove: run it here no longer. Its card and its folder stay.";
 
 fn main() -> ExitCode {
@@ -70,27 +81,29 @@ fn places() -> anyhow::Result<Places> {
 
 fn run(args: &[String]) -> anyhow::Result<ExitCode> {
     let systemd = SystemdUser::system();
-    let places = places()?;
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    #[cfg(target_os = "linux")]
+    if let ["__rollback", path] = args.as_slice() {
+        return takeover::exec_original(path.as_ref()).map(|()| ExitCode::SUCCESS);
+    }
+    let places = places()?;
+    #[cfg(target_os = "linux")]
+    takeover::reconcile(&systemd, &places)?;
     let port = |p: &str| p.parse::<u16>().ok().filter(|p| *p != 0);
-    if let ["keep", p, rest @ ..] = args.as_slice()
+    if let [verb @ ("keep" | "facts"), p, rest @ ..] = args.as_slice()
         && let Some(port) = port(p)
     {
-        let (mut lend, mut name) = (None, None);
-        for pair in rest.chunks(2) {
-            match pair {
-                ["--lend", l] => lend = Some(*l),
-                ["--name", n] => name = Some(*n),
-                _ => anyhow::bail!("keep <port> takes --lend <lend> and --name <name>"),
-            }
-        }
-        return promote(&systemd, &places, port, lend, name);
+        return at_port(&systemd, &places, verb, port, rest);
     }
     run_card(&systemd, &places, &args).map(|()| ExitCode::SUCCESS)
 }
 
 fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Result<()> {
-    let (systemd, places) = (systemd, places);
+    #[cfg(target_os = "linux")]
+    let _lock = match args {
+        ["stop" | "start" | "restart" | "remove", name] => Some(takeover::lock_card(places, &Name::new(name)?)?),
+        _ => None,
+    };
     match args {
         ["keep", "--name", name, card] | ["keep", card, "--name", name] => keep(systemd, places, card, Some(name)),
         ["keep", card] => keep(systemd, places, card, None),
@@ -104,6 +117,7 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
             }
             Ok(())
         }
+        ["list", "--json"] => json(&kept::list(systemd, places)?),
         ["stop", name] => {
             let name = kept::stop(systemd, places, name)?;
             let name = name.as_str();
@@ -116,6 +130,11 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
             println!("{} runs again. {starts} and starts again if it stops.", name.as_str());
             Ok(())
         }
+        ["restart", name] => {
+            let name = kept::restart(systemd, places, name)?;
+            println!("{} was asked to restart if running.", name.as_str());
+            Ok(())
+        }
         ["remove", name] => {
             let dir = kept::remove(systemd, places, name)?;
             println!(
@@ -124,7 +143,7 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
             );
             Ok(())
         }
-        _ => anyhow::bail!("the commands are keep, list, stop, start and remove"),
+        _ => anyhow::bail!("the commands are keep, facts, list, stop, start, restart and remove"),
     }
 }
 
@@ -134,7 +153,14 @@ fn keep(systemd: &SystemdUser, places: &Places, card: &str, name: Option<&str>) 
         path = path.join("compose.yaml");
     }
     let text = std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
-    let kept = kept::keep(systemd, places, &text, name, || kept::boot(systemd, terminal))?;
+    let card = svrngs_keeper::card::Card::parse(&text)?;
+    let name = Name::new(&name.map_or_else(|| kept::name_of(&card.title), str::to_owned))?;
+    #[cfg(target_os = "linux")]
+    let _locks = (
+        takeover::lock_free_port(places, card.door.port)?,
+        takeover::lock_card(places, &name)?,
+    );
+    let kept = kept::keep_card(systemd, places, &text, &card, name, || kept::boot(systemd, terminal))?;
     let (name, port, unit) = (kept.name.as_str(), kept.port, &kept.unit);
     match kept.stored {
         Stored::New => println!("{name} is kept here now, for port {port}: the systemd unit {unit}."),
@@ -153,76 +179,71 @@ fn keep(systemd: &SystemdUser, places: &Places, card: &str, name: Option<&str>) 
     Ok(())
 }
 
-#[cfg(not(target_os = "linux"))]
-fn promote(_: &SystemdUser, _: &Places, port: u16, _: Option<&str>, _: Option<&str>) -> anyhow::Result<ExitCode> {
-    anyhow::bail!("keep {port} reads how a program was started from Linux's /proc, and this is not Linux")
+fn json(value: &impl serde::Serialize) -> anyhow::Result<()> {
+    println!("{}", serde_json::to_string(value)?);
+    Ok(())
 }
 
-/// `keep <port>`: show what would be kept, ask, stop the one running, keep
-/// its card, and check the kept one answers; else start the one before
-/// again as it was (src/promote.rs decides, src/host.rs acts).
+#[cfg(not(target_os = "linux"))]
+fn at_port(_: &SystemdUser, _: &Places, verb: &str, port: u16, _: &[&str]) -> anyhow::Result<ExitCode> {
+    anyhow::bail!("{verb} {port} reads how a program was started from Linux's /proc, and this is not Linux")
+}
+
 #[cfg(target_os = "linux")]
-fn promote(
+fn at_port(
     systemd: &SystemdUser,
     places: &Places,
+    verb: &str,
     port: u16,
-    lend: Option<&str>,
-    name: Option<&str>,
+    mut args: &[&str],
 ) -> anyhow::Result<ExitCode> {
-    use svrngs_keeper::{host, promote as p};
-    let surveyed = host::survey(port).and_then(|(addr, procs)| match p::declines(&procs, port, host::ephemeral()) {
-        Some(declined) => Err(declined),
-        None => Ok((addr, procs)),
-    });
-    let (addr, procs) = match surveyed {
-        Ok(found) => found,
-        Err(declined) => {
-            tracing::debug!(?declined, "declined");
-            println!("svrngs-keeper can't keep port {port}: {declined}. Nothing was changed.");
+    use facts::{Draft, Facts};
+    let (mut lend, mut name, mut token, mut yes) = (None, None, None, false);
+    while !args.is_empty() {
+        match args {
+            ["--name", n, rest @ ..] if name.is_none() => {
+                name = Some(*n);
+                args = rest;
+            }
+            ["--lend", l, rest @ ..] if verb == "keep" && lend.is_none() => {
+                lend = Some(*l);
+                args = rest;
+            }
+            ["--token", t, rest @ ..] if verb == "keep" && token.is_none() => {
+                token = Some(*t);
+                args = rest;
+            }
+            ["--yes", rest @ ..] if verb == "keep" && !yes => {
+                yes = true;
+                args = rest;
+            }
+            _ => anyhow::bail!("unrecognized or repeated argument: {}", args[0]),
+        }
+    }
+    anyhow::ensure!(
+        yes == token.is_some() && !(yes && lend.is_some()),
+        "--yes needs --token from facts and cannot be used with --lend"
+    );
+    let draft = Draft::read(systemd, &takeover::boot_id()?, port, name.or(lend));
+    if verb == "facts" {
+        json(&draft.map_or_else(|declined| Facts::refused(port, declined), Draft::facts))?;
+        return Ok(ExitCode::SUCCESS);
+    }
+    let draft = match draft {
+        Ok(draft) => draft,
+        Err(why) => {
+            tracing::debug!(%why, "takeover:declined");
+            println!("svrngs-keeper can't keep port {port}: {why}. Nothing was changed.");
             return Ok(ExitCode::from(1));
         }
     };
-    let (listener, top) = (&procs[0], &procs[procs.len() - 1]);
-    let home = std::env::var("HOME").unwrap_or_default();
-    let dial = p::dial(&addr);
-    // svrngs names it by its lend; else its program does.
-    let name = name.or(lend).map_or_else(|| p::name_for(&top.argv), str::to_string);
-    let props = if p::known(&procs) {
-        host::get(&dial, port, "/props").and_then(|(status, body)| match status {
-            200 => p::props(&body),
-            s => Err(format!("/props answered {s}")),
-        })
+    let offer = &draft.offer;
+    let boot = if let Some(token) = token {
+        anyhow::ensure!(token == offer.token, "what runs there changed; review it again");
+        Boot::read(offer.linger.clone())
     } else {
-        Err("svrngs-keeper ships no card for it".into())
-    };
-    let program = top.argv.first().map_or("", |a| a.rsplit('/').next().unwrap_or(a));
-    let (card, http, what) = match &props {
-        Ok(props) => {
-            let model = p::model(listener, props, &home);
-            let what = format!(
-                "llama-server with your model {model} on port {port}, context {}",
-                props.n_ctx
-            );
-            (p::llama_card(&name, listener, &addr, port, props, &home), true, what)
-        }
-        Err(why) => {
-            tracing::debug!(why, "copied, not composed");
-            let http = host::get(&dial, port, "/").is_ok();
-            let what = format!(
-                "{program} as it was started, on port {port}:\n  {}\n  in {}",
-                p::shown(&top.argv),
-                p::homed(&top.cwd, &home)
-            );
-            (p::copy_card(&name, top, port, http, &home), http, what)
-        }
-    };
-    // Read before anything stops: a card keep would refuse is refused now.
-    svrngs_keeper::card::Card::parse(&card)?;
-    let named = svrngs_keeper::runtime::Name::new(&name)?;
-    let unit = svrngs_keeper::unit::unit_name(&named);
-    println!("svrngs-keeper will run {name}: {what}.");
-    if props.is_ok() {
-        let flags = p::not_carried(&listener.argv);
+        println!("svrngs-keeper will run {}: {}.", offer.name, offer.what);
+        let flags = &offer.omitted_flags;
         if !flags.is_empty() {
             let them = if flags.len() == 1 { "it" } else { "them" };
             println!(
@@ -230,79 +251,49 @@ fn promote(
                 flags.join(", ")
             );
         }
-    }
-    let manager = systemd.environment().unwrap_or_else(|why| {
-        tracing::debug!(why, "the manager's environment was not read, so every setting is named");
-        String::new()
-    });
-    let added = p::added(top.env.as_deref().unwrap_or_default(), &manager);
-    if !added.is_empty() {
+        if !offer.omitted_settings.is_empty() {
+            println!(
+                "It starts with none of the settings your terminal added: {}.",
+                offer.omitted_settings.join(", ")
+            );
+        }
+        let boot = kept::boot(systemd, terminal);
         println!(
-            "It starts with none of the settings your terminal added: {}.",
-            added.join(", ")
+            "{} and starts again if it stops (4 times a minute at most).",
+            boot.starts()
         );
-    }
-    let boot = kept::boot(systemd, terminal);
-    println!(
-        "{} and starts again if it stops (4 times a minute at most).",
-        boot.starts()
-    );
-    if !ask(&format!(
-        "The {program} you started stops, and this one takes its place. Keep it running?"
-    )) {
-        println!("Nothing was changed: yours runs as it was.");
-        return Ok(ExitCode::from(1));
-    }
-    if let Err(why) = host::stop(&procs, port) {
-        println!("svrngs-keeper could not stop yours ({why}), so nothing was kept.");
-        return Ok(ExitCode::from(1));
-    }
-    let kept = kept::keep(systemd, places, &card, Some(&name), || boot);
-    let (mut up, mut gave_up) = (false, false);
-    if kept.is_ok() {
-        host::within(30, || {
-            up = host::held_by(port, &unit, &listener.exe, &dial, http);
-            // A unit that hit its start limit will not start again by itself.
-            gave_up = !up
-                && systemd
-                    .show(&unit, &["ActiveState"])
-                    .is_ok_and(|s| s.contains("=failed"));
-            up || gave_up
-        });
-    }
-    if up {
-        println!("{name} runs here now, and it answers on port {port}: the systemd unit {unit}.");
-        return Ok(approve(lend, port));
-    }
-    let why = match &kept {
-        Err(why) => format!("it could not be kept ({why})"),
-        Ok(_) if gave_up => format!("{program} under {unit} kept stopping, so systemd stopped starting it"),
-        Ok(_) => format!("{program} under {unit} did not answer on port {port} within 30 s"),
+        if !ask("The program you started stops, and this one takes its place. Keep it running?") {
+            println!("Nothing was changed: yours runs as it was.");
+            return Ok(ExitCode::from(1));
+        }
+        boot
     };
-    let why = format!("{why} (journalctl --user -u {unit} says what it said)");
-    tracing::debug!(why, "rolled back");
-    let _ = kept::remove(systemd, places, &name);
-    // A failed unit stays listed as failed until it is reset.
-    let _ = systemd.ctl(&["--user", "reset-failed", &unit]);
-    let dir = places.card_dir(&named);
-    let log = dir.join("original.log");
-    let _ = std::fs::create_dir_all(&dir);
-    let again = host::start_again(top, &log).map(|pid| (pid, host::within(30, || host::answers(&dial, port, http))));
-    match again {
-        Ok((pid, true)) => println!(
-            "The kept copy failed: {why}. So yours is started again as it was, with your terminal's settings, \
-             and it answers on port {port} (pid {pid}, its output in {}). Its card is in {}.",
-            log.display(),
-            dir.display()
-        ),
-        Ok((pid, false)) => println!(
-            "The kept copy failed: {why}. Yours is started again as it was (pid {pid}), but it does not answer \
-             on port {port} yet; its output is in {}.",
-            log.display()
-        ),
-        Err(e) => println!("The kept copy failed: {why}. And yours could not be started again: {e}."),
+    let unit = svrngs_keeper::unit::unit_name(&draft.name);
+    match takeover::take(systemd, places, &draft, boot)? {
+        takeover::Outcome::Verified => {
+            if yes {
+                json(&serde_json::json!({"kind": "verified", "name": offer.name, "port": port, "unit": unit}))?;
+                return Ok(ExitCode::SUCCESS);
+            }
+            println!(
+                "{} runs here now, and it answers on port {port}: the systemd unit {unit}.",
+                offer.name
+            );
+            Ok(approve(lend, port))
+        }
+        takeover::Outcome::Restored(why) => {
+            if yes {
+                json(&serde_json::json!({"kind": "rolled_back", "why": why}))?;
+                return Ok(ExitCode::from(1));
+            }
+            println!(
+                "The kept copy failed: {why}. So yours is started again as it was, with your terminal's settings, \
+                and it answers on port {port}. See journalctl --user -u {unit}."
+            );
+            Ok(ExitCode::from(1))
+        }
+        takeover::Outcome::Unchanged(why) => anyhow::bail!("nothing was changed: {why}"),
     }
-    Ok(ExitCode::from(1))
 }
 
 /// Ask `question` if stdin is a terminal; `None` when it is not.
