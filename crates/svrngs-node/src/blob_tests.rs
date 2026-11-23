@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A get's silences, asked where no route reaches them (#148): an ask
 //! whose task panicked, and a lapse this computer was given for bytes its
-//! store lost.
+//! store lost; and a put's bytes through each sweep of the store.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
+use std::collections::HashSet;
 use std::path::Path as FsPath;
 
+use iroh_blobs::store::fs::{options::Options, FsStore};
+use iroh_blobs::store::GcConfig;
+use tokio::sync::{mpsc, oneshot, watch};
+
 use super::*;
+use crate::folder::{protect, KeepAsk};
 use crate::iroh::tests::{loopback_sockets, Said};
 use crate::iroh::{EndpointAddr, MemoryLookup, Net as _, RelayConfig};
 use crate::node::Node;
@@ -286,5 +292,85 @@ async fn a_fetch_rides_the_connection_the_transport_keeps() {
     );
     for node in [ana, ben] {
         node.endpoint().close().await;
+    }
+}
+
+/// **The bytes a put answered for are kept by every sweep of the store**,
+/// the one that asked what to keep before the put included: Ana's folders
+/// over a store of their own, whose sweeps' asks this test hands their
+/// keeper, and the keeper's answers back. The first sweep's answer, read
+/// before Ana puts, reaches it once the put has answered; that sweep keeps
+/// the bytes, and so does the next, and her get answers them. Red with the
+/// plant the finding names, the put's tag dropped once it is carried (as at
+/// 15f458cf): the first sweep drops the bytes.
+#[tokio::test]
+async fn a_put_is_kept_by_a_sweep_that_asked_before_it() {
+    let dirs = [tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap()];
+    let (ana, ben, films) = ana_and_ben([dirs[0].path(), dirs[1].path()]).await;
+    let blobs = tempfile::tempdir().unwrap();
+    let (ask, mut asked) = mpsc::unbounded_channel();
+    let mut options = Options::new(blobs.path());
+    // The interval only paces the asks: each sweep waits on its answer.
+    options.gc = Some(GcConfig {
+        interval: Duration::from_millis(1),
+        add_protected: Some(protect(ask)),
+    });
+    let fs = FsStore::load_with_opts(blobs.path().join("blobs.db"), options);
+    let fs = fs.await.expect("the store opens");
+    // Ana's host, over this store, with what it carries and holds its own.
+    let f = Folders {
+        store: (*fs).clone(),
+        carried: watch::Sender::new(BTreeMap::new()),
+        fresh: watch::Sender::new(Vec::new()),
+        ..ana.folders().clone()
+    };
+    let (to_keeper, keep_asked) = mpsc::unbounded_channel();
+    tokio::spawn(f.clone().keeper(keep_asked));
+    let kept = || {
+        let (answer, answered) = oneshot::channel();
+        to_keeper.send(answer).unwrap();
+        async { answered.await.expect("the keeper answers") }
+    };
+
+    let first: KeepAsk = asked.recv().await.expect("the store's first sweep asks");
+    let keep = kept().await;
+    assert_eq!(
+        keep,
+        Some(HashSet::new()),
+        "nothing kept yet, so the sweep goes on"
+    );
+    let bytes = axum::body::Bytes::from_static(b"put while a sweep was under way");
+    let query = BlobQuery {
+        group: films.clone(),
+        keep: Some(60),
+    };
+    let answer = put(State(f.clone()), Query(query), bytes.clone()).await;
+    assert_eq!(answer.into_response().status(), StatusCode::OK);
+    let hash = Hash::new(&bytes);
+    first.send(keep).unwrap();
+
+    // Each sweep asks only once the last is done (iroh-blobs `run_gc`).
+    let second: KeepAsk = asked.recv().await.expect("the store sweeps again");
+    assert!(
+        f.store.has(hash).await.unwrap(),
+        "the sweep that asked before the put kept its bytes"
+    );
+    second.send(kept().await).unwrap();
+    let _third = asked.recv().await.expect("the store sweeps again");
+    let query = BlobQuery {
+        group: films.clone(),
+        keep: None,
+    };
+    let got = get(State(f.clone()), Path(hash), Query(query))
+        .await
+        .into_response();
+    assert_eq!(got.status(), StatusCode::OK, "the next sweep kept them too");
+    let body = axum::body::to_bytes(got.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    assert_eq!(body, bytes, "Ana's get answers what she put");
+    fs.shutdown().await.ok();
+    for node in [ana, ben] {
+        node.net().close().await;
     }
 }

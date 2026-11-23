@@ -144,6 +144,10 @@ pub struct Folders {
     pub(crate) woken: watch::Sender<BTreeMap<String, u64>>,
     /// What apps placed, by hash and group, and when each lapses (blob.rs).
     carried: watch::Sender<blob::Carried>,
+    /// The tag of each put carried since the keeper last took them, held
+    /// from the store's sweep until the keeper's next answer (blob.rs
+    /// `put`, [`Self::keeper`]).
+    fresh: watch::Sender<Vec<TempTag>>,
     /// How many files no member gave, by each folder's writer (synced.rs).
     waiting: watch::Sender<synced::Waiting>,
 }
@@ -215,6 +219,7 @@ impl Folders {
             layouts: watch::Sender::new(BTreeMap::new()),
             woken: watch::Sender::new(BTreeMap::new()),
             carried: watch::Sender::new(BTreeMap::new()),
+            fresh: watch::Sender::new(Vec::new()),
             waiting: watch::Sender::new(BTreeMap::new()),
         };
         tracing::info!(target: "folder", untagged, "folder: the store is open");
@@ -226,10 +231,17 @@ impl Folders {
 
     /// Each of the store's sweeps answered with what it keeps, `None` to
     /// keep everything: none when no record and no directory moved since
-    /// the last answer, nor when what it keeps is as it was then.
+    /// the last answer, nor when what it keeps is as it was then. A put's
+    /// tag is let go here alone, as the first ask after its put was carried
+    /// ends: a sweep asks only once the last is done (iroh-blobs `run_gc`),
+    /// so one that asked before the put found its tag held, and this one is
+    /// answered with the put carried, or told to keep everything.
     async fn keeper(self, mut keep_asked: mpsc::UnboundedReceiver<KeepAsk>) {
         let (mut last, mut read_at) = (None, None);
         while let Some(answer) = keep_asked.recv().await {
+            // Taken before what is kept is read, so this answer carries each
+            // one's put; let go as this ask ends.
+            let fresh = self.fresh.send_replace(Vec::new());
             // Each sweep reading every group's layout cost each node a
             // whole record's admission a second: 25 nodes of 10,000 acts
             // reached none of 24 in the ceiling's canary (syp-4).
@@ -240,7 +252,7 @@ impl Folders {
             let now = Instant::now();
             let at = self.read_at(now);
             if at.is_some() && at == read_at {
-                tracing::debug!(target: "folder", "folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read");
+                tracing::debug!(target: "folder", puts_let_go = fresh.len(), "folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read");
                 answer.send(None).ok();
                 continue;
             }
@@ -249,7 +261,7 @@ impl Folders {
             let sweep = keep.is_some() && keep != last;
             if sweep {
                 let kept = keep.as_ref().map_or(0, HashSet::len);
-                tracing::debug!(target: "folder", kept, "folder: what the store keeps changed, so it drops every other version");
+                tracing::debug!(target: "folder", kept, puts_let_go = fresh.len(), "folder: what the store keeps changed, so it drops every other version");
                 last.clone_from(&keep);
             }
             answer.send(keep.filter(|_| sweep)).ok();

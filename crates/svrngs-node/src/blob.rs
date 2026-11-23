@@ -192,9 +192,11 @@ pub(super) async fn put(
     let tag = f.store.add_bytes(bytes).temp_tag().await;
     let tag = tag.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, format!("the store: {e}")))?;
     let hash = tag.hash();
-    // Placed before the tag goes, so the sweep never finds it unkept.
+    // Carried, then its tag handed to the store's keeper, which lets it go
+    // as it answers the next sweep's ask, the put carried (folder.rs
+    // `keeper`).
     f.carry(hash, &q.group, Some(until));
-    drop(tag);
+    f.fresh.send_modify(|fresh| fresh.push(tag));
     tracing::debug!(target: "blob", %hash, group = q.group, keep, "blob: put, placed in the group until it lapses");
     Ok(Json(json!({ "hash": hash })).into_response())
 }
