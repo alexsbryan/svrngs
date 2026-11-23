@@ -948,3 +948,29 @@ Windows.
         this branch. One pair is not a rate: the same-image replay is
         still the gate's evidence.
     - **Room:** 8 counted, 14 JS. JSDoc and tests are not counted.
+  - **The second full gate** (`REVIEW-audit-available-2.await.log`):
+    tests, types and typed lint pass now. Browser failed two WebKit cases,
+    both `fragile` (`docs/seams.tsv:81,144`).
+    - `navigations::…judged_as_its_fetch::webkit`: a harness abort, the
+      Playwright assertion in `WKPage._onTargetCreated`.
+    - `webrtc_page::the_channel_closed_mid_film…::webkit`: no
+      `goes direct` in the trace, so this run never exercised the
+      fallback. The first gate's 4.006 s was a real timing miss.
+  - **The protocol** (QA oc-cruu42, 2026-11-23). `fragile` skips only in
+    `--touched` (`docs/CHECKS.md:29–41`). In the full gate, nonzero is
+    failure.
+    - Keep the original red logs.
+    - Predeclare 3 interleaved exact runs of each test, at 789707dc and
+      at the tip.
+    - Use the same image and worker count, a fresh browser per run, and no
+      heavy job running alongside.
+    - Record whether Playwright created its target, and whether the trace
+      went direct before the close, beside the payload hash and the
+      timings.
+    - **Then one controlled full gate** on the pinned candidate.
+    - If browser fails again, leave it red, and diagnose the instrument or
+      confirm a problem specific to this revision before another attempt.
+    - Never change a threshold, skip, take best-of-N, or stitch a
+      focused pass into an earlier full run's exit.
+    - The real hosts and the people sessions are separate gates
+      (HUMAN-release-hosts).
