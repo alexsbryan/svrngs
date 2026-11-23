@@ -266,15 +266,14 @@ fn a_set_before_its_device_s_binding_is_dropped_and_taken_once_it_lands() {
 }
 
 /// **A fault holds its mark, and the copy says it is still syncing**: a set
-/// this copy can't apply, here one whose title the table's CHECK refuses as
-/// SQLite applies it, leaves the device's mark where it was and blocks
-/// adopting the member's mark for it; a call taken whole after clears it.
-/// The parse leaves a CHECK to SQLite, since one can read the row's other
-/// columns as they stand on each copy. Plant: a fault counted in the mark
-/// (the set never fetched again).
+/// this copy can't apply, here one whose title a STRICT table refuses as
+/// SQLite applies it, a BLOB in a TEXT column, leaves the device's mark
+/// where it was and blocks adopting the member's mark for it; a call taken
+/// whole after clears it. The parse leaves a value's type to SQLite. Plant:
+/// a fault counted in the mark (the set never fetched again).
 #[test]
 fn a_fault_holds_its_mark_and_is_said_syncing() {
-    const CHECKED: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT CHECK (title <> 'gone'));";
+    const CHECKED: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT) STRICT;";
     let dir = tempfile::tempdir().unwrap();
     let states = |n: u8| States::new(&dir.path().join(format!("computer-{n}")), key(n));
     let (a, b) = (
@@ -285,7 +284,7 @@ fn a_fault_holds_its_mark_and_is_said_syncing() {
     assert!(b.syncing(), "a new copy is syncing until its first full sync");
     let mut sent = call(&a, &b);
     let good = sent.sets[0].clone();
-    let gone = |c: &mut Change| c.val = Val::Text("gone".into());
+    let gone = |c: &mut Change| c.val = Val::Blob(b"gone".into());
     sent.sets[0] = remade(&good, &key(1), |c| {
         c.iter_mut().filter(|c| c.cid == "title").for_each(gone)
     });
@@ -298,6 +297,43 @@ fn a_fault_holds_its_mark_and_is_said_syncing() {
     assert_eq!(call(&a, &b).sets, [good], "fetched again");
     assert_eq!(took(&b, &call(&a, &b)), [Took::Taken]);
     assert!(!b.syncing(), "a full call taken whole");
+}
+
+/// **A CHECK across two columns holds each copy's own writes, never a
+/// merge**: Ana sets `lo` to 8 and Ben, apart, `hi` to 5, each kept by
+/// `CHECK (lo <= hi)` on its own copy; each copy takes the other's set and
+/// both end at (8, 5), and a page's next write that leaves the row breaking
+/// it is refused (svrn-docs `magnets-spikes/README.md`, S5). Plant, watched
+/// failing: `keep` merging with CHECKs on, and each copy's take is a fault,
+/// fetched again every round.
+#[test]
+fn a_check_across_columns_holds_writes_never_a_merge() {
+    const SPAN: &str = "CREATE TABLE spans (id TEXT PRIMARY KEY NOT NULL, lo INTEGER, hi INTEGER, CHECK (lo <= hi));";
+    let dir = tempfile::tempdir().unwrap();
+    let states = |n: u8| States::new(&dir.path().join(format!("computer-{n}")), key(n));
+    let (ana, ben) = (
+        states(1).carry("g", "board", SPAN).unwrap(),
+        states(2).open("g", "board", Some(SPAN)).unwrap(),
+    );
+    let set =
+        |db: &Db, col: &str, n: i64| db.write(&json!([{ "update": "spans", "key": { "id": "s" }, "set": { col: n } }]));
+    ana.write(&json!([{ "insert": "spans", "row": { "id": "s", "lo": 1, "hi": 10 } }]))
+        .unwrap();
+    assert_eq!(took(&ben, &call(&ana, &ben)), [Took::Taken]);
+    set(&ana, "lo", 8).unwrap();
+    set(&ben, "hi", 5).unwrap();
+    let (to_ben, to_ana) = (call(&ana, &ben), call(&ben, &ana));
+    assert_eq!(
+        (took(&ben, &to_ben), took(&ana, &to_ana)),
+        (vec![Took::Taken], vec![Took::Taken])
+    );
+    let span = |db: &Db| db.read("SELECT lo, hi FROM spans", &[]).unwrap()["rows"].clone();
+    assert_eq!(
+        (span(&ana), span(&ben)),
+        (json!([{ "lo": 8, "hi": 5 }]), json!([{ "lo": 8, "hi": 5 }]))
+    );
+    let refused = set(&ana, "lo", 9).expect_err("a write that leaves the row broken");
+    assert!(refused.to_string().contains("CHECK constraint failed"), "{refused}");
 }
 
 /// **A copy's first full sync is kept**: opened again, it isn't said
