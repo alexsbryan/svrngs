@@ -238,15 +238,26 @@ fn literal(words: &str) -> bool {
 /// Each column of the app's tables, `table.column`, as `pragma_table_xinfo`
 /// and `pragma_table_list` give it: what an earlier version's must keep, its
 /// declared type, NOT NULL, place in the key and place in the table, as a
-/// copy made wider adds a column after the last (`widen`), its DEFAULT, and
-/// whether its table is STRICT; and whether one added must not be there, as
-/// NOT NULL, with a DEFAULT or in the key.
+/// copy made wider adds a column after the last (`widen`), its DEFAULT,
+/// whether it is GENERATED, and whether its table is STRICT or WITHOUT
+/// ROWID, a copy made before those were refused included; and whether one
+/// added must not be there, as NOT NULL, with a DEFAULT or in the key. And
+/// each table's key as SQLite orders it, `the primary key of <table>`: the
+/// index SQLite makes for the key or a UNIQUE (`pragma_index_list`'s origin
+/// other than `c`), which has no text, each key column's name, order and
+/// collation, and none where an INTEGER key is the rowid. So a key declared
+/// DESC, or an INTEGER key made the rowid or no longer it, which leaves the
+/// rows a copy holds read in another order or place, is a change, either way.
 type Columns = BTreeMap<String, (String, bool)>;
 
 fn columns(conn: &Connection) -> Result<Columns, Refused> {
-    let each = "SELECT t.name, t.name || '.' || c.name, json_array(lower(c.type), c.\"notnull\", c.pk, c.cid, c.dflt_value, l.strict), \
+    let each = "SELECT t.name, t.name || '.' || c.name, \
+        json_array(lower(c.type), c.\"notnull\", c.pk, c.cid, c.dflt_value, c.hidden, l.strict, l.wr), \
         c.\"notnull\" OR c.dflt_value IS NOT NULL OR c.pk > 0 \
-        FROM sqlite_master AS t, pragma_table_xinfo(t.name) AS c, pragma_table_list(t.name) AS l WHERE t.type = 'table'";
+        FROM sqlite_master AS t, pragma_table_xinfo(t.name) AS c, pragma_table_list(t.name) AS l WHERE t.type = 'table' \
+        UNION ALL SELECT t.name, 'the primary key of ' || t.name, (SELECT json_group_array(json_array(l.origin, x.name, x.desc, x.coll)) \
+        FROM pragma_index_list(t.name) AS l, pragma_index_xinfo(l.name) AS x WHERE l.origin <> 'c' AND x.key), 0 \
+        FROM sqlite_master AS t WHERE t.type = 'table'";
     let read = rows(conn, each, [], |r| {
         Ok((r.get::<_, String>(0)?, (r.get(1)?, (r.get(2)?, r.get(3)?))))
     });
@@ -274,9 +285,11 @@ pub fn check(schema: &str, was: Option<&str>) -> Result<Vec<(String, bool)>, Ref
 /// Whether `now` only adds to `was` (APP_STATE §4, "It only adds"), each a
 /// schema's columns and texts: the one decider for `svrngs check`, a version
 /// held against a copy and a copy made wider. Each column of `was` kept as
-/// [`Columns`] reads it; each index of `was` that `now` has kept with its
-/// text and its columns' collations, as an index a copy holds is ordered
-/// by them; and each column `now` adds to a table of `was` one that can be
+/// [`Columns`] reads it, and each table's key as SQLite orders it, both
+/// ways; each index of `was` that `now` has kept with its text and its
+/// columns' collations, as an index a copy holds is ordered by them, which
+/// with the key's is every index a copy holds, as cr-sqlite takes no other
+/// UNIQUE ([`made`]); and each column `now` adds to a table of `was` one that can be
 /// NULL, with no DEFAULT and outside the key, so a page on the earlier
 /// version still writes its rows, and no copy rebuilds a table's clocks as
 /// its own, as a changed key does (cr-sqlite `alter.rs:42-71`,
@@ -296,9 +309,8 @@ fn follows((was, held): &Shape, (now, texts): &Shape) -> Result<(), Refused> {
         .iter()
         .find(|(c, (_, held))| *held && in_was(c) && !was.contains_key(*c));
     tracing::debug!(target: "state", changed = ?changed.map(|c| c.0), index = ?index.map(|i| i.0), added = ?added.map(|c| c.0), "state: a schema.sql held to only adding to the version it follows");
-    let unmade = (changed.map(|(c, _)| c).or(index.map(|(n, _)| n)))
-        .map(|c| Unmade::Changed(c.clone()))
-        .or(added.map(|(c, _)| Unmade::Added(c.clone())));
+    let unmade = (added.map(|(c, _)| Unmade::Added(c.clone())))
+        .or((changed.map(|(c, _)| c).or(index.map(|(n, _)| n))).map(|c| Unmade::Changed(c.clone())));
     unmade.map_or(Ok(()), |u| Err(Refused::Schema(u)))
 }
 

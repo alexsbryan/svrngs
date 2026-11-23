@@ -319,3 +319,75 @@ fn a_restore_that_can_t_swap_leaves_the_database_open_as_it_was() {
     let ana = ana_states.open("g", "board", None).unwrap();
     assert_eq!(rows(&ana, "SELECT * FROM cards ORDER BY id"), both);
 }
+
+/// What `PRAGMA integrity_check` says of the board under `dir`, from a
+/// second connection.
+fn sound(dir: &Path) -> Vec<String> {
+    let side = Connection::open(dir.join("state/g/board.db")).unwrap();
+    let mut stmt = side.prepare("PRAGMA integrity_check").unwrap();
+    let said = stmt.query_map([], |r| r.get(0)).unwrap().map(Result::unwrap).collect();
+    drop(stmt);
+    svrngs_db::close(side).unwrap();
+    said
+}
+
+/// **A version that orders or keeps the key otherwise makes no copy
+/// wider** (the delta review's D1): every index SQLite holds for a kept
+/// table is compared, the key's own among them, which has no text. A TEXT
+/// key declared DESC where the copy's is ascending, and an INTEGER key made
+/// DESC or no longer DESC, which SQLite then keeps apart from the rowid or
+/// as it, are each refused, by `svrngs check` and at the copy, naming the
+/// key, and the copy still finds each card by its key, sound. A version
+/// that keeps the key as it is and adds a column is taken, a DESC key's
+/// included, and finds each card by its key after. Plant, watched failing:
+/// the code before this commit (each version taken; the TEXT key's copy
+/// then found no card by its key, its key's index missing every row).
+#[test]
+fn a_version_that_orders_the_key_otherwise_makes_no_copy_wider() {
+    let text = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\n";
+    let desc = "CREATE TABLE cards (id TEXT PRIMARY KEY DESC NOT NULL, title TEXT, note TEXT);\n";
+    let int = "CREATE TABLE cards (id INTEGER PRIMARY KEY NOT NULL, title TEXT);\n";
+    let int_desc = "CREATE TABLE cards (id INTEGER PRIMARY KEY DESC NOT NULL, title TEXT);\n";
+    let noted = |v: &str| v.replace("title TEXT)", "title TEXT, note TEXT)");
+    let ids = |v: &str| -> Vec<Value> {
+        match v.contains("INTEGER") {
+            true => (1..=26).map(|n| json!(n)).collect(),
+            false => (b'a'..=b'z').map(|c| json!((c as char).to_string())).collect(),
+        }
+    };
+    for (v1, v2) in [(text, desc.to_string()), (int, noted(int_desc)), (int_desc, noted(int))] {
+        let refused = svrngs_db::check(&v2, Some(v1)).map(drop).map_err(|r| r.to_string());
+        println!("MEASURE {v1} then {v2}\n  {refused:?}");
+        assert!(
+            refused.as_ref().is_err_and(|w| w.contains("the primary key of cards")),
+            "{v2}: {refused:?}"
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let ana_states = states(dir.path(), 1);
+        let ana = ana_states.carry("g", "board", v1).unwrap();
+        for id in ids(v1) {
+            write(&ana, json!({ "id": id, "title": "t" })).unwrap();
+        }
+        let held = ana_states.widen(&ana, &v2).map_err(|r| r.to_string());
+        assert_eq!(held, refused, "refused alike at the copy");
+        let third = ana
+            .read("SELECT id FROM cards WHERE id = ?1", &[ids(v1)[2].clone()])
+            .unwrap();
+        assert_eq!(third["rows"], json!([{ "id": ids(v1)[2] }]), "{v2}");
+        assert_eq!(sound(dir.path()), ["ok"], "{v2}");
+    }
+    for v1 in [text, int_desc] {
+        let dir = tempfile::tempdir().unwrap();
+        let ana_states = states(dir.path(), 1);
+        let ana = ana_states.carry("g", "board", v1).unwrap();
+        for id in ids(v1) {
+            write(&ana, json!({ "id": id, "title": "t" })).unwrap();
+        }
+        ana_states.widen(&ana, &noted(v1)).unwrap();
+        let third = ana
+            .read("SELECT id FROM cards WHERE id = ?1", &[ids(v1)[2].clone()])
+            .unwrap();
+        assert_eq!(third["rows"], json!([{ "id": ids(v1)[2] }]), "{v1}");
+        assert_eq!(sound(dir.path()), ["ok"], "{v1}");
+    }
+}
