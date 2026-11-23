@@ -27,6 +27,16 @@ envelope, not a reason for a workaround.
   host checks use units named `svrngs-keeper-test-*` and remove them.
   Never touch the operator's own units or the installed svrngs.
 
+**From the toolbox, Podman and browsers are on the host.** In the toolbox,
+`podman` is not on PATH and WebKit lacks its libraries: avail-run-page's
+WebKit preflight was could-not-judge for that alone. Reach the gate
+container through `flatpak-spawn --host`, under
+`ralph-result await <time> -- …`, as avail-unmagic's gate run did. Use
+`/tmp/keeper-audit/gate.sh`, which falls back to `flatpak-spawn --host
+podman`, with the command to run appended after the image name, or the
+same `podman run` line from `scripts/gate/README.md` with the `.git`
+mount below. The browser scenes run inside that container.
+
 **The full gate from this worktree.** This checkout is a git worktree,
 whose `.git` points into `/home/alexbryan/dev/svrngs/.git`. In the gate's
 `podman run`, add `-v /home/alexbryan/dev/svrngs/.git:/home/alexbryan/dev/svrngs/.git`,
