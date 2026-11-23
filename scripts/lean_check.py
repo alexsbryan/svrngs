@@ -1071,12 +1071,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # threads +4). Their pass cut first: check uses scratch, columns and texts
 # read through sync::rows, one refusal for WITHOUT ROWID and GENERATED, the
 # per-scratch bound and the DEFAULT probe dropped. The cap to 27,282.
+# JavaScript lands at 8,747 with the phone's signer fixes in: its cap down
+# to 8,748.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
     ".": 27282,
 
-    "js": 8751,
+    "js": 8748,
 
     "swift": 1,
 }
