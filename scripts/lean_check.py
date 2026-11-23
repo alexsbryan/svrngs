@@ -1064,10 +1064,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # causal length refused, a carry through the person's refill, +26) and a
 # value held to its column's type (+53, after its pass cut 7) come to +79
 # over 27,159. The cap to 27,239. The pool: +94 drawn, +6 and +10 left.
+# (2026-11-23) The operator's raise, +43, past the pool: the review's schema
+# fixes (one decider for what a version may keep +9, a schema.sql that only
+# declares +10, a value bound read by SQLite and the parse alike +13, a
+# restore that keeps a working connection +7, SQLite off the runtime's
+# threads +4). Their pass cut first: check uses scratch, columns and texts
+# read through sync::rows, one refusal for WITHOUT ROWID and GENERATED, the
+# per-scratch bound and the DEFAULT probe dropped. The cap to 27,282.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 27239,
+    ".": 27282,
 
     "js": 8751,
 
