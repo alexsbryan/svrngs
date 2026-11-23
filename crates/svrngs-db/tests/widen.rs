@@ -391,3 +391,34 @@ fn a_version_that_orders_the_key_otherwise_makes_no_copy_wider() {
         assert_eq!(sound(dir.path()), ["ok"], "{v1}");
     }
 }
+
+/// **A version is held to a copy whether or not it adds** (the delta
+/// review's N2): one that changes a kept column's type, or its DEFAULT,
+/// and adds nothing is refused at the copy in the words `svrngs check`
+/// refuses it in, and the copy reads and writes on as it was. Plant,
+/// watched failing: `adds` comparing only a version that adds (each
+/// answered `Ok`).
+#[test]
+fn a_version_that_only_changes_is_refused_at_a_copy() {
+    let v1 = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, n INTEGER);\n";
+    let dir = tempfile::tempdir().unwrap();
+    let ana_states = states(dir.path(), 1);
+    let ana = ana_states.carry("g", "board", v1).unwrap();
+    write(&ana, json!({ "id": "c1", "title": "milk" })).unwrap();
+    for v2 in [
+        "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title INTEGER, n INTEGER);\n",
+        "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, n INTEGER DEFAULT 0);\n",
+    ] {
+        let checked = svrngs_db::check(v2, Some(v1)).map(drop);
+        assert!(checked.is_err(), "{v2}");
+        assert_eq!(ana_states.widen(&ana, v2), checked, "{v2}");
+    }
+    write(&ana, json!({ "id": "c2", "title": "tea" })).unwrap();
+    assert_eq!(
+        rows(&ana, "SELECT id, title FROM cards ORDER BY id")
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
+}

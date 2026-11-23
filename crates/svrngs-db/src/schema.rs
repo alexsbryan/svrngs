@@ -342,15 +342,21 @@ fn scratch(schema: &str) -> Result<(Open, Shape, BTreeMap<String, Table>), Refus
     Ok((open, shape, tables))
 }
 
-/// Whether `schema` adds to what `conn`, a database, holds: false for one
-/// that adds nothing, as an older version's; refused where it doesn't only
-/// add to it ([`follows`]), as two versions that each add to a third, which
-/// no copy made from either matches.
+/// Whether `schema` adds to what `conn`, a database, holds, held to it by
+/// the one decider ([`follows`]) either way: one that adds only adds to it,
+/// and one that adds nothing, an older version's, is one the database only
+/// adds to. Refused otherwise, as two versions that each add to a third,
+/// which no copy made from either matches, or one that changes a column
+/// and adds nothing, which `svrngs check` refuses alike.
 pub(crate) fn adds(conn: &Connection, schema: &str) -> Result<bool, Refused> {
     let (wider, had) = (scratch(schema)?.1, (columns(conn)?, texts(conn)?));
     let more = (wider.0.keys()).any(|c| !had.0.contains_key(c)) || wider.1.keys().any(|n| !had.1.contains_key(n));
-    tracing::debug!(target: "state", more, "state: a version's schema held against a database's, adding to it or not");
-    more.then(|| follows(&had, &wider)).transpose().map(|g| g.is_some())
+    tracing::debug!(target: "state", more, "state: a version's schema held against a database's, adding to it or one it adds to");
+    match more {
+        true => follows(&had, &wider),
+        false => follows(&wider, &had),
+    }
+    .map(|()| more)
 }
 
 /// `schema`, a wider version's, made on `conn`, a restored copy of a
