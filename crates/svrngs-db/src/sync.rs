@@ -220,32 +220,108 @@ pub const SIZE_MOST: u64 = 64 << 20;
 const SITE_COST: u64 = 100;
 
 /// What a call may still add to this copy's ask as it is taken, by the
-/// keys the record binds: the rows each device holds ([`Db::room`]), the
-/// bytes it holds of the database, and the devices muted here.
+/// keys the record binds: what each device holds ([`Db::room`]), and the
+/// devices muted here.
 struct Room<'b> {
     binds: &'b Binds,
-    rows: Shares,
-    size: Shares,
+    held: Held,
     muted: BTreeSet<Device>,
 }
 
-/// What each device holds at a copy: rows of its ask, or bytes.
-type Shares = BTreeMap<Device, u64>;
+/// What each device holds at a copy: rows of its ask, and bytes of the
+/// database.
+pub type Held = BTreeMap<Device, (u64, u64)>;
 
 impl Room<'_> {
     /// Whether a set of `device`'s has room for the `adds` rows it brings,
     /// and its `bytes`: unmuted, in its share of the ask with one row left
     /// for its name should it be muted, and in its share of the database.
     fn fits(&self, device: &Device, (adds, bytes): (u64, u64)) -> bool {
-        let (held, size) = (self.rows.get(device), self.size.get(device));
-        let sized = size.copied().unwrap_or(0) + bytes <= self.binds.size_share();
-        !self.muted.contains(device) && (adds == 0 || held.copied().unwrap_or(0) + adds < self.binds.share()) && sized
+        let (held, size) = self.held.get(device).copied().unwrap_or_default();
+        let sized = size + bytes <= self.binds.size_share();
+        !self.muted.contains(device) && (adds == 0 || held + adds < self.binds.share()) && sized
     }
 
     fn add(&mut self, device: &Device, (adds, bytes): (u64, u64)) {
-        *self.rows.entry(device.clone()).or_default() += adds;
-        *self.size.entry(device.clone()).or_default() += bytes;
+        let held = self.held.entry(device.clone()).or_default();
+        *held = (held.0 + adds, held.1 + bytes);
     }
+}
+
+/// What a connection records as SQLite changes its file, in temporary
+/// tables of its own and by TEMP triggers, so none of it reaches the file
+/// (lib.rs `Db::open` makes them):
+/// - `svrngs_was`, the places each change outranks, for prune, which visits
+///   only the sets at them ([`Db::prune`]): on each app table's clock, before
+///   a row is updated or deleted, its place, and before one is written, the
+///   place of the row it would replace, its key's and column's, so every way
+///   SQLite outranks a cell is recorded, cr-sqlite's merge and a local write
+///   alike; and each set kept whole, as one all of whose changes lost stands
+///   nowhere.
+/// - `svrngs_held`, what each device holds here ([`Db::held`]): counted from
+///   the file as the connection opens, then moved by each site, set counted
+///   above a mark and set kept or dropped, in the transaction that keeps or
+///   drops it, so a write reads one row of it, whatever the copy keeps.
+pub(crate) fn recorded(tables: &BTreeMap<String, Table>) -> String {
+    // Each row the ask names, by the device of its site: the sites, the
+    // sets counted above a mark, each twin, and each set kept at the site
+    // this file retired as it was made again, which the ask names as twins
+    // too ([`Db::ask`]); and the bytes of the database each holds: its kept
+    // sets, and its sites.
+    let asks = "SELECT h.device, count(*) AS n FROM (SELECT site FROM svrngs_sites UNION ALL SELECT site FROM svrngs_above \
+        UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
+        AND t.seq = s.seq AND t.sig <> s.sig) OR site = (SELECT retired FROM svrngs_db)) AS r \
+        JOIN svrngs_sites h USING (site) GROUP BY h.device";
+    let mut sql = format!(
+        "CREATE TEMP TABLE svrngs_was (site BLOB NOT NULL, seq INTEGER NOT NULL); CREATE TEMP TABLE svrngs_held \
+        (device TEXT PRIMARY KEY, asks INTEGER NOT NULL, bytes INTEGER NOT NULL); INSERT INTO svrngs_held SELECT \
+        a.device, a.n, b.n FROM ({asks}) a JOIN (SELECT h.device, coalesce(sum(length(s.bytes)), 0) + {SITE_COST} \
+        * count(DISTINCT h.site) AS n FROM svrngs_sites h LEFT JOIN svrngs_sets s USING (site) GROUP BY h.device) b \
+        USING (device);"
+    );
+    let held = |row: &str, asks: &str, bytes: &str| {
+        format!(
+            "INSERT INTO svrngs_held SELECT device, {asks}, {bytes} FROM svrngs_sites WHERE site = {row}.site \
+            ON CONFLICT (device) DO UPDATE SET asks = asks + excluded.asks, bytes = bytes + excluded.bytes;"
+        )
+    };
+    // A set moves its device's rows of the ask as its place's count moves
+    // the twins the ask names: none for the first, two for the second, one
+    // for each after; one for each at the site the file retired.
+    let twin = |row: &str, n: &str| {
+        format!(
+            "CASE WHEN {row}.site = (SELECT retired FROM svrngs_db) THEN 1 ELSE CASE (SELECT count(*) {n} \
+            FROM svrngs_sets WHERE site = {row}.site AND seq = {row}.seq) WHEN 1 THEN 0 WHEN 2 THEN 2 ELSE 1 END END"
+        )
+    };
+    let was = "INSERT INTO svrngs_was SELECT NEW.site, NEW.seq WHERE NEW.kept = 0;";
+    let kept = held("NEW", &twin("NEW", ""), "coalesce(length(NEW.bytes), 0)") + was;
+    let minus = format!("-({})", twin("OLD", "+ 1"));
+    let gone = held("OLD", &minus, "-coalesce(length(OLD.bytes), 0)");
+    let cost = SITE_COST.to_string();
+    let mut each = vec![
+        ("AFTER INSERT ON svrngs_sites".into(), held("NEW", "1", &cost)),
+        ("AFTER INSERT ON svrngs_above".into(), held("NEW", "1", "0")),
+        ("AFTER DELETE ON svrngs_above".into(), held("OLD", "-1", "0")),
+        ("AFTER INSERT ON svrngs_sets".into(), kept),
+        ("AFTER DELETE ON svrngs_sets".into(), gone),
+    ];
+    for t in tables.keys().map(|t| t.replace('"', "\"\"")) {
+        let was = |row: &str| {
+            format!(
+                "INSERT INTO svrngs_was SELECT o.site_id, c.db_version FROM \"{t}__crsql_clock\" c \
+                JOIN crsql_site_id o ON o.ordinal = c.site_id WHERE c.key = {row}.key AND c.col_name = {row}.col_name;"
+            )
+        };
+        let on = |when: &str| format!("{when} ON \"{t}__crsql_clock\"");
+        each.push((on("BEFORE INSERT"), was("NEW")));
+        each.push((on("BEFORE UPDATE"), was("OLD") + &was("NEW")));
+        each.push((on("BEFORE DELETE"), was("OLD")));
+    }
+    for (i, (when, body)) in each.iter().enumerate() {
+        sql += &format!("CREATE TEMP TRIGGER svrngs_{i} {when} BEGIN {body} END;");
+    }
+    sql
 }
 
 /// How a set is kept here, as `svrngs_sets.kept` says.
@@ -326,18 +402,14 @@ fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept
     // The site's device, by which its share is counted and a muted device's
     // sets are found; and its home, from whom alone a word for its mark is
     // trusted: a phone's, as its set names it, else the device's own. Kept
-    // before the set, so the set's device is known as the set is kept.
+    // before the set, so the set's device is known as the set is kept, and
+    // its device's totals move with it ([`recorded`]).
     let home = set.phone.as_ref().map_or(&set.head.device, |p| &p.home);
     let sited = "INSERT OR IGNORE INTO svrngs_sites (site, device, home) VALUES (?1, ?2, ?3)";
     conn.execute(sited, params![site, set.head.device, home])?;
     let bytes = (kept != Kept::Refused).then(|| postcard::to_allocvec(set).expect("a set is written in memory"));
     let sql = "INSERT OR IGNORE INTO svrngs_sets (site, seq, sig, kept, bytes) VALUES (?1, ?2, ?3, ?4, ?5)";
     conn.execute(sql, params![site, seq, set.head.sig, kept, bytes])?;
-    // Visited by the prune after it too, as a set all of whose changes lost
-    // stands nowhere here, and is dropped (`Db::prune`).
-    if kept == Kept::Taken {
-        conn.execute("INSERT INTO temp.svrngs_was VALUES (?1, ?2)", params![site, seq])?;
-    }
     count(conn, (site, seq))
 }
 
@@ -354,9 +426,9 @@ impl Db {
     /// refused holds no value here and is kept as it is. A set stops
     /// standing only where a cell it holds is outranked, so prune visits
     /// only the sets at the places the changes since it last ran outranked,
-    /// as SQLite outranked them (`lib.rs`, `outranked`), and each set taken
-    /// since (`keep`): its work follows what a write or a call changes, never
-    /// all a copy keeps. How many it dropped.
+    /// as SQLite outranked them, and each set kept whole since
+    /// ([`recorded`]): its work follows what a write or a call changes,
+    /// never all a copy keeps. How many it dropped.
     fn prune(&self, conn: &Connection, tables: &BTreeMap<String, Table>) -> rusqlite::Result<usize> {
         let clock = |t: &String| format!("\"{}__crsql_clock\"", t.replace('"', "\"\""));
         let stands = tables.keys().map(|t| {
@@ -430,8 +502,13 @@ impl Db {
         let changes = postcard::to_allocvec(&made.0).expect("changes are written in memory");
         // In this computer's share of the app's database, as every copy
         // counts it at apply, so no copy keeps a set the others drop.
-        let (_, size, _) = self.held(conn).map_err(fault)?;
-        if size.get(&self.device).copied().unwrap_or(0) + changes.len() as u64 > binds.size_share() {
+        // Its one row of the totals ([`recorded`]), whatever the copy keeps.
+        let mine = "SELECT coalesce(sum(bytes), 0) FROM temp.svrngs_held WHERE device = ?1";
+        let mut mine = conn.prepare_cached(mine).map_err(fault)?;
+        let size: u64 = mine.query_row([&self.device], |r| r.get(0)).map_err(fault)?;
+        let read = mine.reset_status(rusqlite::StatementStatus::VmStep);
+        tracing::debug!(target: "state", group = self.group, app = self.app, size, read, "state: what this computer holds of the app's database, read as its row of the totals, in the steps SQLite took");
+        if size + changes.len() as u64 > binds.size_share() {
             return Err(Refused::Full(SIZE_MOST >> 20));
         }
         let set = Set::signed(
@@ -477,7 +554,7 @@ impl Db {
             (SELECT site, seq FROM svrngs_sets GROUP BY site, seq HAVING count(*) > 1) \
             OR site = (SELECT retired FROM svrngs_db)";
         let twins = rows(&conn, twins, [], |r| Ok((place(r)?, r.get(2)?))).map_err(fault)?;
-        let (.., muted) = self.held(&conn).map_err(fault)?;
+        let (_, muted) = self.held(&conn).map_err(fault)?;
         let (marks, haves, twins) = (
             marks.into_iter().collect(),
             haves.into_iter().collect(),
@@ -612,40 +689,31 @@ impl Db {
     fn room<'b>(&self, conn: &Connection, binds: &'b Binds) -> rusqlite::Result<Room<'b>> {
         self.shares[0].store(binds.share(), Relaxed);
         self.shares[1].store(binds.size_share(), Relaxed);
-        let (rows, size, muted) = self.held(conn)?;
-        Ok(Room {
-            binds,
-            rows,
-            size,
-            muted,
-        })
+        let (held, muted) = self.held(conn)?;
+        Ok(Room { binds, held, muted })
     }
 
     /// The rows of the ask and the bytes of the database each device holds
-    /// at this copy now, and the devices over either share now, by the
+    /// at this copy now, as the totals SQLite keeps say them ([`recorded`]),
+    /// read one row a device, and the devices over either share now, by the
     /// shares of this copy's last call: no stored mute, so a device's sets
     /// come again once what it holds here falls (svrn-docs
     /// `app-state-diligence/invariants-2026-11-22/` §2.1). Over its rows, it
     /// has none left beside the row that names it.
-    fn held(&self, conn: &Connection) -> rusqlite::Result<(Shares, Shares, BTreeSet<Device>)> {
-        // Each row the ask names, by the device of its site: the sites, the
-        // sets counted above a mark, each twin, and each set kept at the site
-        // this file retired as it was made again, which the ask names as
-        // twins too ([`Self::ask`]).
-        let shares = "SELECT h.device, count(*) FROM (SELECT site FROM svrngs_sites UNION ALL SELECT site FROM svrngs_above \
-            UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
-            AND t.seq = s.seq AND t.sig <> s.sig) OR site = (SELECT retired FROM svrngs_db)) AS r \
-            JOIN svrngs_sites h USING (site) GROUP BY h.device";
-        let held = Shares::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
-        // And the bytes of the database each holds: its kept sets, and its sites.
-        let size = "SELECT h.device, coalesce(sum(length(s.bytes)), 0) + ?1 * count(DISTINCT h.site) \
-            FROM svrngs_sites h LEFT JOIN svrngs_sets s USING (site) GROUP BY h.device";
-        let size = Shares::from_iter(rows(conn, size, [SITE_COST], |r| Ok((r.get(0)?, r.get(1)?)))?);
+    fn held(&self, conn: &Connection) -> rusqlite::Result<(Held, BTreeSet<Device>)> {
+        let each = |r: &Row| Ok((r.get(0)?, (r.get(1)?, r.get(2)?)));
+        let all = "SELECT device, asks, bytes FROM temp.svrngs_held";
+        let held = Held::from_iter(rows(conn, all, [], each)?);
         let (share, sized) = (self.shares[0].load(Relaxed), self.shares[1].load(Relaxed));
-        let over = (held.iter()).filter(|(_, n)| **n + 1 >= share);
-        let over = over.chain(size.iter().filter(|(_, b)| **b > sized));
+        let over = (held.iter()).filter(|(_, (n, b))| n + 1 >= share || *b > sized);
         let over = over.map(|(d, _)| d.clone()).collect();
-        Ok((held, size, over))
+        Ok((held, over))
+    }
+
+    /// What each device holds at this copy now ([`Held`]), as its totals
+    /// say it ([`recorded`]).
+    pub fn holds(&self) -> Result<Held, Refused> {
+        self.held(&self.conn()).map(|(held, _)| held).map_err(fault)
     }
 
     /// The mark `m` a full call claims for `site`, adopted up to the highest
