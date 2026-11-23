@@ -1025,10 +1025,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # prepare, land in its commits. The rest is the phone's check, which is what
 # keeps a computer between a phone and its group from signing for it. It
 # comes down to where phones lands.
+# (2026-11-22) The operator's B', "pass signs": a phone's set is signed by
+# its open's approver and carries the pass that names it, since WebKit gives
+# the framed signer a store of its own, without the person's key (svrn-docs
+# HOLDER_APPROVAL section 1, measured). About +80 for the pass and stamp
+# checked at apply and in the wasm, so the cap to 26,901. It comes down to
+# where phones lands.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 26821,
+    ".": 26901,
 
     "js": 8741,
 
