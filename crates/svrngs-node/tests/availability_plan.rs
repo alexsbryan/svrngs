@@ -378,11 +378,26 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         lend::revision(dir.path(), &nature.name).unwrap(),
         current.if_rev
     );
-    // The original listener still accepts a connection after the attempts.
-    let _client =
-        std::net::TcpStream::connect_timeout(&addr, std::time::Duration::from_secs(1)).unwrap();
+    // A completed client connect need not have queued the connection for accept yet on macOS.
+    let timeout = std::time::Duration::from_secs(1);
     listener.set_nonblocking(true).unwrap();
-    assert!(listener.accept().is_ok());
+    let client = std::net::TcpStream::connect_timeout(&addr, timeout).unwrap();
+    let deadline = std::time::Instant::now() + timeout;
+    loop {
+        match listener.accept() {
+            Ok((_, peer)) => {
+                assert_eq!(peer, client.local_addr().unwrap());
+                break;
+            }
+            Err(err)
+                if err.kind() == std::io::ErrorKind::WouldBlock
+                    && std::time::Instant::now() < deadline =>
+            {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+            Err(err) => panic!("the original listener did not accept the connection: {err}"),
+        }
+    }
 }
 
 #[test]

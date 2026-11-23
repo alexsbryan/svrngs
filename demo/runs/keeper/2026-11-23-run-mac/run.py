@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import signal
 import socket
 import subprocess
@@ -91,7 +92,10 @@ try:
     first = pid()
     assert first and call("/bin/ps", "-p", str(first), "-o", "comm=").stdout.strip().endswith("llama-server")
     prefill = json.loads(call(keeper, "facts", str(port)).stdout)
-    assert prefill["kind"] == "prefill" and str(model) in prefill["card"], prefill
+    assert prefill["kind"] == "prefill" and prefill["folder"] == str(scratch), prefill
+    assert shlex.split(prefill["command"]) == [
+        "llama-server", "--model", str(model), "--host", "127.0.0.1", "--port", str(port),
+    ], prefill
     print(f"prefill: {model.name} resolved from relative path")
     listing = json.loads(call(keeper, "list", "--json").stdout)
     assert listing[0]["status"]["starts"] == "at_login" and listing[0]["status"]["running"] == {"since": None}

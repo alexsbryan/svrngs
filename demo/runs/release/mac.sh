@@ -86,6 +86,7 @@ build() {
 suite() {
     local log=$root/$1-test.log code=0
     env HOME="$root/tests-home" SVRNGS_DIR="$root/tests-home/node" XDG_DATA_HOME="$root/tests-home/data" \
+        TMPDIR="$root/tests-home" \
         CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" \
         cargo test --locked --offline -p "svrngs-$1" >"$log" 2>&1 || code=$?
     cat "$log"
@@ -107,8 +108,10 @@ step mac-node-tests darwin-arm64/cargo-test/svrngs-node suite node
 build_id=none
 if build native; then
     step mac-run "$build_id" "$python" -Bu "$demo-run-mac/run.py"
+    # The lifecycle driver derives its scratch root from its own location.
+    cp "$demo-mac-proof/proof.py" "$root/proof.py"
     for case in lineage ownership managed; do
-        step "mac-proof-$case" "$build_id" "$python" -Bu "$demo-mac-proof/proof.py" "$pair/svrngs-keeper" "$case"
+        step "mac-proof-$case" "$build_id" "$python" -Bu "$root/proof.py" "$root/repo/$pair/svrngs-keeper" "$case"
     done
 else
     result mac-run 1 native-build
