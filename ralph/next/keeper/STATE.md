@@ -350,8 +350,13 @@ envelope.
   - One conditional publish through `lend::mutate`: binding, grant,
     audience and limit together.
   - `RunningNotShared`.
+  - The revisions and tombstones live where app-state's `lend::all` doesn't
+    look (PR 7, `lend.rs:904`, which lists every `<name>.json` in the lends
+    folder as a declaration, as its `stamp` walks): another suffix, or a
+    folder of their own. Commons lesson 5d939213.
 
   check, each planted first:
+  - `lend::all` over a folder holding a tombstone lists no extra lend;
   - a concurrent withdrawal wins;
   - a stale confirmation is refused and never resurrects a withdrawn
     share;
