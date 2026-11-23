@@ -218,20 +218,18 @@ pub fn plan(state: &State) -> Option<Plan<'_>> {
         (_, Runs::Transient, _) => Err(Reason::Transient),
     };
     let later = app.max(door);
-    let proposed = proposed.and_then(|method| match later {
+    let verified = match later {
         Return::ThisRun | Return::Unknown if app >= door => Err(Reason::AppStart),
         Return::ThisRun | Return::Unknown => Err(Reason::DoorStart),
-        _ => Ok(method),
-    });
-    let verified = if nature.platform == Platform::Mac {
-        Return::SignIn
-    } else {
-        later
+        _ if nature.platform == Platform::Mac => Ok(Return::SignIn),
+        _ => Ok(later),
     };
+    // Deployment refusals explain the fallback before an unverified start does.
+    let proposed = proposed.and_then(|method| verified.map(|when| (when, method)));
     let (when, method, reason) = match (terms.availability, proposed) {
         (Availability::ThisRun, _) => (Return::ThisRun, Method::ThisRun, None),
         (Availability::Keep, Err(why)) => (Return::ThisRun, Method::ThisRun, Some(why)),
-        (Availability::Keep, Ok(method)) => (verified, method, None),
+        (Availability::Keep, Ok((when, method))) => (when, method, None),
     };
     let action = match method {
         Method::Reuse(_) => "reuse",

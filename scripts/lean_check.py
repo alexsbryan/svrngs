@@ -956,10 +956,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 24,644; uid.rs 8, 24,636. JavaScript: lent-row.js 18, 8,650.
 # Then avail-plan: the pure deployment fold, words and purity check land at
 # 24,945 (+309 of the release's +435 envelope; CHARTER, "The release").
+# Then avail-plan-economize folds the start verdicts together: 24,942.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24946,
+    ".": 24943,
 
     "js": 8651,
 
