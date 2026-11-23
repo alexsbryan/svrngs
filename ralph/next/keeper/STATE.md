@@ -989,7 +989,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - **Size:** 0 counted. Anything that has to land in `scripts/` is
     measured; if it crosses the ceiling, park.
 
-- [ ] avail-robust-e2e — depends [avail-release-tier] — ONE UNIT (tests only, 0 counted): fix the gate's flaky tests with robust e2e assertions (the operator, 2026-11-23: "We just need to fix flaky tests. Just use e2e testing best practices for robust assertions and lets stop wasting our time with this").
+- [x] avail-robust-e2e 5c4f67458 — depends [avail-release-tier] — ONE UNIT (tests only, 0 counted): fix the gate's flaky tests with robust e2e assertions (the operator, 2026-11-23: "We just need to fix flaky tests. Just use e2e testing best practices for robust assertions and lets stop wasting our time with this").
   - **The rule:** assert what happened (events, bytes, order), not how
     fast. Time is only a generous hang guard (for example 20 s) that
     fails a run that never finishes. Elapsed times are logged, never
