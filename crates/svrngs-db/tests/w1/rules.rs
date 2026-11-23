@@ -197,20 +197,35 @@ fn rules() -> Vec<Rule> {
     }
 }
 
-/// Each rule on the gate's seeds. It fails where any rule run fails, so it
-/// stays out of the gate: H fails seeds 5 and 500. The gate runs the rule
-/// svrngs keeps on them (`seeds.rs`, `live.rs`). Run `cargo test -p
+/// Only the rule svrngs keeps (`Rule::default()`) must hold every run. The
+/// others are the alternatives it was chosen over, so their tallies are said
+/// and not judged: today and H part on seeds the gate names. A run that
+/// never ran the kept rule judges nothing, and says so.
+fn the_kept_rule_holds(tallies: Vec<(Rule, Vec<String>)>) {
+    let kept = Rule::default();
+    let (_, failed) = (tallies.iter().find(|(r, _)| *r == kept))
+        .unwrap_or_else(|| panic!("{} wasn't run, so nothing is judged: name it in W1_RULES", kept.name()));
+    assert!(
+        failed.is_empty(),
+        "{} runs failed under {}, the rule svrngs keeps",
+        failed.len(),
+        kept.name()
+    );
+}
+
+/// Each rule on the gate's seeds, a measure beside the gate, which runs the
+/// rule svrngs keeps on them (`seeds.rs`, `live.rs`). Run `cargo test -p
 /// svrngs-db --test w1 -- --ignored each_rule_on_the_gate --nocapture`,
 /// `W1_RULES` to name rules.
 #[test]
-#[ignore = "H fails seeds 5 and 500; the gate runs the rule svrngs keeps on these seeds"]
+#[ignore = "each rule on the gate's seeds; the gate runs the rule svrngs keeps on them"]
 fn each_rule_on_the_gate_s_seeds() {
-    let failed: Vec<String> = rules().into_iter().flat_map(|r| runs(r, GATE)).collect();
-    assert!(failed.is_empty(), "{} runs failed", failed.len());
+    the_kept_rule_holds(rules().into_iter().map(|r| (r, runs(r, GATE))).collect());
 }
 
 /// The soak under each rule: `W1_SEEDS` as `<first>..<end>`, else the
-/// 100,000 runs APP_STATE §11 names, model copies only. Run `cargo test
+/// 100,000 runs APP_STATE §11 names, model copies only, each rule's tally
+/// said and the rule svrngs keeps held to every run. Run `cargo test
 /// --release -p svrngs-db --test w1 -- --ignored each_rule_s_soak
 /// --nocapture`, `W1_RULES` to name rules.
 #[test]
@@ -219,6 +234,5 @@ fn each_rule_s_soak() {
     let seeds = std::env::var("W1_SEEDS").unwrap_or_else(|_| "0..100000".into());
     let (first, end) = seeds.split_once("..").expect("W1_SEEDS is <first>..<end>");
     let (first, end): (u64, u64) = (first.parse().expect("a first seed"), end.parse().expect("an end seed"));
-    let failed: Vec<String> = rules().into_iter().flat_map(|r| runs(r, first..end)).collect();
-    assert!(failed.is_empty(), "{} runs failed", failed.len());
+    the_kept_rule_holds(rules().into_iter().map(|r| (r, runs(r, first..end))).collect());
 }
