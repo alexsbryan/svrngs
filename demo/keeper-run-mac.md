@@ -16,3 +16,19 @@ Use Qwen2.5-0.5B-Instruct Q4_K_M from the approved demo model.
    are gone and the card and model still exist before cleaning scratch.
 
 Sign-in and reboot are HUMAN-release-hosts checks.
+
+## Run and lifecycle controls
+
+Run `runs/keeper/2026-11-23-mac-proof/proof.py` with the scratch keeper on
+beefymac. The HTTP fixture needs no model or group. Run the controls first
+with the respective guard absent, then with the shipping binary:
+
+1. Wait for a real launch agent that never binds the requested port. Only
+   then let an unrelated process listen there and answer HTTP 200. Record
+   both PIDs and the Run result: ready and running, but unverified.
+2. Bootstrap a test plist at the keeper's expected path without using
+   Run. With no saved card, Stop, Start, Restart and Remove must all refuse
+   with the registration and PID unchanged.
+3. Verify a genuine Run on its own listener. Refuse a symlink in place of
+   its plist, then restore the regular file and exercise Stop, Start and
+   Remove. Confirm the card remains but the agent and plist do not.

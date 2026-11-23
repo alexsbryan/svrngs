@@ -218,7 +218,9 @@ writes no share. Linux also takes `--card <compose.yaml>` for one volume-only
 HTTP container, using the port named by the card. On Linux the CLI shows
 the keeper's boot consent prompt at the terminal. The page has no terminal
 input and cannot turn on unattended startup. On macOS the program starts
-at sign-in; Stop takes its plist out of the login set until Start. Run
+at sign-in; Stop takes its plist out of the login set until Start. Lifecycle
+changes require the keeper's saved card and a regular live or parked plist;
+a loaded agent must also match the live plist's path (`launchd.rs`). Run
 verifies readiness with listeners in its active unit's cgroup subtree or
 with holders descended from the active launch agent. Otherwise it reports
 manager state and port readiness separately (`native_run.rs`); neither

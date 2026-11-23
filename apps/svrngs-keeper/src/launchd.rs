@@ -4,7 +4,7 @@
 
 use std::{
     fs,
-    io::Write,
+    io::{ErrorKind, Write},
     path::{Path, PathBuf},
     process::{Command, Output},
 };
@@ -70,10 +70,11 @@ pub struct Agent {
     label: String,
     path: PathBuf,
     parked: PathBuf,
+    card: PathBuf,
 }
 
 impl Agent {
-    pub fn new(agents: &Path, name: &Name) -> Result<Self, String> {
+    pub fn new(agents: &Path, name: &Name, card: PathBuf) -> Result<Self, String> {
         let uid = Command::new("/usr/bin/id")
             .arg("-u")
             .output()
@@ -88,6 +89,7 @@ impl Agent {
             path: agents.join(format!("{label}.plist")),
             parked: agents.join(format!("{label}.stopped")),
             label,
+            card,
         })
     }
 
@@ -133,7 +135,7 @@ impl Agent {
             let path = value(shown, "path = ")
                 .map(Path::new)
                 .and_then(|p| p.canonicalize().ok());
-            if path.is_none() || path != self.path.canonicalize().ok() || !self.path.is_file() {
+            if path.is_none() || path != self.path.canonicalize().ok() || !regular(&self.path)? {
                 tracing::debug!(target = %self.target, ?path, "launchd:refused_foreign_registration");
                 return Err("that name is already registered from a different setup".into());
             }
@@ -145,8 +147,24 @@ impl Agent {
         self.path.exists() || self.parked.exists()
     }
 
+    fn owned_plist(&self) -> Result<&Path, String> {
+        // A matching launchd path is not evidence that the keeper set it up.
+        if !regular(&self.card)? {
+            tracing::debug!(target = %self.target, "launchd:refused_no_card");
+            return Err(format!("{} has no saved card here", self.label));
+        }
+        match (regular(&self.path)?, regular(&self.parked)?) {
+            (true, false) => Ok(&self.path),
+            (false, true) => Ok(&self.parked),
+            (live, parked) => {
+                tracing::debug!(target = %self.target, live, parked, "launchd:refused_plist_state");
+                Err(format!("{} needs exactly one login or stopped setup", self.label))
+            }
+        }
+    }
+
     pub fn require_new(&self) -> Result<(), String> {
-        if self.installed() || self.show()?.is_some() {
+        if regular(&self.path)? || regular(&self.parked)? || self.show()?.is_some() {
             tracing::debug!(target = %self.target, "launchd:existing_setup");
             return Err(
                 "this name already has a setup here; start it again, or remove it before running a new command".into(),
@@ -155,7 +173,7 @@ impl Agent {
         Ok(())
     }
 
-    pub fn install(&self, native: &Native, dir: &Path) -> Result<(), String> {
+    pub(super) fn install(&self, native: &Native) -> Result<(), String> {
         use std::os::unix::fs::OpenOptionsExt;
         let agents = self.path.parent().expect("agent has a directory");
         let home = agents
@@ -163,7 +181,7 @@ impl Agent {
             .nth(2)
             .and_then(Path::to_str)
             .ok_or("the home path is not UTF-8")?;
-        let log = dir.join("program.log");
+        let log = self.card.with_file_name("program.log");
         let content = render(
             &self.label,
             native,
@@ -182,11 +200,12 @@ impl Agent {
     }
 
     pub fn start(&self) -> Result<(), String> {
+        let plist = self.owned_plist()?;
         if self.ours()?.is_some() {
             return Ok(());
         }
-        if self.parked.exists() {
-            self.move_plist(&self.parked, &self.path)?;
+        if plist == self.parked {
+            self.move_plist(plist, &self.path)?;
         }
         let path = self.path.to_str().ok_or("the setup path is not UTF-8")?;
         self.checked(&["bootstrap", &self.domain, path])
@@ -209,22 +228,24 @@ impl Agent {
     }
 
     fn move_plist(&self, from: &Path, to: &Path) -> Result<(), String> {
-        if to.exists() {
+        if regular(to)? {
             return Err(format!("{} already exists", to.display()));
         }
         fs::rename(from, to).map_err(|e| format!("move {} to {}: {e}", from.display(), to.display()))
     }
 
     pub fn stop(&self) -> Result<(), String> {
+        let plist = self.owned_plist()?;
         self.bootout()?;
         // No login plist and no persistent launchctl override to leave behind.
-        if self.path.exists() {
-            self.move_plist(&self.path, &self.parked)?;
+        if plist == self.path {
+            self.move_plist(plist, &self.parked)?;
         }
         Ok(())
     }
 
     pub fn restart(&self) -> Result<(), String> {
+        self.owned_plist()?;
         if self.observe()?.1.is_some() {
             self.checked(&["kickstart", "-k", &self.target])?;
         }
@@ -232,13 +253,9 @@ impl Agent {
     }
 
     pub fn remove(&self) -> Result<(), String> {
+        let plist = self.owned_plist()?;
         self.bootout()?;
-        for path in [&self.path, &self.parked] {
-            if path.exists() {
-                fs::remove_file(path).map_err(|e| format!("remove {}: {e}", path.display()))?;
-            }
-        }
-        Ok(())
+        fs::remove_file(plist).map_err(|e| format!("remove {}: {e}", plist.display()))
     }
 
     pub fn observe(&self) -> Result<(Status, Option<u32>), String> {
@@ -279,6 +296,17 @@ impl Agent {
             pid.filter(|_| state == "running"),
         ))
     }
+}
+
+fn regular(path: &Path) -> Result<bool, String> {
+    let error = match fs::symlink_metadata(path) {
+        Ok(m) if m.is_file() => return Ok(true),
+        Ok(_) => format!("{} is not a regular file", path.display()),
+        Err(e) if e.kind() == ErrorKind::NotFound => return Ok(false),
+        Err(e) => format!("read {}: {e}", path.display()),
+    };
+    tracing::debug!(%error, "launchd:refused_file");
+    Err(error)
 }
 
 fn value<'a>(shown: &'a str, key: &str) -> Option<&'a str> {

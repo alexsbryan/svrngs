@@ -133,9 +133,6 @@ fn run_agent(places: &Places, args: &[&str]) -> anyhow::Result<()> {
             let name = Name::new(name)?;
             let _lock = lock(places, &format!("name-{}", name.as_str()))?;
             let agent = places.agent(&name)?;
-            if !agent.installed() {
-                return Err(kept::KeptError::NotKept(name.as_str().into()).into());
-            }
             match *verb {
                 "start" => agent.start(),
                 "stop" => agent.stop(),

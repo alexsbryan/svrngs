@@ -73,13 +73,17 @@ impl Places {
         self.data.join(name.as_str())
     }
 
+    fn card_path(&self, name: &Name) -> PathBuf {
+        self.card_dir(name).join("compose.yaml")
+    }
+
     pub fn unit_path(&self, name: &Name) -> PathBuf {
         self.units.join(unit_name(name))
     }
 
     #[cfg(target_os = "macos")]
     pub fn agent(&self, name: &Name) -> Result<crate::launchd::Agent, KeptError> {
-        crate::launchd::Agent::new(&self.units, name).map_err(KeptError::Manager)
+        crate::launchd::Agent::new(&self.units, name, self.card_path(name)).map_err(KeptError::Manager)
     }
 
     #[cfg(target_os = "macos")]
@@ -91,7 +95,7 @@ impl Places {
         let agent = self.agent(name)?;
         agent.require_new().map_err(KeptError::Manager)?;
         store(self, card, name)?;
-        agent.install(native, &self.card_dir(name)).map_err(KeptError::Manager)
+        agent.install(native).map_err(KeptError::Manager)
     }
 }
 
@@ -272,7 +276,7 @@ pub fn install(
 
 fn store(places: &Places, card: &Card, name: &Name) -> Result<Stored, KeptError> {
     let dir = places.card_dir(name);
-    let (path, previous) = (dir.join("compose.yaml"), dir.join("previous.yaml"));
+    let (path, previous) = (places.card_path(name), dir.join("previous.yaml"));
     let before = std::fs::read_to_string(&path).ok();
     let text = &card.text;
     let stored = match &before {
@@ -503,7 +507,7 @@ fn row(places: &Places, name: String, observe: &impl Fn(&Name) -> Result<Option<
         return unread("not a name svrngs-keeper keeps a card under".into());
     };
     let dir = places.card_dir(&n);
-    let card = match std::fs::read_to_string(dir.join("compose.yaml")).map(|t| Card::parse(&t)) {
+    let card = match std::fs::read_to_string(places.card_path(&n)).map(|t| Card::parse(&t)) {
         Ok(Ok(card)) => card,
         Ok(Err(why)) => return unread(why.to_string()),
         Err(why) => return unread(why.to_string()),
