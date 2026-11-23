@@ -1,8 +1,9 @@
 //! `svrngs relay` (relay-verb (b)): a relay the verb starts on 127.0.0.1,
 //! over the data of a computer that runs svrngs beside it, lets through a
 //! key standing in a group that computer holds and a key a pass of the
-//! group's names, itself or by its holder's link, and refuses one that
-//! stands in none and holds no pass;
+//! group's names, itself or by its holder's link, a guest's as the lend's
+//! door would let them in, and refuses one that stands in none and holds
+//! no pass;
 //! `--open` lets both through; a computer in no group is refused the verb.
 //! Planted: every key let through, as an open relay would.
 
@@ -366,6 +367,178 @@ async fn a_group_only_relay_admits_the_key_a_holder_s_link_names_and_no_other() 
             "the relay: {case}"
         );
     }
+    sam.endpoint().close().await;
+}
+
+/// Lou's visit key, which Lou's page makes fresh for a visit (web/page/visit.js).
+const LOU: u8 = 12;
+
+/// Sam's computer has Lou over in `group` until tomorrow, the visit opening
+/// Sam's `opens`, as `/visit` writes one (invite.rs): the visit's id.
+fn lou_visits(sam: &svrngs_node::node::Node, group: &str, opens: &[&str]) -> svrngs_node::OpId {
+    let (lou, host) = (
+        SigningKey::from_bytes(&[LOU; 32]),
+        svrngs_core::actor_of(sam.rail().signer()),
+    );
+    let visit = svrngs_node::Visit {
+        guest: svrngs_node::Person::parse("Lou").unwrap(),
+        key: svrngs_core::actor_of(&lou),
+        opens: [(host.clone(), opens.iter().map(|o| o.to_string()).collect())].into(),
+        until: unix_now() + 24 * 3600,
+        consent: svrngs_core::tests_support::consent(&lou, &host),
+        under: None,
+    };
+    let act = svrngs_core::tests_support::Fixture {
+        act: svrngs_node::RailAct::Visit(visit),
+    };
+    sam.rail().commit(group, &act).unwrap().unwrap().lines()[0]
+        .id
+        .clone()
+}
+
+/// **A group-only relay admits a guest's pass as the lend's door does**
+/// (lend-guests): Lou is Sam's guest, by a visit opening Sam's film, and
+/// Lou's key stands in no group. The run's key presenting Lou's pass for the
+/// film and the holder's link naming it is let through; Lou's pass for a
+/// lend of Sam's the visit does not open, for another computer's lend, or
+/// for the group's carried app, a pass a key with no visit signed, and,
+/// once Sam stops the visit, Lou's pass for the film, are refused. On each
+/// the lend's door answers the same: [`resolve`] for the lend, then the
+/// guest it asks as (door.rs `as_guest`), its declaration lent to the
+/// group. The stop is asked once the clock has passed its line's time,
+/// from which it counts. Planted, each watched red: the relay's guest left
+/// unasked, as before, where Lou's pass for the film was refused; and any
+/// visit held here letting its key through, its lend unasked, where Lou's
+/// pass for a lend the visit does not open was let through.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_group_only_relay_admits_a_guest_s_pass_as_the_lend_s_door_does() {
+    use svrngs_node::lend::{Audience, Lend, LendName, Program, Source, Terms};
+    let (_relay, _, dir, sam) = common::sams_computer(SAM).await;
+    let (seed, _) = made::new_group(
+        &sam,
+        Name::parse("house").unwrap(),
+        Name::parse("Sam").unwrap(),
+        None,
+        &[],
+    )
+    .await
+    .expect("Sam makes house");
+    let house = seed.id().to_string();
+    let visit = lou_visits(&sam, &house, &["film"]);
+    let groups = relay_over(dir.path(), false)
+        .await
+        .expect("Sam's relay starts");
+
+    let sam_key = SigningKey::from_bytes(&[SAM; 32])
+        .verifying_key()
+        .to_bytes();
+    let bo_key = SigningKey::from_bytes(&[13; 32]).verifying_key().to_bytes();
+    let (lou, stranger) = (
+        SigningKey::from_bytes(&[LOU; 32]),
+        SigningKey::from_bytes(&[6; 32]),
+    );
+    let holder = SigningKey::from_bytes(&[7; 32]);
+    let run = SecretKey::from_bytes(&[9; 32]);
+    let dialer = hex::encode(run.public().as_bytes());
+    // A port lend of `lender`'s named `name`, lent to house, as its door
+    // reads its declaration; a carried app's, as house's folder carries it.
+    let lent = |lender: &[u8; 32], name: &str| {
+        let lend = Lend {
+            name: LendName::parse(name).unwrap(),
+            source: Source::Port(std::num::NonZeroU16::new(8096).unwrap()),
+            kind: Program::parse("k").unwrap(),
+            terms: Terms {
+                audience: Audience::Selected(vec![house.clone()]),
+                ..Terms::default()
+            },
+        };
+        (lend.label(lender), lend)
+    };
+    let carried = Lend::carried("money", &house).expect("a carried app's lend");
+    let carried = (carried.label(&sam_key), carried);
+    let film = lent(&sam_key, "film");
+    // The pass `by` signs to the holder for `lend`, and the holder's link
+    // naming the run's key.
+    let pair = |by: &SigningKey, label: &Label| {
+        let pass = Pass::sign(
+            by,
+            &svrngs_core::actor_of(&holder),
+            (label.clone(), vec![]),
+            unix_now() + 3600,
+        );
+        linked(&pass, &holder, &run)
+    };
+    let cases = [
+        (
+            "Lou's pass for Sam's film, which the visit opens",
+            &lou,
+            &film,
+            true,
+        ),
+        (
+            "Lou's pass for a lend of Sam's the visit does not open",
+            &lou,
+            &lent(&sam_key, "music"),
+            false,
+        ),
+        (
+            "Lou's pass for another computer's lend",
+            &lou,
+            &lent(&bo_key, "film"),
+            false,
+        ),
+        (
+            "Lou's pass for the group's carried app",
+            &lou,
+            &carried,
+            false,
+        ),
+        (
+            "a pass for Sam's film a key with no visit signed",
+            &stranger,
+            &film,
+            false,
+        ),
+    ];
+    // The lend's door: `resolve` for the lend, then the guest it asks as,
+    // the signer standing in no group (door.rs `holder_of`).
+    let door = |(pass, link): &(Pass, Option<Pass>), (label, lend): &(Label, Lend)| {
+        let now = unix_now();
+        let guest = svrngs_node::door::as_guest(sam.rail(), &pass.person, (label, Some(lend)), now);
+        resolve(pass, link.as_ref(), &dialer, label, now, || ()).is_ok()
+            && matches!(guest, Some(Ok(_)))
+    };
+    for (case, by, lend, admitted) in cases {
+        let pair = pair(by, &lend.0);
+        assert_eq!(door(&pair, lend), admitted, "the door: {case}");
+        assert_eq!(
+            admits_with(&groups, &run, Some(&token(&pair))).await,
+            admitted,
+            "the relay: {case}"
+        );
+    }
+
+    // Sam stops the visit, as the home page's Stop writes it (home.rs `POST /visits`).
+    let stop = svrngs_core::tests_support::Fixture {
+        act: svrngs_node::RailAct::Correct {
+            corrects: visit,
+            replacement: None,
+        },
+    };
+    let stopped = sam.rail().commit(&house, &stop).unwrap().unwrap().lines()[0].ts_unix;
+    // A Stop counts from its line's time (door.rs `guest_of`), which the
+    // record stamps past the lines before it, so a few seconds past the
+    // clock here: both are asked once the clock has passed it.
+    while unix_now() < stopped {
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+    }
+    let pair = pair(&lou, &film.0);
+    let case = "Lou's pass for the film once Sam stopped the visit";
+    assert!(!door(&pair, &film), "the door: {case}");
+    assert!(
+        !admits_with(&groups, &run, Some(&token(&pair))).await,
+        "the relay: {case}"
+    );
     sam.endpoint().close().await;
 }
 

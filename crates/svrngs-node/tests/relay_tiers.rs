@@ -72,9 +72,20 @@ async fn a_dial_reaches_a_member_at_a_relay_this_computer_does_not_hold() {
             .await
             .expect("online");
     }
+    // Ada takes the first dial whose handshake completes. The control's,
+    // given up, can come first: iroh sends a dial's first packets, the
+    // close Bo's giving up sends among them, to every path it knows for
+    // the remote (iroh-1.4.2 socket/remote_map/remote_state.rs
+    // `handle_msg_send_datagram`), and R1 is one once Bo dials there.
     let taken = tokio::spawn({
         let ada = ada.clone();
-        async move { ada.accept().await.unwrap().await.unwrap() }
+        async move {
+            loop {
+                if let Ok(c) = ada.accept().await.unwrap().await {
+                    break c;
+                }
+            }
+        }
     });
     let dial =
         |url: &str| EndpointAddr::new(ada.id()).with_relay_url(url.parse::<RelayUrl>().unwrap());
@@ -787,15 +798,22 @@ async fn pressed_on(node: &Node) -> String {
 /// its 8 MiB, so the share holds from the first second), and Sam's dial
 /// through it, its connections built as the page builds `paths`, reading
 /// two answers on, a part of 2 MiB after another, as a player's lookahead
-/// asks them (`web/lend.js` `PART`); 12 s in, a seek asks a range, whose
-/// first bytes must come within 6 s: the 2.1 s a page's [`QUEUED`] takes
-/// at the share, and slack for the asks' round trips and a loaded host
-/// (2.2-4.1 s here, the whole file's tests at once among them).
+/// asks them (`web/lend.js` `PART`); a seek asks a range 4 s in and again
+/// 12 s in, and the later must not wait 4 s longer than the earlier: half
+/// what the 8 s between them adds when the queue grows with the reading,
+/// about a second a second (the plant's, below). How long either waits — the 2.1 s a
+/// page's [`QUEUED`] takes at the share, the asks' round trips, and the
+/// read of the port's sockets the door makes for each answer's connection
+/// (door/bound.rs `bound`) — rides the host's load and is not judged here:
+/// a person's bar is a recorded run's (AGENTS.md 7). Each seek's first
+/// bytes come within 30 s, a hang guard.
 /// Ada's group meets at its own plain-HTTP relay, her build's answering
 /// nowhere, so the share watch, which reads only the build's relay,
 /// refuses nothing. Planted, watched red: `QUEUED` ignored (iroh's
-/// 1.25 MB a stream), and the first bytes came after 12.4 s, the queue
-/// growing for as long as the lookahead reads (4.5 s at 4 s in, 8.5 s at 8).
+/// 1.25 MB a stream), the queue growing for as long as the lookahead
+/// reads: 4.5 s at 4 s in, 8.5 s at 8, 12.4 s at 12; with the second seek
+/// asked after the first, 4.5 s then 16.8 s over a page's dial, 4.6 s then
+/// 19.8 s over a data endpoint.
 ///
 /// [`QUEUED`]: svrngs_node::dial::QUEUED
 async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportConfig) {
@@ -819,26 +837,35 @@ async fn a_seek_over_the_share(way: &str, paths: iroh::endpoint::QuicTransportCo
     for i in 0..2 {
         tokio::spawn(read_on(conn.clone(), head(&format!("bytes={}-", i * PART))));
     }
-    tokio::time::sleep(Duration::from_secs(12)).await;
-    let asked = Instant::now();
-    let (mut send, mut recv) = conn.open_bi().await.unwrap();
-    send.write_all(head("bytes=0-1").as_bytes()).await.unwrap();
-    let first = recv.read_chunk(64 * 1024).await.unwrap().unwrap();
-    let ms = asked.elapsed().as_millis();
-    eprintln!(
-        "the seek over {way}: its first bytes in {ms} ms ({} B)",
-        first.len()
+    let reading = Instant::now();
+    tokio::time::sleep(Duration::from_secs(4)).await;
+    let early = seek(&conn, head("bytes=0-1")).await;
+    tokio::time::sleep(Duration::from_secs(12).saturating_sub(reading.elapsed())).await;
+    let later = seek(&conn, head("bytes=0-1")).await;
+    eprintln!("the seek over {way}: its first bytes in {early} ms 4 s in, {later} ms 12 s in");
+    assert!(
+        later <= early + 4_000,
+        "the seek over {way} waited {early} ms 4 s in and {later} ms 12 s in: what it waits behind grows with the lookahead's reading"
     );
+    dialer.close().await;
+    node.endpoint().close().await;
+}
+
+/// A seek on `conn`, `ask` sent on a stream of its own: the ms its first
+/// bytes, a 206's, took, within 30 s.
+async fn seek(conn: &iroh::endpoint::Connection, ask: String) -> u128 {
+    let asked = Instant::now();
+    let first = tokio::time::timeout(Duration::from_secs(30), async {
+        let (mut send, mut recv) = conn.open_bi().await.unwrap();
+        send.write_all(ask.as_bytes()).await.unwrap();
+        recv.read_chunk(64 * 1024).await.unwrap().unwrap()
+    });
+    let first = first.await.expect("a seek's first bytes within 30 s");
     assert!(
         String::from_utf8_lossy(&first).starts_with("HTTP/1.1 206"),
         "{first:?}"
     );
-    assert!(
-        ms <= 6_000,
-        "the seek over {way} waited {ms} ms behind the lookahead"
-    );
-    dialer.close().await;
-    node.endpoint().close().await;
+    asked.elapsed().as_millis()
 }
 
 /// [`a_seek_over_the_share`] over a page's endpoint's dial to a lender

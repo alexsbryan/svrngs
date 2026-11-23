@@ -20,9 +20,10 @@
 //! in a group this computer holds — the register's one answer,
 //! [`RingRail::standing_anywhere`], read from the record on disk as svrngs
 //! running beside it writes it — and a lend's worker acting for such a
-//! person ([`pass_holds`], self-host): its key stands in no group, and
-//! the token it presents is its pass and the holder's link naming that
-//! key, judged as the lending computer's door judges them; with `--open`,
+//! person, or for a guest the lend's door would let in ([`pass_holds`],
+//! [`guest`], self-host): its key stands in no group, and the token it
+//! presents is its pass and the holder's link naming that key, judged as
+//! the lending computer's door judges them; with `--open`,
 //! everyone, each held to the share, [`SHARE_RATE`] with a
 //! [`SHARE_BURST`]. Every decision traces at debug.
 
@@ -38,8 +39,9 @@ use iroh_relay::server::{
     Access, AccessControl, AcmeConfig, CertConfig, ClientRateLimit, ClientRequest, QuicConfig,
     RelayConfig, Server, ServerConfig, TlsConfig,
 };
-use svrngs_node::{authority::resolve, pass::presented, register::Member};
-use svrngs_node::{namespaces_in, RailError, RingRail, SigningKey};
+use svrngs_node::pass::{presented, Pass};
+use svrngs_node::{authority::resolve, door::as_guest};
+use svrngs_node::{namespaces_in, Person, RailError, RingRail, SigningKey};
 use tokio::task::JoinError;
 
 use crate::cli::{Refusal, Refused, Unjudged};
@@ -117,29 +119,35 @@ impl AccessControl for Admits {
         // stands in no group and which the pass's holder names in a link
         // (web/lend.js `opened`): the pass its person signed and that link
         // are what a group's own relay admits it by, as the door admits
-        // them for the lends the pass names; then the person stands here
-        // or not, read as their own key's is. A token that holds nothing
+        // them for the lends the pass names; then the person stands here,
+        // read as their own key's is, or is a guest here as the lend's door
+        // would let them in ([`guest`]), or not. A token that holds nothing
         // is refused.
-        let person = match request.auth_token().map(|token| pass_holds(&key, &token)) {
+        let held = match request.auth_token().map(|token| pass_holds(&key, &token)) {
             Some(None) => return Access::Deny { reason: None },
             held => held.flatten(),
         };
+        let person = held.as_ref().map(|(pass, _)| pass.person.clone());
         let asked = person.clone().unwrap_or_else(|| key.clone());
         // The record is read from disk, off the relay's own tasks.
         let stands = tokio::task::spawn_blocking(move || {
-            RingRail::new(root, signer).standing_anywhere(&asked)
+            let rail = RingRail::new(root, signer);
+            match rail.standing_anywhere(&asked) {
+                Some((group, member)) => Some((group, member.person, None)),
+                None => held.and_then(|(pass, now)| guest(&rail, &pass, now)),
+            }
         });
         verdict(&key, person.as_deref(), stands.await)
     }
 }
 
-/// The person the dialer `key`, presenting `token`, acts for: the token
-/// read as a pass and the link carrying it ([`presented`]), judged as the
-/// door judges the pair (door.rs `holder_of`), by [`resolve`] — the pass
-/// signed by the person it names, live, and held by `key` or by the holder
-/// whose link, live and no wider, names `key`. `None` for any other
-/// token, each branch traced.
-fn pass_holds(key: &str, token: &str) -> Option<String> {
+/// The pass the dialer `key`, presenting `token`, acts by, and the time it
+/// was judged at: the token read as a pass and the link carrying it
+/// ([`presented`]), judged as the door judges the pair (door.rs
+/// `holder_of`), by [`resolve`] — the pass signed by the person it names,
+/// live, and held by `key` or by the holder whose link, live and no wider,
+/// names `key`. `None` for any other token, each branch traced.
+fn pass_holds(key: &str, token: &str) -> Option<(Pass, i64)> {
     let (read, clock) = (presented(token), svrngs_node::door::unix_now());
     // Nothing to judge, the trace saying which: no pass and link that
     // read, or no clock to judge them on.
@@ -154,32 +162,44 @@ fn pass_holds(key: &str, token: &str) -> Option<String> {
         tracing::debug!(target: "relay", key, person = %pass.person, %why, "relay: refused — a pass that does not admit this dialer");
         return None;
     }
-    Some(pass.person.clone())
+    Some((pass.clone(), now))
+}
+
+/// The guest the person `pass` names is, by a visit held here, for the lend
+/// it opens: the visit's group, the guest and their host, as the lend's
+/// door would let them in at `now`, by its own call (door.rs `as_guest`,
+/// traced there), the lend's declaration unread, since a relay holds none.
+fn guest(rail: &RingRail, pass: &Pass, now: i64) -> Option<(String, Person, Option<Person>)> {
+    let guest = as_guest(rail, &pass.person, (&pass.app, None), now)?;
+    let (group, host, guest) = guest.ok()?;
+    Some((group, guest, Some(host)))
 }
 
 /// Whether `key` is let through, by the read of where it — or `person`,
-/// the signer a pass names (self-host) — stands, made off the relay's own
-/// tasks. A read that failed — it panicked, or was cancelled — refuses,
-/// traced as that, never as the key standing in no group (#129).
+/// the signer a pass names (self-host) — stands, or visits as a guest
+/// ([`guest`]): the group, the person, and a guest's host. It is made off
+/// the relay's own tasks. A read that failed — it panicked, or was
+/// cancelled — refuses, traced as that, never as the key standing in no
+/// group (#129).
 fn verdict(
     key: &str,
     person: Option<&str>,
-    read: Result<Option<(String, Member)>, JoinError>,
+    read: Result<Option<(String, Person, Option<Person>)>, JoinError>,
 ) -> Access {
     match (read, person) {
-        (Ok(Some((group, member))), None) => {
-            tracing::debug!(target: "relay", key, group, person = %member.person, "relay: admitted — the key stands in a group held here");
+        (Ok(Some((group, name, _))), None) => {
+            tracing::debug!(target: "relay", key, group, person = %name, "relay: admitted — the key stands in a group held here");
             return Access::Allow;
         }
-        (Ok(Some((group, _))), Some(person)) => {
-            tracing::debug!(target: "relay", key, person, group, "relay: admitted — a key acting for a pass's person, who stands in a group held here");
+        (Ok(Some((group, name, host))), Some(person)) => {
+            tracing::debug!(target: "relay", key, person, group, %name, ?host, "relay: admitted — a key acting for a pass's person, who stands in a group held here, or, with a host, is their guest there by a visit that opens the pass's lend");
             return Access::Allow;
         }
         (Ok(None), None) => {
             tracing::debug!(target: "relay", key, "relay: refused — the key stands in no group held here")
         }
         (Ok(None), Some(person)) => {
-            tracing::debug!(target: "relay", key, person, "relay: refused — the person a pass names stands in no group held here")
+            tracing::debug!(target: "relay", key, person, "relay: refused — the person a pass names stands in no group held here, nor is a guest there whom the lend's door would let in")
         }
         (Err(e), _) => {
             tracing::warn!(target: "relay", key, error = %e, "relay: refused — the record could not be read")
@@ -207,19 +227,18 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
         Admits(Some((root.to_path_buf(), Arc::new(key))))
     };
     let any = |port| SocketAddr::from((Ipv6Addr::UNSPECIFIED, port));
-    let (http, tls, quic) = match &relay.at {
+    let (http, tls, quic, metrics) = match &relay.at {
         At::Here(addr) => {
             tracing::debug!(target: "relay", %addr, "relay: plain HTTP at the address given, with no certificate");
-            (*addr, None, None)
+            (*addr, None, None, None)
         }
         At::Name { name, staging } => {
             tracing::debug!(target: "relay", name, staging, "relay: HTTPS at the name, its certificate Let's Encrypt's");
-            let builder = rustls::ServerConfig::builder_with_provider(Arc::new(
-                rustls::crypto::ring::default_provider(),
-            ))
-            .with_safe_default_protocol_versions()
-            .expect("ring's protocols")
-            .with_no_client_auth();
+            let ring = Arc::new(rustls::crypto::ring::default_provider());
+            let builder = rustls::ServerConfig::builder_with_provider(ring)
+                .with_safe_default_protocol_versions()
+                .expect("ring's protocols")
+                .with_no_client_auth();
             let acme = AcmeConfig::letsencrypt(!staging)
                 .domains(vec![name.clone()])
                 .cache_path(root.join("relay"));
@@ -227,10 +246,15 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
                 acme_config: acme,
                 server_config_builder: builder,
             };
+            // The counters an operator watches, on loopback, where the box
+            // alone reads them: two `--at` relays on one computer (the tests',
+            // a local network's) would collide on the one port.
+            let metrics = SocketAddr::from((Ipv4Addr::LOCALHOST, DEFAULT_METRICS_PORT));
             (
                 any(DEFAULT_HTTP_PORT),
                 Some(TlsConfig::new(any(DEFAULT_HTTPS_PORT), cert)),
                 Some(QuicConfig::new(any(DEFAULT_RELAY_QUIC_PORT))),
+                Some(metrics),
             )
         }
     };
@@ -246,13 +270,7 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
     let mut server = ServerConfig::default();
     server.relay = Some(config);
     server.quic = quic;
-    if matches!(relay.at, At::Name { .. }) {
-        // The counters an operator watches, on loopback, where the box
-        // alone reads them: two `--at` relays on one computer (the tests',
-        // a local network's) would collide on the one port.
-        let metrics = SocketAddr::from((Ipv4Addr::LOCALHOST, DEFAULT_METRICS_PORT));
-        server.metrics_addr = Some(metrics);
-    }
+    server.metrics_addr = metrics;
     Server::spawn(server).await.map_err(|e| {
         tracing::debug!(target: "relay", error = %e, "relay: refused — it did not start");
         Unjudged::RelayStart(e.to_string()).into()

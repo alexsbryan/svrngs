@@ -303,12 +303,8 @@ impl LendRefusal {
     fn said(self, status: StatusCode, mut body: serde_json::Value) -> Response {
         body["kind"] = self.as_str().into();
         let words = Words(body["error"].as_str().unwrap_or_default().to_string());
-        let mut answer = (status, Json(body)).into_response();
-        answer.extensions_mut().insert(words);
-        answer
-            .headers_mut()
-            .insert(REFUSED_HEADER, HeaderValue::from_static(self.as_str()));
-        answer
+        let kind = [(REFUSED_HEADER, HeaderValue::from_static(self.as_str()))];
+        (status, kind, Extension(words), Json(body)).into_response()
     }
 }
 
@@ -778,28 +774,24 @@ async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
     let Some(port) = lend.port() else {
         return (None, None);
     };
-    let at = lend
-        .terms
-        .approved
-        .as_ref()
-        .map_or(std::net::Ipv4Addr::LOCALHOST.into(), |a| a.at);
-    let dialed = tokio::net::TcpStream::connect((at, port.get()));
-    let took = match lend.raw() {
-        Raw::Tcp => Some(
-            tokio::time::timeout(ANSWER_WAIT, dialed)
-                .await
-                .is_ok_and(|d| d.is_ok()),
-        ),
-        Raw::Udp => None,
-    };
+    let approved = lend.terms.approved.as_ref();
     let net = door.folders.host.transport.as_ref();
-    let read = match lend.raw() {
-        Raw::Udp => bound::udp_port(net, port.get(), (&door.using, &lend.name)).await,
-        Raw::Tcp => net.read_port(Raw::Tcp, port.get(), None).await,
+    let (took, read) = match lend.raw() {
+        Raw::Tcp => {
+            let at = approved.map_or(std::net::Ipv4Addr::LOCALHOST.into(), |a| a.at);
+            let dialed = tokio::net::TcpStream::connect((at, port.get()));
+            let took = tokio::time::timeout(ANSWER_WAIT, dialed).await;
+            let read = net.read_port(Raw::Tcp, port.get(), None).await;
+            (Some(took.is_ok_and(|d| d.is_ok())), read)
+        }
+        Raw::Udp => {
+            let read = bound::udp_port(net, port.get(), (&door.using, &lend.name)).await;
+            (None, read)
+        }
     };
     let held = match bound::decided(&door.data_dir, lend, read) {
         Err(Unsent::Held(held)) => Some(held),
-        _ => lend.terms.approved.is_none().then_some(Hold::Unapproved),
+        _ => approved.is_none().then_some(Hold::Unapproved),
     };
     tracing::debug!(target: "door", lend = %lend.name, ?took, ?held, "door: lends — whether a lend's port takes a connection, and whether what is there is what its lender approved");
     (took, held)
@@ -962,7 +954,8 @@ pub(crate) fn guest_admitted(rail: &RingRail, key: &str, lend: &Lend) -> bool {
         tracing::debug!(target: "door", guest = key, "door: no visit of the key's held here, or no clock, so the guest is not let in");
         return false;
     };
-    guest_of(&crate::actor_of(rail.signer()), visit, key, lend, now).is_ok()
+    let label = lend.label(&rail.signer().verifying_key().to_bytes());
+    guest_of(visit, key, (&label, Some(lend)), now).is_ok()
 }
 
 /// `body`, carried by a task of its own until it ends or `cut` fires: then
@@ -1202,15 +1195,14 @@ impl LendPath {
 fn drop_echoed_secret(
     headers: &mut HeaderMap,
     secret: &[(HeaderName, HeaderValue)],
-) -> Vec<String> {
+) -> Vec<HeaderName> {
     let holds = |v: &HeaderValue| {
         secret.iter().any(|(_, s)| {
             let s = s.as_bytes();
             !s.is_empty() && v.as_bytes().windows(s.len()).any(|w| w == s)
         })
     };
-    let echoed = strip(headers, |_, v| holds(v));
-    echoed.iter().map(HeaderName::to_string).collect()
+    strip(headers, |_, v| holds(v))
 }
 
 /// Who asks for a lend through the door: a closed set (AGENTS 9), each
@@ -1378,17 +1370,9 @@ async fn holder_of(
             .map(|(group, member)| (group, member.person, PersonKey(member.person_key), None))
     };
     let mut standing = stands();
-    // A key the keeper cut never stands again (U7), so it is told so at once
-    // rather than after the ring is asked.
-    if standing.is_none() && door.rail.removed_anywhere(&issuer).is_some() {
-        tracing::debug!(target: "door", holder = key, signer = issuer, lend = %lend.name,
-            "door: refused — the pass's signer was removed from a group held here");
-        return Err(gone());
-    }
     if standing.is_none() {
-        if let Some(visit) = door.rail.visit_anywhere(&issuer) {
-            let (group, host, person) =
-                guest_of(&hex::encode(door.key), visit, &issuer, lend, now)?;
+        if let Some(guest) = as_guest(&door.rail, &issuer, (&label, Some(lend)), now) {
+            let (group, host, person) = guest?;
             standing = Some((group, person, PersonKey(issuer.clone()), Some(host)));
         } else {
             tracing::debug!(target: "door", holder = key, signer = issuer, lend = %lend.name,
@@ -1438,24 +1422,49 @@ pub(crate) async fn holder_of_offer(
     holder_of(door, dialer, headers, &lend).await.map(|_| ())
 }
 
+/// The guest the pass's signer `key`, standing in no group the lend
+/// reaches, asks as for the lend `lend` labels, as [`guest_of`] judges it,
+/// the lend's declaration beside its label when it is read: none when no
+/// visit of theirs is held here; refused when a group held here removed the
+/// key, since a key the keeper cut never stands again (U7), so it is told so
+/// at once rather than after the ring is asked. What the lend's door asks of
+/// a pass's signer ([`holder_of`]), and a group's own relay of a guest's
+/// pass, which reads no declaration (`svrngs relay`).
+pub fn as_guest(
+    rail: &RingRail,
+    key: &str,
+    lend: (&Label, Option<&Lend>),
+    now: i64,
+) -> Option<Result<(String, Person, Person), Response>> {
+    if rail.removed_anywhere(key).is_some() {
+        tracing::debug!(target: "door", signer = key, lend = %lend.0, "door: refused — the pass's signer was removed from a group held here");
+        return Some(Err(gone()));
+    }
+    Some(guest_of(rail.visit_anywhere(key)?, key, lend, now))
+}
+
 /// The guest whose visit's key `key` signed a pass (guests-door; GUESTS §3.4-§3.6,
 /// §5 "The door"): let in as themselves, their host's guest, only while the
 /// fold says the visit is live ([`svrngs_core::Guest::live`]) and it names
-/// this lend, its host's, this computer's own, and never a carried app, the
-/// group's. Each refusal says which of those refused it: `ended` for the
-/// visit's end, `closed` for the rest. A visit begun later than now, which
-/// only this computer's clock stepping back makes, is said as one ended.
-/// Let in, the visit's group, the host and the guest as the fold names them.
+/// the lend `label` labels, its host's own — the computer the label names,
+/// as a door labels its own lends with its key — and never a carried app,
+/// the group's, whose label names no computer. Each refusal says which of
+/// those refused it: `ended` for the visit's end, `closed` for the rest. A
+/// visit begun later than now, which only this computer's clock stepping
+/// back makes, is said as one ended. Let in, the visit's group, the host and
+/// the guest as the fold names them. `lend` is the lend's declaration, read
+/// by its door: of a port's app, and lent to the visit's group. Where none
+/// is read — a group's own relay holds none ([`as_guest`]) — those two are
+/// its door's to judge.
 fn guest_of(
-    me: &str,
     v: Visiting,
     key: &str,
-    lend: &Lend,
+    (label, lend): (&Label, Option<&Lend>),
     now: i64,
 ) -> Result<(String, Person, Person), Response> {
-    let ((group, register, guest), name) = (v, lend.name.as_str());
-    let host = register.members.get(&guest.host).map(|m| &m.person);
-    let Some(host) = host.or(register.removed.get(&guest.host)).cloned() else {
+    let ((group, register, guest), name) = (v, lend.map_or(label.as_str(), |l| l.name.as_str()));
+    let member = register.members.get(&guest.host).map(|m| &m.person);
+    let Some(host) = member.or(register.removed.get(&guest.host)).cloned() else {
         tracing::debug!(target: "door", guest = key, host = guest.host, "door: refused — a visit whose host is bound to nobody here");
         return Err(LendRefusal::closed("nobody here hosts your visit"));
     };
@@ -1463,13 +1472,18 @@ fn guest_of(
     let gone = register.cut.get(&guest.host).is_some_and(|c| c.at <= now);
     let stopped = guest.stopped.is_some_and(|s| s <= now);
     // A carried app is its group's, never its host's own.
-    let own = guest.host == me && matches!(lend.source, Source::Port(_));
-    let named = guest.visit.opens.get(me).is_some_and(|l| l.contains(name));
+    let hosts = matches!(label.whose(), Whose::Computer(k) if hex::encode(k) == guest.host);
+    let own = hosts && lend.is_none_or(|l| matches!(l.source, Source::Port(_)));
+    // The visit names each lend it opens at its host by name, so by the
+    // label that name has there, which a door and a relay both read.
+    let mut opened = guest.visit.opens.get(&guest.host).into_iter().flatten();
+    let named = opened.any(|n| Label::of_hex(&guest.host, n).as_ref() == Some(label));
     let ended = |w| Some((LendRefusal::Ended, w));
     let closed = |w| Some((LendRefusal::Closed, w));
-    // The visit's group must still be one the lend is lent to: a visit in a
-    // group the audience excludes reaches nothing here (LENDING_SCOPE).
-    let in_scope = lend.reaches(&group) && register.members.contains_key(me);
+    // The visit's group must still be one the lend is lent to, its host a
+    // member there: a visit in a group the audience excludes reaches
+    // nothing here (LENDING_SCOPE).
+    let in_scope = lend.is_none_or(|l| l.reaches(&group)) && member.is_some();
     let refused = match () {
         _ if gone => ended(format!("{host} is no longer a member, so your visit ended")),
         _ if stopped => ended(format!("{host} ended your visit")),

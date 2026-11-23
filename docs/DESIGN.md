@@ -2052,10 +2052,17 @@ pair by the call the lending computer's door makes, Eudoxia's
 `authority::resolve`, for the pass's own app — the pass signed by the
 person it names and live, held by the dialing key or by the holder whose
 link, live and no wider, names it — and then the person stands in a
-group held here, read as their own key's is (`relay.rs` `pass_holds`). So
-the relay and the door have one rule for a pass, a group's own relay
-need not be `--open` for its members' lends, and it lets through only
-keys the door would take as that person. A computer in no group is refused the
+group held here, read as their own key's is (`relay.rs` `pass_holds`), or
+is a guest there whom the lend's door would let in: the door's own
+`door::as_guest`, a key no group held here removed and a visit held here,
+live and opening that lend at its host, the computer the pass's label
+names (`relay.rs` `guest`; "A visit takes one of its host computer's
+slots", §6). A relay reads no lend's declaration, so whether the lend is
+a port's and lent to the visit's group, as for a member's lend, is its
+door's alone. So the relay and the door have one rule for a pass, a
+group's own relay need not be `--open` for its members' lends or its
+guests', and it lets through only keys the door would take as that
+person. A computer in no group is refused the
 verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each held to the share: 125,000 bytes a second, about a
 megabit, with an 8 MiB burst (`SHARE_RATE` and `SHARE_BURST`). The numbers
@@ -2160,7 +2167,11 @@ film's bytes need not cross a relay when the phone and its lender share a
 Wi-Fi: the lend's endpoint offers the lender a WebRTC path on the dial it
 already holds (`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend
 worker's fresh endpoint, and the window holds the channel, since a worker
-has no `RTCPeerConnection`. The offer is answered only to a dialer
+has no `RTCPeerConnection`. That endpoint's key is made for the attempt and
+named by the holder's link, so it presents the pass and that link at its
+relays, as the run's own endpoint does (`web/src/lib.rs` `direct_start`):
+a group's own relay admits it by them for the relay leg beside the channel
+("A relay anyone runs", above). The offer is answered only to a dialer
 holding a live pass for a lend this computer lends
 (`door::holder_of_offer`), only while this computer is on a network its
 lender turned direct connections on for from the home page
@@ -3105,9 +3116,10 @@ The release's record keeps its verdict.
    n0's public relays stay in every build as the emergency behind ours: a
    computer meets at n0's only while neither svrngs's relay nor its
    groups' own answers (§3), so an outage of ours is not an outage of the
-   groups. A group's own relay carries a phone's lends too: it admits the
-   key a lend's worker dials from, by the pass its person signed and the
-   link its holder signed naming that key, as the door does (§3, "A relay
+   groups. A group's own relay carries a phone's lends too, a guest's
+   among them: it admits the key a lend's worker dials from, by the pass
+   its person signed and the link its holder signed naming that key, and
+   then the person's standing or visit, as the door does (§3, "A relay
    anyone runs"; self-host). And whoever
    serves a group's page serves the code that holds the person's key, its
    bytes unsealed while the page runs, so a group that does not trust

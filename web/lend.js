@@ -411,9 +411,12 @@ async function direct(label, port) {
   /** @param {Uint8Array<ArrayBuffer>} bytes */
   const forward = (bytes) => port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]);
   const relay = lend.relay ?? null;
-  const data = await direct_start(lend.key, relay, handed.relays ?? [], forward);
-  // The data endpoint's own key, named by a link the holder signs.
-  const named = await linkTo(data.key());
+  // The data endpoint's own key, made here so the holder's link names it
+  // before the bind: it presents the pass and that link at its relays, as
+  // this run's endpoint does (`opened`), and to the lender after.
+  const key = crypto.getRandomValues(new Uint8Array(32));
+  const named = await linkTo(actor(key));
+  const data = await direct_start(lend.key, relay, handed.relays, forward, key, handed.pass, named);
   const dial = await (await bound()).dial_webrtc(lend.key, relay);
   // The offer crosses this run's own dial, so it presents this run's link
   // (`passed`'s `own`), never an earlier attempt's: the door checks the
@@ -817,8 +820,7 @@ async function proxied(asked, held) {
   if (set) await keepCookies(asked, set);
   if (asked.where.read) return inert(res);
   const turned = (await refusedAppend(asked, res)) ?? redirected(asked, res);
-  if (turned) return turned;
-  return served(asked, res, said, set);
+  return turned ?? served(asked, res, said, set);
 }
 
 // The headers `asked` goes to the door with: the page's, but its cookies
