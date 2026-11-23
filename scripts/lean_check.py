@@ -31,6 +31,14 @@ ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().pare
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
 # The one file whose one function may allow `unsafe_code` (its `kernel`).
 UNSAFE_HOME = "crates/svrngs-node/src/uid.rs"
+# The pure availability decision and renderer, not the executor beside them.
+PLAN_PURE = {"crates/svrngs-node/src/plan.rs", "crates/svrngs-node/src/plan/words.rs"}
+PLAN_IO = re.compile(
+    r"\b(?:async|await|SystemTime|Instant|SystemRandom|Command)\b"
+    r"|\b(?:fs|io|net|env|process|thread|time|rand|tokio|reqwest|run)\s*(?:::|[,}])"
+    r"|\b(?:include_bytes|include_str|env|option_env|print|println|eprint|eprintln)\s*!"
+    r"|\bjob\s*::\s*(?!Keep\b)\w+"
+)
 # An exemption from the lint, however spelled: `allow`, `expect` or `warn`,
 # alone or among other lints, inner or outer, under a `cfg_attr` too.
 EXEMPT = re.compile(r"\b(allow|expect|warn)\s*\(([^()]*[,\s])?unsafe_code\b")
@@ -946,10 +954,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # cut lowering its caps to one past where it lands
 # (demo/runs/economize/2026-11-22-available/SURVEY.md): door/bound.rs 11,
 # 24,644; uid.rs 8, 24,636. JavaScript: lent-row.js 18, 8,650.
+# Then avail-plan: the pure deployment fold, words and purity check land at
+# 24,945 (+309 of the release's +435 envelope; CHARTER, "The release").
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24637,
+    ".": 24946,
 
     "js": 8651,
 
@@ -1024,6 +1034,8 @@ def main():
             broken.append(f"{rel} links std: the core is no_std, so I/O, clocks and threads stay outside it")
         if rel.startswith("crates/svrngs-core/") and re.search(r"\basync\b|\.await\b", text):
             broken.append(f"{rel} is async: the core stays synchronous (RUST_ARCH §2, §4)")
+        if rel in PLAN_PURE and (site := PLAN_IO.search(text)):
+            broken.append(f"{rel} uses {site[0]}: the share planner is pure; put effects in plan/run.rs (KEEP_IT_RUNNING_RELEASE P4)")
     core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")

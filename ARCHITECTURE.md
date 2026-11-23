@@ -702,6 +702,14 @@ inodes under `/sys/fs/cgroup`. `Net::job` reads it off the runtime, kept
 for the cgroup that took the door's connection. `share::kept` makes the
 grant at an approval; `door::bound::renewed` renews with it.
 
+`plan.rs` folds the current app and door observations, chosen terms, share
+revision, and job or publication reports without reading the host. Its steps
+name a takeover only when needed, followed by a conditional access write;
+the owners must supply the resulting binding and grant. `plan/words.rs`
+renders the review and reports. The preview token binds the observed target,
+recipe, terms and revision; terminal and page wiring follow this fold
+(svrn-docs `KEEP_IT_RUNNING_RELEASE.md` §3).
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its

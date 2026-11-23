@@ -102,6 +102,7 @@ pub mod room;
 // lends, opened on this computer's 127.0.0.1 while its person has Play on.
 pub mod play;
 // What a lend is decided from: the probe, the well-known table (v1ui-lend (a)).
+pub mod plan;
 pub mod share;
 
 // The member door, U3's (docs/PLAN.md §4, U3's inventory): the route that
