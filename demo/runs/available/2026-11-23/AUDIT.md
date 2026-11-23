@@ -210,3 +210,66 @@ before the relay case starts, those clicks cannot overlap its measured
 fallback on that trial. Whole-test overlap would show opportunity for
 contention, not causation. Read the target abort separately from the timing
 miss. This diagnostic cannot qualify the release.
+
+### Browser-test overlap results at `ab551667`
+
+`REVIEW-audit-available-6.await.log:3,646–1084` records the same gate image
+and 32 visible CPUs. The candidate's sources and checks match `2b1a7040`
+(`git diff --exit-code 2b1a7040 ab551667`, excluding this audit and queue
+state). Results in the declared order:
+
+| Revision | Browser pass/fail; Cargo exit | WebKit fallback | Home ended before relay test by | Home overlap with WebKit navigation |
+|---|---|---:|---:|---:|
+| `789707dc` | 43/1; 101 (gzip) | 3901 ms | 7.085 s | 7.958 s |
+| `ab551667` | 44/0; 0 | 3841 ms | 7.003 s | 8.037 s |
+| `ab551667` | 44/0; 0 | 3770 ms | 0.286 s | 9.065 s |
+| `789707dc` | 44/0; 0 | 3859 ms | 1.152 s | 8.225 s |
+
+All four channel-close cases selected WebRTC first and returned 206 with
+all 6,291,456 bytes and the expected digest. All four navigation cases
+passed without the `WKPage._onTargetCreated` abort. The one base failure
+was `a_phone_opens_a_lend_that_answers_only_in_gzip::webkit` (line 737);
+the diagnostic does not identify its cause. The wrapper's exit 0 means
+the trials completed; the first browser suite itself failed.
+
+The Home test did not overlap the relay test in these trials. Its overlap
+with the navigation test occurred on both revisions without an abort.
+Neither earlier failure reproduced here, so these trials cannot attribute
+them or justify a test change.
+
+The candidate's focused audit still passes:
+
+```text
+67 tracked markers, 67 ledger entries; missing=[]; extra=[]
+trust floor: 13 policies, 13 listeners, 17 gates
+  the core (svrngs-core)     3,471   most   3,539
+  all code but JavaScript   25,715   most  25,719
+  JavaScript                 8,731   most   8,731
+```
+
+The CSP diff and the diff of `scripts/check.sh`, the floor and its checker
+against `789707dc` both exited 0 with no output. The counted totals sit 12
+non-JavaScript and 10 JavaScript lines below CHARTER's release ceilings.
+
+## Operator decision: the candidate full gate is still failed
+
+Should the release stay blocked pending a separate investigation of the
+WebKit gate failures, or should the operator explicitly authorize another
+qualification path? `ralph/next/keeper/STATE.md:870–875` requires an
+unchanged full pass; the diagnostic is useful evidence but does not meet
+that requirement. QA's disposition is recorded in `ce02fe1a`.
+
+- `flock /tmp/svrngs-gate.lock bash /tmp/opencode/keeper-audit-webkit.sh 2b1a7040`
+  ran the unchanged `scripts/check.sh` with the main `.git` mounted and
+  `TOKIO_WORKER_THREADS=4`. The candidate exited 1: the WebKit fallback
+  took **4010 ms** against the **4000 ms** bound, with 43 browser tests
+  passed and 1 failed (`-4.await.log:1163–1307`).
+- `flock /tmp/svrngs-gate.lock bash /tmp/opencode/keeper-audit-main.sh`
+  ran the same full gate on `789707dc` in the same image. It exited 0
+  (`-5.await.log:435–545`). The navigation abort was reproduced on
+  earlier main; no same-image control here reproduced the candidate's
+  exact fallback miss.
+- `flock /tmp/svrngs-gate.lock bash /tmp/opencode/keeper-audit-browser-overlap.sh ab5516674ca7624d3dc70eb6987a4a869e728c7a`
+  produced the four browser-only outcomes above (`-6.await.log:646–1084`).
+  Both candidate trials passed, and the lone failure on base was a
+  different case. No release check was relaxed.
