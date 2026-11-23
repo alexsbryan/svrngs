@@ -730,13 +730,14 @@ async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>
     }
 }
 
-/// `f` on `db`, off the runtime's threads, as a database's work is SQLite's
-/// and its signature checks', the page's reads' too (`carried.rs`), so one
-/// member's exchange holds no thread every group's round needs; none where
-/// its task didn't end.
-async fn off<T: Send + 'static>(
-    db: &Arc<svrngs_db::Db>,
-    f: impl FnOnce(&svrngs_db::Db) -> T + Send + 'static,
+/// `f` on `db`, a database or this computer's databases, off the runtime's
+/// threads, as a database's work is SQLite's and its signature checks', a
+/// page's reads' and a version made wider too (`carried.rs`), so one
+/// member's exchange or schema holds no thread every group's round needs;
+/// none where its task didn't end. How svrngs-node does SQLite work: here.
+pub(crate) async fn off<D: Send + Sync + 'static, T: Send + 'static>(
+    db: &Arc<D>,
+    f: impl FnOnce(&D) -> T + Send + 'static,
 ) -> Option<T> {
     let db = db.clone();
     tokio::task::spawn_blocking(move || f(&db)).await.ok()

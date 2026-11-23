@@ -635,14 +635,18 @@ impl Folders {
         let schema = self.runs_at(group, app, &schema, who).await?;
         tracing::debug!(target: "folder", group, %app, schema = schema.is_some(), "carried: an app's database asked; none without a schema.sql in the files that run as the person");
         let schema = String::from_utf8_lossy(&schema.ok_or(NO_SCHEMA)?).into_owned();
-        let db = self.host.states.open(group, app.as_str(), Some(&schema));
-        // One found copied from another computer's is made again, once
-        // nothing else holds it, restored whole (svrngs-db `remake`).
-        match db {
-            Ok(db) if db.copied() => Ok(self.host.states.remake(&db).map(|()| db)),
-            Ok(db) => Ok(self.host.states.widen(&db, &schema).map(|()| db)),
-            db => Ok(db),
-        }
+        // One found copied from another computer's is made again, restored
+        // whole (svrngs-db `remake`): SQLite's work, off the runtime's threads.
+        let (group, app) = (group.to_owned(), app.to_string());
+        let opened = crate::ring_sync::off(&self.host.states, move |states| {
+            let db = states.open(&group, &app, Some(&schema))?;
+            match db.copied() {
+                true => states.remake(&db),
+                false => states.widen(&db, &schema),
+            }
+            .map(|()| db)
+        });
+        Ok((opened.await).unwrap_or_else(|| Err(Refused::Fault("its task ended".into()))))
     }
 
     /// Every app database this computer keeps in `group`, as the round
