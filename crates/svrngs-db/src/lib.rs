@@ -657,8 +657,9 @@ impl Db {
     /// was none, so an op with no change row is a no-op only where its row
     /// already stood as the op would leave it (§4, "A no-op is told from a
     /// missing effect"); and the place the phone, `phone`, signs the set at,
-    /// its epoch here and seq.
-    pub fn prepare(&self, ops: &Value, phone: &str) -> Result<Value, Refused> {
+    /// its epoch here and seq. Refused, as a write is, where it changes an
+    /// owned row the record `binds` doesn't give the phone's person.
+    pub fn prepare(&self, ops: &Value, (phone, binds): (&str, &Binds)) -> Result<Value, Refused> {
         let (made, stands, count) = self.run(ops, true, |tx, count, stands| {
             let seq = tx.query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0));
             let made = self.changes(&tx, seq.map_err(fault)?).map_err(fault)?;
@@ -669,6 +670,9 @@ impl Db {
             return Ok(json!({ "count": count }));
         }
         let made = parse::fit(made, &self.tables).map_err(Refused::Unkept)?;
+        // Its owned rows judged as every copy judges the phone's set again.
+        let device = Device::parse(phone).ok_or_else(|| fault("a phone's key is lower-case hex"))?;
+        owned::mine(&made, &self.tables, binds, &device)?;
         let (epoch, next) = self.place(phone).map_err(fault)?;
         let keys: BTreeMap<_, _> = self.tables.iter().map(|(t, table)| (t, &table.key)).collect();
         let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));

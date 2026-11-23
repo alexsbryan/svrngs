@@ -721,7 +721,9 @@ impl Folders {
                 let (db, ops, phone) = (db.clone(), ops.clone(), key.to_owned());
                 // A phone's prepare seals nothing, and so wakes nothing.
                 let wrote = tokio::task::spawn_blocking(move || match prepare {
-                    true => db.prepare(&ops, &phone).map(|answer| (answer, None)),
+                    true => db
+                        .prepare(&ops, (&phone, &bound))
+                        .map(|answer| (answer, None)),
                     false => db.write(&ops, &bound),
                 });
                 let wrote = wrote.await;

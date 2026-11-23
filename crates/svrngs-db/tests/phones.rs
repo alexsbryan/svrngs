@@ -22,7 +22,8 @@ use set::change::{self, Value as Sql};
 mod set;
 
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, col TEXT DEFAULT 'todo');\n\
-    CREATE TABLE seats (row INTEGER NOT NULL, seat INTEGER NOT NULL, who TEXT, PRIMARY KEY (seat, row));\n";
+    CREATE TABLE seats (row INTEGER NOT NULL, seat INTEGER NOT NULL, who TEXT, PRIMARY KEY (seat, row));\n\
+    CREATE TABLE claims (person_key TEXT NOT NULL, item TEXT NOT NULL, PRIMARY KEY (person_key, item)) STRICT;\n";
 
 /// The board's database on the computer of the key `[key; 32]`, in a
 /// directory of its own.
@@ -35,7 +36,7 @@ fn board(key: u8) -> (tempfile::TempDir, Arc<Db>) {
 /// The keys every copy here binds: every test key's.
 fn bound() -> Binds {
     let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
-    Binds::new(keys, 4 << 20)
+    Binds::new(keys.map(|k| (k.clone(), k, false)), 4 << 20)
 }
 
 /// Bo's phone: its key, `[7; 32]`, and its device.
@@ -69,7 +70,7 @@ fn signed(asked: &set::Asked) -> Result<String, String> {
 
 /// `ops`, prepared on `db` for Bo's phone and signed there.
 fn prepared(db: &Db, ops: &Value) -> String {
-    signed(&asked(ops, &db.prepare(ops, &bo().1).unwrap())).unwrap()
+    signed(&asked(ops, &db.prepare(ops, (&bo().1, &bound())).unwrap())).unwrap()
 }
 
 /// `card` inserted, as [`prepared`].
@@ -112,12 +113,12 @@ fn cards(db: &Db) -> Value {
 fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
     let (_dir, db) = board(1);
     let milk = json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
-    assert_eq!(db.write(&milk).unwrap().1.map(|s| s.get()), Some(1));
+    assert_eq!(db.write(&milk, &bound()).unwrap().1.map(|s| s.get()), Some(1));
     let ops = json!([
         { "update": "cards", "key": { "id": "c1" }, "set": { "title": "eggs" } },
         { "insert": "cards", "row": { "id": "c2", "title": "jam" } },
     ]);
-    let answer = db.prepare(&ops, &bo().1).unwrap();
+    let answer = db.prepare(&ops, (&bo().1, &bound())).unwrap();
     let (text, by, sig) = (answer["prepared"].as_str().unwrap(), &answer["by"], &answer["sig"]);
     assert_eq!(by, &json!(svrngs_core::actor_of(&SigningKey::from_bytes(&[1; 32]))));
     let message = svrngs_core::set::prepared("g", "board", text);
@@ -128,7 +129,10 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
     ));
     let prepared: Value = serde_json::from_str(text).unwrap();
     assert_eq!(prepared["ops"], ops);
-    assert_eq!(prepared["keys"], json!({ "cards": ["id"], "seats": ["seat", "row"] }));
+    assert_eq!(
+        prepared["keys"],
+        json!({ "cards": ["id"], "claims": ["person_key", "item"], "seats": ["seat", "row"] })
+    );
     assert_eq!(prepared["count"], 2);
     assert_eq!(
         prepared["stands"],
@@ -147,11 +151,15 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
         "nothing of it kept"
     );
     let tea = json!([{ "insert": "cards", "row": { "id": "c3", "title": "tea" } }]);
-    assert_eq!(db.write(&tea).unwrap().1.map(|s| s.get()), Some(2), "no version spent");
+    assert_eq!(
+        db.write(&tea, &bound()).unwrap().1.map(|s| s.get()),
+        Some(2),
+        "no version spent"
+    );
 
     let same = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": "milk" } }]);
     assert_eq!(
-        db.prepare(&same, &bo().1).unwrap(),
+        db.prepare(&same, (&bo().1, &bound())).unwrap(),
         json!({ "count": 1 }),
         "a no-op: nothing to sign"
     );
@@ -172,14 +180,14 @@ fn a_phone_signs_only_what_its_page_asked() {
         { "insert": "cards", "row": { "id": "c1", "title": "milk" } },
         { "insert": "cards", "row": { "id": "c3", "title": "tea" } },
     ]);
-    ana.write(&both).unwrap();
+    ana.write(&both, &bound()).unwrap();
     let ops = json!([
         { "update": "cards", "key": { "id": "c1" }, "set": { "title": "eggs" } },
         { "insert": "cards", "row": { "id": "c2", "title": "jam" } },
         { "delete": "cards", "key": { "id": "c3" } },
         { "update": "cards", "key": { "id": "c1" }, "set": { "col": null } },
     ]);
-    let answer = ana.prepare(&ops, &bo().1).unwrap();
+    let answer = ana.prepare(&ops, (&bo().1, &bound())).unwrap();
     let honest = asked(&ops, &answer);
     let set = signed(&honest).expect("the batch as its page asked it");
     assert_eq!(carry(&ana, &set), Took::Taken);
@@ -336,8 +344,11 @@ fn call(from: &Db, (to, by): (&Db, u8)) {
 #[test]
 fn a_phone_s_site_is_vouched_for_by_its_home() {
     let ((_a, ana), (_b, ben)) = (root(1), root(2));
-    ana.write(&json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]))
-        .unwrap();
+    ana.write(
+        &json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]),
+        &bound(),
+    )
+    .unwrap();
     for title in ["eggs", "jam"] {
         let set = prepared(
             &ana,
@@ -405,7 +416,7 @@ fn a_phone_s_home_never_hands_a_place_twice() {
     };
     let [one, two] = ["milk", "jam"].map(|card| {
         let ops = json!([{ "insert": "cards", "row": { "id": card, "title": card } }]);
-        let answer = ana.prepare(&ops, &bo().1).unwrap();
+        let answer = ana.prepare(&ops, (&bo().1, &bound())).unwrap();
         (place(&answer), signed(&asked(&ops, &answer)).unwrap())
     });
     assert_eq!(
@@ -417,8 +428,26 @@ fn a_phone_s_home_never_hands_a_place_twice() {
     assert_eq!(carry(&ana, &two.1), Took::Taken);
     let tea = json!([{ "insert": "cards", "row": { "id": "tea", "title": "tea" } }]);
     assert_eq!(
-        place(&ana.prepare(&tea, &bo().1).unwrap()),
+        place(&ana.prepare(&tea, (&bo().1, &bound())).unwrap()),
         (1, 1),
         "a fresh site past the gap"
     );
+}
+
+/// **A phone's prepare refuses an owned row the record doesn't give its
+/// person, as a write does** (APP_STATE §4, "Who may write which row"):
+/// Bo's phone's claim on Ana's row is refused at Ana's computer before
+/// anything is signed, naming the table, and his claim on his own is
+/// prepared, signed and taken, as every copy judges it again at apply.
+/// Plant, watched failing: the prepare judging no owned row (Bo's claim on
+/// Ana's row prepared).
+#[test]
+fn a_phone_s_prepare_refuses_another_s_owned_row() {
+    let (_dir, ana) = board(1);
+    let claim = |person: &str| json!([{ "insert": "claims", "row": { "person_key": person, "item": "ice" } }]);
+    let anas = svrngs_core::actor_of(&SigningKey::from_bytes(&[1; 32]));
+    let refused = ana.prepare(&claim(&anas), (&bo().1, &bound()));
+    assert_eq!(refused.unwrap_err(), svrngs_db::Refused::NotYours("claims".into()));
+    let set = prepared(&ana, &claim(&bo().1));
+    assert_eq!(carry(&ana, &set), Took::Taken, "his own row, taken at apply");
 }
