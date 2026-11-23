@@ -478,3 +478,25 @@ fn a_database_gives_back_what_pruning_frees() {
     assert_eq!(cards(&db).as_array().unwrap().len(), 90);
     svrngs_db::close(side).unwrap();
 }
+
+/// **A read answers at most `ANSWER_MOST` bytes, saying there were more**
+/// (APP_STATE §4, "What SQL may do", bytes per answer; §7, invariant 9):
+/// 70 cards of 64 KiB, 4.4 MiB, under the row bound, are read as fewer, and
+/// `more`. Plant, watched failing: the bytes left uncounted (all 70, and no
+/// more).
+#[test]
+fn a_read_answers_at_most_its_bytes_saying_there_were_more() {
+    let (_dir, db) = board();
+    let long = "x".repeat(64 << 10);
+    for n in 0..70 {
+        let card = json!([{ "insert": "cards", "row": { "id": format!("c{n:02}"), "title": long } }]);
+        db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
+    }
+    let read = db.read("SELECT * FROM cards ORDER BY id", &[]).unwrap();
+    let rows = read["rows"].as_array().unwrap().len();
+    assert!(
+        rows * (64 << 10) <= svrngs_db::ANSWER_MOST + (64 << 10) && rows < 70,
+        "{rows} rows"
+    );
+    assert_eq!(read["more"], true);
+}

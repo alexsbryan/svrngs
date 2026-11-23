@@ -77,6 +77,11 @@ pub const SCHEMA: &str = "schema.sql";
 pub const QUERY_MOST: Duration = Duration::from_millis(250);
 /// The most rows a page is given at once.
 pub const ROWS_MOST: usize = 1000;
+/// The most bytes of text and blobs one read answers, past which it stops,
+/// saying there were more: this number's one home. Provisional: the ask's
+/// room (`svrngs-node` `peer_wire.rs`, `ASK_ROOM_BYTES`), [`ROWS_MOST`] rows
+/// of 4 KiB, until Magnets' recorded answers set it.
+pub const ANSWER_MOST: usize = 4 << 20;
 
 /// Why a page's ask was not run, said to the page in its words: what
 /// stopped it, why, and what to do.
@@ -941,18 +946,21 @@ fn said(e: rusqlite::Error) -> Refused {
     }
 }
 
-/// The statement's rows, at most [`ROWS_MOST`], and whether there were more.
+/// The statement's rows, at most [`ROWS_MOST`] and [`ANSWER_MOST`] bytes of
+/// their text and blobs, and whether there were more.
 fn rows(stmt: &mut rusqlite::Statement<'_>, params: &[Sql]) -> Result<(Vec<Value>, bool), Refused> {
     let names: Vec<String> = stmt.column_names().map(String::from).collect();
     let mut found = stmt.query(rusqlite::params_from_iter(params)).map_err(said)?;
-    let mut out = Vec::new();
+    let (mut out, mut size) = (Vec::new(), 0);
     while let Some(row) = found.next().map_err(said)? {
-        if out.len() == ROWS_MOST {
+        if out.len() == ROWS_MOST || size > ANSWER_MOST {
             return Ok((out, true));
         }
         let mut cells = serde_json::Map::new();
         for (i, name) in names.iter().enumerate() {
-            let cell = match row.get_ref(i).map_err(said)? {
+            let cell = row.get_ref(i).map_err(said)?;
+            size += cell.as_bytes().map_or(8, <[u8]>::len);
+            let cell = match cell {
                 ValueRef::Null => Value::Null,
                 ValueRef::Integer(i) => json!(i),
                 ValueRef::Real(r) => json!(r),
