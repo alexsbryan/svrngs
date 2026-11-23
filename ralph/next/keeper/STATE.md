@@ -989,6 +989,17 @@ Windows.
     - Fix: build `Selected` in the order the person named the groups, as
       before 9ef329ff, keeping the map for lookups. Don't weaken the test
       to compare a set: the person's order is what they see.
+    - **Fix both paths** (QA oc-cruu42):
+      - CLI `Verb::Share` builds the draft audience from `names.keys()`
+        (`cli.rs:913`), beside `audience_of` (`:2255`);
+      - `plan/run.rs:275` overwrites it with the sorted keys at the save.
+
+      Resolve once, in the requested order, and derive the `BTreeMap` for
+      the token and display lookups. At publish, keep only the ordered
+      audience, checked to hold exactly the reviewed IDs. The token
+      already serializes the canonical `Terms.groups` (`plan.rs:58`:
+      order is not consent), and the declaration's revision doesn't
+      depend on ID order.
     - Red: run the test until the IDs sort against creation order (or
       plant two IDs in that order), and it fails. Green: it passes in
       either order.
@@ -998,7 +1009,17 @@ Windows.
       off at exactly 8,192 bytes ("EOF while parsing a string", line 1,
       column 8192, `drive.rs:123`): a harness pipe-read truncation, not
       svrngs.
-    - Diagnose that instrument (does `drive.rs` read the browser half's
-      stdout in full?) before another full gate. Fix it if it's a short
-      read. Don't retry until lucky.
+    - **The cause** (QA oc-cruu42, reproduced on this host):
+      - `drive.rs:110` collects `wait_with_output` in full;
+      - `web/tests/page.mjs:538` prints with `console.log`;
+      - then `web/tests/pages/acts.mjs:58` calls `process.exit()`, which
+        can abandon pending pipe writes.
+      - `node -e 'console.log(JSON.stringify({logs:"x".repeat(32768)}));process.exit()' | wc -c`
+        gives exactly 8192. `process.stdout.write(…+"\n",()=>process.exit())`
+        gives 32780.
+    - Fix: await the stdout write in the shared `driving` output path, or
+      remove the forced exit if an exact run shows the process ends on its
+      own. Keep exit failures visible.
+    - Plant: more than 8 KiB over a pipe, truncated before the fix and
+      whole after it.
   - **Then one controlled full gate,** under the same protocol.
