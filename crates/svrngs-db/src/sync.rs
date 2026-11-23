@@ -223,10 +223,13 @@ const SITE_COST: u64 = 100;
 /// bytes it holds of the database, and the devices muted here.
 struct Room<'b> {
     binds: &'b Binds,
-    rows: BTreeMap<Device, u64>,
-    size: BTreeMap<Device, u64>,
+    rows: Shares,
+    size: Shares,
     muted: BTreeSet<Device>,
 }
+
+/// What each device holds at a copy: rows of its ask, or bytes.
+type Shares = BTreeMap<Device, u64>;
 
 impl Room<'_> {
     /// Whether a set of `device`'s has room for the `adds` rows it brings,
@@ -413,11 +416,8 @@ impl Db {
         let changes = postcard::to_allocvec(&made.0).expect("changes are written in memory");
         // In this computer's share of the app's database, as every copy
         // counts it at apply, so no copy keeps a set the others drop.
-        if !self
-            .room(conn, binds)
-            .map_err(fault)?
-            .fits(&self.device, (0, changes.len() as u64))
-        {
+        let (_, size, _) = self.held(conn).map_err(fault)?;
+        if size.get(&self.device).copied().unwrap_or(0) + changes.len() as u64 > binds.size_share() {
             return Err(Refused::Full(SIZE_MOST >> 20));
         }
         let set = Set::signed(
@@ -463,13 +463,12 @@ impl Db {
             (SELECT site, seq FROM svrngs_sets GROUP BY site, seq HAVING count(*) > 1) \
             OR site = (SELECT retired FROM svrngs_db)";
         let twins = rows(&conn, twins, [], |r| Ok((place(r)?, r.get(2)?))).map_err(fault)?;
-        let muted = rows(&conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0)).map_err(fault)?;
+        let (.., muted) = self.held(&conn).map_err(fault)?;
         let (marks, haves, twins) = (
             marks.into_iter().collect(),
             haves.into_iter().collect(),
             twins.into_iter().collect(),
         );
-        let muted = muted.into_iter().collect();
         Ok(Ask {
             marks,
             haves,
@@ -556,7 +555,7 @@ impl Db {
         let adopting = marks.filter(|(s, _)| call.full && **s != self.site && !stopped.contains(*s));
         tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature, or isn't bound or schemed here yet");
         for (s, m) in adopting {
-            self.claimed(&tx, (*s, *m), (from, call.synced, &room)).map_err(fault)?;
+            self.claimed(&tx, (*s, *m), (from, call.synced)).map_err(fault)?;
         }
         let took = out.iter().any(|(_, t)| matches!(t, Took::Taken | Took::Twin));
         if took {
@@ -592,23 +591,13 @@ impl Db {
         Ok(took.first().map_or(Took::Fault, |(_, took)| *took))
     }
 
-    /// What a call may add to this copy's ask, as it begins ([`Room`]).
+    /// What a call may add to this copy's ask, as it begins ([`Room`]): the
+    /// shares the record gives at it kept, by which the ask names the
+    /// devices over them now ([`Self::held`]).
     fn room<'b>(&self, conn: &Connection, binds: &'b Binds) -> rusqlite::Result<Room<'b>> {
-        // Each row the ask names, by the device of its site: the sites, the
-        // sets counted above a mark, each twin, and each set kept at the site
-        // this file retired as it was made again, which the ask names as
-        // twins too ([`Self::ask`]).
-        let shares = "SELECT h.device, count(*) FROM (SELECT site FROM svrngs_sites UNION ALL SELECT site FROM svrngs_above \
-            UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
-            AND t.seq = s.seq AND t.sig <> s.sig) OR site = (SELECT retired FROM svrngs_db)) AS r \
-            JOIN svrngs_sites h USING (site) GROUP BY h.device";
-        let held = BTreeMap::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
-        // And the bytes of the database each holds: its kept sets, and its sites.
-        let size = "SELECT h.device, coalesce(sum(length(s.bytes)), 0) + ?1 * count(DISTINCT h.site) \
-            FROM svrngs_sites h LEFT JOIN svrngs_sets s USING (site) GROUP BY h.device";
-        let size = BTreeMap::from_iter(rows(conn, size, [SITE_COST], |r| Ok((r.get(0)?, r.get(1)?)))?);
-        let muted = BTreeSet::from_iter(rows(conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0))?);
-        let rows = held;
+        self.shares[0].store(binds.share(), Relaxed);
+        self.shares[1].store(binds.size_share(), Relaxed);
+        let (rows, size, muted) = self.held(conn)?;
         Ok(Room {
             binds,
             rows,
@@ -617,20 +606,45 @@ impl Db {
         })
     }
 
-    /// `set`, past its share of what this copy's ask may carry, dropped as if
-    /// it never came; and its device muted here from then on, named in this
-    /// copy's ask so that no member sends it more, and no more of its sets
-    /// taken here. Its sets before stand. The seat's decision (svrn-docs
-    /// APP_STATE Decisions, 2026-11-22): no one device can fill what every
-    /// copy's ask may carry, and so stall the app's sync for everyone.
-    fn over(&self, tx: &Transaction, set: &Set, room: &mut Room) -> rusqlite::Result<Took> {
+    /// The rows of the ask and the bytes of the database each device holds
+    /// at this copy now, and the devices over either share now, by the
+    /// shares of this copy's last call: no stored mute, so a device's sets
+    /// come again once what it holds here falls (svrn-docs
+    /// `app-state-diligence/invariants-2026-11-22/` §2.1). Over its rows, it
+    /// has none left beside the row that names it.
+    fn held(&self, conn: &Connection) -> rusqlite::Result<(Shares, Shares, BTreeSet<Device>)> {
+        // Each row the ask names, by the device of its site: the sites, the
+        // sets counted above a mark, each twin, and each set kept at the site
+        // this file retired as it was made again, which the ask names as
+        // twins too ([`Self::ask`]).
+        let shares = "SELECT h.device, count(*) FROM (SELECT site FROM svrngs_sites UNION ALL SELECT site FROM svrngs_above \
+            UNION ALL SELECT site FROM svrngs_sets s WHERE EXISTS (SELECT 1 FROM svrngs_sets t WHERE t.site = s.site \
+            AND t.seq = s.seq AND t.sig <> s.sig) OR site = (SELECT retired FROM svrngs_db)) AS r \
+            JOIN svrngs_sites h USING (site) GROUP BY h.device";
+        let held = Shares::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
+        // And the bytes of the database each holds: its kept sets, and its sites.
+        let size = "SELECT h.device, coalesce(sum(length(s.bytes)), 0) + ?1 * count(DISTINCT h.site) \
+            FROM svrngs_sites h LEFT JOIN svrngs_sets s USING (site) GROUP BY h.device";
+        let size = Shares::from_iter(rows(conn, size, [SITE_COST], |r| Ok((r.get(0)?, r.get(1)?)))?);
+        let (share, sized) = (self.shares[0].load(Relaxed), self.shares[1].load(Relaxed));
+        let over = (held.iter()).filter(|(_, n)| **n + 1 >= share);
+        let over = over.chain(size.iter().filter(|(_, b)| **b > sized));
+        let over = over.map(|(d, _)| d.clone()).collect();
+        Ok((held, size, over))
+    }
+
+    /// `set`, past its share of what this copy's ask may carry, or of the
+    /// database, dropped as if it never came; its device named over in this
+    /// copy's ask while what it holds here is past its share, so no member
+    /// sends it more, and no more of its sets taken in this call. Its sets
+    /// before stand. The seat's decision (svrn-docs APP_STATE Decisions,
+    /// 2026-11-22): no one device can fill what every copy's ask may carry,
+    /// and so stall the app's sync for everyone.
+    fn over(&self, set: &Set, room: &mut Room) -> Took {
         let (device, share) = (&set.head.device, room.binds.share());
-        tracing::warn!(target: "state", group = self.group, app = self.app, %device, share, "state: a device past its share of what this copy's ask may carry, so its set is dropped, and the device muted here, named in the ask so no member sends it more; its sets before stand");
-        let muted = "INSERT OR IGNORE INTO svrngs_muted (device) VALUES (?1)";
-        if room.muted.insert(device.clone()) {
-            tx.execute(muted, [device])?;
-        }
-        Ok(Took::Over)
+        tracing::warn!(target: "state", group = self.group, app = self.app, %device, share, "state: a device past its share of what this copy's ask may carry, or of the database, so its set is dropped, and the device named over in the ask while it holds that much here; its sets before stand");
+        room.muted.insert(device.clone());
+        Took::Over
     }
 
     /// The place this computer, the home of the phone `phone` here, hands its
@@ -676,7 +690,7 @@ impl Db {
     /// The mark `m` a full call claims for `site`, adopted up to the highest
     /// seq of the site this copy has counted and no further, so it fills the
     /// gaps below what this copy holds and passes nothing it hasn't counted;
-    /// and only where its device is unmuted here, and the caller is trusted
+    /// and only where the caller is trusted
     /// for it: the site's home, the computer of its own database or a
     /// phone's home, which vouches for its sets as it applied them first,
     /// or a synced caller into a copy not yet synced, as a newcomer trusts
@@ -687,7 +701,7 @@ impl Db {
         &self,
         tx: &Transaction,
         (site, m): (Site, Seq),
-        (from, synced, room): (Option<&Device>, bool, &Room),
+        (from, synced): (Option<&Device>, bool),
     ) -> rusqlite::Result<()> {
         let top = "SELECT device, home, max(coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0), \
             coalesce((SELECT max(seq) FROM svrngs_above WHERE site = ?1), 0)) FROM svrngs_sites WHERE site = ?1";
@@ -697,10 +711,10 @@ impl Db {
         let Some((device, home, top)) = top.optional()? else {
             return Ok(());
         };
+        // For a device over its share too: adoption only takes rows away.
         let trusted = from == Some(&home) || synced && !self.synced.load(Relaxed);
-        let muted = room.muted.contains(&device);
-        tracing::debug!(target: "state", group = self.group, app = self.app, %device, mark = m.get(), top, trusted, muted, "state: a full call's mark for a site, adopted up to the highest seq of it this copy has counted, where its device is unmuted here and its caller is trusted for it");
-        if !trusted || muted {
+        tracing::debug!(target: "state", group = self.group, app = self.app, %device, mark = m.get(), top, trusted, "state: a full call's mark for a site, adopted up to the highest seq of it this copy has counted, where its caller is trusted for it");
+        if !trusted {
             return Ok(());
         }
         adopt(tx, (site, (m.get() as i64).min(top)))
@@ -761,7 +775,7 @@ impl Db {
         let adds = u64::from(!sited) + u64::from(set.head.seq.0 > mark + 1) + [0, 2, 1][sigs.len().min(2)];
         let adds = (adds, set.changes.len() as u64 + SITE_COST * u64::from(!sited));
         if !room.fits(device, adds) {
-            return self.over(tx, set, room);
+            return Ok(self.over(set, room));
         }
         // Parsed before cr-sqlite sees it. One written under another schema
         // that names a table or column this copy lacks waits for the widest

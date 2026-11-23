@@ -46,7 +46,7 @@ fn a_call_that_fails_leaves_no_transaction_open() {
     let dir = tempfile::tempdir().unwrap();
     let b = board(dir.path(), 2);
     let side = side(dir.path(), 2);
-    side.execute_batch("ALTER TABLE svrngs_muted RENAME COLUMN device TO aside")
+    side.execute_batch("ALTER TABLE svrngs_sites RENAME COLUMN device TO aside")
         .unwrap();
     assert!(
         b.ingest(&Call::default(), &bound(), None).is_err(),
@@ -54,7 +54,7 @@ fn a_call_that_fails_leaves_no_transaction_open() {
     );
     let free = side.execute_batch("BEGIN IMMEDIATE; ROLLBACK");
     assert!(free.is_ok(), "the call's transaction is still open: {free:?}");
-    side.execute_batch("ALTER TABLE svrngs_muted RENAME COLUMN aside TO device")
+    side.execute_batch("ALTER TABLE svrngs_sites RENAME COLUMN aside TO device")
         .unwrap();
     svrngs_db::close(side).unwrap();
 }

@@ -453,6 +453,9 @@ pub struct Db {
     /// Whether it is to be made wider, so a page's subscription ends and a
     /// new one waits (`States::widen`).
     retiring: AtomicBool,
+    /// Each bound key's share of the ask's rows, and of the database, as
+    /// the record gave them at this copy's last call (`sync.rs`, `room`).
+    shares: [AtomicU64; 2],
 }
 
 /// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
@@ -717,6 +720,7 @@ impl Db {
             faulted: false.into(),
             copied: copied.into(),
             retiring: false.into(),
+            shares: [AtomicU64::new(u64::MAX), AtomicU64::new(u64::MAX)],
         })
     }
 
@@ -877,9 +881,10 @@ impl Db {
 /// by site, seq and signature so two at one seq are both kept, and how each
 /// is kept (`sync.rs`, `Kept`), a refused one with no bytes; each site's
 /// mark, and the sets counted above a mark; each site's device and its home
-/// (`sync.rs`, `keep`); each device muted here, past its share (`sync.rs`,
-/// `Db::over`); and each phone this computer is the home of, its epoch here
-/// and the last seq it handed it (`sync.rs`, `Db::place`).
+/// (`sync.rs`, `keep`); and each phone this computer is the home of, its
+/// epoch here and the last seq it handed it (`sync.rs`, `Db::place`). No
+/// device is stored muted: one over its share is worked out from what it
+/// holds now (`sync.rs`, `Db::held`).
 const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT NULL, synced INTEGER NOT NULL,
       copied INTEGER NOT NULL DEFAULT 0, retired BLOB);
     CREATE TABLE svrngs_sets (site BLOB NOT NULL, seq INTEGER NOT NULL, sig TEXT NOT NULL, kept INTEGER NOT NULL,
@@ -887,7 +892,6 @@ const OWN: &str = "CREATE TABLE svrngs_db (nonce BLOB NOT NULL, schema BLOB NOT 
     CREATE TABLE svrngs_marks (site BLOB PRIMARY KEY, mark INTEGER NOT NULL);
     CREATE TABLE svrngs_above (site BLOB NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (site, seq));
     CREATE TABLE svrngs_sites (site BLOB PRIMARY KEY, device TEXT NOT NULL, home TEXT NOT NULL);
-    CREATE TABLE svrngs_muted (device TEXT PRIMARY KEY);
     CREATE TABLE svrngs_homes (device TEXT PRIMARY KEY, epoch INTEGER NOT NULL, handed INTEGER NOT NULL);";
 
 /// A new database's tables: `schema` made as `svrngs check` makes it

@@ -809,7 +809,7 @@ impl Folders {
             Took::Held => return Json(json!({ "took": took })).into_response(),
             Took::Refused => (422, "No computer of your group takes this write, so it isn’t kept."),
             Took::NotItsDevice => (422, "This write wasn’t signed as this phone, so no computer takes it."),
-            Took::NotYet | Took::Fault | Took::Over => (503, "This computer couldn’t keep this write. It is kept on this phone and goes with your next one."),
+            Took::NotYet | Took::Fault | Took::Over => (503, "This computer couldn’t keep this write yet. It stays on this phone, and is sent again before your next write."),
         };
         let took = json!(took);
         told(status, took.as_str().unwrap_or_default(), words.into())

@@ -285,3 +285,56 @@ fn one_device_fills_no_more_than_its_share_of_the_database() {
 fn taken_from(to: &Db, from: &Db) -> Vec<Took> {
     took(to, &call(from, to), &all())
 }
+
+/// **A device past its share at a copy comes back once what it holds there
+/// falls** (svrn-docs `app-state-diligence/invariants-2026-11-22/` §2.1,
+/// finding (b)): Wes writes a card, which Eve's copy takes, then a card
+/// twice, so its first set is pruned at his own copy, then twenty more. Ted's
+/// copy, with a roomier share, takes them all. Eve's, established, takes them through Ted's, every
+/// one above the gap that prune made, until Wes is past his share of her
+/// ask's rows: the rest are dropped, and her ask names him over. Wes's own
+/// full call then sends none of his sets, as her ask names him, and vouches
+/// for his mark, so the gap goes and his rows there fall. His next call
+/// brings the rest, and his next card is taken: Eve's board is his. Plant,
+/// watched failing: today's latch, the mute written once and never lifted,
+/// and no adoption for a muted device (his next card never sent to her,
+/// nor taken).
+#[test]
+fn a_device_past_its_share_at_a_copy_comes_back_once_what_it_holds_falls() {
+    let dir = tempfile::tempdir().unwrap();
+    let (wes, ted, eve) = (board(dir.path(), 5), board(dir.path(), 6), board(dir.path(), 7));
+    let (room, roomy) = (binds(&[5, 6, 7], 10), binds(&[5, 6, 7], 100));
+    let by = |a: &Db, b: &Db, (who, room): (u8, &Binds)| {
+        let ask = b.ask().unwrap();
+        let from = Device::parse(&actor(who)).unwrap();
+        b.ingest(&a.missing(&ask, BUDGET).unwrap(), room, Some(&from)).unwrap()
+    };
+    let from = |a: &Db, b: &Db, who: u8| by(a, b, (who, &room));
+    write(&wes, "c0", "a");
+    from(&wes, &eve, 5);
+    write(&wes, "c1", "milk");
+    write(&wes, "c1", "tea");
+    for n in 2..22 {
+        write(&wes, &format!("c{n}"), "jam");
+    }
+    by(&wes, &ted, (5, &roomy));
+    let through = from(&ted, &eve, 6);
+    assert!(
+        through.iter().any(|(_, t)| *t == Took::Over),
+        "past his share: {through:?}"
+    );
+    let him = Device::parse(&actor(5)).unwrap();
+    assert!(eve.ask().unwrap().muted.contains(&him), "her ask names him over");
+    for _ in 0..3 {
+        from(&wes, &eve, 5);
+    }
+    write(&wes, "c22", "fig");
+    let last = from(&wes, &eve, 5);
+    assert!(
+        !last.is_empty() && last.iter().all(|(_, t)| *t == Took::Taken),
+        "his next card taken: {last:?}"
+    );
+    let all = "SELECT id, title FROM cards ORDER BY id";
+    assert_eq!(eve.read(all, &[]).unwrap(), wes.read(all, &[]).unwrap());
+    assert!(!eve.ask().unwrap().muted.contains(&him), "named over no more");
+}
