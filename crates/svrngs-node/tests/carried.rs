@@ -4088,3 +4088,75 @@ async fn a_phone_s_write_is_prepared_by_a_computer_and_carried_back_signed() {
         node.net().close().await;
     }
 }
+
+/// **Every computer takes the widest version a member runs, an author's
+/// draft among them** (svrn-docs `rings/current/APP_STATE.md` §4, "Every
+/// computer takes the widest"; W5; the seat's decision 4 for slice E):
+/// Board, carried on Ana's computer with one table, reaches Ben's, and Ana
+/// writes a card. Ana adds a note to its schema.sql, her own change, which
+/// runs for her at once. Her page's next ask makes her copy wider, her card
+/// kept, its note NULL, and she writes a note. Ben's person runs the
+/// version he had, yet his copy is made wider at his round by the version
+/// Ana runs, and takes her note. Plant, watched failing: the round making
+/// a copy wider by this computer's own person's version alone (Ben's copy
+/// never has a note).
+#[tokio::test]
+async fn every_computer_takes_the_widest_version_a_member_runs() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 79, ana, &[(ben, 2)]);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    let origin_b = board_on(ben, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(sql(ana, &origin_a, milk).await.0, 200);
+
+    let wider = "CREATE TABLE cards (id TEXT NOT NULL PRIMARY KEY, title TEXT, note TEXT);\n";
+    std::fs::write(folder.join("apps/Board/schema.sql"), wider).unwrap();
+    let read = json!({ "sql": "SELECT * FROM cards ORDER BY id" });
+    let noted = json!([{ "id": "c1", "title": "milk", "note": null }]);
+    let mut wide = false;
+    for _ in 0..20 {
+        if sql(ana, &origin_a, read.clone()).await.1["rows"] == noted {
+            wide = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    assert!(
+        wide,
+        "Ana's copy made wider, her card kept: {}",
+        sql(ana, &origin_a, read.clone()).await.1
+    );
+    let note = json!({ "write": [{ "update": "cards", "key": { "id": "c1" }, "set": { "note": "two" } }] });
+    assert_eq!(sql(ana, &origin_a, note).await.0, 200);
+
+    let both = json!([{ "id": "c1", "title": "milk", "note": "two" }]);
+    let mut took = false;
+    for _ in 0..15 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        if sql(ben, &origin_b, read.clone()).await.1["rows"] == both {
+            took = true;
+            break;
+        }
+    }
+    assert!(
+        took,
+        "Ben's copy made wider by Ana's version, her note on it: {}",
+        sql(ben, &origin_b, read).await.1
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}

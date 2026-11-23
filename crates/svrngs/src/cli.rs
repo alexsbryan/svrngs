@@ -1009,7 +1009,7 @@ fn checked(dir: &Path, was: Option<&Path>) -> Result<String, Refusal> {
         false => format!(" {t}, any member's to change."),
     });
     let each: String = each.collect();
-    let each = (!each.is_empty()).then(|| format!(" Its database's tables:{each}"));
+    let each = (!each.is_empty()).then(|| format!(" Its database's tables:{each} A column you add stays in every copy of your group for good, so try a new one in a group of your own first."));
     Ok(format!(
         "Nothing in {shown} that apps can't load.{}\n",
         each.unwrap_or_default()

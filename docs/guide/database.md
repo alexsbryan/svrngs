@@ -214,10 +214,14 @@ $ svrngs check ~/svrngs/Test/apps/Movie-Votes ~/svrngs/House/apps/Movie-Votes
 
 It refuses a version that doesn't only add to the one it follows.
 
-Today a database keeps the schema it was first made from: a version that
-adds tables or columns is checked, but svrngs doesn't take the additions
-into a database that already exists yet. Try a schema that changes in a
-group of your own, under a new folder name, whose database starts fresh.
+Every computer of your group takes the widest version anyone in it runs,
+the one you're still editing included, as soon as it sees it. A page on an
+older version keeps working, and its rows get NULL in the new columns.
+So a column you add stays in every copy for good, even if you take it out
+of `schema.sql` later:
+
+- Add each new column after the table's last one.
+- Try a new column in a group of your own first.
 
 ## Send the link
 

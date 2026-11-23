@@ -620,8 +620,11 @@ impl Folders {
 impl Folders {
     /// The app `app`'s database in `group`, opened from the `schema.sql`
     /// that runs as `who`'s person ([`runs_as`]): their yes, else the
-    /// version it was brought with, which runs as everyone; or svrngs-db's
-    /// refusal. Withheld where those files hold no `schema.sql`.
+    /// version it was brought with, which runs as everyone; and made wider
+    /// by it where it adds to the copy here, as every computer takes the
+    /// widest version a member runs (svrn-docs APP_STATE §4, "Its schema");
+    /// or svrngs-db's refusal. Withheld where those files hold no
+    /// `schema.sql`.
     async fn database(
         &self,
         (app, group): (&AppName, &str),
@@ -636,6 +639,7 @@ impl Folders {
         // nothing else holds it, restored whole (svrngs-db `remake`).
         match db {
             Ok(db) if db.copied() => Ok(self.host.states.remake(db)),
+            Ok(db) => Ok(self.host.states.widen(db, &schema)),
             db => Ok(db),
         }
     }
@@ -648,7 +652,11 @@ impl Folders {
     /// the app's schema, so every computer whose person said yes keeps the
     /// app's writes, and a lid closing on one strands none of them while
     /// another is awake; a computer none of whose people runs a version with
-    /// a schema holds none. None while this computer stands in no group here.
+    /// a schema holds none. Each one kept is then made wider by the version
+    /// each member runs, an author's own change among them ([`runs_as`]),
+    /// so a member's newer version reaches this copy at the next round, and
+    /// a column a draft adds stays for good. None while this computer stands
+    /// in no group here.
     pub(crate) async fn kept(&self, group: &str) -> Vec<Arc<Db>> {
         let Ok(Standing::Members(people)) = self.host.rail.standing(group) else {
             return Vec::new();
@@ -661,6 +669,13 @@ impl Folders {
         for app in kinds.into_iter().filter_map(|k| AppName::parse(k).ok()) {
             let kept = (self.database((&app, group), (&people, &self.host.actor))).await;
             tracing::debug!(target: "folder", group, %app, refused = ?kept.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database kept here, as the files that run as this computer's person hold its schema; or why not");
+            // Let go of first, as a copy is made wider only once nothing holds it.
+            let opened = matches!(kept, Ok(Ok(_)));
+            drop(kept);
+            for key in people.keys().filter(|_| opened) {
+                let wide = self.database((&app, group), (&people, key)).await;
+                tracing::debug!(target: "folder", group, %app, key, refused = ?wide.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database made wider by the version a member runs, where it adds to it; or why not");
+            }
         }
         self.host.states.held(group)
     }
@@ -868,6 +883,10 @@ async fn subscribed(
         async move {
             let (mut changed, mut now, last) = at;
             loop {
+                // A database to be made wider ends its subscriptions, so none
+                // holds it (svrngs-db `widen`): the page's next ask is of the
+                // wider one.
+                (!db.retiring()).then_some(())?;
                 let rows = now.take().filter(|r| last.as_ref() != Some(r));
                 if let Some(rows) = rows {
                     let event = Ok::<_, std::convert::Infallible>(format!("data: {rows}\n\n"));
