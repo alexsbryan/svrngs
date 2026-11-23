@@ -89,9 +89,10 @@ fn a_query_that_never_ends_is_stopped() {
 }
 
 /// **An app reaches only its own tables** (APP_STATE §7, 4): the
-/// authorizer refuses ATTACH, PRAGMA, CREATE TABLE, load_extension, and
-/// cr-sqlite's own tables. Plant: an authorizer that allows
-/// `ATTACH`: it runs, and its file is made.
+/// authorizer refuses ATTACH, PRAGMA, CREATE TABLE, load_extension, the
+/// JSON aggregates, and cr-sqlite's own tables. Plants: an authorizer that
+/// allows `ATTACH`: it runs, and its file is made; one that allows
+/// `json_group_array`: it answers 200.
 #[test]
 fn the_authorizer_refuses_all_but_the_app_s_own_tables() {
     let (dir, db) = board();
@@ -102,6 +103,9 @@ fn the_authorizer_refuses_all_but_the_app_s_own_tables() {
         "PRAGMA table_info(cards)".into(),
         "CREATE TABLE more (id INTEGER PRIMARY KEY)".into(),
         "SELECT load_extension('/tmp/nothing')".into(),
+        "SELECT json_group_array(id) FROM cards".into(),
+        "SELECT json_group_object(id, id) FROM cards".into(),
+        "SELECT jsonb_group_array(id) FROM cards".into(),
         "SELECT * FROM crsql_master".into(),
         "SELECT * FROM crsql_changes".into(),
         "SELECT * FROM cards__crsql_clock".into(),

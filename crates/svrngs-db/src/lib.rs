@@ -689,7 +689,12 @@ fn page_rule(
                     | AuthAction::Update { table_name, .. } => own(table_name),
                     AuthAction::Function { function_name } => {
                         let f = function_name.to_ascii_lowercase();
-                        f != "load_extension" && !f.starts_with("crsql") && f != "fts3_tokenizer"
+                        // json(b)_group_array and _object grow with no length check, so only the deadline
+                        // would stop one; a page builds that JSON from the rows it reads.
+                        f != "load_extension"
+                            && !f.starts_with("crsql")
+                            && f != "fts3_tokenizer"
+                            && !f.contains("_group_")
                     }
                     _ => false,
                 };
