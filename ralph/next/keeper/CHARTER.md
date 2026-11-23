@@ -164,3 +164,36 @@ of 8,689.
 **The release gate.** No release before HUMAN-release-hosts: the packaged
 proofs on beefymac and a real Fedora laptop, and the people sessions. The
 release itself is the operator's (PLAN §2).
+
+## Run it with svrngs (2026-11-22, the design that stands)
+
+After the build ballooned, the operator ruled from first principles:
+- "I prefer bulletproof systems that work without flash over perfect bells
+  and whistles", which dropped the live takeover;
+- "If we just stop trying to do magic, what's the most industry standard
+  devex expectation", then "Yes this is all I wanted. It just has to be
+  clear in the UI / UX for the lightly technical user, but otherwise
+  that's the bulletproof system".
+
+So the release has two explicit steps, as pm2, `brew services` and
+systemd have:
+1. **Run it with svrngs,** with a command the person gives or confirms.
+2. **Share it.**
+
+svrngs never adopts, stops or signals a program it didn't start. A busy
+port is refused in plain words. The design is svrn-docs
+`rings/current/KEEP_IT_RUNNING_RELEASE.md` at `0080f3f`, which supersedes
+the earlier revisions' takeover and gate. A partial avail-containers
+session on the takeover design is in `git stash@{0}`; avail-run-containers
+reuses its `containers.rs`.
+
+**The envelope now.** The operator, 2026-11-22: "Go", to the spec's ask of
+about +360 non-JS and +90 JS for its rows 2–8, after avail-unmagic's
+removal (about −155). The ceilings are:
+- **all code but JavaScript, 25,727:** the branch's whole growth since
+  e5d9813b held to about +1,210;
+- **JavaScript, 8,741:** about +48 since the branch.
+
+Each row spends only as far as it lands, with its `Size:` paragraph. A row
+that would cross a ceiling stops with `needs-human`; it never raises past
+it.

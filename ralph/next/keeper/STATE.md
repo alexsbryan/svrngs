@@ -386,101 +386,105 @@ envelope.
   check, planted first: partial success. A failed write leaves "Running
   here; not shared", and the next review shares it with no restart.
 
-- [ ] avail-page — depends [avail-terminal] — ONE UNIT:
-  spec §2.1, §2.2, §3.7 O3, O4; row R4.
-  - The page renders the review and the result svrngs sends, through two
-    routes. No string lives in the page.
+Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the operator, 2026-11-22: "Yes this is all I wanted … that's the bulletproof system"). Each row's design and grounded estimate is the spec's §5 row named in it; where they disagree, the spec wins. svrngs never stops or signals a program it didn't start (spec §3.4, N1).
+
+- [ ] avail-unmagic — depends [avail-terminal] — ONE UNIT: spec §5 row 1. Remove the live takeover, the adoption and the copying from a live process.
+  - **Keeper:** `takeover.rs`; the stop, verify and identity paths of
+    `host.rs`; `promote.rs`'s adoption, declines, copy card and
+    environment; `facts.rs`, reduced to the prefill; `main.rs` `at_port`'s
+    handover; `kept.rs`'s takeover hooks. The tests go with them.
+  - **Counted:** the takeover and live-process arms of `plan.rs`,
+    `plan/run.rs`, `plan/words.rs` and `cli.rs`.
+  - Its commit carries a `Size:` paragraph, measured.
 
   check:
-  - O3, a lean rule: svrngs only reads jobs, and one module runs the
-    keeper;
-  - O4, `vocab_check.py`: no mechanism word on the page;
-  - the first demo again, from the page, in WebKit.
+  - N1, a `lean_check.py` rule that svrngs never stops or signals a process
+    it didn't start: planted against today's tree first (it must fail on
+    `host.rs` `stop`), then green after the cut;
+  - every remaining test of svrngs-keeper and svrngs-node green;
+  - lean counts.
 
-- [ ] avail-containers — depends [avail-keeper-facts] — ONE UNIT (keeper):
-  spec §5 row R5.
-  - A rootless Podman container or pod becomes a Quadlet, verified by the
-    unit's cgroup.
-  - First, a plant: today a container's port copies pasta
-    (`promote.rs`, no container case).
+- [ ] avail-run-linux — depends [avail-unmagic] — ONE UNIT: spec §2.2–§2.4, §5 row 2.
+  - `svrngs-keeper run <name> [--folder] -- <command>` writes a native card
+    and its unit.
+  - It refuses a busy port with spec §2.2's sentence.
+  - It emits llama-server's prefill, with `Nice=10` and the 30 s answer
+    check.
+  - `start` resets a failed unit (spec §7.8).
+  - svrngs gets `svrngs run` through the plan, and the
+    `Unapproved`-with-grant arm, loopback only, planted (§3.4).
 
-  Demo: Actual, and an Immich-shaped pod, through a reboot in the VM.
+  Demo, first: Sam stops his terminal copy and runs coder with svrngs, and
+  Alex's link keeps working through three no-login reboots in the spike's
+  VM and a kill -9. Then the busy-port refusal, and a failed save giving
+  "not shared" with no second run.
 
-- [ ] avail-mac-native — depends [avail-keeper-facts] — ONE UNIT (keeper):
-  spec §5 row R6.
+- [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper): spec §5 row 3.
+  - A rootless Podman container or pod, run by svrngs as a `.container` or
+    `.pod` Quadlet from its own `podman inspect`.
+  - Reuse `git stash@{0}`'s `containers.rs` (its inspect, its pinned
+    digest, its published port), and drop the netns identity only the
+    takeover needed.
+  - The stash itself is left as it is. Read it with `git show
+    'stash@{0}^3:apps/svrngs-keeper/src/containers.rs'`.
+
+  Demo: Actual and an Immich-shaped pod. Refused while Sam's container
+  runs; run by svrngs after `podman stop`; through a reboot.
+
+- [ ] avail-run-page — depends [avail-run-linux] — ONE UNIT: spec §2.1–§2.3, §5 row 4.
+  - The share line's two kinds; the form with its one command box and its
+    prefill; the busy sentence; every state.
+  - Two routes over `run.rs` `confirm`. The words come from `plan/words.rs`
+    only.
+
+  Demo: the first demo again, from the page, in WebKit.
+
+- [ ] avail-run-mac — depends [avail-unmagic] — ONE UNIT (keeper): spec §5 row 5.
   - Fork commonwealth-ai `svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0`,
-    its LaunchAgent half, as `launchd.rs`: unchanged first, with ported-from
-    lines.
-  - Then reads by `lsof` and `ps`, and §3.4 on the Mac.
+    lines 296–395, as `launchd.rs`: unchanged first, with ported-from lines.
+    Then grow it to the job verbs, as `systemd.rs` is.
+  - The busy check and the prefill by `lsof` and `ps`.
 
   Demo on beefymac (PROMPT.addendum, "beefymac"): llama-server on Metal,
-  kill -9, and `launchctl kickstart -k` of its agent. The reboots and
-  sign-ins are the operator's, in HUMAN-release-hosts.
+  run by svrngs; kill -9; a stop that stays stopped. Reboots and sign-ins
+  are HUMAN-release-hosts'.
 
-- [ ] avail-mac-renew — depends [avail-mac-native, avail-publish] — ONE
-  UNIT: spec §3.3, §3.7 B2; row R7.
-  - A LaunchAgent's label plus its plist's hash, judged by lineage.
-  - A Podman-machine container by name and image digest, with the engine
-    read before and after the dial.
-  - Whether a sandboxed Mac app can reach Podman's socket is answered
-    first; until it is, a Mac container is `ThisRun`.
+- [ ] avail-run-mac-renew — depends [avail-run-mac, avail-publish] — ONE UNIT: spec §5 row 6.
+  - A launch agent's grant: its label plus its plist's hash, judged by
+    lineage.
+  - A Podman-machine container's witness, with the engine read before and
+    after the dial.
 
-  check: B2's Mac twins, each planted, and Alex's link after the agent's
-  restart and a kill -9 on beefymac. After a reboot, it is
-  HUMAN-release-hosts'.
+  check: B2's Mac twins, each planted, on beefymac.
 
-- [ ] avail-mac-containers — depends [avail-mac-renew] — ONE UNIT (keeper):
-  spec §5 row R8.
-  - Spike M0 on a Podman machine's restart policy, then the keeper's Mac
-    containers.
+- [ ] avail-run-mac-containers — depends [avail-run-mac-renew] — ONE UNIT (keeper): spec §5 row 7.
+  - Spike M0 first: a Podman-machine container under a launch agent,
+    through a restart of the agent. Then the keeper.
 
   Demo: Actual on beefymac.
 
-- [ ] avail-ship — depends [avail-page, avail-containers, avail-mac-containers] — ONE UNIT: shipping, after the code (the operator, 2026-11-22: "a lot of coding ahead of us before needing to talk about fit and finish").
-  - svrngs-keeper built by `scripts/build-release.sh`, always installed by
-    `web/install.sh`, and in `packaging/arch`.
+- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-containers] — ONE UNIT: spec §5 row 8.
+  - `build-release.sh`, `install.sh` (always) and the Arch package, as
+    Give's lines are.
+  - Uninstall says what svrngs still runs.
   - The guides: models.md, lend.md and troubleshooting.md, in spec §2's
     words.
 
-  check: `scripts/release.sh build` lists the keeper's archives beside
-  svrngs's. install.sh, run on a scratch HOME, puts both on PATH. The Arch
-  package's file list names it.
+  Demo: a fresh VM, installed by the line.
 
-- [ ] avail-rehearse — depends [avail-ship] — ONE UNIT, evidence: spec §5 rows R0 and R9's strangers, on the built page.
-  - xenia strangers (DeepSeek Flash, `--variant max`) on the built home
-    page, served by xenia's world (svrn-docs `play-lend-give/world/`). The
-    availability rehearsal (`prototype/availability/`, not ours) is the
-    reference to compare against.
-  - The plant runs first: the two choices' labels swapped. Then Hana ("you
-    restart tonight: make sure Cy can use coder tomorrow") and Ivo, two runs
-    each.
-  - Recorded in this repository's `demo/runs/available/strangers-<date>/`,
-    the way PLAY_LEND_GIVE_UX §4 records them. Workers on opencode can't
-    edit `~/dev/svrn-docs` (`.opencode/opencode.json`), and the svrn-docs
-    folder `play-lend-give/runs/availability-2026-11-22/` is an earlier
-    session's start, left as it is.
+- [ ] avail-rehearse — depends [avail-ship] — ONE UNIT, evidence: spec §5 row 9, its strangers.
+  - xenia on the built page: DeepSeek Flash at `--variant max`, the world
+    being svrn-docs `play-lend-give/world/`.
+  - The plant runs first: the two line kinds' words swapped. Can a stranger
+    tell "shared while you run it" from "run by svrngs"?
+  - Recorded in `demo/runs/available/strangers-<date>/`.
 
-  read: PLAY_LEND_GIVE_UX §4; the rehearsal's README.
-  check: the plant is told apart from the real labels, or the round says
-  could-not-judge; each count is reported as a rehearsal, never a people
-  result.
-
-- [ ] avail-proof — depends [avail-ship, avail-rehearse] — ONE UNIT, evidence: spec §5 R9, the parts that are
-  automatic. In `demo/runs/available/<date>/`, predictions first, each case
-  given one of the four verdicts:
-  - the gated cases: a takeover interrupted at each stage, a VM power-cut
-    between stop and start among them; a withdrawal concurrent with a
-    confirmation; a failed publication; a stale confirmation after a
-    withdrawal;
-  - the packaged path in the VM: the Arch package, and the install line on
-    Fedora Workstation's image. After a reboot, Alex's old link reaches the
-    same app and the same data, a marker written before the reboot and read
-    after. Stop sharing leaves Sam's app answering on localhost, and Alex's
-    open stream ends within 2 s, with a test that plants the withdrawal
-    itself (`tests/door/live.rs`, spec §3.5);
-  - Sam's scene: three no-login reboots in the spike's VM
-    (`demo/runs/keeper/2026-11-22/`'s driver), with the page and the
-    terminal.
+- [ ] avail-proof — depends [avail-ship, avail-rehearse] — ONE UNIT, evidence: spec §5 row 9, its packaged proofs, in the VM. In `demo/runs/available/<date>/`, predictions first, each case given one of the four verdicts:
+  - after a reboot, Alex's old link reaches the same app and data, a marker
+    written before the reboot and read after;
+  - stop sharing ends Alex's open stream within 2 s, with a test that
+    plants the withdrawal itself (`tests/door/live.rs`);
+  - a concurrent withdrawal; a failed save; the busy port.
 
 - [ ] HUMAN-release-hosts — depends [avail-proof] — the operator. The
   release waits on this row (the operator, 2026-11-22: "release only after
