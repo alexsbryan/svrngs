@@ -80,19 +80,13 @@ each one it finds, with the fix, and exits non-zero:
   your page writes the first rows. Do that work in your page.
 - No `WITHOUT ROWID` and no `GENERATED` column. Work a value out in your
   page as it writes.
-- A `CHECK`, an index or a `DEFAULT` calls only functions that make no data
-  and read their value once: `abs`, `coalesce`, `date`, `datetime`,
-  `ifnull`, `iif`, `julianday`, `length`, `likely`, `lower`, `nullif`,
-  `octet_length`, `round`, `sign`, `strftime`, `substr`, `substring`,
-  `time`, `typeof`, `unicode`, `unixepoch`, `unlikely` and `upper`. Every
-  computer runs them for each row it writes or takes, so `LIKE`, `GLOB`,
-  `printf` and the rest are refused.
-
-A `CHECK` holds for each computer's own writes, but not for what a merge
-makes. With `CHECK (lo <= hi)`, if Ana sets `lo` to 8 and Ben, apart, sets
-`hi` to 5, both copies end at 8 and 5, and the next write that leaves the
-row like that is refused. Write columns that have to agree in one write,
-and have your page show a row that broke the rule so people can fix it.
+- A column has a name, a type, `NOT NULL` or not, its place in the key,
+  and a `DEFAULT` of one value, like `0`, `-1`, `'todo'` or `NULL`. No
+  `CHECK`, and no function or other expression anywhere. An index orders
+  columns as they are, with no expression and no `WHERE`. Every computer
+  would work an expression out for each row it writes or takes, so do
+  that work in your page, and keep a value you sort or look up by in a
+  column of its own.
 
 ## Read
 
@@ -222,8 +216,8 @@ renames a column, changes a type, a `DEFAULT` or a key, changes whether a
 table is `STRICT`, rewrites an index, or renames the app's folder, since
 the database is named by the folder. Each computer keeps what it holds,
 and a page on the earlier version still writes its rows. A new version may
-give a column it keeps a `CHECK`, or a `COLLATE` where no index orders it:
-every computer takes it alike, for what comes after.
+give a column it keeps a `COLLATE` where no index orders it: every
+computer takes it alike, for what comes after.
 
 Before you copy a new version over the one your group uses, name both:
 

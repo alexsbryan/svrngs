@@ -585,10 +585,10 @@ fn internal(table: &str) -> bool {
 /// What `schema.sql` may do: declare. Make tables and indexes in `main`,
 /// with what SQLite reads of them and writes of its own schema to do it,
 /// the `REINDEX` it asks for as it makes an index included (svrn-docs
-/// `magnets-spikes/README.md`, S5), and write no row of any other table, so
-/// no expression runs on one; and call only the functions that make no data
-/// (`schema.rs`, [`schema::INERT`]). What it refuses is said by the check
-/// (`schema.rs`, [`schema::Unmade`]).
+/// `magnets-spikes/README.md`, S5), write no row of any other table, and
+/// call no function, so no expression of it makes data on any copy
+/// (`schema.rs`, `limits`, holds the rest). What it refuses is said by the
+/// check (`schema.rs`, [`schema::Unmade`]).
 fn schema_rule(ctx: AuthContext<'_>) -> Authorization {
     let main = ctx.database_name.is_none_or(|d| d == "main");
     let own = |t: &str| t == "sqlite_master" || t == "sqlite_schema";
@@ -600,9 +600,6 @@ fn schema_rule(ctx: AuthContext<'_>) -> Authorization {
             AuthAction::Reindex { index_name } => !internal(index_name),
             AuthAction::Insert { table_name } | AuthAction::Update { table_name, .. } => own(table_name),
             AuthAction::Read { table_name, .. } => own(table_name) || !internal(table_name),
-            AuthAction::Function { function_name } => {
-                schema::INERT.split(", ").any(|i| i.eq_ignore_ascii_case(function_name))
-            }
             _ => false,
         };
     tracing::debug!(target: "state", action = ?ctx.action, allowed, "state: schema.sql's statement, allowed or refused by the authorizer");

@@ -308,50 +308,6 @@ fn a_fault_holds_its_mark_and_is_said_syncing() {
     assert!(!b.syncing(), "a full call taken whole");
 }
 
-/// **A CHECK across two columns holds each copy's own writes, never a
-/// merge**: Ana sets `lo` to 8 and Ben, apart, `hi` to 5, each kept by
-/// `CHECK (lo <= hi)` on its own copy; each copy takes the other's set and
-/// both end at (8, 5), and a page's next write that leaves the row breaking
-/// it is refused (svrn-docs `magnets-spikes/README.md`, S5). Plant, watched
-/// failing: `keep` merging with CHECKs on, and each copy's take is a fault,
-/// fetched again every round.
-#[test]
-fn a_check_across_columns_holds_writes_never_a_merge() {
-    const SPAN: &str = "CREATE TABLE spans (id TEXT PRIMARY KEY NOT NULL, lo INTEGER, hi INTEGER, CHECK (lo <= hi));";
-    let dir = tempfile::tempdir().unwrap();
-    let states = |n: u8| States::new(&dir.path().join(format!("computer-{n}")), key(n));
-    let (ana, ben) = (
-        states(1).carry("g", "board", SPAN).unwrap(),
-        states(2).open("g", "board", Some(SPAN)).unwrap(),
-    );
-    let set = |db: &Db, col: &str, n: i64| {
-        db.write(
-            &json!([{ "update": "spans", "key": { "id": "s" }, "set": { col: n } }]),
-            &bound(),
-        )
-    };
-    ana.write(
-        &json!([{ "insert": "spans", "row": { "id": "s", "lo": 1, "hi": 10 } }]),
-        &bound(),
-    )
-    .unwrap();
-    assert_eq!(took(&ben, &call(&ana, &ben)), [Took::Taken]);
-    set(&ana, "lo", 8).unwrap();
-    set(&ben, "hi", 5).unwrap();
-    let (to_ben, to_ana) = (call(&ana, &ben), call(&ben, &ana));
-    assert_eq!(
-        (took(&ben, &to_ben), took(&ana, &to_ana)),
-        (vec![Took::Taken], vec![Took::Taken])
-    );
-    let span = |db: &Db| db.read("SELECT lo, hi FROM spans", &[]).unwrap()["rows"].clone();
-    assert_eq!(
-        (span(&ana), span(&ben)),
-        (json!([{ "lo": 8, "hi": 5 }]), json!([{ "lo": 8, "hi": 5 }]))
-    );
-    let refused = set(&ana, "lo", 9).expect_err("a write that leaves the row broken");
-    assert!(refused.to_string().contains("CHECK constraint failed"), "{refused}");
-}
-
 /// **A copy's first full sync is kept**: opened again, it isn't said
 /// syncing. Plant: the flag kept in memory alone.
 #[test]

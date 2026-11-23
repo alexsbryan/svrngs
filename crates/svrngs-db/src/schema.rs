@@ -4,18 +4,20 @@
 //! one decider, for `svrngs check` ([`check`]) and for a database made from
 //! it (`Db::open`), so the two never disagree ([`made`]). SQLite runs the
 //! file under the schema's authorizer, which lets it only declare: make
-//! tables and indexes and write no row, so nothing runs on one, its
-//! expressions calling only [`INERT`] (`schema_rule`, which SQLite asks of a
-//! CHECK's, an index's and a DEFAULT's functions as each is made; `tests/schema.rs`
-//! holds it); cr-sqlite's `crsql_as_crr` decides each table's
-//! shape, and its six refusals are said by their text, which
-//! `tests/schema.rs` pins, so a fork that rewords one fails there; svrngs's
-//! own limits are read from SQLite's pragmas ([`limits`]), a table WITHOUT
-//! ROWID and a GENERATED column outside them, as no copy can take either in
-//! a later version as SQLite reads the rows it holds. No SQL is parsed
-//! here. A CHECK can't be told from the rest without parsing it, so it is
-//! taken, and copies apply each other's sets with CHECKs off (`sync.rs`,
-//! `keep`): the guide says so beside its first `CREATE TABLE`.
+//! tables and indexes, write no row and call no function (`schema_rule`,
+//! which SQLite asks of a CHECK's, an index's, a WHERE's and a DEFAULT's
+//! functions as each is made; `tests/schema.rs` holds it); cr-sqlite's
+//! `crsql_as_crr` decides each table's shape, and its six refusals are said
+//! by their text, which `tests/schema.rs` pins, so a fork that rewords one
+//! fails there; svrngs's own limits are read from SQLite's pragmas and its
+//! program for a row's insert ([`limits`]): a table with a rowid, of plain
+//! columns, a type, NOT NULL, the key, STRICT and a DEFAULT of one value,
+//! with no CHECK; an index of columns, with no expression and no WHERE. So
+//! no expression of a schema runs on any copy, for a row it writes or
+//! takes, and what a copy holds is what SQLite's pragmas say of it, which a
+//! later version is compared by ([`follows`]). No statement is parsed here:
+//! a DEFAULT's words, as SQLite keeps them, are read as one value or not
+//! ([`literal`]).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::mpsc;
@@ -26,14 +28,6 @@ use rusqlite::{Connection, OptionalExtension as _};
 use crate::form::Table;
 use crate::sync::rows;
 use crate::{Open, Refused, fault, internal, schema_rule, tables_of};
-
-/// The functions a `schema.sql` may call, in a CHECK, an index or a
-/// DEFAULT, which every copy computes for each row it writes or takes: each
-/// gives back no more than it is given, in time no longer than reading it,
-/// so none makes data or runs past the value it reads. LIKE, GLOB, `instr`
-/// and `trim` compare each byte with the pattern they're given, so they
-/// aren't. This list's one home.
-pub(crate) const INERT: &str = "abs, coalesce, date, datetime, ifnull, iif, julianday, length, likely, lower, nullif, octet_length, round, sign, strftime, substr, substring, time, typeof, unicode, unixepoch, unlikely, upper";
 
 /// Why a `schema.sql` makes no database, a closed set (AGENTS 9): what
 /// stopped it, why, and the fix (svrn-docs `magnets-spikes/README.md`, S5,
@@ -93,9 +87,9 @@ pub enum Unmade {
     )]
     Added(String),
     #[error(
-        "schema.sql calls {0}, and each computer of your group runs a CHECK, an index or a DEFAULT for every row it writes or takes, so schema.sql may call only functions that give back no more than they're given, as fast as they read it: {INERT}. To fix it, write a plain value, and work out anything else in your page."
+        "{0}, and every computer of your group would work it out for each row it writes or takes, so schema.sql only declares. To fix it, {1}."
     )]
-    Makes(String),
+    Runs(String, &'static str),
     #[error(
         "In {0}, {1}, and svrngs keeps only tables with a rowid, of columns a write fills, so every later version of your app reads each row alike. To fix it, take out WITHOUT ROWID and GENERATED: the primary key still finds each row, and your page can work out a value as it writes."
     )]
@@ -134,7 +128,10 @@ pub(crate) fn made(conn: &mut Connection, schema: &str) -> Result<BTreeMap<Strin
             AuthAction::CreateTable {
                 table_name: "sqlite_sequence",
             } => Unmade::Autoincrement,
-            AuthAction::Function { function_name } => Unmade::Makes(function_name.into()),
+            AuthAction::Function { function_name } => Unmade::Runs(
+                format!("schema.sql calls {function_name}"),
+                "write a plain value, and work out anything else in your page",
+            ),
             other => Unmade::Statement(format!("{other:?}")),
         };
         let _ = (ruled == Authorization::Deny).then(|| said.send(unmade));
@@ -170,7 +167,17 @@ pub(crate) fn made(conn: &mut Connection, schema: &str) -> Result<BTreeMap<Strin
 /// whose a row is, comparing its type and bytes, TEXT first in the key of a
 /// STRICT table, so a column of that name never promises a check it isn't;
 /// and a table with a rowid, none of its columns GENERATED, as a copy made
-/// wider reads the rows it holds by their place in the table (`widen`).
+/// wider reads the rows it holds by their place in the table (`widen`);
+/// and no expression of it that a copy works out for a row: no CHECK,
+/// which SQLite's program for a row's insert halts on as
+/// `SQLITE_CONSTRAINT_CHECK`, a CHECK of no function included; no index
+/// of an expression (`pragma_index_xinfo`'s cid below 0), whose entry
+/// can be many times its row, or with a WHERE; and each DEFAULT one value
+/// ([`literal`]) no longer than a value a copy keeps (`parse.rs`, `fit`),
+/// as cr-sqlite writes a DEFAULT's words into its own statements
+/// (`vendor/cr-sqlite/core/rs/core/src/backfill.rs:226-228`) and a merge
+/// fills it into the row it makes again (`changes_vtab_write.rs`,
+/// `clear_earlier_life`).
 fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
     let plain = "SELECT CASE WHEN l.wr THEN 'the table is WITHOUT ROWID' ELSE \
         (SELECT c.name || ' is GENERATED' FROM pragma_table_xinfo(?1) c WHERE c.hidden > 1) END FROM pragma_table_list(?1) l";
@@ -187,11 +194,45 @@ fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
         Some((.., false)) => Some("is in a table that isn't STRICT"),
         _ => None,
     };
-    tracing::debug!(target: "state", table = t, ?unplain, ?folded, off, "state: a table held to svrngs's limits, a rowid table of plain columns, its key compared as BINARY and its person_key TEXT first in the key of a STRICT table");
+    let insert = format!("EXPLAIN INSERT INTO \"{}\" DEFAULT VALUES", t.replace('"', "\"\""));
+    let halts = rows(conn, &insert, [], |r| Ok((r.get::<_, String>(1)?, r.get::<_, i64>(2)?)));
+    let check = ("Halt".into(), i64::from(rusqlite::ffi::SQLITE_CONSTRAINT_CHECK));
+    let checked = halts.map_err(fault)?.contains(&check);
+    let checked = checked.then(|| format!("The table {t} has a CHECK"));
+    let index = "SELECT 'The index ' || l.name || iif(l.partial, ' has a WHERE', ' orders an expression') \
+        FROM pragma_index_list(?1) l \
+        WHERE l.partial OR EXISTS (SELECT 1 FROM pragma_index_xinfo(l.name) x WHERE x.key AND x.cid < 0)";
+    let index: Option<String> = conn.query_row(index, [t], |r| r.get(0)).optional().map_err(fault)?;
+    let defaults = "SELECT name, dflt_value FROM pragma_table_xinfo(?1) WHERE dflt_value NOT NULL";
+    let defaults: Vec<(String, String)> = rows(conn, defaults, [t], |r| Ok((r.get(0)?, r.get(1)?))).map_err(fault)?;
+    let unvalued = (defaults.into_iter()).find(|(_, d)| !literal(d) || d.len() > crate::ANSWER_MOST);
+    let unvalued = unvalued.map(|(c, _)| format!("In {t}, the DEFAULT of {c} isn't one short value"));
+    tracing::debug!(target: "state", table = t, ?unplain, ?folded, off, ?checked, ?index, ?unvalued, "state: a table held to svrngs's limits, a rowid table of plain columns with no CHECK and each DEFAULT one value, its key compared as BINARY, its person_key TEXT first in the key of a STRICT table, and each index of columns with no WHERE");
+    let runs = [
+        (checked, "take the CHECK out, and check the value in your page"),
+        (index, "index columns, keeping a worked-out value in its own column"),
+        (unvalued, "write a number, a 'string', x'…' bytes or NULL"),
+    ];
+    let runs = (runs.into_iter()).find_map(|(what, fix)| what.map(|w| Unmade::Runs(w, fix)));
     let unmade = (unplain.map(|u| Unmade::Unplain(t.into(), u)))
         .or(folded.map(|c| Unmade::Folded(t.into(), c)))
-        .or(off.map(|o| Unmade::PersonKey(t.into(), o)));
+        .or(off.map(|o| Unmade::PersonKey(t.into(), o)))
+        .or(runs);
     unmade.map_or(Ok(()), |u| Err(Refused::Schema(u)))
+}
+
+/// Whether `words`, a DEFAULT as SQLite keeps it (`pragma_table_xinfo`'s
+/// `dflt_value`, the text between its parentheses where it had them), is
+/// one value as written: a number, signed or not, a 'string', its quotes
+/// doubled inside it, x'…' bytes, or NULL. Anything else is an expression.
+fn literal(words: &str) -> bool {
+    let quoted = |w: &str| {
+        let inside = w.strip_prefix('\'').and_then(|w| w.strip_suffix('\''));
+        inside.is_some_and(|i| !i.replace("''", "").contains('\''))
+    };
+    let number = words.strip_prefix(['-', '+']).unwrap_or(words);
+    let number = number.starts_with(|c: char| c.is_ascii_digit() || c == '.') && number.parse::<f64>().is_ok();
+    number || quoted(words) || words.strip_prefix(['x', 'X']).is_some_and(quoted) || words.eq_ignore_ascii_case("null")
 }
 
 /// Each column of the app's tables, `table.column`, as `pragma_table_xinfo`

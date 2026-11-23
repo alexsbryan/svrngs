@@ -16,10 +16,9 @@ use svrngs_db::{Binds, Db, Refused, SigningKey, States, Unmade};
 
 const V1: &str =
     "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);\nCREATE INDEX cards_title ON cards (title);\n";
-/// A note a page sorts and compares without case, and holds short, with an
-/// index of its own; and a table of lists, whose index's name sorts before
-/// its table's.
-const V2: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT COLLATE NOCASE CHECK (length(note) < 9));\n\
+/// A note a page sorts and compares without case, with an index of its
+/// own; and a table of lists, whose index's name sorts before its table's.
+const V2: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, note TEXT COLLATE NOCASE);\n\
     CREATE INDEX cards_title ON cards (title);\nCREATE INDEX cards_note ON cards (note);\n\
     CREATE TABLE zlists (id TEXT PRIMARY KEY NOT NULL, name TEXT);\nCREATE INDEX a_zlists ON zlists (name);\n";
 
@@ -129,11 +128,11 @@ fn a_saved_edit_outlasts_an_upgrade_and_a_restart_then_syncs() {
 
 /// **A copy made wider is the copy made from the wider schema**: Ana's copy
 /// on version 1, written and pruned, made wider by version 2's note, which
-/// compares without case, checks its length and has an index, against a
-/// copy made from version 2 that took every set Ana's keeps. Each has the
-/// same text for every table and index, the index version 1 had among
-/// them, the same columns, the same cards and the same clocks. Each then sorts notes alike, case set aside, and
-/// refuses the same long note. Plants, watched failing: the table's text
+/// compares without case and has an index, against a copy made from
+/// version 2 that took every set Ana's keeps. Each has the same text for
+/// every table and index, the index version 1 had among them, the same
+/// columns, the same cards and the same clocks. Each then sorts notes alike,
+/// case set aside. Plants, watched failing: the table's text
 /// left as `ALTER TABLE` writes it (the texts differ, and Ana's copy sorts
 /// "B" before "a"); the new index made before its new table (the copy
 /// refused).
@@ -158,8 +157,6 @@ fn a_copy_made_wider_is_the_copy_made_from_the_wider_schema() {
     let sorted = json!([{ "id": "c2" }, { "id": "c1" }]);
     for db in [&ana, &fresh] {
         assert_eq!(rows(db, "SELECT id FROM cards ORDER BY note"), sorted);
-        let long = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "note": "ninechars" } }]);
-        assert!(db.write(&long, &bound()).is_err(), "the long note refused");
     }
 }
 
@@ -215,14 +212,14 @@ fn a_copy_is_made_wider_while_its_page_holds_it() {
 
 /// **A version that declares a kept column otherwise makes no copy wider**
 /// (the review's P5): Ana's copy holds a card of `cards (id, a, b)`. A
-/// version that makes `a` GENERATED, or the table WITHOUT ROWID, as it adds
-/// `c`, is refused in words, and one that folds `a` where an index orders
-/// it is refused naming the index; each time her card reads and writes as
-/// it did. One that adds a CHECK to `b`, or folds `a` where no index orders
-/// it, makes her copy the copy made from it: the same text, columns, cards
-/// and clocks as a fresh one. Plants, watched failing: `limits` without its
-/// rowid and GENERATED arm (the GENERATED version taken); `texts` without
-/// an index's collations (the folded index taken).
+/// version that makes `a` GENERATED, or the table WITHOUT ROWID, or adds a
+/// CHECK to `b`, as it adds `c`, is refused in words, and one that folds
+/// `a` where an index orders it is refused naming the index; each time her
+/// card reads and writes as it did. One that folds `a` where no index
+/// orders it makes her copy the copy made from it: the same text, columns,
+/// cards and clocks as a fresh one. Plants, watched failing: `limits`
+/// without its rowid and GENERATED arm (the GENERATED version taken);
+/// `texts` without an index's collations (the folded index taken).
 #[test]
 fn a_version_that_declares_a_kept_column_otherwise_makes_no_copy_wider() {
     let v1 = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT);\n";
@@ -238,6 +235,11 @@ fn a_version_that_declares_a_kept_column_otherwise_makes_no_copy_wider() {
             "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT, c TEXT) WITHOUT ROWID;\n",
             "",
             "In cards, the table is WITHOUT ROWID",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT CHECK (b IS NULL OR b > 'm'), c TEXT);\n",
+            "",
+            "The table cards has a CHECK",
         ),
         (
             "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT COLLATE NOCASE, b TEXT, c TEXT);\n",
@@ -256,46 +258,41 @@ fn a_version_that_declares_a_kept_column_otherwise_makes_no_copy_wider() {
         assert_eq!(rows(&ana, "SELECT id, a, b FROM cards"), card, "{v2}");
         write(&ana, json!({ "id": "r2", "b": "B2" })).unwrap();
     }
-    for v2 in [
-        "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT, b TEXT CHECK (b IS NULL OR length(b) > 100), c TEXT);\n",
-        "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT COLLATE NOCASE, b TEXT, c TEXT);\n",
-    ] {
-        let (ana_dir, fresh_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-        let ana_states = states(ana_dir.path(), 1);
-        let ana = ana_states.carry("g", "board", v1).unwrap();
-        write(&ana, card[0].clone()).unwrap();
-        ana_states.widen(&ana, v2).unwrap();
-        let fresh_states = states(fresh_dir.path(), 2);
-        let fresh = fresh_states.open("g", "board", Some(v2)).unwrap();
-        call(&ana, &fresh);
-        assert_eq!(file(ana_dir.path()), file(fresh_dir.path()), "{v2}");
-    }
+    let v2 = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, a TEXT COLLATE NOCASE, b TEXT, c TEXT);\n";
+    let (ana_dir, fresh_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ana_states = states(ana_dir.path(), 1);
+    let ana = ana_states.carry("g", "board", v1).unwrap();
+    write(&ana, card[0].clone()).unwrap();
+    ana_states.widen(&ana, v2).unwrap();
+    let fresh_states = states(fresh_dir.path(), 2);
+    let fresh = fresh_states.open("g", "board", Some(v2)).unwrap();
+    call(&ana, &fresh);
+    assert_eq!(file(ana_dir.path()), file(fresh_dir.path()), "{v2}");
 }
 
 /// **A version is judged once against a file** (the review's H3): Ana's
-/// copy holds a card counted at `i64::MIN`, and version 2 indexes the
-/// count's `abs()`, which SQLite can't make of it, so the copy made wider
-/// faults. Her card then changes, and the version is answered as it was,
-/// never made again at the next ask; once svrngs starts again it is judged
-/// afresh, and taken. Plant, watched failing: `States::widen` keeping
-/// nothing it judged (the version taken at the second ask).
+/// copy is made wider while the place its file is set aside in during the
+/// swap is taken, by a directory, so the widening faults. The place is
+/// then free again, and the version is answered as it was, never made
+/// again at the next ask; once svrngs starts again it is judged afresh,
+/// and taken. Plant, watched failing: `States::widen` keeping nothing it
+/// judged (the version taken at the second ask).
 #[test]
 fn a_version_is_judged_once_against_a_file() {
     let dir = tempfile::tempdir().unwrap();
-    let v1 = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, n INTEGER);\n";
-    let v2 = format!("{v1}CREATE INDEX cards_n ON cards (abs(n));\n");
     let ana_states = states(dir.path(), 1);
-    let ana = ana_states.carry("g", "board", v1).unwrap();
-    write(&ana, json!({ "id": "c1", "n": i64::MIN })).unwrap();
-    let faulted = ana_states.widen(&ana, &v2);
+    let ana = ana_states.carry("g", "board", V1).unwrap();
+    write(&ana, json!({ "id": "c1", "title": "milk" })).unwrap();
+    let aside = dir.path().join("state/g/board.db.old");
+    std::fs::create_dir(&aside).unwrap();
+    let faulted = ana_states.widen(&ana, V2);
     assert!(matches!(faulted, Err(Refused::Fault(_))), "{faulted:?}");
-    let counted = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "n": 1 } }]);
-    ana.write(&counted, &bound()).unwrap();
-    assert_eq!(ana_states.widen(&ana, &v2), faulted, "answered as it was");
+    std::fs::remove_dir(&aside).unwrap();
+    assert_eq!(ana_states.widen(&ana, V2), faulted, "answered as it was");
     drop((ana, ana_states));
     let ana_states = states(dir.path(), 1);
     let ana = ana_states.open("g", "board", None).unwrap();
-    ana_states.widen(&ana, &v2).unwrap();
+    ana_states.widen(&ana, V2).unwrap();
 }
 
 /// **A restore that can't swap leaves the database open as it was** (the

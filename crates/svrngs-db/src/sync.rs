@@ -383,22 +383,16 @@ fn adopt(conn: &Connection, (site, theirs): (Site, i64)) -> rusqlite::Result<()>
 /// `set`, at `site`, kept as `kept` says and counted, its bytes with it but
 /// for a refusal's; and, `rows` given, merged into `crsql_changes` first as
 /// `site`'s at its seq, where cr-sqlite decides what wins: only rows the
-/// parse made, so nothing it didn't read reaches cr-sqlite. Merged with
-/// CHECKs off, and on again after, whatever the merge did: a CHECK across two
-/// columns that each copy's writes kept can be broken by their merge, and
-/// copies would refuse each other's sets for good (svrn-docs
-/// `magnets-spikes/README.md`, S5); a page's own write is still held to it.
+/// parse made, so nothing it didn't read reaches cr-sqlite. No table holds
+/// a CHECK (`schema.rs`, `limits`), so no merge breaks one.
 fn keep(conn: &Connection, (set, site): (&Set, Site), rows: Option<&Valid>, kept: Kept) -> rusqlite::Result<()> {
     let put = "INSERT INTO crsql_changes (\"table\", pk, cid, val, col_version, db_version, site_id, cl, seq, ts) \
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '0')";
     let seq = set.head.seq;
-    conn.pragma_update(None, "ignore_check_constraints", rows.is_some())?;
-    let merged = rows.map_or(&[][..], |v| &v.0).iter().try_for_each(|c| {
+    rows.map_or(&[][..], |v| &v.0).iter().try_for_each(|c| {
         let p = params![c.table, c.pk, c.cid, c.val, c.col_version, seq, site, c.cl, c.seq];
         conn.prepare_cached(put)?.execute(p).map(drop)
-    });
-    conn.pragma_update(None, "ignore_check_constraints", false)?;
-    merged?;
+    })?;
     // The site's device, by which its share is counted and a muted device's
     // sets are found; and its home, from whom alone a word for its mark is
     // trusted: a phone's, as its set names it, else the device's own. Kept

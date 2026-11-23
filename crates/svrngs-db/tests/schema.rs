@@ -333,49 +333,122 @@ fn what_svrngs_can_t_keep_alike_is_refused_wherever_a_schema_is_read() {
     }
 }
 
-/// **schema.sql only declares** (APP_STATE §4, "Its schema"): the review's
-/// P7, rows inserted with `zeroblob` of 300 MB each, is refused by what it
-/// asks and runs on no row, as an UPDATE is; and an expression that calls a
-/// function that makes data, or that compares each byte with a pattern, is
-/// refused naming it, in a CHECK, an index, an index's WHERE and a DEFAULT,
-/// each of whose functions SQLite asks the authorizer of as it is made.
-/// What a schema may call is taken. Plants, watched failing: `schema_rule`
-/// letting schema.sql write the app's tables (P7 refused only for its
-/// `zeroblob`); its function arm as it was (each call taken).
+/// An index of `v` concatenated with itself `leaves` times, a balanced tree
+/// of `||`, which calls no function: each row's entry is the row times
+/// `leaves` (the delta review's D2, 16,384 leaves in 82 KB of schema.sql).
+fn concatenated(leaves: usize) -> String {
+    let mut terms = vec!["v".to_string(); leaves];
+    while terms.len() > 1 {
+        terms = (terms.chunks(2).map(|c| c.join("||")))
+            .map(|t| format!("({t})"))
+            .collect();
+    }
+    format!("CREATE INDEX t_v ON t {};", terms[0])
+}
+
+/// **schema.sql only declares, and no expression of it ever runs**
+/// (APP_STATE §4, "Its schema"): it writes no row, as the review's P7 tried
+/// with `zeroblob` of 300 MB a row; it calls no function, in a CHECK, an
+/// index, an index's WHERE or a DEFAULT, `CURRENT_TIMESTAMP` among them;
+/// a table holds no CHECK, a function's or not; an index orders columns,
+/// with no expression and no WHERE, the delta review's D2 (an index of
+/// `||` making each row's entry 16,384 times the row) and N1 (`'now'` and
+/// `abs` in an index) among them; and each DEFAULT is one value, as
+/// written, of at most `ANSWER_MOST` bytes. Each is refused in words that
+/// say what to write instead, by the check and where a version is held
+/// against a copy. Columns of a type, NOT NULL, the key, STRICT, a DEFAULT
+/// of a number, signed or not, a string, a blob or NULL, and an index of
+/// columns, each in its order and collation, are taken. Plants, watched
+/// failing: `schema_rule` letting schema.sql write the app's tables (P7
+/// refused only for its `zeroblob`); the code before this commit (the D2
+/// index, the CHECKs, the WHERE, `abs` and `datetime` and the DEFAULT
+/// expressions taken).
 #[test]
 fn schema_sql_only_declares() {
-    let t = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v BLOB);\n";
+    let t = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT, n INTEGER);\n";
+    let long = "x".repeat(svrngs_db::ANSWER_MOST);
     let refusals = [
         (
             format!(
-                "{t}INSERT INTO t VALUES ('1', zeroblob(300000000));\nINSERT INTO t VALUES ('2', zeroblob(300000000));\n"
+                "{t}INSERT INTO t VALUES ('1', zeroblob(300000000), 1);\nINSERT INTO t VALUES ('2', zeroblob(300000000), 2);\n"
             ),
             "asks SQLite for Insert { table_name: \"t\" }",
         ),
         (format!("{t}UPDATE t SET v = NULL;"), "asks SQLite for Update"),
         (
-            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT CHECK (length(printf('%.*c', 9, v)) < 9));".into(),
-            "schema.sql calls printf",
+            format!("{t}{}", concatenated(16384)),
+            "The index t_v orders an expression",
         ),
         (
-            format!("{t}CREATE INDEX t_v ON t (replace(v, 'a', 'aaaa'));"),
-            "schema.sql calls replace",
+            format!("{t}CREATE INDEX t_v ON t (v || n);"),
+            "The index t_v orders an expression",
         ),
         (
-            format!("{t}CREATE INDEX t_v ON t (v) WHERE v LIKE '%a%a%';"),
-            "schema.sql calls like",
+            format!("{t}CREATE INDEX t_v ON t (v, -n);"),
+            "The index t_v orders an expression",
+        ),
+        (
+            format!("{t}CREATE INDEX t_v ON t (datetime('now', v));"),
+            "schema.sql calls datetime",
+        ),
+        (format!("{t}CREATE INDEX t_n ON t (abs(n));"), "schema.sql calls abs"),
+        (
+            format!("{t}CREATE INDEX t_v ON t (v) WHERE v IS NOT NULL;"),
+            "The index t_v has a WHERE",
+        ),
+        (
+            format!("{t}CREATE INDEX t_v ON t (v) WHERE lower(v) = v;"),
+            "schema.sql calls lower",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT CHECK (0));".into(),
+            "The table t has a CHECK",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, lo INTEGER, hi INTEGER, CHECK (lo <= hi));".into(),
+            "The table t has a CHECK",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT CHECK (length(v) < 9));".into(),
+            "schema.sql calls length",
         ),
         (
             "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v BLOB DEFAULT (randomblob(4000000)));".into(),
             "schema.sql calls randomblob",
         ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT DEFAULT CURRENT_TIMESTAMP);".into(),
+            "schema.sql calls CURRENT_TIMESTAMP",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, n INTEGER DEFAULT (1 + 1));".into(),
+            "In t, the DEFAULT of n isn't one short value",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT DEFAULT ('a' || 'b'));".into(),
+            "In t, the DEFAULT of v isn't one short value",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT DEFAULT -'x');".into(),
+            "In t, the DEFAULT of v isn't one short value",
+        ),
+        (
+            format!("CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT DEFAULT '{long}');"),
+            "In t, the DEFAULT of v isn't one short value",
+        ),
     ];
+    let dir = tempfile::tempdir().unwrap();
+    let states = States::new(dir.path(), SigningKey::from_bytes(&[1; 32]));
+    let copy = states.open("g", "t", Some(t)).unwrap();
     for (schema, said) in refusals {
         let words = refused(&schema);
-        println!("MEASURE {schema}\n  {words}");
+        println!("MEASURE {}\n  {words}", &schema[..schema.len().min(200)]);
         assert!(words.contains(said) && words.contains("To fix it"), "{schema}: {words}");
+        let held = states.widen(&copy, &schema).map_err(|r| r.to_string());
+        assert_eq!(held, Err(words), "a version held against a copy, refused alike");
     }
-    let declared = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT CHECK (length(v) < 9), n INTEGER NOT NULL DEFAULT -1, c TEXT DEFAULT 'todo');\n\
-        CREATE INDEX t_v ON t (lower(v)) WHERE typeof(v) = 'text';";
+    let declared = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT COLLATE NOCASE, n INTEGER NOT NULL DEFAULT -1,\n\
+        c TEXT DEFAULT 'it''s', r REAL DEFAULT +1.5e3, b BLOB DEFAULT x'00ff', z DEFAULT NULL, s TEXT DEFAULT '');\n\
+        CREATE INDEX t_v ON t (v DESC, n COLLATE BINARY);";
     assert_eq!(check(declared, None), Ok(vec![("t".into(), false)]));
 }
