@@ -59,6 +59,22 @@ refused and ends the session.
 a check only as a scratch node: `SVRNGS_DIR` and `HOME` in a scratch
 folder, as svrn-docs LEND_SANDBOX §6 B5 does.
 
+**Overnight, 2026-11-23** (the operator: "This is the overnight session
+where we need to not block"). keeper-lead and QA (oc-cruu42, over
+agent-mail) carry the queue to its end. The operator's decisions are taken
+as defaults, each reversible in the morning:
+- **Host binds** (`card.rs:543`) stay refused for every card.
+- **No Restart or Change on the page.** Managed Mac containers and pods
+  are deferred.
+- **Don't stop for a judgment you can make from the row, the spec and the
+  principles.** Decide it, and say so in the commit.
+- **`needs-human` is only for a hard wall:** a CHARTER ceiling, an
+  approval this file doesn't give, or something that would touch the
+  operator's own machine state. Park with the evidence, and the loop
+  goes on with other rows. keeper-lead answers parks through the night.
+- **beefymac:** no reboot, and no sign-out without the operator. Those
+  rows' reboot demos are HUMAN-release-hosts'. Do every other demo there.
+
 **Decisions:**
 - **A row's allowance is its estimate; the caps decide** (the operator,
   2026-11-19). For svrngs's half, the envelope is CHARTER's.

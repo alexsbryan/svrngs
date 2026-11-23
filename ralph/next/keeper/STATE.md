@@ -562,6 +562,10 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     prefill; the busy sentence; every state.
   - Two routes over `run.rs` `confirm`. The words come from `plan/words.rs`
     only.
+  - **Not on the page this release** (QA's recommendation, adopted
+    overnight 2026-11-23): no Restart (automatic recovery, plus the
+    existing Stop and Start, cover it), and no Change how it runs. To
+    change a command, stop running it with svrngs and Run again.
 
   Demo: the first demo again, from the page, in WebKit.
 
@@ -578,18 +582,15 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
 - [ ] avail-run-mac-renew — depends [avail-run-mac, avail-publish] — ONE UNIT: spec §5 row 6.
   - A launch agent's grant: its label plus its plist's hash, judged by
     lineage.
-  - A Podman-machine container's witness, with the engine read before and
-    after the dial.
+  - No Podman-machine container witness: managed Mac containers are
+    deferred (see avail-run-mac-containers). A Mac container stays
+    shareable while it runs, as today.
 
   check: B2's Mac twins, each planted, on beefymac.
 
-- [ ] avail-run-mac-containers — depends [avail-run-mac-renew] — ONE UNIT (keeper): spec §5 row 7.
-  - Spike M0 first: a Podman-machine container under a launch agent,
-    through a restart of the agent. Then the keeper.
+- [x] avail-run-mac-containers — depends [avail-run-mac-renew] — DEFERRED, not built (QA oc-cruu42's recommendation, adopted overnight 2026-11-23, for the operator to reverse). Managed Mac containers add the Podman machine's lifecycle, and an endpoint-identity proof beyond native macOS. A Mac container stays shareable while it runs. The native baseline on Linux and macOS is unchanged. No commit.
 
-  Demo: Actual on beefymac.
-
-- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-containers] — ONE UNIT: spec §5 row 8.
+- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-renew] — ONE UNIT: spec §5 row 8.
   - `build-release.sh`, `install.sh` (always) and the Arch package, as
     Give's lines are.
   - Uninstall says what svrngs still runs.
