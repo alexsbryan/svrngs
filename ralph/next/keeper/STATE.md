@@ -620,6 +620,29 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     are kept, and a same-name foreign pod is untouched (green).
   - Size: keeper only. Counted: none expected.
 
+- [ ] avail-run-page-copy — depends [avail-run-page] — ONE UNIT: the page's next step after Run, a page acceptance blocker (QA oc-cruu42, 2026-11-23).
+  - Today `plan/words.rs:173`, for Verified, says on both doors
+    "{name} is running here. Share it separately with `svrngs share`.",
+    sending a lightly technical Sam from the page to the terminal.
+  - The shared success line is "{name} is running here." Then:
+    - the page adds a next step in the browser, naming the real heading
+      Sam sees (for example "To share it, find it under Already running
+      here");
+    - only the terminal render adds its command, in the tested form
+      `svrngs share <port> …`, not the service name.
+  - One decider for the words. Add no second render.
+  - In the existing WebKit scene:
+    - assert the success text where it is rendered, not only in the next
+      status row;
+    - use a named group seed, or a real group creation, in place of the
+      fixture's unnamed Roster (`browser/main.rs:109–150`); assert its name
+      at the review and in the saved row.
+    - The "a group whose name this computer cannot read" fallback stays as
+      it is. It is right for a seed that is really missing.
+  - Plant: the old sentence on the page fails the success assertion.
+  - Size: a few words and lines. Counted within the reserve; JavaScript
+    +0 if possible, as 10 JS lines remain under the ceiling.
+
 - [ ] avail-run-mac — depends [avail-unmagic] — ONE UNIT (keeper): spec §5 row 5.
   - Fork commonwealth-ai `svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0`,
     lines 296–395, as `launchd.rs`: unchanged first, with ported-from lines.
