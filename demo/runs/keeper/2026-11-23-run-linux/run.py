@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -73,7 +74,7 @@ def complete(lines):
     return demo.answered(lines) and any(l["what"] == "chat" and l.get("status") == 200 for l in lines)
 
 
-def scene():
+def scene(plant_old_hint):
     code, said = terminal("systemctl --user enable --now svrngs.service; sleep 2; svrngs new house --as Sam --relay http://127.0.0.1:7900")
     link = re.search(r"svrngs://join/\S+", said)
     assert code == 0 and link, "Sam did not make a group"
@@ -113,8 +114,22 @@ def scene():
     assert terminal("svrngs unshare coder")[0] == 0
     code, said = terminal(run)
     before = pid()
-    prove("Run starts the service without writing a share", code == 0 and "Share it separately" in said and
-          before.isdecimal() and before != "0" and root(f"test ! -e {state}/lends/coder.json && loginctl show-user sam -p Linger --value").strip() == "yes", pid=before)
+    declaration = root(f"test ! -e {state}/lends/coder.json && test ! -L {state}/lends/coder.json && echo absent").strip()
+    linger = root("loginctl show-user sam -p Linger --value").strip()
+    hint = "To share it: `svrngs share 8101 --program <program> --name coder --group <group>`."
+    if plant_old_hint:
+        assert hint in said, said
+        said = said.replace(hint, "Share it separately")
+    checks = (
+        ("Run starts the service", code == 0 and before.isdecimal() and before != "0", {"pid": before, "exit": code}),
+        ("Run writes no share", declaration == "absent", {"declaration": declaration}),
+        ("Run enables linger", linger == "yes", {"linger": linger}),
+        ("Run prints the separate Share command", hint in said.splitlines()[-1] if said else False,
+         {"plant_old_hint": plant_old_hint, "said": said}),
+    )
+    for case, passed, facts in checks:
+        demo.verdict(case, "passed" if passed else "failed", **facts)
+    assert all(passed for _, passed, _ in checks), "Run startup witnesses"
     assert root(f"sudo -u sam mkdir {state}/lends/.coder.json.partial && echo planted").strip() == "planted"
     code, said = terminal(share)
     prove("failed save leaves the app running and unshared", code != 0 and
@@ -161,7 +176,7 @@ def main():
         subprocess.run(["scp", *demo.SCP, *map(str, files), "root@127.0.0.1:/root/stage/"], check=True)
         subprocess.run(["scp", *demo.SCP, str(SPIKE / "qwen2.5-0.5b.gguf"), "root@127.0.0.1:/root/stage/model.gguf"], check=True)
         demo.say("setup", said=root("bash /root/stage/setup.sh 2>&1"))
-        scene()
+        scene("--plant-old-hint" in sys.argv[1:])
     finally:
         try:
             root("systemctl poweroff", 10)

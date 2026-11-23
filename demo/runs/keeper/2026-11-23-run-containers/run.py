@@ -30,6 +30,7 @@ PORT = 18081
 IMAGE = "docker.io/library/python@sha256:1148dbb014615300fa7e713b2f94f550c0d1c69780c0805f84f093ceee34dd0b"
 MANAGER = "systemctl --user -M sam@.host"
 SAM = "systemd-run -M sam@.host --user --wait --pipe -q"
+RENEWED = "door: a kept lend renewed after a restart, or why not"
 
 
 def guest(command, timeout=20, *, check=True):
@@ -152,7 +153,7 @@ def share(name):
     return row["origin"].rstrip("/"), before
 
 
-def scene(split):
+def scene(split, plant_no_renewal):
     if not wait_for(f"http://127.0.0.1:{PORT}/", direct).endswith("\n200"):
         sample("start-failed")
         vm.verdict("pod starts", "failed", unit_log="start-failed-unit.log")
@@ -169,13 +170,14 @@ def scene(split):
     boot, sessions = reboot()
     local = wait_for(f"http://127.0.0.1:{PORT}/marker", direct)
     fresh = sample("after")
-    seen = wait_for(url, lambda args: alex(*args, check=False) if local == expected else "", bound=5)
+    # A local read still works, but without Alex's request there is no renewal.
+    seen = "" if plant_no_renewal or local != expected else wait_for(url, lambda args: alex(*args, check=False), bound=5)
     renewed, after = renewal("recipes", before)
     ok = initial and fresh and local == expected and seen == expected and renewed and vm.no_login(sessions)
     vm.verdict("same marker at same address after reboot", "passed" if ok else "failed", split=split,
                url=url, boot_before=boot, boot_after=guest("cat /proc/sys/kernel/random/boot_id"),
                sessions=sessions, expected=marker, local=local, alex=seen,
-               renewed=renewed, approved=after.get("approved"))
+               renewed=renewed, approved=after.get("approved"), plant_no_renewal=plant_no_renewal)
     return ok
 
 
@@ -190,11 +192,17 @@ def reboot():
 
 def renewal(name, before):
     after = declaration(name)
-    door = guest("journalctl -b -q _UID=1000 _SYSTEMD_USER_UNIT=svrngs.service --no-pager "
-                 "-g 'unit renewed|what is on the lend.s port'")
-    (vm.OUT / "after-door.log").write_text(door + "\n")
+    door = guest("journalctl -b -q _UID=1000 _SYSTEMD_USER_UNIT=svrngs.service --no-pager -o cat")
+    # journald preserves the tracing formatter's ANSI escapes around fields.
+    door = re.sub(r"\x1b\[[0-9;]*m", "", door)
+    events = [line for line in door.splitlines() if RENEWED in line]
+    (vm.OUT / "after-door.log").write_text("\n".join(events) + "\n")
+    accepted = any({f"lend={name}", "renewed=Ok(())"} <= set(line.split()) for line in events)
     renewed = ((before.get("keep") or {}).get("unit") == UNIT and before.get("keep") == after.get("keep")
-               and after.get("approved") != before.get("approved") and "renewed=Ok(())" in door)
+               and after.get("approved") != before.get("approved") and accepted)
+    vm.verdict("saved approval renewed for this lend", "passed" if renewed else "failed", lend=name,
+               before=before.get("approved"), after=after.get("approved"),
+               keep_before=before.get("keep"), keep_after=after.get("keep"), events=events)
     return renewed, after
 
 
@@ -224,7 +232,7 @@ def main():
 
     def run():
         install(split)
-        return 0 if scene(split) else 1
+        return 0 if scene(split, "--plant-no-renewal" in sys.argv[1:]) else 1
 
     return with_vm(run)
 
