@@ -332,3 +332,50 @@ fn what_svrngs_can_t_keep_alike_is_refused_wherever_a_schema_is_read() {
         }
     }
 }
+
+/// **schema.sql only declares** (APP_STATE §4, "Its schema"): the review's
+/// P7, rows inserted with `zeroblob` of 300 MB each, is refused by what it
+/// asks and runs on no row, as an UPDATE is; and an expression that calls a
+/// function that makes data, or that compares each byte with a pattern, is
+/// refused naming it, in a CHECK, an index, an index's WHERE and a DEFAULT,
+/// each of whose functions SQLite asks the authorizer of as it is made.
+/// What a schema may call is taken. Plants, watched failing: `schema_rule`
+/// letting schema.sql write the app's tables (P7 refused only for its
+/// `zeroblob`); its function arm as it was (each call taken).
+#[test]
+fn schema_sql_only_declares() {
+    let t = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v BLOB);\n";
+    let refusals = [
+        (
+            format!(
+                "{t}INSERT INTO t VALUES ('1', zeroblob(300000000));\nINSERT INTO t VALUES ('2', zeroblob(300000000));\n"
+            ),
+            "asks SQLite for Insert { table_name: \"t\" }",
+        ),
+        (format!("{t}UPDATE t SET v = NULL;"), "asks SQLite for Update"),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT CHECK (length(printf('%.*c', 9, v)) < 9));".into(),
+            "schema.sql calls printf",
+        ),
+        (
+            format!("{t}CREATE INDEX t_v ON t (replace(v, 'a', 'aaaa'));"),
+            "schema.sql calls replace",
+        ),
+        (
+            format!("{t}CREATE INDEX t_v ON t (v) WHERE v LIKE '%a%a%';"),
+            "schema.sql calls like",
+        ),
+        (
+            "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v BLOB DEFAULT (randomblob(4000000)));".into(),
+            "schema.sql calls randomblob",
+        ),
+    ];
+    for (schema, said) in refusals {
+        let words = refused(&schema);
+        println!("MEASURE {schema}\n  {words}");
+        assert!(words.contains(said) && words.contains("To fix it"), "{schema}: {words}");
+    }
+    let declared = "CREATE TABLE t (id TEXT PRIMARY KEY NOT NULL, v TEXT CHECK (length(v) < 9), n INTEGER NOT NULL DEFAULT -1, c TEXT DEFAULT 'todo');\n\
+        CREATE INDEX t_v ON t (lower(v)) WHERE typeof(v) = 'text';";
+    assert_eq!(check(declared, None), Ok(vec![("t".into(), false)]));
+}

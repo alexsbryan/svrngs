@@ -35,7 +35,8 @@ fn checked(args: &[&Path]) -> (bool, String) {
 
 /// **`svrngs check` reads schema.sql by svrngs-db's rule**: a schema it
 /// takes is named table by table, owned or shared; a NOCASE key is refused
-/// with its fix, beside the page's findings, and the exit code says so; a
+/// with its fix, beside the page's findings, and the exit code says so, as
+/// a row schema.sql inserts is, since it only declares; a
 /// schema that drops a column of the version it follows is refused, and a
 /// folder named as that version that is no app's is said, never taken for
 /// one with no schema. Plant, watched failing: `checked` not reading
@@ -59,6 +60,17 @@ fn svrngs_check_reads_schema_sql_by_svrngs_db_s_rule() {
     assert!(!passed, "{said}");
     assert!(
         said.contains("schema.sql: The primary key of tags compares text as NOCASE"),
+        "{said}"
+    );
+    let seeded = app(
+        root.path(),
+        "seeded",
+        Some("CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL);\nINSERT INTO cards VALUES ('c1');\n"),
+    );
+    let (passed, said) = checked(&[&seeded]);
+    assert!(!passed, "{said}");
+    assert!(
+        said.contains("schema.sql: schema.sql asks SQLite for Insert"),
         "{said}"
     );
 

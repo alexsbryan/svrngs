@@ -324,17 +324,26 @@ impl States {
     /// ([`Self::restored`]) and `schema` made on the copy, a wider version's
     /// tables, columns and indexes, each as a copy made from `schema` has
     /// it (`schema.rs`, `widen`). Nothing where `schema` adds nothing, and
-    /// refused where it doesn't only add.
+    /// refused where it doesn't only add. Judged once against each file
+    /// `db` holds: a version that adds nothing, is refused or whose widening
+    /// faulted is answered as it was, until the file is made wider or
+    /// svrngs starts again, so no member's version is made again at every
+    /// round and every page's ask.
     pub fn widen(&self, db: &Db, schema: &str) -> Result<(), Refused> {
         let hash = svrngs_core::set::schema(schema);
         let conn = db.conn();
-        let adds = hash != conn.file.schema && schema::adds(&conn, schema)?;
-        drop(conn);
-        tracing::debug!(target: "state", group = db.group, app = db.app, adds, "state: a version's schema asked of a database, made wider where it adds to it");
-        match adds {
-            true => self.restored(db, |conn| schema::widen(conn, schema)),
-            false => Ok(()),
+        if let Some(judged) = conn.judged.get(&hash) {
+            return judged.clone();
         }
+        let adds = schema::adds(&conn, schema);
+        drop(conn);
+        tracing::debug!(target: "state", group = db.group, app = db.app, ?adds, "state: a version's schema judged against a database's file for the first time, made wider where it adds to it");
+        let judged = match adds {
+            Ok(true) => self.restored(db, |conn| schema::widen(conn, schema)),
+            adds => adds.map(drop),
+        };
+        db.conn().judged.insert(hash, judged.clone());
+        judged
     }
 
     /// `db`'s file restored whole, `change` made on the restored copy, and
@@ -455,11 +464,13 @@ pub struct Db {
 struct Open(Option<Connection>);
 
 /// A `Db`'s file as it holds it: its connection, the query gate the
-/// connection's handlers read, and what the file names.
+/// connection's handlers read, what the file names, and how each version's
+/// schema judged against it went (`States::widen`).
 pub(crate) struct Live {
     open: Open,
     gate: Arc<Gate>,
     pub(crate) file: File,
+    judged: BTreeMap<[u8; 32], Result<(), Refused>>,
 }
 
 /// What a database's file names: the nonce it was made with, its site, its
@@ -557,25 +568,26 @@ fn internal(table: &str) -> bool {
         || t.contains("__crsql_")
 }
 
-/// What `schema.sql` may do: make tables and indexes in `main`, and what
-/// SQLite reads and writes of its own schema to do it, the `REINDEX` it asks
-/// for as it makes an index included (svrn-docs `magnets-spikes/README.md`,
-/// S5). What it refuses is said by the check (`schema.rs`, [`schema::Unmade`]).
+/// What `schema.sql` may do: declare. Make tables and indexes in `main`,
+/// with what SQLite reads of them and writes of its own schema to do it,
+/// the `REINDEX` it asks for as it makes an index included (svrn-docs
+/// `magnets-spikes/README.md`, S5), and write no row of any other table, so
+/// no expression runs on one; and call only the functions that make no data
+/// (`schema.rs`, [`schema::INERT`]). What it refuses is said by the check
+/// (`schema.rs`, [`schema::Unmade`]).
 fn schema_rule(ctx: AuthContext<'_>) -> Authorization {
     let main = ctx.database_name.is_none_or(|d| d == "main");
+    let own = |t: &str| t == "sqlite_master" || t == "sqlite_schema";
     let allowed = main
         && match ctx.action {
             AuthAction::CreateTable { table_name } | AuthAction::CreateIndex { table_name, .. } => {
                 !internal(table_name)
             }
             AuthAction::Reindex { index_name } => !internal(index_name),
-            AuthAction::Insert { table_name }
-            | AuthAction::Update { table_name, .. }
-            | AuthAction::Read { table_name, .. } => {
-                table_name == "sqlite_master" || table_name == "sqlite_schema" || !internal(table_name)
-            }
+            AuthAction::Insert { table_name } | AuthAction::Update { table_name, .. } => own(table_name),
+            AuthAction::Read { table_name, .. } => own(table_name) || !internal(table_name),
             AuthAction::Function { function_name } => {
-                !function_name.eq_ignore_ascii_case("load_extension") && !function_name.starts_with("crsql")
+                schema::INERT.split(", ").any(|i| i.eq_ignore_ascii_case(function_name))
             }
             _ => false,
         };
@@ -751,6 +763,8 @@ impl Db {
                     schema: hash,
                     tables,
                 },
+                // The schema it was made from, judged as it was made.
+                judged: BTreeMap::from([(hash, Ok(()))]),
             }
             .into(),
             changed: watch::Sender::new(0),

@@ -271,3 +271,29 @@ fn a_version_that_declares_a_kept_column_otherwise_makes_no_copy_wider() {
         assert_eq!(file(ana_dir.path()), file(fresh_dir.path()), "{v2}");
     }
 }
+
+/// **A version is judged once against a file** (the review's H3): Ana's
+/// copy holds a card counted at `i64::MIN`, and version 2 indexes the
+/// count's `abs()`, which SQLite can't make of it, so the copy made wider
+/// faults. Her card then changes, and the version is answered as it was,
+/// never made again at the next ask; once svrngs starts again it is judged
+/// afresh, and taken. Plant, watched failing: `States::widen` keeping
+/// nothing it judged (the version taken at the second ask).
+#[test]
+fn a_version_is_judged_once_against_a_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let v1 = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, n INTEGER);\n";
+    let v2 = format!("{v1}CREATE INDEX cards_n ON cards (abs(n));\n");
+    let ana_states = states(dir.path(), 1);
+    let ana = ana_states.carry("g", "board", v1).unwrap();
+    write(&ana, json!({ "id": "c1", "n": i64::MIN })).unwrap();
+    let faulted = ana_states.widen(&ana, &v2);
+    assert!(matches!(faulted, Err(Refused::Fault(_))), "{faulted:?}");
+    let counted = json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "n": 1 } }]);
+    ana.write(&counted, &bound()).unwrap();
+    assert_eq!(ana_states.widen(&ana, &v2), faulted, "answered as it was");
+    drop((ana, ana_states));
+    let ana_states = states(dir.path(), 1);
+    let ana = ana_states.open("g", "board", None).unwrap();
+    ana_states.widen(&ana, &v2).unwrap();
+}

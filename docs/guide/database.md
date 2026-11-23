@@ -75,10 +75,18 @@ each one it finds, with the fix, and exits non-zero:
   `lower(title) || ' (' || year || ')'`, so two people adding it make one
   row. Otherwise use `crypto.randomUUID()` from your page.
 - No `COLLATE NOCASE` on a key. Keep the text in the case you compare it in.
-- Only tables and indexes: no triggers, views or virtual tables. Do that
-  work in your page.
+- Only tables and indexes: no triggers, views or virtual tables, and no
+  rows, so no `INSERT` or `UPDATE`. A fresh app's tables are empty, and
+  your page writes the first rows. Do that work in your page.
 - No `WITHOUT ROWID` and no `GENERATED` column. Work a value out in your
   page as it writes.
+- A `CHECK`, an index or a `DEFAULT` calls only functions that make no data
+  and read their value once: `abs`, `coalesce`, `date`, `datetime`,
+  `ifnull`, `iif`, `julianday`, `length`, `likely`, `lower`, `nullif`,
+  `octet_length`, `round`, `sign`, `strftime`, `substr`, `substring`,
+  `time`, `typeof`, `unicode`, `unixepoch`, `unlikely` and `upper`. Every
+  computer runs them for each row it writes or takes, so `LIKE`, `GLOB`,
+  `printf` and the rest are refused.
 
 A `CHECK` holds for each computer's own writes, but not for what a merge
 makes. With `CHECK (lo <= hi)`, if Ana sets `lo` to 8 and Ben, apart, sets
