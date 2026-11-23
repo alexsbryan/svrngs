@@ -336,7 +336,7 @@ pub struct Ingested {
 
 /// The person whose device writes at `site` in the simulator: `person-0` at
 /// site 1 (`sim.rs`, `op`).
-fn person(site: Site) -> String {
+pub fn person(site: Site) -> String {
     format!("person-{}", site.0[0] - 1)
 }
 

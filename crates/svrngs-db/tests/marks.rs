@@ -25,7 +25,7 @@ fn key(n: u8) -> SigningKey {
 /// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
 fn bound() -> svrngs_db::Binds {
     let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
-    svrngs_db::Binds::new(keys, 4 << 20)
+    svrngs_db::Binds::new(keys.map(|k| (k.clone(), k, false)), 4 << 20)
 }
 
 fn board(dir: &Path, n: u8) -> Arc<Db> {
@@ -41,8 +41,11 @@ fn root(dir: &Path, n: u8) -> Arc<Db> {
 }
 
 fn write(db: &Db, id: &str, title: &str) {
-    db.write(&json!([{ "insert": "cards", "row": { "id": id, "title": title } }]))
-        .unwrap();
+    db.write(
+        &json!([{ "insert": "cards", "row": { "id": id, "title": title } }]),
+        &bound(),
+    )
+    .unwrap();
 }
 
 fn cards(db: &Db) -> Value {

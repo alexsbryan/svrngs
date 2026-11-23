@@ -437,7 +437,7 @@ async fn the_state_route_serves_a_standing_member_alone() {
     inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
     let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
     let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
-    db.write(&card).unwrap();
+    db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
     let asked = svrngs_db::Call::default();
     let (status, answer) = state(inbound.clone(), Some(&key()), (NS, "board"), &asked).await;
     let answer = answer.expect("a call back");
@@ -454,7 +454,7 @@ async fn the_state_route_serves_a_standing_member_alone() {
     rail.set_seed("bo-only", &Roster::new(members)).unwrap();
     let bo_states = svrngs_db::States::new(&dir.path().join("bo"), bo.clone());
     let bo_db = bo_states.open(NS, "board", Some(SCHEMA)).unwrap();
-    bo_db.write(&card).unwrap();
+    bo_db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
     let offered = bo_db.missing(&Default::default(), 1 << 20).unwrap();
     let marks = db.ask().unwrap().marks;
     let cy = SigningKey::from_bytes(&[14u8; 32]);
@@ -464,7 +464,7 @@ async fn the_state_route_serves_a_standing_member_alone() {
     rail.set_seed(NS, &Roster::new(members)).unwrap();
     let cy_states = svrngs_db::States::new(&dir.path().join("cy"), cy);
     let cy_db = cy_states.open(NS, "board", Some(SCHEMA)).unwrap();
-    cy_db.write(&card).unwrap();
+    cy_db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
     let cy_s = cy_db.missing(&Default::default(), 1 << 20).unwrap();
     for dialer in [Some(&bo), None] {
         let (status, _) = state(inbound.clone(), dialer, (NS, "board"), &offered).await;
@@ -548,7 +548,7 @@ async fn a_call_with_a_key_cr_sqlite_cannot_unpack_is_answered_and_its_set_refus
     let his = svrngs_db::States::new(&dir.path().join("bo"), bo.clone());
     let his = his.open(NS, "board", Some(SCHEMA)).unwrap();
     let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
-    his.write(&card).unwrap();
+    his.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
     let mut set = his
         .missing(&Default::default(), 1 << 20)
         .unwrap()
@@ -654,7 +654,7 @@ async fn the_state_route_reads_no_call_before_standing_and_says_no_words_of_its_
     inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
     let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
     let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
-    db.write(&card).unwrap();
+    db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
 
     let stranger = SigningKey::from_bytes(&[12u8; 32]);
     let mut body = postcard::to_allocvec(&(NS, "board")).unwrap();

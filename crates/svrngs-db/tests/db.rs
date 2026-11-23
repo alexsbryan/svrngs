@@ -35,7 +35,12 @@ fn board() -> (tempfile::TempDir, Arc<Db>) {
 
 /// `ops` written: the rows changed, or why not.
 fn write(db: &Db, ops: Value) -> Result<Value, Refused> {
-    db.write(&ops).map(|(answer, _)| answer)
+    let everyone = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
+    db.write(
+        &ops,
+        &svrngs_db::Binds::new(everyone.map(|k| (k.clone(), k, false)), 4 << 20),
+    )
+    .map(|(answer, _)| answer)
 }
 
 /// Every row of `cards`, by id.

@@ -89,6 +89,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
+use crate::register::{RemovalSaid, Removing};
 use crate::{RailError, RingRail};
 use n0_future::task::AbortOnDropHandle;
 use tokio::sync::{watch, Notify};
@@ -647,17 +648,24 @@ pub const SYNC_ROUTE: &str = "/internal/ring/sync";
 /// ([`crate::ring_routes::ring_state`]).
 pub const STATE_ROUTE: &str = "/internal/ring/state";
 
-/// The keys `group`'s record binds, as a set's device is judged: standing
-/// now, or cut since, as a removed device's sets are taken like any (svrn-docs
-/// APP_STATE §4, "A removed device"), each with its share of the room an
-/// app database's ask has ([`crate::peer_wire::ASK_ROOM_BYTES`]). An
+/// The keys `group`'s record binds, as a set's device and the owned rows it
+/// changes are judged (svrn-docs APP_STATE §4, "A removed device", "Who may
+/// write which row"): standing now, or cut since, as a removed device's sets
+/// are taken like any, each with its person's first key, and whether the
+/// office cut it, the keeper's cut and no leave, by a cut whose acts this
+/// copy holds whole (Eudoxia's `db::Record`); each with its share of the
+/// room an app database's ask has ([`crate::peer_wire::ASK_ROOM_BYTES`]). An
 /// unreadable record binds none, so every set offered is dropped, to be sent
 /// again once it reads, said at warn.
 pub(crate) fn bound(rail: &RingRail, group: &str) -> svrngs_db::Binds {
     let read = rail.register(group).inspect_err(|e| warn!(namespace = group, error = %e, "ring state: the record is unreadable, so every set offered is dropped, to be sent again once it reads"));
     let read = read.unwrap_or_default();
-    let keys = read.members.into_keys().chain(read.removed.into_keys());
-    svrngs_db::Binds::new(keys, crate::peer_wire::ASK_ROOM_BYTES)
+    let whole = |k: &String| read.cut.get(k).is_some_and(|c| c.unheld.is_empty());
+    let office = |r: &Removing| r.said == RemovalSaid::Removed && whole(&r.key);
+    let cuts = (read.removals.iter()).filter(|r| r.said != RemovalSaid::Asked);
+    let cuts = cuts.map(|r| (r.key.clone(), r.of_key.clone(), office(r)));
+    let standing = (read.members.iter()).map(|(k, m)| (k.clone(), m.person_key.clone(), false));
+    svrngs_db::Binds::new(standing.chain(cuts), crate::peer_wire::ASK_ROOM_BYTES)
 }
 
 /// Each app database this computer keeps in `group`

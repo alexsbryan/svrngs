@@ -683,8 +683,11 @@ impl Folders {
                     let refused = [(header::RETRY_AFTER, wait.to_string())];
                     return Ok((refused, told(429, "limit", words)).into_response());
                 }
+                // Its owned rows judged as the record binds this computer's
+                // person, as every copy judges them again (svrngs-db `owned.rs`).
+                let bound = crate::ring_sync::bound(&self.host.rail, group);
                 let (db, ops) = (db.clone(), ops.clone());
-                let wrote = tokio::task::spawn_blocking(move || db.write(&ops)).await;
+                let wrote = tokio::task::spawn_blocking(move || db.write(&ops, &bound)).await;
                 let wrote = wrote.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())));
                 // A write that sealed a set wakes the round, so a member holds
                 // it within the round's own seconds, not its minute, on every

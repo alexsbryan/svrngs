@@ -3194,6 +3194,58 @@ async fn an_app_keeps_its_own_database_at_its_origin() {
     }
 }
 
+/// **A page writes only its own person's rows of an owned table**
+/// (svrn-docs APP_STATE §4, "Who may write which row"; invariant 13): Votes,
+/// a table whose key begins with `person_key`, takes Ana's vote under the
+/// `you_key` `svrngs/acts` gives her page, and refuses one under another
+/// key, `not-yours`, in words that say what to write instead. The route
+/// judges it by the group's record. Plant, watched failing: the route
+/// passing a record that binds no key, and Ana's own vote is refused.
+#[tokio::test]
+async fn a_page_writes_only_its_own_person_s_rows() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 71, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), &group).await;
+    carry(&at_ana, "Votes");
+    let schema = "CREATE TABLE votes (person_key TEXT NOT NULL, film TEXT NOT NULL, yes INTEGER, PRIMARY KEY (person_key, film)) STRICT;\n";
+    std::fs::write(at_ana.join("apps/Votes/schema.sql"), schema).unwrap();
+    let mut listed = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&listed, "Votes").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        listed = lends(ana, &group).await;
+    }
+    let origin = of_kind(&listed, "Votes")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let acts: Value = at(ana, &origin, "GET", "/svrngs/acts", None)
+        .await
+        .json()
+        .await
+        .unwrap();
+    let vote = |person: &Value| json!({ "write": [{ "insert": "votes", "row": { "person_key": person, "film": "f1", "yes": 1 } }] });
+    assert_eq!(
+        sql(ana, &origin, vote(&acts["you_key"])).await,
+        (200, json!({ "count": 1 }))
+    );
+    let (status, refused) = sql(ana, &origin, vote(&json!(actor_of(&signing(2))))).await;
+    assert_eq!(
+        (status, &refused["refused"]),
+        (403, &json!("not-yours")),
+        "{refused}"
+    );
+    assert_eq!(refused["words"], "This write changes a row of votes whose person_key isn't yours, and only that person's own devices change it. To fix it, give the row your own you_key, from svrngs/acts, as its person_key.");
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
 /// **A write to an app's database is its own computer's alone**, as an
 /// act is (capability-signed; DESIGN §6, "An entry's author is its
 /// signer"): Ben's write reaching Ana's door is refused, saying where to

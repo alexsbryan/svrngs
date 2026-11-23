@@ -23,7 +23,7 @@ fn key(n: u8) -> SigningKey {
 /// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
 fn bound() -> svrngs_db::Binds {
     let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
-    svrngs_db::Binds::new(keys, 4 << 20)
+    svrngs_db::Binds::new(keys.map(|k| (k.clone(), k, false)), 4 << 20)
 }
 
 /// No key bound, in the same room.
@@ -46,7 +46,7 @@ fn root(dir: &Path, n: u8) -> Arc<Db> {
 
 fn write(db: &Db, id: &str, title: &str) {
     let op = json!([{ "insert": "cards", "row": { "id": id, "title": title } }]);
-    db.write(&op).unwrap();
+    db.write(&op, &bound()).unwrap();
 }
 
 fn cards(db: &Db) -> Value {
@@ -315,10 +315,17 @@ fn a_check_across_columns_holds_writes_never_a_merge() {
         states(1).carry("g", "board", SPAN).unwrap(),
         states(2).open("g", "board", Some(SPAN)).unwrap(),
     );
-    let set =
-        |db: &Db, col: &str, n: i64| db.write(&json!([{ "update": "spans", "key": { "id": "s" }, "set": { col: n } }]));
-    ana.write(&json!([{ "insert": "spans", "row": { "id": "s", "lo": 1, "hi": 10 } }]))
-        .unwrap();
+    let set = |db: &Db, col: &str, n: i64| {
+        db.write(
+            &json!([{ "update": "spans", "key": { "id": "s" }, "set": { col: n } }]),
+            &bound(),
+        )
+    };
+    ana.write(
+        &json!([{ "insert": "spans", "row": { "id": "s", "lo": 1, "hi": 10 } }]),
+        &bound(),
+    )
+    .unwrap();
     assert_eq!(took(&ben, &call(&ana, &ben)), [Took::Taken]);
     set(&ana, "lo", 8).unwrap();
     set(&ben, "hi", 5).unwrap();

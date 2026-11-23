@@ -191,6 +191,17 @@ impl DbCopy {
         }
     }
 
+    /// The record as the run binds it: each device to the person whose
+    /// rows it writes (`sync.rs`, `person`), none cut.
+    fn binds(&self) -> svrngs_db::Binds {
+        let run = self.run.borrow();
+        let each = run
+            .devices
+            .iter()
+            .map(|(k, s)| (k.clone(), crate::sync::person(*s), false));
+        svrngs_db::Binds::new(each, 4 << 20)
+    }
+
     fn side(&self) -> &Connection {
         self.side.as_ref().expect("open until the copy drops")
     }
@@ -274,8 +285,9 @@ impl Replica for DbCopy {
     fn write(&mut self, ops: &[Op]) -> Option<ChangeSet> {
         let last = "SELECT coalesce(max(rowid), 0) FROM svrngs_sets";
         let before: i64 = self.side().query_row(last, [], |r| r.get(0)).unwrap();
+        let binds = self.binds();
         self.db
-            .write(&form(ops))
+            .write(&form(ops), &binds)
             .unwrap_or_else(|r| panic!("the write {ops:?} is refused: {r}"));
         let sealed = "SELECT bytes FROM svrngs_sets WHERE rowid > ?1";
         let sealed: Option<Vec<u8>> = self.side().query_row(sealed, [before], |r| r.get(0)).ok();
@@ -366,7 +378,7 @@ impl Replica for DbCopy {
             let from = run.devices.iter().find(|(_, s)| Some(**s) == call.from);
             from.and_then(|(d, _)| svrngs_db::Device::parse(d))
         };
-        let binds = svrngs_db::Binds::new(self.run.borrow().devices.keys().cloned(), 4 << 20);
+        let binds = self.binds();
         let got = self
             .db
             .ingest(&real, &binds, from.as_ref())
@@ -571,7 +583,7 @@ fn the_review_s_case_between_computers() {
     let key = |i: u8| svrngs_core::actor_of(&SigningKey::from_bytes(&[i; 32]));
     let (admitted, sam_s): (BTreeSet<String>, _) = ((1..=4).map(key).collect(), key(2));
     let removed = std::cell::Cell::new(false);
-    let bound = svrngs_db::Binds::new(admitted.iter().cloned(), 4 << 20);
+    let bound = svrngs_db::Binds::new(admitted.iter().map(|k| (k.clone(), k.clone(), false)), 4 << 20);
     let meet = |copies: &[DbCopy], who: &[usize]| {
         for _ in 0..10 {
             let before: Vec<Ask> = who.iter().map(|&c| copies[c].db.ask().unwrap()).collect();

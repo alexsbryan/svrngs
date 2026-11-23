@@ -58,6 +58,7 @@ use serde_json::{Value, json};
 use tokio::sync::watch;
 
 mod form;
+mod owned;
 mod parse;
 mod schema;
 mod sync;
@@ -112,6 +113,18 @@ pub enum Refused {
     /// fix.
     #[error("{0}")]
     Schema(schema::Unmade),
+    /// A write that changes an owned row of the table named, not its
+    /// person's (`owned.rs`).
+    #[error(
+        "This write changes a row of {0} whose person_key isn't yours, and only that person's own devices change it. To fix it, give the row your own you_key, from svrngs/acts, as its person_key."
+    )]
+    NotYours(String),
+    /// A write that deletes another person's owned row of the table named
+    /// before the office has cut every key of theirs (`owned.rs`).
+    #[error(
+        "This write deletes a row of {0} that is another person's, and only their own devices change it until your group's keeper removes them. To fix it, delete only your own rows: theirs can go once they're removed."
+    )]
+    NotYetGone(String),
     /// A write whose set no other computer would take: why, and what to do.
     #[error("This write isn't kept, since no other computer would take it: {0}.")]
     Unkept(Unfit),
@@ -131,6 +144,7 @@ impl Refused {
             Self::NotHere => (404, "not-here"),
             Self::Unkept(_) => (422, "unkept"),
             Self::Schema(_) => (422, "schema"),
+            Self::NotYours(_) | Self::NotYetGone(_) => (403, "not-yours"),
         }
     }
 }
@@ -599,8 +613,10 @@ impl Db {
 
     /// The page's write, `ops` in the write form, as one transaction:
     /// `{count}`, the rows changed in all, and the seq of the set it sealed,
-    /// none where it changed nothing; or refused, nothing of it kept.
-    pub fn write(&self, ops: &Value) -> Result<(Value, Option<Seq>), Refused> {
+    /// none where it changed nothing; or refused, nothing of it kept, as
+    /// where it changes an owned row the record `binds` doesn't give this
+    /// computer's person (`owned.rs`).
+    pub fn write(&self, ops: &Value, binds: &Binds) -> Result<(Value, Option<Seq>), Refused> {
         let listed = ops.as_array().filter(|o| !o.is_empty());
         let listed =
             listed.ok_or_else(|| Refused::Form(format!("write takes a list of one or more ops, not {ops}. {FORM}")))?;
@@ -619,7 +635,7 @@ impl Db {
         let count = ran.map_err(said)?;
         // Its set sealed in its own transaction (APP_STATE §4): refused, the
         // write is rolled back with it.
-        let sealed = self.seal(&tx)?;
+        let sealed = self.seal(&tx, binds)?;
         tx.commit().map_err(fault)?;
         if count > 0 {
             self.changed.send_modify(|n| *n += 1);

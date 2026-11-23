@@ -31,8 +31,11 @@ fn board(dir: &Path, n: u8) -> Arc<Db> {
 }
 
 fn write(db: &Db, id: &str, title: &str) {
-    db.write(&json!([{ "insert": "cards", "row": { "id": id, "title": title } }]))
-        .unwrap();
+    db.write(
+        &json!([{ "insert": "cards", "row": { "id": id, "title": title } }]),
+        &binds(&[], 0),
+    )
+    .unwrap();
 }
 
 fn call(from: &Db, to: &Db) -> Call {
@@ -49,7 +52,10 @@ fn alone(sets: Vec<Set>) -> Call {
 /// `keys` bound, sharing a room of `rows` shares a key, as `Binds::share`
 /// counts them.
 fn binds(keys: &[u8], share: usize) -> Binds {
-    Binds::new(keys.iter().map(|n| actor(*n)), share * ROW_MOST * keys.len())
+    Binds::new(
+        keys.iter().map(|n| (actor(*n), actor(*n), false)),
+        share * ROW_MOST * keys.len(),
+    )
 }
 
 fn took(to: &Db, call: &Call, binds: &Binds) -> Vec<Took> {

@@ -34,7 +34,7 @@ fn key(n: u8) -> SigningKey {
 /// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
 fn bound() -> svrngs_db::Binds {
     let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
-    svrngs_db::Binds::new(keys, 4 << 20)
+    svrngs_db::Binds::new(keys.map(|k| (k.clone(), k, false)), 4 << 20)
 }
 
 /// Computer `n`'s database of `app` in `g`, made from `schema`.
@@ -113,7 +113,7 @@ fn written(dir: &Path, app: (&str, &str), op: Value) -> Set {
     let h = States::new(&dir.join("computer-9"), key(9))
         .carry("g", app.0, app.1)
         .unwrap();
-    h.write(&op).unwrap();
+    h.write(&op, &bound()).unwrap();
     h.missing(&Ask::default(), BUDGET).unwrap().sets.remove(0)
 }
 
@@ -193,7 +193,7 @@ fn a_key_not_of_its_table_s_shape_is_refused_for_good_on_every_copy() {
         let to = db(&dir.path().join("null"), n, ("ints", INTS));
         if n == 2 {
             for id in [10, 11, 12] {
-                to.write(&json!([{ "insert": "t", "row": { "id": id, "v": "mine" } }]))
+                to.write(&json!([{ "insert": "t", "row": { "id": id, "v": "mine" } }]), &bound())
                     .unwrap();
             }
         }
@@ -358,7 +358,7 @@ fn every_key_cr_sqlite_packs_from_a_write_is_taken() {
     }
     ops.push(json!({ "insert": "f", "row": { "id": 1.5, "v": "x" } }));
     for op in ops {
-        h.write(&json!([op])).unwrap();
+        h.write(&json!([op]), &bound()).unwrap();
     }
     let sent = h.missing(&to.ask().unwrap(), BUDGET).unwrap();
     let got = to.ingest(&sent, &bound(), None).unwrap();
@@ -391,13 +391,13 @@ fn a_write_past_the_bound_is_refused_at_the_write_in_words() {
     }
     let marks = a.ask().unwrap().marks;
     let refused = a
-        .write(&card("c1", "fixed"))
+        .write(&card("c1", "fixed"), &bound())
         .expect_err("past the bound, refused at the write");
     let words = refused.to_string();
     assert!(words.contains("title"), "the words name the column: {words}");
     assert_eq!(a.ask().unwrap().marks, marks, "nothing sealed");
     assert_eq!(rows(&a, "SELECT title FROM cards"), json!([{ "title": "milk" }]));
-    a.write(&card("c2", "eggs")).unwrap();
+    a.write(&card("c2", "eggs"), &bound()).unwrap();
     let sent = a.missing(&b.ask().unwrap(), BUDGET).unwrap();
     assert_eq!(
         b.ingest(&sent, &bound(), None)
@@ -414,8 +414,10 @@ fn a_write_past_the_bound_is_refused_at_the_write_in_words() {
     let h = db(dir.path(), 9, ("blobs", BLOBS));
     let blob = |n: usize| base64::Engine::encode(&base64::engine::general_purpose::STANDARD, vec![7u8; n]);
     let key = |n| json!([{ "insert": "b", "row": { "id": { "base64": blob(n) }, "v": "x" } }]);
-    let refused = h.write(&key(128)).expect_err("a BLOB key cr-sqlite reads back signed");
+    let refused = h
+        .write(&key(128), &bound())
+        .expect_err("a BLOB key cr-sqlite reads back signed");
     assert!(refused.to_string().contains("BLOB key"), "{refused}");
     assert_eq!(refused.said(), (422, "unkept"));
-    h.write(&key(127)).unwrap();
+    h.write(&key(127), &bound()).unwrap();
 }

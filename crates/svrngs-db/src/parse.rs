@@ -26,7 +26,7 @@ const BOUND: i64 = 1 << 53;
 
 /// The `cid` of a row's own change, its insert or delete, as cr-sqlite
 /// names it (`vendor/cr-sqlite/core/rs/core/src/c.rs:10-11`).
-const SENTINEL: &str = "-1";
+pub(crate) const SENTINEL: &str = "-1";
 
 /// cr-sqlite's numbers for a packed column's type
 /// (`vendor/cr-sqlite/core/rs/sqlite-rs-embedded/sqlite_nostd/src/nostd.rs:221-227`);

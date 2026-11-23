@@ -21,7 +21,7 @@ fn key(n: u8) -> SigningKey {
 /// beside its sets (svrngs-node `peer_wire.rs`, `ASK_ROOM_BYTES`).
 fn bound() -> svrngs_db::Binds {
     let keys = (0..=255).map(|n| svrngs_core::actor_of(&SigningKey::from_bytes(&[n; 32])));
-    svrngs_db::Binds::new(keys, 4 << 20)
+    svrngs_db::Binds::new(keys.map(|k| (k.clone(), k, false)), 4 << 20)
 }
 
 fn board(dir: &Path, n: u8) -> Arc<Db> {
@@ -71,8 +71,11 @@ fn a_waiting_set_is_kept_and_counted_together_or_not_at_all() {
     let dir = tempfile::tempdir().unwrap();
     let a = States::new(&dir.path().join("computer-1"), key(1));
     let (a, b) = (a.open("g", "board", Some(WIDER)).unwrap(), board(dir.path(), 2));
-    a.write(&json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]))
-        .unwrap();
+    a.write(
+        &json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]),
+        &bound(),
+    )
+    .unwrap();
     let sent = a.missing(&b.ask().unwrap(), BUDGET).unwrap();
     let side = side(dir.path(), 2);
     let plant = "CREATE TRIGGER aside BEFORE INSERT ON svrngs_above BEGIN SELECT RAISE(ABORT, 'planted'); END";
@@ -156,11 +159,11 @@ fn a_version_pruned_is_never_sealed_again() {
     let dir = tempfile::tempdir().unwrap();
     let a = board(dir.path(), 1);
     let card = |id: &str, title: &str| json!([{ "insert": "cards", "row": { "id": id, "title": title } }]);
-    a.write(&card("c1", "milk")).unwrap();
-    a.write(&card("c1", "jam")).unwrap();
+    a.write(&card("c1", "milk"), &bound()).unwrap();
+    a.write(&card("c1", "jam"), &bound()).unwrap();
     let side = side(dir.path(), 1);
     side.execute("UPDATE crsql_db_versions SET db_version = 0", []).unwrap();
-    let refused = a.write(&card("c2", "eggs")).err().map(|r| r.to_string());
+    let refused = a.write(&card("c2", "eggs"), &bound()).err().map(|r| r.to_string());
     assert_eq!(
         refused.as_deref(),
         Some("This computer couldn't: this database gave a write the version 1 again."),

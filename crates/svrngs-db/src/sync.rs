@@ -29,9 +29,9 @@
 //!   its sets as JSON with hex keys, which cost 3.8 times the data they keep.
 //!   A set's changes, and what travels, are postcard's bytes.
 //!
-//! Owned rows are checked at the write and at apply in slice D, both at once
-//! (MAGNETS_BUILD §3): checked at apply alone, a set the writer's copy took
-//! would be refused on every other copy.
+//! Owned rows are checked at the write and at apply by one function
+//! (`owned.rs`): checked at apply alone, a set the writer's copy took would
+//! be refused on every other copy.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::Ordering::Relaxed;
@@ -42,7 +42,7 @@ use serde::{Deserialize, Serialize};
 use svrngs_core::set::{At, Nonce, Site, site};
 
 use crate::parse::{Change, Valid, fit, parse};
-use crate::{Db, Refused, fault};
+use crate::{Db, Refused, fault, owned};
 
 /// A set's seq at its database, and a mark, a have or a twin's place: from 1
 /// to `i64::MAX`, what SQLite holds. Parsed as the wire is read, so a call
@@ -221,27 +221,30 @@ pub enum Took {
 /// the largest of each.
 pub const ROW_MOST: usize = 155;
 
-/// The keys a group's record binds, standing or cut, as a set's device is
-/// judged by them (APP_STATE §4, "A removed device"); and the room a call's
+/// The keys a group's record binds, standing or cut, each with its person's
+/// first key and whether the office has cut it, by a cut whose reach the
+/// record holds whole, as a set's device and the owned rows it changes are
+/// judged by them (APP_STATE §4, "A removed device", "Who may write which
+/// row"; Eudoxia's `db::Record`, `owned.rs`); and the room a call's
 /// ask may fill beside its sets. Every key the record binds has an equal
 /// share of the room ([`Self::share`]), so no one device can fill what every
 /// copy's ask may carry and stall the app's sync for everyone.
 pub struct Binds {
-    keys: BTreeSet<String>,
+    pub(crate) keys: BTreeMap<String, (String, bool)>,
     room: usize,
 }
 
 impl Binds {
-    pub fn new(keys: impl IntoIterator<Item = String>, room: usize) -> Self {
-        Self {
-            keys: keys.into_iter().collect(),
-            room,
-        }
+    /// Each key, its person's first key, and whether the office has cut it.
+    pub fn new(keys: impl IntoIterator<Item = (String, String, bool)>, room: usize) -> Self {
+        let keys = keys.into_iter().map(|(k, person, cut)| (k, (person, cut))).collect();
+        Self { keys, room }
     }
 
-    /// Whether the record binds `device`.
+    /// Whether a set `device` signed counts, by Eudoxia's rule: once the
+    /// record binds it (`db::set`).
     fn binds(&self, device: &Device) -> bool {
-        self.keys.contains(device.as_str())
+        eudoxia_community::db::set(self, device.as_str()) == eudoxia_community::db::Verdict::Taken
     }
 
     /// Each one's share of the room, in rows of at most [`ROW_MOST`] bytes:
@@ -276,7 +279,7 @@ impl Room<'_> {
 
 /// How a set is kept here, as `svrngs_sets.kept` says.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Kept {
+pub(crate) enum Kept {
     /// Applied, and sent to a member that lacks it.
     Taken,
     /// Refused for good: its place and signature alone, no bytes, so a
@@ -422,9 +425,10 @@ impl Db {
     /// signed by this computer's key, kept and counted; none when it changed
     /// nothing. Refused, loudly, at a version this site's sets already hold;
     /// and, in words for the page, where the parse every other copy runs
-    /// would refuse the set, so the writer's copy never takes what no other
-    /// copy would.
-    pub(crate) fn seal(&self, conn: &Connection) -> Result<Option<Seq>, Refused> {
+    /// would refuse the set, or Eudoxia's rule, by the record `binds`, would
+    /// not take this computer's change to an owned row (`owned.rs`), so the
+    /// writer's copy never takes what no other copy would.
+    pub(crate) fn seal(&self, conn: &Connection, binds: &Binds) -> Result<Option<Seq>, Refused> {
         let seq: Seq = conn
             .query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0))
             .map_err(fault)?;
@@ -462,6 +466,7 @@ impl Db {
             return Ok(None);
         }
         let made = fit(made, &self.tables).map_err(Refused::Unkept)?;
+        owned::mine(&made, &self.tables, binds, &self.device)?;
         let changes = postcard::to_allocvec(&made.0).expect("changes are written in memory");
         let hash = svrngs_core::set::changes(&changes);
         let sig = self
@@ -709,6 +714,12 @@ impl Db {
         // cr-sqlite sees it.
         let waits = (set.head.schema != self.schema).then_some(Kept::Unschemed);
         let judged = waits.map_or_else(|| parse(&set.changes, &self.tables).map_err(|_| Kept::Refused), Err);
+        // The owned rows it changes, by Eudoxia's rule (`owned.rs`): one that
+        // waits for the record's cut of a row's person is dropped as one not
+        // bound yet is, and sent again by marks once the Remove lands here.
+        let Some(judged) = owned::kept(judged, &self.tables, room.binds, device) else {
+            return Ok(Took::NotYet);
+        };
         if judged.is_ok() && !sigs.is_empty() {
             tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), "state: a second set at one site and seq, both taken: a copied or restored database runs beside its original");
         }
