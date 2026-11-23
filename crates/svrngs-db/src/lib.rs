@@ -63,6 +63,7 @@ mod parse;
 mod schema;
 mod sync;
 mod tidy;
+mod wire;
 pub use form::FORM;
 use form::Table;
 pub use parse::Unfit;
