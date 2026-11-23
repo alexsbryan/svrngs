@@ -48,8 +48,8 @@ with tempfile.TemporaryDirectory(dir=scratch) as tmp:
         home.mkdir(exist_ok=True)
         return dict(os.environ, HOME=str(home), SVRNGS_DIR=str(home / 'node'),
                     XDG_DATA_HOME=str(home / 'data'), TOKIO_WORKER_THREADS='4',
-                    RUST_LOG='error,door=debug,job=debug', SVRNGS_TEST_CONTROL=plant,
-                    SVRNGS_TEST_RACE=str(race))
+                    RUST_LOG='error,door=debug,job=debug,cli=debug,plan=debug', SVRNGS_TEST_CONTROL=plant,
+                    SVRNGS_TEST_RACE=str(race), SVRNGS_TEST_HANDOFF=str(work / 'fds'))
 
     def call(who, *args, check=True, answer=None):
         out = sp.run(args, cwd=work, env=env(who), text=True, input=answer,
@@ -149,16 +149,21 @@ if role == 'taker':
             link, _ = channel.accept()
             with link:
                 _, fds, _, _ = socket.recv_fds(link, 1, 1)
-                serve(socket.socket(fileno=fds[0]))
+                accepted = socket.socket(fileno=fds[0])
+                link.sendall(b'1')
+                serve(accepted)
 else:
     s = socket.create_server(('0.0.0.0' if role == 'holder' else '127.0.0.1', int(port)), reuse_port=True)
     mark.touch()
     while True:
         conn, _ = s.accept()
         if role == 'app' and handoff.exists():
-            with conn, socket.socket(socket.AF_UNIX) as channel:
+            with socket.socket(socket.AF_UNIX) as channel:
                 channel.connect(route)
-                socket.send_fds(channel, [b'x'], [conn.fileno()])
+                with conn:
+                    socket.send_fds(channel, [b'x'], [conn.fileno()])
+                assert channel.recv(1) == b'1'
+            handoff.with_suffix('.ready').touch()
         else:
             serve(conn)
 ''')
@@ -174,12 +179,15 @@ else:
     assert show().returncode == show(door_target).returncode == 113
     try:
         active.parent.mkdir(parents=True)
-        door_plist.write_bytes(plistlib.dumps(dict(Label=door_label,
+        registration = plistlib.dumps(dict(Label=door_label,
             ProgramArguments=[str(svr)], RunAtLoad=True,
             EnvironmentVariables={k: v for k, v in env('sam').items() if k in (
                 'HOME', 'SVRNGS_DIR', 'XDG_DATA_HOME', 'TOKIO_WORKER_THREADS', 'RUST_LOG',
-                'SVRNGS_TEST_CONTROL', 'SVRNGS_TEST_RACE')},
-            StandardOutPath=str(work / 'sam.log'), StandardErrorPath=str(work / 'sam.log'))))
+                'SVRNGS_TEST_CONTROL', 'SVRNGS_TEST_RACE', 'SVRNGS_TEST_HANDOFF')},
+            StandardOutPath=str(work / 'sam.log'), StandardErrorPath=str(work / 'sam.log')))
+        # Match web/install.sh's SVRNGS_DIR spelling, which CLI kept_over reads.
+        door_plist.write_bytes(re.sub(rb'(<key>SVRNGS_DIR</key>)\s+(<string>)',
+                                     rb'\1\2', registration))
         call('sam', '/bin/launchctl', 'bootstrap', domain, door_plist)
         start('alex', svr)
         for who in ('sam', 'alex'):
@@ -193,7 +201,9 @@ else:
         first = pid()
         assert first and active.is_file()
         share = (svr, 'share', port, '--program', 'mac-fixture', '--name', name, '--group', 'Scratch')
-        print(confirm(*share))
+        shared = confirm(*share)
+        print(shared)
+        assert 'closes until you approve' not in shared, 'Share gave conflicting restart guidance'
         before = json.loads(lend.read_text())
         original = active.read_bytes()
         got = before.get('keep')
@@ -266,11 +276,12 @@ else:
                 print('RED: forwarding occurred despite the violated invariant')
                 raise SystemExit(5)
             assert result[0] == 502 and got == (0, 0) and same, 'refusal did not hold'
-            assert ('changed' if control == 'changed' else 'didn’t choose') in result[1]
+            assert ('changed' if control == 'changed' else 'didn’t choose') in result[1], result
             if stray:
                 stray.terminate()
                 stray.wait(10)
                 route.unlink(missing_ok=True)
+                route.with_suffix('.ready').unlink(missing_ok=True)
             if control != 'withdrawn':
                 active.write_bytes(original)
                 lend.write_bytes(saved if control != 'held' else json.dumps(after).encode())

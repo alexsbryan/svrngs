@@ -1697,12 +1697,12 @@ impl std::fmt::Display for Said {
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
                 }
-                let (each, beside, or) = if raw.is_empty() || raw.starts_with("TCP") {
-                    ("before each connection it carries there", "While another program is on the port, it is closed. ", "")
-                } else {
-                    ("before and after each batch of datagrams it sends there", "", ", or another one is on the port")
+                let (each, beside, or) = match lend.raw() {
+                    Raw::Tcp => ("before each connection it carries there", " While another program is on the port, it is closed.", ""),
+                    Raw::Udp => ("before and after each batch of datagrams it sends there", "", ", or another one is on the port"),
                 };
-                writeln!(f, "Lent {name}: {}. svrngs checks port {port} {each}. {beside}If the program starts again{or}, {name} closes until you approve what runs there: `svrngs approve {name}`.", what_answers(answers))?;
+                let restart = match &lend.terms.keep { Some(_) => String::new(), None => format!(" If the program starts again{or}, {name} closes until you approve what runs there: `svrngs approve {name}`.") };
+                writeln!(f, "Lent {name}: {}. svrngs checks port {port} {each}.{beside}{restart}", what_answers(answers))?;
                 let ((theirs, by), kind) = (terms.clone().unwrap_or_default(), &lend.kind);
                 // How its people sign in, in the words of who wrote the group's file.
                 let shipped = share::accounts_of(kind, "");

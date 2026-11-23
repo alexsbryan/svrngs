@@ -38,6 +38,14 @@ change(bound, '    let fresh = || {\n        let another', '''    if let Some(si
 # The kernel must be sampled after, not during, the fixture's local FD handoff.
 change('svrngs-node/src/uid.rs', '    let scan = scanned(me, raw, port, conn.map(|c| (c.peer, c.local)))?;', '''    if conn.is_some() && std::env::var_os("SVRNGS_TEST_RACE").is_some() {
         std::thread::sleep(std::time::Duration::from_millis(60));
+        if let Some(route) = std::env::var_os("SVRNGS_TEST_HANDOFF").map(std::path::PathBuf::from).filter(|p| p.exists()) {
+            let ready = route.with_extension("ready");
+            for _ in 0..500 {
+                if ready.exists() { break; }
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+            assert!(ready.exists(), "fixture did not finish the FD handoff");
+        }
     }
     let scan = scanned(me, raw, port, conn.map(|c| (c.peer, c.local)))?;''')
 
