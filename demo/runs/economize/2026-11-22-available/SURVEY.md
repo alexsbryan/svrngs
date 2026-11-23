@@ -72,9 +72,9 @@ Not cut, each tried and laid out no shorter by the formatter:
 
 ## The cuts
 
-Each its own commit, named by its file (`git log --oneline --
-demo/runs/economize/2026-11-22-available`), its caps lowered to one past
-where it lands.
+Each its own commit, named by its file (`git log --oneline
+4f4cc72c..c3097364`: 0afc0575, 6d862b2c, fbef6af0), its caps lowered to
+one past where it lands.
 
 | File | Cut | All but JavaScript | JavaScript |
 |---|---:|---:|---:|
