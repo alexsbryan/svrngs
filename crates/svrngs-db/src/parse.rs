@@ -14,9 +14,12 @@
 use std::collections::BTreeMap;
 
 use rusqlite::types::Value as Sql;
-use serde::{Deserialize, Serialize};
 
 use crate::form::Table;
+
+#[path = "change.rs"]
+mod change;
+pub(crate) use change::Change;
 
 /// A `col_version` or a causal length past this is refused for good: one at
 /// `i64::MAX` freezes its cell (svrn-docs
@@ -35,31 +38,6 @@ const INTEGER: u8 = 1;
 const FLOAT: u8 = 2;
 const TEXT: u8 = 3;
 const BLOB: u8 = 4;
-
-/// One change row of a set, as `crsql_changes` carries it, less the site
-/// and version its set names once.
-#[derive(Serialize, Deserialize)]
-pub(crate) struct Change {
-    pub(crate) table: String,
-    pub(crate) pk: Vec<u8>,
-    pub(crate) cid: String,
-    #[serde(with = "Value")]
-    pub(crate) val: Sql,
-    pub(crate) col_version: i64,
-    pub(crate) cl: i64,
-    pub(crate) seq: i64,
-}
-
-/// rusqlite's value, as postcard writes it.
-#[derive(Serialize, Deserialize)]
-#[serde(remote = "Sql")]
-enum Value {
-    Null,
-    Integer(i64),
-    Real(f64),
-    Text(String),
-    Blob(Vec<u8>),
-}
 
 /// A set's changes, each one its table can hold: made only by [`fit`].
 pub(crate) struct Valid(pub(crate) Vec<Change>);
