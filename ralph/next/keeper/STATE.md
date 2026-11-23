@@ -899,7 +899,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - **A late or failed suggestion never replaces Sam's edits, or fills
     another row's form** (QA). Plant: a delayed answer arriving after
     Sam types. His text stays.
-  - **Allowance:** the counted room left (8) and +12 JS.
+  - **Allowance:** measured at 0281948f, 25,717 counted and 8,731 JS against CHARTER's 25,727 and 8,741. So at most **+8 counted** (2 kept back) and **+10 JS**, the JavaScript ceiling's whole remainder (keeper-lead's correction: +12 JS would cross it).
     - Measured, before and after.
     - If the lean version can't fit, park with per-file counts. A raise is
       the operator's.
