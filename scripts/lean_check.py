@@ -945,11 +945,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Then avail-economize's pass before the available-by-default release, each
 # cut lowering its caps to one past where it lands
 # (demo/runs/economize/2026-11-22-available/SURVEY.md): door/bound.rs 11,
-# 24,644.
+# 24,644; uid.rs 8, 24,636.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24645,
+    ".": 24637,
 
     "js": 8689,
 

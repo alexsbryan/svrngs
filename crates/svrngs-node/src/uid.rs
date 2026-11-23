@@ -886,9 +886,7 @@ mod record {
     pub(super) fn cwd(vnode: &[u8]) -> Option<std::path::PathBuf> {
         let path = vnode.get(CWD..).filter(|_| vnode.len() == VNODE_LEN)?;
         let path = &path[..path.iter().position(|b| *b == 0)?];
-        Some(std::path::PathBuf::from(
-            String::from_utf8_lossy(path).into_owned(),
-        ))
+        Some(String::from_utf8_lossy(path).into_owned().into())
     }
 
     /// The 32-bit word at `at` in `bytes`, in this computer's byte order.
@@ -1035,14 +1033,8 @@ mod record {
         let at = |b: &[u8]| -> Option<SocketAddr> {
             let port = u16::from_be_bytes([b[2], b[3]]);
             match (b[0], b[1]) {
-                (16, 2) => Some(SocketAddr::from((
-                    <[u8; 4]>::try_from(&b[4..8]).ok()?,
-                    port,
-                ))),
-                (28, 30) => Some(SocketAddr::from((
-                    <[u8; 16]>::try_from(&b[8..24]).ok()?,
-                    port,
-                ))),
+                (16, 2) => Some((<[u8; 4]>::try_from(&b[4..8]).ok()?, port).into()),
+                (28, 30) => Some((<[u8; 16]>::try_from(&b[8..24]).ok()?, port).into()),
                 _ => None,
             }
         };
