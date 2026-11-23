@@ -118,9 +118,12 @@ function Found({ r: shown, named, groups, home }) {
   `;
 }
 
-/** @param {{ shares: Drawn }} props */
+/** @typedef {{ name: string, text: string, port?: number, action?: 'start' | 'stop', button?: string }} RunRow */
+/** @typedef {{ run: string, starting: string, fields: [string, string][], rows: RunRow[] }} RunView */
+
+/** @param {{ shares: Drawn | null }} props */
 function RunForm({ shares }) {
-  const [view, set] = useState(/** @type {any} */ (null));
+  const [view, set] = useState(/** @type {RunView | null} */ (null));
   const [said, say] = useState('');
   const [busy, wait] = useState(false);
   const refresh = () => get('/run').then(set);
@@ -132,7 +135,7 @@ function RunForm({ shares }) {
   /** @param {string} path @param {unknown} body */
   const act = (path, body) => {
     wait(true);
-    say(path === '/run' ? view.starting : '');
+    say(path === '/run' ? (view?.starting ?? '') : '');
     return post(path, body)
       .then((answer) => say(answer ?? ''), refused)
       .then(() => refresh().catch(refused))
@@ -144,10 +147,10 @@ function RunForm({ shares }) {
     const { name, port, folder, command } = Object.fromEntries(new FormData(event.currentTarget));
     void act('/run', { name, port: Number(port), folder, command });
   };
-  if (!shares && !view?.rows.length) return null;
+  if (shares === null && (view?.rows.length ?? 0) === 0) return null;
   return html`<section id="running"><h2>Already running here</h2><div id="run-form">
     ${
-      view &&
+      view !== null &&
       html`<details><summary>${view.run}</summary>
       <form onSubmit=${submit}><fieldset disabled=${busy}>
         ${view.fields.map(([key, label]) => html`<label>${label} <input name=${key} required /></label>`)}
@@ -159,7 +162,7 @@ function RunForm({ shares }) {
     ${view?.rows.map(
       ({ name, port, text, action, button }) => html`<p key=${name}>
       ${name} ${port} · ${text}
-      ${action && html`<button disabled=${busy} onClick=${() => act('/run/action', [name, action])}>${button}</button>`}
+      ${action !== undefined && html`<button disabled=${busy} onClick=${() => act('/run/action', [name, action])}>${button}</button>`}
     </p>`,
     )}
   </div>${shares}</section>`;
@@ -188,8 +191,8 @@ function Running({ s, home }) {
     );
   const busy = state.at.running === 'looking' ? 'busy' : 'idle';
   return html`<${RunForm} shares=${
-    groups.length > 0 &&
-    html`
+    groups.length > 0
+      ? html`
       <p>${SAID[state.at.running](state)}</p>
       <p>
         <${Act}
@@ -200,7 +203,8 @@ function Running({ s, home }) {
         />
       </p>
       <ul>${found}</ul>
-  `
+   `
+      : null
   } />`;
 }
 

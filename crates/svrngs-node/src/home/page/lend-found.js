@@ -85,7 +85,10 @@ export const LEND = (home) => ({
               why: [lend.said, lend.review?.promise, lend.review?.reason, lend.review?.impact]
                 .filter(Boolean)
                 .join(' '),
-              review: lend.token ? { token: lend.token, button: lend.review.button } : undefined,
+              review:
+                typeof lend.token === 'string'
+                  ? { token: lend.token, button: lend.review.button }
+                  : undefined,
             },
       ),
     again: groupsAgain(home),
