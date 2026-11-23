@@ -1059,10 +1059,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # size-share check reads one row however much the copy keeps (+24, after cuts
 # in held, Room and the trigger loop prune shares). The cap to 27,203. The
 # pool: +58 drawn, +42 and +10 left.
+# (2026-11-23) +36 more from the pool: the security review's phone and parse
+# fixes (a phone signs only what its ops make, a column change at an even
+# causal length refused, a carry through the person's refill, +26) and a
+# value held to its column's type (+53, after its pass cut 7) come to +79
+# over 27,159. The cap to 27,239. The pool: +94 drawn, +6 and +10 left.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 27203,
+    ".": 27239,
 
     "js": 8751,
 
