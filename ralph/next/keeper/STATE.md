@@ -669,7 +669,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
       leave the tty unanswered. Run returns, and linger is unchanged.
   - Size: a small counted patch, in the reserve.
 
-- [ ] avail-run-mac — depends [avail-unmagic] — ONE UNIT (keeper): spec §5 row 5.
+- [x] avail-run-mac 0197c4fd4 — depends [avail-unmagic] — ONE UNIT (keeper): spec §5 row 5.
   - Fork commonwealth-ai `svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0`,
     lines 296–395, as `launchd.rs`: unchanged first, with ported-from lines.
     Then grow it to the job verbs, as `systemd.rs` is.
