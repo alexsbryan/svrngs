@@ -3748,3 +3748,198 @@ async fn every_computer_whose_person_said_yes_keeps_the_app_s_database() {
         node.net().close().await;
     }
 }
+
+/// A phone of `bo`'s admitted to `group` by Ana's computer, its key
+/// `signing(seed)`, as `a_computer_writes_nothing_as_a_phone_s_person`
+/// admits one.
+fn phone(ana: &Node, group: &str, seed: u8, bo: &str) -> String {
+    use svrngs_node::{Device, Person, Redemption};
+    let append = |act| {
+        let fixture = svrngs_core::tests_support::Fixture { act };
+        ana.rail().commit(group, &fixture).unwrap().unwrap().lines()[0].clone()
+    };
+    let link = signing(seed + 100);
+    let invite = append(RailAct::Invite {
+        key: actor_of(&link),
+        until: i64::MAX,
+        device_of: None,
+    });
+    let bo = Person::parse(bo).unwrap();
+    let redeemed = Redemption::sign(&signing(seed), group, &invite.id, &bo, Device::Browser);
+    append(RailAct::Admit {
+        invite: Some(redeemed),
+        person: bo,
+        key: actor_of(&signing(seed)),
+    });
+    actor_of(&signing(seed))
+}
+
+/// Where the holder `holder` of a pass `phone` signs for the carried lend at
+/// `origin` on `node` asks the app's database, and the pass.
+async fn as_phone(node: &Node, origin: &str, phone: u8, holder: u8) -> (String, String) {
+    use svrngs_core::pass::{Label, Pass};
+    let label = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let until = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 600;
+    let app = (Label::parse(label).unwrap(), vec![]);
+    let pass = Pass::sign(&signing(phone), &actor_of(&signing(holder)), app, until).encode();
+    let bridge = bridge_as(&signing(holder), node, svrngs_core::alpn::Alpn::Lend).await;
+    (
+        format!("http://{}/lend/{label}/svrngs/sql", bridge.local_addr()),
+        pass,
+    )
+}
+
+/// **A phone reads and subscribes through any computer that keeps the
+/// app, and a removed device's phone through none** (svrn-docs
+/// `rings/current/APP_STATE.md` §4, "Phones" and "A removed device";
+/// MAGNETS_BUILD §3, slice C): Board carried on Ana's computer reaches
+/// Ben's, which keeps a copy of its own. Bo's phone, under its pass for
+/// Ben's lend of Board, reads Ana's card through Ben's computer, and its
+/// subscription there is pushed her next card once Ben's copy takes it.
+/// Ana removes Bo's phone; once each computer's record holds that, its open
+/// subscription ends as the database next changes, and neither computer
+/// answers its read or a new subscription, each saying why. Plant, watched
+/// failing: the stream reading none of its asker's standing (the removed
+/// phone is pushed Ana's card written after the removal).
+#[tokio::test]
+async fn a_phone_reads_through_any_computer_that_keeps_the_app_and_a_removed_one_through_none() {
+    use http_body_util::BodyExt;
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 75, ana, &[(ben, 2)]);
+    let bo = phone(ana, &group, 7, "bo");
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let (origin_a, folder) = board(ana, &group).await;
+    let root = tempfile::tempdir().unwrap();
+    let at_ben = synced_in(ben, root.path(), &group).await;
+    let schema = at_ben.join("apps/Board/schema.sql");
+    assert!(
+        until(&[ana, ben], || schema.exists()).await,
+        "Board reaches Ben’s folder"
+    );
+    drop(folder);
+    let origin_b = board_on(ben, &group).await;
+    let milk = json!({ "write": [{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, milk).await,
+        (200, json!({ "count": 1 }))
+    );
+    let read = json!({ "sql": "SELECT id, title FROM cards ORDER BY id" });
+    let milk_row = json!([{ "id": "c1", "title": "milk" }]);
+    for _ in 0..10 {
+        for node in [ana, ben] {
+            round(node).await;
+        }
+        if sql(ben, &origin_b, read.clone()).await.1["rows"] == milk_row {
+            break;
+        }
+    }
+
+    let (route, pass) = as_phone(ben, &origin_b, 7, 9).await;
+    let asked = http()
+        .post(&route)
+        .header("x-svrngs-pass", &pass)
+        .json(&read);
+    let answer = asked.send().await.unwrap();
+    assert_eq!(
+        answer.status(),
+        200,
+        "Bo's phone reads through Ben's computer"
+    );
+    let answer: Value = answer.json().await.unwrap();
+    assert_eq!(
+        answer["rows"], milk_row,
+        "Ana's card, through Ben's copy: {answer}"
+    );
+    let q = "SELECT%20id%2C%20title%20FROM%20cards%20ORDER%20BY%20id";
+    let ask = http()
+        .get(format!("{route}?q={q}"))
+        .header("x-svrngs-pass", &pass);
+    let stream = ask
+        .header("accept", "text/event-stream")
+        .sent()
+        .await
+        .unwrap();
+    assert_eq!(
+        stream.status(),
+        200,
+        "Bo's phone subscribes through Ben's computer"
+    );
+    let mut events = stream.into_body();
+    assert_eq!(next_event(&mut events).await["rows"], milk_row);
+    let eggs = json!({ "write": [{ "insert": "cards", "row": { "id": "c2", "title": "eggs" } }] });
+    assert_eq!(
+        sql(ana, &origin_a, eggs).await,
+        (200, json!({ "count": 1 }))
+    );
+    for node in [ana, ben] {
+        round(node).await;
+    }
+    let both = json!([{ "id": "c1", "title": "milk" }, { "id": "c2", "title": "eggs" }]);
+    assert_eq!(
+        next_event(&mut events).await["rows"],
+        both,
+        "pushed through Ben's computer"
+    );
+
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: RailAct::Remove {
+            key: bo.clone(),
+            through: vec![],
+        },
+    };
+    ana.rail().commit(&group, &fixture).unwrap().unwrap();
+    for node in [ana, ben] {
+        round(node).await;
+    }
+    let jam = json!({ "write": [{ "insert": "cards", "row": { "id": "c3", "title": "jam" } }] });
+    assert_eq!(sql(ana, &origin_a, jam).await, (200, json!({ "count": 1 })));
+    for node in [ana, ben] {
+        round(node).await;
+    }
+    let ended = tokio::time::timeout(Duration::from_secs(10), events.frame()).await;
+    let ended = ended.expect("the stream ends within 10 s");
+    assert!(
+        ended.is_none(),
+        "the removed phone's open subscription ends: {ended:?}"
+    );
+    for (node, origin) in [(ben, &origin_b), (ana, &origin_a)] {
+        let (route, pass) = as_phone(node, origin, 7, 9).await;
+        let asked = http()
+            .post(&route)
+            .header("x-svrngs-pass", &pass)
+            .json(&read);
+        let refused = asked.send().await.unwrap();
+        let status = refused.status();
+        let words = refused.text().await.unwrap();
+        assert_eq!(status, 403, "a removed phone's read refused: {words}");
+        let said = json!({ "error": "You are no longer in this group, so nothing of it is open to you.", "kind": "removed" });
+        assert_eq!(serde_json::from_str::<Value>(&words).unwrap(), said);
+        let ask = http()
+            .get(format!("{route}?q={q}"))
+            .header("x-svrngs-pass", &pass);
+        let stream = ask
+            .header("accept", "text/event-stream")
+            .sent()
+            .await
+            .unwrap();
+        assert_eq!(
+            stream.status(),
+            403,
+            "a removed phone's subscription refused"
+        );
+    }
+    for node in &nodes {
+        node.net().close().await;
+    }
+}

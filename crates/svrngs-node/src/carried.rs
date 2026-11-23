@@ -679,7 +679,9 @@ impl Folders {
                 .into_iter()
                 .find_map(|(k, q)| (k == "q").then(|| q.into_owned()));
             let q = q.ok_or((Malformed, 422, "a subscription asks ?q=<a SELECT>"))?;
-            return Ok(subscribed(db, q, others).await);
+            let (host, group, key) = (self.host.clone(), group.to_owned(), key.to_owned());
+            let stands = move || matches!(host.rail.standing(&group), Ok(Standing::Members(p)) if p.contains_key(&key));
+            return Ok(subscribed(db, q, others, stands).await);
         }
         // Past the most it reads, refused in the route's own shape and in words
         // of the database's, so a page says a pasted list too long for one write.
@@ -804,15 +806,21 @@ fn refused(r: &Refused) -> Response {
 /// `q`'s rows on `db` as an event stream, each event one `data:` line of
 /// the read's answer: now, then each time they differ after the database
 /// changes. Refused once, the query is answered as any refusal, in place of
-/// the stream; refused later, the stream ends, and the page's next ask is
-/// told why.
-async fn subscribed(db: Arc<Db>, q: String, others: bool) -> Response {
+/// the stream; refused later, or once its asker `stands` no more, the
+/// stream ends, and the page's next ask is told why: a removed device
+/// reaches the group no more (svrn-docs APP_STATE §4, "A removed device").
+async fn subscribed(
+    db: Arc<Db>,
+    q: String,
+    others: bool,
+    stands: impl Fn() -> bool + Clone + Send + 'static,
+) -> Response {
     let first = match read(&db, q.clone(), Vec::new(), others).await {
         Ok(first) => first,
         Err(r) => return refused(&r),
     };
     let rows = n0_future::stream::unfold((db.watch(), Some(first), None), move |at| {
-        let (db, q) = (db.clone(), q.clone());
+        let (db, q, stands) = (db.clone(), q.clone(), stands.clone());
         async move {
             let (mut changed, mut now, last) = at;
             loop {
@@ -822,6 +830,9 @@ async fn subscribed(db: Arc<Db>, q: String, others: bool) -> Response {
                     return Some((event, (changed, None, Some(rows))));
                 }
                 changed.changed().await.ok()?;
+                let stands = stands();
+                tracing::debug!(target: "folder", group = db.group, app = db.app, stands, "carried: a subscription's asker still stands in the group as its database changes, else the stream ends");
+                stands.then_some(())?;
                 let again = read(&db, q.clone(), Vec::new(), others).await;
                 tracing::debug!(target: "folder", group = db.group, app = db.app, refused = ?again.as_ref().err(), "carried: a subscription read again as its database changed, its rows pushed if they differ, or it ends");
                 now = Some(again.ok()?);
