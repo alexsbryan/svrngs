@@ -810,6 +810,27 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     server, with `install.sh` pointed at it.
   - Counted room: 10 lines to the CHARTER ceiling (25,717 of 25,727).
     Over that, park with the measured delta.
+  - **svrngs is the only voice: no `svrngs-keeper` in user words** (the
+    operator: Keep and Give are implementation details; QA oc-cruu42's
+    call, 2026-11-23).
+    - `install.sh:170` tells Sam to "use svrngs-keeper remove <name>".
+      Spec §2.4's `svrngs stop|start|unrun` was never built (`cli.rs`
+      has Run, Share and Unshare). Don't add them here: there is no room.
+    - Before the binaries are removed, uninstall says: "Uninstalling
+      svrngs does not stop your apps or remove their setup or files.
+      Native apps may still start. To stop an app, open your home page
+      and choose Stop before uninstalling. If you've already uninstalled,
+      reinstall svrngs to manage it again."
+    - Anything shown after deletion uses only the reinstall wording.
+    - Never say that Stop removes setup.
+    - The guides and the CLI help document this real workflow. They don't
+      promise terminal Start, Stop or Unrun, and don't present the keeper
+      as a user command.
+    - In the existing fresh-VM replay, Stop a managed app from Home before
+      uninstalling, and check that it stays down. Keep the separate case
+      where a running native app survives uninstall.
+    - No new command parser, no raise.
+    - Spec §2.4 is corrected by keeper-lead in svrn-docs.
 
   Demo: a fresh VM, installed by the line.
 
