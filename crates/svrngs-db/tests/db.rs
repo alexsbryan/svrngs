@@ -432,7 +432,8 @@ fn a_database_closes_as_it_drops() {
 /// **A database gives back what pruning frees, past Corrosion's bound**
 /// (APP_STATE §4, "What is kept"; `tidy.rs`): it is made with
 /// `auto_vacuum=INCREMENTAL`, though cr-sqlite's own tables come first. Ana
-/// writes 150 cards of 640 KiB each, then writes each again with one word,
+/// writes 90 cards of 640 KiB each, within her share of the app's
+/// database (`SIZE_MOST`), then writes each again with one word,
 /// so every first set is pruned and the pages its text held are freed: over
 /// 12,000 of them. `tidy` gives them back until 10,000 or fewer are
 /// free, and asked again gives back nothing. A WAL past 5 GiB, Corrosion's
@@ -445,15 +446,17 @@ fn a_database_gives_back_what_pruning_frees() {
     let count = |p: &str| side.pragma_query_value(None, p, |r| r.get::<_, u64>(0)).unwrap();
     assert_eq!(count("auto_vacuum"), 2, "made to give pages back");
     let long = "x".repeat(640 << 10);
-    for n in 0..150 {
-        write(
+    // Ana's key alone bound, so her share is the whole of `SIZE_MOST`.
+    let alone = |db: &Db, ops: Value| db.write(&ops, &svrngs_db::Binds::new([], 0));
+    for n in 0..90 {
+        alone(
             &db,
             json!([{ "insert": "cards", "row": { "id": format!("c{n}"), "title": long } }]),
         )
         .unwrap();
     }
-    for n in 0..150 {
-        write(
+    for n in 0..90 {
+        alone(
             &db,
             json!([{ "insert": "cards", "row": { "id": format!("c{n}"), "title": "short" } }]),
         )
@@ -472,6 +475,6 @@ fn a_database_gives_back_what_pruning_frees() {
     );
     assert!(!truncated, "no WAL near 5 GiB");
     assert_eq!(db.tidy().unwrap(), (0, false), "nothing more to give");
-    assert_eq!(cards(&db).as_array().unwrap().len(), 150);
+    assert_eq!(cards(&db).as_array().unwrap().len(), 90);
     svrngs_db::close(side).unwrap();
 }

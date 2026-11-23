@@ -69,7 +69,7 @@ use form::Table;
 pub use parse::Unfit;
 pub use schema::{Unmade, check};
 pub use svrngs_core::SigningKey;
-pub use sync::{Ask, Binds, Call, Device, Head, Hex, Place, ROW_MOST, Seq, Set, Sig, Took};
+pub use sync::{Ask, Binds, Call, Device, Head, Hex, Place, ROW_MOST, SIZE_MOST, Seq, Set, Sig, Took};
 
 /// The app's schema, beside its `index.html`.
 pub const SCHEMA: &str = "schema.sql";
@@ -135,6 +135,12 @@ pub enum Refused {
         "This copy of {0} was copied from another computer’s, so svrngs is making it again. Try again in a moment."
     )]
     Copied(String),
+    /// A write past this computer's share of the app's database, of the
+    /// MiB named (`sync.rs`, `SIZE_MOST`).
+    #[error(
+        "This computer's writes fill its share of the {0} MB your group keeps of this app, so this write isn't kept. Delete rows you no longer need, then write again."
+    )]
+    Full(u64),
 }
 
 impl Refused {
@@ -153,6 +159,7 @@ impl Refused {
             Self::Schema(_) => (422, "schema"),
             Self::NotYours(_) | Self::NotYetGone(_) => (403, "not-yours"),
             Self::Copied(_) => (503, "copied"),
+            Self::Full(_) => (507, "full"),
         }
     }
 }
@@ -616,8 +623,11 @@ impl Db {
         // [`close`] finalizes. Without cr-sqlite, above, it has none.
         let mut open = Open(Some(conn));
         let conn = open.0.as_mut().expect("just opened");
-        // Corrosion's: a WAL folded in is cut back to 1 GiB (`tidy.rs`).
-        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA journal_size_limit=1073741824;")
+        // Corrosion's: a WAL folded in is cut back to 1 GiB (`tidy.rs`). And
+        // the fixed ceiling no file passes, 1 GiB in SQLite's 4 KiB pages,
+        // far above every share of `SIZE_MOST`, which may rise to it: a copy
+        // full to it faults a set, its mark held, and refuses none.
+        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA journal_size_limit=1073741824; PRAGMA max_page_count=262144;")
             .map_err(fault)?;
         // A database without svrngs's own tables is new: its schema applied,
         // its tables made cr-sqlite's, and svrngs's made, its nonce and site

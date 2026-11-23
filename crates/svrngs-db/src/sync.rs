@@ -197,28 +197,50 @@ impl Binds {
     fn share(&self) -> u64 {
         (self.room / ROW_MOST / self.keys.len().max(1)) as u64
     }
+
+    /// Each one's share of an app's database, in bytes of [`SIZE_MOST`].
+    fn size_share(&self) -> u64 {
+        SIZE_MOST / self.keys.len().max(1) as u64
+    }
 }
 
+/// The most an app's database on one computer holds of its kept sets and
+/// their sites, each bound key's an equal share ([`Binds::size_share`]), so
+/// no one device fills the app for everyone (APP_STATE §7, invariant 9): this
+/// number's one home. Provisional: about 7 times the spike's 8.6 MB a
+/// computer at 25 devices and 10,000 rows (svrn-docs APP_STATE §9, step 2),
+/// until W9's run at that scale sets it.
+pub const SIZE_MOST: u64 = 64 << 20;
+
+/// What a site costs every copy beside its sets, counted in its device's
+/// share of [`SIZE_MOST`]: its rows of sites, marks and above, about 100
+/// bytes for the database's life (svrn-docs APP_STATE §8, question 10), so a
+/// device minting a nonce a set pays for each.
+const SITE_COST: u64 = 100;
+
 /// What a call may still add to this copy's ask as it is taken, by the
-/// keys the record binds: the rows each device holds ([`Db::room`]), and
-/// the devices muted here.
+/// keys the record binds: the rows each device holds ([`Db::room`]), the
+/// bytes it holds of the database, and the devices muted here.
 struct Room<'b> {
     binds: &'b Binds,
     rows: BTreeMap<Device, u64>,
+    size: BTreeMap<Device, u64>,
     muted: BTreeSet<Device>,
 }
 
 impl Room<'_> {
-    /// Whether a set of `device`'s has room for the `adds` rows it brings:
-    /// unmuted, in its share with one row left for its name should it be
-    /// muted.
-    fn fits(&self, device: &Device, adds: u64) -> bool {
-        let held = self.rows.get(device).copied().unwrap_or(0);
-        !self.muted.contains(device) && (adds == 0 || held + adds < self.binds.share())
+    /// Whether a set of `device`'s has room for the `adds` rows it brings,
+    /// and its `bytes`: unmuted, in its share of the ask with one row left
+    /// for its name should it be muted, and in its share of the database.
+    fn fits(&self, device: &Device, (adds, bytes): (u64, u64)) -> bool {
+        let (held, size) = (self.rows.get(device), self.size.get(device));
+        let sized = size.copied().unwrap_or(0) + bytes <= self.binds.size_share();
+        !self.muted.contains(device) && (adds == 0 || held.copied().unwrap_or(0) + adds < self.binds.share()) && sized
     }
 
-    fn add(&mut self, device: &Device, adds: u64) {
+    fn add(&mut self, device: &Device, (adds, bytes): (u64, u64)) {
         *self.rows.entry(device.clone()).or_default() += adds;
+        *self.size.entry(device.clone()).or_default() += bytes;
     }
 }
 
@@ -389,6 +411,15 @@ impl Db {
         let made = fit(made, &self.tables).map_err(Refused::Unkept)?;
         owned::mine(&made, &self.tables, binds, &self.device)?;
         let changes = postcard::to_allocvec(&made.0).expect("changes are written in memory");
+        // In this computer's share of the app's database, as every copy
+        // counts it at apply, so no copy keeps a set the others drop.
+        if !self
+            .room(conn, binds)
+            .map_err(fault)?
+            .fits(&self.device, (0, changes.len() as u64))
+        {
+            return Err(Refused::Full(SIZE_MOST >> 20));
+        }
         let set = Set::signed(
             &self.key,
             (&self.group, &self.app),
@@ -572,9 +603,18 @@ impl Db {
             AND t.seq = s.seq AND t.sig <> s.sig) OR site = (SELECT retired FROM svrngs_db)) AS r \
             JOIN svrngs_sites h USING (site) GROUP BY h.device";
         let held = BTreeMap::from_iter(rows(conn, shares, [], |r| Ok((r.get(0)?, r.get(1)?)))?);
+        // And the bytes of the database each holds: its kept sets, and its sites.
+        let size = "SELECT h.device, coalesce(sum(length(s.bytes)), 0) + ?1 * count(DISTINCT h.site) \
+            FROM svrngs_sites h LEFT JOIN svrngs_sets s USING (site) GROUP BY h.device";
+        let size = BTreeMap::from_iter(rows(conn, size, [SITE_COST], |r| Ok((r.get(0)?, r.get(1)?)))?);
         let muted = BTreeSet::from_iter(rows(conn, "SELECT device FROM svrngs_muted", [], |r| r.get(0))?);
         let rows = held;
-        Ok(Room { binds, rows, muted })
+        Ok(Room {
+            binds,
+            rows,
+            size,
+            muted,
+        })
     }
 
     /// `set`, past its share of what this copy's ask may carry, dropped as if
@@ -719,6 +759,7 @@ impl Db {
         // rows of it. Past its device's share, it is dropped ([`Self::over`]).
         let device = &set.head.device;
         let adds = u64::from(!sited) + u64::from(set.head.seq.0 > mark + 1) + [0, 2, 1][sigs.len().min(2)];
+        let adds = (adds, set.changes.len() as u64 + SITE_COST * u64::from(!sited));
         if !room.fits(device, adds) {
             return self.over(tx, set, room);
         }

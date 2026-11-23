@@ -12,7 +12,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use svrngs_core::set::At;
-use svrngs_db::{Ask, Binds, Call, Db, Device, ROW_MOST, Seq, Set, Sig, SigningKey, States, Took};
+use svrngs_db::{Ask, Binds, Call, Db, Device, ROW_MOST, SIZE_MOST, Seq, Set, Sig, SigningKey, States, Took};
 
 const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
 const BUDGET: usize = 4 << 20;
@@ -243,4 +243,45 @@ fn a_file_made_again_counts_its_retired_sites_sets_in_its_share() {
     let other = other.open("g", "board", Some(SCHEMA)).unwrap();
     write(&other, "c4", "tea");
     assert_eq!(took(&ana, &call(&other, &ana), &binds(&[1], 3)), [Took::Over]);
+}
+
+/// Every test key bound, 256 of them, so each one's share of an app's
+/// database is `SIZE_MOST / 256`.
+fn all() -> Binds {
+    Binds::new((0..=255).map(|n| (actor(n), actor(n), false)), 4 << 20)
+}
+
+/// **One device fills no more than its share of an app's database**
+/// (APP_STATE §7, invariant 9; the seat's decision 3 for slice E): with 256
+/// keys bound, each one's share is `SIZE_MOST / 256`. Bo's copy, binding his
+/// key alone, keeps five cards of about 60 KiB each. Ana's copy takes his
+/// first four; his fifth is past his share, dropped and his device muted,
+/// his sets before standing, and Cy's card is still taken. Ana's own fifth
+/// card is refused at the write, saying so, as every copy would drop it.
+/// Plant, watched failing: the size left out of a set's room (Bo's fifth
+/// taken, Ana's fifth written).
+#[test]
+fn one_device_fills_no_more_than_its_share_of_the_database() {
+    let dir = tempfile::tempdir().unwrap();
+    let (ana, bo, cy) = (board(dir.path(), 1), board(dir.path(), 2), board(dir.path(), 3));
+    let big = |n: usize| "x".repeat(60 << 10) + &n.to_string();
+    const { assert!(5 * (60 << 10) > SIZE_MOST / 256 && 4 * (61 << 10) < SIZE_MOST / 256) };
+    for n in 0..5 {
+        write(&bo, &format!("b{n}"), &big(n));
+    }
+    write(&cy, "c1", "tea");
+    let took = took(&ana, &call(&bo, &ana), &all());
+    assert_eq!(took, [Took::Taken, Took::Taken, Took::Taken, Took::Taken, Took::Over]);
+    assert_eq!(taken_from(&ana, &cy), [Took::Taken], "Cy's card, still taken");
+    for n in 0..4 {
+        let card = json!([{ "insert": "cards", "row": { "id": format!("a{n}"), "title": big(n) } }]);
+        ana.write(&card, &all()).unwrap();
+    }
+    let fifth = json!([{ "insert": "cards", "row": { "id": "a4", "title": big(4) } }]);
+    let refused = ana.write(&fifth, &all()).unwrap_err();
+    assert_eq!(refused, svrngs_db::Refused::Full(SIZE_MOST >> 20));
+}
+
+fn taken_from(to: &Db, from: &Db) -> Vec<Took> {
+    took(to, &call(from, to), &all())
 }
