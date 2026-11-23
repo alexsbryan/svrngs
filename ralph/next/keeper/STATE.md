@@ -834,7 +834,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
 
   Demo: a fresh VM, installed by the line.
 
-- [ ] avail-rehearse — depends [avail-ship] — ONE UNIT, evidence: spec §5 row 9, its strangers.
+- [x] avail-rehearse cce20868f — depends [avail-ship] — ONE UNIT, evidence: spec §5 row 9, its strangers.
   - xenia on the built page: DeepSeek Flash at `--variant max`, the world
     being svrn-docs `play-lend-give/world/`.
   - The plant runs first: the two line kinds' words swapped. Can a stranger
