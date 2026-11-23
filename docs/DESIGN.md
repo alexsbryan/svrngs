@@ -3031,6 +3031,8 @@ never-ran.
 - Linux x86_64 and aarch64: the test binaries `cargo zigbuild -p svrngs-db
   --tests --target <triple>-unknown-linux-musl` builds. They run on a Linux
   x86_64 computer, and in an aarch64 kernel such as a podman machine's.
+- Each with the open-files limit raised as `scripts/check.sh` raises it,
+  since W1's seeds open more than a login's 1,024 at once.
 
 sign and page read the commit's `cli::SHIPPED` (§3, "Where a computer meets
 its groups"): a build at n0's relays they go on with and say so; a build at
