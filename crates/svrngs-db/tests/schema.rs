@@ -196,10 +196,12 @@ fn an_owned_table_s_person_key_is_text_first_in_a_strict_key() {
 
 /// **A schema that follows another only adds to it** (APP_STATE §4, "It
 /// only adds"; invariant 14): a new table, and a column that can be NULL
-/// with no DEFAULT, are taken; a column dropped, retyped, made NOT NULL or
-/// moved into the key, a table renamed, and a column added as NOT NULL,
-/// with a DEFAULT or in the key, are each refused, naming the column. Plant,
-/// watched failing: `check` not calling `grows`, and the first is taken.
+/// with no DEFAULT, are taken; a column dropped, retyped, made NOT NULL,
+/// moved into the key or moved in the table, as a new column before it
+/// moves it, a table renamed, and a column added as NOT NULL, with a
+/// DEFAULT, in the key or generated, are each refused, naming the column.
+/// Plant, watched failing: `check` not calling `grows`, and the first is
+/// taken.
 #[test]
 fn a_schema_that_follows_another_only_adds_to_it() {
     let was = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
@@ -239,6 +241,14 @@ fn a_schema_that_follows_another_only_adds_to_it() {
         ),
         (
             "CREATE TABLE cards (id TEXT NOT NULL, title TEXT, n INTEGER NOT NULL, PRIMARY KEY (id, n));",
+            "adds cards.n",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, note TEXT, title TEXT);",
+            "drops or changes cards.title",
+        ),
+        (
+            "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT, n INTEGER GENERATED ALWAYS AS (1));",
             "adds cards.n",
         ),
     ];

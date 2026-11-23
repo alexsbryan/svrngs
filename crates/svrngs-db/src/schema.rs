@@ -71,11 +71,11 @@ pub enum Unmade {
     )]
     PersonKey(String, &'static str),
     #[error(
-        "schema.sql drops or changes {0}, which the version it follows has, and a schema only grows: every computer of your group keeps what it holds of {0}. To fix it, keep {0} as it was, and add a new column for what changed."
+        "schema.sql drops or changes {0}, which the version it follows has, and a schema only grows: every computer of your group keeps what it holds of {0}. To fix it, keep {0} as it was, in its place, and add a new column after the table's last one for what changed."
     )]
     Changed(String),
     #[error(
-        "schema.sql adds {0} as NOT NULL, with a DEFAULT, or in the key, and a page on the version it follows still writes rows without it. To fix it, add {0} as a column that can be NULL, with no DEFAULT, outside the key."
+        "schema.sql adds {0} as NOT NULL, with a DEFAULT, in the key, or generated, and a page on the version it follows still writes rows without it. To fix it, add {0} as a plain column that can be NULL, with no DEFAULT, outside the key."
     )]
     Added(String),
     #[error("The schema.sql it follows makes no database either: {0}")]
@@ -168,14 +168,15 @@ fn limits(conn: &Connection, t: &str) -> Result<(), Refused> {
 
 /// Each column of the app's tables, `table.column`, as `pragma_table_xinfo`
 /// gives it: what an earlier version's must keep, its declared type, NOT
-/// NULL and place in the key; and whether one added must not be there, as
-/// NOT NULL, with a DEFAULT or in the key.
+/// NULL, place in the key and place in the table, as a copy made wider adds
+/// a column after the last (`widen`); and whether one added must not be
+/// there, as NOT NULL, with a DEFAULT, in the key or generated.
 type Columns = BTreeMap<String, (String, bool)>;
 
 fn columns(conn: &Connection) -> Result<Columns, Refused> {
-    let each = "SELECT t.name, t.name || '.' || c.name, lower(c.type) || ' ' || c.\"notnull\" || ' ' || c.pk, \
-        c.\"notnull\" OR c.dflt_value IS NOT NULL OR c.pk > 0 FROM sqlite_master AS t, pragma_table_xinfo(t.name) AS c \
-        WHERE t.type = 'table'";
+    let each = "SELECT t.name, t.name || '.' || c.name, lower(c.type) || ' ' || c.\"notnull\" || ' ' || c.pk || ' ' || c.cid, \
+        c.\"notnull\" OR c.dflt_value IS NOT NULL OR c.pk > 0 OR c.hidden > 0 \
+        FROM sqlite_master AS t, pragma_table_xinfo(t.name) AS c WHERE t.type = 'table'";
     let mut stmt = conn.prepare(each).map_err(fault)?;
     let read = stmt.query_map([], |r| {
         Ok((r.get::<_, String>(0)?, (r.get(1)?, (r.get(2)?, r.get(3)?))))
@@ -224,4 +225,94 @@ fn grows(was: &Columns, now: &Columns) -> Result<(), Refused> {
         .map(|(c, _)| Unmade::Changed(c.clone()))
         .or(added.map(|(c, _)| Unmade::Added(c.clone())));
     unmade.map_or(Ok(()), |u| Err(Refused::Schema(u)))
+}
+
+/// The text of each of the app's tables and indexes, by name, as
+/// `sqlite_master` keeps it, with its kind.
+type Texts = BTreeMap<String, (String, String)>;
+
+fn texts(conn: &Connection) -> Result<Texts, Refused> {
+    let each = "SELECT name, type, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index') AND sql NOT NULL";
+    let mut stmt = conn.prepare(each).map_err(fault)?;
+    let read = stmt.query_map([], |r| Ok((r.get(0)?, r.get(2)?, (r.get(1)?, r.get(3)?))));
+    let read: Vec<(String, String, _)> = read.and_then(Iterator::collect).map_err(fault)?;
+    let app = read.into_iter().filter(|(n, t, _)| !internal(n) && !internal(t));
+    Ok(app.map(|(n, _, text)| (n, text)).collect())
+}
+
+/// `schema` made on a scratch database, with its columns and texts.
+fn scratch(schema: &str) -> Result<(Open, Columns, Texts), Refused> {
+    let mut open = Open(Some(Connection::open_in_memory().map_err(fault)?));
+    made(&mut open, schema)?;
+    let (now, texts) = (columns(&open)?, texts(&open)?);
+    Ok((open, now, texts))
+}
+
+/// Whether `schema` adds to what `conn`, a database, holds: false for one
+/// that adds nothing, as an older version's; refused where it doesn't only
+/// add to it ([`grows`]), as two versions that each add to a third, which
+/// no copy made from either matches.
+pub(crate) fn adds(conn: &Connection, schema: &str) -> Result<bool, Refused> {
+    let (_, now, texts) = scratch(schema)?;
+    let (had, held) = (columns(conn)?, self::texts(conn)?);
+    let more = now.keys().any(|c| !had.contains_key(c)) || texts.keys().any(|n| !held.contains_key(n));
+    tracing::debug!(target: "state", more, "state: a version's schema held against a database's, adding to it or not");
+    more.then(|| grows(&had, &now)).transpose().map(|g| g.is_some())
+}
+
+/// `schema`, a wider version's, made on `conn`, a restored copy of a
+/// database (`States::widen`), where it only adds to it ([`grows`]): each
+/// column it adds to a table here added after the last, then the table's
+/// text made `schema`'s, so it compares, sorts and checks as on a copy made
+/// from `schema`, within cr-sqlite's bracket, so its triggers take the
+/// column; each table it adds made, and a CRR, then each index. Held after
+/// to `schema`'s text, table for table and index for index, and its
+/// columns, then `ANALYZE`d, `schema`'s hash the copy's.
+pub(crate) fn widen(conn: &Connection, schema: &str) -> Result<(), Refused> {
+    let (scratch, now, texts) = scratch(schema)?;
+    let (had, held) = (columns(conn)?, self::texts(conn)?);
+    grows(&had, &now)?;
+    let run = |sql: &str| conn.execute_batch(sql).map_err(fault);
+    let crsql = |f: &str, t: &str| conn.query_row(&format!("SELECT crsql_{f}"), [t], |_| Ok(()));
+    let quoted = |n: &str| format!("\"{}\"", n.replace('"', "\"\""));
+    let tables = texts
+        .iter()
+        .filter(|(n, (kind, _))| kind == "table" && held.contains_key(*n));
+    for (name, (_, sql)) in tables {
+        let each = "SELECT name FROM pragma_table_xinfo(?1) ORDER BY cid";
+        let each = crate::sync::rows(&scratch, each, [name], |r| r.get::<_, String>(0)).map_err(fault)?;
+        let added: Vec<_> = each
+            .into_iter()
+            .filter(|c| !had.contains_key(&format!("{name}.{c}")))
+            .collect();
+        if added.is_empty() {
+            continue;
+        }
+        crsql("begin_alter(?1)", name).map_err(fault)?;
+        for c in added {
+            run(&format!("ALTER TABLE {} ADD COLUMN {}", quoted(name), quoted(&c)))?;
+        }
+        run("PRAGMA writable_schema = ON")?;
+        let text = "UPDATE sqlite_master SET sql = ?1 WHERE type = 'table' AND name = ?2";
+        conn.execute(text, [sql, name]).map_err(fault)?;
+        run("PRAGMA writable_schema = RESET")?;
+        crsql("commit_alter('main', ?1, 1)", name).map_err(fault)?;
+    }
+    let mut made: Vec<_> = texts.iter().filter(|(n, _)| !held.contains_key(*n)).collect();
+    made.sort_by_key(|(_, (kind, _))| kind != "table");
+    for (name, (kind, sql)) in made {
+        run(sql)?;
+        (kind == "table")
+            .then(|| crsql("as_crr(?1)", name))
+            .transpose()
+            .map_err(fault)?;
+    }
+    let (held, cols) = (self::texts(conn)?, columns(conn)?);
+    let same = texts.iter().all(|(n, t)| held.get(n) == Some(t)) && now.iter().all(|(c, d)| cols.get(c) == Some(d));
+    tracing::debug!(target: "state", same, "state: a restored copy made wider, held to the wider schema's text and columns");
+    same.then_some(())
+        .ok_or_else(|| fault("a copy made wider isn't its schema's"))?;
+    conn.execute("UPDATE svrngs_db SET schema = ?1", [svrngs_core::set::schema(schema)])
+        .map_err(fault)?;
+    run("ANALYZE")
 }

@@ -317,6 +317,26 @@ impl States {
         })
     }
 
+    /// `db` made wider by `schema`, a version a standing member runs, where
+    /// it adds to what `db` holds: its file restored whole
+    /// ([`Self::restored`]) and `schema` made on the copy, a wider version's
+    /// tables, columns and indexes, each as a copy made from `schema` has
+    /// it (`schema.rs`, `widen`). `db` as it is where `schema` adds nothing,
+    /// and refused where it doesn't only add. Its pages' subscriptions are
+    /// ended first ([`Db::retiring`]), as each holds it; until they have,
+    /// it is given back as it is, to widen at a later ask.
+    pub fn widen(&self, db: Arc<Db>, schema: &str) -> Result<Arc<Db>, Refused> {
+        let hash = svrngs_core::set::schema(schema);
+        let adds = hash != db.schema && schema::adds(&db.conn(), schema)?;
+        tracing::debug!(target: "state", group = db.group, app = db.app, adds, "state: a version's schema asked of a database, made wider where it adds to it");
+        if !adds {
+            return Ok(db);
+        }
+        db.retiring.store(true, Relaxed);
+        db.changed.send_modify(|n| *n += 1);
+        self.restored(db, |conn| schema::widen(conn, schema))
+    }
+
     /// `db`'s file restored whole, `change` made on the restored copy, and
     /// the copy put in its place once it opens as this computer's (svrn-docs
     /// `app-state-diligence/e-build-2026-11-22/`, from the operator's review
@@ -418,6 +438,9 @@ pub struct Db {
     /// Whether a set sealed by another file of its nonce and key reached it:
     /// it was copied, and is to be made again (`States::remake`).
     copied: AtomicBool,
+    /// Whether it is to be made wider, so a page's subscription ends and a
+    /// new one waits (`States::widen`).
+    retiring: AtomicBool,
 }
 
 /// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
@@ -678,6 +701,7 @@ impl Db {
             synced: synced.into(),
             faulted: false.into(),
             copied: copied.into(),
+            retiring: false.into(),
         })
     }
 
@@ -688,6 +712,12 @@ impl Db {
     /// Whether this file was found copied, and is to be made again.
     pub fn copied(&self) -> bool {
         self.copied.load(Relaxed)
+    }
+
+    /// Whether this file is to be made wider, so no page's subscription
+    /// holds it ([`States::widen`]).
+    pub fn retiring(&self) -> bool {
+        self.retiring.load(Relaxed)
     }
 
     /// Whether this copy is still to be said syncing: it has never synced in
