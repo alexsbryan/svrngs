@@ -15,27 +15,12 @@
 
 use std::collections::BTreeMap;
 
-use eudoxia_community::db::{self, Change as Does, Key, Lacks, Record, Type, Verdict};
+use eudoxia_community::db::{self, Change as Does, Key, Lacks, Type, Verdict};
 
 use crate::form::Table;
 use crate::parse::{Change, SENTINEL, Valid};
 use crate::sync::{Binds, Device, Kept};
 use crate::{Refused, fault};
-
-/// The record as Eudoxia's rules read it: each key's person, the office's
-/// cuts, and a person's keys, all from the keys the record binds.
-impl Record for Binds {
-    fn person_of(&self, device: &str) -> Option<&str> {
-        self.keys.get(device).map(|(person, _)| person.as_str())
-    }
-    fn cut(&self, device: &str) -> bool {
-        self.keys.get(device).is_some_and(|(_, cut)| *cut)
-    }
-    fn keys_of(&self, person: &str) -> impl Iterator<Item = &str> {
-        let theirs = move |(_, (p, _)): &(&String, &(String, bool))| p == person;
-        self.keys.iter().filter(theirs).map(|(key, _)| key.as_str())
-    }
-}
 
 /// The app's tables, by name.
 type Tables = BTreeMap<String, Table>;

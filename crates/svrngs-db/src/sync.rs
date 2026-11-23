@@ -44,6 +44,7 @@ use svrngs_core::set::{Site, site};
 use crate::parse::{Change, Valid, fit, parse};
 pub use crate::wire::{Device, Head, Hex, Seq, Set, Sig};
 use crate::{Db, Refused, fault, owned};
+use eudoxia_community::db::Record;
 
 impl ToSql for Seq {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
@@ -104,7 +105,10 @@ pub struct Call {
 }
 
 /// How a set offered to a copy ends (APP_STATE §4, the four outcomes, with
-/// two ways it ends being here already), as a phone that carried it is told.
+/// two ways it ends being here already), as a phone that carried it is told:
+/// decided by the set and by what this copy's record binds and has cut, a
+/// phone's by its pass too, never by whether a device stands now, so copies
+/// that take sets in any order end alike ([`Binds`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Took {
@@ -147,12 +151,33 @@ pub const ROW_MOST: usize = 155;
 /// record holds whole, as a set's device and the owned rows it changes are
 /// judged by them (APP_STATE §4, "A removed device", "Who may write which
 /// row"; Eudoxia's `db::Record`, `owned.rs`); and the room a call's
-/// ask may fill beside its sets. Every key the record binds has an equal
+/// ask may fill beside its sets. It holds only what a record can gain, a
+/// binding and a cut, never whether a device stands now, and gives them
+/// only through Eudoxia's rules: so a set's outcome depends only on the set
+/// and on facts the record can only gain, and the order sets arrive in
+/// can't split copies. Whether a device still stands is the door's
+/// question, which refuses a removed device's computer and phone, never
+/// apply's. Every key the record binds has an equal
 /// share of the room ([`Self::share`]), so no one device can fill what every
 /// copy's ask may carry and stall the app's sync for everyone.
 pub struct Binds {
-    pub(crate) keys: BTreeMap<String, (String, bool)>,
+    keys: BTreeMap<String, (String, bool)>,
     room: usize,
+}
+
+/// The record as Eudoxia's rules read it: each key's person, the office's
+/// cuts, and a person's keys, all from the keys the record binds.
+impl Record for Binds {
+    fn person_of(&self, device: &str) -> Option<&str> {
+        self.keys.get(device).map(|(person, _)| person.as_str())
+    }
+    fn cut(&self, device: &str) -> bool {
+        self.keys.get(device).is_some_and(|(_, cut)| *cut)
+    }
+    fn keys_of(&self, person: &str) -> impl Iterator<Item = &str> {
+        let theirs = move |(_, (p, _)): &(&String, &(String, bool))| p == person;
+        self.keys.iter().filter(theirs).map(|(key, _)| key.as_str())
+    }
 }
 
 impl Binds {
