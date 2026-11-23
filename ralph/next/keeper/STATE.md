@@ -1272,3 +1272,19 @@ Windows.
     unchanged. After it and avail-page-prefill, run one unchanged full
     gate on the pinned candidate. If browser fails again, park with the
     evidence. Never repeat until green.
+  - **After the squash onto main** (eb58f807 on 05896fb0, the operator:
+    "Squash, with an archive tag"). The 195 commits and their evidence are
+    at keeper-archive-2026-11-23 (42a5fcc8). Main's #7 (carried SQLite)
+    and #10 (relay guest pass) are now under this code, and eudoxia is
+    fdc96b1 everywhere. So the earlier evidence is for the pre-squash
+    candidate, and the squashed candidate qualifies afresh:
+    1. pin one clean commit;
+    2. rerun the whole release tier on it (`demo/runs/release/run.py`;
+       Linux VM and beefymac, beefymac's steps under its `lockf`);
+    3. then the one unchanged full gate on the same pin.
+
+    #7 needs `git submodule update --init vendor/cr-sqlite` before the
+    cargo build (done in this worktree). If a tier case fails, fix the
+    driver or the product with a plant, never the bar, and rerun the whole
+    tier. The nine resolved conflicts are listed in eb58f807's body; QA
+    reviews them.
