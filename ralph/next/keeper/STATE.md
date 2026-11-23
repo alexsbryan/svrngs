@@ -496,6 +496,20 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     it reads verified (red). After the fix it is not (green).
   - Size: keeper only, a few lines. Counted: none expected.
 
+  **And the readiness test's flake** (QA, 2026-11-23). At 8f7f16d0,
+  `apps/svrngs-keeper/tests/run.rs`'s
+  `readiness_needs_an_answer_and_llama_must_finish_loading` failed its 200
+  case once and passed on an immediate rerun.
+  - The test server reads only `GET /health ` and closes with the rest of
+    the request unread, which can reset the connection before the reply is
+    read.
+  - QA's test-only fix reads the whole request header before replying. It
+    is at `ralph/next/keeper/ctl/readiness-flake.patch`; `git apply` it.
+  - Commit it alone, as a test fix. Its body gives QA's evidence: with the
+    patch, the 20 focused keeper tests and 10 more runs of the case
+    passed. The original failure was intermittent, and no reset was
+    captured directly.
+
 - [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses, unchanged:
   - the card (`compose.yaml` plus `x-svrngs`) and `card::check`;
   - `runtime::App` (`pull`, `start`, `wait_healthy`, `health`, `stop`);
