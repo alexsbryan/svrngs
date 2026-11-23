@@ -21,6 +21,16 @@
 //! every computer whose person runs Magnets keeps its database, a page
 //! opened there or not, and a write wakes the round, so a member holds it
 //! within the round's seconds.
+//!
+//! **Show the source** ([`magnets_fork`]; MAGNETS_BUILD §3, slice D, proof
+//! 3) is its third beat: Magnets' lines are counted by its own law, at most
+//! 1,000. Ana copies it to a folder of her own and changes its prompt and
+//! five words in `pack.json`, then brings the fork to a second group of
+//! hers, Office, under the same folder name, while Magnets stays in Fridge.
+//! Office's fridge opens fresh under its own prompt; Bo joins Office; a word
+//! moved in each group appears in neither other's fridge, on any computer.
+//! It relies on **each group's board being a database of its own** (APP_STATE
+//! §4, "Where it lives"): a database is named by its group and its folder.
 
 use std::path::Path;
 use std::process::Stdio;
@@ -28,7 +38,7 @@ use std::time::Duration;
 
 use serde_json::{json, Value};
 
-use crate::harness::{browsers, repo, Engine};
+use crate::harness::{browsers, relay_url, repo, Engine};
 use crate::people::{late, sees, Person, Scene};
 
 /// What Ana puts after the prompt.
@@ -288,4 +298,126 @@ async fn magnets_lid(engine: Engine) {
         "Ana sees Cy's word: {seen:#}"
     );
     drop((ana, bo, cy));
+}
+
+/// The fork's prompt, and the five words it puts in place of Magnets'
+/// first five, each a new id, as demo/magnets.md's proof 3 asks.
+const PROMPT: &str = "Ask me about the";
+const FORKED: [&str; 5] = ["kettle", "ferry", "spreadsheet", "cactus", "rumor"];
+
+/// Magnets carried into `dir`'s `apps/magnets/`, then its pack changed:
+/// its prompt, and its first five magnets new words with new ids, the rest
+/// kept.
+fn fork(dir: &Path) {
+    carry(dir);
+    let pack = dir.join("apps/magnets/pack.json");
+    let mut read: Value = serde_json::from_str(&std::fs::read_to_string(&pack).unwrap()).unwrap();
+    read["prompt"] = PROMPT.into();
+    for (i, word) in FORKED.iter().enumerate() {
+        read["magnets"][i] = json!({ "id": word, "word": word });
+    }
+    std::fs::write(&pack, serde_json::to_string_pretty(&read).unwrap()).unwrap();
+}
+
+scene!(
+    /// Planted, watched failing: svrngs-db keeping an app's database in one
+    /// file for every group (lib.rs `States::made`), and Office's fridge is
+    /// refused, "this app's database here was made under another key".
+    magnets_fork
+);
+async fn magnets_fork(engine: Engine) {
+    let scene = Scene::new("magnets-fork", engine).await;
+
+    // Magnets' lines, counted by its own law (apps/magnets/tests/lines.test.mjs).
+    let counted = tokio::process::Command::new("node")
+        .current_dir(repo())
+        .args(["--test", "apps/magnets/tests/lines.test.mjs"])
+        .stdin(Stdio::null())
+        .output()
+        .await
+        .expect("node counts Magnets' lines");
+    let said = String::from_utf8_lossy(&counted.stdout);
+    assert!(counted.status.success(), "Magnets' count: {said}");
+    let files = said
+        .lines()
+        .find_map(|l| l.strip_prefix("magnets: "))
+        .expect("the count's files");
+    let files: Vec<(String, u64)> = serde_json::from_str(files).unwrap();
+    let lines: u64 = files.iter().map(|(_, n)| n).sum();
+    eprintln!("Magnets ships {lines} lines: {files:?}");
+    assert!(lines <= 1_000, "Magnets ships {lines} lines, past 1,000");
+
+    // Ana's fridge in Fridge, with her word on it.
+    let (ana, fridge) = scene.founds("Ana", "Fridge").await;
+    carry(&ana.folder(&fridge).await);
+    let at_fridge = ana.opens(&fridge, "magnets").await;
+    assert_eq!(
+        asked(&ana, &at_fridge, put(ANA_S, 1)).await,
+        json!({ "count": 1 })
+    );
+
+    // Ana forks it in a folder of her own and brings the fork to Office.
+    let relay = relay_url(&scene.relay);
+    let ana = scene
+        .again(ana, &["new", "Office", "--as", "Ana", "--relay", &relay])
+        .await;
+    let office = ana.group_named("Office").await;
+    let own = scene.scratch("fork");
+    fork(&own);
+    let to = ana.folder(&office).await.join("apps/magnets");
+    std::fs::create_dir_all(&to).unwrap();
+    for file in std::fs::read_dir(own.join("apps/magnets")).unwrap() {
+        let file = file.unwrap().path();
+        std::fs::copy(&file, to.join(file.file_name().unwrap())).unwrap();
+    }
+    let at_office = ana.opens(&office, "magnets").await;
+    assert_ne!(
+        at_office, at_fridge,
+        "the fork opens at an address of its own"
+    );
+
+    // Office's fridge opens fresh, under its own prompt, its own words in the
+    // tray; Fridge's is as Ana left it.
+    shows(&ana, &at_office, &[]).await;
+    let seen = sees(engine, "carried.mjs", json!({ "url": at_office, "do": [] })).await;
+    eprintln!("Office's fridge: {seen:#}");
+    let page = seen["said"].as_str().unwrap_or_default();
+    assert!(
+        page.contains(PROMPT) && !page.contains("I can explain the"),
+        "its own prompt: {seen:#}"
+    );
+    assert!(
+        page.contains(FORKED[0]) && !page.contains(ANA_S),
+        "its own words: {seen:#}"
+    );
+    shows(&ana, &at_fridge, &[ANA_S]).await;
+
+    // Bo joins Office, and a word moved in each group shows in that group's
+    // fridge alone, on every computer of it.
+    let bo = scene
+        .joins("Bo", &ana.invites(&office).await, "Office")
+        .await;
+    let at_bo = bo.opens(&office, "magnets").await;
+    shows(&bo, &at_bo, &[]).await;
+    assert_eq!(
+        asked(&ana, &at_fridge, put("haunted", 2)).await,
+        json!({ "count": 1 })
+    );
+    assert_eq!(
+        asked(&bo, &at_bo, put(FORKED[0], 1)).await,
+        json!({ "count": 1 })
+    );
+    shows(&ana, &at_office, &[FORKED[0]]).await;
+    shows(&bo, &at_bo, &[FORKED[0]]).await;
+    shows(&ana, &at_fridge, &[ANA_S, "haunted"]).await;
+    let state = ana.home.join(".svrngs/state");
+    for group in [&fridge, &office] {
+        let db = state.join(group).join("magnets.db");
+        assert!(
+            db.is_file(),
+            "a database of each group's own at {}",
+            db.display()
+        );
+    }
+    drop((ana, bo));
 }
