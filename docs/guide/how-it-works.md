@@ -112,8 +112,7 @@ its own storage. [Start](start.md) shows how.
 ## What's ours, and who sees what
 
 Your group's things live on your group's computers. We run three things,
-and you can replace each ([README](../../README.md), "What we host, and
-why"):
+and you can [host your own](self-host.md) in their place:
 
 - **The page**, `group.svrnme.sh`: static files. It sees which app's
   address a phone opens, never what's in it.

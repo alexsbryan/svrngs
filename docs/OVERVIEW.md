@@ -26,9 +26,9 @@ every member's computer. More: [`DESIGN.md`](DESIGN.md) §3.
 them in one order and folds them the same way, so who's in the group, Money's
 balances and the house's rules agree everywhere. The code is a tree around
 `svrngs-core`, which is pure. Each piece we run (the phones' page, a relay,
-the builds) is a default, and you can run your own: see "Run it with nobody
-in the middle" in [`README.md`](../README.md). You extend svrngs by adding an
-app, never by changing the platform. More: [`DESIGN.md`](DESIGN.md) §5 and §6.
+the builds) is a default, and you can [run your own](guide/self-host.md).
+You extend svrngs by adding an app, never by changing the platform.
+More: [`DESIGN.md`](DESIGN.md) §5 and §6.
 
 [`diagrams/v1/`](diagrams/v1/) holds a fuller first set, with more of the
 mechanism on each picture. [`diagrams/README.md`](diagrams/README.md) says how

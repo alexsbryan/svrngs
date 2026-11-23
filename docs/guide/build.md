@@ -294,6 +294,9 @@ with you: it opens while your computer is on, and it runs outside the rules
 above. What your server does with what it's sent is yours to answer for,
 since svrngs only carries it.
 
+See [Bring a folder or lend a program?](choose-an-app.md) for when to use
+Give or the planned shared app database.
+
 ![The two shapes: a lent server goes with its lender and opens while that computer is on; a carried folder, an index.html under apps/ in the group's folder, is served by every computer and reads and writes svrngs/acts.](../diagrams/guide/build-shapes.svg)
 
 ### What your server gets

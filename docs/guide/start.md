@@ -153,6 +153,14 @@ Everything your group lends has an address that doesn't change.
   thing by name, add `#open=` and its name to the group's page:
   `https://group.svrnme.sh/#open=jellyfin@Sam` opens Sam's jellyfin.
 
+## Uninstall
+
+To remove svrngs and keep your data in `~/.svrngs`, run:
+
+```sh
+curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- --uninstall
+```
+
 ## Next
 
 - [Lend something of yours](lend.md): Jellyfin, Navidrome, Immich, anything on a port.
