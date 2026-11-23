@@ -124,8 +124,8 @@ step "web rustfmt and clippy" scripts/build-web.sh --lint
 # the browser to itself so the parallel suite doesn't spend its 4 s budget.
 relay_fallback=webrtc_page::the_channel_closed_mid_film_completes_over_the_relay::
 step "browser" cargo test --quiet --workspace --test browser -- --skip playback:: --skip "$relay_fallback"
-step "relay fallback" cargo test --quiet -p svrngs-node --test browser "$relay_fallback" -- --test-threads=1
-! reached "relay fallback" || grep -qE '^test result: (ok\. 2 passed;|FAILED)' /tmp/svrngs-check.$$ || { echo "never-ran  relay fallback: expected the Chromium and WebKit cases"; failed=1; }
+# Cargo exits 0 on an empty selection; require both engine cases in this step.
+step "relay fallback" sh -c 'out=$(cargo test --quiet -p svrngs-node --test browser "$1" -- --test-threads=1); status=$?; printf "%s\n" "$out"; [ "$status" = 0 ] || exit "$status"; case $out in *"test result: ok. 2 passed;"*) ;; *) echo "never-ran: expected the Chromium and WebKit cases"; exit 1 ;; esac' sh "$relay_fallback"
 # The pages' types (jsconfig.json, and the service workers' in
 # jsconfig.workers.json, by scripts/types.mjs), checked against the wasm
 # glue's declaration built here, target/web/site/wasm/: the browser step
