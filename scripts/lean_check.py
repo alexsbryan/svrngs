@@ -942,10 +942,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the job named and the kept lend renewed (job.rs, bound.rs `renewed`,
 # `Net::job`, `share::kept`, `Terms::keep`, `Hold::Changed`, `Answer::Job`),
 # 24,655, the envelope's whole +180; JavaScript, the row's words, 8,688.
+# Then avail-economize's pass before the available-by-default release, each
+# cut lowering its caps to one past where it lands
+# (demo/runs/economize/2026-11-22-available/SURVEY.md): door/bound.rs 11,
+# 24,644.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 24656,
+    ".": 24645,
 
     "js": 8689,
 

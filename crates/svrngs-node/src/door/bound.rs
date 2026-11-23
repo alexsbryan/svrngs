@@ -21,7 +21,7 @@ use tokio::net::UdpSocket;
 
 use crate::door::Using;
 use crate::iroh::{Duplex, Net, PortRead};
-use crate::lend::{Hold, Lend, LendName, Raw};
+use crate::lend::{Hold, Lend, LendError, LendName, Raw};
 use crate::uid::{Conn, Unread};
 use eudoxia_community::binding::{self, Chosen, Held, Read, Took};
 
@@ -184,11 +184,7 @@ fn away(lend: &Lend) -> impl FnOnce(std::io::Error) -> Unsent + '_ {
 /// can't be read, held [`Hold::Unjudged`]. A program not approved seen
 /// there holds a UDP share in `dir` too, until its lender approves again
 /// ([`hold`]); a TCP connection is judged alone, so it holds only itself.
-pub(crate) fn decided(
-    dir: &Path,
-    lend: &Lend,
-    read: Result<(Read, Took), Unread>,
-) -> Result<(), Unsent> {
+pub(crate) fn decided(dir: &Path, lend: &Lend, read: PortRead) -> Result<(), Unsent> {
     let approved = lend.terms.approved.as_ref();
     let checked = match &read {
         Ok((now, took)) => binding::check(approved, now, took).map_err(|held| match held {
@@ -228,12 +224,9 @@ fn mutated(
     dir: &Path,
     name: &LendName,
     mut edit: impl FnMut(&mut Lend),
-) -> Result<bool, crate::lend::LendError> {
-    let mut kept = crate::lend::mutate(dir, name, &mut edit);
-    for _ in 0..20 {
-        if !matches!(kept, Err(crate::lend::LendError::Busy { .. })) {
-            break;
-        }
+) -> Result<bool, LendError> {
+    let (mut kept, mut tries) = (crate::lend::mutate(dir, name, &mut edit), 0..20);
+    while matches!(kept, Err(LendError::Busy { .. })) && tries.next().is_some() {
         std::thread::sleep(Duration::from_millis(1));
         kept = crate::lend::mutate(dir, name, &mut edit);
     }
@@ -334,11 +327,7 @@ impl Flow {
 /// its lender's list's alike: with the flows `using` names for `lend` by
 /// this read, each by its own socket's address, so a server's socket
 /// answering one is known ([`Took::Flow`]).
-pub(crate) async fn udp_port(
-    net: &dyn Net,
-    port: u16,
-    of: (&Using, &LendName),
-) -> Result<(Read, Took), Unread> {
+pub(crate) async fn udp_port(net: &dyn Net, port: u16, of: (&Using, &LendName)) -> PortRead {
     let read = net.read_port(Raw::Udp, port, None).await;
     let now = read.as_ref().ok().map(|(now, _)| &now.sockets);
     let to = |s: &binding::Socket| match s.peer {
