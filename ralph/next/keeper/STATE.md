@@ -1061,3 +1061,26 @@ Windows.
       candidate in three trials each against zero in six at main is too
       little to attribute.
     - Never repeat until green, and never qualify on a red gate.
+  - **The verdict to record** (QA oc-cruu42, 2026-11-23):
+    - "Pre-existing WebKit-tier intermittency reproduced on main; no
+      keeper-specific cause demonstrated for the exact fallback and
+      navigation failures."
+    - In the overlap diagnostic (`REVIEW-audit-available-6.await.log`;
+      base, tip, tip, base; same image; 32 CPUs): main's first browser
+      tier failed `a_phone_opens_a_lend_that_answers_only_in_gzip::webkit`
+      (active=8, load1=10.09), and the other three passed.
+    - Main failed a different case, so this does not show that these
+      exact symptoms predate keeper.
+    - The Home test's zero overlap with the relay case rules out direct
+      contention in those runs. It does not establish a general load
+      cause.
+  - **Close the row:**
+    - The candidate's full-gate verdict stays **failed** (browser).
+    - Record the tip's two green browser-tier runs as separate evidence,
+      never as the gate's exit.
+    - Write it all up in `demo/runs/keeper/AUDIT.md`, or this release's
+      audit record.
+    - Then stop with `needs-human`. The operator decides.
+    - Another full run is warranted only after a targeted instrument fix,
+      or a predeclared change that tests a specific hypothesis. Never
+      repeat it unchanged.
