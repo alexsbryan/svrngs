@@ -141,6 +141,27 @@ export const LAWS = {
       b.stop();
     }
   },
+  /** A plan taken off goes from the board, and its things and claims from what the board reads. */
+  async 'a plan taken off is read no more'(app) {
+    const b = fresh(app);
+    try {
+      await b.as(Ana)({ write: app.addPlan({ title: 'Picnic' }, Ana, 'p1') });
+      await b.as(Ana)({ write: app.addPlan({ title: 'Bowling' }, Ana, 'p2') });
+      await b.as(Ana)({ write: app.paste('p1', 'ice') });
+      await b.as(Bo)({ write: app.claim('p1', 'chips', Bo, 'c1') });
+      await b.as(Bo)({ write: app.takeOff('p1') });
+      const things = (await b.as(Ana)({ sql: app.THINGS })).rows;
+      return (
+        differ(
+          (await b.drawn(Ana)).map((p) => p.title),
+          ['Bowling'],
+          'the plans',
+        ) ?? differ(things, [], 'the things and claims read')
+      );
+    } finally {
+      b.stop();
+    }
+  },
   /** A claim brings the listed thing its words name, spelled any way; one naming nothing listed stands on its own. */
   'a claim brings the thing it names'(app) {
     const drawn = app.board({
@@ -206,6 +227,17 @@ test('each law catches its plant', async () => {
           .map((l) => l.replace(/^\s*(?:[-*]|\d+[.)])\s+/, '').trim())
           .filter(Boolean)
           .map((words) => ({ insert: 'things', row: { plan, thing: words, words, off: 0 } })),
+    },
+    'a plan taken off is read no more': {
+      why: /^the things and claims read: \[\{"kind":"thing","plan":"p1"/,
+      // The things and claims of every plan, on the board or not.
+      THINGS: board.THINGS.replaceAll(
+        ' AND plan IN (SELECT id FROM plans WHERE off IS NOT 1)',
+        '',
+      ).replaceAll(
+        '\nWHERE withdrawn IS NOT 1 AND plan IN (SELECT id FROM plans WHERE off IS NOT 1)',
+        ' WHERE withdrawn IS NOT 1',
+      ),
     },
     'a claim brings the thing it names': {
       why: /^the things and the other claims: \[\[\["Ice",\[\]\]\]/,

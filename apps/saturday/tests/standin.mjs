@@ -32,6 +32,8 @@
 //   GET svrngs/sql?q=<one read>, Accept: text/event-stream: an event stream
 //   of that read's answers, at once and again each time those rows change.
 //
+//   most rows  a read gives its first MOST_ROWS rows, with `more: true`
+//              when it had more (docs/guide/database.md, "Read")
 //   too large  a POST body past MOST_BYTES is answered 413 {error, kind:
 //              'path'} with x-svrngs-refused: path, as the real route
 //              answered one (a run on svrngs 1.13.3: 66,528 bytes taken,
@@ -64,6 +66,8 @@ export const SCHEMA = join(APP, 'schema.sql');
 export const AWAY = 'None of your group’s computers is on.';
 /** The largest POST body it takes, 65 KiB, between the real route's largest taken and smallest refused. */
 export const MOST_BYTES = 66_560;
+/** The most rows a read gives, as the guide says the route gives. */
+export const MOST_ROWS = 1_000;
 /** The people it serves, by name, each with a key of their own. */
 export const PEOPLE = { Ana: 'key-ana', Bo: 'key-bo', Cy: 'key-cy' };
 
@@ -346,8 +350,15 @@ export async function serve({ port = 0, host = '127.0.0.1', link = null } = {}) 
   /** Each open stream, to its query and the last answer it was sent. */
   const streams = new Map();
   /** An answer as this copy gives it: `syncing: true` beside its rows while that switch is on. */
-  const given = (answer) =>
-    answer.rows && switches.syncing ? { ...answer, syncing: true } : answer;
+  const given = (answer) => {
+    if (!answer.rows) return answer;
+    const most = {
+      ...answer,
+      rows: answer.rows.slice(0, MOST_ROWS),
+      more: answer.rows.length > MOST_ROWS,
+    };
+    return switches.syncing ? { ...most, syncing: true } : most;
+  };
   const read = async (sql) => given(await db.read(sql));
   const push = async () => {
     for (const [res, stream] of streams) {

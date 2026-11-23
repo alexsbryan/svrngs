@@ -116,7 +116,8 @@ async function listen(name, sql, then = async () => {}) {
         sub.state = answer.syncing === true ? 'syncing' : 'ready';
         if (sub.state === 'ready') {
           sub.rows = answer.rows;
-          if (answer.more) trace(`${name}: more rows than one read gives`);
+          sub.more = answer.more === true;
+          if (sub.more) trace(`${name}: more rows than one read gives`);
           await then();
         }
         trace(`${name} answered`, { state: sub.state, rows: answer.rows.length });
@@ -332,12 +333,13 @@ function drawPlan(plan) {
 function draw() {
   const now = state();
   const ready = now.state === 'ready' && seen.you !== null;
+  const more = seen.plans.more || seen.things.more;
   $('said').textContent = ready
-    ? seen.note
+    ? seen.note || (more ? b.MORE : '')
     : now.state === 'shut'
       ? b.shut(now.words)
       : b.SAID[now.state];
-  $('said').dataset.state = ready ? (seen.note ? 'refused' : '') : now.state;
+  $('said').dataset.state = ready ? (seen.note ? 'refused' : more ? 'more' : '') : now.state;
   $('board').hidden = !ready;
   if (!ready) return;
   const plans = b.board({

@@ -4,7 +4,7 @@
 // (WebKit as an iPhone) plan one Saturday and see each other's changes,
 // pushed, and what Ana is typing survives Bo's. The keyboard alone adds a
 // plan, votes and takes it off, focus kept on the page. The page says still syncing, unreachable, a write
-// refused and a paste too long in board.js's words, and names a claimer
+// refused, a paste too long and a board past one read in board.js's words, and names a claimer
 // who joined after it opened. The board's reads and writes are
 // board.test.mjs's laws. Without Playwright or its browser this fails
 // naming the install; it never skips.
@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { launch } from '../../../web/tests/page.mjs';
-import { SAID, TOO_LONG, total, unsaved } from '../board.js';
+import { MORE, SAID, TOO_LONG, total, unsaved } from '../board.js';
 import { serve } from './standin.mjs';
 
 const WAIT = { timeout: 15_000 };
@@ -277,6 +277,34 @@ test('a claim by someone who joined after the page opened shows their name (chro
     await standin.set({});
     await p.reads('Picnic', 'Cy: cake');
     traced(p, ['names asked again']);
+    assert.deepEqual(p.errors, []);
+  } finally {
+    await close();
+    standin.stop();
+  }
+});
+
+test('a board past what one read gives says so (chromium)', async () => {
+  const standin = await serve();
+  const { context, close } = await launch('chromium', OPEN);
+  try {
+    const p = await open(context, standin.at);
+    await p.shown();
+    await p.page.getByLabel('What').fill('Picnic');
+    await p.page.getByRole('button', { name: 'Add it to the board' }).click();
+    await p.plan('Picnic').waitFor(WAIT);
+    await p.says('');
+    // 1,001 things on it, as many people's pastes would make over a season.
+    const [{ rows }] = await standin.db.run([{ sql: 'SELECT id FROM plans' }]);
+    await standin.db.run(
+      Array.from({ length: 1001 }, (_, i) => ({
+        sql: 'INSERT INTO things (plan, thing, words, off) VALUES (?, ?, ?, 0)',
+        params: [rows[0].id, `thing ${i}`, `thing ${i}`],
+      })),
+    );
+    await standin.set({});
+    await p.says(MORE);
+    traced(p, ['things: more rows than one read gives']);
     assert.deepEqual(p.errors, []);
   } finally {
     await close();

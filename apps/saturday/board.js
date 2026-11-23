@@ -12,12 +12,14 @@ ORDER BY p.at, p.title, p.id`;
 /**
  * The things to bring and the claims, one list, each row saying which it
  * is: the things by their key, the trimmed lower case of their words, so
- * "chips" comes before "Ice"; the claims by their ID.
+ * "chips" comes before "Ice"; the claims by their ID. Only the plans on
+ * the board's, so a plan taken off spends none of the rows a read gives.
  */
 export const THINGS = `SELECT 'thing' AS kind, plan, thing AS id, words, NULL AS person_key
-FROM things WHERE off IS NOT 1
+FROM things WHERE off IS NOT 1 AND plan IN (SELECT id FROM plans WHERE off IS NOT 1)
 UNION ALL
-SELECT 'claim', plan, id, what, person_key FROM claims WHERE withdrawn IS NOT 1
+SELECT 'claim', plan, id, what, person_key FROM claims
+WHERE withdrawn IS NOT 1 AND plan IN (SELECT id FROM plans WHERE off IS NOT 1)
 ORDER BY plan, kind DESC, id`;
 
 /** The plans this person voted for: read with their key, after each change to the totals. */
@@ -139,6 +141,9 @@ export const SAID = {
 export const shut = (words) => `The board didn’t open: ${words}`;
 /** Something the page tried to save and couldn't, in the route's words. */
 export const unsaved = (what, words) => `${what} didn’t go through: ${words}`;
+/** Said while a read gave its most rows and had more: the board shown is not all of it. */
+export const MORE =
+  'The board has more than one read can show, so some of it isn’t listed. Take off plans that are done.';
 /** Why, where the route gave no words of its own. */
 export const NONE = 'None of your group’s computers answered.';
 export const answeredWith = (status) => `Your group’s computer answered ${status}.`;
