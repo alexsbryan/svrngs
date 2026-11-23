@@ -1047,4 +1047,15 @@ Windows.
     - Then mark the row done with `needs-human` for the operator's
       morning read: the full gate can't exit 0 on these fragile cases on
       main either.
-    - If main passes, it's specific to this revision: diagnose it.
+    - **If main passes** (QA's correction): one green run at main does
+      not make an intermittent miss specific to this revision. Report
+      the attribution as unresolved. Then use per-test overlap or load
+      traces, or a narrow same-image comparison of the changed Home
+      scenario's contribution, before assigning a cause.
+      - The branch's +173 lines in `browser/main.rs` aren't +173 lines
+        of work: the new Run and Share scenario is `#[ignore]` in the
+        default tier. The already-running-app test does add two real
+        confirmation clicks.
+    - Judge the 4 s bar and the WKPage abort separately: 1 in 6 against 0
+      in 6 is too little to attribute.
+    - Never repeat until green, and never qualify on a red gate.
