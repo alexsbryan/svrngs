@@ -1054,10 +1054,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # sets can't end apart by arrival order. Its pass cut 7 first (one refusal's
 # per-type words, a wrapped signature); the rest is the column-type rule.
 # The cap to 27,188. The pool: +43 drawn, +57 and +10 left.
+# (2026-11-23) +15 more from the pool for each device's bytes and rows kept
+# as running totals in the transaction that keeps or drops a set, so a write's
+# size-share check reads one row however much the copy keeps (+24, after cuts
+# in held, Room and the trigger loop prune shares). The cap to 27,203. The
+# pool: +58 drawn, +42 and +10 left.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 27188,
+    ".": 27203,
 
     "js": 8751,
 
