@@ -34,6 +34,10 @@ change(bound, '    let fresh = || {\n        let another', '''    if let Some(si
     }
     let fresh = || {
         let another''')
+change(bound, '    let renewed = stands.then_some(()).ok_or(Unsent::Held(hold));', '''    if let Some(signal) = std::env::var_os("SVRNGS_TEST_RACE").map(std::path::PathBuf::from).filter(|p| p.with_extension("judged").exists()) {
+        std::fs::write(signal.with_extension("decided"), if stands { "carried" } else { "refused" }).unwrap();
+    }
+    let renewed = stands.then_some(()).ok_or(Unsent::Held(hold));''')
 
 # The kernel must be sampled after, not during, the fixture's local FD handoff.
 change('svrngs-node/src/uid.rs', '    let scan = scanned(me, raw, port, conn.map(|c| (c.peer, c.local)))?;', '''    if conn.is_some() && std::env::var_os("SVRNGS_TEST_RACE").is_some() {

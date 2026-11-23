@@ -264,19 +264,32 @@ else:
                     until(race.with_suffix('.judged').exists)
                     call('sam', svr, 'unshare', name)
                     race.unlink()
-                    result = reply.result(timeout=15)
+                    try:
+                        result = reply.result(timeout=15)
+                    except http.client.RemoteDisconnected:
+                        # Alex's Play address can close before the door answers.
+                        result = ('disconnected', '')
+                verdict = race.with_suffix('.decided')
+                until(lambda: verdict.exists() and verdict.stat().st_size)
+                decision = verdict.read_text()
+                print(f'Withdrawal at door: {decision}')
+                assert decision == ('carried' if plant else 'refused')
+                if plant:
+                    until(lambda: count()[0] > received[0])
                 same = not lend.exists()
             else:
                 result = request()
                 same = lend.read_bytes() == saved
             got = tuple(a - b for a, b in zip(count(), received))
-            print(f'{control}: HTTP {result[0]}; bytes (app,foreign)={got}; state unchanged={same}')
+            status = 'disconnected' if result[0] == 'disconnected' else f'HTTP {result[0]}'
+            print(f'{control}: {status}; bytes (app,foreign)={got}; state unchanged={same}')
             if plant:
-                assert result == expected and sum(got) > 0, 'plant did not exercise its targeted refusal'
+                assert (result == expected or result[0] == 'disconnected') and sum(got) > 0, 'plant did not exercise its targeted refusal'
                 print('RED: forwarding occurred despite the violated invariant')
                 raise SystemExit(5)
-            assert result[0] == 502 and got == (0, 0) and same, 'refusal did not hold'
-            assert ('changed' if control == 'changed' else 'didn’t choose') in result[1], result
+            assert result[0] in (502, 'disconnected') and got == (0, 0) and same, 'refusal did not hold'
+            if result[0] == 502:
+                assert ('changed' if control == 'changed' else 'didn’t choose') in result[1], result
             if stray:
                 stray.terminate()
                 stray.wait(10)
