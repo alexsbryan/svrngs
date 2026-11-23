@@ -762,7 +762,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     `svrngs-keeper-test-*`, removed at the end, and no reboot. Each case
     red first, then green.
 
-- [ ] avail-mac-plist-read — depends [avail-run-mac-renew] — ONE UNIT: the node reads its own Mac login plist by text, a blocker for qualifying Mac renewal (QA oc-cruu42, 2026-11-23).
+- [x] avail-mac-plist-read 59b344054 — depends [avail-run-mac-renew] — ONE UNIT: the node reads its own Mac login plist by text, a blocker for qualifying Mac renewal (QA oc-cruu42, 2026-11-23).
   - `crates/svrngs/src/cli.rs:1205–1210` (`kept_over`, from 68291fc0)
     splits the plist's text on `SVRNGS_DIR`, and so needs the literal
     `<key>SVRNGS_DIR</key><string>` spelling of `web/install.sh`.
