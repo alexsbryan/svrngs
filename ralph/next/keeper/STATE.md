@@ -687,6 +687,52 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     shareable while it runs, as today.
 
   check: B2's Mac twins, each planted, on beefymac.
+  - **Answer to the park** (keeper-lead, with QA oc-cruu42's allowance,
+    2026-11-23).
+    - **The whole row may add +105 counted and +0 JavaScript** since
+      `d621e4c9`. That leaves 21 to the ceiling for avail-ship.
+    - Over that, the row is deferred, not weakened (see the end).
+    - Don't take `/tmp/opencode/avail-run-mac-renew.patch` wholesale.
+  - **Keep the door's own live read.** The keeper's `lsof`/`ps`
+    `owns(port, pid)` proves Run's status. It does not prove the accepted
+    connection, or the PID and start time on the forwarding path. Don't
+    run the keeper's JSON as a subprocess on each dial. Reuse:
+    - the node's libproc lineage;
+    - its `launchctl` reader;
+    - the shared binding check;
+    - the conditional publication.
+  - **Cut general launch-agent discovery first.** The baseline is jobs
+    svrngs started.
+    - Look up one exact keeper label, from the reviewed Run or Share name,
+      and validate that label's own registered plist. The name is only a
+      lookup hint, never authority.
+    - Defer agents a user wrote or renamed, if that saves the list and its
+      parser.
+  - **One witness for every renewal grant.** Share, and any reapprove path
+    that writes a renewal grant, use the same fresh witness (listener,
+    taker and plist) before the save. Or make the legacy reapprove
+    (`surface.rs:215–219`, `cli.rs:2013–2018`) instance-only, with a way
+    back through a verified Share. Never a second, unwitnessed grant path.
+  - **To qualify:**
+    - the first Share on a verified login start chain (running alone is
+      not login registration);
+    - after the native agent restarts, Alex's same address and data, with
+      no reapproval;
+    - independent red, then green, for each refusal: a changed plist, a
+      foreign holder, a foreign taker, held, and withdrawn. Each gives zero
+      bytes and no widened state.
+  - **Words:**
+    - neutral (for example "service", not "systemd unit", on a Mac);
+    - no Mac container witness;
+    - only isolated scratch labels and accounts, never the operator's
+      `sh.svrnme.svrngs`.
+    - The packaged reboot and sign-in remain HUMAN-release-hosts'.
+  - **If the safe slice cannot fit +105:** defer unattended Mac renewal.
+    Don't ship a weaker witness. Record, in the row and in
+    KEEP_IT_RUNNING_RELEASE, that Mac sharing for the current run only is
+    a scope downgrade from the agreed native parity bar, not a qualified
+    release. Then mark the row done with `needs-human` for the operator's
+    morning read.
 
 - [x] avail-run-mac-containers — depends [avail-run-mac-renew] — DEFERRED, not built (QA oc-cruu42's recommendation, adopted overnight 2026-11-23, for the operator to reverse). Managed Mac containers add the Podman machine's lifecycle, and an endpoint-identity proof beyond native macOS. A Mac container stays shareable while it runs. The native baseline on Linux and macOS is unchanged. No commit.
 
