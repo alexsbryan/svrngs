@@ -607,7 +607,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     - a busy or failed Run that publishes nothing;
     - one Start and Stop.
 
-- [ ] avail-run-stop-gap — depends [avail-run-containers] — ONE UNIT (keeper): a Stop during the wrapper's restart gap leaves the pod serving (QA oc-cruu42 at b94aa922).
+- [x] avail-run-stop-gap cc33fbc9c — depends [avail-run-containers] — ONE UNIT (keeper): a Stop during the wrapper's restart gap leaves the pod serving (QA oc-cruu42 at b94aa922).
   - `serve-card … --stop` with no MAINPID returns early. `KillMode=process`
     leaves the pod behind on purpose, so Stop pressed after the wrapper
     dies, and before systemd restarts it, would leave Actual serving after
