@@ -111,16 +111,8 @@ fn a_copied_file_is_found_made_again_and_healed_by_twins() {
         ana.copied(),
         "Ana's file found copied by the copy's set above her versions"
     );
-    assert_eq!(
-        write(&ana, put("c9", "x")),
-        Err(Refused::Copied("board".into())),
-        "her writes refused, saying why"
-    );
     let site = ana.ask().unwrap();
-    let held = ana_states.remake(ana.clone()).unwrap();
-    assert!(held.copied(), "never made again under a live connection");
-    drop(held);
-    let ana = ana_states.remake(ana).unwrap();
+    ana_states.remake(&ana).unwrap();
     assert!(!ana.copied(), "made again");
     let after = handed(&ana);
     assert_ne!(
@@ -178,7 +170,7 @@ fn a_database_made_again_keeps_its_rows_marks_and_sets() {
         assert_eq!(ana.missing(&Default::default(), 4 << 20).unwrap().sets, kept);
         assert!(!ana.syncing(), "its synced flag");
     };
-    let ana = ana_states.remake(ana).unwrap();
+    ana_states.remake(&ana).unwrap();
     same(&ana);
     drop((ana, ana_states));
     let ana = board(&states(dir.path(), 1));
@@ -201,11 +193,56 @@ fn a_restore_that_fails_leaves_the_file_as_it_was() {
     write(&ana, put("c1", "milk")).unwrap();
     let asked = ana.ask().unwrap();
     std::fs::create_dir(dir.path().join("state/g/board.db.new")).unwrap();
-    assert!(ana_states.remake(ana).is_err(), "the restore refused");
+    assert!(ana_states.remake(&ana).is_err(), "the restore refused");
     let milk = json!([{ "id": "c1", "title": "milk" }]);
     let ana = board(&ana_states);
     assert_eq!((cards(&ana), ana.ask().unwrap()), (milk.clone(), asked.clone()));
     drop((ana, ana_states));
     let ana = board(&states(dir.path(), 1));
     assert_eq!((cards(&ana), ana.ask().unwrap()), (milk, asked));
+}
+
+/// **A copied file is made again while its person's page holds it**
+/// (svrn-docs `app-state-diligence/invariants-2026-11-22/` §2.2, finding
+/// (c)): Ana's file is copied to another computer of her key, which writes
+/// above her versions, and her copy finds itself copied, while her page
+/// holds her database and listens to it. Made again then, her page's own
+/// handle has the new file: not copied, her card on it, its next write
+/// taken at a site of its own, and the page told it changed; the copy's next
+/// call brings its card, at the site she retired. Plant, watched
+/// failing: the wait for no other holder (her page's write refused `Copied`
+/// for as long as it holds the database).
+#[test]
+fn a_copied_file_is_made_again_while_its_person_s_page_holds_it() {
+    let (ana_dir, copy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ana_states = states(ana_dir.path(), 1);
+    let ana = ana_states.carry("g", "board", SCHEMA).unwrap();
+    write(&ana, put("c1", "milk")).unwrap();
+    drop(ana);
+    ana_states.close("g");
+    let at = |dir: &Path| dir.join("state/g/board.db");
+    std::fs::create_dir_all(at(copy_dir.path()).parent().unwrap()).unwrap();
+    std::fs::copy(at(ana_dir.path()), at(copy_dir.path())).unwrap();
+    let copy_states = states(copy_dir.path(), 1);
+    let copy = board(&copy_states);
+    write(&copy, put("c2", "tea")).unwrap();
+    let page = board(&ana_states);
+    // Its subscription's own hold, beside the page's and this computer's.
+    let (subscription, told) = (page.clone(), page.watch());
+    call(&copy, &page);
+    assert!(page.copied(), "found copied");
+    let site = page.ask().unwrap().marks;
+    ana_states.remake(&page).unwrap();
+    assert!(!page.copied(), "the page's own handle has the new file");
+    assert!(told.has_changed().unwrap(), "and the page is told");
+    write(&page, put("c3", "pie")).unwrap();
+    call(&copy, &page);
+    let marks = page.ask().unwrap().marks;
+    assert!(
+        marks.keys().any(|s| !site.contains_key(s)),
+        "a site of its own: {marks:?}"
+    );
+    let all = json!([{ "id": "c1", "title": "milk" }, { "id": "c2", "title": "tea" }, { "id": "c3", "title": "pie" }]);
+    assert_eq!(cards(&page), all);
+    assert_eq!(cards(&subscription), all, "the subscription's hold, the same file");
 }

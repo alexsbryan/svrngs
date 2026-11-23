@@ -639,8 +639,8 @@ impl Folders {
         // One found copied from another computer's is made again, once
         // nothing else holds it, restored whole (svrngs-db `remake`).
         match db {
-            Ok(db) if db.copied() => Ok(self.host.states.remake(db)),
-            Ok(db) => Ok(self.host.states.widen(db, &schema)),
+            Ok(db) if db.copied() => Ok(self.host.states.remake(&db).map(|()| db)),
+            Ok(db) => Ok(self.host.states.widen(&db, &schema).map(|()| db)),
             db => Ok(db),
         }
     }
@@ -670,10 +670,7 @@ impl Folders {
         for app in kinds.into_iter().filter_map(|k| AppName::parse(k).ok()) {
             let kept = (self.database((&app, group), (&people, &self.host.actor))).await;
             tracing::debug!(target: "folder", group, %app, refused = ?kept.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database kept here, as the files that run as this computer's person hold its schema; or why not");
-            // Let go of first, as a copy is made wider only once nothing holds it.
-            let opened = matches!(kept, Ok(Ok(_)));
-            drop(kept);
-            for key in people.keys().filter(|_| opened) {
+            for key in people.keys().filter(|_| matches!(kept, Ok(Ok(_)))) {
                 let wide = self.database((&app, group), (&people, key)).await;
                 tracing::debug!(target: "folder", group, %app, key, refused = ?wide.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database made wider by the version a member runs, where it adds to it; or why not");
             }
@@ -925,12 +922,11 @@ async fn subscribed(
         async move {
             let (mut changed, mut newer, mut now, last) = at;
             loop {
-                // A database to be made wider ends its subscriptions, so none
-                // holds it (svrngs-db `widen`): the page's next ask is of the
-                // wider one. And one past its person's most here ends.
+                // One past its person's most here ends.
                 let opened = newer.borrow().get(&asker).copied();
-                let past = opened.is_some_and(|n| n - nth >= SUBSCRIPTIONS_MOST);
-                (!db.retiring() && !past).then_some(())?;
+                opened
+                    .is_none_or(|n| n - nth < SUBSCRIPTIONS_MOST)
+                    .then_some(())?;
                 let rows = now.take().filter(|r| last.as_ref() != Some(r));
                 if let Some(rows) = rows {
                     let event = Ok::<_, std::convert::Infallible>(format!("data: {rows}\n\n"));

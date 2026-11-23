@@ -41,9 +41,10 @@ use rusqlite::{Connection, OptionalExtension as _, Row, Transaction, Transaction
 use serde::{Deserialize, Serialize};
 use svrngs_core::set::{Site, site};
 
+use crate::form::Table;
 use crate::parse::{Change, Unfit, Valid, fit, parse};
 pub use crate::wire::{Device, Head, Hex, Seq, Set, Sig};
-use crate::{Db, Refused, fault, owned};
+use crate::{Db, File, Refused, fault, owned};
 use eudoxia_community::db::Record;
 
 impl ToSql for Seq {
@@ -346,9 +347,9 @@ impl Db {
     /// site's own computer, once that copy counts a set above it. A set
     /// refused holds no value here and is kept as it is. How many it
     /// dropped.
-    fn prune(&self, conn: &Connection) -> rusqlite::Result<usize> {
+    fn prune(&self, conn: &Connection, tables: &BTreeMap<String, Table>) -> rusqlite::Result<usize> {
         let clock = |t: &String| format!("\"{}__crsql_clock\"", t.replace('"', "\"\""));
-        let stands = self.tables.keys().map(|t| {
+        let stands = tables.keys().map(|t| {
             format!(
                 "SELECT 1 FROM {} c WHERE c.site_id = o.ordinal AND c.db_version = s.seq",
                 clock(t)
@@ -389,7 +390,7 @@ impl Db {
     /// would refuse the set, or Eudoxia's rule, by the record `binds`, would
     /// not take this computer's change to an owned row (`owned.rs`), so the
     /// writer's copy never takes what no other copy would.
-    pub(crate) fn seal(&self, conn: &Connection, binds: &Binds) -> Result<Option<Seq>, Refused> {
+    pub(crate) fn seal(&self, (conn, file): (&Connection, &File), binds: &Binds) -> Result<Option<Seq>, Refused> {
         let seq: Seq = conn
             .query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0))
             .map_err(fault)?;
@@ -398,7 +399,7 @@ impl Db {
         let reused = "SELECT ?2 <= coalesce((SELECT mark FROM svrngs_marks WHERE site = ?1), 0) \
             OR EXISTS (SELECT 1 FROM svrngs_sets WHERE site = ?1 AND seq = ?2)";
         let reused: bool = conn
-            .query_row(reused, params![self.site, seq], |r| r.get(0))
+            .query_row(reused, params![file.site, seq], |r| r.get(0))
             .map_err(fault)?;
         tracing::debug!(target: "state", group = self.group, app = self.app, seq = seq.get(), rows = made.len(), reused, "state: a write's rows sealed as one set at its version, none when it changed nothing, or refused at a version this site's sets hold");
         if reused {
@@ -411,8 +412,8 @@ impl Db {
         if made.is_empty() {
             return Ok(None);
         }
-        let made = fit(made, &self.tables).map_err(Refused::Unkept)?;
-        owned::mine(&made, &self.tables, binds, &self.device)?;
+        let made = fit(made, &file.tables).map_err(Refused::Unkept)?;
+        owned::mine(&made, &file.tables, binds, &self.device)?;
         let changes = postcard::to_allocvec(&made.0).expect("changes are written in memory");
         // In this computer's share of the app's database, as every copy
         // counts it at apply, so no copy keeps a set the others drop.
@@ -423,11 +424,11 @@ impl Db {
         let set = Set::signed(
             &self.key,
             (&self.group, &self.app),
-            (self.nonce, seq, self.schema),
+            (file.nonce, seq, file.schema),
             changes,
         );
-        keep(conn, (&set, self.site), None, Kept::Taken).map_err(fault)?;
-        self.prune(conn).map_err(fault)?;
+        keep(conn, (&set, file.site), None, Kept::Taken).map_err(fault)?;
+        self.prune(conn, &file.tables).map_err(fault)?;
         Ok(Some(seq))
     }
 
@@ -533,6 +534,7 @@ impl Db {
         let mut sets: Vec<&Set> = call.sets.iter().collect();
         sets.sort_by(|a, b| a.head.cmp(&b.head));
         let mut conn = self.conn();
+        let file = conn.file.clone();
         // Rolled back as it drops on any `?` below, so a call that fails
         // leaves no transaction open (rusqlite 0.41 `transaction.rs:243`).
         let mut tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
@@ -541,7 +543,7 @@ impl Db {
         let twins: BTreeSet<Place> = call.ask.twins.iter().map(|(place, _)| *place).collect();
         for set in sets {
             let place = (self.site_of(&set.head), set.head.seq);
-            let took = self.take(&mut tx, (set, place.0), (&mut room, &twins)).unwrap_or_else(|e| {
+            let took = self.take((&mut tx, &file), (set, place.0), (&mut room, &twins)).unwrap_or_else(|e| {
                 tracing::warn!(target: "state", group = self.group, app = self.app, device = %set.head.device, seq = set.head.seq.get(), %e, "state: a set this copy couldn't apply, its mark held");
                 Took::Fault
             });
@@ -552,14 +554,14 @@ impl Db {
             out.push((place, took));
         }
         let marks = call.ask.marks.iter();
-        let adopting = marks.filter(|(s, _)| call.full && **s != self.site && !stopped.contains(*s));
+        let adopting = marks.filter(|(s, _)| call.full && **s != file.site && !stopped.contains(*s));
         tracing::debug!(target: "state", group = self.group, app = self.app, full = call.full, stopped = stopped.len(), "state: a full call's marks adopted as far as its word goes, but for this copy's own site, and each site's with a set that faulted here, failed its signature, or isn't bound or schemed here yet");
         for (s, m) in adopting {
             self.claimed(&tx, (*s, *m), (from, call.synced)).map_err(fault)?;
         }
         let took = out.iter().any(|(_, t)| matches!(t, Took::Taken | Took::Twin));
         if took {
-            self.prune(&tx).map_err(fault)?;
+            self.prune(&tx, &file.tables).map_err(fault)?;
         }
         tx.commit().map_err(fault)?;
         let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
@@ -656,6 +658,7 @@ impl Db {
     /// in one transaction, so two prepares at once hand two places.
     pub(crate) fn place(&self, phone: &str) -> rusqlite::Result<(u64, u64)> {
         let mut conn = self.conn();
+        let nonce = conn.file.nonce;
         let tx = conn.transaction_with_behavior(Immediate)?;
         let was = "SELECT epoch, handed FROM svrngs_homes WHERE device = ?1";
         let was = tx.query_row(was, [phone], |r| Ok((r.get(0)?, r.get(1)?))).optional()?;
@@ -663,7 +666,7 @@ impl Db {
         // file made again with a fresh one (`States::remake`) hands places at
         // sites the file it was copied from never hands; below 2^52, so a
         // page's JSON keeps it whole.
-        let first = u64::from_be_bytes(self.nonce[..8].try_into().expect("a nonce is 16 bytes")) >> 12;
+        let first = u64::from_be_bytes(nonce[..8].try_into().expect("a nonce is 16 bytes")) >> 12;
         let (epoch, handed): (u64, u64) = was.unwrap_or((first, 0));
         let site = site(
             &self.group,
@@ -726,7 +729,7 @@ impl Db {
     /// set is kept and counted together or not at all.
     fn take(
         &self,
-        tx: &mut Transaction,
+        (tx, file): (&mut Transaction, &File),
         (set, site): (&Set, Site),
         (room, twins): (&mut Room, &BTreeSet<Place>),
     ) -> rusqlite::Result<Took> {
@@ -755,7 +758,7 @@ impl Db {
         // `app-state-diligence/sync-simplify-2026-11-22/`, change 5): set
         // aside, its mark held, and this file flagged to be made again
         // (`States::remake`), after which the set is another site's here.
-        if site == self.site && set.head.seq.get() > mark {
+        if site == file.site && set.head.seq.get() > mark {
             tracing::warn!(target: "state", group = self.group, app = self.app, seq = set.head.seq.get(), mark, "state: a set at this copy's own site above every version it sealed, so this file was copied from another computer's: it is made again");
             tx.execute("UPDATE svrngs_db SET copied = 1", [])?;
             self.copied.store(true, Relaxed);
@@ -784,16 +787,16 @@ impl Db {
         // good, as a copy that holds that schema takes it. One under another
         // schema that names only what this copy holds, a narrower version's,
         // is judged as any.
-        let judged = parse(&set.changes, &self.tables);
+        let judged = parse(&set.changes, &file.tables);
         let lacks = |u: &Unfit| matches!(u, Unfit::NoTable(_) | Unfit::NoColumn(_));
-        if set.head.schema != self.schema && judged.as_ref().is_err_and(lacks) {
+        if set.head.schema != file.schema && judged.as_ref().is_err_and(lacks) {
             return Ok(Took::NotYet);
         }
         let judged = judged.map_err(|_| Kept::Refused);
         // The owned rows it changes, by Eudoxia's rule (`owned.rs`): one that
         // waits for the record's cut of a row's person is dropped as one not
         // bound yet is, and sent again by marks once the Remove lands here.
-        let Some(judged) = owned::kept(judged, &self.tables, room.binds, device) else {
+        let Some(judged) = owned::kept(judged, &file.tables, room.binds, device) else {
             return Ok(Took::NotYet);
         };
         if judged.is_ok() && !sigs.is_empty() {

@@ -9,7 +9,6 @@
 //! node or route. Each test names the plant it was watched failing on.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use rusqlite::Connection;
 use serde_json::{Value, json};
@@ -101,7 +100,7 @@ fn a_saved_edit_outlasts_an_upgrade_and_a_restart_then_syncs() {
     write(&ana, json!({ "id": "c1", "title": "milk" })).unwrap();
     write(&ana, json!({ "id": "c1", "title": "tea" })).unwrap();
     let asked = ana.ask().unwrap();
-    let ana = ana_states.widen(ana, V2).unwrap();
+    ana_states.widen(&ana, V2).unwrap();
     let tea = json!([{ "id": "c1", "title": "tea", "note": null }]);
     assert_eq!(rows(&ana, "SELECT * FROM cards"), tea, "the saved edit, made wider");
     assert_eq!(ana.ask().unwrap(), asked, "her mark and what she keeps");
@@ -121,7 +120,7 @@ fn a_saved_edit_outlasts_an_upgrade_and_a_restart_then_syncs() {
         site.iter().all(|(s, m)| theirs.get(s).is_none_or(|t| t < m)),
         "Bo's mark for her site unmoved past it"
     );
-    let bo = bo_states.widen(bo, V2).unwrap();
+    bo_states.widen(&bo, V2).unwrap();
     call(&ana, &bo);
     let both = rows(&ana, "SELECT * FROM cards ORDER BY id");
     assert_eq!(rows(&bo, "SELECT * FROM cards ORDER BY id"), both);
@@ -146,7 +145,7 @@ fn a_copy_made_wider_is_the_copy_made_from_the_wider_schema() {
     for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c1", "tea")] {
         write(&ana, json!({ "id": id, "title": title })).unwrap();
     }
-    let ana = ana_states.widen(ana, V2).unwrap();
+    ana_states.widen(&ana, V2).unwrap();
     let fresh_states = states(fresh_dir.path(), 2);
     let fresh = fresh_states.open("g", "board", Some(V2)).unwrap();
     call(&ana, &fresh);
@@ -178,32 +177,38 @@ fn a_version_that_moves_a_column_makes_no_copy_wider() {
     let ana = ana_states.carry("g", "board", V1).unwrap();
     write(&ana, json!({ "id": "c1", "title": "milk" })).unwrap();
     let moved = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, note TEXT, title TEXT);";
-    let refused = ana_states.widen(ana.clone(), moved).err();
+    let refused = ana_states.widen(&ana, moved).err();
     assert_eq!(refused, Some(Refused::Schema(Unmade::Changed("cards.title".into()))));
-    let ana = ana_states.open("g", "board", None).unwrap();
     write(&ana, json!({ "id": "c2", "title": "eggs" })).unwrap();
     assert_eq!(rows(&ana, "SELECT * FROM cards").as_array().unwrap().len(), 2);
-    let wide = ana_states.widen(ana, V2).unwrap();
-    let same = ana_states.widen(wide.clone(), V1).unwrap();
-    assert!(Arc::ptr_eq(&wide, &same), "an older version adds nothing");
+    ana_states.widen(&ana, V2).unwrap();
+    ana_states.widen(&ana, V1).unwrap();
+    let noted = rows(&ana, "SELECT * FROM cards ORDER BY id");
+    assert_eq!(
+        noted[0]["note"],
+        Value::Null,
+        "an older version adds nothing, and takes nothing away"
+    );
 }
 
-/// **A copy made wider waits for its pages' subscriptions**: while a page
-/// holds Ana's database, it is given back as it is, marked to retire, and
-/// its subscriptions told it changed, so each ends; once none holds it, the
-/// next ask makes it wider. Plant, watched failing: the database not marked
-/// (its subscriptions never told to end).
+/// **A copy is made wider while its page holds it** (svrn-docs
+/// `app-state-diligence/invariants-2026-11-22/` §2.2): Ana's page holds her
+/// database and listens to it. Made wider then, under the database's own
+/// lock, the page's own handle has the wider file, its card kept, its note
+/// written, and the page is told it changed: no subscription ends, and none
+/// is waited on. Plant, watched failing: the wait for no other holder (the
+/// page's handle still on version 1, its note refused).
 #[test]
-fn a_copy_made_wider_waits_for_its_pages_subscriptions() {
+fn a_copy_is_made_wider_while_its_page_holds_it() {
     let dir = tempfile::tempdir().unwrap();
     let ana_states = states(dir.path(), 1);
-    let ana = ana_states.carry("g", "board", V1).unwrap();
-    let (page, told) = (ana.clone(), ana.watch());
-    let held = ana_states.widen(ana, V2).unwrap();
-    assert!(held.retiring() && told.has_changed().unwrap(), "marked, and told");
-    assert!(Arc::ptr_eq(&held, &page), "given back as it is");
-    drop(page);
-    let ana = ana_states.widen(held, V2).unwrap();
-    assert!(!ana.retiring());
-    write(&ana, json!({ "id": "c1", "title": "milk", "note": "one" })).unwrap();
+    let page = ana_states.carry("g", "board", V1).unwrap();
+    write(&page, json!({ "id": "c1", "title": "milk" })).unwrap();
+    // Its subscription's own hold, beside the page's and this computer's.
+    let (subscription, told) = (page.clone(), page.watch());
+    ana_states.widen(&page, V2).unwrap();
+    assert!(told.has_changed().unwrap(), "the page told");
+    write(&page, json!({ "id": "c2", "title": "tea", "note": "one" })).unwrap();
+    let both = json!([{ "id": "c1", "title": "milk", "note": null }, { "id": "c2", "title": "tea", "note": "one" }]);
+    assert_eq!(rows(&subscription, "SELECT * FROM cards ORDER BY id"), both);
 }

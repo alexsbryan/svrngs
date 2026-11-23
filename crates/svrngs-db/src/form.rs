@@ -25,7 +25,7 @@ pub const FORM: &str = "A write goes as {write: [op, ...]}, each op one of \
 
 /// A table as `pragma_table_info` names it: its columns, its key's in the
 /// key's order, and those that are NOT NULL.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Table {
     pub columns: Vec<String>,
     pub key: Vec<String>,

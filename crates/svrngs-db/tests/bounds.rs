@@ -237,7 +237,7 @@ fn a_file_made_again_counts_its_retired_sites_sets_in_its_share() {
     for (id, title) in [("c1", "milk"), ("c2", "eggs"), ("c3", "jam")] {
         write(&ana, id, title);
     }
-    let ana = states.remake(ana).unwrap();
+    states.remake(&ana).unwrap();
     assert_eq!(ana.ask().unwrap().twins.len(), 3, "the retired site's sets, named");
     let other = States::new(&dir.path().join("other"), key(1));
     let other = other.open("g", "board", Some(SCHEMA)).unwrap();

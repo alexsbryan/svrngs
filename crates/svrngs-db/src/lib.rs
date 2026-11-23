@@ -134,12 +134,6 @@ pub enum Refused {
     /// A write whose set no other computer would take: why, and what to do.
     #[error("This write isn't kept, since no other computer would take it: {0}.")]
     Unkept(Unfit),
-    /// A write to the app named, whose file here was found copied from
-    /// another computer's and is being made again (`States::remake`).
-    #[error(
-        "This copy of {0} was copied from another computer’s, so svrngs is making it again. Try again in a moment."
-    )]
-    Copied(String),
     /// A write past this computer's share of the app's database, of the
     /// MiB named (`sync.rs`, `SIZE_MOST`).
     #[error(
@@ -163,7 +157,6 @@ impl Refused {
             Self::Unkept(_) => (422, "unkept"),
             Self::Schema(_) => (422, "schema"),
             Self::NotYours(_) | Self::NotYetGone(_) => (403, "not-yours"),
-            Self::Copied(_) => (503, "copied"),
             Self::Full(_) => (507, "full"),
         }
     }
@@ -285,7 +278,7 @@ impl States {
         }
         std::fs::create_dir_all(&dir).map_err(fault)?;
         let db = Arc::new(Db::open(&path, (group, app), (schema, root), key)?);
-        tracing::debug!(target: "state", group, app, tables = ?db.tables, "state: an app's database opened, its schema applied and its tables made CRRs");
+        tracing::debug!(target: "state", group, app, "state: an app's database opened, its schema applied and its tables made CRRs");
         dbs.insert((group.into(), app.into()), db.clone());
         Ok(db)
     }
@@ -299,9 +292,9 @@ impl States {
     /// leaves behind, since their first epoch is drawn from the new nonce
     /// (`sync.rs`, `place`), so the file it was copied from, which hands
     /// them on, and this one never hand one place twice.
-    pub fn remake(&self, db: Arc<Db>) -> Result<Arc<Db>, Refused> {
+    pub fn remake(&self, db: &Db) -> Result<(), Refused> {
         tracing::warn!(target: "state", group = db.group, app = db.app, "state: a database found copied from another computer's is made again with a fresh nonce");
-        let (old, nonce) = (db.site, drawn()?);
+        let (old, nonce) = (db.conn().file.site, drawn()?);
         let new = svrngs_core::set::site(&db.group, &db.app, db.device.as_str(), &nonce);
         self.restored(db, |conn| {
             let tables = tables_of(conn)?;
@@ -333,20 +326,18 @@ impl States {
     /// it adds to what `db` holds: its file restored whole
     /// ([`Self::restored`]) and `schema` made on the copy, a wider version's
     /// tables, columns and indexes, each as a copy made from `schema` has
-    /// it (`schema.rs`, `widen`). `db` as it is where `schema` adds nothing,
-    /// and refused where it doesn't only add. Its pages' subscriptions are
-    /// ended first ([`Db::retiring`]), as each holds it; until they have,
-    /// it is given back as it is, to widen at a later ask.
-    pub fn widen(&self, db: Arc<Db>, schema: &str) -> Result<Arc<Db>, Refused> {
+    /// it (`schema.rs`, `widen`). Nothing where `schema` adds nothing, and
+    /// refused where it doesn't only add.
+    pub fn widen(&self, db: &Db, schema: &str) -> Result<(), Refused> {
         let hash = svrngs_core::set::schema(schema);
-        let adds = hash != db.schema && schema::adds(&db.conn(), schema)?;
+        let conn = db.conn();
+        let adds = hash != conn.file.schema && schema::adds(&conn, schema)?;
+        drop(conn);
         tracing::debug!(target: "state", group = db.group, app = db.app, adds, "state: a version's schema asked of a database, made wider where it adds to it");
-        if !adds {
-            return Ok(db);
+        match adds {
+            true => self.restored(db, |conn| schema::widen(conn, schema)),
+            false => Ok(()),
         }
-        db.retiring.store(true, Relaxed);
-        db.changed.send_modify(|n| *n += 1);
-        self.restored(db, |conn| schema::widen(conn, schema))
     }
 
     /// `db`'s file restored whole, `change` made on the restored copy, and
@@ -354,45 +345,48 @@ impl States {
     /// `app-state-diligence/e-build-2026-11-22/`, from the operator's review
     /// of `41d94397`): every row, clock, mark, kept set and handed place
     /// carried as the file holds them, never replayed from the sets it
-    /// keeps, which prune has thinned. Only once nothing but this
-    /// computer's map holds `db`, so no write lands between the copy and the
-    /// swap, else given back as it is, to restore at a later open. On any
-    /// failure the old file stays, open as it was, and the copy goes.
-    fn restored(
-        &self,
-        db: Arc<Db>,
-        change: impl FnOnce(&Connection) -> Result<(), Refused>,
-    ) -> Result<Arc<Db>, Refused> {
-        let at = (db.group.clone(), db.app.clone());
-        let mut dbs = self.dbs.lock().expect("the databases' lock");
-        let held = Arc::strong_count(&db) > 2;
-        let path = self.dir.join(&at.0).join(format!("{}.db", at.1));
+    /// keeps, which prune has thinned. All under `db`'s one lock, so no
+    /// statement runs on the file between the copy and the swap, and every
+    /// holder of `db`, a page's subscription among them, has the new file at
+    /// its next ask, told it changed. On any failure before the swap, the
+    /// old file stays, open as it was, and the copy goes.
+    fn restored(&self, db: &Db, change: impl FnOnce(&Connection) -> Result<(), Refused>) -> Result<(), Refused> {
+        let mut live = db.conn();
+        let (names, path) = (
+            (db.group.as_str(), db.app.as_str()),
+            self.dir.join(&db.group).join(format!("{}.db", db.app)),
+        );
         let copy = path.with_extension("db.new");
         let _ = std::fs::remove_file(&copy);
-        let made = (!held).then(|| {
-            db.conn()
-                .execute("VACUUM INTO ?1", [copy.to_string_lossy()])
+        let made = (|| {
+            live.execute("VACUUM INTO ?1", [copy.to_string_lossy()])
                 .map_err(fault)?;
             change(&Open(Some(Connection::open(&copy).map_err(fault)?)))?;
-            drop(Db::open(&copy, (&at.0, &at.1), (None, false), self.key.clone())?);
+            drop(Db::open(&copy, names, (None, false), self.key.clone())?);
             let closed = !copy.with_extension("db.new-wal").exists();
             closed
                 .then_some(())
                 .ok_or_else(|| fault("the restored copy's WAL stayed open"))
-        });
-        tracing::debug!(target: "state", group = at.0, app = at.1, held, refused = ?made.as_ref().and_then(|m| m.as_ref().err()), "state: a database restored whole into a copy, changed there and opened as this computer's, then put in its place; or left as it was, while a connection holds it or the copy is refused");
-        let Some(Ok(())) = made else {
+        })();
+        tracing::debug!(target: "state", group = db.group, app = db.app, refused = ?made.as_ref().err(), "state: a database restored whole into a copy, changed there and opened as this computer's, then swapped in under its lock; or left as it was, the copy refused");
+        if let Err(e) = made {
             let _ = std::fs::remove_file(&copy);
-            return made.unwrap_or(Ok(())).map(|()| db);
-        };
-        dbs.remove(&at);
-        drop(db);
+            return Err(e);
+        }
+        drop(std::mem::replace(&mut live.open, Open(None)));
         for gone in ["db-wal", "db-shm"] {
             let _ = std::fs::remove_file(path.with_extension(gone));
         }
-        std::fs::rename(&copy, &path).map_err(fault)?;
-        drop(dbs);
-        self.made(&at.0, &at.1, (None, false))
+        // Renamed into place only once whole, and opened again from there,
+        // the old file's own name; a rename that fails leaves the old file.
+        let renamed = std::fs::rename(&copy, &path).map_err(fault);
+        let new = Db::open(&path, names, (None, false), self.key.clone())?;
+        (db.synced).store(new.synced.load(Relaxed), Relaxed);
+        db.copied.store(new.copied(), Relaxed);
+        *live = new.live.into_inner().expect("a lock just made");
+        drop(live);
+        db.changed.send_modify(|n| *n += 1);
+        renamed
     }
 
     /// Each database of `group` this computer has open closed, as it drops,
@@ -436,13 +430,12 @@ pub struct Db {
     pub app: String,
     device: Device,
     key: SigningKey,
-    nonce: svrngs_core::set::Nonce,
-    site: svrngs_core::set::Site,
-    schema: [u8; 32],
+    /// Its file and what the file names, under the one lock every statement
+    /// takes, so a file made again or wider is swapped in whole, under it,
+    /// and every holder of this `Db` has the new one at its next ask (svrn-docs
+    /// `app-state-diligence/invariants-2026-11-22/` §2.2).
     #[expect(clippy::disallowed_types, reason = "one connection, one statement at a time")]
-    conn: std::sync::Mutex<Open>,
-    tables: BTreeMap<String, Table>,
-    gate: Arc<Gate>,
+    live: std::sync::Mutex<Live>,
     changed: watch::Sender<u64>,
     /// Whether it has synced in full once, and whether a set faulted since.
     synced: AtomicBool,
@@ -450,9 +443,6 @@ pub struct Db {
     /// Whether a set sealed by another file of its nonce and key reached it:
     /// it was copied, and is to be made again (`States::remake`).
     copied: AtomicBool,
-    /// Whether it is to be made wider, so a page's subscription ends and a
-    /// new one waits (`States::widen`).
-    retiring: AtomicBool,
     /// Each bound key's share of the ask's rows, and of the database, as
     /// the record gave them at this copy's last call (`sync.rs`, `room`).
     shares: [AtomicU64; 2],
@@ -461,6 +451,37 @@ pub struct Db {
 /// A connection cr-sqlite is loaded on, closed as it drops ([`close`]),
 /// whether its database opened or was refused.
 struct Open(Option<Connection>);
+
+/// A `Db`'s file as it holds it: its connection, the query gate the
+/// connection's handlers read, and what the file names.
+pub(crate) struct Live {
+    open: Open,
+    gate: Arc<Gate>,
+    pub(crate) file: File,
+}
+
+/// What a database's file names: the nonce it was made with, its site, its
+/// schema's hash, and its tables.
+#[derive(Clone)]
+pub(crate) struct File {
+    pub(crate) nonce: svrngs_core::set::Nonce,
+    pub(crate) site: svrngs_core::set::Site,
+    pub(crate) schema: [u8; 32],
+    pub(crate) tables: BTreeMap<String, Table>,
+}
+
+impl std::ops::Deref for Live {
+    type Target = Connection;
+    fn deref(&self) -> &Connection {
+        &self.open
+    }
+}
+
+impl std::ops::DerefMut for Live {
+    fn deref_mut(&mut self) -> &mut Connection {
+        &mut self.open
+    }
+}
 
 impl std::ops::Deref for Open {
     type Target = Connection;
@@ -479,7 +500,7 @@ impl std::ops::DerefMut for Open {
 
 impl Drop for Open {
     fn drop(&mut self) {
-        let conn = self.0.take().expect("a connection is open until it drops");
+        let Some(conn) = self.0.take() else { return };
         let path = conn.path().unwrap_or_default().to_owned();
         let closed = close(conn);
         tracing::debug!(target: "state", path, closed = closed.is_ok(), "state: a database's connection closed as it dropped, cr-sqlite's statements finalized first, or SQLite refused");
@@ -709,34 +730,32 @@ impl Db {
             app: app.into(),
             device: Device::parse(&device).expect("a key is written in lower-case hex"),
             key,
-            nonce,
-            site: derived,
-            schema: hash,
-            conn: open.into(),
-            tables,
-            gate,
+            live: Live {
+                open,
+                gate,
+                file: File {
+                    nonce,
+                    site: derived,
+                    schema: hash,
+                    tables,
+                },
+            }
+            .into(),
             changed: watch::Sender::new(0),
             synced: synced.into(),
             faulted: false.into(),
             copied: copied.into(),
-            retiring: false.into(),
             shares: [AtomicU64::new(u64::MAX), AtomicU64::new(u64::MAX)],
         })
     }
 
-    fn conn(&self) -> std::sync::MutexGuard<'_, Open> {
-        self.conn.lock().expect("the database's lock")
+    fn conn(&self) -> std::sync::MutexGuard<'_, Live> {
+        self.live.lock().expect("the database's lock")
     }
 
     /// Whether this file was found copied, and is to be made again.
     pub fn copied(&self) -> bool {
         self.copied.load(Relaxed)
-    }
-
-    /// Whether this file is to be made wider, so no page's subscription
-    /// holds it ([`States::widen`]).
-    pub fn retiring(&self) -> bool {
-        self.retiring.load(Relaxed)
     }
 
     /// Whether this copy is still to be said syncing: it has never synced in
@@ -757,18 +776,19 @@ impl Db {
         let params = (params.iter().enumerate()).map(|(i, v)| form::value(v, &format!("params[{i}]")));
         let params = params.collect::<Result<Vec<_>, _>>()?;
         let conn = self.conn();
-        self.gate.page.store(true, Relaxed);
+        let gate = conn.gate.clone();
+        gate.page.store(true, Relaxed);
         let prepared = conn.prepare(sql);
-        self.gate.page.store(false, Relaxed);
+        gate.page.store(false, Relaxed);
         let mut stmt = prepared.map_err(said)?;
         tracing::debug!(target: "state", group = self.group, app = self.app, readonly = stmt.readonly(), "state: a page's statement prepared under the authorizer; it runs only if it only reads");
         if !stmt.readonly() {
             return Err(Refused::NotARead);
         }
-        let until = self.gate.now().saturating_add(QUERY_MOST.as_micros() as u64);
-        self.gate.until.store(until, Relaxed);
+        let until = gate.now().saturating_add(QUERY_MOST.as_micros() as u64);
+        gate.until.store(until, Relaxed);
         let ran = rows(&mut stmt, &params);
-        self.gate.until.store(u64::MAX, Relaxed);
+        gate.until.store(u64::MAX, Relaxed);
         tracing::debug!(target: "state", group = self.group, app = self.app, refused = ?ran.as_ref().err(), "state: a page's read answered, or stopped");
         let (rows, more) = ran?;
         Ok(json!({ "rows": rows, "more": more }))
@@ -780,10 +800,10 @@ impl Db {
     /// where it changes an owned row the record `binds` doesn't give this
     /// computer's person (`owned.rs`).
     pub fn write(&self, ops: &Value, binds: &Binds) -> Result<(Value, Option<Seq>), Refused> {
-        let (sealed, count) = self.run(ops, false, |tx, count, _| {
+        let (sealed, count) = self.run(ops, false, |tx, file, count, _| {
             // Its set sealed in its own transaction (APP_STATE §4): refused,
             // the write is rolled back with it.
-            let sealed = self.seal(&tx, binds)?;
+            let sealed = self.seal((&tx, file), binds)?;
             tx.commit().map_err(fault)?;
             Ok((sealed, count))
         })?;
@@ -812,25 +832,25 @@ impl Db {
     /// set. Refused, as a write is, where it changes an
     /// owned row the record `binds` doesn't give the phone's person.
     pub fn prepare(&self, ops: &Value, (phone, binds): (&str, &Binds)) -> Result<Value, Refused> {
-        let (made, stands, count) = self.run(ops, true, |tx, count, stands| {
+        let (made, stands, count, file) = self.run(ops, true, |tx, file, count, stands| {
             let seq = tx.query_row("SELECT crsql_peek_next_db_version()", [], |r| r.get(0));
             let made = self.changes(&tx, seq.map_err(fault)?).map_err(fault)?;
-            Ok((made, stands, count))
+            Ok((made, stands, count, file.clone()))
         })?;
         tracing::debug!(target: "state", group = self.group, app = self.app, rows = made.len(), count, "state: a phone's write prepared and rolled back whole, its rows for its signer, none where it changes nothing");
-        let made = parse::fit(made, &self.tables).map_err(Refused::Unkept)?;
+        let made = parse::fit(made, &file.tables).map_err(Refused::Unkept)?;
         // Its owned rows judged as every copy judges the phone's set again.
         let device = Device::parse(phone).ok_or_else(|| fault("a phone's key is lower-case hex"))?;
-        owned::mine(&made, &self.tables, binds, &device)?;
+        owned::mine(&made, &file.tables, binds, &device)?;
         // A place only for a set, so none is handed that no set fills.
         let place = (!made.0.is_empty())
             .then(|| self.place(phone))
             .transpose()
             .map_err(fault)?;
         let (epoch, next) = place.unzip();
-        let keys: BTreeMap<_, _> = self.tables.iter().map(|(t, table)| (t, &table.key)).collect();
+        let keys: BTreeMap<_, _> = file.tables.iter().map(|(t, table)| (t, &table.key)).collect();
         let changes = STANDARD.encode(postcard::to_allocvec(&made.0).expect("changes are written in memory"));
-        let schema = STANDARD.encode(self.schema);
+        let schema = STANDARD.encode(file.schema);
         let text = json!({ "ops": ops, "changes": changes, "schema": schema, "keys": keys, "count": count, "stands": stands, "epoch": epoch, "seq": next });
         let text = text.to_string();
         let sig = svrngs_core::sign_message(&self.key, &svrngs_core::set::prepared(&self.group, &self.app, &text));
@@ -846,19 +866,17 @@ impl Db {
         &self,
         ops: &Value,
         stands: bool,
-        then: impl FnOnce(rusqlite::Transaction<'_>, usize, Vec<Option<Value>>) -> Result<T, Refused>,
+        then: impl FnOnce(rusqlite::Transaction<'_>, &File, usize, Vec<Option<Value>>) -> Result<T, Refused>,
     ) -> Result<T, Refused> {
-        if self.copied() {
-            return Err(Refused::Copied(self.app.clone()));
-        }
         let listed = ops.as_array().filter(|o| !o.is_empty());
         let listed =
             listed.ok_or_else(|| Refused::Form(format!("write takes a list of one or more ops, not {ops}. {FORM}")))?;
-        let made = |(i, op)| form::statement(op, &self.tables, i);
+        let mut conn = self.conn();
+        let file = conn.file.clone();
+        let made = |(i, op)| form::statement(op, &file.tables, i);
         let statements = listed.iter().enumerate().map(made).collect::<Result<Vec<_>, _>>();
         tracing::debug!(target: "state", group = self.group, app = self.app, ops = listed.len(), refused = ?statements.as_ref().err(), "state: a write's ops made statements by key, or refused");
         let statements = statements?;
-        let mut conn = self.conn();
         let tx = conn.transaction_with_behavior(Immediate).map_err(fault)?;
         let stood = statements.iter().filter(|_| stands).map(|(_, (sql, key))| {
             let mut row = tx.prepare(sql).map_err(said)?;
@@ -869,7 +887,7 @@ impl Db {
         let ran = ran.sum::<Result<usize, _>>();
         tracing::debug!(target: "state", group = self.group, app = self.app, ?ran, "state: a write run whole, or rolled back whole as SQLite refused it");
         let count = ran.map_err(said)?;
-        then(tx, count, stood)
+        then(tx, &file, count, stood)
     }
 }
 
