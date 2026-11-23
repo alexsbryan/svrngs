@@ -974,3 +974,31 @@ Windows.
       focused pass into an earlier full run's exit.
     - The real hosts and the people sessions are separate gates
       (HUMAN-release-hosts).
+  - **The controlled full gate** (`REVIEW-audit-available-3.await.log`).
+    - All 12 WebKit trials passed, at 789707dc and at 1581f2ba, and the
+      relay runs went direct before the close.
+    - Browser passed. Tests and pages failed: two new failures.
+  - **`verbs::share::a_share_names_who_can_open_it_and_unshare_takes_one_group_away`:
+    a regression from this branch, nondeterministic** (keeper-lead,
+    2026-11-23).
+    - `verbs/share.rs:65` expects `Audience::Selected` in the order the
+      groups were named. Since 9ef329ff, `audience_of` collects from
+      `audience_names`' `BTreeMap`, so it is sorted by the random group
+      ID. The test passes only when the IDs happen to sort in creation
+      order; this run's left and right were the same two IDs, swapped.
+    - Fix: build `Selected` in the order the person named the groups, as
+      before 9ef329ff, keeping the map for lookups. Don't weaken the test
+      to compare a set: the person's order is what they see.
+    - Red: run the test until the IDs sort against creation order (or
+      plant two IDs in that order), and it fails. Green: it passes in
+      either order.
+    - Counted: a line or two, from the 8 left.
+  - **`pages::acts::a_line_left_unsent_is_carried_on_the_next_open::webkit`:**
+    - `fragile` (`docs/seams.tsv:489`). The browser half's JSON was cut
+      off at exactly 8,192 bytes ("EOF while parsing a string", line 1,
+      column 8192, `drive.rs:123`): a harness pipe-read truncation, not
+      svrngs.
+    - Diagnose that instrument (does `drive.rs` read the browser half's
+      stdout in full?) before another full gate. Fix it if it's a short
+      read. Don't retry until lucky.
+  - **Then one controlled full gate,** under the same protocol.
