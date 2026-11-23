@@ -1567,6 +1567,11 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
         let said = String::from_utf8_lossy(&out.stdout);
         let err = String::from_utf8_lossy(&out.stderr);
         assert!(out.status.success(), "{uname:?}: {said}{err}");
+        let stop = "To stop an app, open your home page and choose Stop before uninstalling.";
+        let (while_installed, after_remove) = said.split_once("Stopped svrngs,").unwrap();
+        assert!(while_installed.contains(stop), "{said}");
+        assert!(!after_remove.contains("choose Stop"), "{said}");
+        assert!(!said.contains("svrngs-keeper"), "{said}");
         for p in &placed {
             assert!(!p.exists(), "{uname:?}: left: {}", p.display());
         }
@@ -1580,10 +1585,11 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
             "Stopped svrngs, and took it off what runs when you log in".to_string(),
             "Stopped give, and took it off what runs when you log in".into(),
             format!("Removed svrngs from {}.", bin.display()),
-            format!("Removed svrngs-keeper from {}.", bin.display()),
             format!("Removed give from {}.", bin.display()),
-            "Apps you told svrngs to run are not stopped or removed.".into(),
-            "managed containers on Linux need svrngs-keeper to start and stop.".into(),
+            "Uninstalling svrngs does not stop your apps or remove their setup or files.".into(),
+            "Native apps may still start.".into(),
+            "Managed Linux containers need svrngs installed to start and stop.".into(),
+            "If you've already uninstalled, reinstall svrngs to manage your apps again.".into(),
             format!("Removed the svrngs opener, {}.", opener.display()),
             format!(".zshrc still adds {}", bin.display()),
             format!("Kept {}: your key and your groups' copies.", data.display()),
@@ -1612,6 +1618,11 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
             "{said}"
         );
         assert!(said.contains("svrngs is uninstalled."), "{said}");
+        assert!(!said.contains("choose Stop"), "{said}");
+        assert!(
+            said.contains("reinstall svrngs to manage your apps again."),
+            "{said}"
+        );
     }
 }
 

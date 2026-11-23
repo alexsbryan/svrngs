@@ -144,6 +144,7 @@ by_hand() {
 # PATH line, which other programs in $bin may need: each said, with how to
 # remove it. A relay's Linux system unit is root's, so said and left.
 if [ -n "$uninstall" ]; then
+  [ ! -x "$bin/svrngs" ] || say "Uninstalling svrngs does not stop your apps or remove their setup or files. Native apps may still start. Managed Linux containers need svrngs installed to start and stop. To stop an app, open your home page and choose Stop before uninstalling."
   for kept_as in sh.svrnme.svrngs:svrngs sh.svrnme.svrngs.relay:svrngs-relay sh.svrnme.give:give; do
     label="${kept_as%%:*}" unit="${kept_as#*:}"
     at
@@ -155,7 +156,7 @@ if [ -n "$uninstall" ]; then
   [ "$os" = darwin ] || systemctl --user daemon-reload 2>/dev/null || :
   by_hand ""
   for program in svrngs svrngs-keeper give; do
-    [ ! -e "$bin/$program" ] || { rm -f "$bin/$program" && say "Removed $program from $bin."; }
+    [ ! -e "$bin/$program" ] || { rm -f "$bin/$program" && { [ "$program" = svrngs-keeper ] || say "Removed $program from $bin."; }; }
   done
   [ ! -e "$opener" ] || { rm -rf "$opener" && say "Removed the svrngs opener, $opener."; }
   relay_unit=/etc/systemd/system/svrngs-relay.service
@@ -167,8 +168,7 @@ if [ -n "$uninstall" ]; then
   if [ -d "$dir" ]; then
     say "Kept $dir: your key and your groups' copies. To delete them too: rm -rf '$dir'"
   fi
-  say "Apps you told svrngs to run are not stopped or removed. Native apps can still start as before; managed containers on Linux need svrngs-keeper to start and stop. To stop running an app and remove its setup, use svrngs-keeper remove <name> before uninstalling, or reinstall first. Your apps' files stay where they were."
-  say "svrngs is uninstalled. It left none of your groups: to leave one, run svrngs leave <group> before you uninstall."
+  say "svrngs is uninstalled. If you've already uninstalled, reinstall svrngs to manage your apps again. It left none of your groups: to leave one, run svrngs leave <group> before you uninstall."
   exit 0
 fi
 
@@ -233,7 +233,7 @@ mkdir -p "$bin" "$dir"
 printf '%s' "$from" >"$dir/origin"
 put() {
   if [ -e "$bin/$1" ]; then done="Updated"; else done="Installed"; fi
-  mv -f "$tmp/$1" "$bin/$1" && say "$done $1 in $bin."
+  mv -f "$tmp/$1" "$bin/$1" && { [ "$1" = svrngs-keeper ] || say "$done $1 in $bin."; }
 }
 put svrngs
 put svrngs-keeper

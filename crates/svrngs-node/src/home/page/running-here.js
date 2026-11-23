@@ -118,13 +118,8 @@ function Found({ r: shown, named, groups, home }) {
   `;
 }
 
-/**
- * "Already running here": HOME's groups to lend one to, and its `dispatch`,
- * which each lend tells.
- * @typedef {{ groups: Choice[], home: Home }} RunningProps
- */
-
-function RunForm() {
+/** @param {{ shares: Drawn }} props */
+function RunForm({ shares }) {
   const [view, set] = useState(/** @type {any} */ (null));
   const [said, say] = useState('');
   const [busy, wait] = useState(false);
@@ -149,7 +144,8 @@ function RunForm() {
     const { name, port, folder, command } = Object.fromEntries(new FormData(event.currentTarget));
     void act('/run', { name, port: Number(port), folder, command });
   };
-  return html`<div id="run-form">
+  if (!shares && !view?.rows.length) return null;
+  return html`<section id="running"><h2>Already running here</h2><div id="run-form">
     ${
       view &&
       html`<details><summary>${view.run}</summary>
@@ -166,11 +162,12 @@ function RunForm() {
       ${action && html`<button disabled=${busy} onClick=${() => act('/run/action', [name, action])}>${button}</button>`}
     </p>`,
     )}
-  </div>`;
+  </div>${shares}</section>`;
 }
 
-/** @param {RunningProps} props */
-function Running({ groups, home }) {
+/** @param {HOME.PlaceProps} props */
+function Running({ s, home }) {
+  const groups = /** @type {Choice[]} */ (s.groups);
   const [state, send] = useMachine(() =>
     machine('RUNNING', RUNNING, { at: { running: 'unlooked' } }),
   );
@@ -190,10 +187,9 @@ function Running({ groups, home }) {
         />`,
     );
   const busy = state.at.running === 'looking' ? 'busy' : 'idle';
-  return html`
-    <section id="running">
-      <h2>Already running here</h2>
-      <${RunForm} />
+  return html`<${RunForm} shares=${
+    groups.length > 0 &&
+    html`
       <p>${SAID[state.at.running](state)}</p>
       <p>
         <${Act}
@@ -204,17 +200,9 @@ function Running({ groups, home }) {
         />
       </p>
       <ul>${found}</ul>
-    </section>
-  `;
-}
-
-/** @param {HOME.PlaceProps} props */
-function RunningPlace({ s: state, home }) {
-  // HOME draws its places once the groups are read (home-page.js `Home`).
-  const groups = /** @type {Choice[]} */ (state.groups);
-  if (groups.length === 0) return false;
-  return html`<${Running} groups=${groups} home=${home} />`;
+  `
+  } />`;
 }
 
 /** @type {{ running: (props: HOME.PlaceProps) => Drawn }} */
-export const view = { running: RunningPlace };
+export const view = { running: Running };

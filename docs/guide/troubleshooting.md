@@ -154,8 +154,9 @@ short name.
   Stop that copy yourself, then try again. svrngs hasn't stopped anything.
 - **"Not shared; svrngs couldn't verify coder is answering."**
   Check the reported state and the port, then check the command, folder and
-  paths you gave it. It runs without your terminal's settings. If it has a
-  setup you need to change, use `svrngs-keeper remove coder`, then Run again.
+  paths you gave it. It runs without your terminal's settings. To stop it,
+  choose **Stop coder** under **Already running here** on your home page.
+  This leaves its setup in place.
 - **"Running here; not shared."**
   Run and Share are separate. If the share couldn't be saved, fix the reason
   shown and share again; don't Run a second copy.
@@ -163,10 +164,11 @@ short name.
   That's expected on a Mac. On Linux, read the Share review: both the app
   and sharing must start without sign-in, and a locked disk needs unlocking.
 - **An app is still running after uninstall.**
-  Removing svrngs doesn't stop apps you told it to run. Use
-  `svrngs-keeper remove <name>` before uninstalling, or reinstall first.
-  The app's files stay where they were. Managed Linux containers need
-  the keeper for their next start or stop.
+  Uninstalling svrngs doesn't stop your apps or remove their setup or files.
+  Before uninstalling, choose **Stop** on your home page for any app you
+  want to stop. If you've already uninstalled, reinstall svrngs to manage
+  them again. Native apps may still start; managed Linux containers need
+  svrngs installed to start and stop.
 
 ## Programs on your computer
 

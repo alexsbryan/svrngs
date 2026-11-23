@@ -3028,8 +3028,11 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
 Run again, it updates in place and joins nothing twice. With `--uninstall`
 where the link goes, it stops and takes away what it kept at login, the
 programs and the opener, and keeps the data dir and the profile's PATH line,
-saying each and how to remove it. It leaves jobs created by Run and their
-data: native jobs run their programs directly, while Linux container jobs
+saying each and how to remove it. Before removing svrngs it points to
+**Stop** on the home page, which shows jobs created by Run even without
+a group; afterward, it points to reinstalling. Stop leaves the app's
+setup and files in place. Uninstall leaves those jobs and their data:
+native jobs run their programs directly, while Linux container jobs
 need the keeper at their next start or stop (`apps/svrngs-keeper/src/unit.rs`).
 The person is named
 as their computer shows them: the full name of the account `$USER` names,

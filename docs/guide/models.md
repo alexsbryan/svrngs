@@ -54,8 +54,10 @@ refused; svrngs never stops your terminal copy for you. Once coder answers,
 [share it as `coder`](#lend-your-llama-server). If you shared the terminal
 copy before, stop lending that copy, then share this one under the same name.
 Run itself shares nothing. The Share review says when your friends can open
-it again after a restart. [Lend](lend.md#run-it-with-svrngs-then-share-it)
-explains start times and how to stop running or lending it separately.
+it again after a restart. To stop coder, open your home page (`svrngs open`)
+and choose **Stop coder** under **Already running here**. Its setup and
+model files stay in place. [Lend](lend.md#run-it-with-svrngs-then-share-it)
+explains start times and how to stop lending it separately.
 
 ## What svrngs keeps back, and why
 

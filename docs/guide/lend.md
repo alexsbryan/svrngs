@@ -62,11 +62,11 @@ when running it from a terminal, both parts start with the computer, and
 the disk unlocks on its own. A locked disk needs you to unlock it first.
 Nothing runs while the computer is asleep or off.
 
-Use **Stop** to stop the program; it stays stopped until you start it
-again. **Stop lending** does something different: it takes away your
-friends' access and leaves the program running for you. Use
-`svrngs-keeper remove <name>` to stop running it with svrngs and remove
-its setup; your app's files stay where they were.
+On your home page (`svrngs open`), use **Stop** under **Already running
+here**. Apps you run with svrngs appear there even before you join a group.
+The app stays stopped until you start it again, even after a
+restart. Its setup and files stay in place. **Stop lending** takes away
+your friends' access and leaves the program running for you.
 
 On Linux, you can also run one HTTP container with a card that uses named
 volumes only: `svrngs run <name> --port <port> --card <compose.yaml>`.

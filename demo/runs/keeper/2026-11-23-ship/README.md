@@ -15,23 +15,30 @@
   difference between native jobs and Linux container jobs, removes the
   binaries and the node's login service, and the native program can still
   restart. Container lifecycle after uninstall is not exercised here.
+- In a second case, from Home in WebKit, Stop an app before uninstalling
+  without having joined a group. The app should stay down through uninstall
+  with its setup intact. The first app should still be running at that point.
 - The Arch packaging function refuses the incomplete archive for the next
   release and places both executables in `/usr/bin` in the complete case.
   The installed package's signature verification requires the operator's
   eventual release; this proof stages the package locally without signing.
 
 From the repository root, with a fresh scratch directory and the keeper
-spike's prepared disk, key and seed already in `/tmp/keeper-demo`:
+spike's prepared disk, key and seed already in `/tmp/keeper-demo`. The
+Home action uses the prepared `svrngs-gate` container under flock via
+`/tmp/keeper-audit/gate.sh` (override with `GATE`), and the existing
+`web/tests/home.mjs` Playwright driver:
 
 ```sh
 toolbox run -c sovereign-vulkan bash -c 'cd ~/dev/svrngs-keeper && scripts/build-release.sh --only linux-x86_64 --out /tmp/opencode/avail-ship-site'
 W=/tmp/opencode/avail-ship-vm python3 -B demo/runs/keeper/2026-11-23-ship/run.py /tmp/opencode/avail-ship-site
 ```
 
-The site is served on loopback inside the guest. The overlay is discarded
+`--skip-stop` plants an omitted Stop before the same checks. The site is
+served on loopback inside the guest. The overlay is discarded
 after the run. No release, tag, page deployment or AUR update is made.
 
-## Observed on 2026-11-23
+## Initial run on 2026-11-23 (3957bca8)
 
 The release build and VM replay exited 0 in 1m44s. The Linux x86_64
 builder passed its PIE check for all three programs and wrote these sums:

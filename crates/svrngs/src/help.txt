@@ -50,6 +50,8 @@ an app's page svrngs won't load, and what to change.
 
   svrngs run <name> --port <port> [--folder <folder>] -- <command>
       Run a command here (Linux or macOS). Share it separately with svrngs share.
+      To stop the app, choose Stop under Already running here on your home
+      page (`svrngs open`). Stop leaves its setup and files in place.
 
   svrngs share <port> --group <group>... [--plan] [--name <name>] [--program <name>] [--pid <id>@<start>] [--replace] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp] [--ask-after-restart]
       Lend what runs on <port> on this computer to everyone in each
