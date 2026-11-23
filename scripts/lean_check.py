@@ -43,11 +43,12 @@ PLAN_IO = re.compile(
 # command's own restart is outside the node and acts on svrngs itself.
 NODE_COMMAND = {
     "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
-    "plan/run.rs": "Command::new(path).args(args).stdin(Stdio::null()).output()",
     "home.rs": "Command::new(opener);",
     "network.rs": 'Command::new("/usr/sbin/scutil");',
     "update.rs": 'Command::new("tar")',
 }
+# N1: the keeper asks the OS to manage its own services, not individual processes.
+PROCESS_SIGNAL = re.compile(r'\b(?:pidfd_send_signal|kill_process(?:_group)?)\b|\bkill\s*\(|\bCommand\s*::\s*new\s*\(\s*"(?:[^"\n]*/)?kill"')
 # An exemption from the lint, however spelled: `allow`, `expect` or `warn`,
 # alone or among other lints, inner or outer, under a `cfg_attr` too.
 EXEMPT = re.compile(r"\b(allow|expect|warn)\s*\(([^()]*[,\s])?unsafe_code\b")
@@ -974,10 +975,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Its terminal and owner adapters land at 25,499 (25,521 ceiling).
 # O3 pins the node's process calls and the executor's keeper entry at 25,513.
 # O4 keeps mechanism names out of the page's and planner's copy, at 25,521 and 8,651 JS.
+# Then avail-unmagic: cut the live takeover and add N1, to 25,336.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 25522,
+    ".": 25337,
 
     "js": 8652,
 
@@ -1024,6 +1026,17 @@ def code_lines(base, kinds=CODE):
     return n
 
 
+def process_signals(paths):
+    for f in paths:
+        rel = f.relative_to(ROOT).as_posix()
+        if TEST_FILE.search(rel) or "/tests/" in rel:
+            continue
+        text = f.read_text(errors="replace")
+        for site in PROCESS_SIGNAL.finditer(text):
+            line = text.count("\n", 0, site.start()) + 1
+            yield f"{rel}:{line}: direct process signaling ({site[0]}), use only keeper-owned services (KEEP_IT_RUNNING_RELEASE N1)"
+
+
 def main():
     broken = []
     lock = ROOT / "Cargo.lock"
@@ -1061,6 +1074,8 @@ def main():
                 code = re.sub(r"\s+", "", text)
                 if "Command::new(" in code.replace(NODE_COMMAND.get(node, ""), "", 1):
                     broken.append(f"{rel}: an unlisted process call; the node may only read app jobs (KEEP_IT_RUNNING_RELEASE O3)")
+    broken.extend(process_signals(sorted([*(ROOT / "crates").glob("*/src/**/*.rs"),
+                                         *(ROOT / "apps/svrngs-keeper/src").rglob("*.rs")])))
     core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")

@@ -1,12 +1,10 @@
-# The card svrngs-keeper ships for llama-server. `keep <port>` fills each
-# @word@ from what the running llama-server reports (src/promote.rs
-# `llama_card`): its /props `model_path` and
-# `default_generation_settings.n_ctx`, and the address and port it listens on.
+# The card svrngs-keeper suggests for llama-server. `facts <port>` fills in
+# the model path from /props and the port. Review the command and add any flags.
 x-svrngs:
   title: @name@
   about: @about@
   door: { port: @port@, protocol: http }
   state: []
   native:
-    command: [@program@, --model, @model@, --host, @host@, --port, @port@, --ctx-size, @ctx@]
+    command: [llama-server, --model, @model@, --host, "127.0.0.1", --port, @port@]
     folder: @folder@

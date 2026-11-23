@@ -991,7 +991,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let (result, witness) = match run::confirm(
                 &reviewed.token,
                 || replay,
-                |witness, next| current.execute(next, witness, secret_header, read),
+                |witness, ready| current.execute(ready, witness, secret_header),
             ) {
                 run::Confirmation::Finished(result, witness) => (result, witness),
                 run::Confirmation::ReviewAgain(now, witness) => {
@@ -1898,12 +1898,7 @@ fn share_review(reviewed: &plan::Plan<'_>, answers: &[Answer]) -> String {
     let words = reviewed.words();
     let mut lines = vec![words.promise];
     lines.extend(words.reason);
-    lines.extend(
-        words
-            .runs
-            .map(str::to_owned)
-            .or_else(|| (!answers.is_empty()).then(|| what_answers(answers))),
-    );
+    lines.extend((!answers.is_empty()).then(|| what_answers(answers)));
     lines.extend([words.impact, words.button, String::new()]);
     lines.join("\n")
 }

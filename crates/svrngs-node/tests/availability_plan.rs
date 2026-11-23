@@ -14,7 +14,7 @@ fn facts() -> (Nature, Terms) {
             port: 8101_u16.try_into().unwrap(),
             platform: Platform::Linux,
             raw: None,
-            runs: Runs::ByHand(Hand::Known(recipe())),
+            runs: Runs::ByHand,
             pid: Some(Pid {
                 pid: 41,
                 start: 197,
@@ -27,13 +27,6 @@ fn facts() -> (Nature, Terms) {
             availability: Availability::Keep,
         },
     )
-}
-
-fn recipe() -> Recipe {
-    Recipe {
-        fingerprint: "recipe-v1".into(),
-        shown: "llama-server with your model".into(),
-    }
 }
 
 fn fold(events: &[Event], state: State) -> State {
@@ -61,7 +54,6 @@ fn p1_every_prefix_replays_and_material_changes_invalidate_the_token() {
     .to_vec();
     events.extend([
         Event::Job(Job::Starting),
-        Event::Done(Done::Verified),
         Event::Done(Done::NotPublished {
             why: "disk full".into(),
         }),
@@ -69,9 +61,9 @@ fn p1_every_prefix_replays_and_material_changes_invalidate_the_token() {
     let whole = fold(&events, State::default());
     assert_eq!(
         whole.report,
-        Some(Report::RunningNotShared {
+        Some(Report::Done(Done::NotPublished {
             why: "disk full".into()
-        })
+        }))
     );
     let shown = plan(&whole).unwrap();
     for split in 0..=events.len() {
@@ -104,12 +96,9 @@ fn p1_every_prefix_replays_and_material_changes_invalidate_the_token() {
             },
         ),
         (
-            "recipe",
+            "deployment",
             Nature {
-                runs: Runs::ByHand(Hand::Known(Recipe {
-                    fingerprint: "recipe-v2".into(),
-                    ..recipe()
-                })),
+                runs: Runs::Transient,
                 ..nature.clone()
             },
         ),
@@ -196,12 +185,9 @@ fn p2_host_product_matches_the_written_plans_and_words() {
     let cases: Value = serde_json::from_str(include_str!("../src/plan/cases.json")).unwrap();
     let returns = [Startup, AfterUnlock, SignIn, ThisRun, Unknown];
     let runs = [
-        Runs::ByHand(Hand::Known(recipe())),
-        Runs::ByHand(Hand::Copyable(recipe())),
-        Runs::ByHand(Hand::Declined("it needs input at startup".into())),
+        Runs::ByHand,
         Runs::Container {
             pod: "coder".into(),
-            recipe: recipe(),
         },
         Runs::Kept(Keep {
             unit: "coder".into(),
@@ -234,21 +220,16 @@ fn p2_host_product_matches_the_written_plans_and_words() {
                             let state =
                                 fold(&observation(nature, terms, app, door), State::default());
                             let plan = plan(&state).unwrap();
-                            let deployment = cases["deployments"][host][kind].as_str().unwrap();
+                            let deployment = cases["deployments"][kind].as_str().unwrap();
                             let point = cases["returns"][a][d].as_str().unwrap();
                             let (method, arrival, why) =
                                 match (availability, raw, deployment, point) {
                                     (Availability::ThisRun, _, _, _) => ("run", "run", None),
                                     (_, Some(Raw::Udp), _, _) => ("run", "run", Some("udp")),
-                                    (
-                                        _,
-                                        _,
-                                        method @ ("reuse" | "takeover"),
-                                        "boot" | "unlock" | "login",
-                                    ) => {
-                                        (method, if host == "mac" { "login" } else { point }, None)
+                                    (_, _, "reuse", "boot" | "unlock" | "login") => {
+                                        ("reuse", if host == "mac" { "login" } else { point }, None)
                                     }
-                                    (_, _, "reuse" | "takeover", reason) => (
+                                    (_, _, "reuse", reason) => (
                                         "run",
                                         "run",
                                         Some(if reason == "run" {
@@ -279,26 +260,12 @@ fn p2_host_product_matches_the_written_plans_and_words() {
                             assert_eq!(words.promise, cases["promise"][arrival], "{context:?}");
                             assert_eq!(words.impact, cases["impact"][method], "{context:?}");
                             assert_eq!(words.button, cases["button"][method], "{context:?}");
-                            assert_eq!(
-                                words.runs,
-                                matches!(kind, 0 | 1 | 3).then_some("llama-server with your model"),
-                                "{context:?}"
-                            );
                             assert_eq!(words.reason, why.map(|key| format!("svrngs can’t verify that sharing will come back by itself with this setup: {}.", cases["reason"][key].as_str().unwrap())), "{context:?}");
-                            let steps: Vec<_> = plan.steps().collect();
-                            match (method, &plan.method, steps.as_slice()) {
-                                (
-                                    "takeover",
-                                    Method::Takeover(recipe),
-                                    [Step::Keeper(first), Step::Access(_)],
-                                ) => assert_eq!(first, recipe),
-                                ("reuse", Method::Reuse(_), [Step::Access(_)])
-                                | ("run", Method::ThisRun, [Step::Access(_)]) => (),
-                                _ => panic!("wrong method or steps: {context:?}"),
+                            match (method, &plan.method) {
+                                ("reuse", Method::Reuse(_)) | ("run", Method::ThisRun) => (),
+                                _ => panic!("wrong method: {context:?}"),
                             }
-                            assert!(
-                                matches!(steps.last(), Some(Step::Access(write)) if write.if_rev == 13)
-                            );
+                            assert_eq!(plan.if_rev, 13);
                             checked += 1;
                         }
                     }
@@ -306,22 +273,7 @@ fn p2_host_product_matches_the_written_plans_and_words() {
             }
         }
     }
-    assert_eq!(checked, 2400);
-    let state = fold(
-        &observation(base, terms, Startup, Startup),
-        State::default(),
-    );
-    let plan = plan(&state).unwrap();
-    let status = plan
-        .report_words(&Report::RunningNotShared {
-            why: "disk full".into(),
-        })
-        .unwrap();
-    assert_eq!(
-        status.text,
-        "Running here; not shared. The share couldn’t be saved: disk full."
-    );
-    assert_eq!(status.button.as_deref(), Some("Review sharing"));
+    assert_eq!(checked, 1800);
     println!(
         "P2: {checked} host combinations, including the rehearsal hosts and the passphrase disk"
     );
@@ -342,23 +294,23 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         observed[3] = Event::Revision(rev);
         fold(&observed, State::default())
     };
-    let before = observe(nature.clone());
-    assert!(matches!(plan(&before).unwrap().method, Method::Takeover(_)));
-    assert!(
-        !dir.path().join("locks").exists(),
-        "preview creates no files"
-    );
-
-    // Stand in for the keeper's verified takeover with a scratch listener.
+    // Stand in for an already-running service with a scratch listener.
     let listener = std::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0)).unwrap();
     let addr = listener.local_addr().unwrap();
     nature.port = addr.port().try_into().unwrap();
-    let before = observe(nature.clone());
     let template = Lend::carried("coder", "house").unwrap();
     let keep = Keep {
         unit: "coder.service".into(),
         files: "verified".into(),
     };
+    nature.runs = Runs::Kept(keep.clone());
+    let before = observe(nature.clone());
+    let first = plan(&before).unwrap();
+    assert!(matches!(first.method, Method::Reuse(_)));
+    assert!(
+        !dir.path().join("locks").exists(),
+        "preview creates no files"
+    );
     let approved = eudoxia_community::binding::Approved {
         at: addr.ip(),
         boot: Some(9),
@@ -372,28 +324,22 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     // Obstruct the declaration writer, after the revision can be reserved.
     let partial = lend::lends_dir(dir.path()).join(format!(".{}.json.partial", nature.name));
     std::fs::create_dir_all(&partial).unwrap();
-    let mut takeovers = 0;
-    let mut execute = |token: &str, running: &Nature| {
+    let execute = |token: &str| {
         run::confirm(
             token,
-            || (observe(running.clone()), ()),
-            |(), next| match next {
-                Step::Keeper(_) => {
-                    takeovers += 1;
-                    Done::Verified
-                }
-                Step::Access(p) => run::publish(
+            || (observe(nature.clone()), ()),
+            |(), ready| {
+                run::publish(
                     dir.path(),
-                    p,
+                    ready,
                     template.clone(),
                     granted.clone(),
                     Credentials::Keep,
-                ),
+                )
             },
         )
     };
-    let run::Confirmation::Finished(result, ()) = execute(&plan(&before).unwrap().token, &nature)
-    else {
+    let run::Confirmation::Finished(result, ()) = execute(&first.token) else {
         panic!("initial confirmation did not finish");
     };
     assert!(lend::read(dir.path(), &nature.name).unwrap().is_none());
@@ -403,22 +349,18 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         .report_words(result.report.as_ref().unwrap())
         .unwrap();
     assert!(
-        words.text.starts_with("Running here; not shared.") && words.text.contains(".json.partial"),
+        words.text.starts_with("The share couldn’t be saved:")
+            && words.text.contains(".json.partial"),
         "{words:?}"
     );
     assert_eq!(words.button.as_deref(), Some("Review sharing"));
     println!("{}", words.text);
 
     std::fs::remove_dir(&partial).unwrap();
-    nature.runs = Runs::Kept(keep.clone());
     let reviewed = observe(nature.clone());
     let retry = plan(&reviewed).unwrap();
     assert!(matches!(retry.method, Method::Reuse(_)));
-    assert!(matches!(
-        retry.steps().collect::<Vec<_>>().as_slice(),
-        [Step::Access(_)]
-    ));
-    let run::Confirmation::Finished(result, ()) = execute(&retry.token, &nature) else {
+    let run::Confirmation::Finished(result, ()) = execute(&retry.token) else {
         panic!("retry did not finish");
     };
     let words = plan(&result)
@@ -426,11 +368,7 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
         .report_words(result.report.as_ref().unwrap())
         .unwrap();
     assert!(words.text.starts_with("Shared with House."), "{words:?}");
-    assert_eq!(takeovers, 1, "retry restarted the already running job");
-    println!(
-        "{} Takeovers across both attempts: {takeovers}.",
-        words.text
-    );
+    println!("{}", words.text);
     assert_eq!(
         lend::revision(dir.path(), &nature.name).unwrap(),
         retry.if_rev + 1
@@ -452,7 +390,7 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
 }
 
 #[test]
-fn p3_changed_revision_requests_review_before_calling_either_owner() {
+fn p3_changed_revision_requests_review_before_publishing() {
     let (nature, terms) = facts();
     let reviewed = observation(nature, terms, Return::Startup, Return::Startup);
     let original = fold(&reviewed, State::default());

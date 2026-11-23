@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::{
-    plan, step, Availability, Done, Event, Hand, Method, Nature, Plan, Platform, Recipe, Return,
-    Runs, State, Step, Terms,
+    plan, step, Availability, Done, Event, Method, Nature, Plan, Platform, Return, Runs, State,
+    Terms,
 };
 use crate::{
     job,
@@ -9,12 +9,7 @@ use crate::{
     share::{self, Granted, Pid, ShareRefusal},
     uid::{Answering, Unread},
 };
-use serde::Deserialize;
-use std::{
-    num::NonZeroU16,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::path::Path;
 
 pub enum Confirmation<T> {
     ReviewAgain(State, T),
@@ -22,13 +17,13 @@ pub enum Confirmation<T> {
     Unavailable,
 }
 
-/// Replay first; only a current review may call the effect owners in plan order.
+/// Replay first; only a current review may publish access.
 pub fn confirm<T>(
     token: &str,
     replay: impl FnOnce() -> (State, T),
-    mut run: impl FnMut(&mut T, Step<'_>) -> Done,
+    publish: impl FnOnce(&T, &Plan<'_>) -> Done,
 ) -> Confirmation<T> {
-    let (observed, mut witness) = replay();
+    let (observed, witness) = replay();
     let Some(ready) = plan(&observed) else {
         return Confirmation::Unavailable;
     };
@@ -36,17 +31,8 @@ pub fn confirm<T>(
         tracing::debug!(target: "plan", "plan: confirm requires a new review");
         return Confirmation::ReviewAgain(observed, witness);
     }
-    let mut result = observed.clone();
-    for next in ready.steps() {
-        let done = run(&mut witness, next);
-        let proceed = done == Done::Verified;
-        tracing::debug!(target: "plan", ?done, proceed, "plan: confirmed step returned");
-        result = step(result, Event::Done(done));
-        if !proceed {
-            break;
-        }
-    }
-    Confirmation::Finished(result, witness)
+    let done = publish(&witness, &ready);
+    Confirmation::Finished(step(observed, Event::Done(done)), witness)
 }
 
 pub struct Share<'a> {
@@ -62,7 +48,6 @@ type Read = Result<Answering, Unread>;
 pub struct Witness {
     granted: Granted,
     pub answers: Vec<Answer>,
-    successor: Option<String>,
 }
 
 impl Share<'_> {
@@ -84,9 +69,9 @@ impl Share<'_> {
         let binding = share::token(&approved);
         let select = self.terms.availability == Availability::Keep && lend.raw() != Raw::Udp;
         let (runs, app, keep, pid) = if select {
-            deployment(lend, port, &answers, &approved.cgroups)
+            deployment(&answers, &approved.cgroups)
         } else {
-            (Runs::Transient, Return::Unknown, None, self.pid)
+            (Runs::Transient, Return::Unknown, None, None)
         };
         let platform = if cfg!(target_os = "macos") {
             Platform::Mac
@@ -101,7 +86,7 @@ impl Share<'_> {
                 platform,
                 raw,
                 runs,
-                pid,
+                pid: self.pid.or(pid),
                 binding,
             }),
             Event::Starts {
@@ -113,67 +98,18 @@ impl Share<'_> {
         let witness = Witness {
             granted: (approved, keep),
             answers,
-            successor: None,
         };
         Ok((events.into_iter().fold(State::default(), step), witness))
     }
 
-    pub fn execute(
-        &self,
-        next: Step<'_>,
-        witness: &mut Witness,
-        secret: Credentials<'_>,
-        read: impl FnOnce(Option<Pid>) -> Read,
-    ) -> Done {
-        let port = self.lend.port().expect("a port share");
-        match next {
-            Step::Keeper(recipe) => match keeper([
-                "keep",
-                &port.to_string(),
-                "--name",
-                self.lend.name.as_str(),
-                "--yes",
-                "--token",
-                &recipe.fingerprint,
-            ]) {
-                Ok(KeeperEnd::Verified { unit }) => {
-                    // Record the keeper's answer separately from any failed access witness.
-                    witness.successor = Some(unit);
-                    Done::Verified
-                }
-                Ok(KeeperEnd::RolledBack { why }) => Done::RolledBack { said: why },
-                Err(why) => Done::NotPublished { why },
-            },
-            Step::Access(ready) => {
-                if matches!(ready.method, Method::Takeover(_)) {
-                    let fresh =
-                        share::approve((port, self.lend.raw()), read(None), None, None).ok();
-                    let old = &witness.granted.0;
-                    let now = witness
-                        .successor
-                        .as_deref()
-                        .and_then(|unit| job::now(unit).ok());
-                    let verified = fresh
-                        .zip(now)
-                        .filter(|((a, _), job)| a.at == old.at && in_job(&a.cgroups, job));
-                    let Some(((approved, answers), now)) = verified else {
-                        return Done::NotPublished {
-                            why: "what answers on the port is no longer the verified program"
-                                .into(),
-                        };
-                    };
-                    witness.granted = (approved, Some(now.keep));
-                    witness.answers = answers;
-                }
-                publish(
-                    self.dir,
-                    ready,
-                    self.lend.clone(),
-                    witness.granted.clone(),
-                    secret,
-                )
-            }
-        }
+    pub fn execute(&self, ready: &Plan<'_>, witness: &Witness, secret: Credentials<'_>) -> Done {
+        publish(
+            self.dir,
+            ready,
+            self.lend.clone(),
+            witness.granted.clone(),
+            secret,
+        )
     }
 }
 
@@ -198,19 +134,9 @@ fn in_job(cgroups: &Groups, job: &job::Now) -> bool {
 }
 
 fn deployment(
-    lend: &Lend,
-    port: NonZeroU16,
     answers: &[Answer],
     cgroups: &Groups,
 ) -> (Runs, Return, Option<job::Keep>, Option<Pid>) {
-    let declined = |why| {
-        (
-            Runs::ByHand(Hand::Declined(why)),
-            Return::Unknown,
-            None,
-            None,
-        )
-    };
     match answers {
         [Answer::Job { unit, .. }] => match job::now(unit) {
             Ok(now) if in_job(cgroups, &now) => (
@@ -227,91 +153,20 @@ fn deployment(
             None,
             None,
         ),
-        [Answer::Program { pid, start, .. }] if cfg!(target_os = "linux") => {
-            let seen = Pid {
+        [Answer::Program { pid, start, .. }] => (
+            Runs::ByHand,
+            Return::ThisRun,
+            None,
+            Some(Pid {
                 pid: *pid,
                 start: *start,
-            };
-            let facts = keeper(["facts", &port.to_string(), "--name", lend.name.as_str()]);
-            let (offer, known) = match facts {
-                Ok(KeeperFacts::Known(offer)) => (offer, true),
-                Ok(KeeperFacts::Copyable(offer)) => (offer, false),
-                Ok(KeeperFacts::Declined { why }) | Err(why) => return declined(why),
-                Ok(KeeperFacts::Kept) => {
-                    return declined(
-                        "the current listener could not be tied to its saved setup".into(),
-                    )
-                }
-            };
-            if offer.listener != seen {
-                return declined("the program changed while it was being read".into());
-            }
-            let mut shown = offer.what;
-            for (label, omitted) in [
-                ("flags", offer.omitted_flags),
-                ("settings", offer.omitted_settings),
-            ] {
-                if !omitted.is_empty() {
-                    shown += &format!(
-                        "\nIt starts without the {label} your terminal added: {}.",
-                        omitted.join(", ")
-                    );
-                }
-            }
-            let recipe = Recipe {
-                fingerprint: offer.token,
-                shown,
-            };
-            let hand = if known {
-                Hand::Known(recipe)
-            } else {
-                Hand::Copyable(recipe)
-            };
-            (Runs::ByHand(hand), Return::SignIn, None, Some(seen))
-        }
-        _ => declined("this program could not be tied to one saved or restartable setup".into()),
+            }),
+        ),
+        _ => (Runs::Transient, Return::Unknown, None, None),
     }
 }
 
-#[derive(Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-enum KeeperFacts {
-    Known(Offer),
-    Copyable(Offer),
-    Kept,
-    Declined { why: String },
-}
-
-#[derive(Deserialize)]
-struct Offer {
-    listener: Pid,
-    token: String,
-    what: String,
-    omitted_settings: Vec<String>,
-    omitted_flags: Vec<String>,
-}
-
-#[derive(Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-enum KeeperEnd {
-    Verified { unit: String },
-    RolledBack { why: String },
-}
-
-fn keeper<T: serde::de::DeserializeOwned, const N: usize>(args: [&str; N]) -> Result<T, String> {
-    let read = || {
-        let path = std::env::current_exe()?.with_file_name("svrngs-keeper");
-        Command::new(path).args(args).stdin(Stdio::null()).output()
-    };
-    let out = read().map_err(|e| format!("svrngs couldn't ask what can run here: {e}"))?;
-    let answer = serde_json::from_slice(&out.stdout)
-        .map_err(|_| format!("svrngs couldn't verify what happened ({})", out.status));
-    tracing::debug!(target: "plan", verb = args.first(), status = %out.status, parsed = answer.is_ok(), "plan: keeper answered");
-    answer
-}
-
-/// The access step of a confirmed plan. The caller supplies the binding and
-/// grant verified by the access owner, after takeover if one was needed.
+/// The access step of a confirmed plan, with the binding and grant just observed.
 pub fn publish(
     dir: &Path,
     plan: &Plan<'_>,

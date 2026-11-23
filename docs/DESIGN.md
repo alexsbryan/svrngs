@@ -200,18 +200,16 @@ what another narrowed; one made while another holds it is refused, busy
 per-name revision in `locks/<lend>.rev`. Withdrawal advances it even when
 no declaration stands and leaves it behind. A confirmed plan can publish
 its binding, grant, audience and limit in one declaration write only at
-the reviewed revision. A write failure after a verified takeover reports
-that the program is running but sharing was not saved (`plan::Report`).
-The executor (`plan::run::confirm`) rebuilds the plan before calling either
-owner, returns the current review on a token mismatch, and folds each
-owner's answer in order. A keeper refusal ends the attempt before access
-is published. `svrngs share --plan` prints the terminal review; at a
+the reviewed revision. The executor (`plan::run::confirm`) rebuilds the
+plan before publishing and returns the current review on a token mismatch.
+`svrngs share --plan` prints the terminal review; at a
 terminal a yes is required before executing it. `--ask-after-restart`,
-and sharing without a terminal, share only the current run. On Linux a
-native takeover is reviewed against the listener's process and start,
-and access is published only after a fresh approval of the verified
-unit on the same address. An enabled unit pulled in by the login target
-is evidence for sign-in, not for unattended disk unlock.
+and sharing without a terminal, share only the current run. A listener
+started by hand is shared only while it runs; sharing does not adopt,
+stop or copy it. On Linux, an enabled unit pulled in by the login target
+is evidence for sign-in, not for unattended disk unlock. Running a program
+with svrngs is separate from sharing it (svrn-docs
+`rings/current/KEEP_IT_RUNNING_RELEASE.md`).
 A group taken away is
 refused at the next request, and what already streams to its people is
 cut within two seconds: every second the door re-reads the declaration

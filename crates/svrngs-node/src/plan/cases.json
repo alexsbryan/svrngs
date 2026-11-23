@@ -6,10 +6,7 @@
     ["run", "run", "run", "run", "door"],
     ["app", "app", "app", "app", "app"]
   ],
-  "deployments": {
-    "linux": ["takeover", "takeover", "declined", "takeover", "reuse", "reuse", "account", "transient"],
-    "mac": ["takeover", "takeover", "declined", "container", "reuse", "reuse", "account", "transient"]
-  },
+  "deployments": ["by-hand", "container", "reuse", "reuse", "account", "transient"],
   "promise": {
     "boot": "House can open it again after this computer starts, even before you sign in.",
     "unlock": "House can open it again after you unlock the disk.",
@@ -17,14 +14,13 @@
     "run": "House can use this copy now. If it stops, you’ll need to share it again."
   },
   "impact": {
-    "takeover": "svrngs will restart Coder now. Anyone using it will disconnect.",
     "reuse": "Coder keeps running as it does now.",
     "run": "svrngs won’t restart Coder."
   },
-  "button": {"takeover": "Restart and share", "reuse": "Share Coder", "run": "Share this run"},
+  "button": {"reuse": "Share Coder", "run": "Share this run"},
   "reason": {
     "udp": "this program shares a UDP port",
-    "declined": "it needs input at startup",
+    "by-hand": "Coder was started by hand",
     "container": "svrngs can’t verify what will answer on this port when the container starts again",
     "account": "Coder runs as the account other",
     "transient": "Coder has no saved setup to start it again",

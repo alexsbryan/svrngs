@@ -73,14 +73,6 @@ impl Places {
     pub fn unit_path(&self, name: &Name) -> PathBuf {
         self.units.join(unit_name(name))
     }
-
-    pub fn takeover_path(&self, name: &Name) -> PathBuf {
-        self.card_dir(name).join("takeover.json")
-    }
-
-    pub fn interrupted_path(&self, name: &Name) -> PathBuf {
-        self.card_dir(name).join("interrupted")
-    }
 }
 
 /// What `keep` did with the card it was given.
@@ -240,7 +232,6 @@ pub fn keep_card(
         what: "programs it keeps",
     };
     systemd.install(&user_unit, true).map_err(KeptError::Systemd)?;
-    clear_interrupted(places, &name)?;
     if boot == Boot::TurnOn {
         systemd.ensure_linger(user_unit.prefix, user_unit.what);
     }
@@ -303,7 +294,6 @@ pub fn start(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name,
     systemd
         .ctl(&["--user", "enable", "--now", &unit])
         .map_err(KeptError::Systemd)?;
-    clear_interrupted(places, &name)?;
     Ok(name)
 }
 
@@ -316,15 +306,6 @@ pub fn restart(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Nam
     Ok(name)
 }
 
-fn clear_interrupted(places: &Places, name: &Name) -> Result<(), KeptError> {
-    let path = places.interrupted_path(name);
-    match std::fs::remove_file(&path) {
-        Ok(()) => Ok(()),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(e) => Err(file(&path)(e)),
-    }
-}
-
 /// Run it here no longer: its unit is stopped and deleted. Its card stays,
 /// in the folder this returns, and so does the program's own folder.
 pub fn remove(systemd: &SystemdUser, places: &Places, name: &str) -> Result<PathBuf, KeptError> {
@@ -332,7 +313,6 @@ pub fn remove(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Path
     systemd
         .uninstall(&unit, &places.unit_path(&name))
         .map_err(KeptError::Systemd)?;
-    clear_interrupted(places, &name)?;
     Ok(places.card_dir(&name))
 }
 
@@ -390,11 +370,6 @@ pub enum Row {
     Unread {
         name: String,
         why: String,
-    },
-    Interrupted {
-        name: String,
-        port: u16,
-        stage: String,
     },
 }
 
@@ -486,17 +461,6 @@ fn row(systemd: &SystemdUser, places: &Places, name: String, lingers: &Result<bo
     if !places.unit_path(&n).exists() {
         return Row::Removed { name, dir };
     }
-    match std::fs::read_to_string(places.interrupted_path(&n)) {
-        Ok(stage) => {
-            return Row::Interrupted {
-                name,
-                port: card.door.port,
-                stage,
-            };
-        }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-        Err(e) => return unread(e.to_string()),
-    }
     let mut properties = SHOWN.to_vec();
     properties.push("ActiveEnterTimestamp");
     match systemd
@@ -546,10 +510,6 @@ impl std::fmt::Display for Row {
                 dir.display()
             ),
             Row::Unread { name, why } => write!(f, "{name}   could not be read: {why}"),
-            Row::Interrupted { name, stage, .. } => write!(
-                f,
-                "{name}   isn't running: moving it didn't finish ({stage}). Start it with svrngs-keeper start {name}"
-            ),
         }
     }
 }

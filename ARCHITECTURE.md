@@ -703,17 +703,15 @@ for the cgroup that took the door's connection. `share::kept` makes the
 grant at an approval; `door::bound::renewed` renews with it.
 
 `plan.rs` folds the current app and door observations, chosen terms, share
-revision, and job or publication reports without reading the host. Its steps
-name a takeover only when needed, followed by a conditional access write;
-the owners must supply the resulting binding and grant. `plan/run.rs`
-publishes them with the audience and limit through the same locked mutation
+revision, and job or publication reports without reading the host. It reuses
+an observed service or shares just the listener that's running. `plan/run.rs`
+replays the review, then publishes its binding and any verified grant with
+the audience and limit through the same locked mutation
 as other declaration edits. The revision advances before the declaration is
 changed, so a failed write can spend a revision without publishing access.
-`locks/<lend>.rev` survives withdrawal and is outside `lend::all`. A failed
-publication after a verified takeover folds to `RunningNotShared`; a fresh
-observation of the kept job can reuse it. `plan/words.rs` renders the review
-and reports. The preview token binds the target, recipe, terms and revision;
-terminal and page wiring follow this fold
+`locks/<lend>.rev` survives withdrawal and is outside `lend::all`.
+`plan/words.rs` renders the review and reports. The preview token binds the
+target, how it runs, terms and revision; the terminal uses this fold
 (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` §3).
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
@@ -981,18 +979,12 @@ changed, under upstream's stock rustfmt and one clippy allowance
 renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
 `src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
 starts, restarts and removes one, and supervises nothing. `tests/host.sh` proves it
-under a real user manager. `keep <port>` keeps what runs on a port:
-`src/promote.rs` decides, purely, from `ss -ltnpH` and `/proc` text which
-process to adopt (a wrapper up to the terminal's shell), what it declines, and
-the card: llama-server's from `cards/llama-server` and its `/props`, anything
-else copied with no environment. `src/facts.rs` gives this draft and its
-confirmation token as JSON. `src/host.rs` reads the host and signals only
-recorded pid@start pairs through pidfds. `src/takeover.rs` serializes a move
-by port and name, keeps its recovery recipe in a private durable journal,
-and enables the service only once it owns the port and answers. Each call
-reconciles unfinished moves; a same-boot rollback restores the original in
-its own systemd scope. `tests/takeover.py` kills the command at each handover
-edge; `tests/promote.sh` proves promotion on a host.
+under a real user manager. `facts <port>` only suggests a card: `src/host.rs`
+reads the listeners and asks a recognized llama-server for its model path,
+`src/promote.rs` fills `cards/llama-server`, and `src/facts.rs` returns the
+suggestion as JSON. No live command or environment is copied. The keeper
+manages its services through the OS; `scripts/lean_check.py` guards against
+direct process signaling (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` N1).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

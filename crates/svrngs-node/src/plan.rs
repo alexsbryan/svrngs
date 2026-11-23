@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A preview is a fold of facts, not permission to run a program or publish a share.
-//! See svrn-docs KEEP_IT_RUNNING_RELEASE §3.1. Only the owners can attest the
-//! inputs, or supply a binding for a listener that has yet to start.
+//! See svrn-docs KEEP_IT_RUNNING_RELEASE §3.1. Only the owners can attest the inputs.
 
 pub mod run;
 mod words;
@@ -46,25 +45,12 @@ pub enum Platform {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Runs {
-    ByHand(Hand),
-    Container { pod: String, recipe: Recipe },
+    ByHand,
+    Container { pod: String },
     Kept(Keep),
     OwnService(Keep),
     OtherAccount(String),
     Transient,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub enum Hand {
-    Known(Recipe),
-    Copyable(Recipe),
-    Declined(String),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct Recipe {
-    pub fingerprint: String,
-    pub shown: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -108,26 +94,14 @@ pub enum Job {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Done {
-    Verified,
-    RolledBack { said: String },
-    Interrupted { stage: Stage },
     Published { rev: u64 },
     NotPublished { why: String },
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Stage {
-    Staged,
-    Recorded,
-    Stopped,
-    Started,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Report {
     Job(Job),
     Done(Done),
-    RunningNotShared { why: String },
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -146,12 +120,6 @@ pub fn step(mut state: State, event: Event) -> State {
         Event::Terms(terms) => state.terms = Some(terms),
         Event::Revision(rev) => state.rev = Some(rev),
         Event::Job(job) => state.report = Some(Report::Job(job)),
-        Event::Done(Done::NotPublished { why })
-            if state.report == Some(Report::Done(Done::Verified)) =>
-        {
-            tracing::debug!(target: "plan", %why, "plan: verified takeover could not be shared");
-            state.report = Some(Report::RunningNotShared { why });
-        }
         Event::Done(done) => state.report = Some(Report::Done(done)),
     }
     state
@@ -160,7 +128,6 @@ pub fn step(mut state: State, event: Event) -> State {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Method<'a> {
     Reuse(&'a Keep),
-    Takeover(&'a Recipe),
     ThisRun,
 }
 
@@ -169,8 +136,8 @@ enum Reason<'a> {
     Udp,
     OtherAccount(&'a str),
     Transient,
-    Declined(&'a str),
-    MacContainer,
+    ByHand,
+    Container,
     AppStart,
     DoorStart,
 }
@@ -186,24 +153,6 @@ pub struct Plan<'a> {
     pub token: String,
 }
 
-pub enum Step<'a> {
-    Keeper(&'a Recipe),
-    /// `Reuse` carries the grant to verify. `Takeover` needs a fresh binding
-    /// and grant from its result. `ThisRun` carries only the current binding.
-    Access(&'a Plan<'a>),
-}
-
-impl Plan<'_> {
-    /// Access always goes last; a takeover must first return a fresh witness.
-    pub fn steps(&self) -> impl Iterator<Item = Step<'_>> {
-        let takeover = match self.method {
-            Method::Takeover(recipe) => Some(Step::Keeper(recipe)),
-            Method::Reuse(_) | Method::ThisRun => None,
-        };
-        takeover.into_iter().chain([Step::Access(self)])
-    }
-}
-
 pub fn plan(state: &State) -> Option<Plan<'_>> {
     let (Some(nature), Some((app, door)), Some(terms), Some(if_rev)) =
         (&state.nature, state.starts, &state.terms, state.rev)
@@ -215,15 +164,13 @@ pub fn plan(state: &State) -> Option<Plan<'_>> {
         tracing::debug!(target: "plan", "plan: no groups chosen");
         return None;
     }
-    let proposed = match (nature.raw, &nature.runs, nature.platform) {
-        (Some(Raw::Udp), _, _) => Err(Reason::Udp),
-        (_, Runs::Kept(job) | Runs::OwnService(job), _) => Ok(Method::Reuse(job)),
-        (_, Runs::ByHand(Hand::Known(recipe) | Hand::Copyable(recipe)), _)
-        | (_, Runs::Container { recipe, .. }, Platform::Linux) => Ok(Method::Takeover(recipe)),
-        (_, Runs::ByHand(Hand::Declined(why)), _) => Err(Reason::Declined(why)),
-        (_, Runs::Container { .. }, Platform::Mac) => Err(Reason::MacContainer),
-        (_, Runs::OtherAccount(account), _) => Err(Reason::OtherAccount(account)),
-        (_, Runs::Transient, _) => Err(Reason::Transient),
+    let proposed = match (nature.raw, &nature.runs) {
+        (Some(Raw::Udp), _) => Err(Reason::Udp),
+        (_, Runs::Kept(job) | Runs::OwnService(job)) => Ok(Method::Reuse(job)),
+        (_, Runs::ByHand) => Err(Reason::ByHand),
+        (_, Runs::Container { .. }) => Err(Reason::Container),
+        (_, Runs::OtherAccount(account)) => Err(Reason::OtherAccount(account)),
+        (_, Runs::Transient) => Err(Reason::Transient),
     };
     let later = app.max(door);
     let verified = match later {
@@ -241,7 +188,6 @@ pub fn plan(state: &State) -> Option<Plan<'_>> {
     };
     let action = match method {
         Method::Reuse(_) => "reuse",
-        Method::Takeover(_) => "takeover",
         Method::ThisRun => "this run",
     };
     tracing::debug!(target: "plan", ?app, ?door, ?when, %action, ?reason, "plan: verified return and least disruption");
