@@ -273,3 +273,43 @@ that requirement. QA's disposition is recorded in `ce02fe1a`.
   produced the four browser-only outcomes above (`-6.await.log:646–1084`).
   Both candidate trials passed, and the lone failure on base was a
   different case. No release check was relaxed.
+
+## Final candidate: focused checks at `35881a42`
+
+The release-tier replay has its own [record](../../release/2026-11-23/README.md).
+For the final source candidate, the `scripts/ports.py` comparison above
+rejected the in-memory deletion before accepting the actual listing:
+
+```text
+planted omission: FAIL missing: [('apps/svrngs-keeper/src/launchd.rs:2', 'svrn/crates/sovereign-service/src/lib.rs@8ed8d99b0')]
+actual: PASS 67 tracked markers, 67 listed; missing: [] extra: []
+```
+
+Both diffs against the rebased main `789707dc` exited 0 with no output:
+
+```sh
+git diff --exit-code 789707dc HEAD -- scripts/trust_floor.txt scripts/trust_check.py
+git diff --exit-code 789707dc HEAD -G 'Content-Security-Policy|content-security-policy|[a-z]+-src|frame-ancestors|base-uri|form-action' -- apps crates web
+```
+
+`python3 -B scripts/lean_check.py` and `python3 -B scripts/trust_check.py`
+both exited 0 in `sovereign-vulkan`:
+
+```text
+Lines of code, tests and apps/ not counted, and the most each may have:
+  the core (svrngs-core)     3,471   most   3,539
+  all code but JavaScript   25,723   most  25,723
+  JavaScript                 8,741   most   8,741
+  Swift                          0   most       0
+trust floor: 13 policies, 13 listeners, 17 gates
+```
+
+These counts and caps fit CHARTER's final ceilings: 25,727 non-JavaScript
+and 8,741 JavaScript, leaving four lines and zero lines respectively.
+
+The locked `/tmp/keeper-audit/gate.sh` preflight used image
+`3080239cdc83294d04a49ff0594eac163d39da784116911641cd5272d3fe49d1`.
+Inside it, `git rev-parse HEAD` resolved `35881a4254428fdb0085acb9609ac61da34d1993`
+through the main `.git` mount, and `ss -V`, `node --version` and
+`rustc --version` reported iproute2-6.1.0, v24.22.3 and 1.95.0.
+The final full gate verdict is still owed.
