@@ -28,13 +28,14 @@ use svrngs_core::pass::Label;
 
 #[path = "../../crates/svrngs-db/src/change.rs"]
 #[rustfmt::skip]
+#[allow(dead_code)]
 pub(crate) mod change;
 #[path = "../../crates/svrngs-db/src/wire.rs"]
 #[rustfmt::skip]
 #[allow(dead_code)]
 mod wire;
 type Sql = change::Value;
-use change::cell;
+use change::{cell, pack};
 
 /// What the signer is asked to sign: the page's write list, in the group and
 /// app the open names, and the computer's prepare of it, its text as `by`
@@ -183,36 +184,13 @@ fn op<'v>(op: &'v Value, keys: &BTreeMap<String, Vec<String>>) -> Option<Op<'v>>
     };
     let (key, columns) = (field(if kind == 0 { "row" } else { "key" })?, keys.get(table)?);
     let of = |k: &String| key.iter().find(|(c, _)| c == &k).map(|(_, v)| v.clone());
-    let pk = packed(&columns.iter().map(of).collect::<Option<Vec<_>>>()?)?;
+    let pk = pack(&columns.iter().map(of).collect::<Option<Vec<_>>>()?)?;
     let named = match kind {
         0 => key.into_iter().filter(|(c, _)| !columns.contains(c)).collect(),
         1 => field("set")?,
         _ => Vec::new(),
     };
     Some(Op { kind, table, pk, named })
-}
-
-/// `values`, a key, as cr-sqlite packs one
-/// (`vendor/cr-sqlite/core/rs/core/src/pack_columns.rs:31-82`), the form
-/// svrngs-db's parse reads (`parse.rs`, `packed`): the count, then each
-/// value's type and the fewest bytes of its integer or length, then its
-/// bytes; none for NULL, which no key holds.
-fn packed(values: &[Sql]) -> Option<Vec<u8>> {
-    let mut out = vec![u8::try_from(values.len()).ok()?];
-    for v in values {
-        let (kind, n, bytes) = match v {
-            Sql::Integer(i) => (1, *i as u64, &[][..]),
-            Sql::Real(r) => (2, 0, &r.to_be_bytes()[..]),
-            Sql::Text(t) => (3, t.len() as u64, t.as_bytes()),
-            Sql::Blob(b) => (4, b.len() as u64, &b[..]),
-            Sql::Null => return None,
-        };
-        let width = 8 - n.leading_zeros() as usize / 8;
-        out.push(kind | (width as u8) << 3);
-        out.extend_from_slice(&n.to_be_bytes()[8 - width..]);
-        out.extend_from_slice(bytes);
-    }
-    Some(out)
 }
 
 /// A row as it stands: its columns to their values, none where there is
