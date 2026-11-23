@@ -754,7 +754,8 @@ impl Folders {
     /// moving a mark past a gap ([`Db::carry`]), and how it ended told, so
     /// the phone's worker forgets the set once a computer keeps it, 200, or
     /// none ever will, 422, and carries it again with its next write after a
-    /// 503. One taken wakes the round.
+    /// 503: a fault, the phone past its share here, or a phone this
+    /// computer's record doesn't bind yet. One taken wakes the round.
     async fn set_carried(&self, db: Arc<Db>, (group, app): (&str, &AppName), set: Set) -> Response {
         let binds = crate::ring_sync::bound(&self.host.rail, group);
         let took = tokio::task::spawn_blocking(move || db.carry(set, &binds)).await;
@@ -766,7 +767,7 @@ impl Folders {
             Took::Held | Took::Waits => return Json(json!({ "took": took })).into_response(),
             Took::Refused => (422, "No computer of your group takes this write, so it isn’t kept."),
             Took::NotItsDevice => (422, "This write wasn’t signed as this phone, so no computer takes it."),
-            Took::Fault | Took::Over => (503, "This computer couldn’t keep this write. It is kept on this phone and goes with your next one."),
+            Took::NotYet | Took::Fault | Took::Over => (503, "This computer couldn’t keep this write. It is kept on this phone and goes with your next one."),
         };
         let took = json!(took);
         told(status, took.as_str().unwrap_or_default(), words.into())
