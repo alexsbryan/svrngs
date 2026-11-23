@@ -633,7 +633,9 @@ impl Replica for DbCopy {
             let sig = svrngs_core::sign_message(&approver, &phoned_message(&set.head, phoned.ts));
             set.head.sig = svrngs_db::Sig::parse(&sig).expect("a signature");
         }
-        let epoch = u8::try_from(epoch).expect("under 256 epochs a run");
+        // A home's epochs run on from one its file's nonce draws, so their
+        // low byte names each apart in a run of under 256.
+        let epoch = epoch.to_be_bytes()[7];
         let site = Site::phone(PHONE + 1 + phone, self.site, epoch);
         let was = self.run.borrow_mut().sites.insert(real_site(&set), site);
         assert!(

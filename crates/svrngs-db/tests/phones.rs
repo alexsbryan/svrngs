@@ -155,11 +155,9 @@ fn a_computer_prepares_a_phone_s_write_and_keeps_none_of_it() {
         json!([{ "id": "c1", "title": "milk", "col": null }, null]),
         "as they stood"
     );
-    assert_eq!(
-        (&prepared["epoch"], &prepared["seq"]),
-        (&json!(0), &json!(1)),
-        "Bo's first place here"
-    );
+    assert_eq!(prepared["seq"], json!(1), "Bo's first place here");
+    let epoch = prepared["epoch"].as_u64().unwrap();
+    assert!(epoch < 1 << 52, "an epoch a page's JSON keeps whole: {epoch}");
     assert_eq!(prepared["schema"].as_str().unwrap().len(), 44, "a hash, in base64");
     assert_eq!(
         cards(&db),
@@ -448,17 +446,22 @@ fn a_phone_s_site_is_vouched_for_by_its_home() {
         &bound(),
     )
     .unwrap();
+    let mut nonce = [0; 16];
     for title in ["eggs", "jam"] {
         let set = prepared(
             &ana,
             &json!([{ "update": "cards", "key": { "id": "c1" }, "set": { "title": title } }]),
         );
+        nonce = postcard::from_bytes::<Set>(&STANDARD.decode(&set).unwrap())
+            .unwrap()
+            .head
+            .nonce;
         assert_eq!(carry(&ana, &set), Took::Taken);
     }
     let jam = json!([{ "id": "c1", "title": "jam" }]);
     assert_eq!(cards(&ana), jam);
     call(&ana, (&ben, 1));
-    let (ask, bo) = (ben.ask().unwrap(), site("g", "board", &bo().1, &nonce_at(1, 0)));
+    let (ask, bo) = (ben.ask().unwrap(), site("g", "board", &bo().1, &nonce));
     assert_eq!(cards(&ben), jam, "the second set alone, the first outranked");
     assert_eq!(
         ask.marks.get(&bo).map(|m| m.get()),
@@ -479,23 +482,6 @@ fn a_phone_s_site_is_vouched_for_by_its_home() {
         Took::NotItsDevice,
         "a home its nonce isn't derived from"
     );
-}
-
-/// The nonce of Bo's phone's database at the home `[home; 32]`, in `epoch`,
-/// as its set carries it.
-fn nonce_at(home: u8, epoch: u64) -> [u8; 16] {
-    let (_keep, ana) = board(home);
-    let set = prepared(
-        &ana,
-        &json!([{ "insert": "cards", "row": { "id": "n", "title": "n" } }]),
-    );
-    let set: Set = postcard::from_bytes(&STANDARD.decode(set).unwrap()).unwrap();
-    assert_eq!(
-        set.phone.as_ref().map(|p| p.epoch),
-        Some(epoch),
-        "an epoch this helper reads"
-    );
-    set.head.nonce
 }
 
 /// **A phone's home never hands one place twice, and moves it to a fresh
@@ -520,7 +506,7 @@ fn a_phone_s_home_never_hands_a_place_twice() {
     });
     assert_eq!(
         (one.0, two.0),
-        ((0, 1), (0, 2)),
+        ((one.0.0, 1), (one.0.0, 2)),
         "two places, though nothing came back between"
     );
     assert_eq!(carry(&ben, &one.1), Took::Taken, "the first through Ben's computer");
@@ -528,7 +514,7 @@ fn a_phone_s_home_never_hands_a_place_twice() {
     let tea = json!([{ "insert": "cards", "row": { "id": "tea", "title": "tea" } }]);
     assert_eq!(
         place(&ana.prepare(&tea, (&bo().1, &bound())).unwrap()),
-        (1, 1),
+        (one.0.0 + 1, 1),
         "a fresh site past the gap"
     );
 }

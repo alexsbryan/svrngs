@@ -599,7 +599,12 @@ impl Db {
         let tx = conn.transaction_with_behavior(Immediate)?;
         let was = "SELECT epoch, handed FROM svrngs_homes WHERE device = ?1";
         let was = tx.query_row(was, [phone], |r| Ok((r.get(0)?, r.get(1)?))).optional()?;
-        let (epoch, handed): (u64, u64) = was.unwrap_or((0, 0));
+        // A phone's first epoch here is drawn from this file's nonce, so a
+        // file made again with a fresh one (`States::remake`) hands places at
+        // sites the file it was copied from never hands; below 2^52, so a
+        // page's JSON keeps it whole.
+        let first = u64::from_be_bytes(self.nonce[..8].try_into().expect("a nonce is 16 bytes")) >> 12;
+        let (epoch, handed): (u64, u64) = was.unwrap_or((first, 0));
         let site = site(
             &self.group,
             &self.app,
