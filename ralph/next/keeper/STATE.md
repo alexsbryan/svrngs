@@ -510,7 +510,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
     passed. The original failure was intermittent, and no reset was
     captured directly.
 
-- [ ] avail-run-containers — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses:
+- [x] avail-run-containers 37939176a — depends [avail-run-linux] — ONE UNIT (keeper), time-boxed proof: one explicit, volume-only card on Linux, run by svrngs (QA, oc-cruu42, 2026-11-22, with keeper-lead; this replaces spec §5 row 3's stash port). It reuses:
   - the card (`compose.yaml` plus `x-svrngs`) and `card::check`;
   - `runtime::App` (`pull`, `start`, `wait_healthy`, `health`, `stop`);
   - `machine` and `podman`.
