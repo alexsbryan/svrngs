@@ -144,3 +144,33 @@ registrations stay in place; the fixture checks the door's registered path
 before Share. The negative cases use `~/.svrngs` as the asking root to
 expose any unintended fallback. The wrong-type plant uses plist data
 containing the exact root's UTF-8 bytes, not a string.
+
+**Passed on beefymac at `b989b31a` (3m03s, exit 0).** Excerpts from the
+loop's `avail-mac-plist-read-1.await.log`:
+
+**Red on `667c52f2` (lines 471, 507 and 544):** each case exited 5.
+
+```text
+plist-formatted: first Share grant=False; expected=True
+plist-binary: first Share grant=False; expected=True
+plist-malformed: first Share grant=True; expected=False
+```
+
+**Green with the parser (lines 584–769):** when Share grants renewal,
+the fixture also checks that the saved label and SHA-256 match the app's
+plist (`run.py:226–232`).
+
+```text
+plist-formatted: first Share grant=True; expected=True
+plist-binary: first Share grant=True; expected=True
+plist-absent: first Share grant=True; expected=True
+plist-wrong-root: first Share grant=False; expected=False
+plist-malformed: first Share grant=False; expected=False
+plist-wrong-type: first Share grant=False; expected=False
+Cleanup gui/502/svrngs-keeper-test-mac-renew: launchctl print exits 113
+Cleanup gui/502/svrngs-keeper-test-mac-renew-door: launchctl print exits 113
+Cleanup: scratch directory removed
+```
+
+Both scratch agents were unloaded after each case. The wrapper removed
+`~/svrngs-keeper-scratch` with the test plists, nodes, and build archive.
