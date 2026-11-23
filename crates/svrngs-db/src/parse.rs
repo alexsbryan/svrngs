@@ -19,7 +19,7 @@ use crate::form::Table;
 
 #[path = "change.rs"]
 mod change;
-pub(crate) use change::Change;
+pub(crate) use change::{Change, cell};
 
 /// A `col_version` or a causal length past this is refused for good: one at
 /// `i64::MAX` freezes its cell (svrn-docs

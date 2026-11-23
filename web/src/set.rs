@@ -34,6 +34,7 @@ pub(crate) mod change;
 #[allow(dead_code)]
 mod wire;
 type Sql = change::Value;
+use change::cell;
 
 /// What the signer is asked to sign: the page's write list, in the group and
 /// app the open names, and the computer's prepare of it, its text as `by`
@@ -178,7 +179,7 @@ fn op<'v>(op: &'v Value, keys: &BTreeMap<String, Vec<String>>) -> Option<Op<'v>>
     let table = op[kinds[kind]].as_str()?;
     let field = |f: &str| -> Option<Vec<(&String, Sql)>> {
         let named = op.get(f)?.as_object()?;
-        named.iter().map(|(c, v)| Some((c, value(v)?))).collect()
+        named.iter().map(|(c, v)| Some((c, cell(v)?))).collect()
     };
     let (key, columns) = (field(if kind == 0 { "row" } else { "key" })?, keys.get(table)?);
     let of = |k: &String| key.iter().find(|(c, _)| c == &k).map(|(_, v)| v.clone());
@@ -189,24 +190,6 @@ fn op<'v>(op: &'v Value, keys: &BTreeMap<String, Vec<String>>) -> Option<Op<'v>>
         _ => Vec::new(),
     };
     Some(Op { kind, table, pk, named })
-}
-
-/// `v`, a value of the write form, as SQLite holds it, by svrngs-db form.rs
-/// `value`'s rule: null, a number, a string, or `{base64}`, its one key, for
-/// a BLOB.
-fn value(v: &Value) -> Option<Sql> {
-    let blob = v
-        .as_object()
-        .filter(|o| o.len() == 1)
-        .and_then(|o| o.get("base64")?.as_str());
-    Some(match v {
-        Value::Null => Sql::Null,
-        Value::String(s) => Sql::Text(s.clone()),
-        Value::Number(n) => n
-            .as_i64()
-            .map_or_else(|| Sql::Real(n.as_f64().unwrap_or_default()), Sql::Integer),
-        _ => Sql::Blob(STANDARD.decode(blob?).ok()?),
-    })
 }
 
 /// `values`, a key, as cr-sqlite packs one
@@ -246,7 +229,7 @@ fn net<'o>(ops: &'o [Op], stands: &[Value]) -> BTreeMap<(&'o str, &'o [u8]), (Ro
     let mut rows = BTreeMap::new();
     for (op, stood) in ops.iter().zip(stands) {
         let row =
-            |o: &serde_json::Map<String, Value>| o.iter().filter_map(|(c, v)| Some((c.clone(), value(v)?))).collect();
+            |o: &serde_json::Map<String, Value>| o.iter().filter_map(|(c, v)| Some((c.clone(), cell(v)?))).collect();
         let before: Row = stood.as_object().map(row);
         let (_, now) = rows
             .entry((op.table, &op.pk[..]))

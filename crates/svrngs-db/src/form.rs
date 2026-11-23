@@ -11,7 +11,6 @@
 use std::collections::BTreeMap;
 use std::convert::identity;
 
-use base64::{Engine as _, engine::general_purpose::STANDARD};
 use rusqlite::types::Value as Sql;
 use serde_json::Value;
 
@@ -51,24 +50,14 @@ pub type Op = (Statement, Statement);
 /// Columns named, each by its table's own name for it, to bound values.
 type Named<'t> = Vec<(&'t String, Sql)>;
 
-/// `v` as SQLite binds it: null, a number, a string, or `{base64}` for a
-/// BLOB; refused naming `at` for anything else.
+/// `v` as SQLite binds it, read as a phone's signer reads it too
+/// (`change.rs`, `cell`); refused naming `at` for anything else.
 pub fn value(v: &Value, at: &str) -> Result<Sql, Refused> {
-    let blob = v
-        .as_object()
-        .filter(|o| o.len() == 1)
-        .and_then(|o| o.get("base64")?.as_str());
-    match (v, blob.map(|b| STANDARD.decode(b))) {
-        (Value::Null, _) => Ok(Sql::Null),
-        (Value::String(s), _) => Ok(Sql::Text(s.clone())),
-        (Value::Number(n), _) => Ok(n
-            .as_i64()
-            .map_or_else(|| Sql::Real(n.as_f64().unwrap_or_default()), Sql::Integer)),
-        (_, Some(Ok(bytes))) => Ok(Sql::Blob(bytes)),
-        _ => Err(Refused::Form(format!(
+    crate::parse::cell(v).ok_or_else(|| {
+        Refused::Form(format!(
             "{at} is {v}: a value is null, a number, a string, or {{base64: \"...\"}} for a BLOB."
-        ))),
-    }
+        ))
+    })
 }
 
 /// `named`, columns of the table `name` to values; refused for a column
