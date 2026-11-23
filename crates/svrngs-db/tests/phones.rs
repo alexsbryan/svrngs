@@ -532,3 +532,39 @@ fn a_phone_s_set_holds_only_under_its_open_s_pass() {
     );
     assert_eq!(carry(&ana, &signed(&asked(&ops, &answer)).unwrap()), Took::Taken);
 }
+
+/// **A phone signs a write as its ops leave the rows, in their order**
+/// (W1's phones found the phone refusing these, one honest write in five):
+/// an update of a row that isn't there, which changes nothing; an insert
+/// and an update of one new row; a delete and an insert of one row; and
+/// two updates of one cell. Each is prepared at Ana's computer, signed, and
+/// taken, the cards as the ops leave them. Plants, each watched failing in
+/// web/src/set.rs: an update read as making the row it names (`net`; the
+/// write refused as a left-out change); the effects left unchecked (the
+/// mixed batch's missing insert signed, in
+/// `a_phone_signs_only_what_its_page_asked`).
+#[test]
+fn a_phone_signs_a_write_as_its_ops_leave_the_rows() {
+    let (_dir, ana) = board(1);
+    ana.write(
+        &json!([{ "insert": "cards", "row": { "id": "c3", "title": "tea" } }]),
+        &bound(),
+    )
+    .unwrap();
+    let ops = json!([
+        { "update": "cards", "key": { "id": "c9" }, "set": { "title": "nobody" } },
+        { "insert": "cards", "row": { "id": "c1", "title": "milk" } },
+        { "update": "cards", "key": { "id": "c1" }, "set": { "title": "eggs" } },
+        { "delete": "cards", "key": { "id": "c3" } },
+        { "insert": "cards", "row": { "id": "c3", "title": "jam" } },
+        { "update": "cards", "key": { "id": "c3" }, "set": { "col": "a" } },
+        { "update": "cards", "key": { "id": "c3" }, "set": { "col": "b" } },
+    ]);
+    let set = prepared(&ana, &ops);
+    assert_eq!(carry(&ana, &set), Took::Taken);
+    let all = ana.read("SELECT id, title, col FROM cards ORDER BY id", &[]).unwrap()["rows"].clone();
+    assert_eq!(
+        all,
+        json!([{ "id": "c1", "title": "eggs", "col": null }, { "id": "c3", "title": "jam", "col": "b" }])
+    );
+}

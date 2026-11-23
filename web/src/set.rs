@@ -63,7 +63,8 @@ struct Prepared {
 }
 
 /// One op of the write list, read for its rows: insert, update or delete
-/// (0, 1, 2), its table, its key packed, and the columns it names.
+/// (0, 1, 2), its table, its key packed, and the columns but its key's it
+/// names.
 struct Op<'v> {
     kind: usize,
     table: &'v str,
@@ -91,13 +92,36 @@ pub fn signed(label: &str, asked: &Asked) -> Result<(Vec<u8>, String, String), S
     let listed = (p.ops == asked.ops).then(|| asked.ops.as_array()).flatten();
     let ops = listed.and_then(|l| l.iter().map(|o| op(o, &p.keys)).collect::<Option<Vec<_>>>());
     let ops = ops.ok_or_else(|| why("the computer prepared other ops than it asked"))?;
-    let mut covered = vec![false; ops.len()];
+    // Each change row is one the ops leave, in their order: a row's own
+    // change at an odd causal length where they leave a row, an even one
+    // where they remove it; a column at the value they leave it at, NULL
+    // where a row they make doesn't name it.
+    let net = (p.stands.len() == ops.len()).then(|| net(&ops, &p.stands));
+    let net = net.ok_or_else(|| why("its prepare can’t be read"))?;
     for c in &rows {
-        let i = ops.iter().position(|op| covers(op, c));
-        covered[i.ok_or_else(|| why("the computer’s rows hold a change it didn’t ask for"))?] = true;
+        let left = net.get(&(c.table.as_str(), &c.pk[..])).map(|(_, after)| after);
+        let fits = match (left, c.cid.as_str()) {
+            (Some(after), "-1") => (c.cl % 2 == 1) == after.is_some(),
+            (Some(Some(row)), cid) => row.get(cid).unwrap_or(&Sql::Null) == &c.val,
+            _ => false,
+        };
+        fits.then_some(())
+            .ok_or_else(|| why("the computer’s rows hold a change it didn’t ask for"))?;
     }
-    let unchanged = |(i, op): (usize, &Op)| covered[i] || stands(op, p.stands.get(i).unwrap_or(&Value::Null));
-    if !ops.iter().enumerate().all(unchanged) {
+    // And each effect they have is there: a row they make has a change, one
+    // they remove its own, and each column changed from how it stood, or
+    // named on a row they make, unless NULL, its value's.
+    let made = |key: &(&str, &[u8]), cid: Option<&str>| {
+        let at = |c: &&change::Change| (c.table.as_str(), &c.pk[..]) == *key;
+        rows.iter().filter(at).any(|c| cid.is_none_or(|cid| c.cid == cid))
+    };
+    let whole = net.iter().all(|(key, (before, after))| match (before, after) {
+        (Some(b), Some(a)) => a.iter().all(|(cid, v)| b.get(cid) == Some(v) || made(key, Some(cid))),
+        (None, Some(a)) => made(key, None) && a.iter().all(|(cid, v)| *v == Sql::Null || made(key, Some(cid))),
+        (Some(_), None) => made(key, Some("-1")),
+        (None, None) => true,
+    });
+    if !whole {
         return Err(why("the computer left out a change it asked for"));
     }
     // The phone's device is its pass's person, and the open's approver
@@ -156,11 +180,11 @@ fn op<'v>(op: &'v Value, keys: &BTreeMap<String, Vec<String>>) -> Option<Op<'v>>
         let named = op.get(f)?.as_object()?;
         named.iter().map(|(c, v)| Some((c, value(v)?))).collect()
     };
-    let key = field(if kind == 0 { "row" } else { "key" })?;
+    let (key, columns) = (field(if kind == 0 { "row" } else { "key" })?, keys.get(table)?);
     let of = |k: &String| key.iter().find(|(c, _)| c == &k).map(|(_, v)| v.clone());
-    let pk = packed(&keys.get(table)?.iter().map(of).collect::<Option<Vec<_>>>()?)?;
+    let pk = packed(&columns.iter().map(of).collect::<Option<Vec<_>>>()?)?;
     let named = match kind {
-        0 => key,
+        0 => key.into_iter().filter(|(c, _)| !columns.contains(c)).collect(),
         1 => field("set")?,
         _ => Vec::new(),
     };
@@ -201,24 +225,31 @@ fn packed(values: &[Sql]) -> Option<Vec<u8>> {
     Some(out)
 }
 
-/// Whether the change row `c` is one of `op`'s effects.
-fn covers(op: &Op, c: &change::Change) -> bool {
-    let named = op.named.iter().find(|(n, _)| **n == c.cid).map(|(_, v)| v);
-    let effect = match (c.cid.as_str(), op.kind) {
-        ("-1", 2) => c.cl % 2 == 0,
-        ("-1", _) => c.cl % 2 == 1,
-        (_, 2) => false,
-        (_, kind) => named.map_or(kind == 0 && c.val == Sql::Null, |v| *v == c.val),
-    };
-    op.table == c.table && op.pk == c.pk && effect
-}
+/// A row as it stands: its columns to their values, none where there is
+/// no row.
+type Row = Option<BTreeMap<String, Sql>>;
 
-/// Whether `op`, with no row, is a no-op: its row, as `row` stood before
-/// the write, already as the op would leave it, a delete's gone.
-fn stands(op: &Op, row: &Value) -> bool {
-    let same = |(c, v): &(&String, Sql)| value(&row[c.as_str()]).as_ref() == Some(v);
-    match op.kind {
-        2 => row.is_null(),
-        _ => row.is_object() && op.named.iter().all(same),
+/// Each row `ops` touch, by table and packed key: as it stood before the
+/// write, from `stands`, each op's row read before any ran (svrngs-db
+/// `Db::prepare`), and as the ops leave it, in their order, as the write
+/// form runs them (svrngs-db form.rs): an insert makes a row of what it
+/// names, or sets that on a row there; an update sets what it names on a
+/// row there, and changes nothing where there is none; a delete removes it.
+fn net<'o>(ops: &'o [Op], stands: &[Value]) -> BTreeMap<(&'o str, &'o [u8]), (Row, Row)> {
+    let mut rows = BTreeMap::new();
+    for (op, stood) in ops.iter().zip(stands) {
+        let row =
+            |o: &serde_json::Map<String, Value>| o.iter().filter_map(|(c, v)| Some((c.clone(), value(v)?))).collect();
+        let before: Row = stood.as_object().map(row);
+        let (_, now) = rows
+            .entry((op.table, &op.pk[..]))
+            .or_insert_with(|| (before.clone(), before));
+        let named = op.named.iter().map(|(c, v)| ((*c).clone(), v.clone()));
+        match (op.kind, now.as_mut()) {
+            (2, _) => *now = None,
+            (0, None) => *now = Some(named.collect()),
+            (_, row) => row.into_iter().for_each(|r| r.extend(named.clone())),
+        }
     }
+    rows
 }
