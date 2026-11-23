@@ -7,7 +7,7 @@ use super::{
 use crate::{
     door::bound,
     job,
-    lend::{self, Answer, Audience, Credentials, Lend, Raw, Source},
+    lend::{self, Answer, Credentials, Lend, Raw, Source},
     share::{self, Granted, Pid, ShareRefusal},
     uid::{Answering, Unread},
 };
@@ -266,13 +266,19 @@ pub fn publish(
     secret: Credentials<'_>,
 ) -> Done {
     let (nature, port) = (plan.nature, plan.nature.port);
+    let ids: BTreeSet<_> = lend.terms.audience.ids().into_iter().flatten().collect();
+    if !ids.into_iter().eq(plan.terms.groups.keys()) {
+        tracing::debug!(target: "plan", lend = %nature.name, "plan: audience differs from the review");
+        return Done::NotPublished {
+            why: "the selected groups differ from the review".into(),
+        };
+    }
     lend.name = nature.name.clone();
     lend.source = nature
         .raw
         .map_or(Source::Port(port), |raw| Source::Raw(raw, port));
     lend.terms.approved = Some(approved);
     lend.terms.keep = keep.filter(|_| !matches!(plan.method, Method::ThisRun));
-    lend.terms.audience = Audience::Selected(plan.terms.groups.keys().cloned().collect());
     lend.terms.limit = plan.terms.limit;
     let saved = lend::publish(dir, lend, plan.if_rev, secret);
     tracing::debug!(target: "plan", lend = %nature.name, ?saved, "plan: conditional share publication");

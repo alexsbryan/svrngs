@@ -200,8 +200,10 @@ what another narrowed; one made while another holds it is refused, busy
 per-name revision in `locks/<lend>.rev`. Withdrawal advances it even when
 no declaration stands and leaves it behind. A confirmed plan can publish
 its binding, grant, audience and limit in one declaration write only at
-the reviewed revision. The executor (`plan::run::confirm`) rebuilds the
-plan before publishing and returns the current review on a token mismatch.
+the reviewed revision. The audience keeps its selection order; its IDs
+must match the ones reviewed, regardless of order. The executor
+(`plan::run::confirm`) rebuilds the plan before publishing and returns the
+current review on a token mismatch.
 On the home page, `/running` reviews a new share and `/running/confirm`
 publishes it with that same executor. The review binds the program and the
 terms shown as well as the audience and listener; it never replaces a

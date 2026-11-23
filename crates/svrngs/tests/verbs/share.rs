@@ -61,8 +61,15 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     let next = "say which groups can open it: `svrngs share 8096 --group <group>`, once for each";
     assert_eq!((none.to_string().as_str(), none.exit_code()), (next, 1));
     let named = |g: &[&str]| g.iter().map(|g| g.to_string()).collect::<Vec<_>>();
-    let both = cli::audience_of(dir, port, &named(&["house", "trip"])).unwrap();
+    let (both, names) = cli::audience_of(dir, port, &named(&["house", "trip"])).unwrap();
     assert_eq!(both, Audience::Selected(seeds.clone()));
+    let (reversed, reversed_names) =
+        cli::audience_of(dir, port, &named(&["trip", "house"])).unwrap();
+    assert_eq!(
+        reversed,
+        Audience::Selected(seeds.iter().rev().cloned().collect())
+    );
+    assert_eq!(names, reversed_names);
     let yard = cli::audience_of(dir, port, &named(&["yard"]));
     assert!(
         matches!(yard, Err(Refusal::Refused(Refused::NoGroup(_)))),
@@ -111,7 +118,7 @@ async fn two_groups_of_one_name_are_chosen_by_id_never_by_name() {
         matches!(&both, Err(Refusal::Refused(Refused::Ambiguous { ids: i, .. })) if i.len() == 2),
         "{both:?}"
     );
-    let second = cli::audience_of(dir, port, &[ids[1][..8].to_string()]).unwrap();
+    let (second, _) = cli::audience_of(dir, port, &[ids[1][..8].to_string()]).unwrap();
     assert_eq!(second, Audience::Selected(vec![ids[1].clone()]));
 }
 

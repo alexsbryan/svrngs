@@ -909,8 +909,8 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             said(&seed, answer, |outcome| Said::Left { group, outcome })?.to_string()
         }
         Verb::Share(mut asked, groups, ask, preview) => {
-            let names = audience_names(&root, asked.port, &groups)?;
-            asked.audience = Audience::Selected(names.keys().cloned().collect());
+            let (audience, names) = audience_of(&root, asked.port, &groups)?;
+            asked.audience = audience;
             let known = share::well_known_kind(asked.port);
             let claimed = if preview {
                 let path = root.join("lock");
@@ -939,22 +939,17 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             } else {
                 Availability::Keep
             };
-            let terms_plan = plan::Terms {
-                groups: names,
-                limit: asked.limit,
-                availability,
-            };
-            let read = |pid: Option<share::Pid>| {
-                here.answering(
-                    asked.raw.unwrap_or(Raw::Tcp),
-                    asked.port,
-                    pid.map(|p| p.pid),
-                )
-            };
-            let intent = |lend| run::Share {
+            let raw = asked.raw.unwrap_or(Raw::Tcp);
+            let read =
+                |pid: Option<share::Pid>| here.answering(raw, asked.port, pid.map(|p| p.pid));
+            let intent = |lend, groups| run::Share {
                 dir: &root,
                 lend,
-                terms: terms_plan.clone(),
+                terms: plan::Terms {
+                    groups,
+                    limit: asked.limit,
+                    availability,
+                },
                 pid: asked.pid,
                 replace: asked.replace,
                 contract: theirs,
@@ -964,19 +959,14 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                     plan::Return::Unknown
                 },
             };
-            let (observed, witness) = intent(&lend).observe(read)?;
+            let (observed, witness) = intent(&lend, names).observe(read)?;
             let reviewed = plan::plan(&observed).expect("share names its audience");
             let words = share_review(&reviewed, &witness.answers);
             if preview {
                 return Ok(words);
             }
-            if terminal
-                && !said_yes(
-                    here,
-                    &lend.name,
-                    &format!("{words}Type y, then press Enter: "),
-                )?
-            {
+            let prompt = format!("{words}Type y, then press Enter: ");
+            if terminal && !said_yes(here, &lend.name, &prompt)? {
                 return Ok("Nothing was changed.\n".into());
             }
             let mut lend = lend.clone();
@@ -989,15 +979,13 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
                 lend.terms.sign_in_with_svrngs = Some(client.clone());
             }
-            let secret = match share::adds_headers(&lend, theirs) {
-                false => {
-                    tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
-                    None
-                }
-                true => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
+            let secret = if share::adds_headers(&lend, theirs) {
+                here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?
+            } else {
+                tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
+                None
             };
-            let mut current = intent(&lend);
-            current.terms.groups = audience_names(&root, asked.port, &groups)?;
+            let current = intent(&lend, audience_of(&root, asked.port, &groups)?.1);
             let (observed, witness) = current.observe(read)?;
             let secret_header =
                 lend::Credentials::Replace(secret.as_deref().map(|s| (lend::SECRET_HEADER, s)));
@@ -2251,24 +2239,26 @@ fn full_name(user: &str) -> Option<String> {
 
 /// The groups `share` lends to, each `--group` the one [`group_named`]
 /// finds: refused with the next command when none is named, never all
-/// groups (LENDING_SCOPE §"User interface and commands").
-pub fn audience_of(root: &Path, port: NonZeroU16, named: &[String]) -> Result<Audience, Refusal> {
-    audience_names(root, port, named).map(|groups| Audience::Selected(groups.into_keys().collect()))
-}
-
-fn audience_names(
+/// groups (LENDING_SCOPE §"User interface and commands"). The declaration
+/// keeps the selected order; the review uses the canonical ID-to-name map.
+pub fn audience_of(
     root: &Path,
     port: NonZeroU16,
     named: &[String],
-) -> Result<std::collections::BTreeMap<String, String>, Refusal> {
+) -> Result<(Audience, std::collections::BTreeMap<String, String>), Refusal> {
     if named.is_empty() {
         tracing::debug!(target: "cli", port, "cli: share — refused, no group named to lend it to");
         return Err(Refused::NoAudience(port).into());
     }
-    named
-        .iter()
-        .map(|g| group_named(root, g).map(|s| (s.id(), s.name().to_string())))
-        .collect()
+    let (mut ids, mut names) = (Vec::new(), std::collections::BTreeMap::new());
+    for reference in named {
+        let group = group_named(root, reference)?;
+        let id = group.id();
+        if names.insert(id.clone(), group.name().to_string()).is_none() {
+            ids.push(id);
+        }
+    }
+    Ok((Audience::Selected(ids), names))
 }
 
 /// The one group held under `root` that `reference` names, by its name or

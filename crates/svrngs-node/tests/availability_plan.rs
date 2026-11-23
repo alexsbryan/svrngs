@@ -282,7 +282,9 @@ fn p2_host_product_matches_the_written_plans_and_words() {
 fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     use svrngs_node::lend::{self, Audience, Credentials, Lend};
     let dir = tempfile::tempdir().unwrap();
-    let (mut nature, terms) = facts();
+    let (mut nature, mut terms) = facts();
+    terms.groups.insert("trip-id".into(), "Trip".into());
+    let selected = Audience::Selected(vec!["trip-id".into(), "house-id".into()]);
     let observe = |nature: Nature| {
         let rev = lend::revision(dir.path(), &nature.name).unwrap();
         let mut observed = observation(nature, terms.clone(), Return::Startup, Return::Startup);
@@ -293,7 +295,8 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     let listener = std::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, 0)).unwrap();
     let addr = listener.local_addr().unwrap();
     nature.port = addr.port().try_into().unwrap();
-    let template = Lend::carried("coder", "house").unwrap();
+    let mut template = Lend::carried("coder", "house").unwrap();
+    template.terms.audience = selected.clone();
     let keep = Keep {
         unit: "coder.service".into(),
         files: "verified".into(),
@@ -319,18 +322,18 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     // Obstruct the declaration writer, after the revision can be reserved.
     let partial = lend::lends_dir(dir.path()).join(format!(".{}.json.partial", nature.name));
     std::fs::create_dir_all(&partial).unwrap();
-    let execute = |token: &str| {
+    let execute = |token: &str, template: Lend| {
         run::confirm(token, &observe(nature.clone()), |ready| {
             run::publish(
                 dir.path(),
                 ready,
-                template.clone(),
+                template,
                 granted.clone(),
                 Credentials::Keep,
             )
         })
     };
-    let Some(result) = execute(&first.token) else {
+    let Some(result) = execute(&first.token, template.clone()) else {
         panic!("initial confirmation did not finish");
     };
     assert!(lend::read(dir.path(), &nature.name).unwrap().is_none());
@@ -347,11 +350,11 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     let reviewed = observe(nature.clone());
     let retry = plan(&reviewed).unwrap();
     assert!(matches!(retry.method, Method::Reuse(_)));
-    let Some(result) = execute(&retry.token) else {
+    let Some(result) = execute(&retry.token, template.clone()) else {
         panic!("retry did not finish");
     };
     let words = retry.report_words(&result);
-    assert!(words.starts_with("Shared with House."), "{words:?}");
+    assert!(words.starts_with("Shared with House, Trip."), "{words:?}");
     println!("{words}");
     assert_eq!(
         lend::revision(dir.path(), &nature.name).unwrap(),
@@ -361,12 +364,21 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     assert_eq!(saved.port(), Some(nature.port));
     assert_eq!(saved.terms.approved, Some(approved));
     assert_eq!(saved.terms.keep, Some(keep));
-    assert_eq!(
-        saved.terms.audience,
-        Audience::Selected(vec!["house-id".into()])
-    );
+    assert_eq!(saved.terms.audience, selected);
     assert_eq!(saved.terms.limit, terms.limit);
-    // The original listener still accepts a connection after both attempts.
+    // Reuse the current token, but hand the writer a different audience.
+    let current = observe(nature.clone());
+    let current = plan(&current).unwrap();
+    template.terms.audience = Audience::Selected(vec!["yard-id".into(), "house-id".into()]);
+    assert!(matches!(
+        execute(&current.token, template),
+        Some(Done::NotPublished { .. })
+    ));
+    assert_eq!(
+        lend::revision(dir.path(), &nature.name).unwrap(),
+        current.if_rev
+    );
+    // The original listener still accepts a connection after the attempts.
     let _client =
         std::net::TcpStream::connect_timeout(&addr, std::time::Duration::from_secs(1)).unwrap();
     listener.set_nonblocking(true).unwrap();
