@@ -13,6 +13,9 @@
     ],
     "allow": [
       "Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "TodoWrite",
+      "Read(//home/alexbryan/dev/svrn-docs/rings/current/**)",
+      "Grep(//home/alexbryan/dev/svrn-docs/rings/current/**)",
+      "Glob(//home/alexbryan/dev/svrn-docs/rings/current/**)",
       "Read(/Users/alexsbryan/.cargo/registry/src/**)",
       "Grep(/Users/alexsbryan/.cargo/registry/src/**)",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",

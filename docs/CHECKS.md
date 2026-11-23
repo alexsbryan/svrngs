@@ -75,7 +75,10 @@ Fedora guest and model are in `/tmp/keeper-demo`; the WebKit checks run in
 
 On `beefymac`, the archived candidate is checked before the scratch build.
 The native keeper and node suites, native Run and the lifecycle proofs use
-unmodified source. Renewal and the six plist cases use the recorded scratch
+unmodified source. The node suite's browser tests use a checksummed Node 24
+download and the candidate's locked Playwright, with Chromium and WebKit
+downloaded into the same scratch folder. If that setup fails, the node
+suite is `never-ran`. Renewal and the six plist cases use the recorded scratch
 instrumentation, with separate build fingerprints. The tier uses only its
 scratch folder and named test agents and does not reboot or sign out.
 

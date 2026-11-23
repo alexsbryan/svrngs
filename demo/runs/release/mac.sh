@@ -83,16 +83,33 @@ build() {
     build_id=$1:$(shasum -a 256 "$pair/svrngs" "$pair/svrngs-keeper" | shasum -a 256 | cut -d' ' -f1)
 }
 
-suite() {
+# Match the gate's Node version; npm ci uses the candidate's web lockfile.
+browser_tools() {
+    local node=node-v24.22.3-darwin-arm64
+    local sha=1d64136c8a43d648d1b3bad10797a4c995b1ca032d2bde8799de43b37f058fe5
+    /usr/bin/curl -q -fsSL --retry 2 --max-time 120 \
+        "https://nodejs.org/dist/v24.22.3/$node.tar.xz" -o "$root/$node.tar.xz" &&
+        (cd "$root" && printf '%s  %s.tar.xz\n' "$sha" "$node" | shasum -a 256 -c -) &&
+        tar -xf "$root/$node.tar.xz" -C "$root" || return
+    export PATH="$root/$node/bin:$PATH" PLAYWRIGHT_BROWSERS_PATH="$root/browsers"
+    node --version && npm ci --prefix web --ignore-scripts --no-audit --no-fund &&
+        npx --prefix web --no-install playwright install chromium webkit
+}
+
+suite() (
     local log=$root/$1-test.log code=0
-    env HOME="$root/tests-home" SVRNGS_DIR="$root/tests-home/node" XDG_DATA_HOME="$root/tests-home/data" \
-        TMPDIR="$root/tests-home" \
-        CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" \
-        cargo test --locked --offline -p "svrngs-$1" >"$log" 2>&1 || code=$?
+    export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
+    export HOME="$root/tests-home" TMPDIR="$root/tests-home"
+    export CFFIXED_USER_HOME="$HOME" SVRNGS_DIR="$HOME/node" XDG_DATA_HOME="$HOME/data"
+    if [[ $1 == node ]] && ! browser_tools; then
+        printf 'Preflight: scratch Node/Playwright setup failed; the node suite did not run\n'
+        return 125
+    fi
+    cargo test --locked --offline -p "svrngs-$1" >"$log" 2>&1 || code=$?
     cat "$log"
     if [[ $code == 0 ]] && ! grep -Eq '^test result: ok\. [1-9]' "$log"; then return 125; fi
     return "$code"
-}
+)
 
 step() {
     local name=$1 build=$2 code=0
