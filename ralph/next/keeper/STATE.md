@@ -791,7 +791,7 @@ Rows from here follow the spec at svrn-docs `0080f3f`, "run it with svrngs" (the
   - Size: aim within +11 counted, keeping avail-ship's +10. If it can't
     fit, park with the measured delta. Never weaken the identity check.
 
-- [ ] avail-ship — depends [avail-run-page, avail-run-containers, avail-run-mac-renew, avail-run-mac-proof, avail-mac-plist-read] — ONE UNIT: spec §5 row 8.
+- [x] avail-ship 4424ef188 — depends [avail-run-page, avail-run-containers, avail-run-mac-renew, avail-run-mac-proof, avail-mac-plist-read] — ONE UNIT: spec §5 row 8.
   - `build-release.sh`, `install.sh` (always) and the Arch package, as
     Give's lines are.
   - Uninstall says what svrngs still runs. Native jobs name the program
