@@ -464,3 +464,26 @@ failing run reports neither when the fixture accepted nor the retry
 budget remaining; the assertion alone cannot distinguish a late fixture
 from a missed socket read. The focused diagnostic measures both times
 and rechecks the same socket after the accept if the first read failed.
+
+### Mac late-accept diagnostic
+
+`bash /tmp/opencode/keeper-mac-late-accept.sh` ran in beefymac scratch at
+`8729eb61` with `TOKIO_WORKER_THREADS=4`. The 250 ms accept-delay plant
+reproduced the same assertion (`REVIEW-audit-available-16.await.log:5–15`):
+
+```text
+after-window exit=101
+accept diagnostic: delay=250 worker=363.708µs checking=779.458µs accepted=324.995666ms returned=122.22725ms seen=NotMine
+accept diagnostic: after accept: Uid(502)
+assertion `left == right` failed: accepted late
+```
+
+All six ordinary instrumented library runs exited 0: `244 passed; 0
+failed; 3 ignored` each (lines 16–57). The test requested a 30 ms sleep;
+observed accepts ranged from 38.177291 to 104.0485 ms after the fixture
+started. In the 104 ms case the check returned at 135.334375 ms with
+`Uid(502)`. The plant establishes that fixture timing can produce the
+original symptom; it does not recover the original run's accept time.
+Synchronize the fixture to the first missed read rather than raising the
+reader's 100 ms budget. The diagnostic removed its scratch directory; it
+installed no launch agents or containers.
