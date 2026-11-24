@@ -16,7 +16,9 @@ import { launch } from '../../../web/tests/page.mjs';
 import { MORE, SAID, TOO_LONG, total, unsaved } from '../board.js';
 import { serve } from './standin.mjs';
 
-const WAIT = { timeout: 15_000 };
+// A hang guard, not a bar: each wait ends at the event it names, and the
+// full gate runs two browsers beside everything else.
+const WAIT = { timeout: 60_000 };
 const OPEN = { unopened: true, b: true };
 
 /** The board opened in `context` at `at`: its page errors and debug traces kept, and what it shows read. */
@@ -63,7 +65,18 @@ test('Ana on a computer and Bo on a phone plan one Saturday', async () => {
     await ana.page.getByLabel('When').fill('14:00');
     await ana.page.getByLabel('Where').fill('Park');
     await ana.page.getByRole('button', { name: 'Add it to the board' }).click();
-    await bo.reads('Picnic', '14:00 · Park');
+    await bo.reads('Picnic', '14:00 · Park').catch(async (error) => {
+      // Said whole, so a lost push tells itself apart from a slow one.
+      const stored = await standin.db.run([{ sql: 'SELECT * FROM plans' }]).catch((e) => String(e));
+      const sees = await bo.page
+        .locator('#board')
+        .innerText()
+        .catch((e) => String(e));
+      throw new Error(
+        `Picnic at the stand-in: ${JSON.stringify(stored)}\nAna: ${ana.traced.join(' | ')}\nBo: ${bo.traced.join(' | ')}\nBo sees: ${sees}`,
+        { cause: error },
+      );
+    });
     await bo.plan('Picnic').getByRole('button', { name: 'Vote for this' }).tap();
     await ana.reads('Picnic', total(1));
     assert.equal(

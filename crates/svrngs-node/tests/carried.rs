@@ -4648,19 +4648,24 @@ async fn a_member_s_version_that_runs_an_expression_or_makes_rows_is_refused_eve
             "{words}"
         );
 
+        // Ben judges a version only once his folder holds it, and the folder
+        // syncs by rounds, so wait on those two events, the version arrived
+        // and its own refusal said, not on a count of rounds or of lines.
+        // 90 s is a hang guard.
+        let wanted = ["randomblob", "Insert"][n];
+        let theirs = at_ben.join("apps/Board/schema.sql");
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(90);
         let mut judged = false;
-        for _ in 0..15 {
+        while !judged && tokio::time::Instant::now() < deadline {
             for node in [ana, ben] {
                 round(node).await;
             }
-            if refusals().len() == n + 1 {
-                judged = true;
-                break;
-            }
+            let held = std::fs::read_to_string(&theirs).is_ok_and(|t| t == *version);
+            judged = held && refusals().iter().any(|r| r.contains(wanted));
         }
         assert!(
             judged,
-            "version {n} refused on Ben's computer, said at debug: {:?}",
+            "version {n} ({wanted}) refused on Ben's computer once his folder held it, said at debug: {:?}",
             refusals()
         );
         let mine = format!("b{n}");
