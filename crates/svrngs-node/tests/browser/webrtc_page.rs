@@ -365,7 +365,7 @@ async fn a_direct_paths_data_endpoint_presents_its_pass_and_link_at_its_relays(e
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, _mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    let (ada, _mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
     direct_on(dir.path());
 
     let seen = drive(
