@@ -20,4 +20,4 @@ Make a group and drop the invite link in your chat. Friends can join in their
 phone’s browser. Add some of our exmple apps like **Money** to split the pizza bill, or share an app from **Already running here**.
 [Step-by-step setup](docs/guide/start.md)
 
-[User guide](docs/guide/README.md) · [How it works (diagram)](docs/diagrams/01-group.svg) · [Build an app](docs/guide/build.md) · [Self-host](docs/guide/self-host.md) · [Contribute](CONTRIBUTING.md) · [Release notes](RELEASES.md)
+[User guide](docs/guide/README.md) · [Local Hosting Inspiration](docs/guide/local-hosting-inspiration.md) · [How it works (diagram)](docs/diagrams/01-group.svg) · [Build an app](docs/guide/build.md) · [Self-host](docs/guide/self-host.md) · [Contribute](CONTRIBUTING.md) · [Release notes](RELEASES.md)
