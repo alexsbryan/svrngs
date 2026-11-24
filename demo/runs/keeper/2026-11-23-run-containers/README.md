@@ -144,6 +144,9 @@ issue `svrngs-keeper stop test-actual` inside that window. Judge both the
 manager and the service: the port must refuse a connection and the exact
 old pod ID must be gone. Restart Sam's user manager before explicitly
 starting Actual and signing in with the password set before the kill.
+After Start and after the unopposed crash, the bounded readiness probe is
+the login itself: retry when there is no HTTP response, but require the
+first HTTP response to confirm the login and return a token.
 
 ```sh
 W=/tmp/opencode/keeper-stop-gap-red python3 -B demo/runs/keeper/2026-11-23-run-containers/stop_gap.py

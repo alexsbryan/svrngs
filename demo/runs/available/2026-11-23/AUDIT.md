@@ -399,3 +399,44 @@ as it does on the host. An in-container `git submodule update` rewrote
 relative setting was restored. The preflight now initializes the gitlink
 on the host side and verifies it through read-only `.git` mounts inside
 the gate.
+
+### Squashed release replay at `e63c4ba9` — failed in Actual stop-gap
+
+`REVIEW-audit-available-14.await.log:76–120` records 23 of 24 release
+cases passing. `linux-container-stop-gap.log:3–18` shows that Stop removed
+the pod, it stayed stopped through a user-manager restart, and explicit
+Start recovered the marker. After the unopposed crash, the root page
+answered 200 but the first login returned `('000', '', False)`. The
+release tier exited 1; that run did not reach the full gate.
+
+A focused replay used the same release keeper (`sha256sum` starts
+`b7efc7b81ff24d8b`, matching the archive manifest in the await log).
+Capturing curl stderr showed both connection refusal (exit 7) and
+connection reset (exit 56) during startup. The stop-gap driver now waits
+on the login itself (`stop_gap.py`, `login_when_ready`) in the existing
+16-second readiness window. Only no HTTP response is retried; an HTTP
+answer must be `200`, `ok`, and include a token for the original marker.
+
+The Fedora VM plant redirected only the first post-crash login to an
+unbound loopback port. The wrong-marker control sent an incorrect
+password to the actual login endpoint. Selected output:
+
+```text
+old driver, transport plant: attempt 1 status=('000', '', False)
+AssertionError: ('000', '', False)                                   exit 1
+new driver, wrong marker: attempt 2 status=('400', 'error', False)
+AssertionError: ('400', 'error', False)                              exit 1
+new driver, transport plant: attempt 1 status=('000', '', False)
+new driver, transport plant: attempt 2 status=('200', 'ok', True)      exit 0
+unplanted: Actual login did not answer, http=000 (twice after crash)
+unplanted: an unopposed crash still recovers; restarts=1;
+  status=["200", "ok", true]; same-name foreign pod untouched          exit 0
+```
+
+The driver discarded each VM disk, including its units, pods, drop-in
+and volume. The focused audit again matched all 69 port markers after
+rejecting an in-memory omission of `launchd.rs:2`. Trust check: 13 policies,
+13 listeners, 17 gates; zero diff for CSP and the trust floor from
+`05896fb0`, and for `scripts/check.sh` from `923a4b9a`. Lean check:
+3,529 core, 28,590 non-JS, 8,795 JS, still five non-JS and zero JS lines
+below the rebased ceilings. Both release tiers are owed on the repaired pin.

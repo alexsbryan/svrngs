@@ -30,6 +30,19 @@ def pod_exists(target):
     return proof.guest(f"{proof.SAM} podman pod exists {target}; printf %s $?")
 
 
+def login_when_ready(marker):
+    def read():
+        answer = actual.request(proof.direct, LOCAL, "login", marker)
+        if answer[0] == "000":
+            proof.vm.say("Actual login did not answer", http=answer[0])
+        return answer
+
+    # The page answering does not establish that Actual's login route answers.
+    login = until(read, lambda answer: answer[0] != "000", seconds=16)
+    assert login == ("200", "ok", True), login
+    return login
+
+
 def scene():
     subprocess.run(["scp", *proof.vm.SCP, str(proof.vm.BIN / "svrngs-keeper"),
                     "root@127.0.0.1:/tmp/svrngs-keeper-test"], check=True, timeout=30)
@@ -81,17 +94,13 @@ def scene():
     proof.write(unit_path + ".d/window.conf", "[Service]\nEnvironment=RUST_LOG=debug\n")
     proof.guest(f"{MANAGER} daemon-reload")
     assert proof.vm.terminal(f"svrngs-keeper start {NAME}")[0] == 0
-    assert proof.wait_for(LOCAL + "/", proof.direct).endswith("\n200")
-    login = actual.request(proof.direct, LOCAL, "login", marker)
-    assert login == ("200", "ok", True), login
+    login = login_when_ready(marker)
     proof.vm.verdict("explicit Start reads the same marker", "passed", status=login)
     before = pod("pod", "inspect", "--format", "{{.Id}}", NAME)
     proof.guest(f"{MANAGER} kill --kill-whom=main --signal=KILL {UNIT}")
     until(lambda: show("SubState", "NRestarts"), lambda state: state == {"SubState": "running", "NRestarts": "1"})
-    assert proof.wait_for(LOCAL + "/", proof.direct).endswith("\n200")
     assert pod_exists(before) == "1"
-    login = actual.request(proof.direct, LOCAL, "login", marker)
-    assert login == ("200", "ok", True), login
+    login = login_when_ready(marker)
     proof.vm.verdict("an unopposed crash still recovers", "passed", restarts="1", status=login)
     assert proof.vm.terminal(f"svrngs-keeper stop {NAME}")[0] == 0
     assert pod_exists(NAME) == "1"
