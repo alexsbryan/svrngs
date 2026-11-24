@@ -440,3 +440,27 @@ rejecting an in-memory omission of `launchd.rs:2`. Trust check: 13 policies,
 `05896fb0`, and for `scripts/check.sh` from `923a4b9a`. Lean check:
 3,529 core, 28,590 non-JS, 8,795 JS, still five non-JS and zero JS lines
 below the rebased ceilings. Both release tiers are owed on the repaired pin.
+
+### Squashed release replay at `8729eb61` — failed in the Mac node suite
+
+`REVIEW-audit-available-15.await.log:76–121` records 23 of 24 release
+cases passing, including the repaired Actual stop-gap case. The release
+tier exited 1 before the full gate. The Mac cleanup case passed.
+`/tmp/opencode/keeper-release-squash-8729eb61/beefymac.log:1345–1370`
+records the failing Mac node assertion and its inner status:
+
+```text
+assertion `left == right` failed: accepted late
+  left: NotMine
+ right: Uid(502)
+test result: FAILED. 243 passed; 1 failed; 3 ignored
+release-case mac-node-tests 101 darwin-arm64/cargo-test/svrngs-node
+```
+
+The fixture starts a thread that sleeps 30 ms before calling `accept`
+(`crates/svrngs-node/src/uid_tests.rs:215–233`). The reader looks again
+for up to 100 ms (`crates/svrngs-node/src/uid.rs:102–109,178–200`). The
+failing run reports neither when the fixture accepted nor the retry
+budget remaining; the assertion alone cannot distinguish a late fixture
+from a missed socket read. The focused diagnostic measures both times
+and rechecks the same socket after the accept if the first read failed.
