@@ -4,10 +4,10 @@
 // before, beside the button pressed: the node's outcome (removal.rs
 // `Outcome`, a 409's too), or a refusal in its own words, a lapsed
 // session (a 401's page, home.rs:198) said as routes.js says it, since
-// that page is not JSON. A leave goes on to the page saying so: HOME takes
-// `left` (leave.js `take`), which says it and reads the groups again. A
-// hand-on reads them again too (HOME's `again`), so the hand-on, no longer
-// this computer's, goes, and what it did is said beside Leave.
+// that page is not JSON. A leave goes on to the page saying so: HOME's
+// `again`, with `?left=`, says it and reads the groups again. A hand-on
+// reads them again too, so the hand-on, no longer this computer's, goes,
+// and what it did is said beside Leave.
 import { assertNever, go } from '../ui/machine.js?v=__VERSION__';
 import { ENDED, sent } from './routes.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
@@ -88,8 +88,8 @@ const SAYS = {
 };
 /** @type {Partial<Record<Outcome, (s: State) => HOME.Message>>} */
 const TELLS = {
-  left: (state) => ({ type: 'left', flow: 'leave', name: state.name }),
-  left_vacant: (state) => ({ type: 'left', flow: 'leave', name: state.name }),
+  left: (state) => ({ type: 'again', q: { left: state.name } }),
+  left_vacant: (state) => ({ type: 'again', q: { left: state.name } }),
   // A removal or an ask to remove: the groups read again draw the door
   // without them, and the line of it under the door.
   out: () => ({ type: 'again' }),

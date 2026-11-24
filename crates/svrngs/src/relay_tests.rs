@@ -34,7 +34,7 @@ async fn a_read_that_panicked_is_refused_as_that_never_as_no_group() {
         .with_ansi(false)
         .finish();
     let _kept = tracing::subscriber::set_default(kept);
-    let panicked = tokio::task::spawn_blocking(|| -> Option<(String, Member)> {
+    let panicked = tokio::task::spawn_blocking(|| -> Option<(String, Person, Option<Person>)> {
         panic!("planted: the record's read panicked")
     });
     let refused = Access::Deny { reason: None };

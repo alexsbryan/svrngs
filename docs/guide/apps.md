@@ -53,9 +53,10 @@ not on yours alone. So it keeps working when you're away: it opens while
 any computer in your group is on.
 
 **If someone changes an app.** Anyone in the group can change an app's
-files. You keep the version you have until you say otherwise: your page
-says *"1 app changed. See what’s new"*, and **Open the new version** moves
-you to it.
+files. You keep the version you have until you say otherwise: your
+group's page says *"1 app has a new version you can review."*, which opens
+**What acts as you** on your home page, where *"1 app changed. See what’s
+new"* opens to **Open the new version**, which moves you to it.
 
 ## Money: split a bill
 

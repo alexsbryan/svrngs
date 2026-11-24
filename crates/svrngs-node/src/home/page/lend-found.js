@@ -34,6 +34,7 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * @property {number | null} [pid] the process the look showed on the port
  * @property {number | null} [start] its start, so one that changed since is refused
  * @property {string} [terms] the text of its groups' own terms, drawn
+ * @property {{ token: string, button: string }} [review]
  * @property {Shown} [l]
  */
 
@@ -45,7 +46,7 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  *   | { type: 'choose', id: string, on: boolean }
  *   | { type: 'lend' }
  *   | { type: 'lent', l: Shown, why: string }
- *   | { type: 'drawn', terms: string, why: string }
+ *   | { type: 'drawn', terms: string, why: string, review?: State['review'] }
  *   | { type: 'told', why: string }
  *   | { type: 'refused', why: string }} Message
  */
@@ -54,7 +55,7 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * The effects its step answers: the port lent, by the name and kind
  * typed, `null` where none is, to the groups chosen, by their stable ids;
  * and HOME told to read the groups again.
- * @typedef {{ run: 'lend', port: number, name: string | null, kind: string | null, groups: string[], terms: string | null, pid: number | null, start: number | null, failed: 'refused' }
+ * @typedef {{ run: 'lend', port: number, name: string | null, kind: string | null, groups: string[], terms: string | null, pid: number | null, start: number | null, token?: string, failed: 'refused' }
  *   | { run: 'again', failed: 'told' }} Effect
  */
 
@@ -65,20 +66,47 @@ import { chosen } from './group-choice.js?v=__VERSION__';
 export const LEND = (home) => ({
   states: { lend: ['unlent', 'lending', 'lent'] },
   io: {
-    lend: ({ port, name, kind, groups, terms, pid, start }) =>
-      post('/running', { port, name, kind, groups, terms, pid, start }).then((lend) =>
+    lend: ({ port, name, kind, groups, terms, pid, start, token }) =>
+      post(token ? '/running/confirm' : '/running', {
+        port,
+        name,
+        kind,
+        groups,
+        terms,
+        pid,
+        start,
+        token,
+      }).then((lend) =>
         lend.terms === undefined
           ? { type: 'lent', l: lend, why: lend.name }
-          : { type: 'drawn', terms: lend.terms, why: lend.said },
+          : {
+              type: 'drawn',
+              terms: lend.terms,
+              why: [lend.said, lend.review?.promise, lend.review?.reason, lend.review?.impact]
+                .filter(Boolean)
+                .join(' '),
+              review:
+                typeof lend.token === 'string'
+                  ? { token: lend.token, button: lend.review.button }
+                  : undefined,
+            },
       ),
     again: groupsAgain(home),
   },
   step: (state, message) => {
     switch (message.type) {
       case 'typed':
-        return go(state, {}, { [message.field]: message.value, terms: undefined });
+        return go(
+          state,
+          {},
+          { [message.field]: message.value, said: '', terms: undefined, review: undefined },
+        );
       case 'choose':
-        return go(state, {}, { groups: chosen(state.groups, message), said: '', terms: undefined });
+        return go(
+          state,
+          {},
+          { groups: chosen(state.groups, message), said: '', terms: undefined, review: undefined },
+        );
       case 'lend':
         if (state.at.lend === 'lending')
           return no(state, 'a lend is under way, and is answered first');
@@ -97,13 +125,22 @@ export const LEND = (home) => ({
             terms: state.terms ?? null,
             pid: state.pid ?? null,
             start: state.start ?? null,
+            ...(state.review && { token: state.review.token }),
             failed: 'refused',
           },
         );
       case 'lent':
         return go(state, { lend: 'lent' }, { l: message.l }, { run: 'again', failed: 'told' });
       case 'drawn':
-        return go(state, { lend: 'unlent' }, { terms: message.terms, said: message.why });
+        return go(
+          state,
+          { lend: 'unlent' },
+          {
+            terms: message.terms,
+            said: `${state.said} ${message.why}`,
+            review: message.review,
+          },
+        );
       case 'told':
         return go(state, {});
       case 'refused':

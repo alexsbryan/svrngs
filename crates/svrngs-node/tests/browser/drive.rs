@@ -80,9 +80,18 @@ pub fn opens(args: &Value) -> Value {
 pub async fn drive(
     engine: Engine,
     script: &str,
-    mut args: Value,
+    args: Value,
     release: Option<tokio::sync::oneshot::Receiver<()>>,
 ) -> Value {
+    browser_json(browser_half(engine, script, args, release).await)
+}
+
+pub async fn browser_half(
+    engine: Engine,
+    script: &str,
+    mut args: Value,
+    release: Option<tokio::sync::oneshot::Receiver<()>>,
+) -> std::process::Output {
     args["engine"] = json!(engine.as_str());
     let mut child = tokio::process::Command::new("node")
         .arg(repo().join("web/tests").join(script))
@@ -112,6 +121,10 @@ pub async fn drive(
         .await
         .expect("the browser half ran");
     told.abort();
+    out
+}
+
+pub fn browser_json(out: std::process::Output) -> Value {
     assert!(
         out.status.success(),
         "the browser half failed ({}):\n{}",

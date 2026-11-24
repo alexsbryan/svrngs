@@ -1,0 +1,4 @@
+$ cargo test -p svrngs-db --test measure -- --nocapture   # app-state-b2 tree on 054f16d6 with the totals of what each device holds, Darwin arm64, debug profile (deps at opt-level 2), 2026-11-23 00:46
+MEASURE 16 rows: a tap's write µs best/median/slowest (426, 491, 856); BOARD read µs (23, 24, 56) (QUERY_MOST 250000 µs); answer 493 B (ANSWER_MOST 4194304 B, ROWS_MOST 1000)
+MEASURE 10000 rows: a tap's write µs best/median/slowest (290, 340, 1899); BOARD read µs (1673, 1688, 1945) (QUERY_MOST 250000 µs); answer 30912 B (ANSWER_MOST 4194304 B, ROWS_MOST 1000)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.92s

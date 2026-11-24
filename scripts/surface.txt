@@ -16,6 +16,7 @@
 # refused <word>: an `x-svrngs-refused` word, door.rs `LendRefusal::as_str`.
 
 route /svrngs/acts
+route /svrngs/sql
 route /svrngs-reads
 route /svrngs-reads/<label>/svrngs-stop
 route /svrngs-to

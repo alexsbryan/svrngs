@@ -324,6 +324,24 @@ async fn an_answer_whose_body_never_ends_is_slow_at_ten_seconds() {
     );
 }
 
+/// **A member's answer is read no further than a request may be**
+/// ([`crate::peer_wire::MAX_REQUEST_BODY_BYTES`]): an answer of exactly that
+/// many bytes is read whole, one a byte longer is no answer. Plant: no
+/// limit (the longer one read whole).
+#[tokio::test]
+async fn an_answer_longer_than_a_request_may_be_is_no_answer() {
+    let most = crate::peer_wire::MAX_REQUEST_BODY_BYTES;
+    let answer = |n: usize| async move { Ok(Streamed::new(axum::body::Body::from(vec![7u8; n]))) };
+    let read = whole(answer(most)).await;
+    assert_eq!(read.expect("an answer of the limit").body().len(), most);
+    let over = whole(answer(most + 1)).await;
+    assert!(
+        matches!(&over, Err(Unsent::Failed(_))),
+        "{:?}",
+        over.map(|w| w.body().len())
+    );
+}
+
 /// **Which connection a request went on, traced** (#178): two requests to
 /// a member, the first said dialled and the second said riding the
 /// connection kept to it, each with its protocol. Red with the plant the

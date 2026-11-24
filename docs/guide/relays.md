@@ -30,8 +30,9 @@ you keep open. It reads the groups this computer is in from svrngs's data,
 so those are the groups it relays for; run svrngs here as usual.
 
 By default it lets through the computers and phones of those groups, and a
-phone opening a lend of theirs: a lend's page dials from a fresh key that is
-in no group, and the pass the page signs is what the relay admits it by.
+phone opening a lend of theirs, a guest's phone too: a lend's page dials
+from a fresh key that is in no group, and the relay checks the pass it
+shows, and the guest's visit, the same way the computer lending it does.
 Nobody else — a key of no group is refused, and each refusal is said in the
 log.
 

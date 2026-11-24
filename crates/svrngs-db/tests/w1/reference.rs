@@ -1,0 +1,218 @@
+//! The reference model: the table state that a set of admissible change
+//! sets, taken in any order, merges to. Written apart from any svrngs-db
+//! code, from the rule as APP_STATE §4 states it ("How it merges"; "A
+//! removed device", "Why"), with Fly's fork read where the rule leaves a case
+//! unsaid (`changes_vtab_write.rs`, at the pin `change.rs` names):
+//!
+//! - **A row's causal length is the highest any change of it carries.** Odd,
+//!   the row exists; even, it was deleted. Parity decides, whatever the
+//!   change's column (`:515`), and a change at a lower length decides
+//!   nothing (`:511-513`).
+//! - **A column's value is its winning change's, among the row's changes at
+//!   that length:** the highest `col_version` (`:58-62`), then the larger
+//!   value in cr-sqlite's order (`:93`, `:108`; `Val::cmp_crsql`), then the
+//!   larger site (`:95-106`, with merge-equal-values on, as svrngs sets it).
+//!   The site only names which of two equal values' sets stands.
+//! - **A column no change at that length reaches takes its DEFAULT,** NULL
+//!   where it has none, as on a copy that creates the row from a set at
+//!   that length: it inserts the key alone, `INSERT OR IGNORE` (`:620-645`;
+//!   `tableinfo.rs:391-406`), or with the one column changed (`:672-690`;
+//!   `tableinfo.rs:802-822`), and SQLite fills every other column with its
+//!   default. So the state is read through the schema (`Join::state`).
+//!
+//! So the state is a join: per row, the pair (causal length, each column's
+//! highest change at it), where a longer length replaces the columns and an
+//! equal one takes each column's maximum. It is commutative, associative and
+//! idempotent (`laws.rs`).
+//!
+//! **Where cr-sqlite's merge equals it.** A column change at a longer odd
+//! length over a row standing here clears the row first, under N, the rule
+//! the fork's engine keeps (`:621-625`, `clear_earlier_life` at `:744-803`),
+//! so the copy holds the row as a copy without it makes it, from the key
+//! alone. A row-level change at a longer odd length keeps the old values,
+//! each at `col_version` 0 (`tableinfo.rs:440-454`, called at
+//! `changes_vtab_write.rs:273`), and only a change at the new length replaces
+//! one. But the set that carries it re-adds the row with a change of every
+//! non-key column: a local insert clocks each (`local_writes/mod.rs`,
+//! `mark_locally_inserted`). So a copy ends on this model's state. Under
+//! today's rule, a copy that held the row alive kept its old values for a
+//! column change too, and ended on another state where the re-add was
+//! missing (`rule.rs`).
+
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
+
+use crate::change::{Change, ChangeSet, RowKey, SENTINEL, SetId, State, Val};
+use crate::replica::Table;
+use crate::rule::Rule;
+
+/// The join of every change taken so far.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Join {
+    rows: BTreeMap<RowKey, Line>,
+}
+
+/// One row's part of the join: its causal length, and each non-key column's
+/// winning change at that length.
+#[derive(Clone, Debug, PartialEq)]
+struct Line {
+    cl: i64,
+    cells: BTreeMap<String, Change>,
+}
+
+impl Line {
+    fn of(c: &Change) -> Line {
+        let mut cells = BTreeMap::new();
+        if c.cid != SENTINEL && c.cl % 2 == 1 {
+            cells.insert(c.cid.clone(), c.clone());
+        }
+        Line { cl: c.cl, cells }
+    }
+
+    /// This line joined with another: the longer causal length's columns, or
+    /// at one length each column's higher change.
+    fn join(&mut self, other: &Line) {
+        match other.cl.cmp(&self.cl) {
+            Ordering::Less => {}
+            Ordering::Greater => *self = other.clone(),
+            Ordering::Equal => {
+                for (cid, c) in &other.cells {
+                    match self.cells.get(cid) {
+                        Some(held) if !outranks(c, held) => {}
+                        _ => {
+                            self.cells.insert(cid.clone(), c.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Whether `a` beats `b` for one column at one causal length: the most
+/// edits, then the larger value, then the larger site.
+fn outranks(a: &Change, b: &Change) -> bool {
+    a.col_version
+        .cmp(&b.col_version)
+        .then_with(|| a.val.cmp_crsql(&b.val))
+        .then_with(|| a.site.cmp(&b.site))
+        == Ordering::Greater
+}
+
+impl Join {
+    /// The join of these sets' changes.
+    pub fn of<'a>(sets: impl IntoIterator<Item = &'a ChangeSet>) -> Join {
+        let mut join = Join::default();
+        for set in sets {
+            join.add(set);
+        }
+        join
+    }
+
+    /// This join, having also taken `set`.
+    pub fn add(&mut self, set: &ChangeSet) {
+        for c in set.changes() {
+            let line = Line::of(c);
+            match self.rows.get_mut(&(c.table.clone(), c.pk.clone())) {
+                Some(held) => held.join(&line),
+                None => {
+                    self.rows.insert((c.table.clone(), c.pk.clone()), line);
+                }
+            }
+        }
+    }
+
+    /// This join joined with another.
+    pub fn join(mut self, other: &Join) -> Join {
+        for (key, line) in &other.rows {
+            match self.rows.get_mut(key) {
+                Some(held) => held.join(line),
+                None => {
+                    self.rows.insert(key.clone(), line.clone());
+                }
+            }
+        }
+        self
+    }
+
+    /// The table state in these tables: the rows at an odd causal length,
+    /// each with its winning values, and each column no change reaches at
+    /// its default (`Table::fresh`), less the NULLs.
+    pub fn state(&self, tables: &[Table]) -> State {
+        self.rows
+            .iter()
+            .filter(|(_, line)| line.cl % 2 == 1)
+            .map(|(key, line)| {
+                let mut values = Table::named(tables, &key.0).fresh();
+                values.extend(line.cells.iter().map(|(cid, c)| (cid.clone(), c.val.clone())));
+                values.retain(|_, v| *v != Val::Null);
+                (key.clone(), values)
+            })
+            .collect()
+    }
+}
+
+/// The reference model: the state these admissible sets merge to in these
+/// tables, in any order.
+pub fn state<'a>(tables: &[Table], sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
+    Join::of(sets).state(tables)
+}
+
+/// The state the admissible sets merge to in these tables under `rule`
+/// (`rule.rs`): the join of all of them, under today's rule and N; of those
+/// H's fixpoint admits; or of each device's sets below its first missing
+/// one, under P.
+pub fn under<'a>(rule: Rule, tables: &[Table], sets: impl IntoIterator<Item = &'a ChangeSet>) -> State {
+    let sets: Vec<&ChangeSet> = sets.into_iter().collect();
+    match rule {
+        Rule::Today | Rule::NewLifeEmpty => state(tables, sets),
+        Rule::WaitForLife => state(tables, given_life(&sets)),
+        Rule::Contiguous => state(tables, contiguous(&sets)),
+    }
+}
+
+/// H's fixpoint: a set is admitted once each of its column changes at a
+/// causal length past 1 meets a row-level change of its row at that length
+/// or a longer one, in the set itself or in a set admitted. A longer one
+/// already outranks the change, so it can bring nothing back. Admitting a set
+/// only adds row-level changes, so a set once admissible stays so, and the
+/// least fixpoint is one whatever order the sets are judged in.
+fn given_life<'a>(sets: &[&'a ChangeSet]) -> Vec<&'a ChangeSet> {
+    let mut lives: BTreeMap<RowKey, i64> = BTreeMap::new();
+    let (mut admitted, mut rest) = (Vec::new(), sets.to_vec());
+    loop {
+        let (now, later): (Vec<&ChangeSet>, Vec<&ChangeSet>) = rest.into_iter().partition(|s| has_life(s, &lives));
+        if now.is_empty() {
+            return admitted;
+        }
+        for c in now.iter().flat_map(|s| s.changes()).filter(|c| c.cid == SENTINEL) {
+            let longest = lives.entry((c.table.clone(), c.pk.clone())).or_default();
+            *longest = (*longest).max(c.cl);
+        }
+        admitted.extend(now);
+        rest = later;
+    }
+}
+
+/// Whether each of the set's column changes past length 1 has its row's
+/// life, given the longest row-level change of each row admitted.
+fn has_life(set: &ChangeSet, lives: &BTreeMap<RowKey, i64>) -> bool {
+    let own = |c: &Change| {
+        set.changes()
+            .iter()
+            .any(|o| o.cid == SENTINEL && o.table == c.table && o.pk == c.pk && o.cl >= c.cl)
+    };
+    set.changes().iter().all(|c| {
+        let admitted = lives.get(&(c.table.clone(), c.pk.clone())).copied().unwrap_or(0);
+        c.cid == SENTINEL || c.cl <= 1 || admitted >= c.cl || own(c)
+    })
+}
+
+/// P's sets: each device's sets whose every earlier set of the device is
+/// admissible too. A device's writes number its sets 1, 2, 3 and on, with no
+/// gap (`replica.rs`, `ModelCopy::write`).
+fn contiguous<'a>(sets: &[&'a ChangeSet]) -> Vec<&'a ChangeSet> {
+    let have: BTreeSet<SetId> = sets.iter().map(|s| s.id()).collect();
+    let whole = |s: &ChangeSet| (1..s.id().1).all(|v| have.contains(&(s.id().0, v)));
+    sets.iter().copied().filter(|s| whole(s)).collect()
+}

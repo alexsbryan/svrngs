@@ -31,6 +31,9 @@ pub enum Refused {
     /// A script written inside the page: a `<script>` with no `src`, a
     /// handler such as `onclick=`, or a `javascript:` address.
     Inline,
+    /// A file of the app's own the page loads that isn't in its folder, by
+    /// the name the page gives it.
+    Missing(String),
 }
 
 impl Refused {
@@ -38,6 +41,7 @@ impl Refused {
     pub fn words(&self) -> String {
         let (host, what, fix) = match self {
             Refused::Inline => return "This page has a script written inside it, and apps run scripts only from their own files. Move it to a .js file beside index.html.".into(),
+            Refused::Missing(file) => return format!("This page loads {file}, and the app's folder has no {file}, so the page would be blank or broken. Save {file} beside index.html, or point the page at the file you meant."),
             Refused::Font(host) => (host, "a font", "save the .woff2 beside index.html and point @font-face at it"),
             Refused::Script(host) => (host, "a script", "save the script beside index.html and load it from there"),
             Refused::Style(host) => (host, "a style sheet", "save the style sheet beside index.html and load it from there"),
@@ -75,8 +79,14 @@ pub fn check(dir: &Path) -> Option<Vec<Finding>> {
         let inline = script && !elsewhere && !body.trim().is_empty();
         let asked = away(tag, script, img).filter(|_| script || sheet || img);
         let inline = (inline || handler).then_some(Refused::Inline);
+        // A file of its own it loads, named as the page names it, that isn't
+        // there, and that the shelf doesn't bring beside it as it places it.
+        let own = named(tag, &page[start + 1..end]).filter(|_| script || sheet || img);
+        let missing = own
+            .filter(|f| !dir.join(f).is_file() && !super::carried::brings(&page, f))
+            .map(|f| Refused::Missing(f.into()));
         let styled = asks(body, line, false).filter(|_| tag.starts_with("style"));
-        let said = (asked.into_iter().chain(inline))
+        let said = (asked.into_iter().chain(inline).chain(missing))
             .map(|r| (line, r))
             .chain(styled);
         found.extend(said.map(|(n, r)| ("index.html".to_string(), n, r)));
@@ -95,6 +105,22 @@ pub fn check(dir: &Path) -> Option<Vec<Finding>> {
     found.dedup();
     tracing::debug!(target: "folder", dir = %dir.display(), found = found.len(), "check: what the policy will refuse in the app's page and the styles and scripts beside it");
     Some(found)
+}
+
+/// The file of the app's own folder that `tag`'s `src=` or `href=` names,
+/// read from `raw`, the tag as written, since a file's name is any case:
+/// its path from the folder, with no query or fragment; none for an address
+/// with a scheme or a host, such as `data:` or `https://`, or none at all.
+fn named<'t>(tag: &str, raw: &'t str) -> Option<&'t str> {
+    let attr = |a| {
+        tag.match_indices(a)
+            .find(|(i, _)| tag[..*i].ends_with(char::is_whitespace))
+    };
+    let (at, _) = attr("src=").or_else(|| attr("href="))?;
+    let value = raw[at..].split_once('=')?.1.trim_start_matches(['"', '\'']);
+    let value = value.split(['"', '\'', ' ', '>', '?', '#', '\n']).next()?;
+    let own = !value.is_empty() && !value.contains(':') && !value.starts_with("//");
+    own.then(|| value.trim_start_matches("./").trim_start_matches('/'))
 }
 
 /// Where an address's host ends.

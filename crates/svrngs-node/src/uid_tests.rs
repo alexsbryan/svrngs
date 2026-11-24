@@ -187,8 +187,8 @@ fn libproc_s_records_are_read_where_they_hold_it() {
 /// **This computer answers whose each end of a connection made here is**:
 /// a listener and the socket that dialled it, each end ours, the uid that
 /// owns the folder this test made, which [`mine`] says too. On a Mac also:
-/// a connection its listener accepts 30 ms late, in no process's files
-/// until then, found within [`ACCEPT_WITHIN`]; one never accepted is not
+/// a connection its listener accepts after the first missed read, in no
+/// process's files until then, found by the retry; one never accepted is not
 /// this account's. Read as this computer reads them, so it passes on each
 /// only with its reader right. Planted on the Mac, watched failing: one
 /// scan, no look again (the late accept not this account's).
@@ -214,18 +214,33 @@ fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
     assert_eq!(owner(back), Owner::Uid(uid), "and from the other end");
     #[cfg(target_os = "macos")]
     {
-        let late = std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(30));
-            listener.accept().map(|(kept, _)| (listener, kept))
-        });
-        let queued = std::net::TcpStream::connect(made.peer).unwrap();
+        use std::net::{TcpListener, TcpStream};
+        use std::sync::OnceLock;
+        use tracing_subscriber::layer::{Context, Layer, SubscriberExt as _};
+
+        struct AcceptOnMiss(TcpListener, OnceLock<TcpStream>);
+
+        impl<S: tracing::Subscriber> Layer<S> for AcceptOnMiss {
+            fn on_event(&self, event: &tracing::Event<'_>, _: Context<'_, S>) {
+                let meta = event.metadata();
+                // `waited` reports its remaining budget after a missed read.
+                // Accept in that turn so fixture scheduling can't eat the window.
+                if meta.target() == "uid" && meta.fields().field("left").is_some() {
+                    self.1.get_or_init(|| self.0.accept().unwrap().0);
+                }
+            }
+        }
+
+        let client = TcpStream::connect(made.peer).unwrap();
         let queued = Conn {
-            local: queued.local_addr().unwrap(),
-            peer: queued.peer_addr().unwrap(),
+            local: client.local_addr().unwrap(),
+            peer: client.peer_addr().unwrap(),
         };
-        assert_eq!(owner(queued), Owner::Uid(uid), "accepted late");
-        let (listener, _kept) = late.join().unwrap().unwrap();
-        let never = std::net::TcpStream::connect(listener.local_addr().unwrap()).unwrap();
+        let accept = AcceptOnMiss(listener.try_clone().unwrap(), OnceLock::new());
+        let subscriber = tracing_subscriber::registry().with(accept);
+        let seen = tracing::subscriber::with_default(subscriber, || owner(queued));
+        assert_eq!(seen, Owner::Uid(uid), "accepted after the first miss");
+        let never = TcpStream::connect(listener.local_addr().unwrap()).unwrap();
         let never = Conn {
             local: never.local_addr().unwrap(),
             peer: never.peer_addr().unwrap(),
@@ -377,7 +392,7 @@ fn approved(
     pid: Option<(u32, u64)>,
 ) -> Result<binding::Approved, binding::Refused> {
     let read = answering(raw, at.1, pid.map(|p| p.0)).expect("the port reads");
-    let chosen = pid.map(|(pid, start)| binding::Chosen {
+    let chosen = pid.map(|(pid, start)| binding::Chosen::Process {
         pid,
         start,
         now: read.start,
@@ -1298,4 +1313,208 @@ fn a_mac_udp_port_is_read_by_ntstat_as_it_is_now() {
     let held = binding::check(Some(&approved), &now, &took);
     assert_eq!(held, Err(binding::Held::Another));
     drop(kept);
+}
+
+/// `/usr/bin/systemctl --user` with `args`, what it printed.
+#[cfg(target_os = "linux")]
+fn systemctl(args: &[&str]) -> String {
+    let out = std::process::Command::new("/usr/bin/systemctl")
+        .arg("--user")
+        .args(args)
+        .output();
+    String::from_utf8_lossy(&out.expect("systemctl runs here").stdout)
+        .trim()
+        .to_owned()
+}
+
+/// What answers on `port` once something listens there, within 10 s, when
+/// its sockets aren't `not`.
+#[cfg(target_os = "linux")]
+fn listening(port: u16, not: &[u64]) -> Answering {
+    for _ in 0..100 {
+        let read = answering(Raw::Tcp, port, None).unwrap();
+        let ids: Vec<u64> = read.read.sockets.iter().map(|s| s.id).collect();
+        if !ids.is_empty() && ids.iter().all(|id| !not.contains(id)) {
+            return read;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    panic!("nothing new listens on {port}");
+}
+
+/// A port nothing listens on now.
+#[cfg(target_os = "linux")]
+fn free_port() -> u16 {
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    free.local_addr().unwrap().port()
+}
+
+/// **On Linux a unit's program is named that unit, granted with its files'
+/// hash, and renewed after a kill -9 from its subtree read now**
+/// (svrn-docs KEEP_SHARING_ON_RESTART §2): `svrngs-keeper-test-renew`, a
+/// user unit under `~/.config` serving `python3 -m http.server`, is shown
+/// as the unit with its Description, and its approval grants it; the
+/// socket's cgroup id is among the subtree's directory inodes. Killed and
+/// started again by systemd, the old approval holds it, and one made from
+/// the cgroups read now carries the door's connection. A drop-in added
+/// under `~/.config` changes the grant; a transient unit
+/// (`systemd-run --unit`), even with a drop-in of the lender's there, is
+/// named and never granted; a scope's program is named as a program. Each
+/// unit removed after. Run on the host, outside a toolbox, whose user
+/// namespace can't read the unit's `/proc/<pid>/fd`. Planted, each watched
+/// failing on this Fedora 45 box (systemd 262): a cgroup's id read as
+/// anything but its directory's inode, `ino() ^ 1` (the socket's cgroup
+/// not in the subtree); the transient check skipped (the transient unit
+/// granted by its drop-in).
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "writes and starts systemd user units, svrngs-keeper-test-*: run on Linux by hand"]
+fn a_unit_s_program_is_named_granted_and_renewed_after_it_restarts() {
+    use crate::job::{now, Keep};
+    let (port, unit) = (free_port(), "svrngs-keeper-test-renew.service");
+    let units = format!("{}/.config/systemd/user", std::env::var("HOME").unwrap());
+    let (file, drop_in) = (format!("{units}/{unit}"), format!("{units}/{unit}.d"));
+    let transient = "svrngs-keeper-test-transient.service";
+    let transient_in = format!("{units}/{transient}.d");
+    struct Removed(Vec<String>, Vec<String>);
+    impl Drop for Removed {
+        fn drop(&mut self) {
+            for unit in &self.0 {
+                systemctl(&["stop", unit]);
+            }
+            for path in &self.1 {
+                let _ = (std::fs::remove_file(path), std::fs::remove_dir_all(path));
+            }
+            systemctl(&["daemon-reload"]);
+        }
+    }
+    let made = vec![file.clone(), drop_in.clone(), transient_in.clone()];
+    let _removed = Removed(vec![unit.into(), transient.into()], made);
+    std::fs::create_dir_all(&units).unwrap();
+    let serve = format!("/usr/bin/python3 -m http.server {port} --bind 127.0.0.1");
+    let body = format!("[Unit]\nDescription=renew, svrngs's test\n[Service]\nExecStart={serve}\nRestart=on-failure\nRestartSec=1\n");
+    std::fs::write(&file, body).unwrap();
+    systemctl(&["daemon-reload"]);
+    systemctl(&["start", unit]);
+    let shown = listening(port, &[]);
+    let said: Vec<Answer> = shown.shown.iter().map(|(_, a)| a.clone()).collect();
+    let description = Some("renew, svrngs's test".into());
+    assert_eq!(
+        said,
+        [Answer::Job {
+            unit: unit.into(),
+            description
+        }]
+    );
+    let (approved, answers) = crate::share::approve(
+        (std::num::NonZeroU16::new(port).unwrap(), Raw::Tcp),
+        Ok(shown.clone()),
+        None,
+        None,
+    )
+    .unwrap();
+    let keep = crate::share::kept(&answers, false).expect("granted");
+    assert_eq!(keep.unit, unit);
+    let read = now(unit).unwrap();
+    assert_eq!(read.keep, keep);
+    let crate::job::Scope::Cgroups(cgroups) = read.scope;
+    assert!(
+        approved.cgroups.is_subset(&cgroups),
+        "{approved:?} in {cgroups:?}",
+    );
+    let pid = systemctl(&["show", "-p", "MainPID", "--value", unit]);
+    assert!(std::process::Command::new("kill")
+        .args(["-9", &pid])
+        .status()
+        .unwrap()
+        .success());
+    let ids: Vec<u64> = shown.read.sockets.iter().map(|s| s.id).collect();
+    listening(port, &ids);
+    let dialled = std::net::TcpStream::connect(("127.0.0.1", port)).unwrap();
+    let conn = Conn {
+        local: dialled.local_addr().unwrap(),
+        peer: dialled.peer_addr().unwrap(),
+    };
+    let (after, took) = super::port(Raw::Tcp, port, Some(conn)).unwrap();
+    assert_eq!(
+        binding::check(Some(&approved), &after, &took),
+        Err(binding::Held::Another)
+    );
+    let read = now(unit).unwrap();
+    assert_eq!(read.keep, keep, "its files unchanged by a restart");
+    let crate::job::Scope::Cgroups(cgroups) = read.scope;
+    let chosen = binding::Chosen::Cgroups(cgroups);
+    let renewed = binding::approve(&after, Some(&chosen)).unwrap();
+    assert_eq!(
+        binding::check(Some(&renewed), &after, &took),
+        Ok(()),
+        "renewed"
+    );
+    std::fs::create_dir_all(&drop_in).unwrap();
+    std::fs::write(
+        format!("{drop_in}/more.conf"),
+        "[Service]\nEnvironment=MORE=1\n",
+    )
+    .unwrap();
+    systemctl(&["daemon-reload"]);
+    let changed: Keep = now(unit).unwrap().keep;
+    assert_ne!(
+        changed.files, keep.files,
+        "a drop-in of the lender's changes the grant"
+    );
+    let other = free_port();
+    // A drop-in of the lender's for it, which systemd applies to a
+    // transient unit too: only its being transient refuses the grant.
+    std::fs::create_dir_all(&transient_in).unwrap();
+    std::fs::write(
+        format!("{transient_in}/more.conf"),
+        "[Service]\nEnvironment=MORE=1\n",
+    )
+    .unwrap();
+    systemctl(&["daemon-reload"]);
+    let run_args = [
+        "--user",
+        "--unit",
+        transient,
+        "/usr/bin/python3",
+        "-m",
+        "http.server",
+    ];
+    let mut run = std::process::Command::new("systemd-run");
+    run.args(run_args)
+        .args([&other.to_string(), "--bind", "127.0.0.1"]);
+    assert!(run.status().unwrap().success());
+    let shown = listening(other, &[]);
+    let said: Vec<Answer> = shown.shown.iter().map(|(_, a)| a.clone()).collect();
+    assert!(
+        matches!(&said[..], [Answer::Job { unit, .. }] if unit == transient),
+        "{said:?}"
+    );
+    assert_eq!(
+        crate::share::kept(&said, false),
+        None,
+        "a transient unit never granted"
+    );
+    assert!(now(transient).is_err());
+    let scoped = free_port();
+    let scope = [
+        "--user",
+        "--scope",
+        "-q",
+        "/usr/bin/python3",
+        "-m",
+        "http.server",
+    ];
+    let mut scope = std::process::Command::new("systemd-run")
+        .args(scope)
+        .args([&scoped.to_string(), "--bind", "127.0.0.1"])
+        .spawn()
+        .unwrap();
+    let shown = listening(scoped, &[]);
+    let _ = (scope.kill(), scope.wait());
+    assert!(
+        matches!(&shown.shown[..], [(_, Answer::Program { .. })]),
+        "{:?}",
+        shown.shown
+    );
 }

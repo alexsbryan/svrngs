@@ -22,9 +22,9 @@ import { get, post } from './routes.js?v=__VERSION__';
  */
 
 /**
- * The messages UPDATE takes: the page's first check; the person's retry,
- * update, or later; and each answer.
- * @typedef {{ type: 'check' | 'retry' | 'update' | 'later' }
+ * The messages UPDATE takes: the person's retry, update, or later; and each
+ * answer. The page's first check is no message: it runs `START`.
+ * @typedef {{ type: 'retry' | 'update' | 'later' }
  *   | { type: 'checked', state: string, why?: string }
  *   | { type: 'updated' }
  *   | { type: 'current' }
@@ -61,8 +61,6 @@ export const UPDATE = {
   },
   step: (state, message) => {
     switch (message.type) {
-      case 'check':
-        return go(state, { update: 'checking' }, {}, { run: 'check', failed: 'unread' });
       case 'retry':
         return go(
           state,

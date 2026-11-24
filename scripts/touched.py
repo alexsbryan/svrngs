@@ -64,9 +64,8 @@ def main(base, given=None):
         targets = [t for t in p["targets"] if "test" in t["kind"]]
         owns = {t["name"]: Path(t["src_path"]) for t in targets}
         owns = {n: (s.parent if s.name == "main.rs" else s.with_suffix("")) for n, s in owns.items()}
-        tests = ROOT / home[p["name"]] / "tests"
         # A file under tests/ in no binary's own folder is every binary's (common/).
-        shared = [f for f in tests.glob("*/**/*") if not any(f.is_relative_to(o) for o in owns.values())]
+        shared = [f for f in (ROOT / home[p["name"]]).glob("tests/*/**/*") if not any(f.is_relative_to(o) for o in owns.values())]
         for t in targets:
             own = owns[t["name"]]
             body = "".join(text(f) for f in [Path(t["src_path"]), *own.glob("**/*"), *shared])

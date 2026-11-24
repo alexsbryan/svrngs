@@ -7,7 +7,9 @@ writes its entries with fetch('svrngs/acts'). Every file in the group's
 folder goes to every member and stays in the group's record for good, as
 every entry does, so try things in a group of your own first (`svrngs new`).
 `svrngs guide` prints the whole guide; `svrngs check <folder>` says what in
-an app's page svrngs won't load, and what to change.
+an app's page svrngs won't load, and what in its schema.sql makes no
+database, and what to change. Name the folder of the version it follows
+after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs
       Run for every group you are in. Leave it running.
@@ -48,7 +50,12 @@ an app's page svrngs won't load, and what to change.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
-  svrngs share <port> --group <group>... [--name <name>] [--program <name>] [--pid <id>@<start>] [--replace] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+  svrngs run <name> --port <port> [--folder <folder>] -- <command>
+      Run a command here (Linux or macOS). Share it separately with svrngs share.
+      To stop the app, choose Stop under Already running here on your home
+      page (`svrngs open`). Stop leaves its setup and files in place.
+
+  svrngs share <port> --group <group>... [--plan] [--name <name>] [--program <name>] [--pid <id>@<start>] [--replace] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp] [--ask-after-restart]
       Lend what runs on <port> on this computer to everyone in each
       --group, by its name or the start of its id; say it again for more.
       Each reaches it through this computer, as themselves. It asks for the
@@ -92,12 +99,16 @@ an app's page svrngs won't load, and what to change.
       <start> is its start, as /proc/<id>/stat's 22nd field says on Linux.
       A name you share from another port, or as another protocol, is
       refused unless you add --replace.
+      At a terminal, svrngs shows who can use it, when it can come back,
+      and whether it needs a restart before asking you to share. --plan
+      shows the review alone. --ask-after-restart shares this run only;
+      with no terminal, `share` shares this run only too.
 
-  svrngs approve <name> [--pid <id>@<start>] [--token <token>]
+  svrngs approve <name> [--pid <id>@<start>] [--token <token>] [--ask-after-restart]
       Say what answers on <name>'s port now, and keep sharing <name> with
       it once you type y. If something else took the port while you read,
-      nothing is approved. Nothing else about it changes. --pid is as for
-      `share`. Without a terminal, it approves only with --token, the
+      nothing is approved. Nothing else about it changes. --pid and
+      --ask-after-restart are as for `share`. Without a terminal, it approves only with --token, the
       token a program read from the lend's row in svrngs's API, for what
       that row showed.
 

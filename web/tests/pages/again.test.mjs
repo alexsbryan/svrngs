@@ -270,7 +270,15 @@ test('a lend from what runs here is in the index and in What you lend at once', 
           running: held.lent.length ? [] : [shown(null, null)],
           named: [],
         }),
-        'POST /running': (held, body) => {
+        'POST /running': (_, body) => {
+          posted.push(body);
+          return {
+            token: 'reviewed',
+            terms: '',
+            review: { promise: 'House can use this copy now.', button: 'Share this run' },
+          };
+        },
+        'POST /running/confirm': (held, body) => {
           posted.push(body);
           held.lent = [notes];
           return shown('notes', 'notes');
@@ -285,8 +293,22 @@ test('a lend from what runs here is in the index and in What you lend at once', 
   await at.type(`${row} input[name=kind]`, 'notes');
   await at.tick(`${row} input[type=checkbox]`);
   await at.press(`${row} button`, 'Lend it to house');
+  assert.ok(at.text(row)[0].includes('House can use this copy now.'));
+  assert.equal(posted.length, 1);
+  assert.deepEqual(at.text('#lent > p'), ['You lend nothing yet.']);
+  await at.press(`${row} button`, 'Share this run');
   assert.deepEqual(posted, [
     { port, name: 'notes', kind: 'notes', groups: ['house'], terms: null, pid: null, start: null },
+    {
+      port,
+      name: 'notes',
+      kind: 'notes',
+      groups: ['house'],
+      terms: '',
+      pid: null,
+      start: null,
+      token: 'reviewed',
+    },
   ]);
   assert.ok(at.text(row)[0].startsWith('You lent notes'), at.text(row)[0]);
   assert.ok(at.text('#home .index').join().includes('ada’s notes'), at.text('#home .index').join());

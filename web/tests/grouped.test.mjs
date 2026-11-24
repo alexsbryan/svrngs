@@ -8,9 +8,7 @@ const { address, exposes, GroupPlaces } =
   await import('../../crates/svrngs-node/src/home/page/grouped.js?v=__VERSION__');
 const { PLACES } =
   await import('../../crates/svrngs-node/src/home/page/group-read.js?v=__VERSION__');
-const join = await import('../../crates/svrngs-node/src/home/page/join.js?v=__VERSION__');
-const make = await import('../../crates/svrngs-node/src/home/page/make.js?v=__VERSION__');
-const { first } =
+const { HOME, first } =
   await import('../../crates/svrngs-node/src/home/page/home-reading.js?v=__VERSION__');
 
 test('B places every original group capability exactly once', () => {
@@ -38,18 +36,25 @@ test('B destinations retain stable ids and refuse unknown views without exposing
   assert.equal(exposes({ grouped: true, q: { group: 'a', view: 'computer' } }, 'acts'), false);
 });
 
-test('making and joining land where the new group is, leaving the form behind', () => {
-  const state = { at: { said: 'none' }, grouped: true, q: { view: 'join' } };
-  for (const flow of [join, make]) {
-    const next = flow.take(state, { q: { joined: 'House' } }).state;
-    assert.deepEqual(next.q, { joined: 'House' });
-    assert.equal(next.grouped, true, 'the layout is held apart from the address');
-    assert.deepEqual(
-      flow.take({ ...state, grouped: false, q: { joined: 'Old' } }, { q: { made: 'New' } }).state.q,
-      { made: 'New' },
-      'A retains its original notice replacement',
-    );
+// HOME's `again` with what was done (join.js, make.js, leaving.js) lands
+// where its address opens the page: All your groups, the form or the group
+// left behind. One with none leaves the page where it is, as a removal on
+// a group's page does.
+test('making, joining and leaving land on All your groups, leaving the form or group behind', () => {
+  const { step } = HOME({});
+  const state = { at: { groups: 'read', said: 'none' }, grouped: true };
+  const done = { joined: { joined: 'House' }, made: { made: 'New' }, left: { left: 'Trip' } };
+  for (const [said, q] of Object.entries(done)) {
+    for (const from of [{ view: 'join' }, { view: 'make' }, { group: 'trip' }]) {
+      const next = step({ ...state, q: from }, { type: 'again', q }).state;
+      assert.deepEqual([next.q, next.at.said], [q, said]);
+      assert.equal(next.grouped, true, 'the layout is held apart from the address');
+    }
+    const a = step({ ...state, grouped: false, q: { joined: 'Old' } }, { type: 'again', q });
+    assert.deepEqual(a.state.q, q, 'A retains its original notice replacement');
   }
+  const stays = step({ ...state, q: { group: 'trip' } }, { type: 'again' }).state;
+  assert.deepEqual([stays.q, stays.at.said], [{ group: 'trip' }, 'none']);
 });
 
 test('the layout is decided once, by the address: only `ui=a` is A', () => {

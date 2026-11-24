@@ -43,7 +43,7 @@ const SCENE: &str = "give";
 /// with its own Bo: named by the person alone, scene 3's Bo and scene 4's
 /// ran one pod, and scene 4's Dee started from scene 3's state
 /// (ralph/next/give/ctl/log/sessions/give-app-scenes-1.await.log). Give
-/// takes a name of 40 bytes at most (apps/give/src/runtime.rs
+/// takes a name of 40 bytes at most (apps/svrngs-keeper/src/runtime.rs
 /// `Name::new`), so `scene` is a word of four letters.
 pub(crate) fn prefix(scene: &str, who: &str) -> String {
     format!(

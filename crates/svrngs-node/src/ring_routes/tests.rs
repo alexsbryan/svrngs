@@ -83,6 +83,8 @@ fn inbound(rail: Arc<RingRail>, live: Arc<LiveBuffer>) -> RingInbound {
         rail,
         live,
         wake: Default::default(),
+
+        states: no_states(),
     }
 }
 
@@ -331,6 +333,8 @@ async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
             rail: issuer,
             live: Default::default(),
             wake: wake.clone(),
+
+            states: no_states(),
         },
         Some(key()),
     );
@@ -378,4 +382,319 @@ fn the_routes_serve_the_keys_the_register_names() {
             );
         }
     }
+}
+
+/// No app database here: the record's routes' tests reach none.
+fn no_states() -> Arc<svrngs_db::States> {
+    let key = svrngs_core::SigningKey::from_bytes(&[0; 32]);
+    Arc::new(svrngs_db::States::new(
+        std::path::Path::new("/nonexistent"),
+        key,
+    ))
+}
+
+/// `call` for `app`'s database in `group`, posted to the state route as
+/// `dialer`'s stream reaches it, `None` off the stream: its status, and the
+/// member's call back where it answered one.
+async fn state(
+    inbound: RingInbound,
+    dialer: Option<&SigningKey>,
+    (group, app): (&str, &str),
+    call: &svrngs_db::Call,
+) -> (u16, Option<svrngs_db::Call>) {
+    let body = postcard::to_allocvec(&((group, app), call)).unwrap();
+    let mut req = axum::http::Request::post(crate::ring_sync::STATE_ROUTE)
+        .body(axum::body::Body::from(body))
+        .unwrap();
+    if let Some(key) = dialer {
+        req.extensions_mut().insert(crate::iroh::tests::dialer(key));
+    }
+    let answer = router(inbound).oneshot(req).await.unwrap();
+    let status = answer.status().as_u16();
+    let bytes = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    (status, postcard::from_bytes(&bytes).ok())
+}
+
+/// **The state route serves an app's database to a computer standing in
+/// its group, and to no other** (svrn-docs APP_STATE §7, invariants 6 and
+/// 2): Ada's computer keeps the board's one set; asked by a dialer standing
+/// in the group, it answers that set, signed by its own key; asked by Bo,
+/// who stands in another group only, or off the stream, it refuses, and
+/// takes nothing Bo offered; a database it keeps none of is 404; and a set
+/// that names Ada's device, signed by Cy's key, is dropped, her marks
+/// unmoved, while Cy's own set, carried by a standing member, is taken. Bo's
+/// set, carried so, is dropped too, as the group's record doesn't bind his
+/// key. Plants, each watched failing: the standing check skipped (Bo
+/// served); the set's signature unchecked (the forged set counted).
+#[tokio::test]
+async fn the_state_route_serves_a_standing_member_alone() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
+    let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
+    let asked = svrngs_db::Call::default();
+    let (status, answer) = state(inbound.clone(), Some(&key()), (NS, "board"), &asked).await;
+    let answer = answer.expect("a call back");
+    assert_eq!((status, answer.sets.len(), answer.full), (200, 1, true));
+    assert_eq!(
+        answer.sets[0].head.device.as_str(),
+        crate::actor_of(&key()),
+        "signed by its own computer"
+    );
+
+    let bo = SigningKey::from_bytes(&[12u8; 32]);
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Bo").unwrap(), vec![crate::actor_of(&bo)]);
+    rail.set_seed("bo-only", &Roster::new(members)).unwrap();
+    let bo_states = svrngs_db::States::new(&dir.path().join("bo"), bo.clone());
+    let bo_db = bo_states.open(NS, "board", Some(SCHEMA)).unwrap();
+    bo_db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
+    let offered = bo_db.missing(&Default::default(), 1 << 20).unwrap();
+    let marks = db.ask().unwrap().marks;
+    let cy = SigningKey::from_bytes(&[14u8; 32]);
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
+    members.insert(Person::parse("Cy").unwrap(), vec![crate::actor_of(&cy)]);
+    rail.set_seed(NS, &Roster::new(members)).unwrap();
+    let cy_states = svrngs_db::States::new(&dir.path().join("cy"), cy);
+    let cy_db = cy_states.open(NS, "board", Some(SCHEMA)).unwrap();
+    cy_db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
+    let cy_s = cy_db.missing(&Default::default(), 1 << 20).unwrap();
+    for dialer in [Some(&bo), None] {
+        let (status, _) = state(inbound.clone(), dialer, (NS, "board"), &offered).await;
+        assert_eq!(status, 403, "{:?} refused", dialer.map(crate::actor_of));
+    }
+    assert_eq!(
+        db.ask().unwrap().marks,
+        marks,
+        "nothing taken from a refused dialer"
+    );
+    let unkept = state(inbound.clone(), Some(&key()), (NS, "notes"), &asked).await;
+    assert_eq!(unkept.0, 404, "a database this computer keeps none of");
+
+    // Carried on its own, vouching for nothing: a full call's marks are
+    // its source's word for completeness (APP_STATE §4, "What travels").
+    let mut forged = cy_s.clone();
+    let ada = svrngs_db::Device::parse(&crate::actor_of(&key())).unwrap();
+    (forged.sets[0].head.device, forged.full) = (ada, false);
+    let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &forged).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        db.ask().unwrap().marks,
+        marks,
+        "a set not its device's, dropped"
+    );
+    let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &offered).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        db.ask().unwrap().marks,
+        marks,
+        "Bo's set, his key unbound here"
+    );
+    let (status, _) = state(inbound, Some(&key()), (NS, "board"), &cy_s).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        db.ask().unwrap().marks.len(),
+        2,
+        "Cy's own set, from a standing member"
+    );
+}
+
+/// A change row as svrngs-db writes one, for a set a test makes.
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Row {
+    table: String,
+    pk: Vec<u8>,
+    cid: String,
+    val: Cell,
+    col_version: i64,
+    cl: i64,
+    seq: i64,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+enum Cell {
+    Null,
+    Integer(i64),
+    Real(f64),
+    Text(String),
+    Blob(Vec<u8>),
+}
+
+/// **A call whose change has a key cr-sqlite couldn't unpack is answered,
+/// and the set refused for good**: a standing member's one set, signed by
+/// its own key, with an empty key, is counted here, applied nowhere, and the
+/// computer goes on answering.
+#[tokio::test]
+async fn a_call_with_a_key_cr_sqlite_cannot_unpack_is_answered_and_its_set_refused() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let bo = SigningKey::from_bytes(&[13u8; 32]);
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
+    members.insert(Person::parse("Bo").unwrap(), vec![crate::actor_of(&bo)]);
+    rail.set_seed(NS, &Roster::new(members)).unwrap();
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
+
+    let his = svrngs_db::States::new(&dir.path().join("bo"), bo.clone());
+    let his = his.open(NS, "board", Some(SCHEMA)).unwrap();
+    let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    his.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
+    let mut set = his
+        .missing(&Default::default(), 1 << 20)
+        .unwrap()
+        .sets
+        .remove(0);
+    let mut changes: Vec<Row> = postcard::from_bytes(&set.changes).unwrap();
+    changes.iter_mut().for_each(|c| c.pk = vec![]);
+    set.changes = postcard::to_allocvec(&changes).unwrap();
+    set.head.changes = svrngs_core::set::changes(&set.changes);
+    let at = svrngs_core::set::At {
+        group: NS,
+        app: "board",
+        device: set.head.device.as_str(),
+        nonce: &set.head.nonce,
+        seq: set.head.seq.get(),
+        schema: &set.head.schema,
+    };
+    set.head.sig = svrngs_db::Sig::parse(&at.sign(&bo, &set.head.changes)).unwrap();
+    let call = svrngs_db::Call {
+        sets: vec![set],
+        ..Default::default()
+    };
+    let (status, _) = state(inbound.clone(), Some(&bo), (NS, "board"), &call).await;
+    assert_eq!(status, 200);
+    let rows = db.read("SELECT * FROM cards", &[]).unwrap();
+    assert_eq!(rows["rows"], serde_json::json!([]), "none of it applied");
+    assert_eq!(
+        db.ask().unwrap().marks.len(),
+        1,
+        "counted, refused for good"
+    );
+    let (status, _) = state(inbound, Some(&key()), (NS, "board"), &Default::default()).await;
+    assert_eq!(status, 200, "and the computer answers on");
+}
+
+/// **The state route serves only a database this computer holds, by a
+/// plain name**: a standing member's call naming an app by a path, absolute
+/// or climbing out of the group's directory, is not served, and a SQLite
+/// file elsewhere is left as it was. Either line holds alone: the wire's
+/// name parsed as a plain one, and the database opened only where its file
+/// is on this disk, under the group's directory.
+/// Plant: both taken away, a name taking any text and the database opened
+/// by the wire's name (the other file is turned to WAL, so its bytes
+/// change). The file is made through SQLite as svrngs-db links it, so the
+/// test needs no `sqlite3` program, which a Linux host may lack.
+#[tokio::test]
+async fn the_state_route_serves_only_a_database_this_computer_holds() {
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let other = dir.path().join("other.db");
+    let made = rusqlite::Connection::open(&other).unwrap();
+    made.execute_batch("CREATE TABLE notes (x);").unwrap();
+    svrngs_db::close(made).unwrap();
+    let before = std::fs::read(&other).unwrap();
+    let absolute = dir.path().join("other");
+    for app in [absolute.to_str().unwrap(), "../../../other"] {
+        let asked = svrngs_db::Call::default();
+        let (status, _) = state(inbound.clone(), Some(&key()), (NS, app), &asked).await;
+        assert_ne!(status, 200, "{app} served");
+    }
+    assert!(
+        std::fs::read(&other).unwrap() == before,
+        "the other file, untouched"
+    );
+}
+
+/// `call` for `app`'s database in `group`, posted to the state route as
+/// `dialer`'s stream reaches it: its status and its body as it came.
+async fn state_said(inbound: RingInbound, dialer: &SigningKey, body: Vec<u8>) -> (u16, String) {
+    let mut req = axum::http::Request::post(crate::ring_sync::STATE_ROUTE)
+        .body(axum::body::Body::from(body))
+        .unwrap();
+    req.extensions_mut()
+        .insert(crate::iroh::tests::dialer(dialer));
+    let answer = router(inbound).oneshot(req).await.unwrap();
+    let status = answer.status().as_u16();
+    let bytes = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    (status, String::from_utf8_lossy(&bytes).into_owned())
+}
+
+/// **The state route reads no call before its asker stands, and tells a
+/// member no words of this computer's own**: a dialer standing nowhere in
+/// the group is refused before its call is read, so a call that isn't one is
+/// refused as any stranger is; a member whose call meets a fault here is
+/// answered with the refusal's short name alone. Plants: the call decoded
+/// before standing (a stranger's call that isn't one is 400); the
+/// refusal's words answered (this computer's own words, to a member).
+#[tokio::test]
+async fn the_state_route_reads_no_call_before_standing_and_says_no_words_of_its_own() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    let db = inbound.states.open(NS, "board", Some(SCHEMA)).unwrap();
+    let card = serde_json::json!([{ "insert": "cards", "row": { "id": "c1", "title": "milk" } }]);
+    db.write(&card, &svrngs_db::Binds::new([], 0)).unwrap();
+
+    let stranger = SigningKey::from_bytes(&[12u8; 32]);
+    let mut body = postcard::to_allocvec(&(NS, "board")).unwrap();
+    body.extend_from_slice(&[0xff; 64]);
+    let (status, _) = state_said(inbound.clone(), &stranger, body).await;
+    assert_eq!(status, 403, "refused for standing, its call unread");
+
+    // A kept set this computer can't read back: its own fault.
+    let spoilt =
+        rusqlite::Connection::open(dir.path().join(format!("ada/state/{NS}/board.db"))).unwrap();
+    spoilt
+        .execute_batch("UPDATE svrngs_sets SET bytes = x'ff';")
+        .unwrap();
+    svrngs_db::close(spoilt).unwrap();
+    let asked = postcard::to_allocvec(&((NS, "board"), svrngs_db::Call::default())).unwrap();
+    let (status, said) = state_said(inbound, &key(), asked).await;
+    assert_eq!(status, 500);
+    assert!(
+        !said.contains("couldn"),
+        "this computer's own words, said to a member: {said}"
+    );
+}
+
+/// **The state route opens only the database a call names**: Ada's computer
+/// keeps two app databases in the group, each closed, and a standing
+/// member's call for one opens that one alone, so a call does only the
+/// work it asks for. Plant, watched failing: the database found among every
+/// one the group keeps here, as before (both opened).
+#[tokio::test]
+async fn the_state_route_opens_only_the_database_a_call_names() {
+    const SCHEMA: &str = "CREATE TABLE cards (id TEXT PRIMARY KEY NOT NULL, title TEXT);";
+    let dir = tempfile::tempdir().unwrap();
+    let (rail, live) = fresh(&dir);
+    let mut inbound = inbound(rail.clone(), live);
+    inbound.states = Arc::new(svrngs_db::States::new(&dir.path().join("ada"), key()));
+    for app in ["board", "lists"] {
+        drop(inbound.states.open(NS, app, Some(SCHEMA)).unwrap());
+    }
+    assert_eq!(inbound.states.close(NS), 2, "both made, then closed");
+    let asked = svrngs_db::Call::default();
+    let (status, _) = state(inbound.clone(), Some(&key()), (NS, "board"), &asked).await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        inbound.states.close(NS),
+        1,
+        "the one the call names, opened alone"
+    );
 }

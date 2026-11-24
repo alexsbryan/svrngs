@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
  && apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl xz-utils git build-essential pkg-config clang lld \
-      python3 lsof perl procps redis-server \
+      python3 iproute2 lsof perl procps redis-server \
  && rm -rf /var/lib/apt/lists/*
 
 # Jellyfin, the server the films and night scenes lend: 12.0, as the
@@ -107,8 +107,11 @@ RUN cargo install cargo-deny --locked --version 0.20.2 \
  && rm -rf "$CARGO_HOME/registry"/* "$CARGO_HOME/git"/*
 WORKDIR /work
 # What the image runs, in the checkout mounted at /work: Linux builds of
-# oxlint and Playwright first, and check.sh either way, which fails its lint
-# and browser steps naming this install when it did not take.
+# oxlint and Playwright first; cr-sqlite's source, the submodule, and its
+# crates, into the registry volume, which svrngs-db's build.rs takes with no
+# network (README.md, "Work on svrngs"); and check.sh either way, which
+# fails its lint and browser steps naming the install, and its build naming
+# the fetch, when either did not take.
 # CARGO_INCREMENTAL=0 as the loops run, so target/ stays smaller; USER as
 # a login sets it and podman does not (crates/svrngs/tests/name.rs reads it).
 ENV CARGO_INCREMENTAL=0 USER=gate
@@ -116,5 +119,7 @@ ENV CARGO_INCREMENTAL=0 USER=gate
 # it the container's cgroup, for podman's pauses.
 COPY delegate.sh /usr/local/bin/delegate
 USER root
+# The keeper test fixture starts a private systemd --user, not systemd as PID 1.
+RUN mkdir -p /run/systemd/system
 ENTRYPOINT ["/usr/local/bin/delegate"]
-CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; exec scripts/check.sh"]
+CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; git submodule update --init && cargo fetch --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml || echo 'note       the cr-sqlite source or its crates did not fetch'; exec scripts/check.sh"]

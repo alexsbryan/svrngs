@@ -342,21 +342,24 @@ function bound() {
 // This run's endpoint (DESIGN §3): a key of this run's alone, which the
 // holder, a key no page can copy, names in a link the door checks beside
 // the pass (`linked`); or, when a lend of the open is at a door taking no
-// link, the holder's own bytes, as a door before links took.
+// link, the holder's own bytes, as a door before links took. Every reader
+// of `linked` waits for this first (`passed`), so none reads it between.
 async function opened() {
   await (loaded ??= init({ module_or_path: store.runtime() }));
   const seed = handed.seed;
   const own = !seed;
   const bytes = seed ? fromHex(seed) : crypto.getRandomValues(new Uint8Array(32));
-  linked = null;
-  if (own) linked = await linkTo(actor(bytes));
+  linked = own ? await linkTo(actor(bytes)) : null;
   const as = own
     ? 'of this run, named by the holder’s link'
     : 'as the pass’s holder, for an older door';
   trace(`RUNTIME: opening the endpoint ${as}`);
   // A pass kept before relay fallbacks names its one relay, and no `relays`.
   if (!handed.relays) trace('RUNTIME: the pass names one relay, as one kept before fallbacks');
-  return holder_endpoint(bytes, handed.relays ?? (handed.relay ? [handed.relay] : []), handed.pass);
+  const relays = handed.relays ?? (handed.relay ? [handed.relay] : []);
+  // The pass and this run's link go to the relays too: a group's own
+  // admits this run's key by them, as the door does (self-host).
+  return holder_endpoint(bytes, relays, handed.pass, linked);
 }
 
 // The link naming the endpoint whose key is `to`, signed by the holder.
@@ -408,9 +411,12 @@ async function direct(label, port) {
   /** @param {Uint8Array<ArrayBuffer>} bytes */
   const forward = (bytes) => port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]);
   const relay = lend.relay ?? null;
-  const data = await direct_start(lend.key, relay, handed.relays ?? [], forward);
-  // The data endpoint's own key, named by a link the holder signs.
-  const named = await linkTo(data.key());
+  // The data endpoint's own key, made here so the holder's link names it
+  // before the bind: it presents the pass and that link at its relays, as
+  // this run's endpoint does (`opened`), and to the lender after.
+  const key = crypto.getRandomValues(new Uint8Array(32));
+  const named = await linkTo(actor(key));
+  const data = await direct_start(lend.key, relay, handed.relays, forward, key, handed.pass, named);
   const dial = await (await bound()).dial_webrtc(lend.key, relay);
   // The offer crosses this run's own dial, so it presents this run's link
   // (`passed`'s `own`), never an earlier attempt's: the door checks the
@@ -723,9 +729,9 @@ async function lent(request, url, where, signs = false) {
   if (!held) return unheldAt(request, url);
   const lend = held.lends.find((one) => one.label === where.label);
   if (!lend) return closed();
-  if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts') {
-    return actsPosted(request, lend, signs);
-  }
+  const own =
+    request.method === 'POST' && lend.group ? await owned(request, where, lend, signs) : null;
+  if (own) return own;
   if (where.read && request.mode === 'navigate') return opening(held, where);
   return proxied(
     {
@@ -754,6 +760,27 @@ function unheldAt(request, url) {
     `${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&back=${back}`,
     302,
   );
+}
+
+// A group's lend's post that this phone writes as its own, from a page that
+// may name acts: its acts, posted as JSON (`writing`), and a body naming a
+// write to its database (`setWritten`), which the computer that prepares
+// it holds to the write form; any other post to its acts refused, and none
+// else, which goes to the lend's door.
+/**
+ * @param {Request} request
+ * @param {Where} where
+ * @param {Passed} lend
+ * @param {boolean} signs
+ * @returns {Promise<Response | null>}
+ */
+async function owned(request, where, lend, signs) {
+  if (where.path === '/svrngs/acts') return actsPosted(request, lend, signs);
+  if (!signs || where.path !== '/svrngs/sql') return null;
+  const body = request.clone();
+  /** @type {{ write?: unknown } | null} */
+  const asked = await body.json().catch(() => null);
+  return asked?.write === undefined ? null : setWritten(request, where, asked.write);
 }
 
 // A group's lend's acts, posted as JSON by a page that may name them, are
@@ -793,8 +820,7 @@ async function proxied(asked, held) {
   if (set) await keepCookies(asked, set);
   if (asked.where.read) return inert(res);
   const turned = (await refusedAppend(asked, res)) ?? redirected(asked, res);
-  if (turned) return turned;
-  return served(asked, res, said, set);
+  return turned ?? served(asked, res, said, set);
 }
 
 // The headers `asked` goes to the door with: the page's, but its cookies
@@ -1120,36 +1146,81 @@ function signed(...args) {
 // How long, in ms, the group's signer has to approve a line.
 const APPROVING = 15_000;
 
-// `line`, unsigned, approved by the group's signer, which a page of this
-// lend's frames (shim.js): the pass that permits it, or why not, thrown.
+// What the group's signer, which a page of this lend's frames (shim.js),
+// answers `asked` (sign.js `answered`): its answer, or why not, thrown.
 /**
- * @param {string} group
- * @param {string} line
+ * @param {object} asked
+ * @returns {Promise<any>}
  */
-async function approved(group, line) {
+async function signerAnswer(asked) {
   const pages = await scope.clients.matchAll({ type: 'window' });
   const client = pages.find((one) => new URL(one.url).origin === SCOPE.origin);
   if (!client) throw new Error('no app page is open to ask the trusted signer');
   const channel = new MessageChannel();
-  /** @type {Promise<string>} */
   const answer = new Promise((yes, no) => {
     const why = walled
       ? `This app’s page (${walled}) may keep out your group’s signer, so this wasn’t saved.`
       : 'the trusted signer did not answer';
     const timeout = setTimeout(() => no(new Error(why)), APPROVING);
-    // The signer's answer (sign.js `answered`): the pass, or why not.
-    channel.port1.onmessage = (
-      /** @type {MessageEvent<{ pass?: string, error?: string }>} */ { data },
-    ) => {
+    channel.port1.onmessage = (/** @type {MessageEvent<{ error?: string }>} */ { data }) => {
       clearTimeout(timeout);
-      if (data.pass) yes(data.pass);
-      else no(new Error(data.error));
+      if (data.error) no(new Error(data.error));
+      else yes(data);
     };
   });
-  const authority = { ...JSON.parse(openMessage(handed)), proof: handed.proof };
-  const approve = { group, reach: handed.pass, line, authority };
-  client.postMessage({ approve, signer: SIGNER }, [channel.port2]);
+  client.postMessage({ approve: asked, signer: SIGNER }, [channel.port2]);
   return answer;
+}
+
+// The open this worker holds, as the signer checks it was its group page's.
+const authority = () => ({ ...JSON.parse(openMessage(handed)), proof: handed.proof });
+
+// `line`, unsigned, approved by the group's signer: the pass that permits
+// it, or why not, thrown.
+/**
+ * @param {string} group
+ * @param {string} line
+ */
+async function approved(group, line) {
+  const { pass } = await signerAnswer({ group, reach: handed.pass, line, authority: authority() });
+  return pass;
+}
+
+// The places of the sets the group's signer keeps that a computer has kept
+// since, or none ever will, told it with the next write so it lets them go.
+/** @type {string[]} */
+const confirmed = [];
+
+// A write to a carried app's database is this phone's own (svrn-docs
+// APP_STATE §4, "Phones"): the computer that answers prepares it, the
+// group's signer checks every prepare and signs it at a place it picks,
+// as no set where it changes nothing (sign.js `setsSigned`), and each set
+// the signer keeps is carried, the same bytes through whichever computer
+// answers, until one keeps it, 200, or none ever will, 422; then the
+// prepare's count is answered.
+/**
+ * @param {Request} request
+ * @param {Where} where
+ * @param {unknown} ops
+ * @returns {Promise<Response>}
+ */
+async function setWritten(request, where, ops) {
+  const toDoor = (/** @type {object} */ body) =>
+    lent(new Request(request, { body: JSON.stringify(body) }), new URL(request.url), where, true);
+  const answer = await toDoor({ prepare: ops });
+  if (!answer.ok) return answer;
+  const prepared = await answer.json();
+  const set = { ...prepared, ops, confirmed, authority: authority() };
+  const signer = await signerAnswer({ set }).catch((/** @type {Error} */ error) => error);
+  if (signer instanceof Error) {
+    return Response.json({ refused: 'unsigned', words: signer.message }, { status: 403 });
+  }
+  for (const [place, bytes] of signer.sets) {
+    const took = await toDoor({ carry: bytes });
+    if (took.ok || took.status === 422) confirmed.push(place);
+    if (!took.ok) return took;
+  }
+  return Response.json({ count: JSON.parse(prepared.prepared).count });
 }
 
 /**
@@ -1506,12 +1577,16 @@ scope.addEventListener('message', async (event) => {
   }
   // A page's hand-over, each part read as its kind before it is taken: an
   // open (`handsPass`), a cookie by `typeof`, a socket as shim.js asks one,
-  // or its app's worker's realm (session.js `realmKept`).
+  // a window that can hold a direct path's channel (`directAsked`), or its
+  // app's worker's realm (session.js `realmKept`). Each is traced once, as
+  // what it is, and only a message none of them takes as refused.
   /**
    * @type {{
    *   handed?: any,
    *   cookie?: unknown,
    *   socket?: { url: string, protocols?: string[] },
+   *   webrtc?: string,
+   *   label?: string,
    * }}
    */
   const data = event.data ?? {};
@@ -1522,7 +1597,7 @@ scope.addEventListener('message', async (event) => {
     event.waitUntil(cookieKept(cookie, reply));
   } else if (asked && reply) {
     event.waitUntil(socket(asked, reply));
-  } else if (!realmKept(event)) {
+  } else if (!directAsked(data, reply, event) && !realmKept(event)) {
     trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(data).join(',')}`);
   }
 });
@@ -1531,15 +1606,21 @@ scope.addEventListener('message', async (event) => {
 const fromHere = (source) => !!source?.url && new URL(source.url).origin === SCOPE.origin;
 
 // A window that can hold a direct path's channel announces itself
-// (shim.js), and the attempt for its lend runs (webrtc-page).
-scope.addEventListener('message', (event) => {
-  const given = /** @type {{ webrtc?: string, label?: string }} */ (event.data ?? {});
-  const source = /** @type {Client | null} */ (event.source);
-  if (given.webrtc !== 'here' || !event.ports[0] || !fromHere(source)) return;
+// (shim.js), with its end of the channel's port, and the attempt for its
+// lend runs (webrtc-page): whether `data` was one.
+/**
+ * @param {{ webrtc?: string, label?: string }} data
+ * @param {MessagePort | undefined} port
+ * @param {ExtendableMessageEvent} event
+ */
+function directAsked({ webrtc, label }, port, event) {
+  if (webrtc !== 'here' || !port) return false;
+  trace(`RUNTIME: a window can hold the direct path for ${label}`);
   /** @param {unknown} error */
   const lost = (error) => trace(`RUNTIME: the direct path failed: ${String(error)}`);
-  event.waitUntil(direct(/** @type {string} */ (given.label), event.ports[0]).catch(lost));
-});
+  event.waitUntil(direct(String(label), port).catch(lost));
+  return true;
+}
 
 // Whether `given` is an open of this lend's, with its pass.
 /** @param {any} given */

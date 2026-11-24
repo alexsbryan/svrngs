@@ -164,16 +164,19 @@ fn traced() {
     ONCE.call_once(|| {
         let kept = repo().join("target/traces");
         std::fs::create_dir_all(&kept).unwrap();
-        let log =
-            std::fs::File::create(kept.join(format!("{}.log", env!("CARGO_CRATE_NAME")))).unwrap();
+        let log = std::fs::File::create(trace_log()).unwrap();
         tracing_subscriber::fmt()
             .with_env_filter(tracing_subscriber::EnvFilter::new(
-                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug,rails=debug,folder=debug,svrngs_node::ring_sync=debug,webrtc=debug",
+                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug,rails=debug,folder=debug,svrngs_node::ring_sync=debug,webrtc=debug,iroh::_events::path::abandoned=debug,iroh::_events::path::selected=debug",
             ))
             .with_writer(std::sync::Mutex::new(log))
             .with_ansi(false)
             .init();
     });
+}
+
+pub fn trace_log() -> PathBuf {
+    repo().join(format!("target/traces/{}.log", env!("CARGO_CRATE_NAME")))
 }
 
 /// iroh's relay server on 127.0.0.1, plain HTTP: no TLS, no QUIC, behind a
@@ -188,7 +191,9 @@ fn traced() {
 pub async fn relay() -> Server {
     traced();
     let mut config = ServerConfig::default();
-    config.relay = Some(RelayServer::new(([127, 0, 0, 1], 0)));
+    let mut relay = RelayServer::new(([127, 0, 0, 1], 0));
+    relay.access = std::sync::Arc::new(Presented);
+    config.relay = Some(relay);
     let server = Server::spawn(config)
         .await
         .expect("a relay starts on 127.0.0.1");
@@ -216,6 +221,36 @@ pub async fn relay() -> Server {
         }
     });
     server
+}
+
+/// Who [`relay`] lets through: everyone, as iroh's relay does by default,
+/// each connection's token kept by the key that presented it ([`TOKENS`]).
+#[derive(Debug)]
+struct Presented;
+
+/// Every token a relay [`relay`] started was presented, by the key that
+/// presented it, in 64 hex, each connection's in turn: none for a
+/// connection that presented none.
+static TOKENS: std::sync::Mutex<std::collections::BTreeMap<String, Vec<Option<String>>>> =
+    std::sync::Mutex::new(std::collections::BTreeMap::new());
+
+impl iroh_relay::server::AccessControl for Presented {
+    async fn on_connect(
+        &self,
+        request: &iroh_relay::server::ClientRequest,
+    ) -> iroh_relay::server::Access {
+        let key = hex::encode(request.endpoint_id().as_bytes());
+        let mut tokens = TOKENS.lock().unwrap();
+        tokens.entry(key).or_default().push(request.auth_token());
+        iroh_relay::server::Access::Allow
+    }
+}
+
+/// The tokens the key `key`, 64 hex, presented at the relays [`relay`]
+/// started, each connection's: what a group's own relay would judge it by
+/// (crates/svrngs/src/relay.rs `pass_holds`).
+pub fn presented_by(key: &str) -> Vec<Option<String>> {
+    TOKENS.lock().unwrap().get(key).cloned().unwrap_or_default()
 }
 
 /// The front's TLS: a certificate for 127.0.0.1 made once a run, which the

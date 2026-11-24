@@ -42,11 +42,13 @@ mod dial;
 #[path = "../../crates/svrngs-node/src/version.rs"]
 #[allow(dead_code)]
 mod version;
+// A phone's set, checked and signed for the group's signer (web/sign.js).
+mod set;
 
 use iroh::RelayUrl;
 use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
-use svrngs_core::pass::{Label, Pass};
+use svrngs_core::pass::{presenting, Label, Pass};
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -221,11 +223,13 @@ async fn bind_for(key: Vec<u8>, token: &str, meets: &[String]) -> Result<Bound, 
 /// token's, the fragment of `<origin>#<token>`, parsed by svrngs-core as
 /// the command parses it (call 5), each the page's policy takes; iroh
 /// chooses among them the fastest that answers, and a dial may be tried at
-/// every one. A pass's holder (self-host) presents `token` — the pass
-/// itself — as the token a group's own relay admits it by, since the fresh
-/// key a lend's page dials from stands in no group; the group's page's own
-/// endpoint presents none. No bearer rides a request to a lend: the node
-/// knows the person by the key that dialled, or the pass its holder shows.
+/// every one. A lend's worker (self-host) presents `token` — its pass and
+/// the holder's link naming the key it dials from, or the pass alone when
+/// it dials as the holder (svrngs-core's `presenting`) — as the token a
+/// group's own relay admits it by, since the key a lend's worker dials
+/// from stands in no group; the group's page's own endpoint presents none.
+/// No bearer rides a request to a lend: the node knows the person by the
+/// key that dialled, or the pass and link its worker shows.
 async fn bind(
     key: Vec<u8>,
     issuer: Option<iroh::PublicKey>,
@@ -248,17 +252,9 @@ async fn bind(
     // (relay-default), as upstream refused a dial string with no relay
     // (ring-runtime/src/lib.rs:91-99). Dotless, as WebKit reaches them.
     relays.iter().for_each(|relay| t!("LAYER parse: ok — relay {relay}"));
-    // A pass's holder presents the pass to every relay it was handed: the
-    // group's own admits it by the pass (self-host); the build's fallback
-    // and n0's ignore the token.
-    let map: iroh::RelayMap = relays.iter().cloned().collect();
-    let mode = iroh::RelayMode::Custom(match token {
-        Some(token) => map.with_auth_token(token),
-        None => map,
-    });
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
-        .relay_mode(mode);
+        .relay_mode(presented_at(&relays, token));
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)…");
@@ -283,6 +279,18 @@ async fn bind(
     }
     t!("LAYER relay-connect: ok — endpoint reports online (relay handshake done)");
     Ok(Bound { ep, issuer, relays })
+}
+
+/// `relays`, each presented `token` when there is one: a lend's worker's
+/// pass and the holder's link naming the key it dials from, by which a
+/// group's own relay admits that key (self-host); the build's fallback and
+/// n0's ignore it.
+fn presented_at(relays: &[RelayUrl], token: Option<String>) -> iroh::RelayMode {
+    let map: iroh::RelayMap = relays.iter().cloned().collect();
+    iroh::RelayMode::Custom(match token {
+        Some(token) => map.with_auth_token(token),
+        None => map,
+    })
 }
 
 /// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
@@ -500,28 +508,32 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 /// for every lender it reaches, never one per dial.
 #[wasm_bindgen]
 pub async fn endpoint(key: Vec<u8>, token: String, meets: Option<Vec<String>>) -> Result<Endpoint, JsError> {
-    Ok(Endpoint {
-        bound: bind_for(key, &token, &meets.unwrap_or_default()).await?,
-    })
+    let bound = bind_for(key, &token, &meets.unwrap_or_default()).await?;
+    Ok(Endpoint { bound })
 }
 
-/// Bind one endpoint as a pass's holder, whose key is `key`, reaching the
-/// group through `relays` — every relay the group's link carries that this
-/// page's policy takes, its public fallback among them — refused with
-/// none: a lend's origin's worker (u5-2; DESIGN §3, "Lent apps", call 6).
-/// It is handed no link's token, which would let it join the group, and
-/// `pass` is presented at the relays it is handed, since a group's own
-/// relay admits the holder by it, the fresh key standing in no group
-/// (self-host).
+/// Bind one endpoint for a pass's holder, whose key is `key` — this run's,
+/// which `link`, the holder's, names, or with none the holder's own —
+/// reaching the group through `relays` — every relay the group's link
+/// carries that this page's policy takes, its public fallback among them —
+/// refused with none: a lend's origin's worker (u5-2; DESIGN §3, "Lent
+/// apps", call 6). It is handed no group link's token, which would let it
+/// join the group, and `pass` and `link` are presented at the relays it is
+/// handed, since a group's own relay admits the key by them as the door
+/// does, the key standing in no group (self-host).
 #[wasm_bindgen]
-pub async fn holder_endpoint(key: Vec<u8>, relays: Vec<String>, pass: String) -> Result<Endpoint, JsError> {
+pub async fn holder_endpoint(
+    key: Vec<u8>,
+    relays: Vec<String>,
+    pass: String,
+    link: Option<String>,
+) -> Result<Endpoint, JsError> {
     let parsed = handed(&relays)?;
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
-    Ok(Endpoint {
-        bound: bind(key, None, parsed, Some(pass)).await?,
-    })
+    let bound = bind(key, None, parsed, Some(presenting(&pass, link.as_deref()))).await?;
+    Ok(Endpoint { bound })
 }
 
 /// The first relay a link's `token` carries, dotless, or none: whether a
@@ -730,10 +742,8 @@ pub fn approve_line(
     let line: svrngs_core::Op<svrngs_core::SignedOp> = serde_json::from_str(&line)?;
     let pass = svrngs_core::approve_in_open(&approver, &group, &reach, &issued, &line, now as i64)
         .map_err(|error| JsError::new(&error.to_string()))?;
-    Ok(js_sys::Array::of2(
-        &serde_json::to_string(&pass)?.into(),
-        &js_sys::Uint8Array::from(pass.approval_message().as_slice()).into(),
-    ))
+    let message = js_sys::Uint8Array::from(pass.approval_message().as_slice());
+    Ok(js_sys::Array::of2(&serde_json::to_string(&pass)?.into(), &message))
 }
 
 type Stamp = (f64, f64, Option<String>);
@@ -755,6 +765,32 @@ fn unsigned(
         grant,
     };
     Ok(svrngs_core::unsigned_act(actor, &group, ts as i64, kind))
+}
+
+/// A phone's write to the app at the label `label`, `asked` as JSON (set.rs
+/// `Asked`), checked: `[message, set, place]`, what its open's approver
+/// signs, the set its signature goes in (`set_sealed`) and its place, its
+/// home and seq; `[]` where it changes nothing, checked so, and is
+/// no set; or `[null, words]`, why not, in words for the person
+/// (web/sign.js, which alone holds the approver).
+#[wasm_bindgen]
+pub fn set_checked(label: String, asked: String) -> Result<js_sys::Array, JsError> {
+    let asked: set::Asked = serde_json::from_str(&asked)?;
+    Ok(match set::signed(&label, &asked) {
+        Ok(Some((message, set, place))) => {
+            let message = js_sys::Uint8Array::from(message.as_slice());
+            js_sys::Array::of3(&message.into(), &set.into(), &place.into())
+        }
+        Ok(None) => js_sys::Array::new(),
+        Err(words) => js_sys::Array::of2(&JsValue::NULL, &words.into()),
+    })
+}
+
+/// `set`, as `set_checked` made it, with its approver's signature `sig`,
+/// hex: the set a phone carries, postcard's bytes in base64.
+#[wasm_bindgen]
+pub fn set_sealed(set: String, sig: String) -> Result<String, JsError> {
+    set::sealed(&set, &sig).ok_or_else(|| JsError::new("not a set and its signature"))
 }
 
 /// The act, JSON, an app `kind`'s page asks for with `body`, as the door
@@ -862,13 +898,20 @@ pub struct Direct {
 /// reaching the network through `relays` (the pass's, as the run's
 /// endpoint is), dialling the lender through `relay` when it is named:
 /// every datagram out goes to `out`, and what the window's channel brings
-/// comes in through [`data_push`].
+/// comes in through [`data_push`]. Its key is `key`, made fresh for the
+/// attempt, which `link`, the holder's, names: it presents `pass` and
+/// `link` at its relays, as the run's own endpoint does
+/// ([`holder_endpoint`]), since a group's own relay admits it by them, the
+/// key standing in no group (self-host).
 #[wasm_bindgen]
 pub async fn direct_start(
     lender: String,
     relay: Option<String>,
-    relays: Vec<String>,
+    relays: Option<Vec<String>>,
     out: js_sys::Function,
+    key: Vec<u8>,
+    pass: String,
+    link: String,
 ) -> Result<Direct, JsError> {
     let lender: iroh::EndpointId = lender.parse().map_err(|e| {
         JsError::new(&format!(
@@ -876,7 +919,7 @@ pub async fn direct_start(
         ))
     })?;
     let named = named(&relay)?;
-    let mut parsed = handed(&relays)?;
+    let mut parsed = handed(&relays.unwrap_or_default())?;
     // A pass kept before relay fallbacks names one relay and no `relays`:
     // the relay named for the lend is the data endpoint's way in then
     // (web/lend.js `direct`, as `opened` reads them).
@@ -886,7 +929,8 @@ pub async fn direct_start(
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
-    let secret = iroh::SecretKey::generate();
+    let secret = iroh::SecretKey::from_bytes(&signing(key)?.to_bytes());
+    t!("LAYER key: ok — the data endpoint's key {}", secret.public());
     let me = *secret.public().as_bytes();
     let (arrived, arrivals) = tokio::sync::mpsc::unbounded_channel();
     // The wire's send must be `Send`, which `out` is not: it takes the
@@ -904,7 +948,7 @@ pub async fn direct_start(
     });
     let data = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
-        .relay_mode(iroh::RelayMode::custom(parsed.clone()))
+        .relay_mode(presented_at(&parsed, Some(presenting(&pass, Some(&link)))))
         .add_custom_transport(wire::Wire::new(&me, arrivals, send))
         .transport_config(paths::quick_paths(Some(dial::QUEUED)))
         .bind()
@@ -925,11 +969,6 @@ pub async fn direct_start(
 
 #[wasm_bindgen]
 impl Direct {
-    /// The data endpoint's key, which the offer names.
-    pub fn key(&self) -> String {
-        self.data.0.id().to_string()
-    }
-
     /// The direct attempt, driven here so the worker's JavaScript stays
     /// thin (webrtc-page): the window is asked over `port` — the worker's
     /// end of the channel it announced itself on (`{webrtc: 'here'}`,
@@ -991,26 +1030,18 @@ impl Direct {
         // its path the window's channel, and whichever holds the channel
         // carries the dial: the second when it has it, its relay backup with
         // it, else the first, whose relay the remote's addresses add.
+        let (data, peer) = (&self.data.0, self.peer);
+        let dial = |at: Vec<iroh::TransportAddr>, what: &'static str| async move {
+            let to = iroh::EndpointAddr::from_parts(peer, at);
+            (data.connect(to, Alpn::Lend.bytes()).await).map_err(|e| JsError::new(&format!("{what}: {e}")))
+        };
         let custom = iroh::TransportAddr::Custom(wire::addr_of(self.peer.as_bytes()));
-        let first = self
-            .data
-            .0
-            .connect(
-                iroh::EndpointAddr::from_parts(self.peer, [custom.clone()]),
-                Alpn::Lend.bytes(),
-            )
-            .await
-            .map_err(|e| JsError::new(&format!("dial webrtc: {e}")))?;
+        let first = dial(vec![custom.clone()], "dial webrtc").await?;
         let mut at = vec![custom];
         if let Some(relay) = &self.relay {
             at.push(iroh::TransportAddr::Relay(relay.clone()));
         }
-        let second = self
-            .data
-            .0
-            .connect(iroh::EndpointAddr::from_parts(self.peer, at), Alpn::Lend.bytes())
-            .await
-            .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
+        let second = dial(at, "dial both").await?;
         self.conn = Some(if on_the_channel(&second, false) { second } else { first });
         // The direct path is the attempt's point, and iroh may settle the
         // connection on the relay first (the channel is still opening),

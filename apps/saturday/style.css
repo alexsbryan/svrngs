@@ -1,0 +1,28 @@
+/* Saturday's page: the browser's own type and named colors, plain black
+   borders, one column that reads at a phone's width. State is said in
+   words; color only repeats it. */
+:root { color-scheme: light; }
+body { margin: 0 auto; max-width: 44rem; padding: 1rem; font: 18px/1.4 system-ui, sans-serif; color: black; background: white; }
+h1 { font-size: 1.5rem; margin: 0 0 0.75rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; }
+h3 { font-size: 1.15rem; margin: 0; }
+h4 { font-size: 1rem; margin: 0.75rem 0 0.25rem; }
+p { margin: 0.4rem 0; }
+#said:empty { display: none; }
+#said[data-state="refused"], #said[data-state="unreachable"], #said[data-state="shut"] { color: firebrick; font-weight: 600; }
+#add { display: grid; gap: 0.25rem; }
+label { font-weight: 600; }
+input, textarea { font: inherit; border: 2px solid black; padding: 0.3rem 0.4rem; max-width: 100%; box-sizing: border-box; }
+textarea { width: 100%; }
+#plans { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.plan article { border: 3px solid black; padding: 0.75rem 1rem; background: lavenderblush; }
+.when { color: dimgray; }
+.things, .others { margin: 0; padding-left: 1.25rem; }
+.things li, .others li { margin: 0.3rem 0; }
+button { font: inherit; color: black; background: white; border: 2px solid black; border-radius: 0; padding: 0.25rem 0.6rem; min-height: 2.75rem; cursor: pointer; touch-action: manipulation; }
+button:active { background: gold; }
+button[aria-pressed="true"] { background: black; color: white; }
+button[aria-pressed="true"]::before { content: "✓ "; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 4px solid blue; outline-offset: 2px; }
+summary { cursor: pointer; margin: 0.75rem 0 0.25rem; font-weight: 600; }
+.off { font-size: 0.9rem; }

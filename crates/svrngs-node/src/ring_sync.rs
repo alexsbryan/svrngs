@@ -89,6 +89,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
+use crate::register::{RemovalSaid, Removing};
 use crate::{RailError, RingRail};
 use n0_future::task::AbortOnDropHandle;
 use tokio::sync::{watch, Notify};
@@ -215,7 +216,7 @@ impl AskRound {
 /// begun and ended for a waiting door. The loop is aborted when the
 /// handle returned drops.
 pub fn spawn_ring_sync_loop(
-    host: Arc<Host>,
+    folders: crate::folder::Folders,
     interval: Duration,
     nudge: Arc<Notify>,
     rounds: Rounds,
@@ -234,7 +235,7 @@ pub fn spawn_ring_sync_loop(
             let started = Instant::now();
             rounds.send_modify(|p| p.begun += 1);
             let answered = || rounds.send_modify(|p| p.answered += 1);
-            let outcome = run_one_round(host.as_ref(), &answered, &mut told).await;
+            let outcome = run_one_round(&folders, &answered, &mut told).await;
             rounds.send_modify(|p| p.ended = p.begun);
             if outcome.namespaces > 0 {
                 debug!(
@@ -264,7 +265,8 @@ pub fn spawn_ring_sync_loop(
 
 /// One anti-entropy pass over every namespace this node holds, against every
 /// online peer **standing in its register** (svrngs: upstream, its roster),
-/// every pair dialled at once and `answered` told as each member answers.
+/// every pair dialled at once and `answered` told as each member answers;
+/// `folders`' host's, with the app databases `folders` says it keeps.
 ///
 /// (svrngs, asleep-1-none-held: upstream dialled one pair after another, so
 /// an asleep member held every exchange after it to its dial's ten-second
@@ -273,11 +275,11 @@ pub fn spawn_ring_sync_loop(
 /// no prediction named" 1. Each exchange is idempotent and keyed on the op
 /// id, so two at once with one journal duplicate nothing.)
 pub async fn run_one_round(
-    host: &Host,
+    folders: &crate::folder::Folders,
     answered: &(impl Fn() + Sync),
     told: &mut LeavesTold,
 ) -> RoundOutcome {
-    let mut outcome = RoundOutcome::default();
+    let (host, mut outcome) = (folders.host.as_ref(), RoundOutcome::default());
     let rail = &host.rail;
     let Ok(namespaces) = rail.namespaces().inspect_err(|e| {
         warn!(error = %e, "ring sync: cannot enumerate namespaces");
@@ -328,6 +330,9 @@ pub async fn run_one_round(
         // this namespace. Under-share, never over-share.
         let standing = match rail.standing(namespace) {
             Ok(crate::register::Standing::Left(stands)) => {
+                // Its app databases closed, their files kept, as the group's
+                // other files are: nothing of a group left is live here.
+                host.states.close(namespace);
                 leaves.extend(leave_told(host, namespace, stands, told));
                 continue;
             }
@@ -354,11 +359,20 @@ pub async fn run_one_round(
             "ring sync: namespace register"
         );
 
+        // The app databases this computer keeps, opened before any member is
+        // dialled, so a member's call this round finds each one here too.
+        let kept = Arc::new(folders.kept(namespace).await);
+        for db in kept.iter() {
+            let tidied = self::off(db, |db| db.tidy()).await;
+            debug!(namespace, app = db.app, ?tidied, "ring state: an app database's free pages given back and its WAL truncated, each past its bound, before the round's exchanges");
+        }
         for OnlinePeer { contact, .. } in offered_to {
+            let kept = kept.clone();
             dials.push(async move {
                 let ended = exchange_with((transport, contact), rail, namespace).await;
                 if ended.stop.is_none() {
                     answered();
+                    states((transport, contact), host, namespace, &kept).await;
                 }
                 ended
             });
@@ -629,6 +643,105 @@ pub(crate) async fn post(
 
 /// Where a member's exchange is asked, and served (`ring_routes.rs`).
 pub const SYNC_ROUTE: &str = "/internal/ring/sync";
+
+/// Where a member's app databases are exchanged, and served
+/// ([`crate::ring_routes::ring_state`]).
+pub const STATE_ROUTE: &str = "/internal/ring/state";
+
+/// The keys `group`'s record binds, as a set's device and the owned rows it
+/// changes are judged (svrn-docs APP_STATE §4, "A removed device", "Who may
+/// write which row"): standing now, or cut since, as a removed device's sets
+/// are taken like any, each with its person's first key, and whether the
+/// office cut it, the keeper's cut and no leave, by a cut whose acts this
+/// copy holds whole (Eudoxia's `db::Record`); each with its share of the
+/// room an app database's ask has ([`crate::peer_wire::ASK_ROOM_BYTES`]). An
+/// unreadable record binds none, so every set offered is dropped, to be sent
+/// again once it reads, said at warn.
+pub(crate) fn bound(rail: &RingRail, group: &str) -> svrngs_db::Binds {
+    let read = rail.register(group).inspect_err(|e| warn!(namespace = group, error = %e, "ring state: the record is unreadable, so every set offered is dropped, to be sent again once it reads"));
+    let read = read.unwrap_or_default();
+    let whole = |k: &String| read.cut.get(k).is_some_and(|c| c.unheld.is_empty());
+    let office = |r: &Removing| r.said == RemovalSaid::Removed && whole(&r.key);
+    let cuts = (read.removals.iter()).filter(|r| r.said != RemovalSaid::Asked);
+    let cuts = cuts.map(|r| (r.key.clone(), r.of_key.clone(), office(r)));
+    let standing = (read.members.iter()).map(|(k, m)| (k.clone(), m.person_key.clone(), false));
+    svrngs_db::Binds::new(standing.chain(cuts), crate::peer_wire::ASK_ROOM_BYTES)
+}
+
+/// Each app database this computer keeps in `group`
+/// ([`crate::folder::Folders::kept`]), exchanged with the member at `to`,
+/// after the record's in the same round (the app-state
+/// spike's `exchange`, svrn-docs `rings/current/app-state-spike/spike.patch:1355-1401`),
+/// so a set's key the record's exchange just brought is bound here: a call
+/// a chunk, each giving what the member's last ask lacks and taking what the
+/// member's answer gives, until neither moves or the chunks are spent.
+async fn states(to: To<'_>, host: &Host, group: &str, kept: &[Arc<svrngs_db::Db>]) {
+    let bound = Arc::new(bound(&host.rail, group));
+    // The member called, the computer its sets are signed by, which a full
+    // answer's marks for its own sites are taken on the word of.
+    let from = svrngs_db::Device::parse(&key_actor(&to.1.key));
+    for db in kept {
+        let mut theirs: Option<svrngs_db::Ask> = None;
+        for chunk in 1..=MAX_CHUNKS_PER_EXCHANGE {
+            let asked = theirs.take();
+            let ours = off(db, move |db| match asked {
+                Some(ask) => db.missing(&ask, RING_SYNC_OPS_BUDGET_BYTES),
+                None => db.ask().map(|ask| svrngs_db::Call {
+                    ask,
+                    ..Default::default()
+                }),
+            });
+            let Some(Ok(ours)) = ours.await else { break };
+            let body = postcard::to_allocvec(&((group, &db.app), &ours))
+                .expect("a call is written in memory");
+            let answer =
+                to.0.fetch(to.1, crate::iroh::posted(STATE_ROUTE, body))
+                    .await;
+            let answer = answer.ok().filter(|a| a.status().is_success());
+            let answer =
+                answer.and_then(|a| postcard::from_bytes::<svrngs_db::Call>(a.body()).ok());
+            let (judge, from) = (bound.clone(), from.clone());
+            let ingested = match answer {
+                Some(a) => off(db, move |db| (db.ingest(&a, &*judge, from.as_ref()), a)).await,
+                None => None,
+            };
+            let (took, answer) = ingested.unzip();
+            debug!(namespace = group, app = db.app, peer = %to.1.key, chunk, sent = ours.sets.len(), ?took, "ring state: a chunk of an app database's exchange with a member, or none, as it didn't answer");
+            let moved = took.as_ref().is_some_and(|t| {
+                t.as_ref().is_ok_and(|t| {
+                    t.iter().any(|(_, t)| {
+                        !matches!(
+                            t,
+                            svrngs_db::Took::Held
+                                | svrngs_db::Took::NotYet
+                                | svrngs_db::Took::Fault
+                                | svrngs_db::Took::Over
+                        )
+                    })
+                })
+            });
+            match answer {
+                Some(answer) if chunk == 1 || moved || !ours.sets.is_empty() => {
+                    theirs = Some(answer.ask)
+                }
+                _ => break,
+            }
+        }
+    }
+}
+
+/// `f` on `db`, a database or this computer's databases, off the runtime's
+/// threads, as a database's work is SQLite's and its signature checks', a
+/// page's reads' and a version made wider too (`carried.rs`), so one
+/// member's exchange or schema holds no thread every group's round needs;
+/// none where its task didn't end. How svrngs-node does SQLite work: here.
+pub(crate) async fn off<D: Send + Sync + 'static, T: Send + 'static>(
+    db: &Arc<D>,
+    f: impl FnOnce(&D) -> T + Send + 'static,
+) -> Option<T> {
+    let db = db.clone();
+    tokio::task::spawn_blocking(move || f(&db)).await.ok()
+}
 
 /// The responder's half of one exchange: ingest what the caller offered,
 /// then answer with this node's digest and one budget of what the caller's

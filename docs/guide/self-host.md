@@ -6,7 +6,8 @@ explains what those services can see. Here’s how to replace them.
 
 ## Use your own relay
 
-Build the command with `cargo build --release -p svrngs`. It’s now at
+First [prepare the checkout](../../CONTRIBUTING.md#prepare-a-checkout), then
+build the command with `cargo build --release -p svrngs`. It’s now at
 `target/release/svrngs`; add that directory to your path or use the full path
 in the commands below.
 

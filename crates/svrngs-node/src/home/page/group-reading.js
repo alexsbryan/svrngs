@@ -5,11 +5,9 @@
 // once, and the people, answered first, are drawn without waiting for the
 // lends, so a group shows before its slowest computer answers. It reads
 // again on HOME's `again` and `visible`, each a new `round` from HOME.
-import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
-import { offered } from './offered.js?v=__VERSION__';
+import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { get } from './routes.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
-/** @import { Flows } from './offered.js?v=__VERSION__' */
 /** @import { Lends, People } from './group.js?v=__VERSION__' */
 
 /** @typedef {'people' | 'lends'} Kind */
@@ -71,14 +69,11 @@ function reading(state) {
   return go(state, { people: 'reading', lends: 'reading' }, { asked }, ...effects);
 }
 
-// A message no case takes is offered to the feature it names, as HOME's
-// are: none sent to GROUP names one, so `message` there is `never`, and a
-// message type GROUP declares and no case takes fails `types` at `offered`.
-/**
- * @param {Flows<State, Effect>} flows
- * @returns {Machine<State, Message, Effect>}
- */
-export const GROUP = (flows) => ({
+// GROUP takes its own messages alone: no feature's message is sent to it,
+// and a message type GROUP declares and no case takes fails `types` at
+// `assertNever`.
+/** @type {Machine<State, Message, Effect>} */
+export const GROUP = {
   states: { people: ['reading', 'read', 'unread'], lends: ['reading', 'read', 'unread'] },
   step: (state, message) => {
     switch (message.type) {
@@ -100,7 +95,7 @@ export const GROUP = (flows) => ({
         );
       }
       default:
-        return offered(flows, state, message);
+        return assertNever(state, message, 'a group');
     }
   },
   io: {
@@ -110,4 +105,4 @@ export const GROUP = (flows) => ({
         (error) => ({ type: 'unread', kind, n: serial, why: error.message }),
       ),
   },
-});
+};

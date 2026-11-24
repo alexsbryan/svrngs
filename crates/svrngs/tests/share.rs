@@ -153,14 +153,27 @@ fn address_in(line: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-/// Nothing a person reads says a word DESIGN §1 keeps from them.
+/// Nothing a person reads says a word DESIGN §1 keeps from them, in
+/// svrngs's own words: a path a line reports is the person's own (where a
+/// lent program runs, a checkout named `relay-link`), so it is not judged.
 fn plain(said: &[String]) {
     for line in said {
-        let lower = line.to_lowercase();
+        let words = line.split_whitespace().filter(|w| !w.starts_with('/'));
+        let lower = words.collect::<Vec<_>>().join(" ").to_lowercase();
         for word in KEPT_WORDS {
             assert!(!lower.contains(word), "{line:?} says {word}");
         }
     }
+}
+
+#[test]
+fn plain_judges_svrngs_s_words_and_not_a_path_it_reports() {
+    plain(&["Lent pad: share-1 in /Users/sam/dev/relay-link/crates/svrngs.".into()]);
+    let said = ["The relay closed.".to_string()];
+    assert!(
+        std::panic::catch_unwind(|| plain(&said)).is_err(),
+        "a kept word in svrngs's words is caught"
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -430,7 +443,7 @@ fn share_takes_no_password_on_the_command_line() {
             "{flag} is taken"
         );
     }
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&[
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&[
         "share", "8096", "--name", "box", "--limit", "2", "--refuse", "/admin",
     ])) else {
         panic!("share parses");
@@ -440,7 +453,8 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(asked.refused.len(), 1);
     assert_eq!(asked.upload, None, "no upload stated, none declared");
     assert!(cli::parse(argv(&["new", "x", "--limit", "2"])).is_err());
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&["share", "8096", "--upload", "30"]))
+    else {
         panic!("share parses an upload");
     };
     assert_eq!(asked.upload.map(|u| u.bps()), Some(30_000_000));
@@ -452,7 +466,7 @@ fn share_takes_no_password_on_the_command_line() {
     }
     assert!(cli::parse(argv(&["link", "x", "--upload", "30"])).is_err());
     // The kinds a lend reads (u5-2), each said again for more.
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&[
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&[
         "share", "8096", "--reads", "films", "--reads", "music",
     ])) else {
         panic!("share parses what it reads");
@@ -508,7 +522,8 @@ async fn a_lend_that_asks_keeps_its_lender_s_words() {
             .collect::<Vec<_>>()
     };
     let words = "the app receives ranked suggestions; your history stays where it is";
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&["share", "8096", "--ask", words])) else {
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&["share", "8096", "--ask", words]))
+    else {
         panic!("share parses what it asks");
     };
     assert_eq!(asked.asks.as_deref(), Some(words));

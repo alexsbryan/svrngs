@@ -8,7 +8,9 @@ cannot use it across the cut.
 
 ## Before
 
-- Build this branch on the mesh laptops: `cargo build --release -p svrngs`.
+- Build this branch on the mesh laptops: once, `git submodule update --init`
+  and `cargo fetch --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml`;
+  then `cargo build --release -p svrngs`.
   Use `target/release/svrngs`; an installed `~/.local/bin/svrngs` may be older.
 - Relay host: an always-on mesh computer at a stable `10.42.x.y`.
   `svrngs relay --at 10.42.x.y:3340 --open`

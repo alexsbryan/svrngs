@@ -25,7 +25,7 @@ import { answered } from './running-look.js?v=__VERSION__';
  * groups to lend it to, and HOME's `dispatch`, told to read again once it
  * changes.
  * @typedef {object} LentProps
- * @property {Lend} l
+ * @property {Lend & { sharing?: [string, string] }} l
  * @property {boolean} signs
  * @property {AppsAccount} [account]
  * @property {string[]} [headers]
@@ -153,6 +153,8 @@ const HELD = {
     ` Something you didn’t approve was on ${name}’s port, so ${name} is closed for now.`,
   unjudged: (/** @type {string} */ name) =>
     ` svrngs can’t tell what answers on ${name}’s port, so nobody can open ${name}. Start it again.`,
+  changed: (/** @type {string} */ name) =>
+    ` What runs ${name} changed since you chose to keep sharing it when it starts again, so ${name} is closed for now.`,
 };
 // What svrngs read answering on a held lend's port now: nothing answering
 // said apart from a read that failed, which the row names in `unread`
@@ -184,15 +186,16 @@ function Keep({ lend, doing, send }) {
 const undone = (/** @type {AppsAccount | undefined} */ account, /** @type {Lend} */ lend) =>
   (account !== undefined && !account.kept) || Boolean(lend.held);
 
+/** @param {LentProps['l']['sharing']} sharing */
+const runLink = (sharing) =>
+  sharing &&
+  html`<p>${sharing[0]} <a href="#run-form" onClick=${() => document.querySelector('#run-form details')?.setAttribute('open', '')}>${sharing[1]}</a></p>`;
+
 /** @param {LentProps} props */
 export function Lent({ l: lend, signs, account, headers, groups, home }) {
-  const [state, send] = useMachine(() =>
-    machine('CHANGE', CHANGE(lend.name, home), {
-      at: { change: 'idle' },
-      said: '',
-      groups: lend.groups ?? [],
-    }),
-  );
+  /** @type {() => State} */
+  const first = () => ({ at: { change: 'idle' }, said: '', groups: lend.groups ?? [] });
+  const [state, send] = useMachine(() => machine('CHANGE', CHANGE(lend.name, home), first()));
   const limit = lend.limit;
   const limited = (limit ?? 0) > 0;
   const people = limit === 1 ? 'person' : 'people';
@@ -200,38 +203,19 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
+  // What three of the row's acts send, named so each act is one line.
+  const everyone = { type: 'change', to: { limit: null } };
+  const [sign, audience] = [{ type: 'sign' }, { type: 'audience' }];
   const letEveryone =
-    limited &&
-    html`
-      <${Act}
-        words="Let everyone in"
-        doing=${doing}
-        on=${{ type: 'change', to: { limit: null } }}
-        send=${send}
-      />
-    `;
+    limited && html`<${Act} words="Let everyone in" doing=${doing} on=${everyone} send=${send} />`;
   const signIn = signs
     ? html`Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide, then test sign-in through your group’s app list. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>. `
-    : html`
-        <${Act}
-          words="Sign people in with svrngs"
-          doing=${doing}
-          on=${{ type: 'sign' }}
-          send=${send}
-        />
-      `;
-  const saveAudience = html`
-    <${Act}
-      words="Save who can open this"
-      doing=${doing}
-      on=${{ type: 'audience' }}
-      send=${send}
-    />
-  `;
+    : html`<${Act} words="Sign people in with svrngs" doing=${doing} on=${sign} send=${send} />`;
   return html`
     <li>
       <details open=${undone(account, lend)} aria-label=${lend.name}>
-      <summary>${words}</summary>
+       <summary>${words}</summary>
+       ${runLink(lend.sharing)}
       <${Keep} lend=${lend} doing=${doing} send=${send} />
       <${Field}
         words="How many people at once: "
@@ -248,7 +232,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
         waiting=${state.at.change === 'changing'}
         send=${send}
       />
-      ${saveAudience}
+      <${Act} words="Save who can open this" doing=${doing} on=${audience} send=${send} />
       <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
       <${Headers} name=${lend.name} kept=${headers} state=${state} doing=${doing} send=${send} />
       ${signIn}

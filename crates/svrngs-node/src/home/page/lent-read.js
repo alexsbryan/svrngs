@@ -53,11 +53,13 @@ export const LENDING = {
   io: {
     read: ({ n: serial }) =>
       get('/lent').then(
-        /** @param {{ lent: Lend[], signing: string[], readers: Record<string, AppsAccount>, headers: Record<string, string[]> }} answer */
-        ({ lent, signing, readers, headers }) => ({
+        /** @param {{ lent: Lend[], signing: string[], readers: Record<string, AppsAccount>, headers: Record<string, string[]>, sharing?: Record<string, [string, string]> }} answer */
+        ({ lent, signing, readers, headers, sharing }) => ({
           type: 'answered',
           n: serial,
-          lent: lent.filter((lend) => !lend.group),
+          lent: lent
+            .filter((lend) => !lend.group)
+            .map((lend) => ({ ...lend, sharing: sharing?.[lend.name] })),
           signing,
           readers,
           headers,

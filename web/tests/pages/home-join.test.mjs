@@ -3,16 +3,18 @@
 // counted, and an older answer refused by name (`late`), where home.js@19b63b2b:411
 // compared the typed value; a second press refused while it joins. Each
 // step's effects are read as data; joined, the form is empty again and HOME
-// says so (`take`). Plant, watched failing: `late` taken out of JOIN's step
-// (`old = false`), so the older answer is drawn.
+// says so (its `again`, with `?joined=`). Plant, watched failing: `late`
+// taken out of JOIN's step (`old = false`), so the older answer is drawn.
 
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
 import { test } from 'node:test';
 
 register('./layout.mjs', import.meta.url);
-const { JOIN: made, take } =
+const { JOIN: made } =
   await import('../../../crates/svrngs-node/src/home/page/join.js?v=__VERSION__');
+const { HOME } =
+  await import('../../../crates/svrngs-node/src/home/page/home-reading.js?v=__VERSION__');
 
 const JOIN = made(() => {}),
   FIRST = { at: { join: 'typing' }, link: '', person: '', why: '' };
@@ -79,7 +81,7 @@ test('a refusal is said in place of the last, the link checked kept to press aga
   assert.equal(JOIN.step(s, { type: 'opened' }).refused, 'joining takes no opened');
 });
 
-test('joined, the form is empty again, and HOME says so from what was joined', () => {
+test('joined, the form is empty again, and HOME says so from what was joined', async (t) => {
   const [s] = run(
     FIRST,
     { type: 'typed', field: 'link', value: 'l' },
@@ -88,12 +90,13 @@ test('joined, the form is empty again, and HOME says so from what was joined', (
     { type: 'joined' },
   );
   assert.deepEqual([s.at.join, s.link, s.for, s.asked], ['typing', '', undefined, { link: 1 }]);
+  // The join's answer (home.rs `join`), and what HOME is told of it.
+  t.mock.method(globalThis, 'fetch', async () => Response.json(['Trip', 'Dee', null]));
+  const told = [];
+  await made((m) => told.push(m)).io.join({ link: 'l', person: 'Dee' });
   const q = { joined: 'Trip', person: 'Dee', unplaced: null };
-  assert.deepEqual(
-    take(
-      { at: { groups: 'read', said: 'made' }, q: { made: 'Lab' } },
-      { type: 'joined', flow: 'join', q },
-    ).state,
-    { at: { groups: 'read', said: 'joined' }, q },
-  );
+  assert.deepEqual(told, [{ type: 'again', q }]);
+  const home = { at: { groups: 'read', said: 'made' }, q: { made: 'Lab' } };
+  const { state } = HOME({}).step(home, told[0]);
+  assert.deepEqual([state.at, state.q], [{ groups: 'rereading', said: 'joined' }, q]);
 });

@@ -1,7 +1,19 @@
 # Work on svrngs
 
 Use the Rust toolchain pinned in [`rust-toolchain.toml`](rust-toolchain.toml)
-and the Node version in [`.nvmrc`](.nvmrc). From the repository root:
+and the Node version in [`.nvmrc`](.nvmrc).
+
+## Prepare a checkout
+
+From the repository root, get cr-sqlite's source and Rust dependencies once
+per checkout or worktree. The build itself does not fetch them:
+
+```sh
+git submodule update --init
+cargo fetch --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml
+```
+
+## Run the checks
 
 ```sh
 npm ci --prefix web

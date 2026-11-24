@@ -293,6 +293,8 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
             asks: None,
             sends: Vec::new(),
             approved: None,
+            keep: None,
+            revision: None,
         },
     }
 }
@@ -664,7 +666,8 @@ fn sams_visit(rail: &RingRail, until: i64, opens: &[(u8, &str)]) -> (crate::OpId
 /// whose key is `me`: who is let in, or the refusal's kind and words.
 fn guest_at(rail: &RingRail, me: u8, lend: &Lend, now: i64) -> Result<String, (String, String)> {
     let visit = rail.visit_anywhere(&actor(9)).expect("the visit is held");
-    match guest_of(&actor(me), visit, &actor(9), lend, now) {
+    let label = lend.label(&key(me).verifying_key().to_bytes());
+    match guest_of(visit, &actor(9), (&label, Some(lend)), now) {
         Ok((group, host, guest)) => Ok(format!("{guest} in {group}, {host}'s")),
         Err(r) => {
             let (_, kind, words) = said(&r);
@@ -1062,7 +1065,7 @@ fn a_hold_is_kept_in_the_lend_s_file_until_its_lender_approves_again() {
         "the approved socket back alone"
     );
     let since = binding::approve(&alone(3), None).unwrap();
-    crate::share::reapproved(dir.path(), &shelf.name, since).unwrap();
+    crate::share::reapproved(dir.path(), &shelf.name, (since, None)).unwrap();
     let stale = decided(&shelf, 2);
     assert!(
         stale.is_err(),
@@ -1088,7 +1091,7 @@ fn a_hold_is_kept_in_the_lend_s_file_until_its_lender_approves_again() {
     mac.lasting = false;
     mac.sockets[0].holders = [(5, 5)].into();
     let approved = binding::approve(&mac, None).unwrap();
-    crate::share::reapproved(dir.path(), &shelf.name, approved).unwrap();
+    crate::share::reapproved(dir.path(), &shelf.name, (approved, None)).unwrap();
     let mut exited = mac.clone();
     exited.sockets.push(binding::Socket {
         holders: Default::default(),
@@ -1155,6 +1158,7 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         // Dials, each writing nothing to a share's port unchecked.
         ("crates/svrngs-node/src/door/bound.rs", "dial: checked by bound"),
         ("crates/svrngs-node/src/door/bound.rs", "dial: a checked flow"),
+        ("crates/svrngs-node/src/door/bound.rs", "dial: witness the unit before saving access"),
         ("crates/svrngs-node/src/door.rs", "dial: unwritten probe"),
         ("crates/svrngs-node/src/door/udp.rs", "dial: member's programs"),
         ("crates/svrngs-node/src/share.rs", "dial: unwritten probe"),
@@ -1165,15 +1169,18 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         ("crates/svrngs-node/src/publication.rs", "dial: a group's page"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
+        ("apps/svrngs-keeper/src/host.rs", "dial: local prefill or readiness, without share credentials"),
         // svrngs's own API, asked only once it proves it holds the token.
         ("crates/svrngs-node/src/api.rs", "dial: svrngs's own API, proved before it is asked"),
         ("apps/give/src/record.rs", "dial: svrngs's own API, proved before it is asked, by each answer's deadline"),
         ("crates/svrngs/src/cli.rs", "dial: a group's page"),
         // The clock and randomness, at their adapters (clippy.toml).
         ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),
-        ("apps/give/src/runtime.rs", "a snapshot is named for when it was taken"),
-        ("apps/give/src/runtime.rs", "a snapshot times its pause"),
-        ("apps/give/src/runtime.rs", "the runtime is podman's adapter: it waits on the clock"),
+        ("apps/svrngs-keeper/src/host.rs", "the local prefill probe sets its deadline at the edge"),
+        ("apps/svrngs-keeper/src/host.rs", "the local readiness probe waits at the edge"),
+        ("apps/svrngs-keeper/src/runtime.rs", "a snapshot is named for when it was taken"),
+        ("apps/svrngs-keeper/src/runtime.rs", "a snapshot times its pause"),
+        ("apps/svrngs-keeper/src/runtime.rs", "the runtime is podman's adapter: it waits on the clock"),
         ("crates/svrngs-node/src/api.rs", "draws the record's token"),
         ("crates/svrngs-node/src/api.rs", "a challenge or a nonce drawn"),
         ("apps/give/src/record.rs", "draws a proof's challenge"),
@@ -1212,6 +1219,7 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         .map(|c| root.join("crates").join(c).join("src"))
         .collect();
     dirs.push(root.join("apps/give/src"));
+    dirs.push(root.join("apps/svrngs-keeper/src"));
     while let Some(dir) = dirs.pop() {
         for entry in std::fs::read_dir(&dir).unwrap().flatten() {
             let (path, name) = (
@@ -1836,4 +1844,260 @@ fn what_a_person_is_shown_is_named_by_a_token_that_changes_with_it() {
         token(&on_mac(2)),
         "the same pid started again"
     );
+}
+
+/// The socket `id` alone on a kept lend's port, made in `cgroup`, read in
+/// `boot`, its connection taken in that cgroup.
+fn in_unit(id: u64, cgroup: u64, boot: u64) -> (binding::Read, binding::Took) {
+    let mut read = alone(id);
+    (read.boot, read.sockets[0].cgroup) = (Some(boot), Some(cgroup));
+    (read, binding::Took::Cgroup(cgroup))
+}
+
+#[test]
+fn a_job_approval_requires_both_its_listeners_and_its_taker() {
+    let job = crate::job::Now {
+        keep: crate::job::Keep {
+            unit: "svrngs-keeper-coder.service".into(),
+            files: "f1".into(),
+        },
+        scope: crate::job::Scope::Cgroups([4, 5].into()),
+    };
+    let (read, _) = in_unit(1, 4, 1);
+    assert!(bound::job_approval(&job, &read, &binding::Took::Cgroup(4)).is_some());
+    assert_eq!(
+        bound::job_approval(&job, &read, &binding::Took::Cgroup(9)),
+        None,
+        "a foreign taker"
+    );
+    assert_eq!(
+        bound::job_approval(&job, &read, &binding::Took::Waiting),
+        None,
+        "an unknown taker"
+    );
+    let mut mixed = read;
+    mixed.sockets.extend(in_unit(2, 9, 1).0.sockets);
+    assert_eq!(
+        bound::job_approval(&job, &mixed, &binding::Took::Cgroup(4)),
+        None,
+        "a foreign listener beside the unit's"
+    );
+}
+
+/// **A lend kept to a unit is renewed after it restarts, and only then**
+/// (svrn-docs KEEP_SHARING_ON_RESTART §2): coder, kept to its unit,
+/// approved in cgroup 4 in boot 1. Its unit crashed (cgroup 5) and was
+/// restarted in a new boot (cgroup 6, boot 2): each renewed from that read,
+/// the file's approval the new one, its grant the same. Another unit on the
+/// port, a stray socket beside the unit's, and the unit's own socket
+/// answered elsewhere: refused, the file unchanged. Its files changed:
+/// `Changed`. Held: stays held. Stopped (its file gone): stays stopped,
+/// nothing written. No connection's taker read (its lender's list): not
+/// renewed. A renewal that lost the race to an approval made since carries
+/// by that approval only when it covers the read. A unit that can't be
+/// read: refused. Planted, each watched failing: the hold not asked (the
+/// held lend renewed); the files not compared (`Ok(())` for the changed
+/// unit); `Chosen::Cgroups` dropped from the approval (another unit
+/// renewed); a write that isn't a compare-and-set through `lend::mutate`,
+/// a declaration of the renewed lend (renewed over the approval made
+/// since). The renewal skipped in `judged` is watched failing through the
+/// door (tests/door/refusals.rs).
+#[test]
+fn a_lend_kept_to_a_unit_is_renewed_after_it_restarts_and_only_then() {
+    use crate::job::{Keep, Now};
+    use bound::Unsent;
+    let dir = tempfile::tempdir().unwrap();
+    let mut coder = Lend::carried("coder", "house").unwrap();
+    coder.source = Source::Port(std::num::NonZeroU16::new(9001).unwrap());
+    coder.terms.approved = binding::approve(&in_unit(1, 4, 1).0, None).ok();
+    let unit = "svrngs-keeper-coder.service";
+    let keep = Keep {
+        unit: unit.into(),
+        files: "f1".into(),
+    };
+    coder.terms.keep = Some(keep.clone());
+    crate::lend::declare(dir.path(), &coder, None).unwrap();
+    let now = || crate::lend::read(dir.path(), &coder.name).unwrap().unwrap();
+    let job = |files: &str, cgroups: &[u64]| {
+        let keep = Keep {
+            unit: unit.into(),
+            files: files.into(),
+        };
+        Ok(Now {
+            keep,
+            scope: crate::job::Scope::Cgroups(cgroups.iter().copied().collect()),
+        })
+    };
+    let renewed = |lend: &Lend, read: &(binding::Read, binding::Took), job| {
+        bound::renewed(dir.path(), lend, &keep, (read, job))
+    };
+    let another = Err(Unsent::Held(Hold::Another));
+    let crashed = in_unit(2, 5, 1);
+    assert_eq!(
+        renewed(&now(), &crashed, job("f1", &[3, 5])),
+        Ok(()),
+        "a crash"
+    );
+    let had = now().terms;
+    assert_eq!(
+        had.approved.as_ref().map(|a| (&a.sockets, &a.cgroups)),
+        Some((&[2].into(), &[5].into()))
+    );
+    assert_eq!(had.keep.as_ref(), Some(&keep), "the grant the same");
+    let restarted = in_unit(3, 6, 2);
+    assert_eq!(
+        renewed(&now(), &restarted, job("f1", &[6])),
+        Ok(()),
+        "a restart in a new boot"
+    );
+    assert_eq!(now().terms.approved.unwrap().boot, Some(2));
+    let kept = now();
+    let other = in_unit(4, 9, 2);
+    assert_eq!(
+        renewed(&kept, &other, job("f1", &[6])),
+        another,
+        "another unit"
+    );
+    let mut stray = restarted.clone();
+    stray.0.sockets.extend(in_unit(5, 9, 2).0.sockets);
+    assert_eq!(
+        renewed(&kept, &stray, job("f1", &[6])),
+        another,
+        "a stray beside"
+    );
+    let mut moved = in_unit(6, 6, 2);
+    moved.0.sockets[0].at = std::net::Ipv6Addr::LOCALHOST.into();
+    assert_eq!(
+        renewed(&kept, &moved, job("f1", &[6])),
+        another,
+        "elsewhere"
+    );
+    assert_eq!(
+        renewed(&kept, &in_unit(7, 7, 2), Err("it isn't running")),
+        another
+    );
+    assert_eq!(now(), kept, "nothing written for any refusal");
+    let changed = renewed(&kept, &in_unit(8, 10, 2), job("f2", &[10]));
+    assert_eq!(
+        changed,
+        Err(Unsent::Held(Hold::Changed)),
+        "its files changed"
+    );
+    let listed = (in_unit(8, 10, 2).0, binding::Took::Datagram);
+    assert_eq!(
+        renewed(&kept, &listed, job("f1", &[10])),
+        another,
+        "no taker read"
+    );
+    assert_eq!(now(), kept);
+    let since = binding::approve(&in_unit(9, 11, 2).0, None).unwrap();
+    crate::share::reapproved(dir.path(), &coder.name, (since, Some(keep.clone()))).unwrap();
+    let raced = renewed(&kept, &in_unit(10, 12, 2), job("f1", &[12]));
+    assert_eq!(
+        raced, another,
+        "lost to an approval that doesn't cover the read"
+    );
+    assert_eq!(
+        renewed(&kept, &in_unit(9, 11, 2), job("f1", &[11])),
+        Ok(()),
+        "carried by it"
+    );
+    crate::lend::mutate(dir.path(), &coder.name, |l| {
+        l.terms.approved.as_mut().unwrap().held = true
+    })
+    .unwrap();
+    let held = now();
+    assert_eq!(
+        renewed(&held, &in_unit(11, 13, 2), job("f1", &[13])),
+        another,
+        "held"
+    );
+    assert_eq!(now(), held, "still held");
+    assert!(
+        crate::lend::withdraw(dir.path(), &coder.name).unwrap(),
+        "svrngs unshare"
+    );
+    let stopped = renewed(&kept, &in_unit(12, 14, 2), job("f1", &[14]));
+    assert_eq!(stopped, another, "stopped");
+    assert!(
+        crate::lend::read(dir.path(), &coder.name)
+            .unwrap()
+            .is_none(),
+        "stays stopped"
+    );
+    crate::lend::declare(dir.path(), &kept, None).unwrap();
+    let recreated = now();
+    assert_eq!(
+        renewed(&kept, &in_unit(12, 14, 2), job("f1", &[14])),
+        another,
+        "a renewal cannot write over a byte-for-byte redeclaration"
+    );
+    assert_eq!(now().terms.approved, recreated.terms.approved);
+}
+
+/// **A transient job is never named a unit, so never granted**
+/// (KEEP_SHARING_ON_RESTART §2): a program's cgroup names a unit of this
+/// account's user manager only for a service below `user@<uid>.service`,
+/// the first that isn't a slice; a terminal's scope, another account's
+/// service and the user manager itself name none, and an approval of
+/// anything but one unit's job grants nothing, nor one its lender asked to
+/// choose again after each restart. Planted, watched failing: `unit_of`
+/// not asking for a service (the terminal's scope named).
+#[test]
+fn a_transient_job_is_never_named_a_unit_so_never_granted() {
+    use crate::job::unit_of;
+    use crate::lend::Answer;
+    let at = "/user.slice/user-1000.slice/user@1000.service";
+    assert_eq!(
+        unit_of(&format!("{at}/app.slice/svrngs-keeper-coder.service"), 1000),
+        Some("svrngs-keeper-coder.service")
+    );
+    let quadlet = format!("{at}/app.slice/recipes.service/libpod-payload-ab12");
+    assert_eq!(unit_of(&quadlet, 1000), Some("recipes.service"));
+    let terminal = format!("{at}/app.slice/app-org.gnome.Terminal.slice/vte-spawn-1f.scope");
+    assert_eq!(unit_of(&terminal, 1000), None, "a terminal's scope");
+    assert_eq!(
+        unit_of(&format!("{at}/app.slice/app-run.scope"), 1000),
+        None
+    );
+    assert_eq!(
+        unit_of(&format!("{at}/init.scope"), 1000),
+        None,
+        "the user manager"
+    );
+    assert_eq!(
+        unit_of(&format!("{at}/app.slice/coder.service"), 1001),
+        None,
+        "another account's"
+    );
+    assert_eq!(
+        unit_of("/system.slice/llama.service", 1000),
+        None,
+        "a system service"
+    );
+    let program = Answer::Program {
+        pid: 1,
+        start: 1,
+        program: "llama-server".into(),
+        folder: None,
+    };
+    let job = |unit: &str| Answer::Job {
+        unit: unit.into(),
+        description: None,
+    };
+    assert_eq!(crate::share::kept(&[program.clone()], false), None);
+    assert_eq!(
+        crate::share::kept(&[job("a.service"), program], false),
+        None
+    );
+    assert_eq!(
+        crate::share::kept(&[job("a.service"), job("b.service")], false),
+        None
+    );
+    assert_eq!(
+        crate::share::kept(&[job("a.service")], true),
+        None,
+        "asked after each restart"
+    );
+    assert_eq!(crate::share::kept(&[], false), None);
 }

@@ -7,6 +7,25 @@
 
 use super::*;
 
+/// Playwright 1.59.1's uncaught provisional-target assertion, not a page
+/// exception or a browser disconnect (demo/runs/flakes/2026-11-19/crash.txt).
+fn provisional_target_abort(out: &std::process::Output) -> bool {
+    if out.status.code() != Some(1) {
+        return false;
+    }
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    let mut lines = stderr.lines();
+    lines.any(|line| line == "Error: Assertion error")
+        && lines.next().is_some_and(|line| {
+            line.starts_with("    at assert (")
+                && line.ends_with("/playwright-core/lib/utils/isomorphic/assert.js:26:11)")
+        })
+        && lines.next().is_some_and(|line| {
+            line.starts_with("    at WKPage._onTargetCreated (")
+                && line.ends_with("/playwright-core/lib/server/webkit/wkPage.js:331:31)")
+        })
+}
+
 /// `node` lends `name` on `port`, as [`lend`] does, its declaration's
 /// other fields `with`.
 fn declare(dir: &Path, name: &str, port: u16, with: Value) {
@@ -77,23 +96,31 @@ async fn a_navigation_from_another_lend_s_page_is_judged_as_its_fetch(engine: En
     let port = ada.api_addr().port();
     let at = |name: &str| format!("http://{}.localhost:{port}/", label(1, name));
 
-    let seen = drive(
-        engine,
-        "navigate.mjs",
-        json!({ "url": at("page"), "into": [at("shelf"), at("box"), at("notes")] }),
-        None,
-    )
-    .await;
+    let mut args = json!({ "url": at("page"), "into": [at("shelf"), at("box"), at("notes")] });
+    let mut out = drive::browser_half(engine, "navigate.mjs", args.clone(), None).await;
+    let retry = matches!(engine, Engine::Webkit) && provisional_target_abort(&out);
+    let suffix = if retry { "?retry" } else { "" };
+    if retry {
+        eprintln!(
+            "retrying the WebKit browser half once after Playwright #43067:\n{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        args["suffix"] = json!(suffix);
+        out = drive::browser_half(engine, "navigate.mjs", args, None).await;
+    }
+    let seen = drive::browser_json(out);
     eprintln!("the navigations' run: {seen:#}");
 
     assert_eq!(
         seen["within"],
-        format!("{}own/next", at("page")),
+        format!("{}own/next{suffix}", at("page")),
         "{seen:#}"
     );
     let on_page = asked(&on_page);
     assert!(
-        on_page.iter().any(|l| l == "GET /own/next"),
+        on_page
+            .iter()
+            .any(|l| l == &format!("GET /own/next{suffix}")),
         "the page moves within itself: {on_page:?}"
     );
     let lends = [("shelf", &on_shelf), ("box", &on_box), ("notes", &on_notes)];
@@ -102,27 +129,31 @@ async fn a_navigation_from_another_lend_s_page_is_judged_as_its_fetch(engine: En
         let heads = asked(heads);
         assert_eq!(
             into["linked"],
-            format!("{}linked", at(name)),
+            format!("{}linked{suffix}", at(name)),
             "a link from the page opens the {name}:\n{seen:#}"
         );
         assert!(
-            heads.iter().any(|l| l == "GET /linked"),
+            heads.iter().any(|l| l == &format!("GET /linked{suffix}")),
             "the {name} is asked the link's path: {heads:?}"
         );
         assert!(
-            !heads.iter().any(|l| l == "GET /bare"),
+            !heads
+                .iter()
+                .any(|l| l == "GET /bare" || l == "GET /bare?retry"),
             "the {name} is never reached at its plain origin by a fetch: {heads:?}\n{seen:#}"
         );
         let read = name == "notes";
         for reached in ["GET /fetched", "GET /framed"] {
             assert_eq!(
-                heads.iter().any(|l| l == reached),
+                heads.iter().any(|l| {
+                    l == &format!("{reached}{suffix}") || (!read && l == reached)
+                }),
                 read,
                 "the page reached the {name} as `{reached}` only if it reads it: {heads:?}\n{seen:#}"
             );
         }
         assert!(
-            !heads.iter().any(|l| l == "POST /posted"),
+            !heads.iter().any(|l| l == "POST /posted" || l == "POST /posted?retry"),
             "the page's form never reaches the {name}, read or not (door.rs `admit`): {heads:?}\n{seen:#}"
         );
     }

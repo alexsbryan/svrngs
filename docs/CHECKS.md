@@ -16,6 +16,9 @@ reimplement authorization. Fast presentation tests are not signing/I/O evidence.
 | One real creator workflow | `cargo test -p svrngs --test scenes creator -- --test-threads=1` | Native publication/signing/version routes and computer/phone browsers |
 | That the shipped binary reaches svrngs's relay | `cargo test -p svrngs --test internet` (check.sh `internet`) | `relay.svrnme.sh` on the internet, the shipped `svrngs` as built; could-not-judge when it does not answer iroh alone |
 | That a browser decodes a lent film | `cargo test --test browser playback:: && cargo test --test conformance seeks_back_to_back:: && cargo test -p svrngs --test scenes night_played::` (check.sh `playback`) | Actual Chromium and WebKit media decoders, and Jellyfin's player on the night scene's TV through a lend's worker; the one place a test waits on playback |
+| That a film's bytes arrive over the relay after its WebRTC channel closes | `cargo test --quiet --workspace --test browser -- --skip playback::` (check.sh `browser`) | Chromium and WebKit: selected WebRTC path, observed channel close, lender trace switching to the relay, and exact range and digest. Time is logged, with a hang guard on the fetch. |
+| That a seek waits behind only bounded lookahead | `cargo test -p svrngs-node --test relay_tiers a_seek_over_the_share` (check.sh `tests`) | Over a rate-limited relay, two unread streams fill the page's QUIC connection credit; the seek stream cannot write until the reader returns credit. Through the real door, both lookaheads start and the seek answers before their gated tails. Both the ordinary page dial and the data endpoint use this check. |
+| Run, prefill, Share and Linux renewal | `keeper e2e` in `scripts/check.sh` | `svrngs-gate` (rebuild from `scripts/gate/Containerfile`); two real WebKit scenes and a real systemd restart/cgroup test. Each exact selection must pass once. |
 | Every deterministic test a change reaches | `scripts/check.sh --touched` (or `--touched --files <path>...`) | The cheap steps, clippy, and each test `docs/seams.tsv` does not call fragile; no browser, scene, relay or service |
 | Complete regression gate | `scripts/check.sh` | Every tier, before shipping |
 
@@ -31,7 +34,7 @@ instrument changes are held to all their consumers. The whole gate remains the g
 ### The touched tier
 
 `--touched` runs no fragile test. `scripts/touched.py` folds each slow step
-that runs named test binaries (browser, scenes, canaries, playback, internet...) into
+that runs named test binaries (browser, keeper e2e, scenes, canaries, playback, internet...) into
 `tests`; `touched.py --run` builds the binaries, lists each, and gives libtest
 `--exact --skip` for each test whose `docs/seams.tsv` row says `fragile`, the one
 decider: a row moved to `deterministic` joins with no second list. A test with
@@ -50,6 +53,45 @@ a developer runs it (incremental on; cheap steps 27 s, clippy 12 s, tests
 one after another is most of `tests`: 104 s at a load of 35, of which 41 s the
 browser binary's one deterministic test, which builds the page. Before, the
 change reached every slow step, about 25 min.
+
+## The release tier
+
+Before releasing the keeper, run the field proofs in order against the clean
+candidate checkout. On the Fedora host (from the toolbox, use
+`flatpak-spawn --host` before `python3`):
+
+```sh
+python3 -B demo/runs/release/run.py /tmp/opencode/keeper-release-candidate
+```
+
+Use a new evidence directory for each run. It holds `summary.txt` and the
+individual transcripts. The command builds one Linux x86-64 release archive
+in the toolbox, verifies the `svrngs version` commit, and uses that archive or
+its extracted pair for every Fedora VM replay: packaged reboot and unchanged
+link/data, busy port, failed save, concurrent withdrawal and Stop sharing;
+native Run; plain Podman, recovery, Actual, and Stop during restart delay;
+terminal consent; and installation, Home Stop and uninstall. The prepared
+Fedora guest and model are in `/tmp/keeper-demo`; the WebKit checks run in
+`svrngs-gate` under its lock (Ship uses `/tmp/keeper-audit/gate.sh`).
+
+On `beefymac`, the archived candidate is checked before the scratch build.
+The native keeper and node suites, native Run and the lifecycle proofs use
+unmodified source. The node suite's browser tests use a checksummed Node 24
+download and the candidate's locked Playwright, with Chromium and WebKit
+downloaded into the same scratch folder. If that setup fails, the node
+suite is `never-ran`. Renewal and the six plist cases use the recorded scratch
+instrumentation, with separate build fingerprints. The tier uses only its
+scratch folder and named test agents and does not reboot or sign out. Cleanup
+checks that the test agents are gone, then retries scratch removal if Finder
+writes metadata during deletion. Anything still left fails the tier.
+
+Each case reports `passed`, `failed`, `could-not-judge` or `never-ran` with
+its commit, build, and transcript. Candidate mismatch is a failure; missing
+work (including an unreachable host) is `never-ran`. Either makes the command
+nonzero. A `could-not-judge` is not a pass; review any evidence still owed.
+The release needs this tier on the final candidate as well as the complete
+regression gate. The operator then records the physical-host reboots and the
+people sessions separately.
 
 ## Structural classification
 
@@ -133,7 +175,7 @@ The seams, each named by its letter in `docs/seams.tsv`:
 | R relay | a relay process, or a relay on the internet, svrngs's or n0's | relay retake races; n0 outages (the events scene at 119dd235, Sam's and Bo's home relay at n0 lost mid-scene) |
 | P socket | a TCP/UDP listener or connection on the host | a prober's connection counted by a stub (C2) |
 | C clock | a duration, rate or "within N s" judged on a loaded host | carried's 15 s bar, acts.rs's rate (C4) |
-| D daemon | podman, Jellyfin, Redis | podman's socket refusing; Redis absent |
+| D daemon | podman, Jellyfin, Redis, systemd | podman's socket refusing; Redis or the private systemd user manager absent |
 
 A child process alone (X in the map) is not a seam: a spawned `svrngs` that
 opens no socket is as repeatable as a function. A node started and never
@@ -356,6 +398,12 @@ Movie Night's startup is B's own: a module held in flight.
    scene needed what only the real binary does (install, release paths,
    launchd), so none stays on it; `SCENES_BINARY` still pins the product
    for a rehearsal, and the xenia worlds run the product as built.
+   The mixed scene's Bo runs v1.13.3 the same way, its own test binary as
+   its `main` through as_main.rs `installed_from` (`Scene::runs`), made
+   from the tag by scenes/last-release.sh into `target/last-release/` or
+   named by `SCENES_LAST_RELEASE`; with neither, the scene is never-ran.
+   It is `#[ignore]`d, so the scenes step lists it ignored and never runs
+   it: a release runs it by name, as DESIGN §7's recorded run.
    Sampled with `lsof` over the scenes step's whole process tree
    (demo/runs/flakes/2026-11-13): every scene's svrngs opened 421 sockets
    to loopback and 13 to this host's LAN address (night's room), none

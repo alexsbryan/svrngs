@@ -1,0 +1,12 @@
+# The group's own relay, on this computer's loopback (relay.rs At::Here).
+[Unit]
+Description=svrngs relay, local
+After=network.target
+
+[Service]
+Environment=SVRNGS_DIR=/var/lib/svrngs-relay RUST_LOG=relay=info
+ExecStart=/usr/local/bin/svrngs relay --at 127.0.0.1:7900 --open
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

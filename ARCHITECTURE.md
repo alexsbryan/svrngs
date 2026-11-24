@@ -691,6 +691,68 @@ Elsewhere `Owner::NoReader`. `uid::mine` is this process's own uid.
 `socket_fdinfo` and `proc_bsdinfo` records, and this computer's own
 sockets, a late accept among them.
 
+**`crates/svrngs-db`**: an app's database in a group, beside the record and
+never in it (PLAN §1, "Persistence for carried apps"). `build.rs` builds
+cr-sqlite from its source, the submodule `vendor/cr-sqlite`, into one object
+whose one global symbol is `shim.c`'s, checked by `nm`, for the release's
+four targets and the Linux gate's; SQLite, as rusqlite
+bundles it, calls that shim as it starts (`SQLITE_EXTRA_INIT`,
+`.cargo/config.toml`), so cr-sqlite is on every connection and no Rust calls
+it (`tests/crsqlite.rs`). `src/lib.rs` is a computer's copy: `States`
+opens one file per group and app under `<data dir>/state/`, from the
+`schema.sql` that runs as the person asking, and makes its tables
+cr-sqlite's, refusing out loud where cr-sqlite's functions are missing
+(`Refused::Unbuilt`). `Db::read` runs a page's SQL under SQLite's
+authorizer (`page_rule`, the one decider of what SQL may do) and a progress
+handler that stops it at `QUERY_MOST`, each installed once at open and told
+the statement at hand by a `Gate`, and refuses a statement that writes in
+words that name the write form. `Db::write` takes that form, a list of ops
+each naming its row by key, made statements in `form.rs` from the names
+`pragma_table_info` gives, every value bound, and runs them as one
+transaction (`tests/db.rs`). The node owns it, one `States` on its `Host`,
+and serves it at each carried app's origin, `svrngs/sql`
+(`svrngs-node/src/carried.rs`): a POST's read or write, a write as this
+computer's person alone and never as an app that reads others' lends, whose
+verdict the door hands it, and a GET's subscription, the read again each time
+the database changes. A read is said `syncing` while another computer of the
+group stands, since no copy syncs yet. Change sets, their signing and their sync are not
+built yet. Its
+tests came first. `tests/w1/` holds the
+reference model every copy of a database is checked against (`reference.rs`,
+the join of every admissible change set); the model copy, cr-sqlite's
+merge as Fly's fork does it (`replica.rs`), behind the trait the database's
+own copies will meet; and a seeded simulator of deliveries (`sim.rs`). The
+gate runs 1,000 of its seeds, and `seeds::soak`, ignored, runs as many as
+it is given.
+
+The service a lend's program runs in is `job.rs` (svrn-docs
+KEEP_SHARING_ON_RESTART §2). On Linux `job::of` names a holder by
+its `/proc/<pid>/cgroup` when it lies in a service of this account's user
+manager (`lend::Answer::Job`, with its `Description`), and `job::now`
+reads a unit through `/usr/bin/systemctl --user show`: refused when
+transient, without a file under `~/.config` or not running, else the grant
+(`job::Keep`, a hash of those files) and its subtree's cgroup ids, the
+inodes under `/sys/fs/cgroup`. `Net::job` reads it off the runtime, kept
+for the cgroup that took the door's connection. `share::kept` makes the
+grant at a Linux approval. On macOS `job/mac.rs` reads the exact keeper
+label named by the share and hashes the registered plist. `door::bound`
+witnesses the agent's current lineage on explicit Share and at renewal;
+legacy Approve on Mac grants only the current listener.
+
+`plan.rs` folds the current app and door observations, chosen terms, share
+revision, and job or publication reports without reading the host. It reuses
+an observed service or shares just the listener that's running. `plan/run.rs`
+asks the packaged keeper to handle explicit `svrngs run`, without
+publishing access. On explicit Share it replays the review and witnesses a
+service's listeners and connection taker again before publishing its grant with
+the audience and limit through the same locked mutation
+as other declaration edits. The revision advances before the declaration is
+changed, so a failed write can spend a revision without publishing access.
+`locks/<lend>.rev` survives withdrawal and is outside `lend::all`.
+`plan/words.rs` renders the review and reports. The preview token binds the
+target, how it runs, terms and revision; the terminal uses this fold
+(svrn-docs `KEEP_IT_RUNNING_RELEASE.md` §3).
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its
@@ -931,13 +993,8 @@ after U3, and is not built: nothing runs it (#196).
 **`apps/give/`**: Give (DESIGN §3, "Give"), a crate of the workspace that
 links no svrngs crate (`tests/surface.rs`) and reaches svrngs by the record
 API, `svrngs share` and `unshare`, the synced folder and its carried page
-alone. `src/card.rs` reads a card once, each refusal naming its field;
-its privately constructed `ContainerPath` rejects mount option/source delimiters
-and path traversal. `runtime.rs` emits explicit `--mount type=volume` and a
-`--` separator before the image, so a target cannot become a host mount.
-`src/runtime.rs` starts, checks, snapshots, restores and stops one on
-Podman's command line (`src/podman.rs`, `src/machine.rs` for a Mac's
-machine), naming no svrngs type; `src/check.rs` is `give check`. `fold/`
+alone. Its runtime is `apps/svrngs-keeper`'s, re-exported under Give's
+names. `fold/`
 is who keeps each app, from give's acts in the record's order, linked by
 the program and built to `page/vendor/fold.js` by `build.sh`, both held to
 `fold/cases.json`. `src/keep.rs` is `give keep`, its `plan` decided apart
@@ -945,6 +1002,44 @@ from doing it, over `src/record.rs` and `src/lend.rs`; `src/page.rs` is
 `give page`, which brings `page/` into a group's folder. `web/install.sh
 --give` installs the program, which `scripts/build-release.sh` builds with
 svrngs. Its scenes are svrngs's (`crates/svrngs/tests/scenes/give*.rs`).
+**`apps/svrngs-keeper/`**: a card kept running on this computer, Give's local
+runtime as a package of its own (svrn-docs `HOSTING_AND_GIVE_BOUNDARY.md`); it
+links no svrngs crate and no Give (`tests/surface.rs`). `src/card.rs` reads a
+card once, each refusal naming its field; its privately constructed
+`ContainerPath` rejects mount option/source delimiters and path traversal.
+`src/runtime.rs` starts, checks, snapshots, restores and stops one on Podman's
+command line (`src/podman.rs`, `src/machine.rs` for a Mac's machine), with
+explicit `--mount type=volume` and a `--` before the image, so a target cannot
+become a host mount; `src/check.rs` is `give check`. `src/systemd.rs` writes
+and drives a user unit, and asks for linger: commonwealth-ai host-kit's
+`service.rs` and its tests at `8ed8d99b0`, forked with only its tests' path
+changed, under upstream's stock rustfmt and one clippy allowance
+(`src/lib.rs`). A native card (`x-svrngs.native`, refused by the runtime)
+renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
+`src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
+starts, restarts and removes one, and supervises nothing. `tests/host.sh` proves it
+under a real user manager. `facts <port>` only suggests Run form fields:
+`src/host.rs` reads the listeners and asks a recognized llama-server for
+its model path, `src/promote.rs` quotes the command, and `src/facts.rs`
+returns the suggestion as JSON. No live command or environment is copied.
+The keeper installs an explicitly supplied command with `run --port … -- <command>`
+(`src/native_run.rs`), using the same card renderer. It refuses a port
+with a listener on any address, and waits up to 30 s for a local HTTP
+answer (llama-server must finish loading). `run --port … --card …` takes
+one volume-only HTTP container on Linux. `container_run.rs` installs a
+unit that waits for a container exit, independently of readiness. A pod
+is labelled at creation and reclaimed by ID only after the label matches;
+its named volumes stay. The unit takes down the owned pod before signaling
+a live wrapper (`ExecStop`), and also cleans up after an exit (`ExecStopPost`)
+so canceling the pending restart cannot strand a serving pod. The keeper manages
+its services through the OS; `scripts/lean_check.py` guards against direct
+process signaling (svrn-docs `KEEP_IT_RUNNING_RELEASE.md` N1).
+On macOS, `src/launchd.rs` installs a native command as a login agent; Stop
+boots it out and parks its plist under a non-login suffix. `src/host/mac.rs`
+uses a system-wide TCP listener read for the busy check and `lsof` and `ps`
+for holder, working folder and lineage observations. The readiness witness
+in the keeper does not grant renewal; the node verifies its own and the app's
+login registrations in `job/mac.rs` and reads sockets via libproc.
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

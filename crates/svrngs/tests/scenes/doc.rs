@@ -193,8 +193,15 @@ async fn doc(engine: Engine) {
         .await;
     }
 
-    // Both write at once, each after the first line; every page holds
-    // both lines, one doc.
+    // Both write at once, each after the first line once their page holds
+    // it: an open waits for the editor, and who is here is said before a
+    // page's own sync is answered (apps/doc/server.mjs `opened`), so
+    // nothing above waits for Alex's line on Bo's or Cy's page. Every page
+    // holds both lines, one doc.
+    for who in ["bo", "cy"] {
+        let first = json!({ "do": "has", "who": who, "texts": [FIRST], "within": 15_000 });
+        tell(&mut browsers, first).await;
+    }
     for (who, line) in LINES {
         tell(
             &mut browsers,

@@ -203,7 +203,8 @@ impl Node {
 
     /// Run one round now, beside the interval's, and say what it moved.
     pub async fn round(&self) -> crate::ring_sync::RoundOutcome {
-        crate::ring_sync::run_one_round(self.host.as_ref(), &|| {}, &mut Default::default()).await
+        crate::ring_sync::run_one_round(&self.asking.door.folders, &|| {}, &mut Default::default())
+            .await
     }
 }
 
@@ -299,6 +300,12 @@ struct Met {
     /// ([`Wire::slow`]); else none.
     slow: std::collections::BTreeMap<([u8; 32], u16), std::time::Duration>,
     answers: std::collections::BTreeMap<([u8; 32], u16), crate::iroh::PortAnswer>,
+    /// What each computer's user manager says of a unit, where a test says
+    /// ([`Wire::jobs`]); else that it doesn't know it.
+    jobs: std::collections::BTreeMap<([u8; 32], String), crate::job::Read>,
+    /// Each unit's read asked of each computer, with the cgroup that took
+    /// the connection, in order ([`Wire::asked_jobs`]).
+    asked_jobs: Vec<([u8; 32], String, Option<u64>)>,
     holders: std::collections::BTreeMap<[u8; 32], Holding>,
     relays: std::collections::BTreeMap<crate::iroh::RelayUrl, Relaying>,
     /// Each computer's relays held, as its endpoint was given them
@@ -427,6 +434,21 @@ impl Wire {
     pub fn reads(&self, key: PublicKey, port: u16, read: crate::iroh::PortRead) {
         let mut met = self.0.lock().unwrap();
         met.reads.insert((*key.as_bytes(), port), read);
+    }
+
+    /// `key`'s computer's user manager says `read` of `unit` from here on,
+    /// as a renewal reads it ([`Net::job`]).
+    pub fn jobs(&self, key: PublicKey, unit: &str, read: crate::job::Read) {
+        let mut met = self.0.lock().unwrap();
+        met.jobs.insert((*key.as_bytes(), unit.into()), read);
+    }
+
+    /// Each unit `key`'s computer read to renew, with the cgroup that took
+    /// the connection, in order.
+    pub fn asked_jobs(&self, key: PublicKey) -> Vec<(String, Option<u64>)> {
+        let met = self.0.lock().unwrap();
+        let of = met.asked_jobs.iter().filter(|(k, ..)| k == key.as_bytes());
+        of.map(|(_, unit, took)| (unit.clone(), *took)).collect()
     }
 
     /// `key`'s computer's reads of the share's `port` take `long` from here
@@ -666,6 +688,13 @@ impl Net for OnWire {
             tokio::time::sleep(slow.unwrap_or_default()).await;
             read
         })
+    }
+    /// What [`Wire::jobs`] says of `unit`, else that it isn't known.
+    fn job(&self, unit: String, took: Option<u64>) -> crate::iroh::Later<'_, crate::job::Read> {
+        let mut met = self.wire.0.lock().unwrap();
+        let read = met.jobs.get(&(*self.key.as_bytes(), unit.clone())).cloned();
+        met.asked_jobs.push((*self.key.as_bytes(), unit, took));
+        Box::pin(async move { read.unwrap_or(Err("its user manager doesn't know it")) })
     }
     /// What [`Wire::answers`] says of the port, else [`answering`].
     fn answering(
