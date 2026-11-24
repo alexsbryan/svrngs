@@ -487,3 +487,34 @@ original symptom; it does not recover the original run's accept time.
 Synchronize the fixture to the first missed read rather than raising the
 reader's 100 ms budget. The diagnostic removed its scratch directory; it
 installed no launch agents or containers.
+
+### Mac ownership fixture synchronized to the first miss
+
+The test accepts the queued connection in the thread-local tracing
+subscriber when `uid::waited` reports its first missed read. It holds the
+accepted socket until the ownership check returns. The reader and its
+100 ms budget are unchanged, and the never-accepted socket must still
+return `NotMine`.
+
+`bash /tmp/opencode/keeper-mac-accept-on-miss.sh` replayed the fixture
+on beefymac scratch from `d538bf23` plus the test patch. The driver
+planted a single scan in `mac::scan` in place of the retry. The exact
+`uid::tests::this_computer_answers_whose_each_end_of_a_connection_made_here_is`
+and then the ordinary node-library suite ran with `TOKIO_WORKER_THREADS=4`
+(`REVIEW-audit-available-17.await.log:1–22`):
+
+```text
+one-scan exit=101
+assertion `left == right` failed: accepted after the first miss
+  left: NotMine
+ right: Uid(502)
+unplanted exit=0
+test result: ok. 1 passed; 0 failed; 0 ignored; 246 filtered out
+full-lib-1 exit=0: 244 passed; 0 failed; 3 ignored
+full-lib-2 exit=0: 244 passed; 0 failed; 3 ignored
+full-lib-3 exit=0: 244 passed; 0 failed; 3 ignored
+Mac test scratch removed
+```
+
+The driver installed no launch agents or containers. Both release tiers
+are owed on the repaired pin.

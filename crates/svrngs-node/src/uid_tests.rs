@@ -187,8 +187,8 @@ fn libproc_s_records_are_read_where_they_hold_it() {
 /// **This computer answers whose each end of a connection made here is**:
 /// a listener and the socket that dialled it, each end ours, the uid that
 /// owns the folder this test made, which [`mine`] says too. On a Mac also:
-/// a connection its listener accepts 30 ms late, in no process's files
-/// until then, found within [`ACCEPT_WITHIN`]; one never accepted is not
+/// a connection its listener accepts after the first missed read, in no
+/// process's files until then, found by the retry; one never accepted is not
 /// this account's. Read as this computer reads them, so it passes on each
 /// only with its reader right. Planted on the Mac, watched failing: one
 /// scan, no look again (the late accept not this account's).
@@ -214,18 +214,33 @@ fn this_computer_answers_whose_each_end_of_a_connection_made_here_is() {
     assert_eq!(owner(back), Owner::Uid(uid), "and from the other end");
     #[cfg(target_os = "macos")]
     {
-        let late = std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(30));
-            listener.accept().map(|(kept, _)| (listener, kept))
-        });
-        let queued = std::net::TcpStream::connect(made.peer).unwrap();
+        use std::net::{TcpListener, TcpStream};
+        use std::sync::OnceLock;
+        use tracing_subscriber::layer::{Context, Layer, SubscriberExt as _};
+
+        struct AcceptOnMiss(TcpListener, OnceLock<TcpStream>);
+
+        impl<S: tracing::Subscriber> Layer<S> for AcceptOnMiss {
+            fn on_event(&self, event: &tracing::Event<'_>, _: Context<'_, S>) {
+                let meta = event.metadata();
+                // `waited` reports its remaining budget after a missed read.
+                // Accept in that turn so fixture scheduling can't eat the window.
+                if meta.target() == "uid" && meta.fields().field("left").is_some() {
+                    self.1.get_or_init(|| self.0.accept().unwrap().0);
+                }
+            }
+        }
+
+        let client = TcpStream::connect(made.peer).unwrap();
         let queued = Conn {
-            local: queued.local_addr().unwrap(),
-            peer: queued.peer_addr().unwrap(),
+            local: client.local_addr().unwrap(),
+            peer: client.peer_addr().unwrap(),
         };
-        assert_eq!(owner(queued), Owner::Uid(uid), "accepted late");
-        let (listener, _kept) = late.join().unwrap().unwrap();
-        let never = std::net::TcpStream::connect(listener.local_addr().unwrap()).unwrap();
+        let accept = AcceptOnMiss(listener.try_clone().unwrap(), OnceLock::new());
+        let subscriber = tracing_subscriber::registry().with(accept);
+        let seen = tracing::subscriber::with_default(subscriber, || owner(queued));
+        assert_eq!(seen, Owner::Uid(uid), "accepted after the first miss");
+        let never = TcpStream::connect(listener.local_addr().unwrap()).unwrap();
         let never = Conn {
             local: never.local_addr().unwrap(),
             peer: never.peer_addr().unwrap(),
