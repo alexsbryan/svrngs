@@ -20,11 +20,11 @@ use std::time::Duration;
 use tokio::net::UdpSocket;
 
 use crate::door::Using;
-use crate::iroh::{Duplex, Net};
-use crate::lend::LendName;
-use crate::lend::{Hold, Lend, Raw};
+use crate::iroh::{Duplex, Net, PortRead};
+use crate::job::{Keep, Now, Scope};
+use crate::lend::{Hold, Lend, LendError, LendName, Raw};
 use crate::uid::{Conn, Unread};
-use eudoxia_community::binding::{self, Held, Read, Took};
+use eudoxia_community::binding::{self, Approved, Chosen, Held, Read, Took};
 
 /// How long a share's port has to take a connection; once connected, a
 /// body takes as long as it takes, as upstream's `forward_stream` bounded
@@ -72,11 +72,124 @@ pub(crate) type Judged<'a> = (&'a dyn Net, &'a Path, &'a Lend);
 pub(crate) async fn bound((net, dir, lend): Judged<'_>) -> Result<Bound, Unsent> {
     let at = reached(lend)?;
     let taken = tokio::time::timeout(CONNECT_WITHIN, net.service(at)).await;
-    let Unchecked(stream, conn) = taken
-        .unwrap_or_else(|_| Err(std::io::ErrorKind::TimedOut.into()))
-        .map_err(away(lend))?;
+    // Past it, `Elapsed` is read as `std::io::ErrorKind::TimedOut` (tokio's
+    // `From<Elapsed> for std::io::Error`).
+    let taken = taken.unwrap_or_else(|e| Err(e.into()));
+    let Unchecked(stream, conn) = taken.map_err(away(lend))?;
     let read = net.read_port(Raw::Tcp, at.port(), Some(conn)).await;
-    decided(dir, lend, read).map(|()| Bound(stream))
+    judged((net, dir, lend), read).await.map(|()| Bound(stream))
+}
+
+/// [`decided`], and a TCP lend its lender kept to a unit renewed where it
+/// is held [`Hold::Another`], with the unit read now ([`Net::job`],
+/// [`renewed`]); never where it is unjudged or away.
+pub(crate) async fn judged((net, dir, lend): Judged<'_>, read: PortRead) -> Result<(), Unsent> {
+    let checked = decided(dir, lend, read.clone());
+    let keep = lend.terms.keep.as_ref().filter(|_| lend.raw() == Raw::Tcp);
+    match (checked, keep, read) {
+        (Err(Unsent::Held(Hold::Another)), Some(keep), Ok(read)) => {
+            let took = match read.1 {
+                Took::Cgroup(c) => Some(c),
+                _ => None,
+            };
+            let job = net.job(keep.unit.clone(), took).await;
+            renewed(dir, lend, keep, (&read, job))
+        }
+        (checked, ..) => checked,
+    }
+}
+
+/// `lend`, kept to `keep`'s unit and held [`Hold::Another`] on `now`,
+/// approved afresh from that read, as the unit is now (svrn-docs
+/// KEEP_SHARING_ON_RESTART §2): never over a hold, and only with its files
+/// as granted, else [`Hold::Changed`]; only on a connection whose taker was
+/// read; with every socket on its address and what took the connection in
+/// the unit's subtree now, at the address approved before; and only while
+/// its approval is still the one judged, or carried by the one made since.
+/// Every branch traced.
+pub(crate) fn renewed(
+    dir: &Path,
+    lend: &Lend,
+    keep: &Keep,
+    ((now, took), job): (&(Read, Took), crate::job::Read),
+) -> Result<(), Unsent> {
+    let fresh = || {
+        let another = |why| (Hold::Another, why);
+        let before = lend.terms.approved.as_ref().filter(|a| !a.held);
+        let before = before.ok_or(another("held: only its lender approves again"))?;
+        let job = Some(job.map_err(another)?).filter(|job| job.keep == *keep);
+        let job = job.ok_or((Hold::Changed, "its files changed since its lender kept it"))?;
+        let new = job_approval(&job, now, took).filter(|n| n.at == before.at);
+        new.ok_or(another("not all the service's, or moved"))
+    };
+    let (mut carried, mut kept) = (false, None);
+    let (hold, why) = match fresh() {
+        Err(not) => not,
+        Ok(new) => {
+            kept = Some(mutated(dir, &lend.name, |l| {
+                let judged = lend.terms.revision.is_some() && &*l == lend;
+                if judged {
+                    l.terms.approved = Some(new.clone());
+                }
+                carried = judged || binding::check(l.terms.approved.as_ref(), now, took).is_ok();
+            }));
+            (Hold::Another, "written, unless it changed meanwhile")
+        }
+    };
+    let stands = carried && matches!(kept, Some(Ok(true)));
+    let renewed = stands.then_some(()).ok_or(Unsent::Held(hold));
+    tracing::debug!(target: "door", lend = %lend.name, ?keep, why, ?kept, ?renewed, "door: a kept lend renewed after a restart, or why not");
+    renewed
+}
+
+pub(super) fn job_approval(job: &Now, read: &Read, took: &Took) -> Option<Approved> {
+    let approved = match (&job.scope, took) {
+        (Scope::Cgroups(ids), Took::Cgroup(_)) => {
+            binding::approve(read, Some(&Chosen::Cgroups(ids.clone()))).ok()?
+        }
+        #[cfg(target_os = "macos")]
+        (Scope::Agent(root), Took::Lineage(up)) if up.contains(root) => {
+            let approved = binding::approve(read, None).ok()?;
+            let on = read
+                .sockets
+                .iter()
+                .filter(|s| approved.sockets.contains(&s.id));
+            if !on.into_iter().all(|s| {
+                !s.holders.is_empty() && s.holders.iter().all(|&p| crate::uid::descends(p, *root))
+            }) {
+                return None;
+            }
+            approved
+        }
+        _ => return None,
+    };
+    binding::check(Some(&approved), read, took)
+        .ok()
+        .map(|()| approved)
+}
+
+pub(crate) fn witnesses_job(port: u16, approved: &Approved, keep: &crate::job::Keep) -> bool {
+    let peer = SocketAddr::new(approved.at, port);
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "dial: witness the unit before saving access"
+    )]
+    let socket = std::net::TcpStream::connect_timeout(&peer, CONNECT_WITHIN);
+    let fresh = || {
+        let socket = socket.ok()?;
+        let conn = Conn {
+            local: socket.local_addr().ok()?,
+            peer,
+        };
+        let (read, took) = crate::uid::port(Raw::Tcp, port, Some(conn)).ok()?;
+        let job = crate::job::now(&keep.unit)
+            .ok()
+            .filter(|j| j.keep == *keep)?;
+        job_approval(&job, &read, &took)
+    };
+    let witnessed = fresh().as_ref() == Some(approved);
+    tracing::debug!(target: "door", port, ?keep, witnessed, "door: unit witnessed at share save");
+    witnessed
 }
 
 /// [`bound`] with this computer's own readers, `lend` kept in `dir`: for a
@@ -86,9 +199,8 @@ pub async fn here(dir: &Path, lend: &Lend) -> Result<Bound, Unsent> {
     let Unchecked(stream, conn) = dial(at).await.map_err(away(lend))?;
     let port = at.port();
     let read = tokio::task::spawn_blocking(move || crate::uid::port(Raw::Tcp, port, Some(conn)));
-    let read = read
-        .await
-        .unwrap_or(Err(Unread::Failed("the read stopped")));
+    let stopped = Err(Unread::Failed("the read stopped"));
+    let read = read.await.unwrap_or(stopped);
     decided(dir, lend, read).map(|()| Bound(stream))
 }
 
@@ -120,11 +232,7 @@ fn away(lend: &Lend) -> impl FnOnce(std::io::Error) -> Unsent + '_ {
 /// can't be read, held [`Hold::Unjudged`]. A program not approved seen
 /// there holds a UDP share in `dir` too, until its lender approves again
 /// ([`hold`]); a TCP connection is judged alone, so it holds only itself.
-pub(crate) fn decided(
-    dir: &Path,
-    lend: &Lend,
-    read: Result<(Read, Took), Unread>,
-) -> Result<(), Unsent> {
+pub(crate) fn decided(dir: &Path, lend: &Lend, read: PortRead) -> Result<(), Unsent> {
     let approved = lend.terms.approved.as_ref();
     let checked = match &read {
         Ok((now, took)) => binding::check(approved, now, took).map_err(|held| match held {
@@ -146,27 +254,31 @@ pub(crate) fn decided(
 /// `lend` held in its file until its lender approves again, so neither the
 /// program going nor svrngs starting again opens it (SHARE_BINDING_REVIEWS
 /// §6 #3): only while its approval is still the one judged, so an approval
-/// made since is never held for what it didn't see. Another change holding
-/// the lend's lock is waited on a moment, up to 20 ms; past that, the check
-/// that saw it has refused its datagram all the same.
+/// made since is never held for what it didn't see ([`mutated`]); past
+/// that wait, the check that saw it has refused its datagram all the same.
 fn hold(dir: &Path, lend: &Lend) {
-    let held = || {
-        crate::lend::mutate(dir, &lend.name, |now| {
-            let judged = now.terms.approved == lend.terms.approved;
-            if let Some(approved) = now.terms.approved.as_mut().filter(|_| judged) {
-                approved.held = true;
-            }
-        })
-    };
-    let mut kept = held();
-    for _ in 0..20 {
-        if !matches!(kept, Err(crate::lend::LendError::Busy { .. })) {
-            break;
+    let kept = mutated(dir, &lend.name, |now| {
+        let judged = now.terms.approved == lend.terms.approved;
+        if let Some(approved) = now.terms.approved.as_mut().filter(|_| judged) {
+            approved.held = true;
         }
-        std::thread::sleep(Duration::from_millis(1));
-        kept = held();
-    }
+    });
     tracing::warn!(target: "door", lend = %lend.name, ?kept, "door: held until its lender approves again — a program not approved was seen where the door reaches it");
+}
+
+/// `edit` made to the lend `name`'s file ([`crate::lend::mutate`]): another
+/// change holding its lock is waited on a moment, up to 20 ms.
+fn mutated(
+    dir: &Path,
+    name: &LendName,
+    mut edit: impl FnMut(&mut Lend),
+) -> Result<bool, LendError> {
+    let (mut kept, mut tries) = (crate::lend::mutate(dir, name, &mut edit), 0..20);
+    while matches!(kept, Err(LendError::Busy { .. })) && tries.next().is_some() {
+        std::thread::sleep(Duration::from_millis(1));
+        kept = crate::lend::mutate(dir, name, &mut edit);
+    }
+    kept
 }
 
 /// One UDP flow's socket on 127.0.0.1, connected to a share's port alone
@@ -263,11 +375,7 @@ impl Flow {
 /// its lender's list's alike: with the flows `using` names for `lend` by
 /// this read, each by its own socket's address, so a server's socket
 /// answering one is known ([`Took::Flow`]).
-pub(crate) async fn udp_port(
-    net: &dyn Net,
-    port: u16,
-    of: (&Using, &LendName),
-) -> Result<(Read, Took), Unread> {
+pub(crate) async fn udp_port(net: &dyn Net, port: u16, of: (&Using, &LendName)) -> PortRead {
     let read = net.read_port(Raw::Udp, port, None).await;
     let now = read.as_ref().ok().map(|(now, _)| &now.sockets);
     let to = |s: &binding::Socket| match s.peer {

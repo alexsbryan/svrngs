@@ -8,14 +8,37 @@
       "~/.cargo/registry/src/**": "allow",
       "/tmp/**": "allow",
       "/private/tmp/**": "allow",
-      "/run/**": "allow"
+      "/run/**": "allow",
+      "~/dev/*": "allow",
+      "~/.cache/llama.cpp/*": "allow",
+      "~/.npm/*": "allow",
+      "~/.rustup/toolchains/*": "allow",
+      "~/.cargo/*": "allow",
+      "~/.config/*": "deny",
+      "~/.ssh/*": "deny",
+      "~/.gnupg/*": "deny",
+      "~/.local/share/*": "deny",
+      "~/.cache/huggingface/*": "deny",
+      "~/dev/*/.env*": "deny"
+    },
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.cargo/credentials*": "deny",
+      "*/.netrc": "deny",
+      "*id_rsa*": "deny",
+      "*id_ed25519*": "deny"
     },
     "edit": {
       "*": "allow",
-      "~/dev/svrn-docs/**": "deny",
-      "~/dev/commonwealth-ai/**": "deny"
+      "../*": "deny",
+      "../../../../tmp/*": "allow",
+      ".opencode/*": "deny",
+      "ralph/claude-settings.json": "deny",
+      ".githooks/*": "deny"
     },
-    "shell": {
+    "bash": {
       "*": "allow",
       "git push*": "deny",
       "git reset --hard*": "deny",
@@ -39,7 +62,12 @@
       "git commit --all*": "deny",
       "docker*": "deny",
       "* docker *": "deny",
-      "orb*": "deny"
+      "orb*": "deny",
+      "*opencode.json*": "deny",
+      "*claude-settings.json*": "deny",
+      "*.githooks*": "deny",
+      "*core.hooksPath*": "deny",
+      "*hooksPath*": "deny"
     },
     "webfetch": "deny",
     "websearch": "deny",

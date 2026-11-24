@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
  && apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl xz-utils git build-essential pkg-config clang lld \
-      python3 lsof perl procps redis-server \
+      python3 iproute2 lsof perl procps redis-server \
  && rm -rf /var/lib/apt/lists/*
 
 # Jellyfin, the server the films and night scenes lend: 12.0, as the
@@ -119,5 +119,7 @@ ENV CARGO_INCREMENTAL=0 USER=gate
 # it the container's cgroup, for podman's pauses.
 COPY delegate.sh /usr/local/bin/delegate
 USER root
+# The keeper test fixture starts a private systemd --user, not systemd as PID 1.
+RUN mkdir -p /run/systemd/system
 ENTRYPOINT ["/usr/local/bin/delegate"]
 CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; git submodule update --init && cargo fetch --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml || echo 'note       the cr-sqlite source or its crates did not fetch'; exec scripts/check.sh"]

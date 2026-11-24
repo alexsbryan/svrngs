@@ -29,8 +29,13 @@ fn direct_on(dir: &Path) {
 /// them: the drive runs after, and a node dropped here would be off
 /// before the phone dials it (the first run of this test failed that way,
 /// "the computer that sent your link did not answer").
-async fn lent_film(dir: &Path, relay: &Server, bo: &SigningKey) -> (Node, std::path::PathBuf, u64) {
-    let ada = node(dir, relay, bo).await;
+async fn lent_film(
+    dir: &Path,
+    relay: &Server,
+    bo: &SigningKey,
+    me: u8,
+) -> (Node, std::path::PathBuf, u64) {
+    let ada = computer(dir, relay, bo, me, "ada").await;
     let mp4 = dir.join("title.mp4");
     let size = film(&mp4);
     let (film_origin, _film_heads) = origins::kept_range_origin(mp4.clone(), size).await;
@@ -66,7 +71,7 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
     direct_on(dir.path());
 
     let seen = drive(
@@ -114,14 +119,8 @@ in_both_engines!(
     /// the window closes the channel once `__svrngsCloseWebrtc` datagrams
     /// have come through it — a count of the wire's own, so the close
     /// lands mid-film however far the page's reading runs behind; the
-    /// part must still arrive whole, after a stall of at least 2.5 s —
-    /// the paths are given up after their 3 s of silence (`paths.rs`
-    /// `PATH_IDLE`, the spike's Q3: 3,188 ms in Chromium, 3,180 in
-    /// WebKit) with the relay beside them. How long the rest then takes
-    /// over the relay rides the host's load: the row's 4 s is a person's
-    /// bar, a recorded run's (AGENTS.md 7), and here 30 s is a hang guard.
-    /// The plant: the data endpoint's second dial without the relay, where
-    /// the bytes after the close never come (`target/close-plant4.log`).
+    /// test witnesses the channel actually closing, the lender giving up
+    /// its custom path, and the exact range arriving with the relay left.
     the_channel_closed_mid_film_completes_over_the_relay
 );
 async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
@@ -129,7 +128,13 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    // Distinct lenders let us select each engine's iroh events even when
+    // every browser case is running against the common trace log.
+    let me = match engine {
+        Engine::Chromium => 101,
+        Engine::Webkit => 102,
+    };
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, me).await;
     direct_on(dir.path());
 
     let seen = drive(
@@ -138,19 +143,20 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
         json!({
             "site": site,
             "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
+            "token": token(&signing(me), &relay),
             "open": "page",
             // 6 MiB, a fifth of the film, with the window closing the
             // channel once 2000 datagrams have come through it: the
             // wire's own count, so the close lands mid-film (about
             // 2.5 MiB in) however far the page's reading runs behind,
-            // and the rest (about 3.5 MiB) fits the relay inside the 4 s.
+            // leaving bytes that the relay must carry.
             "close": {
                 "path": "title.mp4",
                 "range": format!("bytes=0-{}", 6 * MIB - 1),
                 "after": 2000,
             },
             "direct": true,
+            "fallback": true,
         }),
         None,
     )
@@ -165,7 +171,14 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
         "the closed channel's trace:\n{}",
         seen["trace"].as_str().unwrap_or_default()
     );
-    assert!(at_origin(&seen["opened"], &label(1, "page")), "{shown:#}");
+    assert!(at_origin(&seen["opened"], &label(me, "page")), "{shown:#}");
+    assert!(
+        seen["first"]["closed"]["state"] == "closed"
+            && seen["first"]["closed"]["wireBytes"]
+                .as_u64()
+                .is_some_and(|bytes| (1..6 * MIB).contains(&bytes)),
+        "the WebRTC channel must actually close before it can carry the whole range:\n{shown:#}"
+    );
     film_part_answered(
         &seen["first"],
         &mp4,
@@ -182,13 +195,23 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
         webrtc_selected(&goes_direct_paths(trace)),
         "the film must be riding the window's channel before it is closed:\n{shown:#}"
     );
-    // The paths are given up after their 3 s of silence, so a fallback
-    // that never happened (the close not reaching the channel) would
-    // answer the rest at once; 30 s is a hang guard, not a bar.
-    let fallback = seen["first"]["fallbackMs"].as_u64().unwrap_or(u64::MAX);
+    // iroh prints each custom address as transport ID + the full peer key.
+    // Use the local side, including when it appears as the previous path.
+    let lender = format!("_{}->", ada.endpoint().id());
+    let log = std::fs::read_to_string(harness::trace_log()).unwrap();
+    let paths: Vec<_> = log
+        .lines()
+        .filter(|line| line.contains(&lender) && line.contains("iroh::_events::path::"))
+        .collect();
+    eprintln!("the closed channel's lender paths: {paths:#?}");
+    let abandoned = paths.iter().position(|line| {
+        line.contains("path::abandoned:") && line.contains("network_path=Custom(")
+    });
     assert!(
-        (2500..=30_000).contains(&fallback),
-        "the bytes after the channel closed must arrive over the relay, after its 3 s of silence, took {fallback} ms:\n{shown:#}"
+        abandoned.is_some_and(|i| paths[i + 1..].iter().any(|line| {
+            line.contains("path::selected:") && line.contains("network_path=Relay(")
+        })),
+        "iroh must give up the closed WebRTC path and select the relay: {paths:#?}"
     );
     drop(ada);
 }
@@ -210,7 +233,7 @@ async fn the_page_announcing_itself_after_the_channel_closed_goes_direct_again(e
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
     direct_on(dir.path());
 
     let seen = drive(
@@ -284,7 +307,7 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
     direct_on(dir.path());
 
     let seen = drive(
@@ -342,7 +365,7 @@ async fn a_direct_paths_data_endpoint_presents_its_pass_and_link_at_its_relays(e
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, _mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    let (ada, _mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
     direct_on(dir.path());
 
     let seen = drive(

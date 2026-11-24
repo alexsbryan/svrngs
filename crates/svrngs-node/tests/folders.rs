@@ -1790,12 +1790,22 @@ async fn a_programs_file_not_here_yet_is_refused_as_still_being_fetched() {
     group.close().await;
 }
 
-/// `body` posted to `node`'s home page at `/running`, as its own page asks,
-/// with the token: the status and the answer.
-async fn lend_from_the_page(node: &Node, mut body: serde_json::Value) -> (u16, serde_json::Value) {
+/// Post what the page showed, or confirm its review with the same terms and token.
+async fn lend_from_the_page(
+    node: &Node,
+    mut body: serde_json::Value,
+    review: Option<&serde_json::Value>,
+) -> (u16, serde_json::Value) {
     // The program the page showed on the port, as the wire reads it.
     (body["pid"], body["start"]) = (1.into(), 1.into());
-    on_the_page(node, axum::http::Method::POST, "/running", body).await
+    let path = if let Some(review) = review {
+        body["terms"] = review["terms"].as_str().expect("reviewed terms").into();
+        body["token"] = review["token"].as_str().expect("review token").into();
+        "/running/confirm"
+    } else {
+        "/running"
+    };
+    on_the_page(node, axum::http::Method::POST, path, body).await
 }
 
 /// `body` sent to `node`'s home page at `path`, as its own page asks, with
@@ -1824,9 +1834,10 @@ async fn on_the_page(
 /// shown"; §6.8; EXTENSION_POINT §10 row 12, gap 6). Ben writes
 /// `programs/notes.txt`, keeping `/admin`, in films. On Ana's home page the
 /// first press to lend notes to films draws those terms, naming who wrote
-/// them where, and lends nothing; the next, posting the text drawn, lends
-/// notes keeping `/admin`. Ben changes the file to keep `/other`; a press
-/// posting the text drawn before keeps `/admin`, not `/other`. Text no file
+/// them where, and lends nothing; the next, posting the text drawn, reviews
+/// the share. Confirming that review lends notes keeping `/admin`. Ben
+/// changes the file to keep `/other`; confirming a separate review of the
+/// text drawn before keeps `/admin`, not `/other`. Text no file
 /// may hold is refused, saying so. Planted, each watched failing: the lend
 /// made with `""` for its terms (it keeps only what ships, no `/admin`);
 /// and the posted text set aside for the groups' file read at the press (the
@@ -1847,7 +1858,7 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
     let port = running.local_addr().unwrap().port();
     let films = seed("films", 9).id();
     let asked = |name: &str, terms: Option<&str>| serde_json::json!({ "port": port, "name": name, "kind": "notes", "groups": [films], "terms": terms });
-    let (status, first) = lend_from_the_page(&group.ana, asked("notes", None)).await;
+    let (status, first) = lend_from_the_page(&group.ana, asked("notes", None), None).await;
     assert_eq!(
         (status, first["terms"].as_str()),
         (200, Some(drawn)),
@@ -1872,7 +1883,11 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
         None,
         "nothing lent until it is pressed again"
     );
-    let (status, lent) = lend_from_the_page(&group.ana, asked("notes", Some(drawn))).await;
+    let (status, review) =
+        lend_from_the_page(&group.ana, asked("notes", first["terms"].as_str()), None).await;
+    assert_eq!((status, review["terms"].as_str()), (200, Some(drawn)));
+    assert_eq!(kept("notes"), None, "review alone shares nothing");
+    let (status, lent) = lend_from_the_page(&group.ana, asked("notes", None), Some(&review)).await;
     assert_eq!(
         (status, &lent["keeps"]),
         (200, &serde_json::json!(["/admin"])),
@@ -1880,12 +1895,18 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
     );
     assert_eq!(kept("notes"), Some(vec!["/admin".to_string()]));
 
+    let (status, first) = lend_from_the_page(&group.ana, asked("again", None), None).await;
+    assert_eq!((status, first["terms"].as_str()), (200, Some(drawn)));
+    let (status, again) =
+        lend_from_the_page(&group.ana, asked("again", first["terms"].as_str()), None).await;
+    assert_eq!((status, again["terms"].as_str()), (200, Some(drawn)));
+    assert_ne!(again["token"], review["token"]);
     std::fs::write(ben.join("programs/notes.txt"), "- notes keeps: /other\n").unwrap();
     assert!(
         answers(&group, &group.ana, "notes", 200, "/other").await,
         "Ben's change, read on Ana's computer"
     );
-    let (status, lent) = lend_from_the_page(&group.ana, asked("again", Some(drawn))).await;
+    let (status, lent) = lend_from_the_page(&group.ana, asked("again", None), Some(&again)).await;
     assert_eq!(status, 200, "{lent}");
     assert_eq!(
         kept("again"),
@@ -1894,7 +1915,7 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
     );
 
     let (status, refused) =
-        lend_from_the_page(&group.ana, asked("odd", Some("- notes opens: /x"))).await;
+        lend_from_the_page(&group.ana, asked("odd", Some("- notes opens: /x")), None).await;
     assert_eq!(status, 400, "{refused}");
     assert!(
         (refused["error"].as_str().unwrap_or_default())
@@ -1927,7 +1948,10 @@ async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
     let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = running.local_addr().unwrap().port();
     let asked = serde_json::json!({ "port": port, "name": "notes", "kind": "notes", "groups": [seed("films", 9).id()], "terms": terms });
-    assert_eq!(lend_from_the_page(&group.ana, asked).await.0, 200);
+    let (status, review) = lend_from_the_page(&group.ana, asked.clone(), None).await;
+    assert_eq!((status, review["terms"].as_str()), (200, Some(terms)));
+    let (status, lent) = lend_from_the_page(&group.ana, asked, Some(&review)).await;
+    assert_eq!(status, 200, "{lent}");
     let lent = || {
         on_the_page(
             &group.ana,
@@ -1963,8 +1987,8 @@ async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
 /// (svrn-docs `rings/current/CONTRACTS.md` §2, "The lend is the yes"):
 /// llama-server's shipped terms let apps send to `POST /v1/embeddings`, so
 /// the first Lend of it lends nothing and says so, with no group's file at
-/// all; the press after that line is its lender's yes, and the lend keeps
-/// the row. Planted, watched failing: `lend_one` drawing only a group's
+/// all; the press after that line asks for a review. Confirming the review
+/// keeps the row. Planted, watched failing: `lend_one` drawing only a group's
 /// own file (the first press lends it, the send kept unshown).
 #[tokio::test]
 async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
@@ -1973,7 +1997,7 @@ async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
     let port = running.local_addr().unwrap().port();
     let films = seed("films", 9).id();
     let asked = |terms: Option<&str>| serde_json::json!({ "port": port, "name": "model", "kind": "llama-server", "groups": [films], "terms": terms });
-    let (status, first) = lend_from_the_page(&group.ana, asked(None)).await;
+    let (status, first) = lend_from_the_page(&group.ana, asked(None), None).await;
     assert_eq!(
         (status, first["terms"].as_str()),
         (200, Some("")),
@@ -1995,7 +2019,11 @@ async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
         })
     };
     assert_eq!(sends(), None, "nothing lent until it is pressed again");
-    let (status, lent) = lend_from_the_page(&group.ana, asked(Some(""))).await;
+    let (status, review) =
+        lend_from_the_page(&group.ana, asked(first["terms"].as_str()), None).await;
+    assert_eq!((status, review["terms"].as_str()), (200, Some("")));
+    assert_eq!(sends(), None, "review alone shares nothing");
+    let (status, lent) = lend_from_the_page(&group.ana, asked(None), Some(&review)).await;
     assert_eq!(status, 200, "{lent}");
     assert_eq!(sends(), Some(vec!["POST /v1/embeddings".to_string()]));
     drop(running);

@@ -59,7 +59,9 @@ await driving(args, async ({ page, logs }) => {
   if (address) {
     await Promise.all([
       page.waitForURL((u) => !u.href.startsWith(opened), { timeout: 90_000 }).catch(() => {}),
-      page.evaluate((url) => location.assign(url), `${address}${args.go}`),
+      // Playwright's own navigation: one started in page.evaluate can close
+      // the evaluate's context when WebKit swaps processes.
+      page.goto(`${address}${args.go}`, { waitUntil: 'commit' }),
     ]);
     await page
       .waitForFunction((t) => document.title === t, args.title, { timeout: 90_000 })

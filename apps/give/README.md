@@ -158,12 +158,9 @@ A lend reaches everyone in every group its person is in, under one name
 
 ## The files
 
-- `src/card.rs`: a card, read once, with each refusal naming its field.
-- `src/runtime.rs`: start, health, snapshot, restore and stop, for one card
-  under one name, on Podman's command line (`src/podman.rs`). It names no
-  svrngs type.
-- `src/machine.rs`: Podman's machine on a Mac.
-- `src/check.rs`: `give check`.
+- The card, the runtime, Podman's command line and machine, and the check
+  of a card are svrngs-keeper's (`../svrngs-keeper`), and Give names them as
+  it always did (`src/lib.rs`).
 - `fold/`: who keeps each app, and whether it runs, stops or is stopped,
   from give's acts in the record's order; the
   program links it, and the page runs `page/vendor/fold.js`, the same code

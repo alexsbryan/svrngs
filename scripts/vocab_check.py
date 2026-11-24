@@ -17,6 +17,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
+# O4 is a boundary on product copy, not on wire field names or user data.
+MECHANISM = re.compile(r"\b(?:(?-i:Give)|keeper|unit|linger|quadlet|launch ?agent|launchd|systemd)\b", re.I)
+LITERALS = re.compile(r'''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`[^`]*`''', re.S)
 
 
 def nouns(root):
@@ -55,9 +58,7 @@ def gated_to(lines, at):
 
 def check(root):
     words = nouns(root)
-    if not words:
-        return [], 0
-    pattern = re.compile(r"\b(" + "|".join(map(re.escape, words)) + r")\b", re.I)
+    pattern = re.compile(r"\b(" + "|".join(map(re.escape, words)) + r")\b", re.I) if words else None
     found = []
     pages = [*(root / "crates").glob("*/src/**/*.js"), *(root / "web").glob("*.js")]
     pages = [f for f in pages if f.relative_to(root).as_posix() not in ("web/lend.js", "web/shim.js")]
@@ -66,8 +67,16 @@ def check(root):
         if "/tests/" in f"/{rel}" or TEST_FILE.search(rel):
             continue
         for n, code in code_lines(f.read_text(errors="replace")):
-            for m in pattern.finditer(code):
+            for m in pattern.finditer(code) if pattern else ():
                 found.append(f"{rel}:{n}: `{m.group(0)}` is {words[m.group(0).lower()]}'s noun")
+    node = root / "crates/svrngs-node/src"
+    for f in [*sorted((node / "home").rglob("*.js")), *sorted((node / "home").glob("*.html")), node / "plan/words.rs"]:
+        if not f.is_file():
+            continue
+        code = "\n".join(line for line in f.read_text().splitlines() if not line.lstrip().startswith(("//", "*")))
+        copy = code if f.suffix == ".html" else "\n".join(LITERALS.findall(re.sub(r"\$\{[^{}]*\}", "", code)))
+        if mechanism := MECHANISM.search(copy):
+            found.append(f"{f.relative_to(root)}: `{mechanism[0]}` is not availability copy (KEEP_IT_RUNNING_RELEASE O4)")
     return found, len(words)
 
 
