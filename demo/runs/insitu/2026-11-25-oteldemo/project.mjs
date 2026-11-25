@@ -34,13 +34,14 @@ export function shape(s, key) {
 const IDENT = /^[A-Za-z_][\w.]{0,79}$/;
 const VERSION = /^\d+\.\d+\.\d+([-.][\w.]{1,20})?$/;
 
-// A name made only of code: each token (split at / . : _ - and spaces) is an
-// HTTP method, a word of letters, a short number, or a {template}. A token
+// A name made only of code: each token (split at / . : _ - ( ) [ ] and spaces)
+// is an HTTP method, a word of letters, a short number, a short lowercase
+// token with digits (v2, p50, v8js, http2), or a {template}. A token
 // mixing letters and digits, a long number, an @ or a ? is data, and shapes
 // the whole name. (Residual: a person's name written as one word of letters
 // would pass in a name; a vendor's contract can list its names instead.)
-const TOKEN = /^(?:[A-Za-z]{1,40}|\d{1,3}|\{[\w.]{1,40}\}|)$/;
-export const codeName = (v) => typeof v === 'string' && v.length <= 120 && !/[@?=&]/.test(v) && v.split(/[\s/.:_-]+/).every((t) => TOKEN.test(t));
+const TOKEN = /^(?:[A-Za-z]{1,60}|\d{1,3}|[a-z]{1,4}\d{1,3}[a-z]{0,2}|\{[\w.]{1,40}\}|)$/;
+export const codeName = (v) => typeof v === 'string' && v.length <= 120 && !/[@?=&]/.test(v) && v.split(/[\s/.:_()[\]-]+/).every((t) => TOKEN.test(t));
 const INT = (v) => Number.isInteger(v);
 const HOST = (v) => typeof v === 'string' && /^[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})*$/i.test(v) && !/\d{4,}/.test(v);
 

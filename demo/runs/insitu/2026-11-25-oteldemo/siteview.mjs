@@ -35,7 +35,7 @@ function follow() {
       at += n;
       const lines = (partial + buf.subarray(0, n).toString('utf8')).split('\n');
       partial = lines.pop();
-      for (const l of lines) if (l) { try { events.push(...project(l, C, key)); } catch { unreadable++; } }
+      for (const l of lines) if (l) { try { for (const e of project(l, C, key)) { if (e.kind === 'metric') e.t = Math.max(0, ...e.points.map((p) => p.t ?? 0)) || null; events.push(e); } } catch { unreadable++; } }
     }
   } finally { closeSync(fd); }
   const cut = Date.now() - WINDOW;

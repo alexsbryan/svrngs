@@ -1,7 +1,8 @@
 # The run's changes to OTel Demo 3.1.0's compose.yaml, and nothing else:
 # the collector writes the site's file and publishes no port; it gets no
-# host filesystem and no container socket; the proxy moves off 8080, which
-# this computer already uses. The five services that bind-mount the demo's
+# host filesystem and no container socket; the proxy keeps 8080 inside the
+# demo's network (every caller's address is made from it) and is published
+# nowhere on this computer, where 8080 is taken and nothing needs it. The five services that bind-mount the demo's
 # own files run without SELinux labelling, since the demo's compose mounts
 # them unlabelled and Fedora refuses that ("permission denied").
 services:
@@ -24,3 +25,5 @@ services:
   astronomy-db:
     image: docker.io/library/postgres:18.4   # the demo's short name, written out: podman can't prompt for it
     security_opt: [label=disable]
+  frontend-proxy:
+    ports: !reset []

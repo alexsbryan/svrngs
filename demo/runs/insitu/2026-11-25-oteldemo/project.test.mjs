@@ -109,3 +109,13 @@ test('the control arm\'s RAW key keeps every value as written, and nothing else 
   assert.match(p.events[0].message, /Jordan Kowalski/);
   assert.ok(!JSON.stringify(project(span(), C, 'RAW')).includes('Jordan'));
 });
+
+test('calibrated on the demo\'s clean traffic: a version segment and parentheses are code', () => {
+  for (const n of ['flagd.evaluation.v2.Service/ResolveBoolean', 'render route (pages) /']) assert.equal(project(any(n, []), contract(), KEY)[0].name, n, n);
+  for (const n of ['GET /orders/v12345', 'GET /a/(4111111111111111)']) assert.equal(project(any(n, []), contract(), KEY)[0].name.shape, true, n);
+});
+
+test('calibrated: runtime metric names and long function names are code; a word with a number is not', () => {
+  for (const n of ['nodejs.eventloop.delay.p99', 'v8js.memory.heap.space.available_size', 'prepareOrderItemsAndShippingQuoteFromCart']) assert.equal(project(any(n, []), contract(), KEY)[0].name, n, n);
+  for (const n of ['GET /users/jordan99', 'GET /c/OLJCESPC7Z']) assert.equal(project(any(n, []), contract(), KEY)[0].name.shape, true, n);
+});
