@@ -57,7 +57,9 @@ running. svrngs can keep it running, even after a restart."*
 It runs under the lend's own name and port, and the row then says
 *"svrngs runs coder now. House can open it again after you sign in."*
 After a restart, svrngs starts it again when you sign in, and House can
-open it again.
+open it again. If something other than svrngs's copy answers on its port,
+the row says so and approves nothing: check what answers, then press **Keep
+sharing it**.
 
 **Run by svrngs** means it starts again after a crash, up to a limit. Read
 the Share review for when friends can open it again. On a Mac, it starts

@@ -235,14 +235,15 @@ suggestion, when available) and changed by the person, and Start posts
 `/run` with the lend's own name and port; the keeper parses quoting
 without running a shell, and refuses a port another program holds. A
 found listener's row only lends it. Once Run verifies the program, the
-lend is held for what now answers; the page approves it through the
-lender's approve route only when that is the job, by the token `/lent`
-listed: on Linux one unit named for the lend, on macOS, where a job shows
-as its processes, those. That approval keeps the lend to the job through
-its restarts (`share::kept`): on Linux to the unit; on macOS to the
-keeper's launch agent for the lend's name, where every process approved is
-that agent's, as Share keeps it. The terminal's Run gives a Share command
-for its verified port.
+lend is held for what now answers; the page asks the lender's approve
+route, by the token `/lent` listed, to approve it only as the job svrngs
+keeps it to through restarts (`"keep": true`), and the route takes it only
+with that grant (`share::kept`: on Linux one unit's job; on macOS the
+keeper's launch agent for the lend's name, every process approved that
+agent's, as Share keeps it). Else it approves nothing and says why, and the
+row leaves Keep sharing it to press beside what answers: the page never
+approves by itself what the person didn't see. The terminal's Run gives a
+Share command for its verified port.
 The page's Start and Stop controls use only the keeper's observed jobs
 and leave sharing alone.
 When Share would grant a running service, it
@@ -365,15 +366,18 @@ told it is closed for now, and its lender's line says what answers now with
 one button, Keep sharing it (`POST /v1/lends/<name>/approve` with the
 token its list gave for what it showed, refused once that changed, and a
 `pid` without its `start` or the reverse refused 422), which changes only
-`approved`. `svrngs approve <name>` says what answers now at a terminal and
-approves it on a y, by that read's token, so what took the port while its
-person read is refused; without a terminal it approves only with
-`--token`, and is refused otherwise. The list gives that token only
-where approving it would be taken, decided by `share::approve`, the one
-decider. The home page offers the button by the token alone; the panel
-offers it by the token too, but not for a port or program on its own deny
-list. Nothing answering, no reader, a read that failed, and a socket whose
-program can't be read are each refused, and so given none. A port that
+`approved` and the grant it makes. With `"keep": true` the route approves
+only where that grant keeps the lend to its job through restarts, and
+otherwise approves nothing, refused in words. `svrngs approve <name>` says
+what answers now at a terminal and approves it on a y, by that read's
+token, so what took the port while its person read is refused; without
+a terminal it approves only with `--token`, and is refused otherwise.
+The list gives that token only where approving it would be taken,
+decided by `share::approve`, the one decider. The home page offers the
+button by the token alone; the panel offers it by the token too, but not
+for a port or program on its own deny list. Nothing answering, no
+reader, a read that failed, and a socket whose program can't be read are
+each refused, and so given none. A port that
 couldn't be read is said so, its reason a closed set (`unread`,
 `uid::Unread`), never as nothing answering (`answers: []`). A program that
 listens anew after it starts again, and a share made before this, wait on

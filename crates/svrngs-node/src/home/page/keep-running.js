@@ -9,16 +9,16 @@
 // Start runs it under the lend's own name and port (POST /run): the keeper
 // refuses while the person's own copy holds the port, and stops nothing.
 // Once svrngs's copy answers, the lend is held for it, as for anything not
-// approved; it is approved at once (`carry`) only where what answers is the
-// job svrngs just started, by the token /lent lists it with. That approval
-// keeps sharing it through the job's restarts where svrngs verifies it is
-// that job's (share.rs `kept`): on Linux its unit, on a Mac the launch
-// agent the keeper runs it under.
+// approved; `carry` asks to approve it at once, by the token /lent lists it
+// with, only as the job svrngs keeps it to through restarts (`keep`): the
+// approve route takes it only where svrngs verifies it is that job's
+// (share.rs `kept`: on Linux its unit, on a Mac the launch agent the keeper
+// runs it under), and else approves nothing, so the page never approves by
+// itself what the person didn't see.
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
-import { answered } from './running-look.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
@@ -53,23 +53,11 @@ import { answered } from './running-look.js?v=__VERSION__';
  *   | { run: 'start', command: string, folder: string, failed: 'refused' }} Effect
  */
 
-// Whether what answers on the lend `name`'s port is svrngs's job for it,
-// listed with the token approving it takes: as Linux shows a job, one unit
-// /lent names for the lend (running-look.js `answered`); as a Mac shows
-// one, its processes, never a unit (uid.rs `shown`), which approving keeps
-// only where each is the launch agent's svrngs runs the lend under.
-/** @param {Lend | undefined} lend @param {string} name */
-const isJob = (lend, name) => {
-  const answers = (lend?.token && lend.answers) || [];
-  const [job, ...more] = answers;
-  const named = job?.unit && !more.length && answered(job) === name;
-  return Boolean(named || (job && answers.every((one) => one.pid !== undefined)));
-};
-
-// What answers on `name`'s port once svrngs's copy does, approved only
-// where it is that job (`isJob`), by the token /lent lists it with; then
-// HOME reads the list again. Started, it is never refused: a list not read
-// or an approval refused is said after what Start said.
+// What answers on `name`'s port once svrngs's copy does, approved by the
+// token /lent lists it with only as the job svrngs keeps (`keep: true`;
+// surface.rs `approve`); then HOME reads the list again. Started, it is
+// never refused: a list not read or an approval refused is said after
+// what Start said, and the lend stays held for Keep sharing it.
 /**
  * @param {string} name
  * @param {HOME.PlaceProps['home']} home
@@ -79,14 +67,14 @@ const carry = async (name, home) => {
     lent.find((/** @type {Lend} */ one) => one.name === name),
   );
   const lend = /** @type {Lend | undefined} */ (await listed.catch(() => undefined));
-  const ours = isJob(lend, name);
-  const approved = ours ? post(`/v1/lends/${name}/approve`, { token: lend?.token }) : listed;
+  const token = lend?.token;
+  const approved = token ? post(`/v1/lends/${name}/approve`, { token, keep: true }) : listed;
   const refused = await approved.then(
     () => '',
     (/** @type {Error} */ error) => ` ${error.message}`,
   );
   home({ type: 'again' });
-  return { refused, why: ours ? 'its job approved' : 'left to Keep sharing it' };
+  return { refused, why: token ? 'approve asked, if kept' : 'nothing listed to approve' };
 };
 
 /**

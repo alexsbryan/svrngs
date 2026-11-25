@@ -376,9 +376,10 @@ test('a program found that svrngs knows by name has its fields filled, and lendi
 // folder (GET /run?prefill=<port>, a llama-server's), a fold to change
 // them, and Start, posted with the lend's own name and port (home.rs
 // `run_one`). What then answers is held, a job named for the lend (job.rs
-// `of`), so it is approved at once by the token /lent lists it with
-// (surface.rs `approve`), and the list read again shares it no longer only
-// while it runs: one line says so, and the offer is gone.
+// `of`), approved at once by the token /lent lists it with, asked only as
+// the job svrngs keeps (`keep: true`, surface.rs `approve`), and the list
+// read again shares it no longer only while it runs: one line says so, and
+// the offer is gone.
 test('a lend shared while it runs offers to keep it running, and Start carries it over', async () => {
   const port = 21000;
   const notes = lend('notes', { kind: 'llama-server' });
@@ -432,7 +433,7 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
   await at.press('#lent li [role=group] button', 'Start');
   assert.deepEqual(posted, [
     ['/run', { name: 'notes', port, folder: '/Users/ada/models', command }],
-    ['approve', { token: 'its job' }],
+    ['approve', { token: 'its job', keep: true }],
   ]);
   assert.ok(
     row().endsWith('svrngs runs notes now. house can open it again after you sign in.'),
@@ -443,11 +444,11 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
 });
 
 // On a Mac what answers once svrngs's copy does is its processes, never a
-// unit (uid.rs `shown`): approved at once too, by the token /lent lists,
-// and kept through restarts where they are the launch agent's svrngs runs
-// the lend under (job/mac.rs `kept`), so the list read again shares it no
-// longer only while it runs. Where svrngs said no command, the person
-// types it and its folder; Start with one empty says so, a refusal, the
+// unit (uid.rs `shown`): asked to be approved the same way, by the token
+// /lent lists and only as the job svrngs keeps, which there is the launch
+// agent svrngs runs the lend under (job/mac.rs `kept`), so the list read
+// again shares it no longer only while it runs. Where svrngs said no
+// command, the person types it and its folder; Start with one empty says so, a refusal, the
 // person's own copy on the port (svrngs-keeper native_run.rs `run`), is
 // said in one line, Start still there, and Start then says Starting… until
 // the keeper answers.
@@ -510,19 +511,24 @@ test('Start with typed fields carries over a Mac job’s process', async () => {
     folder: '/srv/notes',
     command: 'python3 -m http.server 21000',
   };
-  assert.deepEqual(posted, [body, body, { token: 'a process' }]);
+  assert.deepEqual(posted, [body, body, { token: 'a process', keep: true }]);
   const row = at.text('#lent li')[0];
   assert.ok(row.endsWith('svrngs runs notes now. house can open it again after you sign in.'), row);
   assert.ok(!at.text('#lent li button').includes('Keep sharing it'), row);
   assert.deepEqual([at.went, at.unanswered], [[], []]);
 });
 
-// Where what answers once svrngs's copy does is a unit of another name,
-// nothing is approved: the row says to press Keep sharing it.
-test('Start leaves Keep sharing it to press where what answers is no job of the lend', async () => {
+// Where what answers once svrngs's copy does is no job svrngs keeps, the
+// approve route refuses what `keep: true` asks and approves nothing
+// (surface.rs `approve`): the row says why and to press Keep sharing it,
+// beside what answers, as any held lend's does.
+test('Start leaves Keep sharing it to press where what answers is no job svrngs keeps', async () => {
   const port = 21000;
   const notes = lend('notes', { kind: 'notes' });
   const other = { unit: 'notes-by-hand.service' };
+  const unkept =
+    "svrngs doesn't run what answers on notes's port, so it wasn't approved. Check what answers there, then approve it.";
+  const posted = [];
   const at = await home({
     ...ada({ lent: [notes] }),
     [`GET /run?prefill=${port}`]: { kind: 'unavailable', port, why: 'none' },
@@ -539,6 +545,10 @@ test('Start leaves Keep sharing it to press where what answers is no job of the 
           held.lent = [{ ...notes, held: 'another', token: 'another', answers: [other] }];
           return 'svrngs runs notes now.';
         },
+        'POST /v1/lends/notes/approve': (_, body) => {
+          posted.push(body);
+          return refused(403, unkept, 'closed');
+        },
       },
     ),
   });
@@ -547,9 +557,11 @@ test('Start leaves Keep sharing it to press where what answers is no job of the 
   await at.type('#lent li [role=group] input[name=folder]', '/srv/notes');
   await at.press('#lent li [role=group] button', 'Start');
   const row = at.text('#lent li')[0];
-  assert.ok(row.endsWith('svrngs runs notes now. Press Keep sharing it so they can open it.'), row);
+  assert.deepEqual(posted, [{ token: 'another', keep: true }]);
+  const said = `svrngs runs notes now. ${unkept} Press Keep sharing it so they can open it.`;
+  assert.ok(row.endsWith(said), row);
+  assert.ok(row.includes('notes-by-hand'), `what answers is shown: ${row}`);
   assert.ok(at.text('#lent li button').includes('Keep sharing it'), row);
-  assert.ok(!at.asked.some(([, path]) => path.endsWith('/approve')), 'nothing approved');
   assert.deepEqual([at.went, at.unanswered], [[], []]);
 });
 

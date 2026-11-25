@@ -1775,9 +1775,14 @@ async fn what_the_page_lends_is_what_it_showed() {
 /// with what answers now and a token for it, though only its approved
 /// socket answers now. Approving with that token after what answers changed
 /// is refused in words that say so; with none, refused; with the token of
-/// what answers, approved, and listed held no more. Planted, each watched
-/// failing: `share::approve` not comparing the token (the changed set
-/// approved); the list reading no hold from the file (shelf listed open).
+/// what answers but asked to keep it to the job svrngs runs (`keep`, as the
+/// page's Keep it running asks), refused, nothing saved, since svrngs keeps
+/// no job of it (`share::kept`: on Linux a program in no unit, on a Mac no
+/// launch agent of shelf's name); with that token alone, approved, and
+/// listed held no more. Planted, each watched failing: `share::approve` not
+/// comparing the token (the changed set approved); the list reading no hold
+/// from the file (shelf listed open); the route ignoring `keep` (approved,
+/// 200).
 #[tokio::test]
 async fn keep_sharing_it_approves_only_what_the_page_showed() {
     // A port nothing listens on, so the wire's socket 1 is what answers.
@@ -1832,8 +1837,15 @@ async fn keep_sharing_it_approves_only_what_the_page_showed() {
     let unshown = ask(browser, "POST", home, path, own, "null").await;
     assert_eq!(unshown.status, 422, "no token: {}", unshown.body);
     on_wire::answers(&alex, port, Ok(svrngs_node::node::answering()));
+    let shelf = || lend::read(dir.path(), &lend::LendName::parse("shelf").unwrap());
+    let kept = format!(r#"{{"token":"{token}","pid":1,"start":1,"keep":true}}"#);
+    let unkept = "svrngs doesn't run what answers on shelf's port, so it wasn't approved. Check what answers there, then approve it.";
+    assert_eq!(approve(kept).await, (403, Some(unkept.into())));
+    let still = shelf().unwrap().unwrap().terms;
+    assert!(still.approved.is_some_and(|a| a.held), "nothing approved");
+    assert_eq!(still.keep, None, "nothing kept");
     assert_eq!(approve(with).await.0, 200);
-    let shelf = lend::read(dir.path(), &lend::LendName::parse("shelf").unwrap());
+    let shelf = shelf();
     let approved = shelf.unwrap().unwrap().terms.approved.unwrap();
     assert_eq!(approved, svrngs_node::node::approval(), "held no more");
     assert_eq!(row().await["held"], serde_json::Value::Null);

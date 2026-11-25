@@ -293,6 +293,8 @@ pub enum ShareRefusal {
     UdpBeside(NonZeroU16),
     #[error("svrngs can't share port {0}: what answers on port {0} changed; choose it again.")]
     Changed(NonZeroU16),
+    #[error("svrngs doesn't run what answers on {0}'s port, so it wasn't approved. Check what answers there, then approve it.")]
+    NotKept(LendName),
     #[error("{0} is already shared from {1}: give this one another name, or add --replace to share {0} from here instead.")]
     Taken(LendName, String),
     #[error("nothing is shared from a port here by the name {0}")]
