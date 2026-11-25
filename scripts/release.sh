@@ -98,10 +98,9 @@ sign() {
   [ -n "$key" ] || stop "there is no 'svrngs releases' key here to sign with. Make it once: gpg --quick-generate-key 'svrngs releases' ed25519 sign 2y"
   say "$TAG ($COMMIT) by $key from $get"
   (cd "$get" && shasum -a 256 -c SHA256SUMS) >&2
-  # The installer too, as the release's commit has it, so whatever installs
-  # svrngs for someone can check it before running it, where the line on the
-  # page trusts HTTPS alone.
+  # Bind the installer and both archives to the same signed manifest.
   git show "$COMMIT:web/install.sh" >"$get/install.sh"
+  (cd "$get" && shasum -a 256 -- *.tar.gz install.sh >SHA256SUMS)
   for file in "$get"/*.tar.gz "$get"/SHA256SUMS "$get"/install.sh; do
     gpg --yes --local-user "$key" --detach-sign --output "$file.sig" "$file"
     gpg --verify "$file.sig" "$file"

@@ -236,10 +236,21 @@ pub fn install(
     boot: impl FnOnce() -> Boot,
     content: &str,
 ) -> Result<Kept, KeptError> {
+    let (unit, unit_path) = (unit_name(&name), places.unit_path(&name));
+    let unit_before = regular_text(&unit_path)?;
+    if let Some(before) = &unit_before {
+        saved_unit(places, &name, before)?;
+        systemd.owns(&unit, &unit_path).map_err(KeptError::Systemd)?;
+    } else if systemd.show(&unit, &["LoadState"]).map_err(KeptError::Systemd)?.trim() != "LoadState=not-found" {
+        return Err(KeptError::Systemd(format!(
+            "{unit} already belongs to a different setup"
+        )));
+    }
     let boot = boot();
     let stored = store(places, card, &name)?;
-    let (unit, unit_path) = (unit_name(&name), places.unit_path(&name));
-    let unit_before = std::fs::read_to_string(&unit_path).ok();
+    let seal = places.card_dir(&name).join("unit.hash");
+    regular_text(&seal)?;
+    std::fs::write(&seal, blake3::hash(content.as_bytes()).to_hex().as_str()).map_err(file(&seal))?;
     let user_unit = UserUnit {
         name: &unit,
         path: &unit_path,
@@ -277,7 +288,7 @@ pub fn install(
 fn store(places: &Places, card: &Card, name: &Name) -> Result<Stored, KeptError> {
     let dir = places.card_dir(name);
     let (path, previous) = (places.card_path(name), dir.join("previous.yaml"));
-    let before = std::fs::read_to_string(&path).ok();
+    let before = regular_text(&path)?;
     let text = &card.text;
     let stored = match &before {
         None => Stored::New,
@@ -291,6 +302,7 @@ fn store(places: &Places, card: &Card, name: &Name) -> Result<Stored, KeptError>
     if stored != Stored::Same {
         std::fs::create_dir_all(&dir).map_err(file(&dir))?;
         if let Some(before) = &before {
+            regular_text(&previous)?;
             std::fs::write(&previous, before).map_err(file(&previous))?;
         }
         std::fs::write(&path, text).map_err(file(&path))?;
@@ -298,21 +310,52 @@ fn store(places: &Places, card: &Card, name: &Name) -> Result<Stored, KeptError>
     Ok(stored)
 }
 
-/// A kept card, by name: its unit must be installed.
-fn kept(places: &Places, name: &str) -> Result<(Name, String), KeptError> {
-    let name = Name::new(name).map_err(|_| KeptError::NotKept(name.to_string()))?;
-    if !places.unit_path(&name).exists() {
-        tracing::debug!(name = name.as_str(), "refused: no unit kept under this name");
-        return Err(KeptError::NotKept(name.as_str().to_string()));
+fn regular_text(path: &Path) -> Result<Option<String>, KeptError> {
+    match std::fs::symlink_metadata(path) {
+        Ok(m) if m.is_file() => std::fs::read_to_string(path).map(Some).map_err(file(path)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(file(path)(e)),
+        Ok(_) => Err(KeptError::File {
+            path: path.into(),
+            why: "expected a regular file".into(),
+        }),
     }
+}
+
+fn saved_unit(places: &Places, name: &Name, text: &str) -> Result<(), KeptError> {
+    let seal = regular_text(&places.card_dir(name).join("unit.hash"))?;
+    let card = regular_text(&places.card_path(name))?;
+    let ours = match seal.as_deref() {
+        Some(seal) => card.is_some() && seal == blake3::hash(text.as_bytes()).to_hex().as_str(),
+        // An older native card can prove its exact generated fragment.
+        None => card
+            .and_then(|c| Card::parse(&c).ok())
+            .is_some_and(|c| c.native.as_ref().is_some_and(|n| native(name, &c, n) == text)),
+    };
+    tracing::debug!(name = name.as_str(), ours, "kept: unit compared with the saved setup");
+    ours.then_some(()).ok_or_else(|| {
+        KeptError::Systemd(format!(
+            "{} does not match a saved setup; review it in your service manager",
+            name.as_str()
+        ))
+    })
+}
+
+/// A kept card and its verified registration, by name.
+fn kept(systemd: &SystemdUser, places: &Places, name: &str) -> Result<(Name, String, String), KeptError> {
+    let name = Name::new(name).map_err(|_| KeptError::NotKept(name.to_string()))?;
+    let path = places.unit_path(&name);
+    let text = regular_text(&path)?.ok_or_else(|| KeptError::NotKept(name.as_str().into()))?;
+    saved_unit(places, &name, &text)?;
     let unit = unit_name(&name);
-    Ok((name, unit))
+    let active = systemd.owns(&unit, &path).map_err(KeptError::Systemd)?;
+    Ok((name, unit, active))
 }
 
 /// Stop it until it is started again: `disable --now`, so a boot does not
 /// start it either.
 pub fn stop(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name, KeptError> {
-    let (name, unit) = kept(places, name)?;
+    let (name, unit, _) = kept(systemd, places, name)?;
     systemd
         .ctl(&["--user", "disable", "--now", &unit])
         .map_err(KeptError::Systemd)?;
@@ -321,9 +364,8 @@ pub fn stop(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name, 
 
 /// Start it, and at each boot again: `enable --now`.
 pub fn start(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name, KeptError> {
-    let (name, unit) = kept(places, name)?;
-    let active = systemd.show(&unit, &["ActiveState"]).map_err(KeptError::Systemd)?;
-    if active.trim() == "ActiveState=failed" {
+    let (name, unit, active) = kept(systemd, places, name)?;
+    if active == "failed" {
         tracing::debug!(unit, "kept:start_reset_failed");
         systemd
             .ctl(&["--user", "reset-failed", &unit])
@@ -339,7 +381,7 @@ pub fn start(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name,
 
 /// Restart a running unit. Only an explicit `start` undoes a stop.
 pub fn restart(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Name, KeptError> {
-    let (name, unit) = kept(places, name)?;
+    let (name, unit, _) = kept(systemd, places, name)?;
     systemd
         .ctl(&["--user", "try-restart", &unit])
         .map_err(KeptError::Systemd)?;
@@ -349,7 +391,7 @@ pub fn restart(systemd: &SystemdUser, places: &Places, name: &str) -> Result<Nam
 /// Run it here no longer: its unit is stopped and deleted. Its card stays,
 /// in the folder this returns, and so does the program's own folder.
 pub fn remove(systemd: &SystemdUser, places: &Places, name: &str) -> Result<PathBuf, KeptError> {
-    let (name, unit) = kept(places, name)?;
+    let (name, unit, _) = kept(systemd, places, name)?;
     systemd
         .uninstall(&unit, &places.unit_path(&name))
         .map_err(KeptError::Systemd)?;
@@ -466,9 +508,12 @@ pub fn status(show: &str, lingers: Result<bool, String>) -> Result<Status, Strin
 pub fn list(systemd: &SystemdUser, places: &Places) -> Result<Vec<Row>, KeptError> {
     let lingers = systemd.lingers();
     listed(places, |name| {
-        if !places.unit_path(name).exists() {
+        let path = places.unit_path(name);
+        let Some(text) = regular_text(&path).map_err(|e| e.to_string())? else {
             return Ok(None);
-        }
+        };
+        saved_unit(places, name, &text).map_err(|e| e.to_string())?;
+        systemd.owns(&unit_name(name), &path)?;
         let mut properties = SHOWN.to_vec();
         properties.push("ActiveEnterTimestamp");
         systemd

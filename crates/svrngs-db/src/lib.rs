@@ -504,7 +504,7 @@ pub struct Db {
     #[expect(clippy::disallowed_types, reason = "one connection, one statement at a time")]
     live: std::sync::Mutex<Live>,
     changed: watch::Sender<u64>,
-    /// Whether it has synced in full once, and whether a set faulted since.
+    /// Whether it has synced in full once, and whether a set was deferred since.
     synced: AtomicBool,
     faulted: AtomicBool,
     /// Whether a set sealed by another file of its nonce and key reached it:
@@ -852,7 +852,7 @@ impl Db {
     }
 
     /// Whether this copy is still to be said syncing: it has never synced in
-    /// full with a member, or a set faulted here since its last full call.
+    /// full with a member, or an exchange left changes it couldn't apply.
     pub fn syncing(&self) -> bool {
         !self.synced.load(Relaxed) || self.faulted.load(Relaxed)
     }

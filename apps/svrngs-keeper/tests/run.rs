@@ -95,6 +95,8 @@ fn a_foreign_answer_after_the_busy_check_does_not_verify_run() {
                     "#!/bin/sh\ncase \"$2\" in
                 show) case \"$5\" in
                     LoadState) echo LoadState=not-found ;;
+                    LoadState,FragmentPath,DropInPaths,NeedDaemonReload,ActiveState)
+                        printf '%s\\n' LoadState=loaded \"FragmentPath=$XDG_CONFIG_HOME/systemd/user/$3\" NeedDaemonReload=no ;;
                     *) echo ActiveState={state}; echo ControlGroup={group} ;;
                 esac ;;
                 enable) touch starting; for i in $(seq 100); do

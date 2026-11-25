@@ -121,6 +121,9 @@ netlink-sys = "=0.8.8"
 # `IPV6_FREEBIND`, through the socket2 tokio already builds, with its `all`.
 socket2 = { version = "0.6", features = ["all"] }
 
+[dependencies.tempfile]
+version = "3"
+
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a
 # caller no socket can be, its transport, a round now.
@@ -136,7 +139,6 @@ svrngs-core = { workspace = true, features = ["test-support"] }
 # This crate's integration tests (tests/) link it as any caller does, so they
 # turn its test support on here.
 svrngs-node = { path = ".", features = ["test-support"] }
-tempfile = "3"
 # The state route's tests make and spoil a SQLite file through SQLite as
 # svrngs-db links it, so they need no `sqlite3` program, which a Linux host
 # and the gate image lack.

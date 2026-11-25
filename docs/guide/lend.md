@@ -49,8 +49,9 @@ asked. For a program you want to keep available, have svrngs run it instead.
 
 1. Stop the copy you started. Under **Already running here** on your home
    page, choose **Run it with svrngs**. Give it a name, port, folder and the
-   command you use to start it. It runs without your terminal's settings;
-   use full paths if the command or its files aren't found.
+   command you use to start it. It runs as you and is set to start again at
+   login, even if svrngs can't verify that it answered. It runs without your
+   terminal's settings; use full paths if the command or its files aren't found.
 2. Once it says it's running, find it under **Already running here** and
    share it with the groups you choose. Use the same name for Run and Share.
    Run on its own gives no one access.
@@ -62,11 +63,18 @@ when running it from a terminal, both parts start with the computer, and
 the disk unlocks on its own. A locked disk needs you to unlock it first.
 Nothing runs while the computer is asleep or off.
 
+Sharing through restarts trusts the service to keep answering for the same
+app. An update that replaces its program at the same path can keep the
+share. Use **Share this run** if you only want to share the running copy.
+
 On your home page (`svrngs open`), use **Stop** under **Already running
 here**. Apps you run with svrngs appear there even before you join a group.
 The app stays stopped until you start it again, even after a
 restart. Its setup and files stay in place. **Stop lending** takes away
 your friends' access and leaves the program running for you.
+On Linux, if a setup no longer matches what svrngs saved or systemd loads
+it with app overrides, svrngs leaves it alone. Review the unit in your service
+manager before changing it there.
 
 On Linux, you can also run one HTTP container with a card that uses named
 volumes only: `svrngs run <name> --port <port> --card <compose.yaml>`.

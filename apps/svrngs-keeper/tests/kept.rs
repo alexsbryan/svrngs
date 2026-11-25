@@ -3,6 +3,7 @@
 //! own tests drive its install (src/systemd/tests.rs). The real units are
 //! proved on a host by `tests/host.sh`.
 
+use std::fs::File;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
@@ -19,6 +20,10 @@ const CODER: &str = r#"x-svrngs:
     folder: ~/models
     environment: [HIP_VISIBLE_DEVICES]
 "#;
+
+const SHOW: &str =
+    "--user show svrngs-keeper-coder.service -p LoadState,FragmentPath,DropInPaths,NeedDaemonReload,ActiveState";
+const ABSENT: &str = "--user show svrngs-keeper-coder.service -p LoadState";
 
 /// The unit `CODER` renders to, every word quoted and escaped.
 const CODER_UNIT: &str = r#"[Unit]
@@ -45,21 +50,36 @@ struct Here {
     root: PathBuf,
     systemd: SystemdUser,
     places: Places,
+    _guard: File,
 }
 
 impl Here {
     fn new() -> Here {
+        // Serialize fixtures on this test binary's inode. Otherwise a child
+        // can inherit another fixture's writable script fd before exec,
+        // making Linux briefly refuse to execute that script (ETXTBSY).
+        let guard = File::open(std::env::current_exe().unwrap()).unwrap();
+        guard.lock().unwrap();
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().to_path_buf();
         let log = root.join("argv.log");
         let systemctl = root.join("systemctl");
+        let places = Places::of(&root.join("home"), None, None);
         std::fs::write(
             &systemctl,
             format!(
                 "#!/bin/sh\necho \"$@\" >> {log}\n\
-                 if [ \"$2\" = show ]; then cat {show}; fi\nexit 0\n",
+                 if [ \"$2\" = show ]; then\n\
+                   if [ -f '{units}'/\"$3\" ]; then\n\
+                     if [ -f {root}/foreign ]; then path='{root}/foreign'; else path='{units}/svrngs-keeper-coder.service'; fi\n\
+                     printf 'LoadState=loaded\nFragmentPath=%s\nNeedDaemonReload=no\n' \"$path\"\n\
+                     if [ -f {show} ]; then cat {show}; fi\n\
+                   else echo LoadState=not-found; fi\n\
+                 elif [ \"$2\" = disable ] && [ -f {root}/refuse-stop ]; then exit 1; fi\nexit 0\n",
                 log = log.display(),
-                show = root.join("show.txt").display()
+                show = root.join("show.txt").display(),
+                root = root.display(),
+                units = places.units.display()
             ),
         )
         .unwrap();
@@ -81,12 +101,12 @@ impl Here {
         for p in [&systemctl, &loginctl] {
             std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap();
         }
-        let places = Places::of(&root.join("home"), None, None);
         Here {
             _dir: dir,
             systemd: SystemdUser::at(systemctl, loginctl),
             root,
             places,
+            _guard: guard,
         }
     }
 
@@ -116,6 +136,7 @@ impl Here {
     /// keep `CODER` with what it answered: the questions asked, the answer,
     /// and whether linger was turned on.
     fn keep_answering(&self, answer: Option<bool>) -> (Vec<String>, Boot, bool) {
+        let before = if self.unit().exists() { SHOW } else { ABSENT };
         let mut asked = Vec::new();
         let boot = kept::boot(&self.systemd, |q| {
             asked.push(q.to_string());
@@ -129,7 +150,9 @@ impl Here {
         assert_eq!(
             self.argv(),
             [
+                before,
                 "--user daemon-reload",
+                SHOW,
                 "--user enable --now svrngs-keeper-coder.service"
             ],
             "the unit is enabled whatever the answer"
@@ -185,7 +208,9 @@ fn keep_stores_the_card_writes_its_unit_and_enables_it_now() {
     assert_eq!(
         here.argv(),
         [
+            ABSENT,
             "--user daemon-reload",
+            SHOW,
             "--user enable --now svrngs-keeper-coder.service"
         ]
     );
@@ -221,7 +246,9 @@ fn keep_twice_resets_nothing() {
     assert_eq!(
         here.argv(),
         [
+            SHOW,
             "--user daemon-reload",
+            SHOW,
             "--user enable --now svrngs-keeper-coder.service"
         ],
         "no restart: enable --now leaves a running unit as it is"
@@ -250,7 +277,9 @@ fn a_new_card_keeps_the_one_before_and_starts_again_from_it() {
     assert_eq!(
         here.argv(),
         [
+            SHOW,
             "--user daemon-reload",
+            SHOW,
             "--user enable --now svrngs-keeper-coder.service",
             "--user restart svrngs-keeper-coder.service"
         ]
@@ -289,13 +318,13 @@ fn stop_and_start_last_past_a_boot() {
         kept::stop(&here.systemd, &here.places, "coder").unwrap().as_str(),
         "coder"
     );
-    assert_eq!(here.argv(), ["--user disable --now svrngs-keeper-coder.service"]);
+    assert_eq!(here.argv(), [SHOW, "--user disable --now svrngs-keeper-coder.service"]);
     std::fs::write(here.root.join("show.txt"), "ActiveState=failed\n").unwrap();
     kept::start(&here.systemd, &here.places, "coder").unwrap();
     assert_eq!(
         here.argv(),
         [
-            "--user show svrngs-keeper-coder.service -p ActiveState",
+            SHOW,
             "--user reset-failed svrngs-keeper-coder.service",
             "--user enable --now svrngs-keeper-coder.service"
         ]
@@ -314,6 +343,7 @@ fn remove_deletes_the_unit_and_leaves_the_card() {
     assert_eq!(
         here.argv(),
         [
+            SHOW,
             "--user disable --now svrngs-keeper-coder.service",
             "--user daemon-reload"
         ]
@@ -336,6 +366,38 @@ fn what_is_not_kept_is_refused_before_systemd_is_asked() {
         ));
     }
     assert!(here.argv().is_empty());
+}
+
+#[test]
+fn the_saved_unit_must_match_the_loaded_registration() {
+    let here = Here::new();
+    here.keep(CODER).unwrap();
+    here.argv();
+    std::fs::write(here.root.join("foreign"), "another configuration").unwrap();
+    assert!(kept::start(&here.systemd, &here.places, "coder").is_err());
+    assert!(kept::remove(&here.systemd, &here.places, "coder").is_err());
+    assert_eq!(here.argv(), [SHOW, SHOW]);
+    assert!(here.unit().is_file());
+    std::fs::remove_file(here.root.join("foreign")).unwrap();
+    std::fs::write(here.root.join("show.txt"), "DropInPaths=/another/setup.conf\n").unwrap();
+    assert!(kept::restart(&here.systemd, &here.places, "coder").is_err());
+    assert_eq!(here.argv(), [SHOW]);
+}
+
+#[test]
+fn an_edited_unit_is_not_started_and_a_failed_stop_keeps_its_setup() {
+    let here = Here::new();
+    here.keep(CODER).unwrap();
+    here.argv();
+    let saved = std::fs::read_to_string(here.unit()).unwrap();
+    std::fs::write(here.unit(), saved.replace("Nice=10", "Nice=11")).unwrap();
+    assert!(kept::start(&here.systemd, &here.places, "coder").is_err());
+    assert!(here.argv().is_empty());
+    std::fs::write(here.unit(), &saved).unwrap();
+    std::fs::write(here.root.join("refuse-stop"), "").unwrap();
+    assert!(kept::remove(&here.systemd, &here.places, "coder").is_err());
+    assert_eq!(here.argv(), [SHOW, "--user disable --now svrngs-keeper-coder.service"]);
+    assert_eq!(std::fs::read_to_string(here.unit()).unwrap(), saved);
 }
 
 #[test]
@@ -369,6 +431,7 @@ fn list_reads_each_kept_card_from_systemd() {
     assert_eq!(
         here.argv(),
         [
+            SHOW,
             "--user show svrngs-keeper-coder.service -p LoadState,ActiveState,Result,NRestarts,UnitFileState,ActiveEnterTimestamp"
         ]
     );

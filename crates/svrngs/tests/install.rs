@@ -145,6 +145,10 @@ fn site_of(stand_in: Option<&str>, sums: Option<&str>) -> tempfile::TempDir {
     .unwrap();
     let get = site.path().join("get");
     std::fs::create_dir(&get).unwrap();
+    std::fs::copy(site.path().join("install.sh"), get.join("install.sh")).unwrap();
+    for name in ["SHA256SUMS.sig", "svrngs-release-key.asc"] {
+        std::fs::write(get.join(name), "fixture").unwrap();
+    }
     let bin = match stand_in {
         None => binary(),
         Some(script) => {
@@ -184,7 +188,7 @@ fn site_of(stand_in: Option<&str>, sums: Option<&str>) -> tempfile::TempDir {
     // Summed as install.sh sums (web/install.sh:92): sha256sum, else
     // shasum, which a Mac has and a Linux computer may not (Fedora's is
     // perl-Digest-SHA's). Both write `<sum>  <file>`.
-    let tarballs = [tarball(), tarball_of("give")];
+    let tarballs = [tarball(), tarball_of("give"), "install.sh".into()];
     let summed = std::process::Command::new("sha256sum")
         .args(&tarballs)
         .current_dir(&get)
@@ -199,7 +203,11 @@ fn site_of(stand_in: Option<&str>, sums: Option<&str>) -> tempfile::TempDir {
         .unwrap();
     assert!(summed.status.success(), "the tarballs were not summed");
     let truth = String::from_utf8(summed.stdout).unwrap();
-    std::fs::write(get.join("SHA256SUMS"), sums.unwrap_or(&truth)).unwrap();
+    let published = sums.map_or_else(
+        || truth.clone(),
+        |lines| format!("{lines}{}  install.sh\n", sum_of(&get.join("install.sh"))),
+    );
+    std::fs::write(get.join("SHA256SUMS"), published).unwrap();
     site
 }
 
@@ -284,10 +292,26 @@ async fn paste(port: u16, link: &str, home: &Path, uname: Option<&str>) -> Outpu
 /// The line with `more` after the link.
 async fn paste_more(port: u16, link: &str, more: &str, home: &Path, uname: Option<&str>) -> Output {
     let line = format!("curl -fsSL http://127.0.0.1:{port}/install.sh | sh -s -- '{link}'{more}");
-    let path = format!(
-        "{}:/usr/bin:/bin:/usr/sbin:/sbin",
-        stubs(home, uname).display()
+    let stubs = stubs(home, uname);
+    publisher_key(&stubs, true);
+    executable(
+        &stubs.join("curl"),
+        &format!(
+            r#"#!/bin/sh
+n=$#
+while [ "$n" -gt 0 ]; do
+  case "$1" in
+    --proto|--proto-redir) shift 2; n=$((n - 2)); continue ;;
+    {PUBLISHER}*) set -- "$@" "http://127.0.0.1:{port}/get/${{1#{PUBLISHER}}}" ;;
+    *) set -- "$@" "$1" ;;
+  esac
+  shift; n=$((n - 1))
+done
+exec /usr/bin/curl "$@"
+"#
+        ),
     );
+    let path = format!("{}:/usr/bin:/bin:/usr/sbin:/sbin", stubs.display());
     let mut sh = tokio::process::Command::new("/bin/sh");
     sh.args(["-c", &line])
         .env_clear()
@@ -614,7 +638,7 @@ fn as_linux(site: &Path) {
         return;
     }
     let get = site.join("get");
-    let mut summed = vec!["-a".to_string(), "256".into()];
+    let mut summed = vec!["-a".to_string(), "256".into(), "install.sh".into()];
     for program in ["svrngs", "give"] {
         let linux = format!("{program}-linux-x86_64.tar.gz");
         std::fs::copy(get.join(tarball_of(program)), get.join(&linux)).unwrap();
@@ -923,7 +947,22 @@ async fn joining_places_the_groups_folder() {
 // child process alone: no socket, relay or QUIC (docs/CHECKS.md, X).
 
 /// The page these lines name. Never resolved: the `curl` stub answers it.
-const PAGE: &str = "http://page.test/";
+const PAGE: &str = "http://127.0.0.1:4000/";
+const PUBLISHER: &str = "https://github.com/alexsbryan/svrngs/releases/latest/download/";
+
+fn executable(path: &Path, text: &str) {
+    std::fs::write(path, text).unwrap();
+    std::fs::set_permissions(path, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+}
+
+fn publisher_key(stubs: &Path, accepted: bool) {
+    let fingerprint = if accepted {
+        "46B4D67C5E6621093BB1AB2B057BF9082AA03CFB"
+    } else {
+        "0000000000000000000000000000000000000000"
+    };
+    executable(&stubs.join("gpg"), &format!("#!/bin/sh\ncase \" $* \" in *' --verify '*) echo '[GNUPG:] VALIDSIG {fingerprint}' ;; esac\n"));
+}
 
 /// svrngs's stand-in: install.sh places, keeps and opens it. Run with
 /// nothing, as launchd and systemd run it, it waits to be stopped; `open`
@@ -963,7 +1002,11 @@ while [ $# -gt 0 ]; do
   case "$1" in -o) out="$2"; shift 2 ;; -*) shift ;; *) url="$1"; shift ;; esac
 done
 echo "$url" >>"$HOME/stubs/fetched"
-case "$url" in {PAGE}*) file="{}/${{url#{PAGE}}}" ;; *) exit 6 ;; esac
+case "$url" in
+    {PAGE}*) file="{0}/${{url#{PAGE}}}" ;;
+    {PUBLISHER}*) file="{0}/get/${{url#{PUBLISHER}}}" ;;
+    *) exit 6 ;;
+esac
 [ -f "$file" ] || exit 22
 if [ -n "$out" ]; then cp "$file" "$out"; else cat "$file"; fi
 "#,
@@ -980,6 +1023,9 @@ if [ -n "$out" ]; then cp "$file" "$out"; else cat "$file"; fi
         .env("HOME", home)
         .env("PATH", path)
         .env("USER", "Alex");
+    if !stubs.join("gpg").exists() {
+        publisher_key(&stubs, true);
+    }
     if let Some(shell) = shell {
         sh.env("SHELL", shell);
     }
@@ -1122,6 +1168,36 @@ fn sum_of(file: &Path) -> String {
     hex::encode(ring::digest::digest(&ring::digest::SHA256, &bytes))
 }
 
+#[test]
+fn default_install_takes_the_installer_and_archive_from_the_publisher_manifest() {
+    let site = stand_in_site(None);
+    let archive = tarball();
+    for accepted in [false, true] {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        publisher_key(&stubs(home.path(), None), accepted);
+        let out = line(site.path(), PAGE, "", home.path(), None, None);
+        assert_eq!(out.status.success(), accepted, "{out:?}");
+        if !accepted {
+            assert!(String::from_utf8_lossy(&out.stderr)
+                .contains("not signed by the svrngs release key"));
+        }
+        assert_eq!(
+            home.path().join(".local/bin/svrngs-keeper").is_file(),
+            accepted
+        );
+        let fetched = std::fs::read_to_string(home.path().join("stubs/fetched")).unwrap();
+        assert!(
+            fetched
+                .lines()
+                .skip(1)
+                .all(|url| url.starts_with(PUBLISHER)),
+            "{fetched}"
+        );
+        assert_eq!(fetched.contains(&format!("{PUBLISHER}{archive}")), accepted);
+    }
+}
+
 /// **A release someone checked is installed as given, and the page only
 /// joins** (svrn-docs MARKETPLACE_REVIEW_SVRNGS.md §1): the page serves
 /// another svrngs and Give's program, with sums that match them, as a page
@@ -1200,7 +1276,7 @@ fn install_sh_installs_the_archive_it_is_given_and_never_the_page_s() {
     );
     let fetched = std::fs::read_to_string(home.path().join("stubs/fetched")).unwrap();
     assert!(
-        fetched.contains(&format!("{PAGE}get/SHA256SUMS")),
+        fetched.contains(&format!("{PUBLISHER}SHA256SUMS")),
         "{fetched}"
     );
 }

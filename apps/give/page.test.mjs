@@ -978,7 +978,7 @@ test('Give’s install line names the page this computer’s group links are on,
     const theirs = 'https://links.example.org/our/house/';
     assert.equal(
       await row.locator('code').innerText(),
-      `curl -fsSL ${theirs}install.sh | sh -s -- '${theirs}' --give`,
+      `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '${theirs}' --give`,
     );
 
     // A svrngs from before give-page-host says no page: ours, as it was.
@@ -986,7 +986,7 @@ test('Give’s install line names the page this computer’s group links are on,
     const ours = 'https://group.svrnme.sh/';
     assert.equal(
       await row.locator('code').innerText(),
-      `curl -fsSL ${ours}install.sh | sh -s -- '${ours}' --give`,
+      `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '${ours}' --give`,
     );
     assert.ok(
       traced.some((t) => t.includes('as one before give-page-host')),

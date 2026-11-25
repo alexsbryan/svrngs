@@ -648,16 +648,16 @@ impl Db {
             self.prune(&tx, &file.tables).map_err(fault)?;
         }
         tx.commit().map_err(fault)?;
-        let faulted = out.iter().any(|(_, t)| *t == Took::Fault);
-        let first = call.full && call.synced && !faulted && !self.synced.swap(true, Relaxed);
+        // Readiness is for the page; the persisted bit is a sync protocol claim.
+        let has = |kind| out.iter().any(|(_, t)| *t == kind);
+        let deferred = has(Took::Fault) || has(Took::NotYet);
+        let first = call.full && call.synced && !has(Took::Fault) && !self.synced.swap(true, Relaxed);
         if first {
             let kept = conn.execute("UPDATE svrngs_db SET synced = 1", []);
             tracing::debug!(target: "state", group = self.group, app = self.app, kept = kept.is_ok(), "state: a copy's first full sync, so it is said syncing no more, and its pages told");
         }
-        if call.full || faulted {
-            self.faulted.store(faulted, Relaxed);
-        }
-        if first || took {
+        let readiness_changed = (call.full || deferred) && self.faulted.swap(deferred, Relaxed) != deferred;
+        if first || took || readiness_changed {
             self.changed.send_modify(|n| *n += 1);
         }
         Ok(out)

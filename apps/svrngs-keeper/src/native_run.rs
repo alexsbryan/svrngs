@@ -88,7 +88,8 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
             Outcome::Unverified { state, ready, .. } => {
                 let state = state.as_deref().unwrap_or("unknown");
                 bail!(
-                    "Couldn't verify {} is answering (state: {state}; port {port} ready: {ready}).",
+                    "{} was saved and can start again, but wasn't verified on port {port} (state: {state}; ready: {ready}). To turn it off, run svrngs-keeper stop {}.",
+                    name.as_str(),
                     name.as_str()
                 )
             }

@@ -3018,21 +3018,22 @@ is refused as before, and a browser svrngs never opened is refused by the
 home page in the same words.
 
 **A computer gets svrngs from the group's link.** On a computer the group's
-page gives one line to paste in a terminal, `curl -fsSL <page>install.sh |
+page gives one line to paste in a terminal, `curl -fsSL https://group.svrnme.sh/install.sh |
 sh -s -- '<link>'`, composed in the page from the link's `#` part, so the
-token reaches no server. The host that serves the page serves the rest
-beside it, so any host a group names serves it too: `install.sh` at the
-page's address, and under `get/` a tarball of `svrngs` and its sibling
+token reaches no server. The named invite page is used for joining and
+links. The publisher's HTTPS bootstrap verifies the release key's signature
+on a manifest that binds the installer and the tarballs it gives it. The
+group's page can mirror those signed releases under `get/` for updates. A
+release has a tarball of `svrngs` and its sibling
 `svrngs-keeper` for each platform
 built — macOS on Apple silicon and on Intel, Linux on x86_64 and aarch64 as
 static-pie musl binaries with full RELRO
 (`demo/runs/hardening/2026-11-18/`), cross-built by zig (cargo-zigbuild)
 on mimalloc, since the malloc of zig's musl kept what svrngs freed
-(`demo/runs/leak/2026-10-17/`) — beside one `SHA256SUMS`. Nothing is
-fetched from anywhere else. `install.sh`, POSIX `sh`:
+(`demo/runs/leak/2026-10-17/`) — beside one `SHA256SUMS`. `install.sh`, POSIX `sh`:
 - names the platform and refuses any other;
-- fetches the tarball and the sums from the address the link names, and
-  refuses a mismatch; or, given `--archive <file>` before the link or after
+- verifies the publisher's manifest with GnuPG and fetches matching bytes
+  from the project's GitHub releases; or, given `--archive <file>` before the link or after
   it (and `--give-archive <file>` with `--give`), installs that file as
   given and asks the page for no sums for it. Whoever already checked a
   release, from its signature, installs exactly that; the page then only
@@ -3091,12 +3092,13 @@ is signed after its commit, so its own signature passes, and a computer whose
 `release` is the hash alone, as `install.sh` leaves it, still takes nothing
 signed before the svrngs it runs. A missing, foreign or older signature is
 never offered: the home page says, where the offer would be, what stopped,
-why and the fix, and `svrngs update` says the same and exits 1. The install
-line checks no signature: it runs whatever the page serves, unless it is
-given a release already checked (`--archive`, above); pacman checks the
-release key itself (`packaging/arch`).
-`svrngs update` replaces only `svrngs`; paste the install line again to
-install or update both binaries together, or update via pacman if it owns them.
+why and the fix, and `svrngs update` says the same and exits 1. Pacman
+checks the release key itself (`packaging/arch`). The updater stages both
+executables before replacing either, installs Keeper first, and records the
+release after both replacements. The daemon's Keeper commands require the
+same release build, so an interrupted replacement can be retried without
+run or lifecycle commands crossing the version boundary. The 1.13.3 updater
+predates that rule: rerun the verified install line to cross that transition.
 
 *A computer that keeps apps* gets Give's program from the same line, with
 `--give` after the link or the page's address. The page host serves it

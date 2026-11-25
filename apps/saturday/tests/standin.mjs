@@ -349,6 +349,12 @@ export async function serve({ port = 0, host = '127.0.0.1', link = null } = {}) 
   const switches = { syncing: false, unreachable: false, refusing: null, unjoined: [] };
   /** Each open stream, to its query and the last answer it was sent. */
   const streams = new Map();
+  // Fedora's WebKit can hold the last bytes of an HTTP chunk until the next
+  // write. A separate SSE comment lets an idle stream deliver its last event.
+  const heartbeat = setInterval(() => {
+    for (const res of streams.keys()) res.write(': keep-alive\n\n');
+  }, 500);
+  heartbeat.unref();
   /** An answer as this copy gives it: `syncing: true` beside its rows while that switch is on. */
   const given = (answer) => {
     if (!answer.rows) return answer;
@@ -445,6 +451,7 @@ export async function serve({ port = 0, host = '127.0.0.1', link = null } = {}) 
       else await push();
     },
     stop() {
+      clearInterval(heartbeat);
       for (const server of servers) {
         server.close();
         server.closeAllConnections();

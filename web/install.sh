@@ -3,7 +3,7 @@
 # "A computer gets svrngs from the group's link"), the line the group's
 # page gives:
 #
-#   curl -fsSL <page>install.sh | sh -s -- '<link>' [--give] [--at '/#group-<id>'] [--as '<your name>']
+#   curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '<link>' [--give] [--at '/#group-<id>'] [--as '<your name>']
 #
 # (--give: Give's program too, for a computer that keeps apps for its
 # groups, the line Give's page gives with the page's address for the link;
@@ -12,12 +12,12 @@
 # or, for someone with no link yet, who makes a group on their home page
 # (start-group), the page's address where the link goes:
 #
-#   curl -fsSL <page>install.sh | sh -s -- '<page>'
+#   curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '<page>'
 #
 # or, for a relay (`svrngs relay`; DESIGN §3, "A relay anyone runs"), the
 # page's address where the link goes:
 #
-#   curl -fsSL <page>install.sh | sh -s -- '<page>' --relay <name> [--open]
+#   curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '<page>' --relay <name> [--open]
 #
 # or, for whoever already checked a release from its signature, with that
 # release's file, before the link or after it (--give-archive is Give's
@@ -27,11 +27,11 @@
 #
 # or, to take svrngs off this computer, `--uninstall` where the link goes:
 #
-#   curl -fsSL <page>install.sh | sh -s -- --uninstall
+#   curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- --uninstall
 #
-# It gets svrngs for this computer from the page's address the link names
-# (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, or
-# takes it from --archive's file as given, asking the page for no sums: a
+# The publisher's HTTPS bootstrap checks the signed release manifest before
+# it runs that release's installer or supplies either archive. It takes
+# --archive's file as given, without downloads: a
 # release checked by its signature supplies both svrngs and its keeper; the
 # page then only joins and is kept for links, so it cannot choose them. It puts
 # it in ~/.local/bin with no sudo, and on the PATH of the person's login
@@ -42,7 +42,7 @@
 # macOS, a systemd --user unit on Linux), puts an opener that runs
 # `svrngs open` in their Applications (a .desktop entry on Linux), and opens
 # their home page with it, a code that becomes its session there. With
-# --give it gets Give's program from the same page, checked by the same
+# --give it gets Give's program from the same release, checked by the same
 # sums before either is installed, puts it beside svrngs and keeps `give
 # keep` running at login too, waited for as it stops. Run
 # again, it updates in place, and svrngs joins nothing twice. With
@@ -97,7 +97,7 @@ if [ "${1:-}" = --at ]; then
   case "$destination" in /\#group-*) ;; *) no "the local group destination must start with /#group-." ;; esac
   shift 2
 fi
-from="${SVRNGS_FROM:-${link%%#*}}"
+from="${link%%#*}"
 if [ -z "$uninstall" ]; then
   case "$from" in http://* | https://*) ;; *) no "paste the whole line from your group's page, its link included: it says where svrngs comes from." ;; esac
   case "$from" in */) ;; *) from="$from/" ;; esac
@@ -188,31 +188,43 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
 sum=sha256sum && command -v sha256sum >/dev/null 2>&1 || sum="shasum -a 256"
-# Programs $3 onward, unpacked from the archive named by $3, its sum in $want:
-# from the file $1 when given, copied first so the bytes summed are
-# the bytes installed; else from the page's get/ (scripts/build-release.sh),
-# refused unless it is the one SHA256SUMS there lists.
+hash() { $sum "$tmp/$1" | cut -d' ' -f1; }
+listed() { awk -v f="$1" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS"; }
+if [ -z "$archive" ]; then
+  command -v gpg >/dev/null || no 'GnuPG (gpg) is needed to check releases. Install GnuPG, then run this line again.'
+  release=https://github.com/alexsbryan/svrngs/releases/latest/download/
+  take() { curl -fsSL --proto '=https' --proto-redir '=https' "$release$1" -o "$tmp/$1" || no "Could not download $1. Nothing was installed."; }
+  for asset in svrngs-release-key.asc SHA256SUMS.sig SHA256SUMS; do take "$asset"; done
+  mkdir -m 700 "$tmp/keys"
+  gpg --homedir "$tmp/keys" --batch --quiet --import "$tmp/svrngs-release-key.asc" || no 'Could not read the release key.'
+  signed=$(gpg --homedir "$tmp/keys" --batch --status-fd 1 --verify "$tmp/SHA256SUMS.sig" "$tmp/SHA256SUMS" 2>/dev/null) || no 'The release manifest has no valid signature. Nothing was installed.'
+  printf '%s\n' "$signed" | awk '$1 == "[GNUPG:]" && $2 == "VALIDSIG" && $3 == "46B4D67C5E6621093BB1AB2B057BF9082AA03CFB" { ok=1 } END { exit !ok }' || no 'The manifest was not signed by the svrngs release key. Nothing was installed.'
+  verified() {
+    take "$1"
+    want=$(listed "$1")
+    [ -n "$want" ] && [ "$(hash "$1")" = "$want" ] || no "$1 is not the one the release lists, so it was refused and nothing was installed."
+    say "Checked: $1 is the one the release lists, unchanged on its way here."
+  }
+  verified install.sh
+  verified "svrngs-$os-$arch.tar.gz"
+  [ -z "$relay" ] || set -- --relay "$relay" "$@"
+  [ "$destination" = / ] || set -- --at "$destination" "$@"
+  if [ -n "$give" ]; then
+    if [ -z "$give_archive" ]; then verified "give-$os-$arch.tar.gz"; give_archive="$tmp/give-$os-$arch.tar.gz"; fi
+    set -- --give --give-archive "$give_archive" "$@"
+  fi
+  sh "$tmp/install.sh" --archive "$tmp/svrngs-$os-$arch.tar.gz" "$link" "$@"
+  exit
+fi
+# Copy an explicit archive first, so the bytes summed are the bytes installed.
 get() {
   file=$1 flag=$2 program=$3; shift 2
   tarball="$program-$os-$arch.tar.gz"
-  if [ -n "$file" ]; then
-    [ -f "$file" ] && [ -r "$file" ] && cp -- "$file" "$tmp/$tarball" ||
-      no "$file is not a file you can read, so nothing was installed: give --${flag}archive the release you checked."
-    say "Using $program from $file, the file you gave, in place of the page's."
-    want="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
-  else
-    [ -f "$tmp/SHA256SUMS" ] || curl -fsSL "${from}get/SHA256SUMS" -o "$tmp/SHA256SUMS" ||
-      no "could not get ${from}get/SHA256SUMS to check it against, so nothing was installed."
-    say "Getting $program for this computer from ${from}get/$tarball"
-    curl -fsSL "${from}get/$tarball" -o "$tmp/$tarball" ||
-      no "could not get ${from}get/$tarball, so nothing was installed."
-    want="$(awk -v f="$tarball" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS")"
-    got="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
-    [ -n "$want" ] && [ "$got" = "$want" ] ||
-      no "$tarball is not the one the release lists, so it was refused and nothing was installed."
-    say "Checked: $tarball is the one the release lists, unchanged on its way here."
-  fi
-  (cd "$tmp" && tar -xzf "$tarball" "$@" && chmod 755 "$@") ||
+  [ -f "$file" ] && [ -r "$file" ] && cp -- "$file" "$tmp/$tarball" ||
+    no "$file is not a file you can read, so nothing was installed: give --${flag}archive the release you checked."
+  say "Using $program from $file, the file you gave, in place of the page's."
+  want=$(hash "$tarball")
+  (cd "$tmp" && tar -xzf "$tarball" "$@" && for member do [ -f "$member" ] && [ ! -L "$member" ] && chmod 755 "$member" || exit 1; done) ||
     no "${file:-$tarball} must hold each of these programs: $*. Nothing was installed."
 }
 # Every archive is checked before anything is installed.
@@ -233,10 +245,11 @@ mkdir -p "$bin" "$dir"
 printf '%s' "$from" >"$dir/origin"
 put() {
   if [ -e "$bin/$1" ]; then done="Updated"; else done="Installed"; fi
-  mv -f "$tmp/$1" "$bin/$1" && { [ "$1" = svrngs-keeper ] || say "$done $1 in $bin."; }
+  [ ! -d "$bin/$1" ] && mv -f "$tmp/$1" "$bin/$1" || no "Could not install $1 in $bin. Run the verified installer again to repair the pair."
+  [ "$1" = svrngs-keeper ] || say "$done $1 in $bin."
 }
-put svrngs
 put svrngs-keeper
+put svrngs
 # What this computer installed, for the home page's update (svrngs-node
 # update.rs `RELEASE_FILE`; tests/install.rs reads it by that constant).
 printf '%s' "$svrngs_sum" >"$dir/release"

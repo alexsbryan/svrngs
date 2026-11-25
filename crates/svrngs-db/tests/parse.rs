@@ -292,7 +292,7 @@ fn a_change_its_table_cannot_hold_is_refused_for_good_and_fetched_once() {
 
 /// **A set written under a schema this copy doesn't hold, naming what it
 /// lacks, is dropped and sent again** (`Took::NotYet`), as a set of a key
-/// the record doesn't bind yet is, and is no fault: a set a newer version
+/// the record doesn't bind yet is, and the copy is still syncing: a set a newer version
 /// wrote, naming a column that version added. Nothing of it is kept or
 /// counted, so this copy's mark for its site doesn't move, and a call by
 /// marks sends it again once this copy takes the wider schema
@@ -313,7 +313,8 @@ fn a_set_under_a_schema_this_copy_does_not_hold_is_dropped_and_sent_again() {
         (note.cid, note.val, note.seq) = ("note".into(), Val::Text("buy two".into()), note.seq + 1);
         c.push(note);
     });
-    let b = db(&dir.path().join("b"), 2, ("board", CARDS));
+    let states = States::new(&dir.path().join("b"), key(2));
+    let b = states.open("g", "board", Some(CARDS)).unwrap();
     let call = |set: &Set| Call {
         sets: vec![set.clone()],
         full: true,
@@ -321,9 +322,13 @@ fn a_set_under_a_schema_this_copy_does_not_hold_is_dropped_and_sent_again() {
         ..Default::default()
     };
     assert_eq!(b.ingest(&call(&noted), &bound(), None).unwrap()[0].1, Took::NotYet);
-    assert!(!b.syncing(), "a set that waits is no fault");
+    assert!(b.syncing(), "a full reply that deferred a set isn't a complete sync");
     assert_eq!(rows(&b, "SELECT * FROM cards"), json!([]));
     assert!(b.ask().unwrap().marks.is_empty(), "its site's mark moved");
+    states.widen(&b, WIDER).unwrap();
+    assert_eq!(b.ingest(&call(&noted), &bound(), None).unwrap()[0].1, Took::Taken);
+    assert!(!b.syncing(), "the complete exchange now includes the deferred row");
+    assert_eq!(rows(&b, "SELECT note FROM cards"), json!([{ "note": "buy two" }]));
     let older = written(&dir.path().join("older"), ("board", CARDS), card("c2", "eggs"));
     let w = db(&dir.path().join("w"), 3, ("board", WIDER));
     assert_eq!(w.ingest(&call(&older), &bound(), None).unwrap()[0].1, Took::Taken);

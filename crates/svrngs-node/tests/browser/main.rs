@@ -1689,7 +1689,8 @@ async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine:
     )
     .await;
     let origin = seen["origin"].as_str().unwrap();
-    let line = format!("curl -fsSL {origin}install.sh | sh -s -- '{origin}#{token}'");
+    let line =
+        format!("curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '{origin}#{token}'");
     let computer = &seen["computer"];
     assert_eq!(computer["offered"], true, "{computer:#}");
     assert_eq!(computer["line"], line, "{computer:#}");

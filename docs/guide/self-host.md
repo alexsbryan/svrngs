@@ -31,8 +31,10 @@ except `/sign.html`, which needs `frame-ancestors https:`.
 
 Add `--origin https://<your host>/` to `svrngs new`, or change the origin of
 an existing group with `svrngs link <group> --origin https://<your host>/`.
-To use the one-line installer, use your host in both places in the
-[install command](start.md#start-a-group-on-your-computer).
+To install the publisher's release, put your host only in the argument to
+the [install command](start.md#start-a-group-on-your-computer). It still
+loads the bootstrap from `group.svrnme.sh`. For a build of your own, pass
+your checked archive to your locally built `install.sh` with `--archive`.
 
 ## Replace the default relay in your build
 

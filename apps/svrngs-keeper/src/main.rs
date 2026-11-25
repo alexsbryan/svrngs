@@ -49,7 +49,17 @@ fn main() -> ExitCode {
         .with_writer(std::io::stderr)
         .init();
     let args: Vec<String> = std::env::args().skip(1).collect();
-    match run(&args) {
+    let args = match args.as_slice() {
+        [flag, build, rest @ ..] if flag == "--for-svrngs" => {
+            if build != option_env!("SVRNGS_COMMIT").unwrap_or("dev") {
+                eprintln!("Keeper is from a different svrngs build.");
+                return ExitCode::from(78);
+            }
+            rest
+        }
+        args => args,
+    };
+    match run(args) {
         Ok(()) => ExitCode::SUCCESS,
         Err(why) => {
             eprintln!("svrngs-keeper: {why:#}\n\n{USAGE}");

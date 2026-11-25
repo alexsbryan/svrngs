@@ -849,19 +849,23 @@ fn restart_asked() -> String {
 /// What keeps svrngs running at login in `home` runs it over `dir`, as
 /// install.sh writes its LaunchAgent or systemd unit.
 fn kept_by_login(home: &Path, dir: &Path) {
-    let (unit, said) = match cfg!(target_os = "macos") {
-        true => (
-            "Library/LaunchAgents/sh.svrnme.svrngs.plist",
-            format!("<key>SVRNGS_DIR</key><string>{}</string>", dir.display()),
-        ),
-        false => (
-            ".config/systemd/user/svrngs.service",
-            format!("[Service]\nEnvironment=SVRNGS_DIR={}\n", dir.display()),
-        ),
-    };
-    let unit = home.join(unit);
+    #[cfg(target_os = "macos")]
+    let unit = home.join("Library/LaunchAgents/sh.svrnme.svrngs.plist");
+    #[cfg(not(target_os = "macos"))]
+    let unit = home.join(".config/systemd/user/svrngs.service");
     std::fs::create_dir_all(unit.parent().unwrap()).unwrap();
-    std::fs::write(unit, said).unwrap();
+    #[cfg(target_os = "macos")]
+    plist::to_file_xml(
+        &unit,
+        &serde_json::json!({"EnvironmentVariables": {"SVRNGS_DIR": dir}}),
+    )
+    .unwrap();
+    #[cfg(not(target_os = "macos"))]
+    std::fs::write(
+        unit,
+        format!("[Service]\nEnvironment=SVRNGS_DIR={}\n", dir.display()),
+    )
+    .unwrap();
 }
 
 /// **An older svrngs is restarted once into this one, and then asked**

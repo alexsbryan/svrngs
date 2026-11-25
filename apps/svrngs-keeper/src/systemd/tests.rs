@@ -118,8 +118,10 @@ fn stand_ins(dir: &Path) -> SystemdUser {
             "#!/bin/sh\necho \"$@\" >> {log}\n\
              if [ \"$2\" = is-enabled ]; then\n\
                if grep -q \"^--user enable.* $3\\$\" {log}; then echo enabled; else echo disabled; fi\n\
+             elif [ \"$2\" = show ]; then\n\
+               printf 'LoadState=loaded\nFragmentPath=%s\nNeedDaemonReload=no\n' '{dir}/user/x.service'\n\
              fi\nexit 0\n",
-            log = log.display()
+            log = log.display(), dir = dir.display()
         ),
     )
     .unwrap();
@@ -161,7 +163,7 @@ fn an_installed_unit_is_written_reloaded_and_enabled() {
     let lines: Vec<&str> = argv.lines().collect();
     assert_eq!(
         &lines[1..],
-        ["--user daemon-reload", "--user enable x.service"],
+        ["--user daemon-reload", "--user show x.service -p LoadState,FragmentPath,DropInPaths,NeedDaemonReload,ActiveState", "--user enable x.service"],
         "reload before enable, and no --now when not asked: {argv}"
     );
     assert_eq!(systemd.state("x.service"), UnitState::Enabled);

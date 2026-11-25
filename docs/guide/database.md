@@ -117,8 +117,10 @@ Keep a longer value in parts, a row each in a table keyed by `(id, n)`, or
 lend a program that keeps its own files. Name the columns you want, rather
 than `SELECT *`.
 
-`syncing: true` means this computer's copy hasn't synced with another
-computer of the group yet. Say "still syncing" then, never an empty board.
+`syncing: true` means this computer hasn't completed an exchange with a
+synced copy, or an exchange deferred changes it couldn't yet apply. Say
+"still syncing" then, never an empty board. `false` does not promise there
+are no newer writes elsewhere.
 
 To keep a view current, subscribe. Each event is a read's answer, now and
 again each time the rows change, `syncing: true` beside its rows while this

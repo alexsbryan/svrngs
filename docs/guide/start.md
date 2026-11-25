@@ -8,14 +8,19 @@ takes a few minutes. [How it works](how-it-works.md) explains the ideas.
 
 ## Start a group on your computer
 
-On a Mac or a Linux computer, open Terminal (on a Mac: Applications, then
-Utilities), paste this line, and press Enter:
+On a Mac or Linux computer with GnuPG (`gpg`) installed, open Terminal
+(on a Mac: Applications, then Utilities), paste this line, and press Enter:
 
 ```
 curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/'
 ```
 
 The same line is on `https://group.svrnme.sh/`, with a **Copy** button.
+The first script comes from `group.svrnme.sh` over HTTPS. It checks the
+publisher's signature on a manifest covering the release installer and the
+archive containing svrngs and Keeper. The invite does not choose either of
+them. To verify the installer before running any downloaded script, see
+[Signed releases](../../RELEASES.md#signed-releases).
 That page also says, in red, *"Open this page from your group’s link."*:
 that's for phones. On a computer, the line is all you need.
 
@@ -23,8 +28,6 @@ Within a few seconds it says something like this (your name, chip and
 number differ):
 
 ```
-Getting svrngs for this computer from https://group.svrnme.sh/get/svrngs-darwin-aarch64.tar.gz
-Checked: svrngs-darwin-aarch64.tar.gz is the one the release lists, unchanged on its way here.
 Installed svrngs in /Users/sam/.local/bin.
 Added /Users/sam/.local/bin to where your terminal looks for programs, in /Users/sam/.zshrc. Open a new terminal window, and svrngs runs there by name.
 svrngs runs now, and whenever you log in (/Users/sam/Library/LaunchAgents/sh.svrnme.svrngs.plist).

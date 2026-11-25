@@ -97,6 +97,7 @@ impl SystemdUser {
             let stderr = String::from_utf8_lossy(&out.stderr);
             return Err(format!("systemctl daemon-reload failed: {}", stderr.trim()));
         }
+        self.owns(unit.name, unit.path)?;
         let out = self.systemctl(&enable_argv(unit.name, start_now))?;
         if !out.status.success() {
             let stderr = String::from_utf8_lossy(&out.stderr);
@@ -111,10 +112,9 @@ impl SystemdUser {
         if !path.exists() {
             return Ok(());
         }
-        let _ = self.systemctl(&["--user", "disable", "--now", name]);
+        self.ctl(&["--user", "disable", "--now", name])?;
         std::fs::remove_file(path).map_err(|e| format!("remove {}: {e}", path.display()))?;
-        let _ = self.systemctl(&["--user", "daemon-reload"]);
-        Ok(())
+        self.ctl(&["--user", "daemon-reload"])
     }
 
     /// Whether the manager starts `name` at boot.
@@ -150,6 +150,26 @@ impl SystemdUser {
             return Err(format!("systemctl --user show {name} failed: {}", stderr.trim()));
         }
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+
+    /// The user manager must be using this fragment without app overrides.
+    pub(crate) fn owns(&self, unit: &str, path: &Path) -> Result<String, String> {
+        let shown = self.show(unit, &["LoadState", "FragmentPath", "DropInPaths", "NeedDaemonReload", "ActiveState"])?;
+        let field = |key| shown.lines().filter_map(|line| line.split_once('=')).find_map(|(k, v)| (k == key).then_some(v));
+        let matches = || {
+            let actual = Path::new(field("FragmentPath")?).canonicalize().ok()?;
+            Some(actual == path.canonicalize().ok()?)
+        };
+        let drop_ins = field("DropInPaths").unwrap_or_default();
+        let ours = field("LoadState") == Some("loaded")
+            && field("NeedDaemonReload") == Some("no")
+            && drop_ins.split_whitespace().all(stock_timeout)
+            && matches() == Some(true);
+        tracing::debug!(unit, ours, fragment = field("FragmentPath"), drop_ins, "systemd: judged the loaded setup before a lifecycle change");
+        if !ours {
+            return Err(format!("{unit} is not loaded from the saved setup without overrides; nothing started or stopped"));
+        }
+        Ok(field("ActiveState").unwrap_or_default().into())
     }
 
     /// Whether this user's manager outlives their sessions, so what it
@@ -218,6 +238,17 @@ impl SystemdUser {
             ),
         }
     }
+}
+
+fn stock_timeout(file: &str) -> bool {
+    // Fedora's systemd package applies this stop-timeout default to all
+    // user services. It has no say over the command or its environment.
+    file == "/usr/lib/systemd/user/service.d/10-timeout-abort.conf"
+        && std::fs::symlink_metadata(file).is_ok_and(|m| m.is_file())
+        && std::fs::read_to_string(file).is_ok_and(|text| {
+            text.lines().map(str::trim).filter(|line| !line.is_empty() && !line.starts_with('#'))
+                .eq(["[Service]", "TimeoutStopFailureMode=abort"])
+        })
 }
 
 /// `systemctl --user enable [--now] <name>`.

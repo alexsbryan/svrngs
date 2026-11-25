@@ -82,7 +82,7 @@ impl Action {
 }
 
 pub(super) fn run_form(rows: Vec<serde_json::Value>) -> serde_json::Value {
-    serde_json::json!({ "run": RUN, "fields": [["name", "Name"], ["port", "Port"], ["folder", "Folder"], ["command", "The command you start it with"]], "starting": STARTING, "rows": rows })
+    serde_json::json!({ "run": RUN, "fields": [["name", "Name"], ["port", "Port"], ["folder", "Folder"], ["command", "What to run as you and start again at login"]], "starting": STARTING, "rows": rows })
 }
 
 impl Plan<'_> {
@@ -121,7 +121,7 @@ impl Plan<'_> {
         });
         let (impact, button) = match self.method {
             Method::Reuse(job) => (
-                format!("Shared from your service {job}. It stays shared when the service starts again."),
+                format!("Trust your service {job} to answer after a restart. The share can follow it even if the program at the same path is replaced."),
                 format!("Share {name}"),
             ),
             Method::ThisRun => (
@@ -180,7 +180,7 @@ pub(super) fn started(name: &str, view: RunView, started: Started) -> Result<Str
             RunView::Page => "To share it, find it under Already running here.".into(),
             RunView::Terminal => format!("To share it: `svrngs share {port} --program <program> --name {name} --group <group>`."),
         })),
-        Unverified { state, ready } => Err(format!("Not shared; svrngs couldn't verify {name} is answering. Reported state: {}. The port {}.",
+        Unverified { state, ready } => Err(format!("{name}'s setup was saved and can start again. Nothing was shared. To turn it off, choose Stop. Reported state: {}. The port {}.",
             state.as_deref().unwrap_or("unknown"), if ready { "answered" } else { "wasn't ready" })),
         Busy { why } => Err(why),
     }

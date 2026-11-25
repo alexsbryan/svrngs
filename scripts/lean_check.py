@@ -42,7 +42,7 @@ PLAN_IO = re.compile(
 # O3: app jobs are read here; only the executor may start the keeper. The
 # command's own restart is outside the node and acts on svrngs itself.
 NODE_COMMAND = {
-    "plan/run.rs": 'Command::new(at.with_file_name("svrngs-keeper"))',
+    "plan/run.rs": 'Command::new(at.with_file_name(KEEPER))',
     "job.rs": 'Command::new("/usr/bin/systemctl").args(["--user","show","-p",asked,"--",unit])',
     "job/mac.rs": ('Command::new("/bin/launchctl").args(["print",&target])',
                    'Command::new("/bin/launchctl").args(["print-disabled",&domain])'),
@@ -1155,10 +1155,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Merge the already approved +55 (f6581f34, 15f458cf): a lend withdrawn by
 # any path is turned off for the room first, so one lent again under its name
 # starts off the WiFi. Its pass cut one line from the lock read in `withdrawn`.
+# The operator approved +26 for the delivery and security patch. The pass
+# removed the unsigned loopback download path and its temporary server in
+# deploy-relay.sh. The remaining lines verify the publisher manifest in
+# install.sh, pair Keeper with the daemon build in plan/run.rs, and keep
+# deferred database changes from being reported as synced in sync.rs.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 28646,
+    ".": 28672,
 
     "js": 8796,
 

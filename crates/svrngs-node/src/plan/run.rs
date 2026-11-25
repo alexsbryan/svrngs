@@ -13,6 +13,8 @@ use crate::{
 };
 use std::{collections::BTreeSet, path::Path, process::Stdio};
 
+pub(crate) const KEEPER: &str = "svrngs-keeper";
+
 /// Run is local only; it takes no share witness or access terms.
 pub async fn native<'a>(
     name: &'a str,
@@ -32,13 +34,19 @@ pub(crate) async fn keeper<'a>(
         return Err(RUN_UNREAD.into());
     }
     let at = std::env::current_exe().map_err(|_| RUN_UNREAD)?;
-    let mut child = tokio::process::Command::new(at.with_file_name("svrngs-keeper"));
+    let mut child = tokio::process::Command::new(at.with_file_name(KEEPER));
     let (stdin, stderr) = match view {
         RunView::Terminal => (Stdio::inherit(), Stdio::inherit()),
         RunView::Page => (Stdio::null(), Stdio::piped()),
     };
     child.stdin(stdin).stdout(Stdio::piped()).stderr(stderr);
-    child.args(args).kill_on_drop(true);
+    child
+        .args([
+            "--for-svrngs",
+            option_env!("SVRNGS_COMMIT").unwrap_or("dev"),
+        ])
+        .args(args)
+        .kill_on_drop(true);
     let answer = tokio::time::timeout(std::time::Duration::from_secs(90), async {
         child.spawn()?.wait_with_output().await
     })
@@ -46,6 +54,8 @@ pub(crate) async fn keeper<'a>(
     tracing::debug!(target: "plan", ?view, status = ?answer.as_ref().map(|out| out.as_ref().map(|o| o.status)), "plan: keeper answered");
     match answer {
         Ok(Ok(out)) if out.status.success() => Ok(out.stdout),
+        Ok(Err(e)) if e.kind() == std::io::ErrorKind::NotFound => Err("Keeper is missing. Run the verified svrngs installer again to install both programs.".into()),
+        Ok(Ok(out)) if out.status.code() == Some(78) => Err("Keeper is from a different build. Run the verified svrngs installer again to install both programs.".into()),
         _ => Err(RUN_UNREAD.into()),
     }
 }

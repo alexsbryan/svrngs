@@ -79,14 +79,11 @@ test('Ana on a computer and Bo on a phone plan one Saturday', async () => {
     });
     await bo.plan('Picnic').getByRole('button', { name: 'Vote for this' }).tap();
     await ana.reads('Picnic', total(1));
-    assert.equal(
-      await bo
-        .plan('Picnic')
-        .getByRole('button', { name: 'Vote for this' })
-        .getAttribute('aria-pressed'),
-      'true',
-      'Bo’s vote is shown pressed to Bo',
-    );
+    // Ana's total and Bo's selected state arrive on independent streams.
+    await bo
+      .plan('Picnic')
+      .getByRole('button', { name: 'Vote for this', pressed: true })
+      .waitFor(WAIT);
     assert.equal(
       await ana
         .plan('Picnic')
