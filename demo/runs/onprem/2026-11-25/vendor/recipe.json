@@ -1,0 +1,24 @@
+{
+  "service": "notes-to-forms",
+  "version": "0.1.0",
+  "says": "Acme Notes-to-Forms",
+  "params": {
+    "port": { "type": "port", "default": 8610, "choices": [8610, 8611, 8612] },
+    "data": { "type": "dir", "default": "/srv/notes-to-forms" }
+  },
+  "needs": [
+    { "probe": "systemd", "says": "systemd keeps services running" },
+    { "probe": "memory", "min_gb": 2, "says": "at least 2 GB of memory" },
+    { "probe": "disk_free", "at": "{data}", "min_gb": 1, "says": "at least 1 GB free where the service keeps its data" },
+    { "probe": "port_free", "port": "{port}", "says": "its port is free" },
+    { "probe": "disk_encrypted", "at": "{data}", "severity": "warn", "says": "the disk under its data is encrypted" }
+  ],
+  "artifacts": [],
+  "steps": [
+    { "do": "user", "name": "notes", "says": "Make an account for the service, which can't sign in" },
+    { "do": "dir", "path": "{data}/state", "mode": "0700", "owner": "notes", "says": "Make the folder it keeps its data in, readable only by it" },
+    { "do": "unpack", "artifact": "service.tar.gz", "to": "{data}/app", "says": "Unpack the service, checked against the vendor's signature" },
+    { "do": "unit", "name": "notes-to-forms", "user": "notes", "exec": ["/usr/bin/python3", "{data}/app/server.py", "--port", "{port}", "--state", "{data}/state"], "writes": ["{data}/state"], "says": "Run it as that account, kept running by systemd, and started at boot" },
+    { "do": "health", "url": "http://127.0.0.1:{port}/health", "expect": { "service": "notes-to-forms", "version": "{version}" }, "within_s": 15, "says": "Check it answers on its port" }
+  ]
+}
