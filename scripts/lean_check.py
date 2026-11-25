@@ -1171,12 +1171,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # The Mac keep (2026-11-25): +7 for one decider and the Mac approval, past -13 cut (the Run button's if, /run's starting): 28,672; the offer reads /lent alone: 8,880.
 # The operator approved +4 (2026-11-25) for approve's `keep: true`, refused unless svrngs keeps what answers, so the page approves nothing the person didn't see but svrngs's own job. Its pass cut 1 (the route's `named`); nothing else in the touched files was needless. 28,676; the page's guess goes, JS 8,873.
 # The found row's lend said in fewer words (2026-11-25): the review alone, its sends and kept-back paths as data for the page's Details, no terms-first step (home.rs `drawn` gone): 28,655; the drawn message one patch, the lend's row opened by its focus: JS 8,871.
+# Its review shows its groups' own rows, by whom, in Details (2026-11-25): +6 paid by cutting needless lines in lend_one (the groups' names, the name-taken check) and LEND's two let-go patches made one: 28,649; JS 8,865.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 28656,
+    ".": 28650,
 
-    "js": 8872,
+    "js": 8866,
 
     "swift": 1,
 }

@@ -1864,7 +1864,11 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
         (200, Some(drawn)),
         "{first}"
     );
-    assert_eq!(first["keeps"], serde_json::json!(["/admin"]), "{first}");
+    assert_eq!(
+        first["details"]["keeps"],
+        serde_json::json!(["/admin"]),
+        "{first}"
+    );
     assert!(
         first["token"].is_string(),
         "the first press reviews it: {first}"
@@ -1921,8 +1925,11 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
 /// Ben's `programs/notes.txt` says notes takes a key in `x-notes-key`; Ana's
 /// lend of notes to films is then listed by her home page as read with a
 /// key, said as Ben wrote it in films; once Ben writes a row no file may
-/// hold, the lend says why in its place, and what to do. Planted, watched
-/// failing: `/lent` reading svrngs's terms alone (notes takes no key).
+/// hold, the lend says why in its place, and what to do. Before the yes,
+/// the review gives those rows and who wrote them for the page's Details
+/// (CONTRACTS §2, "The terms kept are the terms shown"). Planted, each
+/// watched failing: `/lent` reading svrngs's terms alone (notes takes no
+/// key); the review drawing no `rows`.
 #[tokio::test]
 async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
     let group = Group::new().await;
@@ -1937,9 +1944,17 @@ async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
     );
     let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = running.local_addr().unwrap().port();
-    let asked = serde_json::json!({ "port": port, "name": "notes", "kind": "notes", "groups": [seed("films", 9).id()], "terms": terms });
+    let asked = serde_json::json!({ "port": port, "name": "notes", "kind": "notes", "groups": [seed("films", 9).id()], "terms": null });
     let (status, review) = lend_from_the_page(&group.ana, asked.clone(), None).await;
     assert_eq!((status, review["terms"].as_str()), (200, Some(terms)));
+    assert_eq!(
+        (&review["details"]["rows"], &review["details"]["by"]),
+        (
+            &serde_json::json!(["readers: key x-notes-key", "accounts: Settings, Keys, New"]),
+            &serde_json::json!(", as ben wrote in films's programs/notes.txt")
+        ),
+        "{review}"
+    );
     let (status, lent) = lend_from_the_page(&group.ana, asked, Some(&review)).await;
     assert_eq!(status, 200, "{lent}");
     let lent = || {
@@ -1995,12 +2010,12 @@ async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
         "{first}"
     );
     assert_eq!(
-        first["sends"],
+        first["details"]["sends"],
         serde_json::json!(["/v1/embeddings"]),
         "{first}"
     );
     assert!(
-        (first["keeps"].as_array()).is_some_and(|k| k.contains(&"/slots".into())),
+        (first["details"]["keeps"].as_array()).is_some_and(|k| k.contains(&"/slots".into())),
         "{first}"
     );
     let sends = || {

@@ -6,7 +6,8 @@
 // group chosen the lend is refused, so joining a group later never widens
 // it. The first press reviews it and lends nothing: who can use it and
 // when, a line when its terms (svrngs's, and its groups' programs/<word>.txt)
-// let apps send to it, and the paths of each for the row's Details. The next,
+// let apps send to it, and for the row's Details the paths of each and its
+// groups' own rows besides, by whom, so each row kept is shown. The next,
 // Yes, lend it, posts back the terms text and the review's token, so the lend
 // keeps what was drawn, not the file as it is then (home.rs `lend_one`;
 // CONTRACTS §6.8). A tick or a word typed lets them go, to be read again. A
@@ -36,9 +37,14 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * @property {number | null} [pid] the process the look showed on the port
  * @property {number | null} [start] its start, so one that changed since is refused
  * @property {string} [terms] the text of its groups' own terms, drawn
- * @property {{ token: string, keeps: string[], sends: string[] }} [review] its
- *   token, and the paths svrngs keeps back and apps may send to by its terms
+ * @property {{ token: string } & Paths} [review] its token, and what its Details say
  * @property {Shown} [l]
+ */
+
+/**
+ * What a review's Details say: the paths svrngs keeps back and apps may send
+ * to by its terms, and its terms' other rows, with who wrote them (`by`).
+ * @typedef {{ keeps: string[], sends: string[], rows?: string[], by?: string }} Paths
  */
 
 /**
@@ -62,6 +68,8 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  *   | { run: 'again', failed: 'told' }} Effect
  */
 
+// A lend's review, let go when a word is typed or a tick changes.
+const UNSAID = { said: '', terms: undefined, review: undefined };
 // Said under a review whose terms let apps send to it.
 const SENDS = 'Apps your friends open can also send it requests, each after that friend says yes.';
 
@@ -81,10 +89,10 @@ export const LEND = (home) => ({
               type: 'drawn',
               drawn: {
                 terms: lend.terms,
-                said: [lend.said, lend.review.promise, lend.sends.length > 0 && SENDS]
+                said: [lend.said, lend.review.promise, lend.details.sends.length > 0 && SENDS]
                   .filter(Boolean)
                   .join(' '),
-                review: { token: lend.token, keeps: lend.keeps, sends: lend.sends },
+                review: { token: lend.token, ...lend.details },
               },
             },
       ),
@@ -93,17 +101,9 @@ export const LEND = (home) => ({
   step: (state, message) => {
     switch (message.type) {
       case 'typed':
-        return go(
-          state,
-          {},
-          { [message.field]: message.value, said: '', terms: undefined, review: undefined },
-        );
+        return go(state, {}, { [message.field]: message.value, ...UNSAID });
       case 'choose':
-        return go(
-          state,
-          {},
-          { groups: chosen(state.groups, message), said: '', terms: undefined, review: undefined },
-        );
+        return go(state, {}, { groups: chosen(state.groups, message), ...UNSAID });
       case 'lend':
         if (state.at.lend === 'lending')
           return no(state, 'a lend is under way, and is answered first');

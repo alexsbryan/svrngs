@@ -253,7 +253,9 @@ const changing = (held, routes) =>
 // "What you lend"). Its first press reviews it: the button is then Yes,
 // lend it, never the review's own label, beside who can use it and when
 // and, its terms letting apps send, one line that says so, the paths under
-// Details; the second posts its terms and token back. Lent, the row says to
+// Details with its group's own rows and who wrote them, so a readers: row
+// kept is a row shown before the yes; the second posts its terms and token
+// back. Lent, the row says to
 // whom, and the lend's row under What you lend opens and takes the focus.
 test('a lend from what runs here is in the index and in What you lend at once', async () => {
   const port = 21000;
@@ -264,6 +266,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
     origin: 'http://notes0lbl.localhost:4000/',
   });
   const posted = [];
+  const terms = '- notes readers: key x-notes-key\n';
   const at = await home({
     ...ada(),
     ...changing(
@@ -279,10 +282,14 @@ test('a lend from what runs here is in the index and in What you lend at once', 
           posted.push(body);
           return {
             token: 'reviewed',
-            terms: '',
+            terms,
             review: { promise: 'house can use it while it’s running.', button: 'Share this run' },
-            sends: ['/v1/embeddings'],
-            keeps: ['/slots'],
+            details: {
+              sends: ['/v1/embeddings'],
+              keeps: ['/slots'],
+              rows: ['readers: key x-notes-key'],
+              by: ', as ben wrote in house’s programs/notes.txt',
+            },
           };
         },
         'POST /running/confirm': (held, body) => {
@@ -315,6 +322,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
     'Details',
     'Apps can send requests to /v1/embeddings.',
     'Kept private: /slots.',
+    'Your group’s terms, as ben wrote in house’s programs/notes.txt: readers: key x-notes-key.',
   ]);
   assert.equal(posted.length, 1);
   assert.deepEqual(at.text('#lent > p'), ['You lend nothing yet.']);
@@ -326,7 +334,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
       name: 'notes',
       kind: 'notes',
       groups: ['house'],
-      terms: '',
+      terms,
       pid: null,
       start: null,
       token: 'reviewed',

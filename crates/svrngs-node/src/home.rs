@@ -874,10 +874,10 @@ async fn lend_one(
     let showed =
         |why| format!("The terms this page showed can't be kept: {why}. Look again, then lend it.");
     let terms = match terms {
-        Some(drawn) => share::fits(&word, &drawn).map(|()| drawn).map_err(showed),
-        None => (at.door.folders.agreed(&groups, &word).await).map(|(text, _)| text),
+        Some(drawn) => (share::fits(&word, &drawn).map_err(showed)).map(|()| (drawn, "".into())),
+        None => at.door.folders.agreed(&groups, &word).await,
     };
-    let terms = terms.map_err(|why| refused(&why, &"its groups' own terms"))?;
+    let (terms, by) = terms.map_err(|why| refused(&why, &"its groups' own terms"))?;
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
@@ -890,14 +890,10 @@ async fn lend_one(
     let pid = crate::surface::process(pid, start)?;
     let read = (at.host.transport).answering(Raw::Tcp, port.get(), pid.map(|p| p.pid));
     let wire = read.await;
+    let called = |id: &str| crate::surface::seed_of(&at, id).map(|s| s.name().to_string());
     let groups = groups
         .into_iter()
-        .map(|id| {
-            let name = crate::surface::seed_of(&at, &id)
-                .map_or_else(|| id.clone(), |s| s.name().to_string());
-            (id, name)
-        })
-        .collect();
+        .map(|id| (id.clone(), called(&id).unwrap_or(id)));
     let intent = run::Share {
         dir,
         lend: &lend,
@@ -905,7 +901,7 @@ async fn lend_one(
         replace: false,
         contract: &terms,
         terms: plan::Terms {
-            groups,
+            groups: groups.collect(),
             limit: None,
             availability: Availability::Keep,
         },
@@ -918,14 +914,10 @@ async fn lend_one(
         return Err(refused(&unshown, &port));
     }
     let name = &lend.name;
-    if lend::read(dir, name)
-        .map_err(|e| LendRefusal::fault(e.to_string()))?
-        .is_some()
-    {
-        return Err(refused(
-            &format!("You already lend something called {name}: give it another name."),
-            name,
-        ));
+    let held = lend::read(dir, name).map_err(|e| LendRefusal::fault(e.to_string()))?;
+    if held.is_some() {
+        let why = format!("You already lend something called {name}: give it another name.");
+        return Err(refused(&why, name));
     }
     let confirming = path.as_str() == "/running/confirm";
     if confirming {
@@ -939,15 +931,17 @@ async fn lend_one(
             return Err(LendRefusal::closed(reviewed.report_words(&report)));
         }
     }
-    // The review, nothing lent: when and who, and, for the page to say, the
-    // paths apps may send to by its terms and those svrngs keeps back. The
-    // page posts its terms and token back to confirm it, the lender's yes to
-    // its sends (CONTRACTS §2, "The lend is the yes"; §6.8).
-    let said = confirming.then_some(plan::REVIEW_AGAIN);
+    // The review, nothing lent: when and who, and, for the page's Details,
+    // the paths apps may send to and those svrngs keeps back, and its terms'
+    // other rows, by whom (none posted back). Its terms and token posted
+    // back confirm it, the yes to all shown (CONTRACTS §2, §6.8).
     let sends: Vec<&str> = lend.terms.sends.iter().map(lend::SendRow::path).collect();
-    let keeps = &lend.terms.refused;
-    tracing::debug!(target: "home", %name, sends = sends.len(), keeps = keeps.len(), "home: reviewed; nothing lent until its lender confirms");
-    Ok(Json(serde_json::json!({"token": reviewed.token, "said": said, "terms": terms, "review": reviewed.words(), "sends": sends, "keeps": keeps})).into_response())
+    let listed = |how: &&str| !how.starts_with("keeps:") && !how.starts_with("sends:");
+    let rows = share::rows_in(&terms).flatten().map(|r| r.2);
+    let rows: Vec<&str> = rows.filter(listed).collect();
+    tracing::debug!(target: "home", %name, sends = sends.len(), keeps = lend.terms.refused.len(), rows = rows.len(), "home: reviewed; nothing lent until its lender confirms");
+    let said = confirming.then_some(plan::REVIEW_AGAIN);
+    Ok(Json(serde_json::json!({"token": reviewed.token, "said": said, "terms": terms, "review": reviewed.words(), "details": {"sends": sends, "keeps": lend.terms.refused, "rows": rows, "by": by}})).into_response())
 }
 
 /// The terms the groups `lend` is lent to agree on for its program, and

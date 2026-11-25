@@ -14,6 +14,7 @@ import { answered, needs, RUNNING } from './running-look.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
+/** @import { Paths } from './lend-found.js?v=__VERSION__' */
 /** @import { Shown, State } from './running-look.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
@@ -78,14 +79,16 @@ const line = ({ kind, answer, port }) => {
 };
 
 // What svrngs keeps private of it and, once reviewed, the paths apps may
-// send to it by its terms, folded under Details; neither, no fold.
-/** @param {{ keeps: string[], sends: string[] }} paths */
-const Details = ({ keeps, sends }) =>
-  keeps.length + sends.length > 0 &&
+// send to it by its terms and its groups' own rows besides, by whom, folded
+// under Details; none, no fold.
+/** @param {Paths} paths */
+const Details = ({ keeps, sends, rows = [], by = '' }) =>
+  keeps.length + sends.length + rows.length > 0 &&
   html`<details>
     <summary>Details</summary>
     ${sends.length > 0 && html`<p>Apps can send requests to ${sends.join(' and ')}.</p>`}
     ${keeps.length > 0 && html`<p>Kept private: ${keeps.join(', ')}.</p>`}
+    ${rows.length > 0 && html`<p>Your group’s terms${by}: ${rows.join('; ')}.</p>`}
   </details>`;
 
 /** @param {FoundProps} props */
