@@ -1,0 +1,6691 @@
+[
+ {
+  "id": "2026-11-25T20-54-30-818Z-b2d84a6d",
+  "at": "2026-11-25T20:54:35.442Z",
+  "purpose": "fix",
+  "candidate": {
+   "version": "0.3.1-rc.1",
+   "recipe": "b2d84a6d9fd0",
+   "from": "fix-claims@eac85ba"
+  },
+  "release": "0.3.0",
+  "inputs": 30,
+  "contract_change": {
+   "proposed": {
+    "attributes": {
+     "input.ref": "hash",
+     "outcome": [
+      "submitted",
+      "rejected",
+      "error",
+      "held",
+      "unjudged"
+     ],
+     "held.reason": [
+      "plan_missing"
+     ]
+    },
+    "spans": [
+     "note",
+     "parse",
+     "lookup",
+     "submit"
+    ]
+   },
+   "note": "shown for review; this trial projected by the installed contract"
+  },
+  "moves": {
+   "submitted→submitted": 22,
+   "rejected→unjudged": 3,
+   "error→unjudged": 3,
+   "error→held": 2
+  },
+  "regressed": [],
+  "improved": [
+   {
+    "input": "f6e9bf0aff7b",
+    "from": "error",
+    "to": "held",
+    "error_class": null
+   },
+   {
+    "input": "fd47233a0618",
+    "from": "error",
+    "to": "held",
+    "error_class": null
+   }
+  ],
+  "unjudged": [
+   {
+    "input": "7f30b7118961",
+    "from": "rejected",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "ee11d561ad0e",
+    "from": "error",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "451520f309d7",
+    "from": "rejected",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "194941a5fabf",
+    "from": "error",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "26edf09a60c2",
+    "from": "error",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "3d0c98f71318",
+    "from": "rejected",
+    "to": "unjudged",
+    "error_class": null
+   }
+  ],
+  "changed": [
+   {
+    "input": "7f30b7118961",
+    "from": "rejected",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "ee11d561ad0e",
+    "from": "error",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "f6e9bf0aff7b",
+    "from": "error",
+    "to": "held",
+    "error_class": null
+   },
+   {
+    "input": "451520f309d7",
+    "from": "rejected",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "194941a5fabf",
+    "from": "error",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "fd47233a0618",
+    "from": "error",
+    "to": "held",
+    "error_class": null
+   },
+   {
+    "input": "26edf09a60c2",
+    "from": "error",
+    "to": "unjudged",
+    "error_class": null
+   },
+   {
+    "input": "3d0c98f71318",
+    "from": "rejected",
+    "to": "unjudged",
+    "error_class": null
+   }
+  ],
+  "effects_unrecorded": {
+   "release": 0,
+   "candidate": 6
+  },
+  "telemetry": {
+   "release": [
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "678297ac",
+     "span": "2ce3104a",
+     "parent": "808e21da",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "678297ac",
+     "span": "2800980d",
+     "parent": "808e21da",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "678297ac",
+     "span": "d3c25030",
+     "parent": "808e21da",
+     "status": "ok",
+     "ms": 6,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "678297ac",
+     "span": "808e21da",
+     "parent": null,
+     "status": "ok",
+     "ms": 7,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "9d8d11a797"
+      },
+      "input.ref": "c4e0d69958c3",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "a0825425",
+     "span": "644302b3",
+     "parent": "cfed3f73",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "a0825425",
+     "span": "2b080a68",
+     "parent": "cfed3f73",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "a0825425",
+     "span": "39d4142d",
+     "parent": "cfed3f73",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "a0825425",
+     "span": "cfed3f73",
+     "parent": null,
+     "status": "ok",
+     "ms": 2,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "ee00a6eec1"
+      },
+      "input.ref": "c31a708d6c6e",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "e429ca92",
+     "span": "c4c5bcdf",
+     "parent": "7d3f0646",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "e429ca92",
+     "span": "d904a3b1",
+     "parent": "7d3f0646",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "e429ca92",
+     "span": "e3cd2ebd",
+     "parent": "7d3f0646",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "e429ca92",
+     "span": "7d3f0646",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "8aadf1216a"
+      },
+      "input.ref": "e321e4165d4a",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "eaf10c72",
+     "span": "ae1bd357",
+     "parent": "712a78a9",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "eaf10c72",
+     "span": "4b8a55e6",
+     "parent": "712a78a9",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "eaf10c72",
+     "span": "e856b9d6",
+     "parent": "712a78a9",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "eaf10c72",
+     "span": "712a78a9",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 36,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "d3a3aa179b"
+      },
+      "input.ref": "014e66b9d06b",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "66d64d29",
+     "span": "541ed03b",
+     "parent": "d2632d9d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "66d64d29",
+     "span": "3d82714c",
+     "parent": "d2632d9d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "66d64d29",
+     "span": "3dc0b292",
+     "parent": "d2632d9d",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "66d64d29",
+     "span": "d2632d9d",
+     "parent": null,
+     "status": "ok",
+     "ms": 2,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 40,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "2a33f65311"
+      },
+      "input.ref": "cbac8fb37cdf",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "b6d8a272",
+     "span": "1bdea581",
+     "parent": "870c2b71",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "b6d8a272",
+     "span": "f98f5b9e",
+     "parent": "870c2b71",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "b6d8a272",
+     "span": "9b70df9e",
+     "parent": "870c2b71",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 422
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "b6d8a272",
+     "span": "870c2b71",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 36,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "292517514a"
+      },
+      "input.ref": "7f30b7118961",
+      "outcome": "rejected"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "2c4be4e8",
+     "span": "19e16022",
+     "parent": "a2d08886",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "2c4be4e8",
+     "span": "1a1acb69",
+     "parent": "a2d08886",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "2c4be4e8",
+     "span": "9f2d0aff",
+     "parent": "a2d08886",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "2c4be4e8",
+     "span": "a2d08886",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "d1382860ee"
+      },
+      "input.ref": "7f7bc4b1ff29",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "990b780f",
+     "span": "ccee0c75",
+     "parent": "b0218951",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "990b780f",
+     "span": "fcf7a86d",
+     "parent": "b0218951",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "990b780f",
+     "span": "f9ef85d9",
+     "parent": "b0218951",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "990b780f",
+     "span": "b0218951",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 36,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "ff3ea98f08"
+      },
+      "input.ref": "8639a66f1701",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "a433c252",
+     "span": "91c39f76",
+     "parent": "fb6c2efc",
+     "status": "error",
+     "ms": 8,
+     "attrs": {},
+     "events": [
+      {
+       "name": "exception",
+       "type": "ValueError",
+       "at": [
+        "__init__.py:589 use_span",
+        "__init__.py:1105 start_as_current_span",
+        "server.py:57 one",
+        "notes.py:23 parse",
+        "_strptime.py:844 _strptime_datetime_datetime",
+        "_strptime.py:574 _strptime"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "a433c252",
+     "span": "fb6c2efc",
+     "parent": null,
+     "status": "error",
+     "ms": 8,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "18d198714b"
+      },
+      "input.ref": "ee11d561ad0e",
+      "outcome": "error"
+     },
+     "events": [
+      {
+       "name": "exception",
+       "type": "ValueError",
+       "at": [
+        "server.py:57 one",
+        "notes.py:23 parse",
+        "_strptime.py:844 _strptime_datetime_datetime",
+        "_strptime.py:574 _strptime"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "1f91eed0",
+     "span": "86476c4c",
+     "parent": "a8066924",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "1f91eed0",
+     "span": "97a01faa",
+     "parent": "a8066924",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "1f91eed0",
+     "span": "ce217c09",
+     "parent": "a8066924",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "1f91eed0",
+     "span": "a8066924",
+     "parent": null,
+     "status": "ok",
+     "ms": 2,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "2b4ea34aed"
+      },
+      "input.ref": "080c06d33d56",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "20167396",
+     "span": "381e9b3d",
+     "parent": "ffa99b1d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "20167396",
+     "span": "04198aaa",
+     "parent": "ffa99b1d",
+     "status": "error",
+     "ms": 1,
+     "attrs": {},
+     "events": [
+      {
+       "name": "exception",
+       "type": "AttributeError",
+       "at": [
+        "__init__.py:589 use_span",
+        "__init__.py:1105 start_as_current_span",
+        "server.py:59 one",
+        "clients.py:10 plan_of"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "20167396",
+     "span": "ffa99b1d",
+     "parent": null,
+     "status": "error",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "35497f4477"
+      },
+      "input.ref": "f6e9bf0aff7b",
+      "outcome": "error"
+     },
+     "events": [
+      {
+       "name": "exception",
+       "type": "AttributeError",
+       "at": [
+        "server.py:59 one",
+        "clients.py:10 plan_of"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "41e64ae4",
+     "span": "2cbdc309",
+     "parent": "11453d34",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "41e64ae4",
+     "span": "c6197f66",
+     "parent": "11453d34",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "41e64ae4",
+     "span": "20c4812d",
+     "parent": "11453d34",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "41e64ae4",
+     "span": "11453d34",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "e54d03c583"
+      },
+      "input.ref": "8279ada67823",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "0659dda8",
+     "span": "88594abf",
+     "parent": "83c975ea",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "0659dda8",
+     "span": "ce5b99ee",
+     "parent": "83c975ea",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "0659dda8",
+     "span": "88834748",
+     "parent": "83c975ea",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "0659dda8",
+     "span": "83c975ea",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "b7b5bb03b3"
+      },
+      "input.ref": "f988c40dd51c",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "ec51a133",
+     "span": "12c4652e",
+     "parent": "4f0fc289",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "ec51a133",
+     "span": "f1fd6fda",
+     "parent": "4f0fc289",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "ec51a133",
+     "span": "44acfb7b",
+     "parent": "4f0fc289",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "ec51a133",
+     "span": "4f0fc289",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "4c74f07ad0"
+      },
+      "input.ref": "0bdad29e26cf",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "be8621ed",
+     "span": "e4cef8d0",
+     "parent": "0856b62a",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "be8621ed",
+     "span": "5cdc0c23",
+     "parent": "0856b62a",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "be8621ed",
+     "span": "5fcc0ba2",
+     "parent": "0856b62a",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "be8621ed",
+     "span": "0856b62a",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "6df4d479aa"
+      },
+      "input.ref": "4f730aa47841",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "2b40e28d",
+     "span": "7c4bf093",
+     "parent": "7f63b53e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "2b40e28d",
+     "span": "efcf3e59",
+     "parent": "7f63b53e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "2b40e28d",
+     "span": "ce3f55f5",
+     "parent": "7f63b53e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "2b40e28d",
+     "span": "7f63b53e",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "f13412de52"
+      },
+      "input.ref": "8b3262aa375a",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "2e6c2261",
+     "span": "dfd783dc",
+     "parent": "b930686d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "2e6c2261",
+     "span": "1efbd2f7",
+     "parent": "b930686d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "2e6c2261",
+     "span": "43ae0506",
+     "parent": "b930686d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 422
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "2e6c2261",
+     "span": "b930686d",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "a16c98a56d"
+      },
+      "input.ref": "451520f309d7",
+      "outcome": "rejected"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "f3a1915e",
+     "span": "94246897",
+     "parent": "849df90e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "f3a1915e",
+     "span": "e75e75fa",
+     "parent": "849df90e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "f3a1915e",
+     "span": "7e60eee5",
+     "parent": "849df90e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "f3a1915e",
+     "span": "849df90e",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "02eaf322ed"
+      },
+      "input.ref": "771a89196a9d",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "3cb3501f",
+     "span": "9c2ebc2d",
+     "parent": "b85ef9e5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "3cb3501f",
+     "span": "2d003833",
+     "parent": "b85ef9e5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "3cb3501f",
+     "span": "9980df9c",
+     "parent": "b85ef9e5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "3cb3501f",
+     "span": "b85ef9e5",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "d5efd0574d"
+      },
+      "input.ref": "7dba811e620e",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "18324add",
+     "span": "630b41c7",
+     "parent": "c48c4d5e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "18324add",
+     "span": "4bc55caf",
+     "parent": "c48c4d5e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "18324add",
+     "span": "f3553df4",
+     "parent": "c48c4d5e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "18324add",
+     "span": "c48c4d5e",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 41,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "4d3ffde273"
+      },
+      "input.ref": "802f85a995f8",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "19a33a11",
+     "span": "4edf0175",
+     "parent": "57cf7520",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "19a33a11",
+     "span": "26abdbcc",
+     "parent": "57cf7520",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "19a33a11",
+     "span": "09c68c46",
+     "parent": "57cf7520",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "19a33a11",
+     "span": "57cf7520",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "b5d85a0e69"
+      },
+      "input.ref": "a745af4de627",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "6deeaef1",
+     "span": "91b0f933",
+     "parent": "d62bdefd",
+     "status": "error",
+     "ms": 0,
+     "attrs": {},
+     "events": [
+      {
+       "name": "exception",
+       "type": "ValueError",
+       "at": [
+        "__init__.py:589 use_span",
+        "__init__.py:1105 start_as_current_span",
+        "server.py:57 one",
+        "notes.py:23 parse",
+        "_strptime.py:844 _strptime_datetime_datetime",
+        "_strptime.py:574 _strptime"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "6deeaef1",
+     "span": "d62bdefd",
+     "parent": null,
+     "status": "error",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "21d5d3cb9d"
+      },
+      "input.ref": "194941a5fabf",
+      "outcome": "error"
+     },
+     "events": [
+      {
+       "name": "exception",
+       "type": "ValueError",
+       "at": [
+        "server.py:57 one",
+        "notes.py:23 parse",
+        "_strptime.py:844 _strptime_datetime_datetime",
+        "_strptime.py:574 _strptime"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "51d26c87",
+     "span": "075b52cc",
+     "parent": "45780c9f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "51d26c87",
+     "span": "416e6cfa",
+     "parent": "45780c9f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "51d26c87",
+     "span": "18d3631d",
+     "parent": "45780c9f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "51d26c87",
+     "span": "45780c9f",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "69e5f946ac"
+      },
+      "input.ref": "4d0395e470af",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "7edf7b51",
+     "span": "fd9b868a",
+     "parent": "ad91cf9c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "7edf7b51",
+     "span": "33eea5ca",
+     "parent": "ad91cf9c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "7edf7b51",
+     "span": "1ef1f87c",
+     "parent": "ad91cf9c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "7edf7b51",
+     "span": "ad91cf9c",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "54f50a2ab6"
+      },
+      "input.ref": "8427a2821638",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "62d32841",
+     "span": "9952ddd4",
+     "parent": "8df3ab03",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "62d32841",
+     "span": "061700d9",
+     "parent": "8df3ab03",
+     "status": "error",
+     "ms": 1,
+     "attrs": {},
+     "events": [
+      {
+       "name": "exception",
+       "type": "AttributeError",
+       "at": [
+        "__init__.py:589 use_span",
+        "__init__.py:1105 start_as_current_span",
+        "server.py:59 one",
+        "clients.py:10 plan_of"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "62d32841",
+     "span": "8df3ab03",
+     "parent": null,
+     "status": "error",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 42,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "6718a966a9"
+      },
+      "input.ref": "fd47233a0618",
+      "outcome": "error"
+     },
+     "events": [
+      {
+       "name": "exception",
+       "type": "AttributeError",
+       "at": [
+        "server.py:59 one",
+        "clients.py:10 plan_of"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "143630e7",
+     "span": "dc4fdaf7",
+     "parent": "7f8ff22d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "143630e7",
+     "span": "093dd105",
+     "parent": "7f8ff22d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "143630e7",
+     "span": "9e512bc0",
+     "parent": "7f8ff22d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "143630e7",
+     "span": "7f8ff22d",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "63b16ec5fe"
+      },
+      "input.ref": "f516d870ccb5",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "d95f86d8",
+     "span": "caa0c275",
+     "parent": "22df5b69",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "d95f86d8",
+     "span": "5c129b85",
+     "parent": "22df5b69",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "d95f86d8",
+     "span": "e50722c6",
+     "parent": "22df5b69",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "d95f86d8",
+     "span": "22df5b69",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "5b598ecb61"
+      },
+      "input.ref": "e30d0f49c998",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "329c4349",
+     "span": "f0497d6a",
+     "parent": "6c662188",
+     "status": "error",
+     "ms": 0,
+     "attrs": {},
+     "events": [
+      {
+       "name": "exception",
+       "type": "ValueError",
+       "at": [
+        "__init__.py:589 use_span",
+        "__init__.py:1105 start_as_current_span",
+        "server.py:57 one",
+        "notes.py:23 parse",
+        "_strptime.py:844 _strptime_datetime_datetime",
+        "_strptime.py:574 _strptime"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "329c4349",
+     "span": "6c662188",
+     "parent": null,
+     "status": "error",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 40,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "323e556327"
+      },
+      "input.ref": "26edf09a60c2",
+      "outcome": "error"
+     },
+     "events": [
+      {
+       "name": "exception",
+       "type": "ValueError",
+       "at": [
+        "server.py:57 one",
+        "notes.py:23 parse",
+        "_strptime.py:844 _strptime_datetime_datetime",
+        "_strptime.py:574 _strptime"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "46b78aa0",
+     "span": "28b3278e",
+     "parent": "69a4f7c5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "46b78aa0",
+     "span": "0d3de79d",
+     "parent": "69a4f7c5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "46b78aa0",
+     "span": "fe8cf630",
+     "parent": "69a4f7c5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "46b78aa0",
+     "span": "69a4f7c5",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "952ee09c7a"
+      },
+      "input.ref": "5bca87d24b67",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "parse",
+     "trace": "1bf9a36c",
+     "span": "ea3210c2",
+     "parent": "5322f02d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "lookup",
+     "trace": "1bf9a36c",
+     "span": "d456dc2d",
+     "parent": "5322f02d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "submit",
+     "trace": "1bf9a36c",
+     "span": "30bfb950",
+     "parent": "5322f02d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 422
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.0",
+     "name": "note",
+     "trace": "1bf9a36c",
+     "span": "5322f02d",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "bcc768f7eb"
+      },
+      "input.ref": "3d0c98f71318",
+      "outcome": "rejected"
+     },
+     "events": []
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "WARN",
+     "trace": "b6d8a272",
+     "body": {
+      "shape": true,
+      "len": 232,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "742773267c"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "effe321ff2"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "ERROR",
+     "trace": "a433c252",
+     "body": {
+      "shape": true,
+      "len": 134,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "acf1912bd7"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "4f2b327182"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "ERROR",
+     "trace": "20167396",
+     "body": {
+      "shape": true,
+      "len": 93,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "63af4298d8"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "4f2b327182"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "WARN",
+     "trace": "2e6c2261",
+     "body": {
+      "shape": true,
+      "len": 232,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "42c5424e61"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "effe321ff2"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "ERROR",
+     "trace": "6deeaef1",
+     "body": {
+      "shape": true,
+      "len": 135,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "094fffed4e"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "4f2b327182"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "ERROR",
+     "trace": "62d32841",
+     "body": {
+      "shape": true,
+      "len": 98,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "6014fec614"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "4f2b327182"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "ERROR",
+     "trace": "329c4349",
+     "body": {
+      "shape": true,
+      "len": 141,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "7433b2cbc7"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "4f2b327182"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "WARN",
+     "trace": "1bf9a36c",
+     "body": {
+      "shape": true,
+      "len": 233,
+      "classes": [
+       "digit",
+       "upper",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "34d6f43f08"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 33,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "1a34db2d37"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "effe321ff2"
+      }
+     }
+    }
+   ],
+   "candidate": [
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "7c8ea11b",
+     "span": "740ba2ba",
+     "parent": "5798aab9",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "7c8ea11b",
+     "span": "9ac7b3ec",
+     "parent": "5798aab9",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "7c8ea11b",
+     "span": "037e40a8",
+     "parent": "5798aab9",
+     "status": "ok",
+     "ms": 6,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "7c8ea11b",
+     "span": "5798aab9",
+     "parent": null,
+     "status": "ok",
+     "ms": 7,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "9d8d11a797"
+      },
+      "input.ref": "c4e0d69958c3",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "b6705b97",
+     "span": "903c63e4",
+     "parent": "da02437d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "b6705b97",
+     "span": "1e207656",
+     "parent": "da02437d",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "b6705b97",
+     "span": "f425e3e8",
+     "parent": "da02437d",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "b6705b97",
+     "span": "da02437d",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "ee00a6eec1"
+      },
+      "input.ref": "c31a708d6c6e",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "8278caa8",
+     "span": "fb592c36",
+     "parent": "de9c9697",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "8278caa8",
+     "span": "d290e216",
+     "parent": "de9c9697",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "8278caa8",
+     "span": "3f27aeac",
+     "parent": "de9c9697",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "8278caa8",
+     "span": "de9c9697",
+     "parent": null,
+     "status": "ok",
+     "ms": 2,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "8aadf1216a"
+      },
+      "input.ref": "e321e4165d4a",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "6f96493a",
+     "span": "8f0a5860",
+     "parent": "3ea9d6e4",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "6f96493a",
+     "span": "c79ad05e",
+     "parent": "3ea9d6e4",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "6f96493a",
+     "span": "ac30f562",
+     "parent": "3ea9d6e4",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "6f96493a",
+     "span": "3ea9d6e4",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 36,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "d3a3aa179b"
+      },
+      "input.ref": "014e66b9d06b",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "29483e8e",
+     "span": "334c5ff7",
+     "parent": "813de125",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "29483e8e",
+     "span": "b56bba93",
+     "parent": "813de125",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "29483e8e",
+     "span": "6b92e2fa",
+     "parent": "813de125",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "29483e8e",
+     "span": "813de125",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 40,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "2a33f65311"
+      },
+      "input.ref": "cbac8fb37cdf",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "f94ca2fb",
+     "span": "ce25352b",
+     "parent": "548bd5b6",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "f94ca2fb",
+     "span": "0579f690",
+     "parent": "548bd5b6",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "f94ca2fb",
+     "span": "cd7957dd",
+     "parent": "548bd5b6",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 599
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "f94ca2fb",
+     "span": "548bd5b6",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 36,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "292517514a"
+      },
+      "input.ref": "7f30b7118961",
+      "outcome": "unjudged"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "ee5c959d",
+     "span": "ce8fb1d5",
+     "parent": "7c9fdddb",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "ee5c959d",
+     "span": "bf5775b4",
+     "parent": "7c9fdddb",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "ee5c959d",
+     "span": "83ff3428",
+     "parent": "7c9fdddb",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "ee5c959d",
+     "span": "7c9fdddb",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "d1382860ee"
+      },
+      "input.ref": "7f7bc4b1ff29",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "994260e7",
+     "span": "c80eac8d",
+     "parent": "c8b2c306",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "994260e7",
+     "span": "059559b7",
+     "parent": "c8b2c306",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "994260e7",
+     "span": "2af48fad",
+     "parent": "c8b2c306",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "994260e7",
+     "span": "c8b2c306",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 36,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "ff3ea98f08"
+      },
+      "input.ref": "8639a66f1701",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "5b3b88f6",
+     "span": "45bb43ea",
+     "parent": "34aef85f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "5b3b88f6",
+     "span": "53c1a542",
+     "parent": "34aef85f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "5b3b88f6",
+     "span": "0b204d0d",
+     "parent": "34aef85f",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 599
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "5b3b88f6",
+     "span": "34aef85f",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "18d198714b"
+      },
+      "input.ref": "ee11d561ad0e",
+      "outcome": "unjudged"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "58063100",
+     "span": "9179a334",
+     "parent": "7c6446d2",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "58063100",
+     "span": "4a682cbf",
+     "parent": "7c6446d2",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "58063100",
+     "span": "c674201f",
+     "parent": "7c6446d2",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "58063100",
+     "span": "7c6446d2",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "2b4ea34aed"
+      },
+      "input.ref": "080c06d33d56",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "c8b086b0",
+     "span": "cbd1aedd",
+     "parent": "c74fff59",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "c8b086b0",
+     "span": "6bb90eb2",
+     "parent": "c74fff59",
+     "status": "error",
+     "ms": 8,
+     "attrs": {},
+     "events": [
+      {
+       "name": "exception",
+       "type": "clients.MissingPlan",
+       "at": [
+        "__init__.py:589 use_span",
+        "__init__.py:1105 start_as_current_span",
+        "server.py:59 one",
+        "clients.py:18 plan_of"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "c8b086b0",
+     "span": "c74fff59",
+     "parent": null,
+     "status": "ok",
+     "ms": 8,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "35497f4477"
+      },
+      "input.ref": "f6e9bf0aff7b",
+      "outcome": "held",
+      "held.reason": {
+       "shape": true,
+       "len": 12,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "a1d5fdc99a"
+      }
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "3f516d44",
+     "span": "8f2808a9",
+     "parent": "780de423",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "3f516d44",
+     "span": "5e079f57",
+     "parent": "780de423",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "3f516d44",
+     "span": "8bf46023",
+     "parent": "780de423",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "3f516d44",
+     "span": "780de423",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "e54d03c583"
+      },
+      "input.ref": "8279ada67823",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "1bf7e944",
+     "span": "cacafcd2",
+     "parent": "c97a0a3f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "1bf7e944",
+     "span": "f44d3cd0",
+     "parent": "c97a0a3f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "1bf7e944",
+     "span": "eefa289b",
+     "parent": "c97a0a3f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "1bf7e944",
+     "span": "c97a0a3f",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "b7b5bb03b3"
+      },
+      "input.ref": "f988c40dd51c",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "6707a78b",
+     "span": "1b1d7a7f",
+     "parent": "7c9fb00e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "6707a78b",
+     "span": "9a87ebc0",
+     "parent": "7c9fb00e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "6707a78b",
+     "span": "1965515f",
+     "parent": "7c9fb00e",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "6707a78b",
+     "span": "7c9fb00e",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "4c74f07ad0"
+      },
+      "input.ref": "0bdad29e26cf",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "2c9b691d",
+     "span": "50e5d78a",
+     "parent": "b11e4c32",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "2c9b691d",
+     "span": "0533f4be",
+     "parent": "b11e4c32",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "2c9b691d",
+     "span": "28c07b44",
+     "parent": "b11e4c32",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "2c9b691d",
+     "span": "b11e4c32",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "6df4d479aa"
+      },
+      "input.ref": "4f730aa47841",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "e3024eda",
+     "span": "86d32577",
+     "parent": "205adddb",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "e3024eda",
+     "span": "e17f5461",
+     "parent": "205adddb",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "e3024eda",
+     "span": "54458a3a",
+     "parent": "205adddb",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "e3024eda",
+     "span": "205adddb",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "f13412de52"
+      },
+      "input.ref": "8b3262aa375a",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "f3d4f761",
+     "span": "f3360e76",
+     "parent": "4f52aed8",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "f3d4f761",
+     "span": "9f15c8ea",
+     "parent": "4f52aed8",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "f3d4f761",
+     "span": "633a241a",
+     "parent": "4f52aed8",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 599
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "f3d4f761",
+     "span": "4f52aed8",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "a16c98a56d"
+      },
+      "input.ref": "451520f309d7",
+      "outcome": "unjudged"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "0725a832",
+     "span": "fef9131b",
+     "parent": "4926084c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "0725a832",
+     "span": "44357472",
+     "parent": "4926084c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "0725a832",
+     "span": "6c37d713",
+     "parent": "4926084c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "0725a832",
+     "span": "4926084c",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "02eaf322ed"
+      },
+      "input.ref": "771a89196a9d",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "46e3471c",
+     "span": "ebda885a",
+     "parent": "ded8269b",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "46e3471c",
+     "span": "23c608a0",
+     "parent": "ded8269b",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "46e3471c",
+     "span": "de1009e2",
+     "parent": "ded8269b",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "46e3471c",
+     "span": "ded8269b",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "d5efd0574d"
+      },
+      "input.ref": "7dba811e620e",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "d3e7a9f7",
+     "span": "faf93a5f",
+     "parent": "ffb9d718",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "d3e7a9f7",
+     "span": "53ecf244",
+     "parent": "ffb9d718",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "d3e7a9f7",
+     "span": "6c261ef8",
+     "parent": "ffb9d718",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "d3e7a9f7",
+     "span": "ffb9d718",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 41,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "4d3ffde273"
+      },
+      "input.ref": "802f85a995f8",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "bf857924",
+     "span": "bd4288bc",
+     "parent": "a17d2d36",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "bf857924",
+     "span": "16e76ed2",
+     "parent": "a17d2d36",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "bf857924",
+     "span": "8ba9647d",
+     "parent": "a17d2d36",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "bf857924",
+     "span": "a17d2d36",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "b5d85a0e69"
+      },
+      "input.ref": "a745af4de627",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "f37505fe",
+     "span": "5d37d0f1",
+     "parent": "a10917af",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "f37505fe",
+     "span": "f28c87af",
+     "parent": "a10917af",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "f37505fe",
+     "span": "d1b1a6d2",
+     "parent": "a10917af",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 599
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "f37505fe",
+     "span": "a10917af",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "21d5d3cb9d"
+      },
+      "input.ref": "194941a5fabf",
+      "outcome": "unjudged"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "83db19d8",
+     "span": "9cb5abbf",
+     "parent": "5e2fdfb5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "83db19d8",
+     "span": "99c18acb",
+     "parent": "5e2fdfb5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "83db19d8",
+     "span": "53f0e92d",
+     "parent": "5e2fdfb5",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "83db19d8",
+     "span": "5e2fdfb5",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "69e5f946ac"
+      },
+      "input.ref": "4d0395e470af",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "c03659b6",
+     "span": "ec0df2bf",
+     "parent": "0cfcbf9f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "c03659b6",
+     "span": "ec679801",
+     "parent": "0cfcbf9f",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "c03659b6",
+     "span": "541aa906",
+     "parent": "0cfcbf9f",
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "c03659b6",
+     "span": "0cfcbf9f",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 39,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "54f50a2ab6"
+      },
+      "input.ref": "8427a2821638",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "60cf161c",
+     "span": "bcfffaed",
+     "parent": "08f67629",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "60cf161c",
+     "span": "91a378ec",
+     "parent": "08f67629",
+     "status": "error",
+     "ms": 0,
+     "attrs": {},
+     "events": [
+      {
+       "name": "exception",
+       "type": "clients.MissingPlan",
+       "at": [
+        "__init__.py:589 use_span",
+        "__init__.py:1105 start_as_current_span",
+        "server.py:59 one",
+        "clients.py:18 plan_of"
+       ],
+       "message": "dropped"
+      }
+     ]
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "60cf161c",
+     "span": "08f67629",
+     "parent": null,
+     "status": "ok",
+     "ms": 1,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 42,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "6718a966a9"
+      },
+      "input.ref": "fd47233a0618",
+      "outcome": "held",
+      "held.reason": {
+       "shape": true,
+       "len": 12,
+       "classes": [
+        "lower",
+        "punct"
+       ],
+       "h": "a1d5fdc99a"
+      }
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "b9810ff6",
+     "span": "8e3244d7",
+     "parent": "689eaf2c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "b9810ff6",
+     "span": "fb9accc5",
+     "parent": "689eaf2c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "b9810ff6",
+     "span": "960e8972",
+     "parent": "689eaf2c",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "b9810ff6",
+     "span": "689eaf2c",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "63b16ec5fe"
+      },
+      "input.ref": "f516d870ccb5",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "9f74fdb8",
+     "span": "8dedb0b8",
+     "parent": "4b7ba586",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "9f74fdb8",
+     "span": "7e03bcba",
+     "parent": "4b7ba586",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "9f74fdb8",
+     "span": "17a8cdc1",
+     "parent": "4b7ba586",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "9f74fdb8",
+     "span": "4b7ba586",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 38,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "5b598ecb61"
+      },
+      "input.ref": "e30d0f49c998",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "ebf6e141",
+     "span": "815e1bc3",
+     "parent": "2fce0c93",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "ebf6e141",
+     "span": "e93e4422",
+     "parent": "2fce0c93",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "ebf6e141",
+     "span": "1b739cd7",
+     "parent": "2fce0c93",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 599
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "ebf6e141",
+     "span": "2fce0c93",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 40,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "323e556327"
+      },
+      "input.ref": "26edf09a60c2",
+      "outcome": "unjudged"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "e37b5e07",
+     "span": "ecb73e7c",
+     "parent": "ae71fa7b",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "e37b5e07",
+     "span": "476fe92a",
+     "parent": "ae71fa7b",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "e37b5e07",
+     "span": "5626f2fa",
+     "parent": "ae71fa7b",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 202
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "e37b5e07",
+     "span": "ae71fa7b",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "952ee09c7a"
+      },
+      "input.ref": "5bca87d24b67",
+      "outcome": "submitted"
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "parse",
+     "trace": "96bc4bc6",
+     "span": "28cb899d",
+     "parent": "1d0028ca",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "lookup",
+     "trace": "96bc4bc6",
+     "span": "1937f1fe",
+     "parent": "1d0028ca",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {},
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "submit",
+     "trace": "96bc4bc6",
+     "span": "192a8dfd",
+     "parent": "1d0028ca",
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "http.response.status_code": 599
+     },
+     "events": []
+    },
+    {
+     "kind": "span",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "version": "0.3.1-rc.1",
+     "name": "note",
+     "trace": "96bc4bc6",
+     "span": "1d0028ca",
+     "parent": null,
+     "status": "ok",
+     "ms": 0,
+     "attrs": {
+      "note.file": {
+       "shape": true,
+       "len": 37,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "space",
+        "punct"
+       ],
+       "h": "bcc768f7eb"
+      },
+      "input.ref": "3d0c98f71318",
+      "outcome": "unjudged"
+     },
+     "events": []
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "WARN",
+     "trace": "c8b086b0",
+     "body": {
+      "shape": true,
+      "len": 49,
+      "classes": [
+       "digit",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "2ce7ee1d1c"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 80,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "punct"
+       ],
+       "h": "a98e2b040c"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "c1abc90756"
+      }
+     }
+    },
+    {
+     "kind": "log",
+     "service": {
+      "shape": true,
+      "len": 14,
+      "classes": [
+       "lower",
+       "punct"
+      ],
+      "h": "b138a5be84"
+     },
+     "severity": "WARN",
+     "trace": "60cf161c",
+     "body": {
+      "shape": true,
+      "len": 49,
+      "classes": [
+       "digit",
+       "lower",
+       "space",
+       "punct"
+      ],
+      "h": "3d8694c8e9"
+     },
+     "attrs": {
+      "code.file.path": {
+       "shape": true,
+       "len": 80,
+       "classes": [
+        "digit",
+        "upper",
+        "lower",
+        "punct"
+       ],
+       "h": "a98e2b040c"
+      },
+      "code.function.name": {
+       "shape": true,
+       "len": 3,
+       "classes": [
+        "lower"
+       ],
+       "h": "ed73589495"
+      },
+      "code.line.number": {
+       "shape": true,
+       "len": 2,
+       "classes": [
+        "digit"
+       ],
+       "h": "c1abc90756"
+      }
+     }
+    }
+   ]
+  },
+  "verdict": "passed",
+  "partly": "6 input(s) now send what was never sent, so the replay can't say how the outside answers them"
+ }
+]

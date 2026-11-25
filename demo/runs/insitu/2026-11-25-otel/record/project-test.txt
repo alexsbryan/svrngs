@@ -1,0 +1,9 @@
+✔ a name never passes: not in an attribute, a resource, a message or a stack trace (1.245485ms)
+✔ what the contract types passes, and what the site knows (0.55787ms)
+✔ a word outside the contract's set is shaped, so a set cannot be widened by the app (0.178977ms)
+✔ a hash that is not hex is shaped (0.672175ms)
+✔ equal values shape alike, so they can be matched; the key decides the hash (0.273856ms)
+✔ a log body is shaped, its severity kept (0.145043ms)
+✔ a contract that types a key as free text is refused (0.266722ms)
+ℹ pass 7
+ℹ fail 0

@@ -1,0 +1,362 @@
+From 9908cad0a4481eeffb33694309e230fee67348e4 Mon Sep 17 00:00:00 2001
+From: Alex <alexsbryan@gmail.com>
+Date: Wed, 25 Nov 2026 12:39:46 -0800
+Subject: [PATCH 1/3] fix: hold a note whose client has no plan, instead of
+ crashing
+
+Production telemetry: 2 of 30 notes (input.ref f6e9bf0aff7b, fd47233a0618)
+end in AttributeError at clients.py:10 plan_of (plan_id.upper()). Their
+error log bodies are 93 and 98 long = 'note ' + file name (37, 42) + ' failed: '
++ 42, the length of "'NoneType' object has no attribute 'upper'"; the
+instrumentation trial (instrument-failures@26ec1f2) confirmed
+lookup.plan_id.kind = none (len 4) for exactly those two.
+
+Acme can't know the plan, so the note is now held (outcome 'held', declared
+in the contract) with held.reason=plan_missing, and the log names the input
+ref, not the client id.
+
+Test: tests/test_clients.py fails on main (AttributeError, 2 errors) and
+passes here.
+---
+ clients.py            |  9 +++++++++
+ recipe.json           |  4 ++--
+ server.py             |  7 ++++++-
+ tests/test_clients.py | 34 ++++++++++++++++++++++++++++++++++
+ 4 files changed, 51 insertions(+), 3 deletions(-)
+ create mode 100644 tests/test_clients.py
+
+diff --git a/clients.py b/clients.py
+index b917e2a..dc9f612 100644
+--- a/clients.py
++++ b/clients.py
+@@ -2,9 +2,18 @@
+ import sqlite3
+ 
+ 
++class MissingPlan(LookupError):
++    """The client exists but its record has no plan to bill."""
++
++
+ def plan_of(db: str, client_id: str) -> dict:
+     row = sqlite3.connect(db).execute("select payer, plan_id from clients where client_id = ?", (client_id,)).fetchone()
+     if row is None:
+         raise LookupError("no such client")
+     payer, plan_id = row
++    if not isinstance(plan_id, str) or not plan_id.strip():
++        # Some rows came over from the old system with no plan (NULL). A claim
++        # with no plan can't be filed and Acme can't guess one, so the note is
++        # held for the clinic to complete the record, not crashed on.
++        raise MissingPlan("client has no plan on record")
+     return {"payer": payer, "plan": plan_id.upper()}
+diff --git a/recipe.json b/recipe.json
+index e187f46..92f85f8 100644
+--- a/recipe.json
++++ b/recipe.json
+@@ -1,6 +1,6 @@
+ {
+   "service": "notes-to-forms",
+-  "version": "0.3.0",
++  "version": "0.3.1-plan.1",
+   "says": "Acme Notes-to-Forms",
+   "params": {
+     "port": { "type": "port", "default": 8610, "choices": [8610, 8611, 8612] },
+@@ -19,7 +19,7 @@
+   "artifacts": [],
+   "effects": { "clearinghouse": { "upstream": "{clearinghouse}", "says": "claims sent to the clinic's clearinghouse" } },
+   "telemetry": {
+-    "attributes": { "input.ref": "hash", "outcome": ["submitted", "rejected", "error", "held", "unjudged"] },
++    "attributes": { "input.ref": "hash", "outcome": ["submitted", "rejected", "error", "held", "unjudged"], "held.reason": ["plan_missing"] },
+     "spans": ["note", "parse", "lookup", "submit"]
+   },
+   "steps": [
+diff --git a/server.py b/server.py
+index d360691..e9ac623 100644
+--- a/server.py
++++ b/server.py
+@@ -17,7 +17,7 @@ from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+ from opentelemetry._logs import set_logger_provider
+ import notes, clients
+ 
+-VERSION = "0.3.0"
++VERSION = "0.3.1-plan.1"
+ CRASH = False
+ 
+ a = argparse.ArgumentParser()
+@@ -69,6 +69,11 @@ def one(path):
+                 outcome = "submitted"
+             span.set_attribute("outcome", outcome)
+             return {"input": ref(name), "outcome": outcome}
++        except clients.MissingPlan as e:
++            span.set_attribute("outcome", "held")
++            span.set_attribute("held.reason", "plan_missing")
++            log.warning("note %s held: client record has no plan", ref(name))
++            return {"input": ref(name), "outcome": "held", "reason": "plan_missing"}
+         except Exception as e:
+             span.record_exception(e)
+             span.set_status(trace.StatusCode.ERROR)
+diff --git a/tests/test_clients.py b/tests/test_clients.py
+new file mode 100644
+index 0000000..7b8d2f5
+--- /dev/null
++++ b/tests/test_clients.py
+@@ -0,0 +1,34 @@
++import os, sqlite3, sys, tempfile, unittest
++sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
++import clients
++
++
++class Clients(unittest.TestCase):
++    def setUp(self):
++        self.d = tempfile.TemporaryDirectory()
++        self.db = os.path.join(self.d.name, "clients.db")
++        c = sqlite3.connect(self.db)
++        c.execute("create table clients (client_id text primary key, payer text, plan_id text)")
++        # Synthetic rows; the second has no plan, as some migrated rows don't.
++        c.executemany("insert into clients values (?, ?, ?)",
++                      [("TEST-0001", "SYNTH-PAYER", "ppo-1"), ("TEST-0002", "SYNTH-PAYER", None), ("TEST-0003", "SYNTH-PAYER", "")])
++        c.commit(); c.close()
++
++    def tearDown(self):
++        self.d.cleanup()
++
++    def test_a_plan_is_returned(self):
++        self.assertEqual(clients.plan_of(self.db, "TEST-0001"), {"payer": "SYNTH-PAYER", "plan": "PPO-1"})
++
++    def test_a_null_plan_is_a_missing_plan_not_a_crash(self):
++        for cid in ("TEST-0002", "TEST-0003"):
++            with self.subTest(cid), self.assertRaises(clients.MissingPlan):
++                clients.plan_of(self.db, cid)
++
++    def test_an_unknown_client_is_still_a_lookup_error(self):
++        with self.assertRaises(LookupError):
++            clients.plan_of(self.db, "TEST-9999")
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.56.1
+
+
+From 14ce398fba54b8edfd6cf60634e9a02415911df7 Mon Sep 17 00:00:00 2001
+From: Alex <alexsbryan@gmail.com>
+Date: Wed, 25 Nov 2026 12:40:22 -0800
+Subject: [PATCH 2/3] fix: drop the unit from minutes written as '50 min'
+
+Production: 3 of 30 notes (input.ref 7f30b7118961, 451520f309d7,
+3d0c98f71318) get 422 from the clearinghouse (/service/effects). The
+instrumentation trials (instrument-failures@26ec1f2, @2e80f9d) show the
+rejected claims differ from the 22 accepted ones only in minutes:
+claim.minutes.form len 10 (non_digits) vs len 6 (digits);
+minutes.is.digits_space_min = yes, has.letter = yes, has.space = yes; and the
+rejection's own words name minutes (reject.says.minutes = yes, every other
+field no; keys code and error).
+
+notes.minutes keeps the digits when the value is digits plus min/mins/minutes,
+and passes every other form on as written, as before.
+
+Test: tests/test_notes.py Minutes (fixture fixtures/minutes-with-unit.txt,
+synthetic) fails on main (1 failure, 1 error) and passes here.
+---
+ fixtures/minutes-with-unit.txt |  7 +++++++
+ notes.py                       | 11 +++++++++++
+ recipe.json                    |  2 +-
+ server.py                      |  2 +-
+ tests/test_notes.py            | 12 ++++++++++++
+ 5 files changed, 32 insertions(+), 2 deletions(-)
+ create mode 100644 fixtures/minutes-with-unit.txt
+
+diff --git a/fixtures/minutes-with-unit.txt b/fixtures/minutes-with-unit.txt
+new file mode 100644
+index 0000000..5122145
+--- /dev/null
++++ b/fixtures/minutes-with-unit.txt
+@@ -0,0 +1,7 @@
++Session note (synthetic, no real person)
++Date of service: 2026-11-04
++Client ID: TEST-0002
++CPT: 90837
++Diagnosis: F32.1
++Minutes: 53 min
++Client practised a breathing exercise.
+diff --git a/notes.py b/notes.py
+index 76e92b2..2c4c739 100644
+--- a/notes.py
++++ b/notes.py
+@@ -1,4 +1,5 @@
+ """Session note -> claim fields. A stand-in for the vendor's parser."""
++import re
+ from datetime import datetime
+ 
+ FIELDS = {"Date of service": "date", "Client ID": "client_id", "CPT": "cpt", "Diagnosis": "icd10", "Minutes": "minutes"}
+@@ -20,5 +21,15 @@ def parse(raw: bytes) -> dict:
+     missing = [k for k in FIELDS.values() if k not in form]
+     if missing:
+         raise KeyError(f"missing {missing}")
++    form["minutes"] = minutes(form["minutes"])
+     form["date"] = datetime.strptime(form["date"], "%Y-%m-%d").date().isoformat()
+     return form
++
++
++def minutes(value: str) -> str:
++    """Minutes as the clearinghouse takes them: digits only. Some notes write
++    the unit ("50 min"), which the clearinghouse rejects with 422; the unit is
++    dropped. Any other form is passed on as written, as before, for the
++    clearinghouse to judge."""
++    m = re.fullmatch(r"(\d+)\s*(?:min|mins|minutes)", value, re.I)
++    return m.group(1) if m else value
+diff --git a/recipe.json b/recipe.json
+index 92f85f8..48ac228 100644
+--- a/recipe.json
++++ b/recipe.json
+@@ -1,6 +1,6 @@
+ {
+   "service": "notes-to-forms",
+-  "version": "0.3.1-plan.1",
++  "version": "0.3.1-rc.1",
+   "says": "Acme Notes-to-Forms",
+   "params": {
+     "port": { "type": "port", "default": 8610, "choices": [8610, 8611, 8612] },
+diff --git a/server.py b/server.py
+index e9ac623..4aca204 100644
+--- a/server.py
++++ b/server.py
+@@ -17,7 +17,7 @@ from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+ from opentelemetry._logs import set_logger_provider
+ import notes, clients
+ 
+-VERSION = "0.3.1-plan.1"
++VERSION = "0.3.1-rc.1"
+ CRASH = False
+ 
+ a = argparse.ArgumentParser()
+diff --git a/tests/test_notes.py b/tests/test_notes.py
+index b1627aa..3fddb71 100644
+--- a/tests/test_notes.py
++++ b/tests/test_notes.py
+@@ -13,5 +13,17 @@ class Notes(unittest.TestCase):
+                 self.assertEqual(form["cpt"].isdigit(), True)
+ 
+ 
++class Minutes(unittest.TestCase):
++    def test_minutes_with_a_unit_become_digits(self):
++        form = notes.parse(open(os.path.join(HERE, "minutes-with-unit.txt"), "rb").read())
++        self.assertEqual(form["minutes"], "53")
++
++    def test_minutes_forms(self):
++        for given, want in [("50", "50"), ("50 min", "50"), ("50min", "50"), ("45 minutes", "45"), ("60 Mins", "60")]:
++            self.assertEqual(notes.minutes(given), want)
++        for other in ("fifty", "1 hr", "45-50", "50.5"):
++            self.assertEqual(notes.minutes(other), other)
++
++
+ if __name__ == "__main__":
+     unittest.main()
+-- 
+2.56.1
+
+
+From eac85bae96bce159f9ffb8a9282a26958809b019 Mon Sep 17 00:00:00 2001
+From: Alex <alexsbryan@gmail.com>
+Date: Wed, 25 Nov 2026 12:43:11 -0800
+Subject: [PATCH 3/3] fix: read a service date written as 'Nov 3, 2026 -
+ remark'
+
+Production: 3 of 30 notes (input.ref ee11d561ad0e, 194941a5fabf,
+26edf09a60c2) end in ValueError at notes.py:23 (strptime '%Y-%m-%d').
+Instrumentation trials on instrument-failures (@26ec1f2, @2e80f9d, @6210e13,
+@ee1242b) show, for exactly those three: parse.date_form = has_letters,
+error_form = does_not_match; the date starts with a month abbreviation, has
+one four-digit year, no ISO date, no weekday, is over 35 characters, and
+splits at ' - ' into a head that parses as '%b %d, %Y'
+(date.head.parses_as.abbr_month_d_comma_y = yes) and a tail with a comma,
+no digit and no month word.
+
+notes.service_date tries ISO, then the part before ' - ' as '%b %d, %Y' or
+'%B %d, %Y'. Every other form still raises ValueError, as before.
+
+Test: tests/test_notes.py ServiceDate (fixture
+fixtures/date-written-with-remark.txt, synthetic) fails on main (3 errors)
+and passes here.
+---
+ fixtures/date-written-with-remark.txt |  7 +++++++
+ notes.py                              | 21 ++++++++++++++++++++-
+ tests/test_notes.py                   | 14 ++++++++++++++
+ 3 files changed, 41 insertions(+), 1 deletion(-)
+ create mode 100644 fixtures/date-written-with-remark.txt
+
+diff --git a/fixtures/date-written-with-remark.txt b/fixtures/date-written-with-remark.txt
+new file mode 100644
+index 0000000..63740b9
+--- /dev/null
++++ b/fixtures/date-written-with-remark.txt
+@@ -0,0 +1,7 @@
++Session note (synthetic, no real person)
++Date of service: Nov 5, 2026 - synthetic remark, for the test
++Client ID: TEST-0003
++CPT: 90834
++Diagnosis: F41.1
++Minutes: 45
++Client reviewed a synthetic plan.
+diff --git a/notes.py b/notes.py
+index 2c4c739..460bd17 100644
+--- a/notes.py
++++ b/notes.py
+@@ -22,10 +22,29 @@ def parse(raw: bytes) -> dict:
+     if missing:
+         raise KeyError(f"missing {missing}")
+     form["minutes"] = minutes(form["minutes"])
+-    form["date"] = datetime.strptime(form["date"], "%Y-%m-%d").date().isoformat()
++    form["date"] = service_date(form["date"])
+     return form
+ 
+ 
++# Some notes write the date as "Nov 3, 2026 - <a remark>" rather than ISO.
++# Only these written forms are read; the remark after " - " is not part of
++# the date. Anything else still raises, as before.
++WRITTEN = ("%b %d, %Y", "%B %d, %Y")
++
++
++def service_date(value: str) -> str:
++    try:
++        return datetime.strptime(value, "%Y-%m-%d").date().isoformat()
++    except ValueError:
++        head = value.split(" - ", 1)[0].strip()
++        for fmt in WRITTEN:
++            try:
++                return datetime.strptime(head, fmt).date().isoformat()
++            except ValueError:
++                pass
++        raise
++
++
+ def minutes(value: str) -> str:
+     """Minutes as the clearinghouse takes them: digits only. Some notes write
+     the unit ("50 min"), which the clearinghouse rejects with 422; the unit is
+diff --git a/tests/test_notes.py b/tests/test_notes.py
+index 3fddb71..108055a 100644
+--- a/tests/test_notes.py
++++ b/tests/test_notes.py
+@@ -25,5 +25,19 @@ class Minutes(unittest.TestCase):
+             self.assertEqual(notes.minutes(other), other)
+ 
+ 
++class ServiceDate(unittest.TestCase):
++    def test_a_written_date_with_a_remark_parses(self):
++        form = notes.parse(open(os.path.join(HERE, "date-written-with-remark.txt"), "rb").read())
++        self.assertEqual(form["date"], "2026-11-05")
++
++    def test_date_forms(self):
++        for given, want in [("2026-11-03", "2026-11-03"), ("Nov 3, 2026", "2026-11-03"),
++                            ("November 30, 2026 - synthetic, remark", "2026-11-30")]:
++            self.assertEqual(notes.service_date(given), want)
++        for bad in ("11/03/2026", "Nov 31, 2026 - x", "sometime, - in Nov", ""):
++            with self.subTest(bad), self.assertRaises(ValueError):
++                notes.service_date(bad)
++
++
+ if __name__ == "__main__":
+     unittest.main()
+-- 
+2.56.1
+

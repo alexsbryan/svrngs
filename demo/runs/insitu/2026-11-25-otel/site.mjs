@@ -32,9 +32,13 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync
 import http from 'node:http';
 import net from 'node:net';
 import { dirname, join } from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { contract, project } from './project.mjs';
 
 const HOME = process.env.ONPREM_DIR ?? '/var/lib/onprem';
 const TRUST = join(HOME, 'trusted-vendor.pub');
+const LIB = '/usr/local/lib/onprem'; // the site's own pieces, installed by trust
+const OTLP_PORT = 4318;
 const V = Object.freeze({ passed: 'passed', failed: 'failed', unjudged: 'could-not-judge', never: 'never-ran' });
 const sha = (b) => createHash('sha256').update(b).digest('hex');
 const run = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' });
@@ -42,7 +46,8 @@ const debug = process.env.ONPREM_DEBUG ? (...a) => console.error('debug:', ...a)
 
 // --- The recipe: parse, don't validate -------------------------------------
 
-const STEPS = ['user', 'dir', 'unpack', 'unit', 'health'];
+const STEPS = ['user', 'dir', 'unpack', 'telemetry', 'gateway', 'unit', 'health'];
+const UNITS = ['telemetry', 'gateway', 'unit']; // the steps that run something, restarted when anything before them changed
 const PROBES = ['memory', 'disk_free', 'port_free', 'systemd', 'disk_encrypted'];
 
 function readBundle(dir) {
@@ -69,14 +74,19 @@ function params(recipe, sets) {
     const v = sets[k] ?? p.default;
     if (p.type === 'port' && !p.choices.includes(Number(v))) throw refusal(`port must be one of ${p.choices.join(', ')}, the vendor's choices; not ${v}`);
     if (p.type === 'dir' && !/^\/[\w./-]+$/.test(v)) throw refusal(`${k} must be an absolute path; not ${v}`);
+    if (p.type === 'url' && !/^https?:\/\/[\w.-]+(:\d+)?(\/[\w./-]*)?$/.test(v)) throw refusal(`${k} must be an http or https address; not ${v}`);
     out[k] = p.type === 'port' ? Number(v) : v;
   }
   out.version = recipe.version;
+  // Where the service sends its telemetry and its effects: the site's own
+  // collector and gateway, never the outside.
+  out.otlp = `http://127.0.0.1:${OTLP_PORT}`;
+  for (const name of Object.keys(recipe.effects ?? {})) out[`effect.${name}`] = `http://127.0.0.1:${out.gateway_port}/${name}`;
   for (const k of Object.keys(sets)) if (!(k in recipe.params)) throw refusal(`the recipe has no setting ${k}; it has ${Object.keys(recipe.params).join(', ')}`);
   return out;
 }
 
-const fill = (v, p) => (typeof v === 'string' ? v.replace(/\{(\w+)\}/g, (_, k) => String(p[k])) : Array.isArray(v) ? v.map((x) => fill(x, p)) : v);
+const fill = (v, p) => (typeof v === 'string' ? v.replace(/\{([\w.]+)\}/g, (_, k) => String(p[k])) : Array.isArray(v) ? v.map((x) => fill(x, p)) : v);
 
 // --- Probes: read-only facts about this machine ---------------------------
 
@@ -133,9 +143,13 @@ function stepCheck(s, p, b) {
       const mark = join(fill(s.to, p), '.onprem-artifact');
       return existsSync(mark) && readFileSync(mark, 'utf8').trim() === artifact(b, s.artifact).sha256;
     }
+    case 'telemetry':
+    case 'gateway':
     case 'unit': {
-      const file = `/etc/systemd/system/${s.name}.service`;
-      return existsSync(file) && readFileSync(file, 'utf8') === unitText(s, p) && run('systemctl', ['is-active', '--quiet', s.name]).status === 0;
+      const u = unitOf(s, b, p);
+      const file = `/etc/systemd/system/${u.name}.service`;
+      const config = configOf(s, b, p);
+      return existsSync(file) && readFileSync(file, 'utf8') === unitText(u, p) && (!config || (existsSync(config.path) && readFileSync(config.path, 'utf8') === config.text)) && run('systemctl', ['is-active', '--quiet', u.name]).status === 0;
     }
     case 'health': return null; // always run: it is the install's last word
   }
@@ -147,6 +161,38 @@ const artifact = (b, name) => {
   return a;
 };
 
+// The site's own units, made from a closed step: what runs is the site's,
+// with only the vendor's names and addresses filled in.
+function unitOf(s, b, p) {
+  const svc = b.recipe.service;
+  if (s.do === 'telemetry') return { name: `onprem-otel-${svc}`, user: 'root', says: `${svc}'s telemetry, kept on this machine`, exec: ['/usr/local/bin/otelcol-contrib', '--config', `/etc/onprem/otel-${svc}.yaml`], writes: [join(HOME, 'telemetry', svc)] };
+  if (s.do === 'gateway') return { name: `onprem-gateway-${svc}`, user: 'root', says: `${svc}'s declared effects, each one recorded`, exec: ['/usr/bin/node', join(LIB, 'gateway.mjs'), '--port', String(p.gateway_port), ...Object.entries(b.recipe.effects).flatMap(([n, e]) => ['--route', `${n}=${fill(e.upstream, p)}`]), '--record', join(HOME, 'effects', `${svc}.jsonl`)], writes: [join(HOME, 'effects')] };
+  return s;
+}
+
+function configOf(s, b, p) {
+  if (s.do !== 'telemetry') return null;
+  const svc = b.recipe.service;
+  return { path: `/etc/onprem/otel-${svc}.yaml`, text: `# The site's collector for ${svc}: it takes OTLP on loopback and keeps it here.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:${OTLP_PORT}
+exporters:
+  file:
+    path: ${join(HOME, 'telemetry', svc, 'raw.jsonl')}
+    flush_interval: 1s
+service:
+  telemetry:
+    metrics:
+      level: none
+  pipelines:
+    traces: { receivers: [otlp], exporters: [file] }
+    logs: { receivers: [otlp], exporters: [file] }
+` };
+}
+
 const unitText = (s, p) => `# Written by the site tool from ${s.name}'s signed recipe. Rerun the tool rather than editing this.
 [Unit]
 Description=${s.says}
@@ -154,7 +200,7 @@ After=network.target
 
 [Service]
 User=${s.user}
-ExecStart=${fill(s.exec, p).map((a) => (/\s/.test(a) ? `"${a}"` : a)).join(' ')}
+${Object.entries(s.env ?? {}).map(([k, v]) => `Environment=${k}=${fill(v, p)}\n`).join('')}ExecStart=${fill(s.exec, p).map((a) => (/\s/.test(a) ? `"${a}"` : a)).join(' ')}
 Restart=on-failure
 RestartSec=2
 NoNewPrivileges=yes
@@ -165,6 +211,16 @@ PrivateTmp=yes
 [Install]
 WantedBy=multi-user.target
 `;
+
+async function waitPort(port, within = 10_000) {
+  const until = Date.now() + within;
+  while (Date.now() < until) {
+    const open = await new Promise((ok) => { const c = net.connect(port, '127.0.0.1').once('connect', () => { c.end(); ok(true); }).once('error', () => ok(false)); });
+    if (open) return;
+    await new Promise((ok) => setTimeout(ok, 200));
+  }
+  throw new Error(`nothing answered on port ${port} within ${within / 1000} s`);
+}
 
 async function doStep(s, p, b, changed) {
   switch (s.do) {
@@ -193,13 +249,21 @@ async function doStep(s, p, b, changed) {
       renameSync(next, to);
       return { verdict: V.passed, did: `unpacked ${a.name} (${a.sha256.slice(0, 12)}…) to ${to}` };
     }
+    case 'telemetry':
+    case 'gateway':
     case 'unit': {
-      const file = `/etc/systemd/system/${s.name}.service`;
-      writeFileSync(file, unitText(s, p));
+      const u = unitOf(s, b, p);
+      const config = configOf(s, b, p);
+      if (config) { mkdirSync(dirname(config.path), { recursive: true }); writeFileSync(config.path, config.text); }
+      for (const w of fill(u.writes, p)) mkdirSync(w, { recursive: true, mode: 0o700 });
+      const file = `/etc/systemd/system/${u.name}.service`;
+      writeFileSync(file, unitText(u, p));
       execFileSync('systemctl', ['daemon-reload']);
-      execFileSync('systemctl', ['enable', s.name], { stdio: 'ignore' });
-      execFileSync('systemctl', [changed ? 'restart' : 'start', s.name]);
-      return { verdict: V.passed, did: `${changed ? 'restarted' : 'started'} ${s.name}, kept running by systemd and started at boot` };
+      execFileSync('systemctl', ['enable', u.name], { stdio: 'ignore' });
+      execFileSync('systemctl', [changed ? 'restart' : 'start', u.name]);
+      if (s.do === 'telemetry') await waitPort(OTLP_PORT);
+      if (s.do === 'gateway') await waitPort(p.gateway_port);
+      return { verdict: V.passed, did: `${changed ? 'restarted' : 'started'} ${u.name}, kept running by systemd and started at boot` };
     }
     case 'health': {
       const url = fill(s.url, p);
@@ -249,7 +313,7 @@ async function plan(b, sets, auto) {
     // A unit runs what the steps before it put in place, so it is undone
     // (restarted) whenever any of them is.
     const before = steps.some((x) => x.done === false);
-    steps.push({ s, done: s.do === 'unit' && before ? false : stepCheck(s, p, b) });
+    steps.push({ s, done: UNITS.includes(s.do) && before ? false : stepCheck(s, p, b) });
   }
   const blockers = needs.filter((x) => x.verdict !== V.passed && x.n.severity !== 'warn');
   const facts = { recipe: sha(b.bytes), params: p, needs: needs.map((x) => [x.n.probe, x.verdict, x.facts]), steps: steps.map((x) => [x.s.do, x.done]) };
@@ -323,82 +387,156 @@ async function apply(b, sets, auto, token) {
   return 0;
 }
 
-// --- Trials: a candidate beside production, on the same inputs --------------
+// --- Trials: a candidate beside production, on the same inputs and state ----
 
 const applied = (service) => join(HOME, `${service}.applied.json`);
 const readApplied = (service) => {
   if (!existsSync(applied(service))) throw refusal(`no release of ${service} is installed here, so there is nothing to compare a candidate with`);
   return JSON.parse(readFileSync(applied(service), 'utf8'));
 };
+const shapeKey = () => readFileSync(join(HOME, 'shape.key'), 'utf8').trim();
+const lines = (f) => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean) : []);
+const projected = (file, recipe, limit = 400) => {
+  const c = contract(recipe.telemetry), key = shapeKey();
+  return lines(file).flatMap((l) => { try { return project(l, c, key); } catch { return [{ kind: 'unreadable' }]; } }).slice(-limit);
+};
 
-function sandboxed(app, t, inputs, out, user) {
-  // One replay, as the service's own account, with no network, every path
-  // read-only but its throwaway output, and nothing kept after it exits.
-  mkdirSync(out, { recursive: true });
-  execFileSync('chown', [`${user}:${user}`, out]);
-  const cmd = fill(t.exec, { app, inputs, out });
-  const r = run('systemd-run', ['--wait', '--collect', '--quiet', '-p', `User=${user}`, '-p', 'PrivateNetwork=yes', '-p', 'ProtectSystem=strict', '-p', 'ProtectHome=yes', '-p', 'PrivateTmp=yes', '-p', 'NoNewPrivileges=yes', '-p', `ReadWritePaths=${out}`, '-p', 'RuntimeMaxSec=120', '--', ...cmd]);
-  const file = join(out, t.result);
-  if (!existsSync(file)) return { unjudged: `the replay wrote no ${t.result} (systemd-run exited ${r.status}${r.stderr.trim() ? `: ${r.stderr.trim().split('\n').at(-1)}` : ''})` };
-  try { return JSON.parse(readFileSync(file, 'utf8')); } catch (e) { return { unjudged: `${t.result} isn't JSON: ${e.message}` }; }
+// A trial's sandbox must have no network, and the site proves it rather than
+// trusting systemd to have made one: where it can't make a network
+// namespace, systemd says "proceeding without" and runs the unit with the
+// network (2026-11-25: 353 claims reached the clearinghouse from trials that
+// way). So the same properties run `ip -o link` first, and anything but
+// loopback refuses the trial. Each arm checks again before it runs.
+const SANDBOX = (user, writes) => ['-p', `User=${user}`, '-p', 'PrivateNetwork=yes', '-p', 'ProtectSystem=strict', '-p', 'ProtectHome=yes', '-p', 'PrivateTmp=yes', '-p', 'NoNewPrivileges=yes', ...(writes ? ['-p', `ReadWritePaths=${writes}`] : []), '-p', 'RuntimeMaxSec=180'];
+function isolation(user) {
+  const r = run('systemd-run', ['--wait', '--collect', '--pipe', '--quiet', ...SANDBOX(user), '--', '/usr/sbin/ip', '-o', 'link']);
+  const links = r.stdout.split('\n').filter(Boolean).map((l) => l.split(':')[1]?.trim().split('@')[0]);
+  debug('isolation', r.status, links);
+  if (r.status !== 0) return `the sandbox didn't run (${(r.stderr.trim().split('\n').at(-1) || `exit ${r.status}`)})`;
+  if (links.length !== 1 || links[0] !== 'lo') return `a sandboxed trial here would have the network (${links.join(', ')}): this machine can't make a network namespace for it`;
+  return null;
 }
+// A trial's own ports: if isolation ever failed, it still couldn't reach
+// production's collector or gateway.
+const TRIAL_OTLP = 14318, TRIAL_GATEWAY = 18640;
+
+// One arm of a trial: the service's replay, in one sandbox with its own
+// collector and the gateway answering from what production recorded. The
+// sandbox has no network, so nothing it does reaches the outside.
+function arm(dir, app, prod, inputs) {
+  const svc = prod.recipe.service, t = prod.recipe.trial, user = prod.recipe.steps.find((s) => s.do === 'unit').user;
+  const out = join(dir, 'out'), state = join(dir, 'state');
+  mkdirSync(out, { recursive: true }); mkdirSync(state, { recursive: true });
+  for (const f of fill(t.state ?? [], prod.params)) if (existsSync(f)) writeFileSync(join(state, f.split('/').at(-1)), readFileSync(f));
+  writeFileSync(join(dir, 'recorded.jsonl'), lines(join(HOME, 'effects', `${svc}.jsonl`)).join('\n') + '\n');
+  writeFileSync(join(dir, 'otel.yaml'), configOf({ do: 'telemetry' }, prod, prod.params).text.replace(join(HOME, 'telemetry', svc, 'raw.jsonl'), join(out, 'telemetry.jsonl')).replace(`127.0.0.1:${OTLP_PORT}`, `127.0.0.1:${TRIAL_OTLP}`));
+  const p = { ...prod.params, app, inputs, out, state, otlp: `http://127.0.0.1:${TRIAL_OTLP}` };
+  for (const n of Object.keys(prod.recipe.effects ?? {})) p[`effect.${n}`] = `http://127.0.0.1:${TRIAL_GATEWAY}/${n}`;
+  const env = Object.entries(prod.recipe.steps.find((s) => s.do === 'unit').env ?? {}).map(([k, v]) => `${k}=${fill(v, p)}`);
+  const q = (a) => `'${String(a).replace(/'/g, "'\\''")}'`;
+  writeFileSync(join(dir, 'arm.sh'), `#!/bin/sh
+[ "$(/usr/sbin/ip -o link | grep -vc ': lo:')" = 0 ] || { echo network > ${q(join(out, 'not-isolated'))}; exit 97; }
+/usr/local/bin/otelcol-contrib --config ${q(join(dir, 'otel.yaml'))} >/dev/null 2>&1 & O=$!
+/usr/bin/node ${q(join(LIB, 'gateway.mjs'))} --port ${TRIAL_GATEWAY} ${Object.keys(prod.recipe.effects ?? {}).map((n) => `--route ${n}=`).join(' ')} --replay ${q(join(dir, 'recorded.jsonl'))} --unrecorded ${q(join(out, 'unrecorded.jsonl'))} & G=$!
+for i in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/${TRIAL_OTLP}) 2>/dev/null && break; sleep 0.1; done
+env ${env.map(q).join(' ')} ${fill(t.exec, p).map(q).join(' ')}; R=$?
+sleep 2; kill $G $O; wait
+exit $R
+`, { mode: 0o755 });
+  execFileSync('chown', ['-R', `${user}:${user}`, dir]);
+  const r = run('systemd-run', ['--wait', '--collect', '--quiet', ...SANDBOX(user, dir), '--', '/bin/bash', join(dir, 'arm.sh')]);
+  const file = join(out, t.result);
+  if (existsSync(join(out, 'not-isolated'))) return { unjudged: 'its sandbox had the network, so it stopped before running anything' };
+  const res = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : { unjudged: `the replay wrote no ${t.result} (systemd-run exited ${r.status})` };
+  res.telemetry = projected(join(out, 'telemetry.jsonl'), prod.recipe, 300);
+  res.unrecorded = lines(join(out, 'unrecorded.jsonl')).length;
+  return res;
+}
+
+const RANK = { submitted: 3, held: 2, rejected: 1, error: 0 };
 
 function trial(b) {
   if (b.recipe.channel !== 'candidate') throw refusal(`only a candidate is trialed; this is a ${b.recipe.channel ?? 'unlabelled'} build`);
   const svc = b.recipe.service;
   if (!existsSync(join(HOME, `${svc}.trials-allowed`))) throw refusal(`trials of ${svc} aren't allowed on this machine: \`node site.mjs allow-trials ${svc}\` says yes to them, once`);
   const prod = readApplied(svc);
-  const t = b.recipe.trial;
-  if (!t || JSON.stringify(t) !== JSON.stringify(prod.recipe.trial)) throw refusal('the candidate replays differently from the installed release, so their results can\'t be compared');
-  const unit = prod.recipe.steps.find((s) => s.do === 'unit');
+  const user = prod.recipe.steps.find((s) => s.do === 'unit').user;
+  const leak = isolation(user);
+  if (leak) {
+    const r = { id: `${new Date().toISOString().replace(/[:.]/g, '-')}-${sha(b.bytes).slice(0, 8)}`, at: new Date().toISOString(), candidate: { version: b.recipe.version, from: b.recipe.source ?? null }, verdict: V.never, why: `no trial ran: ${leak}` };
+    mkdirSync(join(HOME, 'trials'), { recursive: true });
+    writeFileSync(join(HOME, 'trials', `${r.id}.json`), JSON.stringify(r, null, 1));
+    return r;
+  }
+  if (JSON.stringify(b.recipe.trial) !== JSON.stringify(prod.recipe.trial)) throw refusal('the candidate replays differently from the installed release, so their results can\'t be compared');
   const id = `${new Date().toISOString().replace(/[:.]/g, '-')}-${sha(b.bytes).slice(0, 8)}`;
   const dir = join(HOME, 'trials', id);
   const unpack = prod.recipe.steps.find((s) => s.do === 'unpack');
-  const capp = join(dir, 'app');
+  const capp = join(dir, 'candidate-app');
   mkdirSync(capp, { recursive: true });
   execFileSync('tar', ['-xzf', join(b.dir, artifact(b, unpack.artifact).name), '-C', capp]);
-  const inputs = fill(t.inputs, prod.params);
-  const n = existsSync(inputs) ? run('ls', ['-1', inputs]).stdout.trim().split('\n').filter(Boolean).length : 0;
-  debug('trial', id, 'replays', n, 'inputs from', inputs);
-  const base = sandboxed(fill(unpack.to, prod.params), t, inputs, join(dir, 'out-release'), unit.user);
-  const cand = sandboxed(capp, t, inputs, join(dir, 'out-candidate'), unit.user);
-  rmSync(join(dir, 'out-release'), { recursive: true, force: true });
-  rmSync(join(dir, 'out-candidate'), { recursive: true, force: true });
-  rmSync(capp, { recursive: true, force: true });
-  const res = { id, at: new Date().toISOString(), candidate: { version: b.recipe.version, recipe: sha(b.bytes).slice(0, 12), from: b.recipe.source ?? null }, release: prod.recipe.version, inputs: n };
+  const inputs = fill(prod.recipe.trial.inputs, prod.params);
+  const n = (existsSync(inputs) ? run('ls', ['-1', inputs]).stdout.trim().split('\n').filter(Boolean).length : 0);
+  const base = arm(join(dir, 'release'), fill(unpack.to, prod.params), prod, inputs);
+  const cand = arm(join(dir, 'candidate'), capp, prod, inputs);
+  rmSync(dir, { recursive: true, force: true });
+  const purpose = b.recipe.candidate_for === 'instrument' ? 'instrument' : 'fix';
+  const res = { id, at: new Date().toISOString(), purpose, candidate: { version: b.recipe.version, recipe: sha(b.bytes).slice(0, 12), from: b.recipe.source ?? null }, release: prod.recipe.version, inputs: n };
+  // A candidate's own contract is shown, never used: its telemetry is
+  // projected by the release's, so a candidate can't widen what passes.
+  if (JSON.stringify(b.recipe.telemetry) !== JSON.stringify(prod.recipe.telemetry)) res.contract_change = { proposed: b.recipe.telemetry, note: 'shown for review; this trial projected by the installed contract' };
   if (base.unjudged || cand.unjudged) Object.assign(res, { verdict: V.unjudged, why: [base.unjudged && `the release: ${base.unjudged}`, cand.unjudged && `the candidate: ${cand.unjudged}`].filter(Boolean).join('; ') });
   else if (!n) Object.assign(res, { verdict: V.unjudged, why: `there are no inputs at ${inputs} to replay` });
   else {
     const by = (r) => Object.fromEntries(r.events.map((e) => [e.input, e]));
     const B = by(base), C = by(cand);
-    const ok = (e) => e?.outcome === 'parsed';
-    const fixed = Object.keys(B).filter((k) => !ok(B[k]) && ok(C[k]));
-    const broke = Object.keys(B).filter((k) => ok(B[k]) && !ok(C[k]));
-    const still = Object.keys(B).filter((k) => !ok(B[k]) && !ok(C[k])).map((k) => ({ input: k, outcome: C[k]?.outcome ?? 'absent', error_class: C[k]?.error_class ?? null }));
-    Object.assign(res, { release_counts: base.counts, candidate_counts: cand.counts, fixed, regressed: broke, still_failing: still });
-    if (broke.length) Object.assign(res, { verdict: V.failed, why: `${broke.length} input(s) the release parses, the candidate doesn't` });
-    else if (!fixed.length) Object.assign(res, { verdict: V.failed, why: still.length ? `it fixes none of the ${still.length} input(s) the release fails` : 'the release fails no input here, so there is nothing for it to fix' });
-    else if (still.length) Object.assign(res, { verdict: V.passed, partly: `${still.length} input(s) still fail` });
-    else res.verdict = V.passed;
+    const moves = {};
+    const per = Object.keys(B).map((k) => {
+      const from = B[k].outcome, to = C[k]?.outcome ?? 'absent';
+      moves[`${from}→${to}`] = (moves[`${from}→${to}`] ?? 0) + 1;
+      return { input: k, from, to, error_class: C[k]?.error_class ?? null };
+    });
+    const regressed = per.filter((x) => x.to !== 'unjudged' && (RANK[x.to] ?? -1) < RANK[x.from]);
+    const improved = per.filter((x) => x.to !== 'unjudged' && (RANK[x.to] ?? -1) > RANK[x.from]);
+    const unjudged = per.filter((x) => x.to === 'unjudged');
+    Object.assign(res, { moves, regressed, improved, unjudged, changed: per.filter((x) => x.from !== x.to), effects_unrecorded: { release: base.unrecorded, candidate: cand.unrecorded }, telemetry: { release: base.telemetry, candidate: cand.telemetry } });
+    if (purpose === 'instrument') Object.assign(res, per.every((x) => x.from === x.to) ? { verdict: V.passed, note: 'it observed and changed no outcome' } : { verdict: V.failed, why: `an instrumentation candidate changed ${per.filter((x) => x.from !== x.to).length} outcome(s)` });
+    else if (regressed.length) Object.assign(res, { verdict: V.failed, why: `${regressed.length} input(s) do worse than under the release` });
+    else if (improved.length) Object.assign(res, { verdict: V.passed, ...(unjudged.length ? { partly: `${unjudged.length} input(s) now send what was never sent, so the replay can't say how the outside answers them` } : {}) });
+    else if (unjudged.length) Object.assign(res, { verdict: V.unjudged, why: `every changed input now sends what was never sent, so the replay can't say how the outside answers` });
+    else Object.assign(res, { verdict: V.failed, why: 'it improves no input' });
   }
+  mkdirSync(join(HOME, 'trials'), { recursive: true });
   writeFileSync(join(HOME, 'trials', `${id}.json`), JSON.stringify(res, null, 1));
-  rmSync(dir, { recursive: true, force: true });
   return res;
 }
 
-async function watchDir(dir) {
-  const done = new Set();
-  console.log(`watching ${dir} for candidates`);
+// Candidates come from the vendor's own lend, which this machine dials out
+// to: nothing reaches in. Each is checked like any bundle before its trial.
+async function watchLend(name) {
+  const { svrngs } = await import(join(LIB, 'svrngs.mjs'));
+  const s = svrngs();
+  const done = new Set(), into = join(HOME, 'delivered');
+  console.log(`watching the lend ${name} for candidates`);
   for (;;) {
-    for (const d of existsSync(dir) ? run('ls', ['-1', dir]).stdout.trim().split('\n').filter(Boolean) : []) {
-      const path = join(dir, d);
-      if (done.has(d) || !existsSync(join(path, 'recipe.sig'))) continue;
-      done.add(d);
-      let r;
-      try { r = trial(readBundle(path)); } catch (e) { r = { verdict: V.never, why: e.message, at: new Date().toISOString(), bundle: d }; if (!(e instanceof Refusal)) r.why = `the trial broke: ${e.message}`; mkdirSync(join(HOME, 'trials'), { recursive: true }); writeFileSync(join(HOME, 'trials', `${r.at.replace(/[:.]/g, '-')}-refused.json`), JSON.stringify(r, null, 1)); }
-      console.log(`${d}: ${r.verdict}${r.why ? `: ${r.why}` : ''}`);
-    }
-    await new Promise((ok) => setTimeout(ok, 1000));
+    try {
+      let origin = null;
+      for (const g of (await s.ask('/v1/groups')).groups) origin ??= (await s.ask(`/v1/lends?namespace=${g.id}`)).lent.find((l) => l.name === name)?.origin ?? null;
+      if (!origin) throw new Error(`no group of this machine lends ${name} now`);
+      const get = async (path) => { const r = await s.fetch(new URL(path, origin).href, { signal: AbortSignal.timeout(15_000) }); if (!r.ok) throw new Error(`${path}: ${r.status}`); return Buffer.from(await r.arrayBuffer()); };
+      for (const c of JSON.parse(await get('index.json'))) {
+        if (done.has(c) || !/^[\w.-]+$/.test(c)) continue;
+        done.add(c);
+        const d = join(into, c);
+        mkdirSync(d, { recursive: true });
+        for (const f of ['recipe.json', 'recipe.sig']) writeFileSync(join(d, f), await get(`${c}/${f}`));
+        for (const a of JSON.parse(readFileSync(join(d, 'recipe.json'))).artifacts) if (/^[\w.-]+$/.test(a.name)) writeFileSync(join(d, a.name), await get(`${c}/${a.name}`));
+        let r;
+        try { r = trial(readBundle(d)); } catch (e) { r = { verdict: V.never, why: e instanceof Refusal ? e.message : `the trial broke: ${e.message}`, at: new Date().toISOString(), bundle: c }; mkdirSync(join(HOME, 'trials'), { recursive: true }); writeFileSync(join(HOME, 'trials', `${r.at.replace(/[:.]/g, '-')}-${c}.json`), JSON.stringify(r, null, 1)); }
+        console.log(`${c}: ${r.verdict}${r.why ? `: ${r.why}` : ''}`);
+      }
+    } catch (e) { debug('watch', e.message); }
+    await new Promise((ok) => setTimeout(ok, 2000));
   }
 }
 
@@ -406,27 +544,25 @@ async function watchDir(dir) {
 
 function view(service, port) {
   const prod = () => readApplied(service);
+  const q = (u, k, d) => Math.min(Number(u.searchParams.get(k) ?? d) || d, 1000);
   const routes = {
-    '/': () => ({ service, routes: Object.keys(routes), says: 'Read-only. Facts about this machine, the service\'s own telemetry, and trial results. Never a note, a form, a file name or a log line.' }),
+    '/': () => ({ service, routes: Object.keys(routes), says: 'Read-only. Facts about this machine, the service\'s telemetry as this site projects it, its effects, and trial results. No string passes as written unless the site can tell it carries no data.' }),
     '/site': () => {
       const p = prod();
-      const j = join(HOME, `${service}.journal`);
-      return { release: p.recipe.version, params: p.params, trials_allowed: existsSync(join(HOME, `${service}.trials-allowed`)), journal: existsSync(j) ? readFileSync(j, 'utf8').trim().split('\n').slice(-10).map((l) => JSON.parse(l)) : [] };
+      return { release: p.recipe.version, params: Object.fromEntries(Object.entries(p.params).filter(([k]) => !k.startsWith('effect.'))), trials_allowed: existsSync(join(HOME, `${service}.trials-allowed`)), journal: lines(join(HOME, `${service}.journal`)).slice(-12).map((l) => JSON.parse(l)) };
     },
+    '/contract': () => ({ installed: prod().recipe.telemetry }),
+    '/service/telemetry': (u) => projected(join(HOME, 'telemetry', service, 'raw.jsonl'), prod().recipe, q(u, 'limit', 200)),
+    '/service/effects': (u) => { const key = shapeKey(); return lines(join(HOME, 'effects', `${service}.jsonl`)).slice(-q(u, 'limit', 100)).map((l) => { const r = JSON.parse(l); return { at: r.at, effect: r.effect, method: r.method, path: r.path, status: r.status, request: r.req_hash.slice(0, 12), answer: r.resp == null ? null : project(JSON.stringify({ resourceLogs: [{ scopeLogs: [{ logRecords: [{ body: { stringValue: r.resp } }] }] }] }), contract({}), key)[0].body }; }); },
     '/trials': () => (existsSync(join(HOME, 'trials')) ? run('ls', ['-1', join(HOME, 'trials')]).stdout.trim().split('\n').filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(join(HOME, 'trials', f), 'utf8'))) : []),
   };
-  const telemetry = (path) => async () => {
-    const p = prod();
-    const url = fill(p.recipe.view.telemetry[path], p.params);
-    try { return await (await fetch(url, { signal: AbortSignal.timeout(3000) })).json(); } catch (e) { return { verdict: V.unjudged, why: `the service didn't answer ${path}: ${e.cause?.code ?? e.message}` }; }
-  };
-  for (const k of Object.keys(prod().recipe.view.telemetry)) routes[`/service/${k}`] = telemetry(k);
   http.createServer(async (req, res) => {
     const say = (code, v) => res.writeHead(code, { 'content-type': 'application/json' }).end(JSON.stringify(v, null, 1));
     if (req.method !== 'GET') return say(405, { error: 'this view only reads' });
-    const route = routes[new URL(req.url, 'http://x').pathname];
+    const u = new URL(req.url, 'http://x');
+    const route = routes[u.pathname];
     if (!route) return say(404, { error: 'no such view', routes: Object.keys(routes) });
-    try { say(200, await route()); } catch (e) { say(e instanceof Refusal ? 409 : 500, { error: e.message }); }
+    try { say(200, await route(u)); } catch (e) { say(e instanceof Refusal ? 409 : 500, { error: e instanceof Refusal ? e.message : 'the view could not read this' }); }
   }).listen(port, '127.0.0.1', () => console.log(`view of ${service} on 127.0.0.1:${port}`));
 }
 
@@ -451,6 +587,11 @@ try {
     const fp = sha(createPublicKey(pem).export({ type: 'spki', format: 'der' })).slice(0, 16);
     mkdirSync(HOME, { recursive: true });
     writeFileSync(TRUST, pem, { mode: 0o644 });
+    // The site's own pieces, where its units run them from, and its key for
+    // shaping values (each site's own, so shapes match within a site only).
+    mkdirSync(LIB, { recursive: true });
+    for (const f of ['site.mjs', 'project.mjs', 'gateway.mjs', 'svrngs.mjs']) writeFileSync(join(LIB, f), readFileSync(join(import.meta.dirname, f)), { mode: 0o644 });
+    if (!existsSync(join(HOME, 'shape.key'))) writeFileSync(join(HOME, 'shape.key'), randomBytes(32).toString('hex'), { mode: 0o600 });
     console.log(`This machine now trusts the vendor key ${fp}. Check it against what the vendor told you.`);
   } else if (verb === 'plan') process.exitCode = say(readBundle(target), await plan(readBundle(target), sets, auto));
   else if (verb === 'apply') {
@@ -467,7 +608,7 @@ try {
     const r = trial(readBundle(target));
     console.log(JSON.stringify(r, null, 1));
     process.exitCode = r.verdict === V.passed ? 0 : 1;
-  } else if (verb === 'watch') await watchDir(target);
+  } else if (verb === 'watch') await watchLend(target);
   else if (verb === 'view') view(target, Number(sets.__port ?? 8620));
   else { console.error('usage: site.mjs trust|plan|apply|status|allow-trials|trial|watch|view …'); process.exitCode = 2; }
 } catch (e) {

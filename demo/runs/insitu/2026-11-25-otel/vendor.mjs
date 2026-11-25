@@ -3,7 +3,7 @@
 //
 //   node vendor.mjs key <keys dir>
 //   node vendor.mjs bundle <recipe> <keys dir> <out dir> --source <service dir>
-//        [--version v] [--channel release|candidate] [--from <git rev>] [--crash]
+//        [--version v] [--channel release|candidate] [--for fix|instrument] [--from <git rev>] [--crash]
 //
 // The vendor's CI runs this: a release from what was merged, a candidate
 // from a branch. The site installs only releases and only trials candidates.
@@ -28,6 +28,7 @@ if (verb === 'key') {
   const opt1 = (k, d) => (opt.includes(k) ? opt[opt.indexOf(k) + 1] : d);
   recipe.channel = opt1('--channel', 'release');
   if (opt.includes('--from')) recipe.source = opt1('--from');
+  if (opt.includes('--for')) recipe.candidate_for = opt1('--for');
   cpSync(opt1('--source', join(import.meta.dirname, 'service')), stage, { recursive: true, filter: (f) => !/(\/\.git|__pycache__|\/tests|\/fixtures)(\/|$)/.test(f) });
   const py = join(stage, 'server.py');
   writeFileSync(py, readFileSync(py, 'utf8').replace(/VERSION = "[^"]*"/, `VERSION = "${version}"`).replace('CRASH = False', `CRASH = ${opt.includes('--crash') ? 'True' : 'False'}`));
