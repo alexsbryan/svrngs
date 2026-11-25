@@ -19,3 +19,33 @@ fn page_run_says_svrngs_runs_it_and_no_more() {
     let said = started("coder", RunView::Page, verdict).unwrap();
     assert_eq!(said, "svrngs runs coder now.");
 }
+
+/// A program svrngs runs is one row of the page's Already running here,
+/// its button its action and its name: Stop while it runs or starts,
+/// Start once stopped or failed. Planted, watched failing: the button said
+/// by `Action::verb`, "stop coder".
+#[test]
+fn a_run_row_s_button_names_its_action_and_the_program() {
+    let row = |running: &str| {
+        let kept = format!(r#"{{"name":"coder","port":8101,"status":{{"running":{running}}}}}"#);
+        owned(serde_json::from_str(&kept).unwrap())
+    };
+    let said = |v: serde_json::Value| (v["text"].clone(), v["action"].clone(), v["button"].clone());
+    use serde_json::json;
+    assert_eq!(
+        said(row(r#"{"since":"9:00"}"#)),
+        (
+            json!("Run by svrngs, since 9:00."),
+            json!("stop"),
+            json!("Stop coder")
+        )
+    );
+    assert_eq!(
+        said(row(r#""starting""#)),
+        (json!("Starting…"), json!("stop"), json!("Stop coder"))
+    );
+    assert_eq!(
+        said(row(r#""stopped""#)),
+        (json!("Stopped."), json!("start"), json!("Start coder"))
+    );
+}

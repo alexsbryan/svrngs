@@ -57,18 +57,12 @@ pub(super) fn owned(Kept { name, port, status }: Kept) -> serde_json::Value {
         Stopped => ("Stopped.".into(), Start),
         Failed(why) => (format!("{name} stopped ({why}). {RUN_UNREAD}"), Start),
     };
-    let button = format!(
-        "{} {name}",
-        if matches!(action, Start) {
-            "Start"
-        } else {
-            "Stop"
-        }
-    );
+    // Its button names its action, Start or Stop, and the program.
+    let button = format!("{action:?} {name}");
     serde_json::json!({ "name": name, "port": port, "text": text, "action": action, "button": button })
 }
 
-#[derive(serde::Deserialize, Serialize)]
+#[derive(Debug, serde::Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum Action {
     Start,

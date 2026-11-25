@@ -139,21 +139,10 @@ impl Share<'_> {
             (Runs::Transient, Return::Unknown, None, None)
         };
         #[cfg(target_os = "macos")]
-        let (runs, app, keep) =
-            match select.then(|| job::now(&format!("{}{}", job::mac::PREFIX, lend.name))) {
-                Some(Ok(job::Now {
-                    keep: grant,
-                    scope: job::Scope::Agent(root),
-                })) if !approved.processes.is_empty()
-                    && approved
-                        .processes
-                        .iter()
-                        .all(|&p| crate::uid::descends(p, root)) =>
-                {
-                    (Runs::Kept(grant.clone()), Return::SignIn, Some(grant))
-                }
-                _ => (runs, app, keep),
-            };
+        let (runs, app, keep) = match job::mac::kept(job::now, lend, &approved, select) {
+            Some(grant) => (Runs::Kept(grant.clone()), Return::SignIn, Some(grant)),
+            None => (runs, app, keep),
+        };
         let platform = if cfg!(target_os = "macos") {
             Platform::Mac
         } else {
