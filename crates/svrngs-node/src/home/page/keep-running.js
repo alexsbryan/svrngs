@@ -2,18 +2,18 @@
 // A lend's offer to have svrngs keep its program running (lent-row.js
 // `Lent`), and KEEP, its machine. It is made where /lent says the lend is
 // shared only while its program runs, by its port (plan/words.rs
-// `shared_while`), and svrngs runs no program of the lend's name (GET /run's
-// rows, read once as the row is drawn). Keep it running asks what svrngs
-// would start it with (GET /run?prefill=<port>, a llama-server's), shown with
-// a fold to change it, or two fields to fill where nothing could be said.
+// `shared_while`: a lend kept to no job's restarts, so not one whose
+// approval follows svrngs's copy). Keep it running asks what svrngs would
+// start it with (GET /run?prefill=<port>, a llama-server's), shown with a
+// fold to change it, or two fields to fill where nothing could be said.
 // Start runs it under the lend's own name and port (POST /run): the keeper
 // refuses while the person's own copy holds the port, and stops nothing.
 // Once svrngs's copy answers, the lend is held for it, as for anything not
 // approved; it is approved at once (`carry`) only where what answers is the
-// job svrngs just started, a unit named for the lend, by the token /lent
-// lists it with. That approval keeps sharing it through the job's restarts
-// (share.rs `kept`), on Linux; on a Mac what answers is a process, and
-// Keep sharing it is left for the person to press.
+// job svrngs just started, by the token /lent lists it with. That approval
+// keeps sharing it through the job's restarts where svrngs verifies it is
+// that job's (share.rs `kept`): on Linux its unit, on a Mac the launch
+// agent the keeper runs it under.
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
@@ -24,28 +24,22 @@ import { answered } from './running-look.js?v=__VERSION__';
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
- * The offer's state: where it is, nothing drawn while GET /run is read or
- * where svrngs runs the program; the command and folder, as svrngs said
- * them or as typed, and whether svrngs said them; what is said while it
- * starts (plan/words.rs `STARTING`); and what was said last.
+ * The offer's state: where it is; the command and folder, as svrngs said
+ * them or as typed, and whether svrngs said them; and what was said last.
  * @typedef {object} State
- * @property {{ keep: 'none' | 'offered' | 'filling' | 'asked' | 'starting' | 'started' }} at
+ * @property {{ keep: 'offered' | 'filling' | 'asked' | 'starting' | 'started' }} at
  * @property {Record<string, number>} [asked]
  * @property {string} [command]
  * @property {string} [folder]
  * @property {boolean} [filled]
- * @property {string} [starting]
  * @property {string} [said]
  */
 
 /**
- * The messages it takes: GET /run read, and whether svrngs runs a program
- * of the lend's name, or not read; Keep it running pressed; the command
- * and folder said, or not; one typed; Start pressed; it started, with what
- * was said, or refused, with why.
- * @typedef {{ type: 'read', runs: boolean, starting: string, why: string }
- *   | { type: 'unread', why: string }
- *   | { type: 'keep' }
+ * The messages it takes: Keep it running pressed; the command and folder
+ * said, or not; one typed; Start pressed; it started, with what was said,
+ * or refused, with why.
+ * @typedef {{ type: 'keep' }
  *   | { type: 'filled', command: string, folder: string, why: string }
  *   | { type: 'unfilled', why: string }
  *   | { type: 'typed', field?: string, value: string }
@@ -55,18 +49,21 @@ import { answered } from './running-look.js?v=__VERSION__';
  */
 
 /**
- * @typedef {{ run: 'read', failed: 'unread' }
- *   | { run: 'fill', failed: 'unfilled' }
+ * @typedef {{ run: 'fill', failed: 'unfilled' }
  *   | { run: 'start', command: string, folder: string, failed: 'refused' }} Effect
  */
 
-// Whether what answers on the lend `name`'s port is svrngs's job for it
-// alone, a unit /lent names for the lend (running-look.js `answered`),
-// listed with the token approving it takes.
+// Whether what answers on the lend `name`'s port is svrngs's job for it,
+// listed with the token approving it takes: as Linux shows a job, one unit
+// /lent names for the lend (running-look.js `answered`); as a Mac shows
+// one, its processes, never a unit (uid.rs `shown`), which approving keeps
+// only where each is the launch agent's svrngs runs the lend under.
 /** @param {Lend | undefined} lend @param {string} name */
 const isJob = (lend, name) => {
-  const [job, ...more] = lend?.answers ?? [];
-  return Boolean(lend?.token && job?.unit && !more.length && answered(job) === name);
+  const answers = (lend?.token && lend.answers) || [];
+  const [job, ...more] = answers;
+  const named = job?.unit && !more.length && answered(job) === name;
+  return Boolean(named || (job && answers.every((one) => one.pid !== undefined)));
 };
 
 // What answers on `name`'s port once svrngs's copy does, approved only
@@ -98,13 +95,8 @@ const carry = async (name, home) => {
  * @returns {Machine<State, Message, Effect>}
  */
 const KEEP = ({ name, sharing: port }, home) => ({
-  states: { keep: ['none', 'offered', 'filling', 'asked', 'starting', 'started'] },
+  states: { keep: ['offered', 'filling', 'asked', 'starting', 'started'] },
   io: {
-    read: () =>
-      get('/run').then(({ rows, starting }) => {
-        const runs = rows.some((/** @type {{ name: string }} */ row) => row.name === name);
-        return { type: 'read', runs, starting: starting ?? '', why: `runs ${name}: ${runs}` };
-      }),
     fill: () =>
       get(`/run?prefill=${port}`).then((got) =>
         got?.kind === 'prefill' && got.port === port
@@ -119,15 +111,6 @@ const KEEP = ({ name, sharing: port }, home) => ({
   },
   step: (state, message) => {
     switch (message.type) {
-      case 'read':
-        return go(
-          state,
-          { keep: message.runs ? 'none' : 'offered' },
-          { starting: message.starting },
-        );
-      // Not read, it is offered: Start says why, as the keeper refuses.
-      case 'unread':
-        return go(state, { keep: 'offered' });
       case 'keep':
         if (state.at.keep !== 'offered') return no(state, `it is ${state.at.keep}`);
         return go(state, { keep: 'filling' }, {}, { run: 'fill', failed: 'unfilled' });
@@ -148,7 +131,7 @@ const KEEP = ({ name, sharing: port }, home) => ({
         return go(
           state,
           { keep: 'starting' },
-          { said: state.starting },
+          { said: 'Starting…' },
           { run: 'start', command: state.command, folder: state.folder, failed: 'refused' },
         );
       case 'started':
@@ -164,7 +147,8 @@ const KEEP = ({ name, sharing: port }, home) => ({
 // What follows what Start said, once it started: where /lent no longer
 // shares the lend only while it runs, its approval follows svrngs's job
 // through restarts, so who can open it after a sign-in; else, where it is
-// held for svrngs's copy, Keep sharing it, to press.
+// still held for svrngs's copy (not carried, or the approval refused),
+// Keep sharing it, to press.
 /** @param {Lend & { sharing?: number }} lend @param {string} who */
 const after = (lend, who) => {
   if (!lend.sharing) return who && ` ${who} can open it again after you sign in.`;
@@ -203,14 +187,12 @@ function Ask({ state, doing, send }) {
  * @param {{ lend: Lend & { sharing?: number }, who: string, home: HOME.PlaceProps['home'] }} props
  */
 export function KeepRunning({ lend, who, home }) {
-  // Where /lent offers it, GET /run is read first, and nothing drawn till then.
-  const read = lend.sharing ? [{ run: 'read', failed: 'unread' }] : [];
   const [state, send] = useMachine(() =>
-    machine('KEEP', KEEP(lend, home), { at: { keep: 'none' } }, /** @type {Effect[]} */ (read)),
+    machine('KEEP', KEEP(lend, home), { at: { keep: 'offered' } }),
   );
   const at = state.at.keep;
   if (at === 'started') return html`<p role="status">${state.said}${after(lend, who)}</p>`;
-  if (!lend.sharing || at === 'none') return null;
+  if (!lend.sharing) return null;
   const doing = { state: at === 'filling' || at === 'starting' ? 'busy' : 'idle' };
   const offer = html`<p>${who && `${who} can open it only while it’s running. `}svrngs can keep it running, even after a restart.
     <${Act} words="Keep it running" doing=${doing} on=${{ type: 'keep' }} send=${send} /></p>`;

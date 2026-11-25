@@ -71,17 +71,15 @@ enum Row {
 pub(crate) async fn rows() -> Result<serde_json::Value, String> {
     let out = keeper(&RunView::Page, ["list", "--json"]).await?;
     let rows: Vec<Row> = serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?;
-    Ok(words::run_form(
-        rows.into_iter()
-            .filter_map(|row| match row {
-                Row::Kept(kept) => Some(words::owned(kept)),
-                Row::Unread { name } => {
-                    Some(serde_json::json!({ "name": name, "text": RUN_UNREAD }))
-                }
-                Row::Removed => None,
-            })
-            .collect(),
-    ))
+    let rows: Vec<_> = rows
+        .into_iter()
+        .filter_map(|row| match row {
+            Row::Kept(kept) => Some(words::owned(kept)),
+            Row::Unread { name } => Some(serde_json::json!({ "name": name, "text": RUN_UNREAD })),
+            Row::Removed => None,
+        })
+        .collect();
+    Ok(serde_json::json!({ "rows": rows }))
 }
 
 /// Replay first; only a current review may publish access.

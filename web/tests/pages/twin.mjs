@@ -240,8 +240,7 @@ export async function open(address, answers) {
   const answer = async (method, path, body) => {
     const key = `${method} ${path}`;
     page.asked.push(body === undefined ? [method, path] : [method, path, body]);
-    let given =
-      answers[key] ?? (key === 'GET /run' ? { starting: 'Starting…', rows: [] } : undefined);
+    let given = answers[key] ?? (key === 'GET /run' ? { rows: [] } : undefined);
     if (given === undefined) {
       page.unanswered.push(key);
       given = { status: 404, body: { error: `no recorded answer for ${key}` } };

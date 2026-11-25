@@ -2309,7 +2309,7 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             // open it is held below by the lend's file. Read once chores'
             // row, by its fold's name, offers to keep it running: lent by
             // hand, it is shared only while it runs (plan/words.rs
-            // `shared_while`), and svrngs runs nothing of its name.
+            // `shared_while`).
             "after": ["#lent li:has(> details[aria-label='chores'])", "Keep it running"],
             "text": true,
         }),

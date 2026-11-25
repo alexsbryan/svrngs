@@ -606,7 +606,6 @@ test('home can stop a managed app without a group', async () => {
   const page = await home({
     ...ada({ groups: [] }),
     'GET /run': {
-      starting: 'Starting…',
       rows: [
         { name: 'coder', port: 8101, text: 'Run by svrngs', action: 'stop', button: 'Stop coder' },
       ],

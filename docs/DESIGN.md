@@ -228,20 +228,21 @@ with holders descended from the active launch agent. Otherwise it reports
 manager state and port readiness separately (`native_run.rs`); neither
 read approves sharing. On the home page a program is run from its lend:
 a lend shared only while it runs (`plan::shared_while`: a port kept to no
-job's restarts) offers Keep it running, unless the keeper already runs a
-program of its name. It asks only the command and folder, prefilled from
+job's restarts, so not one whose approval follows the keeper's copy)
+offers Keep it running. It asks only the command and folder, prefilled from
 the read-only `/run?prefill=<port>` (the keeper's llama-server
 suggestion, when available) and changed by the person, and Start posts
 `/run` with the lend's own name and port; the keeper parses quoting
 without running a shell, and refuses a port another program holds. A
 found listener's row only lends it. Once Run verifies the program, the
 lend is held for what now answers; the page approves it through the
-lender's approve route only when that is one job, a unit named for the
-lend, by the token `/lent` listed. That approval keeps the lend to the
-job through its restarts (`share::kept`): on Linux to the unit; on macOS,
-where what answers is a process and the person presses Keep sharing it,
-to the keeper's launch agent for the lend's name, as Share keeps it. The
-terminal's Run gives a Share command for its verified port.
+lender's approve route only when that is the job, by the token `/lent`
+listed: on Linux one unit named for the lend, on macOS, where a job shows
+as its processes, those. That approval keeps the lend to the job through
+its restarts (`share::kept`): on Linux to the unit; on macOS to the
+keeper's launch agent for the lend's name, where every process approved is
+that agent's, as Share keeps it. The terminal's Run gives a Share command
+for its verified port.
 The page's Start and Stop controls use only the keeper's observed jobs
 and leave sharing alone.
 When Share would grant a running service, it

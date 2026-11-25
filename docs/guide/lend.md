@@ -54,11 +54,10 @@ running. svrngs can keep it running, even after a restart."*
 2. Quit the copy you started, then press **Start**. svrngs never stops your
    copy for you.
 
-It runs under the lend's own name and port. On Linux the row then says
-*"svrngs runs coder now. House can open it again after you sign in."* On a
-Mac it says *"Press Keep sharing it so they can open it."*: press **Keep
-sharing it** in its row, once. After a restart, svrngs starts it again when
-you sign in, and House can open it again.
+It runs under the lend's own name and port, and the row then says
+*"svrngs runs coder now. House can open it again after you sign in."*
+After a restart, svrngs starts it again when you sign in, and House can
+open it again.
 
 **Run by svrngs** means it starts again after a crash, up to a limit. Read
 the Share review for when friends can open it again. On a Mac, it starts

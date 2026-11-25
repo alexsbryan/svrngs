@@ -13,7 +13,6 @@ pub struct Review {
 pub const REVIEW_AGAIN: &str = "Something changed since you reviewed this.";
 pub(crate) const RUN_UNREAD: &str =
     "svrngs couldn’t verify this. Check it from your terminal, then look again.";
-pub(crate) const STARTING: &str = "Starting…";
 pub(crate) const SHARED_WHILE: &str = "Shared while you run it.";
 
 /// The port of a lend shared only while its program runs, which the home
@@ -53,7 +52,7 @@ pub(super) fn owned(Kept { name, port, status }: Kept) -> serde_json::Value {
     let (text, action) = match status.running {
         Since(Some(at)) => (format!("Run by svrngs, since {at}."), Stop),
         Since(None) => ("Run by svrngs.".into(), Stop),
-        Starting => (STARTING.into(), Stop),
+        Starting => ("Starting…".into(), Stop),
         Stopped => ("Stopped.".into(), Start),
         Failed(why) => (format!("{name} stopped ({why}). {RUN_UNREAD}"), Start),
     };
@@ -76,10 +75,6 @@ impl Action {
             Self::Stop => "stop",
         }
     }
-}
-
-pub(super) fn run_form(rows: Vec<serde_json::Value>) -> serde_json::Value {
-    serde_json::json!({ "starting": STARTING, "rows": rows })
 }
 
 impl Plan<'_> {

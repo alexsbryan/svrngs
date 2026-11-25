@@ -1168,12 +1168,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the lend's offer to keep its program running (keep-running.js). Its pass
 # cut the standalone Run form, its prefill and the found row's Run link
 # (-30) and trimmed the offer (-8): 8,892, to come down with the Mac keep.
+# The Mac keep (2026-11-25): +7 for one decider and the Mac approval, past -13 cut (the Run button's if, /run's starting): 28,672; the offer reads /lent alone: 8,880.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 28679,
+    ".": 28673,
 
-    "js": 8893,
+    "js": 8881,
 
     "swift": 1,
 }
