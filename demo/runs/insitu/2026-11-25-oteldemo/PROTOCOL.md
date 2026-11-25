@@ -20,7 +20,7 @@ the view serves:
 - **R (raw control):** `siteview.mjs --raw`, nothing hidden: what an
   unredacted SaaS receives.
 
-**Each fault:** reset all flags; at least 3 minutes of clean traffic; set the
+**Each fault:** reset all flags and restart both views from the file's end, so the window holds only this fault (added after F3, whose window still held F2: see F3-scores.md); at least 3 minutes of clean traffic; set the
 flag (and `emitRawPii` on, for the leak check); 4 minutes for it to show;
 start P and R together, with the complaint. No hint beyond the complaint.
 

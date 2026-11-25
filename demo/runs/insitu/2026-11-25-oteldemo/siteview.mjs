@@ -4,7 +4,7 @@
 // only what was already projected, so no aggregate can carry what the
 // projection dropped. GET only.
 //
-//   node siteview.mjs <raw.jsonl> --port P [--raw]
+//   node siteview.mjs <raw.jsonl> --port P [--raw] [--fresh]
 //
 // --raw serves the same routes with nothing projected: the benchmark's
 // control arm, which measures what the projection costs. Never a site's.
@@ -20,7 +20,8 @@ const key = raw ? RAW : randomBytes(32).toString('hex');
 const C = contract();
 const WINDOW = 30 * 60_000;
 const events = [];
-let at = 0, partial = '', unreadable = 0, inode = null;
+// --fresh starts at the file's end, so a window holds only what came after.
+let at = process.argv.includes('--fresh') && existsSync(file) ? statSync(file).size : 0, partial = '', unreadable = 0, inode = existsSync(file) ? statSync(file).ino : null;
 
 function follow() {
   if (!existsSync(file)) return;
