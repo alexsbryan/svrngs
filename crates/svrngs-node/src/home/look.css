@@ -144,9 +144,10 @@ table { width: 100%; margin: 0.5rem 0; border-collapse: collapse; }
 th, td { padding: 0.4rem 0.5rem 0.4rem 0; border-bottom: var(--hair); text-align: left; vertical-align: top; }
 thead th { border-bottom: var(--rule); }
 
-/* What went wrong. */
+/* What went wrong, and what was just done (running-here.js `Found`, lent). */
 .bad { background: var(--warn); color: var(--on-colour); }
-p.bad { padding: 0.25rem 0.5rem; }
+.lit { border: var(--rule); background: var(--lit); color: var(--on-colour); }
+p.bad, p.lit { padding: 0.25rem 0.5rem; }
 p.bad:empty { display: none; }
 
 /* The group's page (web/index.html): its forms one field under another, and

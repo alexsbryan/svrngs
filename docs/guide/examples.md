@@ -49,10 +49,10 @@ svrngs's source at your version, nothing else.
    terminal open: closing it stops the example.
 4. A lent one: on your home page, under **Already running here**, press
    **Look for programs running on this computer**. Every program on your
-   computer is listed; open the line naming your example's port (*node in
-   …, at http://localhost:8090*), fill in **Its name:** and **Which
-   program:**, tick your group, and press **Lend it to** your group. More
-   in [Lend](lend.md).
+   computer is listed; open the line naming your example's port (*node, at
+   localhost:8090*), fill in **Its name:** and **Which program:**, tick your
+   group, press **Lend it to** your group, then **Yes, lend it**. More in
+   [Lend](lend.md).
 
 ## 4. Make your own
 

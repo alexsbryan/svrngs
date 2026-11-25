@@ -75,7 +75,8 @@ export const answered = ({ account, program, folder, unit, description }) => {
  */
 
 // What a lend needs first, as /running says from svrngs's table, in a
-// sentence each: its own accounts, a setting, or what svrngs keeps back.
+// sentence each: its own accounts, a setting, or that svrngs keeps some of
+// it back, whose paths its row folds under Details (running-here.js).
 /** @param {Shown} shown */
 export const needs = (shown) => {
   const accounts =
@@ -83,10 +84,7 @@ export const needs = (shown) => {
     `It keeps its own accounts, so make each person one in it: ${shown.signs.accounts}.`;
   const header =
     shown.signs?.header && `Before it knows who is who, set this in it: ${shown.signs.header}.`;
-  const keeps =
-    shown.keeps &&
-    shown.keeps.length > 0 &&
-    `svrngs keeps these parts of it from everyone: ${shown.keeps.join(', ')}.`;
+  const keeps = (shown.keeps?.length ?? 0) > 0 && 'svrngs keeps a few of its parts private.';
   return [accounts, header, keeps, shown.unknown].filter(Boolean).join(' ');
 };
 

@@ -5,7 +5,7 @@
 // nothing or when it could not look (running-look.js RUNNING), and each
 // program it found, one line of its own (`Found`). A program is set to run
 // with svrngs from its lend's row (keep-running.js), or `svrngs run`.
-import { html, useEffect, useMachine, useState } from '../ui/view.js?v=__VERSION__';
+import { html, useEffect, useMachine, useRef, useState } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LEND } from './lend-found.js?v=__VERSION__';
@@ -41,7 +41,10 @@ const SAID = {
 // can open it, one box a group of HOME's, each by its stable id, so it is
 // lent to the groups ticked and never to everyone by default
 // (SCOPE_PARALLEL.md, "Shared API shape"); one button lends it
-// (lend-found.js LEND), and the row then says what happened, or why not.
+// (lend-found.js LEND): pressed, it reviews it, the button then Yes, lend
+// it beside who can use it and when, and the paths under Details. Lent, the
+// row is one line that says to whom, which takes the focus until the lend's
+// own row takes it (lent-row.js `Lent`); refused, it says why.
 /** @type {[field: 'name' | 'kind', words: string][]} */
 const FIELDS = [
   ['name', 'Its name: '],
@@ -54,7 +57,7 @@ const FIELDS = [
  * @typedef {{ r: Shown, groups: Choice[], home: Home }} FoundProps
  */
 
-// The names of the groups ticked, "House, Trip", for the lend's button.
+// The names of the groups ticked, "House and Trip", for the lend's button.
 /**
  * @param {Choice[]} groups
  * @param {string[]} ticked
@@ -66,13 +69,24 @@ const chosen = (groups, ticked) =>
 // sends, so a program that changed since is refused (SHARE_BINDING §5.1).
 /** @param {Shown} shown */
 const shownProcess = ({ answer }) => ({ pid: answer?.pid ?? null, start: answer?.start ?? null });
-// A program found's line: the kind svrngs knows, else what the look read
-// answering on its port, and its address.
-/** @param {Shown} shown @param {string} at */
-const line = ({ kind, answer }, at) => {
-  const what = kind ?? (answer ? answered(answer) : null);
-  return what ? `${what}, at ${at}` : `Something at ${at}`;
+// A program found's line: the kind svrngs knows, else the program the look
+// read answering on its port, by name, and its address.
+/** @param {Shown} shown */
+const line = ({ kind, answer, port }) => {
+  const what = kind ?? answer?.program ?? (answer && answered(answer));
+  return what ? `${what}, at localhost:${port}` : `Something at localhost:${port}`;
 };
+
+// What svrngs keeps private of it and, once reviewed, the paths apps may
+// send to it by its terms, folded under Details; neither, no fold.
+/** @param {{ keeps: string[], sends: string[] }} paths */
+const Details = ({ keeps, sends }) =>
+  keeps.length + sends.length > 0 &&
+  html`<details>
+    <summary>Details</summary>
+    ${sends.length > 0 && html`<p>Apps can send requests to ${sends.join(' and ')}.</p>`}
+    ${keeps.length > 0 && html`<p>Kept private: ${keeps.join(', ')}.</p>`}
+  </details>`;
 
 /** @param {FoundProps} props */
 function Found({ r: shown, groups, home }) {
@@ -87,11 +101,13 @@ function Found({ r: shown, groups, home }) {
       ...shownProcess(shown),
     }),
   );
-  const at = `http://localhost:${shown.port}`;
+  const names = chosen(groups, state.groups).join(' and ');
+  const done = useRef(/** @type {HTMLParagraphElement | null} */ (null));
+  useEffect(() => done.current?.focus(), [state.at.lend]);
   if (state.at.lend === 'lent') {
     // `state.l` is the lend 'lent' made, which set 'lent' with it.
     const lent = /** @type {Shown} */ (state.l);
-    return html`<li>${`You lent ${lent.name}, at ${at}: the groups you chose can open it now. ${needs(lent)} `}</li>`;
+    return html`<li><p class="lit" tabindex="-1" data-lent=${lent.name} ref=${done}>Lent to ${names}.</p></li>`;
   }
   const fields =
     !shown.kind &&
@@ -100,13 +116,12 @@ function Found({ r: shown, groups, home }) {
         html`<${Field} name=${name} words=${words} value=${state[name]} attrs=${{ disabled: state.at.lend === 'lending' }} send=${send} />`,
     );
   const busy = state.at.lend === 'lending' ? 'busy' : 'idle';
-  const names = chosen(groups, state.groups);
   const kind = shown.kind ?? 'it';
-  const words = names.length ? `Lend ${kind} to ${names.join(' and ')}` : `Lend ${kind}`;
+  const words = names ? `Lend ${kind} to ${names}` : `Lend ${kind}`;
   return html`
     <li>
       <details>
-        <summary>${line(shown, at)}</summary>
+        <summary>${line(shown)}</summary>
         ${fields}
         <p>${needs(shown)} Who can open ${kind}?</p>
         <${GroupChoice}
@@ -116,12 +131,13 @@ function Found({ r: shown, groups, home }) {
           send=${send}
         />
         <${Act}
-          words=${state.review?.button ?? words}
+          words=${state.review ? 'Yes, lend it' : words}
           doing=${{ state: busy }}
           on=${{ type: 'lend' }}
           send=${send}
         />
-        ${state.said}
+        <span role="status">${state.said}</span>
+        <${Details} ...${state.review ?? { keeps: shown.keeps ?? [], sends: [] }} />
       </details>
     </li>
   `;

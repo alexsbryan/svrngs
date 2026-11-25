@@ -2134,8 +2134,8 @@ async fn share_then_keep_it_running_in_webkit() {
                 [format!("{row} summary"), null, "opens"],
                 field_on(&row, "name", name), field_on(&row, "kind", "test-http"),
                 [format!("{row} input[type=checkbox]"), true],
-                act(&format!("{row} button"), "Share this run"),
-                act(&format!("{row} button"), "You lent test-page-coder"),
+                act(&format!("{row} button"), "Yes, lend it"),
+                act(&format!("{row} button"), "Lent to"),
                 act(&format!("{offer} button:has-text('Keep it running')"), "Quit the copy you started"),
                 fill("command", &cmd), fill("folder", site.to_str().unwrap()),
                 act(&format!("{offer} button:has-text('Start')"), "is in use by"),
@@ -2361,11 +2361,16 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         let line = after[i].to_string();
         assert!(line.contains(words), "{words}: {seen:#}");
     };
-    lent(1, "Share this run");
-    lent(2, "You lent jellyfin");
+    lent(1, "Yes, lend it");
+    lent(2, "Lent to this group.");
     lent(3, "Give it a name and say which program it is first");
-    lent(4, "Share this run");
-    lent(5, "You lent chores");
+    lent(4, "Yes, lend it");
+    // Each lent row and its one line, as `all` reads both: jellyfin's and chores'.
+    let both = after[5].to_string().matches("Lent to this group.").count();
+    assert_eq!(
+        both, 4,
+        "jellyfin and chores each say they are lent: {seen:#}"
+    );
     let page = seen["text"].as_str().unwrap_or_default();
     assert!(
         !page.contains("svrngs share"),

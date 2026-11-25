@@ -28,8 +28,9 @@ try {
   for (const field of ['name', 'kind'])
     assert.equal(await row.locator(`input[name=${field}]`).inputValue(), 'llama-server', field);
   await row.locator('input[type=checkbox]').check();
-  // Its groups' terms drawn first, then its review, then lent.
-  for (let press = 0; press < 3 && !(await row.textContent()).includes('You lent'); press++) {
+  // Its review first, then lent: the row then says to whom, its address gone.
+  const lit = page.locator('#running p.lit');
+  for (let press = 0; press < 3 && (await lit.count()) === 0; press++) {
     const before = await row.textContent();
     await row.getByRole('button').click();
     await page.waitForFunction(
@@ -37,12 +38,12 @@ try {
         const now = [...document.querySelectorAll('#running li')].find((li) =>
           li.textContent.includes(at),
         );
-        return now && now.textContent !== was && !now.textContent.includes('…');
+        return !now || (now.textContent !== was && !now.textContent.includes('…'));
       },
       [`localhost:${port}`, before],
     );
   }
-  assert.ok((await row.textContent()).includes('You lent llama-server'), await row.textContent());
+  assert.match(await lit.textContent(), /^Lent to /);
 
   const offer = page.locator("#lent [role=group][aria-label='llama-server']");
   await offer.getByRole('button', { name: 'Keep it running' }).click();

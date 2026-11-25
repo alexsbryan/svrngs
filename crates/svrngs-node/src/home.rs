@@ -798,9 +798,10 @@ struct ToLend {
     /// explicit empty list is paused. `Option` distinguishes absent from
     /// paused, which a plain `Vec` could not.
     groups: Option<Vec<String>>,
-    /// The text of its groups' own `programs/<word>.txt` the page drew
-    /// ([`drawn`]), posted back so the lend keeps what its lender saw, not
-    /// the file as it is when they press (CONTRACTS §6.8); none before.
+    /// The text of its groups' own `programs/<word>.txt` the page's review
+    /// drew ([`lend_one`]), posted back so the lend keeps what its lender
+    /// saw, not the file as it is when they press (CONTRACTS §6.8); none
+    /// before.
     terms: Option<String>,
     /// The process the page showed on the port, and its start, as `svrngs
     /// share --pid <pid>@<start>` takes them (SHARE_BINDING §5.1).
@@ -867,18 +868,14 @@ async fn lend_one(
     };
     // The terms it keeps: those the page drew, posted back, so a file
     // changed since changes nothing (CONTRACTS §6.8); else its groups' own,
-    // read now and drawn first when there are any, so its lender sees them.
+    // read now, which the review below draws, with where apps may send by
+    // them, so the press after it is the yes to both.
     tracing::debug!(target: "home", %word, drawn = terms.is_some(), "home: the lend keeps the terms the page drew, else its groups' read now");
     let showed =
         |why| format!("The terms this page showed can't be kept: {why}. Look again, then lend it.");
     let terms = match terms {
         Some(drawn) => share::fits(&word, &drawn).map(|()| drawn).map_err(showed),
-        None => match at.door.folders.agreed(&groups, &word).await {
-            Ok((text, by)) if !text.is_empty() || !share::sends_of(&word, &text).is_empty() => {
-                return Ok(drawn(&word, text, &by));
-            }
-            read => read.map(|(text, _)| text),
-        },
+        None => (at.door.folders.agreed(&groups, &word).await).map(|(text, _)| text),
     };
     let terms = terms.map_err(|why| refused(&why, &"its groups' own terms"))?;
     // Each of the lend's refusals in a person's words: a kind is known or
@@ -942,35 +939,15 @@ async fn lend_one(
             return Err(LendRefusal::closed(reviewed.report_words(&report)));
         }
     }
+    // The review, nothing lent: when and who, and, for the page to say, the
+    // paths apps may send to by its terms and those svrngs keeps back. The
+    // page posts its terms and token back to confirm it, the lender's yes to
+    // its sends (CONTRACTS §2, "The lend is the yes"; §6.8).
     let said = confirming.then_some(plan::REVIEW_AGAIN);
-    Ok(Json(serde_json::json!({"token": reviewed.token, "said": said, "terms": terms, "review": reviewed.words()})).into_response())
-}
-
-/// A group's own terms for `word`, `text`, drawn for its lender before
-/// any is kept: its rows, who wrote them where (`by`), where apps may send
-/// to it by those and svrngs's ([`share::sends_of`]), and the text the page
-/// posts back with the next press, so the lend keeps what they saw
-/// (CONTRACTS §2, "The lend is the yes"; §6.8). That press is the yes to
-/// its sends: a lend with any is drawn first, even with no group's file,
-/// and opens with what it doesn't govern, as `svrngs share`'s question
-/// does: people in the group reach all but what's kept back.
-fn drawn(word: &Program, text: String, by: &str) -> Response {
-    let rows: Vec<String> = (share::rows_in(&text).flatten())
-        .map(|(_, k, how)| format!("{k} {how}"))
-        .collect();
-    let sends = share::sends_of(word, &text);
-    tracing::debug!(target: "home", %word, rows = rows.len(), sends = sends.len(), "home: its groups' own terms and its sends drawn; nothing lent until its lender presses again");
-    let paths: Vec<&str> = sends.iter().map(|s| s.path()).collect();
-    let terms = match rows.is_empty() {
-        true => String::new(),
-        false => format!("Your group's terms for {word}{by}: {}. ", rows.join("; ")),
-    };
-    let sends = match paths.is_empty() {
-        true => String::new(),
-        false => format!("People in your group can use all of {word} that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at {}, each app only after the friend who opened it says yes. ", paths.join(" and ")),
-    };
-    let said = format!("{terms}{sends}To lend it with these, press Lend again.");
-    Json(serde_json::json!({ "terms": text, "said": said })).into_response()
+    let sends: Vec<&str> = lend.terms.sends.iter().map(lend::SendRow::path).collect();
+    let keeps = &lend.terms.refused;
+    tracing::debug!(target: "home", %name, sends = sends.len(), keeps = keeps.len(), "home: reviewed; nothing lent until its lender confirms");
+    Ok(Json(serde_json::json!({"token": reviewed.token, "said": said, "terms": terms, "review": reviewed.words(), "sends": sends, "keeps": keeps})).into_response())
 }
 
 /// The terms the groups `lend` is lent to agree on for its program, and

@@ -250,7 +250,11 @@ const changing = (held, routes) =>
 // name); the row says so, and HOME's `again`, after LEND's `lent`, reads
 // the groups and the list, so the index lists ada's notes and "What you
 // lend" lists it too, with no reload (home.js@19b63b2b:247 redrew only
-// "What you lend").
+// "What you lend"). Its first press reviews it: the button is then Yes,
+// lend it, never the review's own label, beside who can use it and when
+// and, its terms letting apps send, one line that says so, the paths under
+// Details; the second posts its terms and token back. Lent, the row says to
+// whom, and the lend's row under What you lend opens and takes the focus.
 test('a lend from what runs here is in the index and in What you lend at once', async () => {
   const port = 21000;
   const shown = (kind, name) => ({ port, kind, name, signs: null, keeps: [], unknown: null });
@@ -276,7 +280,9 @@ test('a lend from what runs here is in the index and in What you lend at once', 
           return {
             token: 'reviewed',
             terms: '',
-            review: { promise: 'House can use this copy now.', button: 'Share this run' },
+            review: { promise: 'house can use it while it’s running.', button: 'Share this run' },
+            sends: ['/v1/embeddings'],
+            keeps: ['/slots'],
           };
         },
         'POST /running/confirm': (held, body) => {
@@ -295,16 +301,24 @@ test('a lend from what runs here is in the index and in What you lend at once', 
   assert.deepEqual(at.text('#running > p'), look);
   // What it found, one line, its form folded under it until she opens it.
   const row = `#running li`;
-  assert.deepEqual(at.text(`${row} summary`), [`Something at http://localhost:${port}`]);
+  assert.deepEqual(at.text(`${row} summary`), [`Something at localhost:${port}`]);
   assert.deepEqual(at.all(`${row} details[open]`), []);
   await at.type(`${row} input[name=name]`, 'notes');
   await at.type(`${row} input[name=kind]`, 'notes');
   await at.tick(`${row} input[type=checkbox]`);
   await at.press(`${row} button`, 'Lend it to house');
-  assert.ok(at.text(row)[0].includes('House can use this copy now.'));
+  assert.deepEqual(at.text(`${row} button`), ['Yes, lend it']);
+  assert.deepEqual(at.text(`${row} [role=status]`), [
+    'house can use it while it’s running. Apps your friends open can also send it requests, each after that friend says yes.',
+  ]);
+  assert.deepEqual(at.text(`${row} details details > *`), [
+    'Details',
+    'Apps can send requests to /v1/embeddings.',
+    'Kept private: /slots.',
+  ]);
   assert.equal(posted.length, 1);
   assert.deepEqual(at.text('#lent > p'), ['You lend nothing yet.']);
-  await at.press(`${row} button`, 'Share this run');
+  await at.press(`${row} button`, 'Yes, lend it');
   assert.deepEqual(posted, [
     { port, name: 'notes', kind: 'notes', groups: ['house'], terms: null, pid: null, start: null },
     {
@@ -318,7 +332,16 @@ test('a lend from what runs here is in the index and in What you lend at once', 
       token: 'reviewed',
     },
   ]);
-  assert.ok(at.text(row)[0].startsWith('You lent notes'), at.text(row)[0]);
+  assert.deepEqual(at.text(`${row} p.lit`), ['Lent to house.']);
+  assert.deepEqual(at.text(row), ['Lent to house.']);
+  const [fold] = at.all('#lent li details');
+  // Compared by identity, said by words: the twin's elements are circular.
+  const focused = at.document.activeElement;
+  assert.ok(
+    focused === fold.querySelector('summary'),
+    `the focus at its row, not ${words(focused)}`,
+  );
+  assert.equal(fold.open, true, 'opened, in view as its summary takes the focus');
   assert.ok(at.text('#home .index').join().includes('ada’s notes'), at.text('#home .index').join());
   assert.ok(
     at.text('#lent li')[0].startsWith('notes: lent to house, 0 using it now.'),
@@ -331,8 +354,9 @@ test('a lend from what runs here is in the index and in What you lend at once', 
 
 // A program found that svrngs's table knows by the name of what answers
 // (home.rs `running`'s `named`) has its fields filled with that name, both
-// left to change; one it doesn't know by name has them empty. A found row's
-// one act is lending it: no link, nor a way to run it from there.
+// left to change; one it doesn't know by name has them empty. Each line
+// names what answers and its address, not its folder. A found row's one act
+// is lending it: no link, nor a way to run it from there.
 test('a program found that svrngs knows by name has its fields filled, and lending is its one act', async () => {
   const answer = (pid, program) => ({ pid, start: 7, program, folder: '/Users/ada/models' });
   const found = (port, program) => ({
@@ -353,8 +377,8 @@ test('a program found that svrngs knows by name has its fields filled, and lendi
   });
   await at.press('#running button', 'Look for programs');
   assert.deepEqual(at.text('#running li summary'), [
-    'llama-server in /Users/ada/models, at http://localhost:21001',
-    'python3 in /Users/ada/models, at http://localhost:21002',
+    'llama-server, at localhost:21001',
+    'python3, at localhost:21002',
   ]);
   // Each row's fields, in its order: its name, then which program.
   const typed = (field) => at.all(`#running li input[name=${field}]`).map((input) => input.value);

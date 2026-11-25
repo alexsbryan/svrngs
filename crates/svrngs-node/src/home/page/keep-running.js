@@ -139,7 +139,7 @@ const KEEP = ({ name, sharing: port }, home) => ({
 // Keep sharing it, to press.
 /** @param {Lend & { sharing?: number }} lend @param {string} who */
 const after = (lend, who) => {
-  if (!lend.sharing) return who && ` ${who} can open it again after you sign in.`;
+  if ((lend.sharing ?? 0) === 0) return who && ` ${who} can open it again after you sign in.`;
   return lend.token ? ' Press Keep sharing it so they can open it.' : '';
 };
 
@@ -180,7 +180,7 @@ export function KeepRunning({ lend, who, home }) {
   );
   const at = state.at.keep;
   if (at === 'started') return html`<p role="status">${state.said}${after(lend, who)}</p>`;
-  if (!lend.sharing) return null;
+  if ((lend.sharing ?? 0) === 0) return null;
   const doing = { state: at === 'filling' || at === 'starting' ? 'busy' : 'idle' };
   const offer = html`<p>${who && `${who} can open it only while it’s running. `}svrngs can keep it running, even after a restart.
     <${Act} words="Keep it running" doing=${doing} on=${{ type: 'keep' }} send=${send} /></p>`;

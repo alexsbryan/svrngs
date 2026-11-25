@@ -89,8 +89,7 @@ impl Plan<'_> {
             Return::AfterUnlock => "you unlock the disk.",
             Return::SignIn => "you sign in.",
             Return::ThisRun | Return::Unknown => {
-                let now = "can use this copy now. If it stops, you’ll need to share it again.";
-                return format!("{audience} {now}");
+                return format!("{audience} can use it while it’s running.")
             }
         };
         format!("{audience} can open it again after {after}")

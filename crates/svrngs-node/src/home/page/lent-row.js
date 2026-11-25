@@ -12,8 +12,10 @@
 // More settings: how many at once, a header, and signing people in with
 // svrngs, with the app form's fill once that is turned on (`SigningOn`).
 // Under the fold, never in it, the offer to keep its program running,
-// where it is shared only while that runs (keep-running.js).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+// where it is shared only while that runs (keep-running.js). Just lent from
+// its found row, whose line still holds the focus (running-here.js
+// `Found`), it opens and takes the focus, in view with that offer under it.
+import { html, useEffect, useMachine, useRef } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
@@ -65,7 +67,9 @@ const groupNames = (lend, groups) =>
   (lend.groups ?? [])
     .map((id) => {
       const group = groups.find((held) => held.id === id);
-      return group ? called(group) : `a group this computer does not hold (${id.slice(0, 8)})`;
+      return group
+        ? called(group, groups)
+        : `a group this computer does not hold (${id.slice(0, 8)})`;
     })
     .join(' and ');
 
@@ -219,6 +223,13 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   /** @type {() => State} */
   const first = () => ({ at: { change: 'idle' }, said: '', groups: lend.groups ?? [] });
   const [state, send] = useMachine(() => machine('CHANGE', CHANGE(lend.name, home), first()));
+  const fold = useRef(/** @type {HTMLDetailsElement | null} */ (null));
+  // Focus scrolls what takes it into view, so the offer under it shows.
+  useEffect(() => {
+    if (!fold.current || document.activeElement?.getAttribute('data-lent') !== lend.name) return;
+    fold.current.open = true;
+    fold.current.querySelector('summary')?.focus();
+  }, []);
   const limit = lend.limit;
   const limited = (limit ?? 0) > 0;
   const using = limited ? `${lend.using} of ${limit}` : lend.using;
@@ -234,7 +245,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
     : html`<${Act} words="Sign people in with svrngs" doing=${doing} on=${sign} send=${send} />`;
   return html`
     <li>
-      <details open=${undone(account, lend)} aria-label=${lend.name}>
+      <details ref=${fold} open=${undone(account, lend)} aria-label=${lend.name}>
         <summary>${line(lend, lentTo(lend, groups), using)}</summary>
         <${Keep} lend=${lend} doing=${doing} send=${send} />
         <p>Who can open it:</p>

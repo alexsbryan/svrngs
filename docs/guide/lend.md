@@ -10,14 +10,14 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 
 1. Start the program as you always do. Say Sam starts Jellyfin.
 2. Open your home page (open svrngs from your Applications). Under **Already running here**, press **Look for programs running on this computer**. Looking takes a few seconds.
-3. The page lists what it found, one line each: *"jellyfin, at http://localhost:8096"*. Press the line to open it. It says what the program needs first, such as *"It keeps its own accounts, so make each person one in it: …"*
+3. The page lists what it found, one line each: *"jellyfin, at localhost:8096"*. Press the line to open it. It says what the program needs first, such as *"It keeps its own accounts, so make each person one in it: …"*
 4. Tick the groups who can open it, then press **Lend jellyfin to House** (the button names the groups you ticked).
 
-The row then says *"You lent jellyfin, at http://localhost:8096: the groups you chose can open it now."*, and it shows under **What you lend**.
+The first press lends nothing yet: the row says who can use it and when, such as *"House can use it while it’s running."*, and the button becomes **Yes, lend it**. **Details** under it lists the parts svrngs keeps private. Press **Yes, lend it**: the row says *"Lent to House."*, and the lend opens under **What you lend**.
 
 If svrngs doesn't know the program, its line names the program answering there and its address. Open it, fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked). For a program svrngs knows by its name, such as llama-server, both are filled in for you; change them if you like.
 
-For a program apps may also send to, such as llama-server, the first press lends nothing yet: the row says where apps your friends open could send to it, and pressing again lends it ([models.md](models.md#lend-your-llama-server)).
+For a program apps may also send to, such as llama-server, the review adds *"Apps your friends open can also send it requests, each after that friend says yes."*, and **Details** lists where ([models.md](models.md#lend-your-llama-server)).
 
 The home page asks for a password in two places: the account apps read through, in the next paragraph, and a header the program wants on each request, such as its API key (below). Each goes to this computer and nowhere else.
 
