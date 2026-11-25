@@ -218,7 +218,7 @@ async fn approve(
     let read = (at.host.transport).answering(lend.raw(), port.get(), pid.map(|p| p.pid));
     let approving = crate::share::approve((port, lend.raw()), read.await, pid, Some(&asked.token));
     let (approved, answers) = approving.map_err(refused)?;
-    let keep = crate::share::kept(&answers, false);
+    let keep = crate::share::kept(&lend, (&approved, &answers), false);
     crate::share::reapproved(dir, &name, (approved, keep)).map_err(refused)?;
     Ok(Json(serde_json::json!({ "name": name, "answers": answers })).into_response())
 }

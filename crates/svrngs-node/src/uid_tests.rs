@@ -1413,7 +1413,13 @@ fn a_unit_s_program_is_named_granted_and_renewed_after_it_restarts() {
         None,
     )
     .unwrap();
-    let keep = crate::share::kept(&answers, false).expect("granted");
+    let lend = crate::lend::Lend {
+        name: crate::lend::LendName::parse("renew").unwrap(),
+        source: crate::lend::Source::Port(std::num::NonZeroU16::new(port).unwrap()),
+        kind: crate::lend::Program::parse("k").unwrap(),
+        terms: Default::default(),
+    };
+    let keep = crate::share::kept(&lend, (&approved, &answers), false).expect("granted");
     assert_eq!(keep.unit, unit);
     let read = now(unit).unwrap();
     assert_eq!(read.keep, keep);
@@ -1490,8 +1496,9 @@ fn a_unit_s_program_is_named_granted_and_renewed_after_it_restarts() {
         matches!(&said[..], [Answer::Job { unit, .. }] if unit == transient),
         "{said:?}"
     );
+    // Linux reads the grant from what answers alone (share.rs `kept`).
     assert_eq!(
-        crate::share::kept(&said, false),
+        crate::share::kept(&lend, (&approved, &said), false),
         None,
         "a transient unit never granted"
     );

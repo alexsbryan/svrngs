@@ -237,10 +237,11 @@ without running a shell, and refuses a port another program holds. A
 found listener's row only lends it. Once Run verifies the program, the
 lend is held for what now answers; the page approves it through the
 lender's approve route only when that is one job, a unit named for the
-lend, by the token `/lent` listed. On Linux that approval keeps the lend
-to the unit (`share::kept`); on macOS reapproval is instance-only, so the
-person presses Keep sharing it, again after each restart. The terminal's
-Run gives a Share command for its verified port.
+lend, by the token `/lent` listed. That approval keeps the lend to the
+job through its restarts (`share::kept`): on Linux to the unit; on macOS,
+where what answers is a process and the person presses Keep sharing it,
+to the keeper's launch agent for the lend's name, as Share keeps it. The
+terminal's Run gives a Share command for its verified port.
 The page's Start and Stop controls use only the keeper's observed jobs
 and leave sharing alone.
 When Share would grant a running service, it
@@ -396,18 +397,22 @@ connection's taker was read, every socket there and that taker are the
 unit's, at the address approved before, and only over the revision and
 approval it judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
 stopped lend stays stopped.
-On macOS, Share looks for the keeper's exact label from the share name.
-It grants renewal only with both login registrations verified: the svrngs
-door and the app, whose regular plist must be registered in the GUI domain,
-set to start at sign-in and not disabled (`job/mac.rs`). The CLI parses the
+On macOS, Share and an approval (Keep sharing it, `svrngs approve`) look
+for the keeper's exact label from the lend's name, and grant renewal by
+one check (`job::mac::kept`): the lender keeps sharing it through restarts
+(Share's Keep; an approval without `--ask-after-restart`), it is no UDP
+share, the app's regular plist is registered in the GUI domain, set to
+start at sign-in and not disabled (`job/mac.rs`), and every process the
+approval names, one at least, descends from that agent's current PID and
+start time. Share grants it only with the svrngs door's own login
+registration verified too; an approval does not ask that. The CLI parses the
 door's login plist and checks that its `EnvironmentVariables.SVRNGS_DIR`
 names the same canonical data directory; only a parsed plist without that
 key may use `~/.svrngs` (`cli.rs` `kept_over`). The grant pins
 the label and plist hash. The same door check at Share and renewal requires
 every listener holder and the connection taker to trace to the current
-agent PID and start time. The name alone never confers access. Approve on
-a Mac approves only the current run; to renew again, Share under the Run
-name. Mac containers and other launch agents still share the current run.
+agent PID and start time. The name alone never confers access. Mac
+containers and other launch agents share only the current run.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.
 

@@ -2059,7 +2059,7 @@ pub fn approve(
         }
     };
     let (approved, answers) = share::approve((port, lend.raw()), read(), pid, Some(&token))?;
-    let keep = share::kept(&answers, ask);
+    let keep = share::kept(&lend, (&approved, &answers), ask);
     let again = keep
         .as_ref()
         .map_or("", |_| ", and each time it starts again");

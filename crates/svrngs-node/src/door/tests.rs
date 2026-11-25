@@ -2075,29 +2075,32 @@ fn a_transient_job_is_never_named_a_unit_so_never_granted() {
         None,
         "a system service"
     );
-    let program = Answer::Program {
-        pid: 1,
-        start: 1,
-        program: "llama-server".into(),
-        folder: None,
-    };
-    let job = |unit: &str| Answer::Job {
-        unit: unit.into(),
-        description: None,
-    };
-    assert_eq!(crate::share::kept(&[program.clone()], false), None);
-    assert_eq!(
-        crate::share::kept(&[job("a.service"), program], false),
-        None
-    );
-    assert_eq!(
-        crate::share::kept(&[job("a.service"), job("b.service")], false),
-        None
-    );
-    assert_eq!(
-        crate::share::kept(&[job("a.service")], true),
-        None,
-        "asked after each restart"
-    );
-    assert_eq!(crate::share::kept(&[], false), None);
+    let doc = port_lend("doc", &[]);
+    let approved = binding::approve(&alone(1), None).unwrap();
+    let kept = |answers: &[Answer], ask| crate::share::kept(&doc, (&approved, answers), ask);
+    assert_eq!(kept(&[], true), None, "asked after each restart");
+    // Linux's grant is read from what answers; a Mac's from the agent it
+    // runs under (job/mac/tests.rs).
+    #[cfg(not(target_os = "macos"))]
+    {
+        let program = Answer::Program {
+            pid: 1,
+            start: 1,
+            program: "llama-server".into(),
+            folder: None,
+        };
+        let job = |unit: &str| Answer::Job {
+            unit: unit.into(),
+            description: None,
+        };
+        assert_eq!(kept(&[program.clone()], false), None);
+        assert_eq!(kept(&[job("a.service"), program], false), None);
+        assert_eq!(kept(&[job("a.service"), job("b.service")], false), None);
+        assert_eq!(
+            kept(&[job("a.service")], true),
+            None,
+            "asked after each restart"
+        );
+        assert_eq!(kept(&[], false), None);
+    }
 }
