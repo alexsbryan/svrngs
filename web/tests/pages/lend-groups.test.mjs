@@ -169,11 +169,11 @@ const CHOICES = [
 ];
 
 test('a row’s words read paused from [], legacy needing selection from null, names otherwise', () => {
-  assert.equal(lentTo({ groups: [] }, CHOICES), 'Paused: no group can open it.');
-  assert.equal(lentTo({ groups: null }, CHOICES), 'Choose which groups can open this.');
+  assert.equal(lentTo({ groups: [] }, CHOICES), 'paused, no group can open it');
+  assert.equal(lentTo({ groups: null }, CHOICES), 'choose which groups can open it');
   assert.equal(
     lentTo({ groups: ['house', 'trip'] }, CHOICES),
-    'Lent to House and Trip.',
+    'lent to House and Trip',
     'the selected rings, shown by name',
   );
 });
@@ -195,23 +195,23 @@ test('two groups of one name are told apart in the boxes by who made them', () =
 
 // A row names every id of its audience (audit F10): one this computer holds
 // no group for is said by its id's start, never dropped, so no row reads
-// "Lent to ."; two groups of one name are told apart as the boxes tell them
+// "lent to ,"; two groups of one name are told apart as the boxes tell them
 // (group-choice.js). Planted: the ids HOME does not hold filtered out, and
 // a bare name for each.
 test('a row names every audience id, unheld ones by their id, namesakes apart', () => {
   const gone = '0123456789abcdef';
   assert.equal(
     lentTo({ groups: ['house', gone] }, CHOICES),
-    'Lent to House and a group this computer does not hold (01234567).',
+    'lent to House and a group this computer does not hold (01234567)',
   );
   const none = lentTo({ groups: [gone] }, CHOICES);
-  assert.notEqual(none, 'Lent to .');
+  assert.notEqual(none, 'lent to ');
   assert.ok(none.includes('01234567'), none);
   const trips = [
     { id: 'a', name: 'Trip', made: { name: 'Trip', maker: 'sam', since: 1 } },
     { id: 'b', name: 'Trip', made: null },
   ];
   const both = lentTo({ groups: ['a', 'b'] }, trips);
-  assert.ok(both.startsWith('Lent to Trip (sam’s'), both);
-  assert.ok(both.endsWith(' and Trip.'), both);
+  assert.ok(both.startsWith('lent to Trip (sam’s'), both);
+  assert.ok(both.endsWith(' and Trip'), both);
 });

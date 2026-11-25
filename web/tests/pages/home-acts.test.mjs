@@ -121,12 +121,14 @@ test('a lend’s limit is changed in place: four, everyone, then stopped, each r
     }),
   );
   const first = () => page.text('#lent li')[0] ?? '';
-  assert.ok(first().startsWith('shelf: up to 1 person at once, 0 using it now.'), first());
-  await page.type('#lent li input', '4');
+  // Its group as HOME reads it: a node with no seed reads no name.
+  const to = 'shelf: lent to a group whose name this computer cannot read';
+  assert.ok(first().startsWith(`${to}, 0 of 1 using it now.`), first());
+  await page.type('#lent li input[type=number]', '4');
   await page.press('#lent li button', 'Let in this many');
-  assert.ok(first().startsWith('shelf: up to 4 people at once'), first());
+  assert.ok(first().startsWith(`${to}, 0 of 4 using it now.`), first());
   await page.press('#lent li button', 'Let everyone in');
-  assert.ok(first().startsWith('shelf: everyone in the groups you chose at once'), first());
+  assert.ok(first().startsWith(`${to}, 0 using it now.`), first());
   await page.press('#lent li button', 'Stop lending');
   assert.deepEqual(page.text('#lent li'), []);
   assert.deepEqual(page.text('#lent p'), ['You lend nothing yet.']);

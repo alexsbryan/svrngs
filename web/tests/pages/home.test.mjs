@@ -631,7 +631,8 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
   assert.deepEqual(cells(page), ['ada’s shelf (k) Address']);
   const [link] = page.all('#home .index > ul > li > a');
   assert.equal(link.attributes.target, '_blank');
-  assert.equal(page.all('#lent label')[0].textContent, 'How many people at once: ');
+  const labels = page.all('#lent label').map((label) => label.textContent);
+  assert.ok(labels.includes('How many people at once: '), labels.join());
   assert.ok(!page.text('#home h2').includes('What apps use'), page.text('#home h2').join());
 });
 
@@ -894,20 +895,28 @@ test('a Stop under What acts as you is named with the app it stops', async () =>
   );
 });
 
-// "What you lend" is a line a lend, its form folded under the line, and no
-// button there is stretched: look.css's full-width button is the phone
-// page's index's alone (`tbody#lent`, web/page/lent-index.js), where the
-// home page's section, also `#lent`, once took it. Planted, watched failing:
-// lent-row.js drawing the form with no <details>.
+// "What you lend" is a line a lend, its name, who can open it and how many
+// use it now, its form folded under the line; what is seldom changed is
+// folded again, under More settings; and no button there is stretched:
+// look.css's full-width button is the phone page's index's alone
+// (`tbody#lent`, web/page/lent-index.js), where the home page's section,
+// also `#lent`, once took it. Planted, watched failing: lent-row.js drawing
+// the form with no <details>; Let in this many drawn outside More settings.
 test('each lend is one line with its form folded under it, and the wide button is the phone’s', async () => {
   const page = await home(ada({ lent: [lend('shelf')] }));
-  assert.deepEqual(page.text('#lent li details summary'), [
-    'shelf: up to 3 people at once, 0 using it now. Lent to a group whose name this computer cannot read.',
+  assert.deepEqual(page.text('#lent li > details > summary'), [
+    'shelf: lent to a group whose name this computer cannot read, 0 of 3 using it now.',
   ]);
   const folded = page.text('#lent li details button');
   for (const words of ['Let in this many', 'Save who can open this', 'Stop lending'])
     assert.ok(folded.includes(words), folded.join());
   assert.equal(page.text('#lent button').length, folded.length, 'no button outside the fold');
+  assert.deepEqual(page.text('#lent li details details > summary'), ['More settings']);
+  const more = page.text('#lent li details details button');
+  for (const words of ['Let in this many', 'Sign people in with svrngs'])
+    assert.ok(more.includes(words), more.join());
+  for (const words of ['Save who can open this', 'Stop lending'])
+    assert.ok(!more.includes(words), `${words}: ${more.join()}`);
   const look = readFileSync(new URL('look.css', HOME), 'utf8');
   assert.deepEqual(look.match(/^.*#lent button.*$/gm), [
     'tbody#lent button { width: 100%; text-align: left; }',
@@ -943,7 +952,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
     unapproved
       .text('#lent li details summary')[0]
       .includes(
-        'shelf is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each batch of datagrams, and closes it when something you didn’t choose is there. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
+        'shelf is closed until you approve what answers on its port now. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
       ),
   );
   await unapproved.press('#lent li button', 'Keep sharing it');
@@ -1670,7 +1679,7 @@ test('a refusal or an answer is said once at each press, never one after another
   const nothing = 'That is not a link to something lent in your groups.';
   for (let n = 0; n < 2; n++)
     assert.equal(await pressed(page, '#open button', 'Open it', '#open p', nothing), 1);
-  await page.type('#lent input', '0');
+  await page.type('#lent input[type=number]', '0');
   const many = 'Say how many: 1 or more.';
   for (let n = 0; n < 2; n++)
     assert.equal(await pressed(page, '#lent button', 'Let in this many', '#lent li', many), 1);

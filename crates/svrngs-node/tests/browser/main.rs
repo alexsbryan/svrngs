@@ -2129,12 +2129,13 @@ async fn explicit_run_then_share_in_webkit() {
             "all": "#running li, #lent li",
             "do": [
                 act("#running button:has-text('Look for programs')", &format!("localhost:{port}")),
+                [format!("{row} summary"), null, "opens"],
                 field_on(&row, "name", name), field_on(&row, "kind", "test-http"),
                 [format!("{row} input[type=checkbox]"), true],
                 act(&format!("{row} button"), "Share test-page-coder"),
                 act(&format!("{row} button"), "You lent test-page-coder"),
             ],
-            "after": ["#lent details[aria-label='test-page-coder'] > summary", "Lent to house"],
+            "after": ["#lent details[aria-label='test-page-coder'] > summary", "lent to house"],
         }),
     )
     .await;
@@ -2196,9 +2197,10 @@ in_chromium!(
     /// 3.2 bar). On ada's computer a stand-in for Jellyfin listens on
     /// 8096 and something svrngs does not know on a port of its own. Her
     /// home page looks for them only once she asks, its look knocking at
-    /// every address here; then, under "Already running here", it names
-    /// the first by the table with what it needs first (its own accounts,
-    /// and how to make one) and lends it after review; the second it lends only once she has
+    /// every address here; then, under "Already running here", each on a
+    /// line she opens, it names the first by the table with what it needs
+    /// first (its own accounts, and how to make one) and lends it after
+    /// review; the second it lends only once she has
     /// given it a name and said what it is, refusing it before. No
     /// terminal: each is declared through the page's `/running`, and the
     /// share line under "Done in a terminal" is gone. Then bo, on his own
@@ -2247,6 +2249,8 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     // A person ticks who can open it before lending it (SCOPE_PARALLEL.md:
     // never a default): the row offers HOME's one group.
     let tick = |port: u16| json!([format!("{} input[type=checkbox]", row(port)), true]);
+    // Each program found is one line, its form folded under it until opened.
+    let open = |port: u16| json!([format!("{} summary", row(port)), null, "opens"]);
     let look = json!(["#running button:has-text('Look for programs')", null, true]);
     let seen = home_page(
         engine,
@@ -2255,12 +2259,15 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             "read": "#lent h2",
             "timed": ["#lent h2", "#running li"],
             "all": "#running li, #running p",
-            "do": [look, tick(8096), press(8096), press(8096), tick(chores.port()), press(chores.port()),
+            "do": [look, open(8096), tick(8096), press(8096), press(8096), open(chores.port()),
+                 tick(chores.port()), press(chores.port()),
                  fill(chores.port(), "name", "chores"), fill(chores.port(), "kind", "chore-wheel"),
                  press(chores.port()), press(chores.port())],
             // The running row answers before HOME's lending reread. An old
             // list still matches `#lent h2 ~ *` (grouped-home check.log).
-            "after": ["#lent li", "chores: everyone in the groups you chose at once"],
+            // Its group has no seed, so no name the page can read: who can
+            // open it is held below by the lend's file.
+            "after": ["#lent li", "chores: lent to "],
             "text": true,
         }),
     )
@@ -2282,12 +2289,8 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     // Looked for only once asked: the look knocks at every address here.
     let (unasked, found) = (&seen["all"], &seen["after"][0]);
     assert!(
-        unasked.to_string().contains("only when you ask") && said(unasked, 8096).is_empty(),
+        said(unasked, 8096).is_empty(),
         "looked for before she asked:\n{seen:#}"
-    );
-    assert!(
-        found.to_string().contains("You looked just now"),
-        "that she looked, said:\n{seen:#}"
     );
     let first = said(found, 8096);
     assert!(
@@ -2327,7 +2330,7 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     );
     for lent in ["jellyfin", "chores"] {
         assert!(
-            page.contains(&format!("{lent}: everyone in the groups you chose at once")),
+            page.contains(&format!("{lent}: lent to ")),
             "what this computer lends, drawn again in place: {lent}\n{page}"
         );
     }

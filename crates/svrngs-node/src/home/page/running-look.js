@@ -50,20 +50,19 @@ export const answered = ({ account, program, folder, unit, description }) => {
 };
 
 /**
- * RUNNING's state: where its look is, what it found and the kinds the
- * table knows by name alone, or why it could not look.
+ * RUNNING's state: where its look is, what it found, or why it could not
+ * look.
  * @typedef {object} State
  * @property {{ running: 'unlooked' | 'looking' | 'looked' | 'unread' }} at
  * @property {Record<string, number>} [asked]
  * @property {Shown[]} [found]
- * @property {string[]} [named]
  * @property {string} [why]
  */
 
 /**
  * The messages RUNNING takes: Look pressed; look `n` answered, or why not.
  * @typedef {{ type: 'look' }
- *   | { type: 'looked', n: number, found: Shown[], named: string[], why: string }
+ *   | { type: 'looked', n: number, found: Shown[], why: string }
  *   | { type: 'unread', n: number, why: string }} Message
  */
 
@@ -93,11 +92,10 @@ export const RUNNING = {
   states: { running: ['unlooked', 'looking', 'looked', 'unread'] },
   io: {
     look: ({ n: serial }) =>
-      get('/running').then(({ running: found, named }) => ({
+      get('/running').then(({ running: found }) => ({
         type: 'looked',
         n: serial,
         found,
-        named,
         why: `${found.length} running`,
       })),
   },
@@ -107,7 +105,7 @@ export const RUNNING = {
     reading: 'looking',
     done: 'looked',
     at: 'looked',
-    fields: ['found', 'named'],
+    fields: ['found'],
     taker: 'what runs here',
   }),
 };

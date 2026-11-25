@@ -133,14 +133,14 @@ short name.
   it."* on the home page. Start the program, then lend it again.
 - **The terminal waits after `svrngs share`**, its last line asking about a
   password. Press Enter if the program takes none.
-- ***"You looked just now: nothing else on this computer is running at an address."***
+- ***"Nothing else on this computer is running at an address."***
   Start the program you want to lend, then press **Look for programs
   running on this computer** again.
 - ***"You already lend something called jellyfin: give it another name."***
   Use `--name` with `svrngs share`, or stop lending the other one first.
 
 - ***"Give it a name and say which program it is first: svrngs does not know what runs there."***
-  On the home page, fill in **Its name:** and **What it is:**, one word
+  On the home page, fill in **Its name:** and **Which program:**, one word
   each, such as `coder` and `llama-server`.
 - **`svrngs: you lend nothing called films from this computer; you lend …`**
   after `svrngs unshare`. Use one of the names it lists.

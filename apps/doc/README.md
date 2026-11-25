@@ -20,9 +20,10 @@ computer answers again.
    node apps/doc/server.mjs --port 4318 --keep ~/doc
    ```
 2. Lend it from your home page: under **Already running here**, press
-   **Look for programs running on this computer**. Fill in **Its name:**
-   `doc` and **Which program:** `doc`, tick the group, and press **Lend it
-   to** your group. Or in a second terminal:
+   **Look for programs running on this computer**, and open the line at
+   `localhost:4318`. Fill in **Its name:** `doc` and **Which program:**
+   `doc`, tick the group, and press **Lend it to** your group. Or in a
+   second terminal:
    `svrngs share 4318 --name doc --program doc --group <group>`, pressing
    Enter where it asks for a password: the doc takes none.
 

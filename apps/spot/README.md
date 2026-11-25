@@ -21,11 +21,11 @@ stops answering.
    node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000
    ```
 2. Lend it from your home page: under **Already running here**, press
-   **Look for programs running on this computer**. Fill in **Its name:**
-   `deepseek-flash` and **Which program:** `spot`, tick the group, and
-   press **Lend it to** your group.
-   Then open its line under **What you lend** and add the header
-   `Authorization`, `Bearer <your key>`.
+   **Look for programs running on this computer**, and open the line at
+   `localhost:8090`. Fill in **Its name:** `deepseek-flash` and **Which
+   program:** `spot`, tick the group, and press **Lend it to** your group.
+   Then open its line under **What you lend**, then **More settings**, and
+   add the header `Authorization`, `Bearer <your key>`.
 
    Or in a second terminal: `svrngs share 8090 --name deepseek-flash
    --program spot --group <group>`, pasting `Bearer <your key>` where it

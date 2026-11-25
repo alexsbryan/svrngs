@@ -10,12 +10,12 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 
 1. Start the program as you always do. Say Sam starts Jellyfin.
 2. Open your home page (open svrngs from your Applications). Under **Already running here**, press **Look for programs running on this computer**. Looking takes a few seconds.
-3. The page lists what it found, each at its address: *"jellyfin, at http://localhost:8096. It keeps its own accounts, so make each person one in it: …"*
+3. The page lists what it found, one line each: *"jellyfin, at http://localhost:8096"*. Press the line to open it. It says what the program needs first, such as *"It keeps its own accounts, so make each person one in it: …"*
 4. Tick the groups who can open it, then press **Lend jellyfin to House** (the button names the groups you ticked).
 
 The row then says *"You lent jellyfin, at http://localhost:8096: the groups you chose can open it now."*, and it shows under **What you lend**.
 
-If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say which program it is, each one word…"*. Fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
+If svrngs doesn't know the program, its line names the program answering there and its address. Open it, fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
 
 For a program apps may also send to, such as llama-server, the first press lends nothing yet: the row says where apps your friends open could send to it, and pressing again lends it ([models.md](models.md#lend-your-llama-server)).
 
@@ -137,7 +137,7 @@ If actual takes a password on each request, paste what it takes in its Authoriza
 
 Most apps with a sign-in page don't need this: press Enter. Paste something only if the program wants a header on every request, such as llama-server started with `--api-key abc123`: then paste `Bearer abc123`, the whole header value. What you type isn't shown. svrngs then says *"Its password stays on this computer; nobody you lend it to receives it."* Your friends never see it, but to the program they all arrive as that one password, so it can't tell them apart.
 
-**From your home page:** under **What you lend**, press its line to open it. It says *"If coder wants a header on each request, add it here: for llama-server started with --api-key abc123, Authorization with Bearer abc123."* **Header:** already says `Authorization`, which is what most programs want; type `Bearer abc123` in **What it says:** and press **Add this header**. The line then says *"svrngs adds authorization to each request your friends make to coder. They never receive what it says."*, and your friends' next request carries it, with nothing restarted. A program that wants another header, such as `X-API-Key`, gets it the same way, and you can add more than one. Adding one of the same name again replaces it; **Stop adding authorization** takes it off.
+**From your home page:** under **What you lend**, press its line to open it, then **More settings**. It says *"If coder wants a header on each request, add it here: for llama-server started with --api-key abc123, Authorization with Bearer abc123."* **Header:** already says `Authorization`, which is what most programs want; type `Bearer abc123` in **What it says:** and press **Add this header**. The line then says *"svrngs adds authorization to each request your friends make to coder. They never receive what it says."*, and your friends' next request carries it, with nothing restarted. A program that wants another header, such as `X-API-Key`, gets it the same way, and you can add more than one. Adding one of the same name again replaces it; **Stop adding authorization** takes it off.
 
 svrngs puts its own in place of any header of that name a friend sends, so nobody can swap in theirs, and it drops one from any answer that repeats it. It won't add its own `X-Svrngs-` headers, `Host`, `Cookie`, `Content-Length` or the ones that frame a request, nor a value with a line break. It doesn't try the header first, so if your friends are told it was refused, add it again. A program svrngs knows signs each person in itself, such as Jellyfin or Immich, takes none: one header for everyone would make them all one person to it.
 
@@ -155,7 +155,7 @@ Your friends see *"Sam’s films (jellyfin)"*. Without `--name`, the name is the
 svrngs share 8096 --limit 3 --group <group>
 ```
 
-On your home page, under **What you lend**, press its line to open it, then type a number in **How many people at once:** and press **Let in this many**; **Let everyone in** takes the limit off. Someone counts as using it while a request of theirs is running and for 30 seconds after. The fourth person sees *"jellyfin is lent to 3 people at once, and 3 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* With no limit, everyone in the groups you chose can use it at once.
+On your home page, under **What you lend**, press its line to open it, then **More settings**. Type a number in **How many people at once:** and press **Let in this many**; **Let everyone in** takes the limit off. Someone counts as using it while a request of theirs is running and for 30 seconds after. The fourth person sees *"jellyfin is lent to 3 people at once, and 3 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* With no limit, everyone in the groups you chose can use it at once.
 
 ## Keep part of it back
 
@@ -173,7 +173,7 @@ For an app that speaks OpenID Connect, such as Jellyfin with its SSO plugin, svr
 svrngs share 8096 --sign-in-with-svrngs --group <group>
 ```
 
-Or press its line under **What you lend**, then **Sign people in with svrngs**. Either way you get three things to copy into the app's own settings: *"choose OpenID Connect, and fill in: issuer http://127.0.0.1:…/oidc/jellyfin, client id …, client secret …"*, then *"It is plain http on this computer, not https; it signs tokens with ES256; and it tells the app no email address, because svrngs has none. Copy the secret now: it is not shown again."*
+Or press its line under **What you lend**, then **More settings** and **Sign people in with svrngs**. Either way you get three things to copy into the app's own settings: *"choose OpenID Connect, and fill in: issuer http://127.0.0.1:…/oidc/jellyfin, client id …, client secret …"*, then *"It is plain http on this computer, not https; it signs tokens with ES256; and it tells the app no email address, because svrngs has none. Copy the secret now: it is not shown again."*
 
 For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those three values, and in the plugin's settings allow plain http (`DisableHttps`) and turn off its endpoint check (`DoNotValidateEndpoints`). In Jellyfin's networking settings, set the known proxies (`KnownProxies`) to `127.0.0.1`. Then each friend who opens it from the group's list signs in with one press, on a computer or a phone, and two people watching at once stay apart.
 

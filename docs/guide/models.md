@@ -14,7 +14,7 @@ llama-server -m my-model.gguf --host 127.0.0.1 --port 8101
 
 When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, it's ready. (Without `--port`, llama-server uses 8080.)
 
-**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so the row says *"Something at http://localhost:8101. To lend it, give it a name and say which program it is, each one word; if it is llama-server, say that."* Type a name in **Its name:** (`coder`) and `llama-server` in **Which program:**, tick who can open it, then press **Lend it to House** (the button names the groups you ticked). The first press lends nothing yet: the row says *"People in your group can use all of llama-server that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at /v1/embeddings, each app only after the friend who opened it says yes. To lend it with these, press Lend again."* Press it again to lend it.
+**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so its line names the program answering there, *"llama-server in …, at http://localhost:8101"*. Open it, type a name in **Its name:** (`coder`) and `llama-server` in **Which program:**, tick who can open it, then press **Lend it to House** (the button names the groups you ticked). The first press lends nothing yet: the row says *"People in your group can use all of llama-server that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at /v1/embeddings, each app only after the friend who opened it says yes. To lend it with these, press Lend again."* Press it again to lend it.
 
 **From a terminal:**
 
@@ -123,7 +123,7 @@ A model can only answer so many people at once. Set how many:
 svrngs share 8101 --program llama-server --name coder --limit 2 --group <group>
 ```
 
-Or on your home page, under **What you lend**, press its line to open it, type `2` in **How many people at once:** and press **Let in this many**. The third person is told *"coder is lent to 2 people at once, and 2 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* Someone counts as using it for 30 seconds after their last request ends.
+Or on your home page, under **What you lend**, press its line to open it, then **More settings**, type `2` in **How many people at once:** and press **Let in this many**. The third person is told *"coder is lent to 2 people at once, and 2 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* Someone counts as using it for 30 seconds after their last request ends.
 
 ## Spot your group a provider's model for the night
 

@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>? | "opens"], ...], "timed"?: [<selector>, ...], "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
 //
 // A `do` step's fourth element, `until`, is words `all`'s text holds before
 // it is read. `visible` hides the page, then shows it, once the `do` steps
@@ -123,6 +123,12 @@ try {
   const atRest = async (s, w) =>
     (await page.waitForFunction(rest, [s, w], { timeout: 30_000 })).jsonValue();
   for (const [selector, value, stays, words] of args.do ?? []) {
+    // `stays` 'opens': a fold's summary clicked open, as a person opens a
+    // program found to lend it. It changes no words, so none is waited for.
+    if (stays === 'opens') {
+      await page.locator(selector).first().click({ timeout: 30_000 });
+      continue;
+    }
     // A value `true` ticks the box (the shelf, its boxes unticked to start).
     if (value === true) {
       await page.locator(selector).first().check({ timeout: 30_000 });

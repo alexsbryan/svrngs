@@ -37,8 +37,9 @@ try {
   await page.goto(ask);
   const label = await page.locator('#run-form summary').textContent();
   await page.getByRole('button', { name: 'Look for programs running on this computer' }).click();
-  const row = (p) =>
-    page.locator('#running li', { hasText: `localhost:${p}.` }).getByRole('link', { name: label });
+  // A program found is a line, its port's digits last, its link folded under it.
+  const line = (p) => page.locator('#running li', { hasText: new RegExp(`localhost:${p}(?!\\d)`) });
+  const row = (p) => line(p).getByRole('link', { name: label });
   const form = page.locator('#run-form form');
   const field = (name) => form.locator(`input[name=${name}]`);
   const hold = () =>
@@ -50,6 +51,7 @@ try {
     await page.evaluate(() => window.releasePrefill());
     await page.waitForFunction(() => window.prefillDelivered);
   };
+  for (const p of [port, other]) await line(p).locator('summary').click();
   const askOther = async () => {
     const answered = page.waitForResponse((reply) => reply.url().endsWith(`?prefill=${other}`));
     await row(other).click();
