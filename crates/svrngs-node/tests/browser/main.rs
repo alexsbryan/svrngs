@@ -1987,11 +1987,12 @@ static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 /// A stand-in llama-server started by hand, found and lent from the page,
 /// its fields filled with the name svrngs's table knows it by; its lend's
 /// row offers to keep it running, and Keep it running shows the keeper's
-/// suggestion, the command and folder svrngs would start it with, behind a
-/// Change fold too (web/tests/run-prefill.mjs). Nothing starts until
-/// Start; Start, the hand-started copy still on the port, is refused and
-/// leaves it alone. Plant: `SVRNGS_PREFILL_PLANT=start` presses Start
-/// before the count of Run's posts is read.
+/// suggestion, the very command and folder it was started with (Keeper
+/// reads them from /proc), behind a Change fold too
+/// (web/tests/run-prefill.mjs). Nothing starts until Start; Start, the
+/// hand-started copy still on the port, is refused and leaves it alone.
+/// Plant: `SVRNGS_PREFILL_PLANT=start` presses Start before the count of
+/// Run's posts is read.
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "run in the gate with the isolated user manager"]
@@ -2010,13 +2011,12 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
     let executable = dir.path().join("llama-server");
     std::fs::copy("/usr/bin/python3", &executable).unwrap();
     drop(held);
+    let tail = format!("-u -m http.server {port} --bind 127.0.0.1");
+    // What Keeper should read back: this argv, shlex-joined. The temporary
+    // folder's name holds nothing shlex quotes, so the join is plain spaces.
+    let command = format!("{} {tail}", executable.display());
     let mut listener = by_hand(&executable)
-        .args([
-            "-u",
-            "-c",
-            include_str!("../../../../apps/svrngs-keeper/tests/props_fixture.py"),
-            &port.to_string(),
-        ])
+        .args(tail.split(' '))
         .current_dir(dir.path())
         .stdout(std::process::Stdio::piped())
         .kill_on_drop(true)
@@ -2027,13 +2027,13 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
         .read_line(&mut ready)
         .await
         .unwrap();
-    assert_eq!(ready.trim(), port.to_string());
+    assert!(ready.contains(&format!(" port {port} ")), "{ready}");
     let seen = drive(
         Engine::Webkit,
         "run-prefill.mjs",
         json!({
             "ask": format!("http://svrngs.localhost:{}/", ada.api_addr().port()),
-            "port": port, "folder": dir.path(),
+            "port": port, "folder": dir.path(), "command": command,
             "plant": std::env::var("SVRNGS_PREFILL_PLANT").ok(),
         }),
         None,

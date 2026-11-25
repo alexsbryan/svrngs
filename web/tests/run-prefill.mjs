@@ -1,14 +1,14 @@
 // Browser half of run_prefill_waits_for_confirmation_in_webkit: a stand-in
 // llama-server, started by hand, is found and lent, its fields filled with
 // the name svrngs's table knows it by; its lend's row offers to keep it
-// running, and Keep it running shows the command svrngs would start it with
-// and its folder, the keeper's suggestion, behind a Change fold too; nothing
+// running, and Keep it running shows the command it was started with and
+// its folder, the keeper's suggestion, behind a Change fold too; nothing
 // is started until Start, and Start, with the hand-started copy still on
 // the port, is refused, the copy left alone.
 import assert from 'node:assert/strict';
 import { launch } from './page.mjs';
 
-const { engine, ask, port, folder, plant } = JSON.parse(process.argv[2]);
+const { engine, ask, port, folder, command: started, plant } = JSON.parse(process.argv[2]);
 const { context, close } = await launch(engine);
 try {
   await context.addInitScript(() => {
@@ -50,11 +50,7 @@ try {
   const shown = offer.locator('code');
   await shown.first().waitFor();
   const [command, at] = await shown.allTextContents();
-  assert.ok(
-    command.startsWith('llama-server --model ') &&
-      command.endsWith(` --host 127.0.0.1 --port ${port}`),
-    command,
-  );
+  assert.equal(command, started);
   assert.equal(at, folder);
   await offer.locator('summary', { hasText: 'Change' }).click();
   assert.equal(await offer.locator('input[name=command]').inputValue(), command);
