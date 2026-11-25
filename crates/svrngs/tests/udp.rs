@@ -140,7 +140,7 @@ fn share_udp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
         .expect("a UDP port and its kind");
     assert_eq!(lend.source, Source::Raw(Raw::Udp, asked.port));
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(sam.dir.path(), &lend, None).unwrap();
+    svrngs_node::lend::declare(sam.dir.path(), &lend, None).unwrap();
     lend
 }
 

@@ -1,5 +1,5 @@
 //! `svrngs share` and `unshare` on the wire: share.rs's claims whose
-//! decision is `cli::audience_of`'s, `cli::share_lend`'s or `cli::unshare`'s
+//! decision is `cli::audience_of`'s, `svrngs_node::lend::declare`'s or `cli::unshare`'s
 //! over groups `made::new_group` made (docs/seams.tsv). The port a lend
 //! names is said to listen by the probe `share::lend_of` is handed, so no
 //! service answers on it; that a port is probed is share.rs's.
@@ -82,7 +82,8 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     };
     let mut pad = share::lend_of(&asked, None, "").unwrap();
     svrngs_node::node::approve(&mut pad);
-    cli::share_lend(dir, &pad, Some(SECRET)).unwrap();
+    svrngs_node::lend::declare(dir, &pad, Some((svrngs_node::lend::SECRET_HEADER, SECRET)))
+        .unwrap();
     let here = dir.to_path_buf();
     let narrowed = cli::unshare(&here, &pad.name, &named(&["trip"]))
         .await
@@ -138,7 +139,7 @@ async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     made.await.expect("Sam makes house");
     let mut pad = share::lend_of(&share_of(PAD, "pad"), None, "").unwrap();
     svrngs_node::node::approve(&mut pad);
-    cli::share_lend(sam.dir.path(), &pad, None).unwrap();
+    svrngs_node::lend::declare(sam.dir.path(), &pad, None).unwrap();
     let house = ["house".to_string()];
     let said = cli::unshare(&sam.dir.path().to_path_buf(), &pad.name, &house).await;
     said.expect("true already: a legacy lend reaches no group");
@@ -211,7 +212,7 @@ async fn a_lend_stopped_is_closed_to_this_wifi_and_lent_again_is_not_served_ther
     let mut pad = share::lend_of(&share_of(PAD, "pad"), None, "").unwrap();
     svrngs_node::node::approve(&mut pad);
     let lent_again = async |sam: &crate::Computer, how: &str| {
-        cli::share_lend(sam.dir.path(), &pad, None).unwrap();
+        svrngs_node::lend::declare(sam.dir.path(), &pad, None).unwrap();
         assert_eq!(
             room_of(&sam.node).await,
             [ana_pad.clone()],
@@ -225,7 +226,7 @@ async fn a_lend_stopped_is_closed_to_this_wifi_and_lent_again_is_not_served_ther
     both_on();
     let wire = Wire::default();
     let sam = start(&wire, dir).await;
-    cli::share_lend(sam.dir.path(), &pad, None).unwrap();
+    svrngs_node::lend::declare(sam.dir.path(), &pad, None).unwrap();
     assert_eq!(
         room_of(&sam.node).await,
         [sam_pad.clone(), ana_pad.clone()],
@@ -258,7 +259,7 @@ async fn a_lend_stopped_is_closed_to_this_wifi_and_lent_again_is_not_served_ther
     both_on();
     let stopped = cli::unshare(&dir.path().to_path_buf(), &pad.name, &[]).await;
     assert_eq!(stopped.unwrap(), Said::Unshared(pad.name.clone()));
-    cli::share_lend(dir.path(), &pad, None).unwrap();
+    svrngs_node::lend::declare(dir.path(), &pad, None).unwrap();
     let wire = Wire::default();
     let sam = start(&wire, dir).await;
     let on = (

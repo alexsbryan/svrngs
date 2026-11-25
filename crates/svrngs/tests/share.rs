@@ -201,7 +201,12 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
         .expect("something listens there, and its kind is given");
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
+    svrngs_node::lend::declare(
+        sam.dir.path(),
+        &lend,
+        Some((svrngs_node::lend::SECRET_HEADER, SECRET)),
+    )
+    .unwrap();
     let mut said = vec![Said::Shared {
         lend: Box::new(lend.clone()),
         answers: Vec::new(),
@@ -325,7 +330,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
     let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
         .expect("something listens there, and its kind is given");
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(sam.dir.path(), &lend, None).unwrap();
+    svrngs_node::lend::declare(sam.dir.path(), &lend, None).unwrap();
     let shared = Said::Shared {
         lend: Box::new(lend.clone()),
         answers: Vec::new(),
@@ -537,7 +542,7 @@ async fn a_lend_that_asks_keeps_its_lender_s_words() {
     let dir = tempfile::tempdir().unwrap();
     let mut lend = share::lend_of(&asked, Some(LentProgram::parse("taste").unwrap()), "").unwrap();
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(dir.path(), &lend, None).unwrap();
+    svrngs_node::lend::declare(dir.path(), &lend, None).unwrap();
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
     assert_eq!(

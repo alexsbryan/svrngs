@@ -2076,15 +2076,6 @@ fn what_answers(answers: &[Answer]) -> String {
     said.join(" and ")
 }
 
-/// `svrngs share`'s write: `lend` declared in the data dir at `root`, with
-/// `secret` sent as [`lend::SECRET_HEADER`], or none.
-pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
-    lend::declare(root, lend, secret.map(|s| (lend::SECRET_HEADER, s))).map_err(|e| {
-        tracing::debug!(target: "cli", lend = %lend.name, error = %e, "cli: share — the lend cannot be kept");
-        Unjudged::Keep(lend.name.to_string()).into()
-    })
-}
-
 /// `svrngs unshare`: withdraw the lend `name` from the data dir `here`
 /// names, as the home page's Stop withdraws it ([`withdrawn`]), or take
 /// `groups` from who can open it.

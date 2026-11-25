@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::*;
-use crate::actor_of;
 use crate::tests_support::key;
+use crate::{actor_of, verify_hex};
+
+/// Whether `sig` is the set's device's over it and its `changes`' hash, as
+/// a copy checks a set it takes (svrngs-db `sync.rs`, `signed`).
+fn checks(at: &At<'_>, changes: &[u8; 32], sig: &str) -> bool {
+    verify_hex(at.device, &at.message(changes), sig)
+}
 
 /// A set's signature checks for that set alone: another group, app,
 /// device, database, seq, schema or change fails it. Plant: the message
@@ -24,8 +30,8 @@ fn a_set_s_signature_checks_for_that_set_alone() {
         schema: &schema,
     };
     let sig = at.sign(&k, &changes(b"rows"));
-    assert!(at.check(&changes(b"rows"), &sig));
-    assert!(!at.check(&changes(b"rowz"), &sig), "another change");
+    assert!(checks(&at, &changes(b"rows"), &sig));
+    assert!(!checks(&at, &changes(b"rowz"), &sig), "another change");
     let (n2, s2) = (
         [8; 16],
         self::schema("CREATE TABLE u (id TEXT PRIMARY KEY);"),
@@ -42,10 +48,10 @@ fn a_set_s_signature_checks_for_that_set_alone() {
         At { schema: &s2, ..at },
     ];
     for at in lifted {
-        assert!(!at.check(&changes(b"rows"), &sig), "{at:?}");
+        assert!(!checks(&at, &changes(b"rows"), &sig), "{at:?}");
     }
     assert!(
-        !at.check(&changes(b"rows"), &at.sign(&other, &changes(b"rows"))),
+        !checks(&at, &changes(b"rows"), &at.sign(&other, &changes(b"rows"))),
         "another key's"
     );
 }

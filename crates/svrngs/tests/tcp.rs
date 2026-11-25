@@ -184,7 +184,7 @@ fn share_tcp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
     );
     assert_eq!(lend.source, Source::Raw(Raw::Tcp, asked.port));
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(sam.dir.path(), &lend, None).unwrap();
+    svrngs_node::lend::declare(sam.dir.path(), &lend, None).unwrap();
     lend
 }
 

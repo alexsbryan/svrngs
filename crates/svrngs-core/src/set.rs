@@ -33,7 +33,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use crate::sig::{PREPARED_DOMAIN, SCHEMA_DOMAIN, SET_DOMAIN, SITE_DOMAIN};
-use crate::{field, sign_message, verify_hex, ContentHash, SigningKey};
+use crate::{field, sign_message, ContentHash, SigningKey};
 
 /// What a device makes with each database it keeps, so the database's site
 /// is its own ([`site`]).
@@ -75,11 +75,6 @@ impl At<'_> {
     /// set's own device's, where `device` is `key`'s.
     pub fn sign(&self, key: &SigningKey, changes: &[u8; 32]) -> String {
         sign_message(key, &self.message(changes))
-    }
-
-    /// Whether `sig` is the set's device's over it and its `changes`' hash.
-    pub fn check(&self, changes: &[u8; 32], sig: &str) -> bool {
-        verify_hex(self.device, &self.message(changes), sig)
     }
 }
 
