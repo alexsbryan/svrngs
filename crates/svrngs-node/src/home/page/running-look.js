@@ -19,10 +19,13 @@ import { get } from './routes.js?v=__VERSION__';
 /**
  * A program running here, as /running answers it (home.rs `shown`): its
  * port, the kind the table knows, its name once lent, how it signs each
- * person in, and the paths svrngs keeps back of it.
+ * person in, and the paths svrngs keeps back of it; and, set by the look,
+ * the program answering when the table knows that kind by name alone
+ * (/running's `named`), for its fields.
  * @typedef {object} Shown
  * @property {number} port
  * @property {string | null} kind
+ * @property {string | null} [program]
  * @property {string | null} name
  * @property {Signs | null} signs
  * @property {string[] | null} keeps
@@ -92,12 +95,18 @@ export const RUNNING = {
   states: { running: ['unlooked', 'looking', 'looked', 'unread'] },
   io: {
     look: ({ n: serial }) =>
-      get('/running').then(({ running: found }) => ({
-        type: 'looked',
-        n: serial,
-        found,
-        why: `${found.length} running`,
-      })),
+      get('/running').then(
+        /** @param {{ running: Shown[], named: string[] }} answer */
+        ({ running, named }) => ({
+          type: 'looked',
+          n: serial,
+          found: running.map((row) => {
+            const program = row.answer?.program;
+            return { ...row, program: program && named.includes(program) ? program : null };
+          }),
+          why: `${running.length} running`,
+        }),
+      ),
   },
   step: reads({
     region: 'running',

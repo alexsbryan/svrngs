@@ -1164,12 +1164,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # checkout's build as the login svrngs. Its pass (2a1d9f26) cut the two items
 # only tests reached, cli.rs `share_lend` and set.rs `At::check`, -9, to
 # 28,662 and the core's 3,526; dev.sh brings the whole to 28,678.
+# The operator approved up to +97 JS (2026-11-25) for lending first, then
+# the lend's offer to keep its program running (keep-running.js). Its pass
+# cut the standalone Run form, its prefill and the found row's Run link
+# (-30) and trimmed the offer (-8): 8,892, to come down with the Mac keep.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
     ".": 28679,
 
-    "js": 8796,
+    "js": 8893,
 
     "swift": 1,
 }

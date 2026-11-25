@@ -23,7 +23,7 @@ fn refuses_every_listen_address_before_writing() {
         assert!(
             !got.status.success()
                 && said.contains(&format!("Port {port} is in use by "))
-                && said.contains("the copy you started: stop it, then press Run."),
+                && said.contains("the copy you started: stop it, then press Start."),
             "{addr}: {said}"
         );
         assert_eq!(scratch.path().read_dir().unwrap().count(), 0);

@@ -148,10 +148,10 @@ short name.
   The secret is shown only once. Run that command for a new one, and put
   it in the app's settings.
 
-## Run it with svrngs
+## Keep it running
 
-- **"Port 8101 is in use by llama-server, the copy you started: stop it, then press Run."**
-  Stop that copy yourself, then try again. svrngs hasn't stopped anything.
+- **"Port 8101 is in use by llama-server, the copy you started: stop it, then press Start."**
+  Quit that copy yourself, then press **Start** again. svrngs hasn't stopped anything.
 - **"Not shared; svrngs couldn't verify coder is answering."**
   Check the reported state and the port, then check the command, folder and
   paths you gave it. It runs without your terminal's settings. To stop it,

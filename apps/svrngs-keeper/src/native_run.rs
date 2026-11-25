@@ -99,7 +99,7 @@ pub fn run(name: &str, args: &[&str]) -> anyhow::Result<()> {
     };
     let busy = || -> anyhow::Result<_> {
         Ok(host::busy(port).map_err(anyhow::Error::msg)?.map(|by| Outcome::Busy {
-            why: format!("Port {port} is in use by {by}, the copy you started: stop it, then press Run."),
+            why: format!("Port {port} is in use by {by}, the copy you started: stop it, then press Start."),
         }))
     };
     if let Some(outcome) = busy()? {

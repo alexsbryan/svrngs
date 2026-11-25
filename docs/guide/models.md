@@ -39,12 +39,12 @@ They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, 
 
 ## Run coder with svrngs
 
-Trying a model in a terminal is fine. A **Shared while you run it** copy
-doesn't start again by itself. To have svrngs run coder, look for your
-terminal copy under **Already running here** and choose **Run it with svrngs**
-on its row. Review the suggested model path and command, and add any flags
-you need. Stop the terminal copy, then press Run. Or stop the copy and run
-this in a terminal, using your model's full path and flags:
+Trying a model in a terminal is fine, but that copy doesn't start again by
+itself. Once you lend it, its line under **What you lend** offers to keep it
+running: press **Keep it running**, check the command svrngs suggests (open
+**Change** to add flags), quit the terminal copy, then press **Start**
+([Lend](lend.md#keep-it-running)). Or quit the copy and run this in a
+terminal, using your model's full path and flags:
 
 ```
 svrngs run coder --port 8101 -- /usr/bin/llama-server -m "$HOME/models/my-model.gguf" --host 127.0.0.1 --port 8101
@@ -58,7 +58,7 @@ copy before, stop lending that copy, then share this one under the same name.
 Run itself shares nothing. The Share review says when your friends can open
 it again after a restart. To stop coder, open your home page (`svrngs open`)
 and choose **Stop coder** under **Already running here**. Its setup and
-model files stay in place. [Lend](lend.md#run-it-with-svrngs-then-share-it)
+model files stay in place. [Lend](lend.md#keep-it-running)
 explains start times and how to stop lending it separately.
 
 ## What svrngs keeps back, and why

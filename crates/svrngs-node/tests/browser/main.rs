@@ -1984,6 +1984,14 @@ async fn slow_way(relay: &Server, by: Duration) -> String {
 /// port in both engines' runs of [`the_home_page_lends_what_runs_here`].
 static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
+/// A stand-in llama-server started by hand, found and lent from the page,
+/// its fields filled with the name svrngs's table knows it by; its lend's
+/// row offers to keep it running, and Keep it running shows the keeper's
+/// suggestion, the command and folder svrngs would start it with, behind a
+/// Change fold too (web/tests/run-prefill.mjs). Nothing starts until
+/// Start; Start, the hand-started copy still on the port, is refused and
+/// leaves it alone. Plant: `SVRNGS_PREFILL_PLANT=start` presses Start
+/// before the count of Run's posts is read.
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "run in the gate with the isolated user manager"]
@@ -1999,14 +2007,10 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
     let (ada, _) = house(dir.path(), &relay, &signing(7)).await;
     let held = free_here(20100).await;
     let port = held.local_addr().unwrap().port();
-    let other = free_here(port + 1).await;
-    let other_port = other.local_addr().unwrap().port();
-    let run = free_here(other_port + 1).await;
-    let run_port = run.local_addr().unwrap().port();
     let executable = dir.path().join("llama-server");
     std::fs::copy("/usr/bin/python3", &executable).unwrap();
     drop(held);
-    let mut listener = tokio::process::Command::new(executable)
+    let mut listener = by_hand(&executable)
         .args([
             "-u",
             "-c",
@@ -2024,22 +2028,23 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
         .await
         .unwrap();
     assert_eq!(ready.trim(), port.to_string());
-    drop(run);
     let seen = drive(
         Engine::Webkit,
         "run-prefill.mjs",
         json!({
             "ask": format!("http://svrngs.localhost:{}/", ada.api_addr().port()),
-            "port": port, "other": other_port, "runPort": run_port, "folder": dir.path(),
+            "port": port, "folder": dir.path(),
             "plant": std::env::var("SVRNGS_PREFILL_PLANT").ok(),
         }),
         None,
     )
     .await;
-    assert!(svrngs_node::lend::all(dir.path()).unwrap().is_empty());
+    let name = svrngs_node::lend::LendName::parse("llama-server").unwrap();
+    let lent = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
+    assert!(lent.terms.keep.is_none(), "a refused Start kept nothing");
     assert!(
         listener.try_wait().unwrap().is_none(),
-        "Run must leave the original alone"
+        "Start must leave the copy started by hand alone"
     );
     listener.kill().await.unwrap();
     println!("WebKit prefill: {seen}");
@@ -2047,11 +2052,22 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
 
 // The isolated user manager and packaged keeper are supplied by the demo
 // driver. No test in the standard browser suite touches a login manager.
+/// Ada starts a page by hand, finds it under Already running here and lends
+/// it to house; its lend's row offers to keep it running. Keep it running
+/// asks the command and folder, svrngs suggesting none for it; Start is
+/// refused while her copy holds the port, leaving it alone; she quits it,
+/// and Start runs it as the lend's name and port. What answers then is
+/// svrngs's job for the lend, so the page approves it at once (keep-running.js
+/// `carry`): the lend is kept to that unit, through restarts. Stop and
+/// Start under Already running here write no lend, and Bo then opens it,
+/// the share renewed for the restarted job. Plant: `SVRNGS_RUN_PAGE_PLANT`
+/// unbalances the command's quotes, so Start is refused.
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "run in the gate with the isolated user manager"]
-async fn explicit_run_then_share_in_webkit() {
+async fn share_then_keep_it_running_in_webkit() {
     use svrngs_node::{group, lend::Audience};
+    use tokio::io::{AsyncBufReadExt, BufReader};
 
     assert_eq!(
         std::env::var("SVRNGS_RUN_PAGE_DEMO").as_deref(),
@@ -2065,9 +2081,7 @@ async fn explicit_run_then_share_in_webkit() {
     let dir = tempfile::tempdir().unwrap();
     let relay = relay().await;
     let (ada, ns) = house(dir.path(), &relay, &signing(7)).await;
-    let busy = free_here(20000).await;
-    let busy_port = busy.local_addr().unwrap().port();
-    let free = free_here(busy_port + 1).await;
+    let free = free_here(20000).await;
     let port = free.local_addr().unwrap().port();
     drop(free);
     let name = "test-page-coder";
@@ -2084,48 +2098,33 @@ async fn explicit_run_then_share_in_webkit() {
         "'127.0.0.1'"
     };
     let cmd = format!("/usr/bin/python3 -m http.server {port} --bind {address}");
-    let field = |key: &str, value: &str| json!([format!("#run-form input[name={key}]"), value]);
+    // Ada's own copy, as a terminal starts it (`by_hand`): its first line
+    // says it serves.
+    let mut own = by_hand(Path::new("/usr/bin/python3"))
+        .args([
+            "-u",
+            "-m",
+            "http.server",
+            &port.to_string(),
+            "--bind",
+            "127.0.0.1",
+        ])
+        .current_dir(&site)
+        .stdout(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .unwrap();
+    let mut serving = String::new();
+    BufReader::new(own.stdout.take().unwrap())
+        .read_line(&mut serving)
+        .await
+        .unwrap();
+    assert!(serving.starts_with("Serving HTTP"), "{serving}");
     let act = |selector: &str, words: &str| json!([selector, null, true, words]);
-    let submit = "#run-form form button";
-    let ran = home_page(
-        engine,
-        &ada,
-        json!({
-            "read": "#run-form summary",
-            "all": "#running > h2, #run-form [role=status], #run-form > p:not(:first-of-type), #lent li",
-            "unfold": true,
-            "do": [
-                field("name", name), field("port", &busy_port.to_string()),
-                field("folder", site.to_str().unwrap()), field("command", &cmd),
-                act(submit, "is in use by"), field("port", &port.to_string()),
-                act(submit, "Run by svrngs"),
-                act("#run-form button:has-text('Stop test-page-coder')", "Stopped."),
-                act("#run-form button:has-text('Start test-page-coder')", "Run by svrngs"),
-            ],
-        }),
-    )
-    .await;
-    let heading = ran["after"][1][0].as_str().unwrap();
-    assert_eq!(heading, "Already running here");
-    let success = ran["after"][1][1].as_str().unwrap().trim();
-    assert_eq!(
-        success,
-        format!("{name} is running here. To share it, find it under {heading}."),
-        "Run confirmation under #run-form"
-    );
-    let still_busy = std::net::TcpListener::bind(("127.0.0.1", busy_port));
-    assert!(
-        still_busy.is_err(),
-        "the refused Run took the busy listener"
-    );
-    assert!(
-        svrngs_node::lend::all(dir.path()).unwrap().is_empty(),
-        "Run or Start published: {ran:#}"
-    );
-    println!("WebKit Run confirmation: {success}");
-    println!("WebKit Run and lifecycle: {}", ran["after"]);
     let row = format!("#running li:has-text('localhost:{port}')");
-    let shared = home_page(
+    let offer = format!("#lent [role=group][aria-label='{name}']");
+    let fill = |key: &str, value: &str| json!([format!("{offer} input[name={key}]"), value]);
+    let busy = home_page(
         engine,
         &ada,
         json!({
@@ -2135,35 +2134,59 @@ async fn explicit_run_then_share_in_webkit() {
                 [format!("{row} summary"), null, "opens"],
                 field_on(&row, "name", name), field_on(&row, "kind", "test-http"),
                 [format!("{row} input[type=checkbox]"), true],
-                act(&format!("{row} button"), "Share test-page-coder"),
+                act(&format!("{row} button"), "Share this run"),
                 act(&format!("{row} button"), "You lent test-page-coder"),
+                act(&format!("{offer} button:has-text('Keep it running')"), "Quit the copy you started"),
+                fill("command", &cmd), fill("folder", site.to_str().unwrap()),
+                act(&format!("{offer} button:has-text('Start')"), "is in use by"),
             ],
-            "after": ["#lent details[aria-label='test-page-coder'] > summary", "lent to house"],
         }),
     )
     .await;
-    let review = shared["after"][1]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter_map(Value::as_str)
-        .find(|row| row.contains("Share test-page-coder"))
-        .unwrap();
-    assert!(review.contains("house can "), "Share review: {review}");
-    println!("WebKit Share review: {}", review.trim());
-    let saved_row = shared["later"][0].as_str().unwrap();
-    assert!(saved_row.starts_with("test-page-coder:"), "{saved_row}");
+    println!("WebKit refused Start: {}", busy["after"]);
+    assert!(
+        own.try_wait().unwrap().is_none(),
+        "the refused Start stopped Ada's copy"
+    );
+    own.kill().await.unwrap();
+    own.wait().await.unwrap();
+    let ran = home_page(
+        engine,
+        &ada,
+        json!({
+            "all": "#lent li, #runs",
+            "do": [
+                act(&format!("{offer} button:has-text('Keep it running')"), "Quit the copy you started"),
+                fill("command", &cmd), fill("folder", site.to_str().unwrap()),
+                act(&format!("{offer} button:has-text('Start')"), "can open it again after you sign in"),
+                act("#runs button:has-text('Stop test-page-coder')", "Stopped."),
+                act("#runs button:has-text('Start test-page-coder')", "Run by svrngs"),
+            ],
+            "text": true,
+        }),
+    )
+    .await;
+    let page = ran["text"].as_str().unwrap_or_default();
+    assert!(
+        page.contains(&format!("svrngs runs {name} now. house")),
+        "Start, then its promise: {ran:#}"
+    );
+    assert!(
+        !page.contains("Keep it running"),
+        "the offer is gone once svrngs keeps it: {page}"
+    );
+    println!("WebKit Start and lifecycle: {}", ran["after"]);
     let saved = svrngs_node::lend::read(
         dir.path(),
         &svrngs_node::lend::LendName::parse(name).unwrap(),
     )
     .unwrap()
     .unwrap();
-    assert_eq!(saved.port().unwrap().get(), port, "{shared:#}");
+    assert_eq!(saved.port().unwrap().get(), port, "{ran:#}");
     assert_eq!(saved.terms.audience, Audience::Selected(vec![ns.clone()]));
     assert!(
         saved.terms.keep.is_some(),
-        "Share did not grant the observed job: {shared:#}"
+        "approving svrngs's job did not keep the lend to it: {ran:#}"
     );
     let bo_dir = tempfile::tempdir().unwrap();
     let bo = browser_node(bo_dir.path(), relay_url(&relay), 7, group::seed_text).await;
@@ -2174,8 +2197,20 @@ async fn explicit_run_then_share_in_webkit() {
     sync_standing(&bo, &ns, &ada, "bo").await;
     let opened = home_page(engine, &bo, json!({ "open": "test-page-coder" })).await;
     assert_eq!(opened["opened"]["title"], "Run page witness", "{opened:#}");
-    println!("WebKit Share: {}", shared["later"]);
     println!("WebKit Alex opened: {}", opened["opened"]);
+}
+
+/// `program`, as a terminal starts it: in a scope of the private user
+/// manager's, not in the test's own unit, so svrngs names it a program
+/// started by hand, shared only while it runs (job.rs `unit_of`: none for
+/// a scope).
+#[cfg(target_os = "linux")]
+fn by_hand(program: &Path) -> tokio::process::Command {
+    let mut command = tokio::process::Command::new("systemd-run");
+    command
+        .args(["--user", "--scope", "--quiet", "--"])
+        .arg(program);
+    command
 }
 
 #[cfg(target_os = "linux")]
@@ -2206,7 +2241,9 @@ in_chromium!(
     /// review; the second it lends only once she has
     /// given it a name and said what it is, refusing it before. No
     /// terminal: each is declared through the page's `/running`, and the
-    /// share line under "Done in a terminal" is gone. Then bo, on his own
+    /// share line under "Done in a terminal" is gone. A found row only
+    /// lends; the lend's row then offers to keep it running, as one lent
+    /// by hand is shared only while it runs. Then bo, on his own
     /// computer, opens ada's jellyfin from his home page in a tab. Nothing
     /// is offered where nobody listens: neither a port gone before the
     /// page asked nor the table's Navidrome and Calibre-Web unless they
@@ -2269,8 +2306,11 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             // The running row answers before HOME's lending reread. An old
             // list still matches `#lent h2 ~ *` (grouped-home check.log).
             // Its group has no seed, so no name the page can read: who can
-            // open it is held below by the lend's file.
-            "after": ["#lent li", "chores: lent to "],
+            // open it is held below by the lend's file. Read once chores'
+            // row, by its fold's name, offers to keep it running: lent by
+            // hand, it is shared only while it runs (plan/words.rs
+            // `shared_while`), and svrngs runs nothing of its name.
+            "after": ["#lent li:has(> details[aria-label='chores'])", "Keep it running"],
             "text": true,
         }),
     )
@@ -2330,6 +2370,16 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     assert!(
         !page.contains("svrngs share"),
         "the terminal's line is gone:\n{page}"
+    );
+    assert!(
+        !page.contains("Run it with svrngs"),
+        "a found row runs nothing; its lend's row offers that:\n{page}"
+    );
+    let offered = seen["later"][0].as_str().unwrap_or_default();
+    assert!(
+        offered.starts_with("chores: lent to ")
+            && offered.contains("can open it only while it’s running. svrngs can keep it running, even after a restart."),
+        "chores' row offers to keep it running:\n{seen:#}"
     );
     for lent in ["jellyfin", "chores"] {
         assert!(

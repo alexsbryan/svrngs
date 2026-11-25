@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// "Already running here" on the home page, once the person is in a group:
-// its button, after what the look says while it looks, when it found
+// "Already running here" on the home page: the programs svrngs runs, each
+// with Start or Stop (`Runs`), and, once the person is in a group, the
+// look's button, after what the look says while it looks, when it found
 // nothing or when it could not look (running-look.js RUNNING), and each
-// program it found, one line of its own (`Found`).
-import { html, useEffect, useMachine, useRef, useState } from '../ui/view.js?v=__VERSION__';
+// program it found, one line of its own (`Found`). A program is set to run
+// with svrngs from its lend's row (keep-running.js), or `svrngs run`.
+import { html, useEffect, useMachine, useState } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LEND } from './lend-found.js?v=__VERSION__';
@@ -32,13 +34,14 @@ const SAID = {
 
 // A program found running here, one line of "Already running here": what
 // it is, the kind svrngs knows or else what the look read answering, and
-// its address. Folded under that line until the person opens it: Run it
-// with svrngs, fields for the name and the program of a kind svrngs does
-// not know, what a kind it knows needs first, and who can open it, one
-// box a group of HOME's, each by its stable id, so it is lent to the
-// groups ticked and never to everyone by default (SCOPE_PARALLEL.md,
-// "Shared API shape"); one button lends it (lend-found.js LEND), and the
-// row then says what happened, or why not.
+// its address. Folded under that line until the person opens it: fields
+// for the name and the program of a kind svrngs does not know by its port,
+// filled with the program answering where the table knows it by that name
+// (running-look.js `program`), what a kind it knows needs first, and who
+// can open it, one box a group of HOME's, each by its stable id, so it is
+// lent to the groups ticked and never to everyone by default
+// (SCOPE_PARALLEL.md, "Shared API shape"); one button lends it
+// (lend-found.js LEND), and the row then says what happened, or why not.
 /** @type {[field: 'name' | 'kind', words: string][]} */
 const FIELDS = [
   ['name', 'Its name: '],
@@ -46,10 +49,9 @@ const FIELDS = [
 ];
 
 /**
- * A program found: it, HOME's groups to lend it to, HOME's `dispatch`,
- * told once it is lent, and its Run it with svrngs link, if any, drawn
- * apart from the fields under it.
- * @typedef {{ r: Shown, groups: Choice[], home: Home, run: Drawn }} FoundProps
+ * A program found: it, HOME's groups to lend it to, and HOME's
+ * `dispatch`, told once it is lent.
+ * @typedef {{ r: Shown, groups: Choice[], home: Home }} FoundProps
  */
 
 // The names of the groups ticked, "House, Trip", for the lend's button.
@@ -73,13 +75,13 @@ const line = ({ kind, answer }, at) => {
 };
 
 /** @param {FoundProps} props */
-function Found({ r: shown, groups, home, run }) {
+function Found({ r: shown, groups, home }) {
   const [state, send] = useMachine(() =>
     machine('LEND', LEND(home), {
       at: { lend: 'unlent' },
       port: shown.port,
-      name: '',
-      kind: '',
+      name: shown.program ?? '',
+      kind: shown.program ?? '',
       said: '',
       groups: [],
       ...shownProcess(shown),
@@ -105,7 +107,6 @@ function Found({ r: shown, groups, home, run }) {
     <li>
       <details>
         <summary>${line(shown, at)}</summary>
-        ${run}
         ${fields}
         <p>${needs(shown)} Who can open ${kind}?</p>
         <${GroupChoice}
@@ -127,64 +128,38 @@ function Found({ r: shown, groups, home, run }) {
 }
 
 /** @typedef {{ name: string, text: string, port?: number, action?: 'start' | 'stop', button?: string }} RunRow */
-/** @typedef {{ run: string, starting: string, fields: [string, string][], rows: RunRow[] }} RunView */
 
-/** @param {{ shares: ((run: (port: number) => Drawn) => Drawn) | null }} props */
-function RunForm({ shares }) {
-  const [view, set] = useState(/** @type {RunView | null} */ (null));
+// The programs svrngs runs (GET /run's rows), read as it is drawn and on
+// each of HOME's rounds, so one started from a lend's row is listed; each
+// with Start or Stop. Drawn with `shares`, the look, once in a group.
+/** @param {{ shares: Drawn | null, round: HOME.State['round'] }} props */
+function Runs({ shares, round }) {
+  const [rows, set] = useState(/** @type {RunRow[]} */ ([]));
   const [said, say] = useState('');
   const [busy, wait] = useState(false);
-  const asked = useRef(0);
-  const refresh = () => get('/run').then(set);
+  const refresh = () => get('/run').then((view) => set(view.rows));
   /** @param {Error} error */
   const refused = (error) => say(error.message);
-  useEffect(() => void refresh().catch(refused), []);
-  /** @param {string} path @param {unknown} body */
-  const act = (path, body) => {
+  useEffect(() => void refresh().catch(refused), [round]);
+  /** @param {RunRow['name']} name @param {RunRow['action']} action */
+  const act = (name, action) => {
     wait(true);
-    say(path === '/run' ? (view?.starting ?? '') : '');
-    return post(path, body)
-      .then((answer) => say(answer ?? ''), refused)
+    say('');
+    return post('/run/action', [name, action])
+      .catch(refused)
       .then(() => refresh().catch(refused))
       .finally(() => wait(false));
   };
-  /** @param {import('../ui/view.js?v=__VERSION__').Targeted<HTMLFormElement>} event */
-  const submit = (event) => {
-    event.preventDefault();
-    const { name, port, folder, command } = Object.fromEntries(new FormData(event.currentTarget));
-    void act('/run', { name, port: Number(port), folder, command });
-  };
-  /** @param {number} port */
-  const suggest = async (port) => {
-    const form = /** @type {HTMLFormElement | null} */ (document.querySelector('#run-form form'));
-    if (!form || busy) return;
-    form.reset();
-    form.closest('details')?.setAttribute('open', '');
-    // Selecting a row or typing in the form gives the next ticket to that act.
-    const ticket = ++asked.current;
-    const got = await get(`/run?prefill=${port}`).catch(() => null);
-    if (ticket !== asked.current || got?.kind !== 'prefill' || got.port !== port) return;
-    for (const input of form.querySelectorAll('input')) input.value = got[input.name] ?? '';
-  };
-  if (shares === null && (view?.rows.length ?? 0) === 0) return null;
-  return html`<section id="running"><h2>Already running here</h2><div id="run-form">
-    ${
-      view !== null &&
-      html`<details><summary>${view.run}</summary>
-      <form onSubmit=${submit} onInput=${() => asked.current++}><fieldset disabled=${busy}>
-        ${view.fields.map(([key, label]) => html`<label>${label} <input name=${key} required /></label>`)}
-        <button>${view.run}</button>
-      </fieldset></form>
-    </details>`
-    }
+  if (shares === null && rows.length === 0) return null;
+  return html`<section id="running"><h2>Already running here</h2><div id="runs">
     <p role="status">${said}</p>
-    ${view?.rows.map(
+    ${rows.map(
       ({ name, port, text, action, button }) => html`<p key=${name}>
       ${name} ${port} · ${text}
-      ${action !== undefined && html`<button disabled=${busy} onClick=${() => act('/run/action', [name, action])}>${button}</button>`}
+      ${action !== undefined && html`<button disabled=${busy} onClick=${() => act(name, action)}>${button}</button>`}
     </p>`,
     )}
-  </div>${shares?.((port) => view && !view.rows.some((row) => row.port === port) && html`<p><a href="#run-form" onClick=${() => suggest(port)}>${view.run}</a></p>`)}</section>`;
+  </div>${shares}</section>`;
 }
 
 /** @param {HOME.PlaceProps} props */
@@ -195,8 +170,7 @@ function Running({ s, home }) {
   );
   // Each row's key carries its look's number, so a look again draws each
   // program it finds as a new row, with nothing typed or said in it.
-  /** @param {(port: number) => Drawn} run */
-  const found = (run) =>
+  const found =
     state.at.running === 'looked' &&
     /** @type {Shown[]} */ (state.found).map(
       (row) =>
@@ -205,25 +179,21 @@ function Running({ s, home }) {
           r=${row}
           groups=${groups}
           home=${home}
-          run=${run(row.port)}
         />`,
     );
-  return html`<${RunForm} shares=${
-    groups.length > 0
-      ? (/** @type {Parameters<typeof found>[0]} */ run) => html`
-      <p>
-        ${SAID[state.at.running](state)}
-        <${Act}
-          words="Look for programs running on this computer"
-          doing=${{ state: state.at.running === 'looking' ? 'busy' : 'idle' }}
-          on=${{ type: 'look' }}
-          send=${send}
-        />
-      </p>
-      <ul>${found(run)}</ul>
-   `
-      : null
-  } />`;
+  const look = html`
+    <p>
+      ${SAID[state.at.running](state)}
+      <${Act}
+        words="Look for programs running on this computer"
+        doing=${{ state: state.at.running === 'looking' ? 'busy' : 'idle' }}
+        on=${{ type: 'look' }}
+        send=${send}
+      />
+    </p>
+    <ul>${found}</ul>
+  `;
+  return html`<${Runs} shares=${groups.length > 0 ? look : null} round=${s.round} />`;
 }
 
 /** @type {{ running: (props: HOME.PlaceProps) => Drawn }} */

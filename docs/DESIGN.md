@@ -226,16 +226,23 @@ a loaded agent must also match the live plist's path (`launchd.rs`). Run
 verifies readiness with listeners in its active unit's cgroup subtree or
 with holders descended from the active launch agent. Otherwise it reports
 manager state and port readiness separately (`native_run.rs`); neither
-read approves sharing. The home page's native Run asks for a name,
-port, folder and command; the keeper parses quoting without running a
-shell. Choosing Run on an unmanaged listener's row opens that same form.
-The home page's read-only `/run?prefill=<port>` passes through the keeper's
-llama-server suggestion, when available, without replacing edits or
-submitting the form. After Run verifies the program, the page points to
-**Already running here** to share it; the terminal gives a Share command
-for its verified port.
+read approves sharing. On the home page a program is run from its lend:
+a lend shared only while it runs (`plan::shared_while`: a port kept to no
+job's restarts) offers Keep it running, unless the keeper already runs a
+program of its name. It asks only the command and folder, prefilled from
+the read-only `/run?prefill=<port>` (the keeper's llama-server
+suggestion, when available) and changed by the person, and Start posts
+`/run` with the lend's own name and port; the keeper parses quoting
+without running a shell, and refuses a port another program holds. A
+found listener's row only lends it. Once Run verifies the program, the
+lend is held for what now answers; the page approves it through the
+lender's approve route only when that is one job, a unit named for the
+lend, by the token `/lent` listed. On Linux that approval keeps the lend
+to the unit (`share::kept`); on macOS reapproval is instance-only, so the
+person presses Keep sharing it, again after each restart. The terminal's
+Run gives a Share command for its verified port.
 The page's Start and Stop controls use only the keeper's observed jobs
-and leave sharing alone. The share review is still a separate act.
+and leave sharing alone.
 When Share would grant a running service, it
 dials without sending bytes and checks the listeners and connection taker against
 that service and the reviewed approval before the conditional save

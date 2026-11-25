@@ -15,7 +15,7 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 
 The row then says *"You lent jellyfin, at http://localhost:8096: the groups you chose can open it now."*, and it shows under **What you lend**.
 
-If svrngs doesn't know the program, its line names the program answering there and its address. Open it, fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
+If svrngs doesn't know the program, its line names the program answering there and its address. Open it, fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked). For a program svrngs knows by its name, such as llama-server, both are filled in for you; change them if you like.
 
 For a program apps may also send to, such as llama-server, the first press lends nothing yet: the row says where apps your friends open could send to it, and pressing again lends it ([models.md](models.md#lend-your-llama-server)).
 
@@ -41,20 +41,24 @@ For a program apps may also send to, such as llama-server, `share` first asks wh
 
 If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ctrl-C stops it."* Usually it already runs, and `share` ends with *"svrngs is running here already, so they can open it now."*
 
-## Run it with svrngs, then share it
+## Keep it running
 
-**Shared while you run it** means svrngs doesn't restart your copy. If you
-stop it or restart your computer, start it yourself and share it again when
-asked. For a program you want to keep available, have svrngs run it instead.
+A program you started yourself is shared only while it runs. Its line
+under **What you lend** says so: *"House can open it only while it's
+running. svrngs can keep it running, even after a restart."*
 
-1. Stop the copy you started. Under **Already running here** on your home
-   page, choose **Run it with svrngs**. Give it a name, port, folder and the
-   command you use to start it. It runs as you and is set to start again at
-   login, even if svrngs can't verify that it answered. It runs without your
-   terminal's settings; use full paths if the command or its files aren't found.
-2. Once it says it's running, find it under **Already running here** and
-   share it with the groups you choose. Use the same name for Run and Share.
-   Run on its own gives no one access.
+1. Press **Keep it running**. For llama-server, svrngs shows the command it
+   would start it with and its folder; open **Change** to edit them. For
+   anything else, fill in the command you start it with and its folder. Use
+   full paths: it runs without your terminal's settings.
+2. Quit the copy you started, then press **Start**. svrngs never stops your
+   copy for you.
+
+It runs under the lend's own name and port. On Linux the row then says
+*"svrngs runs coder now. House can open it again after you sign in."* On a
+Mac it says *"Press Keep sharing it so they can open it."*: press **Keep
+sharing it** in its row. After a restart, svrngs starts it again when you
+sign in, and the row asks you to press **Keep sharing it** again.
 
 **Run by svrngs** means it starts again after a crash, up to a limit. Read
 the Share review for when friends can open it again. On a Mac, it starts
@@ -65,7 +69,7 @@ Nothing runs while the computer is asleep or off.
 
 Sharing through restarts trusts the service to keep answering for the same
 app. An update that replaces its program at the same path can keep the
-share. Use **Share this run** if you only want to share the running copy.
+share.
 
 On your home page (`svrngs open`), use **Stop** under **Already running
 here**. Apps you run with svrngs appear there even before you join a group.
