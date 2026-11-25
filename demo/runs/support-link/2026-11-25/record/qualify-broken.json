@@ -1,0 +1,67 @@
+{
+ "id": 1,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "passed",
+ "evidence": {
+  "reached_12_55_after_s": 25,
+  "worst_gap_s": 0.05,
+  "worst_gap_at_media_s": 767.21,
+  "last_frame_media_s": 775
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.001,
+ "segment_381_requests": [
+  "1080p",
+  "720p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2"
+ ],
+ "qualifies": false
+}
+{
+ "id": 2,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "passed",
+ "evidence": {
+  "reached_12_55_after_s": 25,
+  "worst_gap_s": 0.07,
+  "worst_gap_at_media_s": 766.17,
+  "last_frame_media_s": 775
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.001,
+ "segment_381_requests": [
+  "1080p",
+  "720p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2"
+ ],
+ "qualifies": false
+}
+{
+ "id": 3,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "passed",
+ "evidence": {
+  "reached_12_55_after_s": 24.98,
+  "worst_gap_s": 0.07,
+  "worst_gap_at_media_s": 761.83,
+  "last_frame_media_s": 775
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.001,
+ "segment_381_requests": [
+  "1080p",
+  "720p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2"
+ ],
+ "qualifies": false
+}
+origin 404s: /v1080p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s

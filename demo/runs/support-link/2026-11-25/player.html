@@ -1,0 +1,128 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Acme Player</title>
+<style>
+  body { font: 15px system-ui; margin: 16px; background: #111; color: #eee; }
+  video { width: 960px; max-width: 100%; background: #000; display: block; }
+  button { font-size: 15px; margin: 8px 8px 0 0; padding: 6px 14px; }
+  #share { border: 1px solid #555; padding: 8px 12px; margin-top: 10px; display: none; }
+  #status { margin-top: 8px; }
+</style>
+<video id="v" muted playsinline></video>
+<div>
+  <button id="play">Play Night Train from 12:30</button>
+  <button id="help" hidden>Get help with playback</button>
+  <button id="fix" hidden>Test fix</button>
+  <button id="again" hidden>Replay as before</button>
+  <button id="end" hidden>End support access</button>
+</div>
+<div id="share">
+  Support can see: the title and position, this player's build, the rendition playing,
+  and the player's events from 12:30 to 12:55 (rendition changes, each segment's media time
+  and HTTP status, buffer seconds, playback errors). Not the video, its addresses, or anything
+  else you watched. Support can't change anything here; you press <b>Test fix</b>.
+  <div><button id="confirm">Share with Acme Player support</button></div>
+</div>
+<div id="status"></div>
+<script src="vendor/hls-1.7.4.min.js"></script>
+<script>
+  // SUPPORT_LINK's player. One attempt = one fresh Hls instance on the
+  // stock config, seeking to 12:30; the only knob is the 720p cap of Test
+  // fix. Its verdict is the proposal's bar, measured on presented frames.
+  const ORIGIN = new URLSearchParams(location.search).get('origin') ?? 'http://127.0.0.1:8401';
+  const START = 750, END = 775, WIN = [760, 770], GAP = 2, WITHIN = 35;
+  const $ = (id) => document.getElementById(id);
+  const say = (t) => ($('status').textContent = t);
+  let hls, last;
+
+  function attempt(kind, cap) {
+    return new Promise((done) => {
+      hls?.destroy();
+      const v = $('v');
+      const t0 = performance.now();
+      const ev = [];
+      const at = () => ({ wall: +((performance.now() - t0) / 1000).toFixed(3), media: +v.currentTime.toFixed(3) });
+      const push = (e) => ev.push({ ...at(), ...e });
+      const frames = [];
+      let clock = null, level = null, seeked = false, over = false;
+      const h = (hls = new Hls()); // stock retry, recovery and ABR settings
+      const name = (i) => (i == null || i < 0 ? null : `${h.levels[i]?.height}p`);
+      h.on(Hls.Events.MANIFEST_PARSED, (_, d) => {
+        push({ e: 'renditions', all: d.levels.map((l) => `${l.height}p`) });
+        if (cap) {
+          h.autoLevelCapping = d.levels.findIndex((l) => l.height === 720);
+          push({ e: 'cap', max: '720p' });
+        }
+      });
+      h.on(Hls.Events.LEVEL_SWITCHED, (_, d) => { level = name(d.level); push({ e: 'rendition', now: level }); });
+      h.on(Hls.Events.FRAG_LOADING, (_, d) => d.frag.sn !== 'initSegment' && push({ e: 'request', rendition: name(d.frag.level), segment: d.frag.sn, from: d.frag.start, to: d.frag.end }));
+      h.on(Hls.Events.FRAG_LOADED, (_, d) => d.frag.sn !== 'initSegment' && push({ e: 'response', rendition: name(d.frag.level), segment: d.frag.sn, status: 200, bytes: d.frag.stats.loaded, ms: Math.round(d.frag.stats.loading.end - d.frag.stats.loading.start) }));
+      h.on(Hls.Events.ERROR, (_, d) => push({ e: 'error', details: d.details, fatal: d.fatal, status: d.response?.code ?? null, rendition: name(d.frag?.level), segment: d.frag?.sn ?? null, action: d.errorAction?.action ?? null }));
+      for (const n of ['waiting', 'playing', 'seeked', 'stalled', 'ended']) v.addEventListener(n, () => push({ e: n }), { once: n === 'seeked' });
+      v.addEventListener('seeked', () => (seeked = true), { once: true });
+      const buf = setInterval(() => {
+        const b = v.buffered;
+        let ahead = 0;
+        for (let i = 0; i < b.length; i++) if (b.start(i) <= v.currentTime + 0.1 && b.end(i) > v.currentTime) ahead = b.end(i) - v.currentTime;
+        push({ e: 'buffer', seconds: +ahead.toFixed(2), rendition: level });
+      }, 1000);
+      const onFrame = (now, m) => {
+        if (over) return;
+        if (clock == null && m.mediaTime >= START) clock = now;
+        if (clock != null) frames.push([(now - clock) / 1000, m.mediaTime]);
+        if (m.mediaTime >= END) return finish();
+        v.requestVideoFrameCallback(onFrame);
+      };
+      v.requestVideoFrameCallback(onFrame);
+      const finish = () => {
+        if (over) return;
+        over = true;
+        clearInterval(buf);
+        v.pause();
+        const r = judge(frames, seeked, typeof v.requestVideoFrameCallback === 'function');
+        push({ e: 'verdict', ...r });
+        last = { kind, cap: cap ? '720p' : null, build: `hls.js ${Hls.version}`, browser: navigator.userAgent, events: ev, frames, ...r };
+        fetch('/report', { method: 'POST', body: JSON.stringify(last) }).finally(() => done(last));
+      };
+      // Past the bar's 35 s, and a seek that never completes, end the attempt.
+      setTimeout(() => clock == null && finish(), 15000);
+      const watch = setInterval(() => { if (clock != null && (performance.now() - clock) / 1000 > WITHIN + 5) { clearInterval(watch); finish(); } }, 500);
+      h.loadSource(`${ORIGIN}/master.m3u8`);
+      h.attachMedia(v);
+      h.startLoad(START);
+      v.currentTime = START;
+      v.play();
+    });
+  }
+
+  // The bar: frame media time reaches 12:55 within 35 s, and no gap of 2 s or
+  // more between advancing frames from 12:40 through 12:50.
+  function judge(frames, seeked, rvfc) {
+    if (!rvfc) return { verdict: 'could-not-judge', why: 'no frame instrumentation (requestVideoFrameCallback)' };
+    if (!seeked || !frames.length) return { verdict: 'could-not-judge', why: 'the seek to 12:30 never completed' };
+    let worst = 0, worstAt = null, prev = null;
+    for (const [w, m] of frames) {
+      if (prev && m > prev[1] && prev[1] >= WIN[0] && prev[1] <= WIN[1] && w - prev[0] > worst) { worst = w - prev[0]; worstAt = prev[1]; }
+      if (!prev || m > prev[1]) prev = [w, m];
+    }
+    const [lw, lm] = frames.at(-1);
+    // Playback that never resumes is a gap that runs to the end of the attempt.
+    if (lm < WIN[1]) { const open = (frames.length ? WITHIN + 5 : 0) - lw; if (open > worst) { worst = open; worstAt = lm; } }
+    const reached = frames.find(([, m]) => m >= END)?.[0] ?? null;
+    const evidence = { reached_12_55_after_s: reached && +reached.toFixed(2), worst_gap_s: +worst.toFixed(2), worst_gap_at_media_s: worstAt && +worstAt.toFixed(2), last_frame_media_s: +lm.toFixed(2) };
+    if (reached != null && reached <= WITHIN && worst < GAP) return { verdict: 'passed', evidence };
+    const why = worst >= GAP
+      ? `a ${worst.toFixed(1)} s gap at media ${worstAt.toFixed(1)} s`
+      : reached == null ? `media time stopped at ${lm.toFixed(1)} s, short of 12:55` : `12:55 took ${reached.toFixed(1)} s, past ${WITHIN} s`;
+    return { verdict: 'failed', why, evidence };
+  }
+
+  const show = (r) => say(`${r.kind}${r.cap ? ` (cap ${r.cap})` : ''}: ${r.verdict}${r.why ? ` — ${r.why}` : ''}`);
+  $('play').onclick = async () => { say('playing…'); const r = await attempt('viewing', false); show(r); $('help').hidden = r.verdict === 'passed'; };
+  $('help').onclick = () => ($('share').style.display = 'block');
+  $('confirm').onclick = async () => { await fetch('/capture', { method: 'POST' }); $('share').style.display = 'none'; $('fix').hidden = $('again').hidden = $('end').hidden = false; say('Shared with Acme Player support. Paste the support link into your ticket.'); };
+  $('fix').onclick = async () => { say('testing the fix…'); show(await attempt('test-fix', true)); };
+  $('again').onclick = async () => { say('replaying as before…'); show(await attempt('replay-normal', false)); };
+  fetch('/shared').then((r) => r.json()).then(({ shared }) => { if (shared) $('fix').hidden = $('again').hidden = $('end').hidden = false; });
+  $('end').onclick = async () => { await fetch('/end', { method: 'POST' }); say('Support access ended. Support keeps what it already read.'); };
+</script>

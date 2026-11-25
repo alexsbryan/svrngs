@@ -1,0 +1,78 @@
+{
+ "id": 1,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "failed",
+ "why": "a 28.0 s gap at media 762.0 s",
+ "evidence": {
+  "reached_12_55_after_s": null,
+  "worst_gap_s": 28.05,
+  "worst_gap_at_media_s": 761.96,
+  "last_frame_media_s": 761.96
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750,
+ "segment_381_requests": [
+  "1080p",
+  "1080p",
+  "1080p",
+  "1080p",
+  "1080p"
+ ],
+ "errors": [
+  "fragLoadTimeOut 1080p #381 fatal=false action=5",
+  "bufferStalledError null #null fatal=false action=0",
+  "fragLoadTimeOut 1080p #381 fatal=false action=5",
+  "fragLoadTimeOut 1080p #381 fatal=false action=5",
+  "fragLoadTimeOut 1080p #381 fatal=false action=5"
+ ],
+ "qualifies": true
+}
+{
+ "id": 2,
+ "kind": "test-fix",
+ "cap": "720p",
+ "verdict": "passed",
+ "evidence": {
+  "reached_12_55_after_s": 24.98,
+  "worst_gap_s": 0.05,
+  "worst_gap_at_media_s": 767.42,
+  "last_frame_media_s": 775
+ },
+ "rendition_at_12_40": "720p",
+ "first_1080p_media_s": null,
+ "segment_381_requests": [
+  "720p"
+ ],
+ "errors": []
+}
+{
+ "id": 3,
+ "kind": "replay-normal",
+ "cap": null,
+ "verdict": "failed",
+ "why": "a 28.0 s gap at media 762.0 s",
+ "evidence": {
+  "reached_12_55_after_s": null,
+  "worst_gap_s": 28.05,
+  "worst_gap_at_media_s": 761.96,
+  "last_frame_media_s": 761.96
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.001,
+ "segment_381_requests": [
+  "1080p",
+  "1080p",
+  "1080p",
+  "1080p",
+  "1080p"
+ ],
+ "errors": [
+  "fragLoadTimeOut 1080p #381 fatal=false action=5",
+  "bufferStalledError null #null fatal=false action=0",
+  "fragLoadTimeOut 1080p #381 fatal=false action=5",
+  "fragLoadTimeOut 1080p #381 fatal=false action=5",
+  "fragLoadTimeOut 1080p #381 fatal=false action=5"
+ ]
+}
+origin 404s: none

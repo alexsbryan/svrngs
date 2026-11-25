@@ -1,0 +1,70 @@
+{
+ "id": 1,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "failed",
+ "why": "a 25.2 s gap at media 764.8 s",
+ "evidence": {
+  "reached_12_55_after_s": null,
+  "worst_gap_s": 25.18,
+  "worst_gap_at_media_s": 764.83,
+  "last_frame_media_s": 764.83
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.001,
+ "segment_381_requests": [
+  "1080p",
+  "720p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2"
+ ],
+ "qualifies": true
+}
+{
+ "id": 2,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "failed",
+ "why": "a 25.1 s gap at media 764.9 s",
+ "evidence": {
+  "reached_12_55_after_s": null,
+  "worst_gap_s": 25.12,
+  "worst_gap_at_media_s": 764.92,
+  "last_frame_media_s": 764.92
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.002,
+ "segment_381_requests": [
+  "1080p",
+  "720p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2"
+ ],
+ "qualifies": true
+}
+{
+ "id": 3,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "failed",
+ "why": "a 25.1 s gap at media 764.9 s",
+ "evidence": {
+  "reached_12_55_after_s": null,
+  "worst_gap_s": 25.1,
+  "worst_gap_at_media_s": 764.92,
+  "last_frame_media_s": 764.92
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.002,
+ "segment_381_requests": [
+  "1080p",
+  "720p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2"
+ ],
+ "qualifies": true
+}
+origin 404s: /v1080p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s

@@ -1,0 +1,12 @@
+{
+  "demo": "support-link",
+  "date": "2026-11-25",
+  "participants": 0,
+  "succeeded_in_time": 0,
+  "accounts_created": 0,
+  "key_prompts": 0,
+  "assisted": true,
+  "recording": "demo/runs/support-link/2026-11-25/record/",
+  "commit": "e5d9813b",
+  "notes": "A lab run, no people: the operator's session played the customer, and a fresh agent played the desk. The proposal's incident (a 404 at one rendition) did not qualify on stock hls.js 1.7.4, which plays through it. A hung 1080p segment stood in. With the link, the desk agent diagnosed in 51 s and verified the 720p cap in 1 min 56 s. The control asked four questions and two replays. See the README."
+}

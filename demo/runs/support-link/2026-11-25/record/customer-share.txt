@@ -1,0 +1,6 @@
+If player-support takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+You lend player-support (port 8403) to the groups you chose, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8403 --group <group> --limit <number>`.
+Lent player-support: node in /home/alexbryan/dev/svrngs/demo/runs/support-link/2026-11-25. svrngs checks port 8403 before each connection it carries there. While another program is on the port, it is closed. If the program starts again, player-support closes until you approve what runs there: `svrngs approve player-support`.
+svrngs doesn't know node, so your friends can reach every part of it that its own sign-in allows.
+svrngs is running here already, so they can open it now.
+`svrngs unshare player-support` stops lending it.

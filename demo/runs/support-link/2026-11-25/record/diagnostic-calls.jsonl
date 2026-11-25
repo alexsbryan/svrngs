@@ -1,0 +1,13 @@
+{"at":1795631009938,"method":"GET","path":"/incident","status":409,"error":"the customer has shared no incident"}
+{"at":1795631065587,"method":"GET","path":"/incident","status":409,"error":"the customer has shared no incident"}
+{"at":1795631152601,"method":"GET","path":"/incident","query":"","status":200}
+{"at":1795631152707,"method":"GET","path":"/timeline","query":"","status":200}
+{"at":1795631162577,"method":"GET","path":"/replay","query":"","status":200}
+{"at":1795631231665,"method":"GET","path":"/replay","query":"","status":200}
+{"at":1795631320450,"method":"GET","path":"/incident","status":410,"error":"the customer ended support access"}
+{"at":1795631320602,"method":"GET","path":"/incident","status":410,"error":"the customer ended support access"}
+{"at":1795631320721,"method":"POST","path":"/timeline","status":405,"error":"support can only read"}
+{"at":1795631320830,"method":"POST","path":"/replay","status":405,"error":"support can only read"}
+{"at":1795631320970,"method":"GET","path":"/timeline","status":400,"error":"timeline takes no attempt"}
+{"at":1795631321116,"method":"GET","path":"/attempts","status":404,"error":"no check called attempts; the checks are incident, timeline, replay"}
+{"at":1795631333710,"method":"GET","path":"/incident","status":410,"error":"the customer ended support access"}

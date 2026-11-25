@@ -1,0 +1,71 @@
+{
+ "id": 1,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "failed",
+ "why": "a 28.1 s gap at media 762.0 s",
+ "evidence": {
+  "reached_12_55_after_s": null,
+  "worst_gap_s": 28.07,
+  "worst_gap_at_media_s": 761.96,
+  "last_frame_media_s": 761.96
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.002,
+ "segment_381_requests": [
+  "1080p",
+  "720p",
+  "540p",
+  "1080p",
+  "1080p",
+  "1080p",
+  "1080p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "fragLoadError 404 720p #381 fatal=false action=2",
+  "fragLoadError 404 540p #381 fatal=false action=2",
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "bufferStalledError null #null fatal=false action=0",
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "fragLoadError 404 1080p #381 fatal=true action=2"
+ ],
+ "qualifies": true
+}
+{
+ "id": 2,
+ "kind": "viewing",
+ "cap": null,
+ "verdict": "failed",
+ "why": "a 28.1 s gap at media 762.0 s",
+ "evidence": {
+  "reached_12_55_after_s": null,
+  "worst_gap_s": 28.07,
+  "worst_gap_at_media_s": 761.96,
+  "last_frame_media_s": 761.96
+ },
+ "rendition_at_12_40": "1080p",
+ "first_1080p_media_s": 750.001,
+ "segment_381_requests": [
+  "1080p",
+  "720p",
+  "540p",
+  "1080p",
+  "1080p",
+  "1080p",
+  "1080p"
+ ],
+ "errors": [
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "fragLoadError 404 720p #381 fatal=false action=2",
+  "fragLoadError 404 540p #381 fatal=false action=2",
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "bufferStalledError null #null fatal=false action=0",
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "fragLoadError 404 1080p #381 fatal=false action=2",
+  "fragLoadError 404 1080p #381 fatal=true action=2"
+ ],
+ "qualifies": true
+}
+origin 404s: /v1080p/seg381.m4s /v720p/seg381.m4s /v540p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s /v720p/seg381.m4s /v540p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s /v1080p/seg381.m4s

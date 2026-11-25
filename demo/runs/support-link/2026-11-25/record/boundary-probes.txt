@@ -1,0 +1,48 @@
+## the same read, after svrngs unshare
+never-ran: no group this computer is in lends player-support now
+
+## the same read, after End support access
+HTTP 410
+{
+ "error": "the customer ended support access"
+}
+
+## a read that works
+HTTP 410
+{
+ "error": "the customer ended support access"
+}
+
+## a write to a listed check
+HTTP 405
+{
+ "error": "support can only read"
+}
+
+## a replay started from the desk
+HTTP 405
+{
+ "error": "support can only read"
+}
+
+## another viewing session, by its id
+HTTP 400
+{
+ "error": "timeline takes no attempt"
+}
+
+## a route the app did not list
+HTTP 404
+{
+ "error": "no check called attempts; the checks are incident, timeline, replay"
+}
+
+## direct dial before unshare
+HTTP 410 x-svrngs-refused=null
+{
+ "error": "the customer ended support access"
+}
+You no longer lend player-support.
+## the same address, after svrngs unshare
+HTTP 404 x-svrngs-refused=unlent
+{"error":"nothing is lent here by that name","kind":"unlent"}
