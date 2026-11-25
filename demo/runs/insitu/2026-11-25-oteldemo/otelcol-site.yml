@@ -1,0 +1,14 @@
+# The site's own pipelines, layered on the demo's collector (--config, as its
+# extras): straight from the OTLP receiver to a file on this machine, before
+# the demo's own redaction, so the site's projection is what is tested. The
+# demo's pipelines are left as they are.
+exporters:
+  file/site:
+    path: /site/raw.jsonl
+    flush_interval: 1s
+    rotation: { max_megabytes: 400, max_backups: 1 }
+service:
+  pipelines:
+    traces/site: { receivers: [otlp], processors: [memory_limiter], exporters: [file/site] }
+    logs/site: { receivers: [otlp], processors: [memory_limiter], exporters: [file/site] }
+    metrics/site: { receivers: [otlp], processors: [memory_limiter], exporters: [file/site] }
