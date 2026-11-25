@@ -25,5 +25,6 @@ if [[ ${1:-} != off ]]; then
 fi
 /usr/libexec/PlistBuddy -c "Set :ProgramArguments:0 $bin" "$plist"
 launchctl bootout "gui/$(id -u)/sh.svrnme.svrngs" 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" "$plist"
-echo "Your login svrngs is now $("$bin" version), from $bin."
+# bootout returns before the job is gone, and bootstrap fails (5) until it is.
+for _ in {1..50}; do launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null && break; sleep 0.2; done
+launchctl print "gui/$(id -u)/sh.svrnme.svrngs" >/dev/null && echo "Your login svrngs now runs $bin."
