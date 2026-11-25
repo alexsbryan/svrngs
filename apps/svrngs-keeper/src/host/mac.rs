@@ -81,10 +81,17 @@ fn program(pid: u32) -> Result<String, String> {
         .ok_or("ps gave no program".into())
 }
 
-pub fn llama_folder(pid: u32) -> Result<PathBuf, String> {
-    if program(pid)? != "llama-server" {
-        return Err("no known program is listening".into());
+/// How this account's process `pid` was started: its arguments, from the
+/// kernel's `KERN_PROCARGS2`, and its folder, as `lsof` names it. Its
+/// arguments can hold a secret (`--api-key`), so they are returned, never
+/// traced.
+pub fn started(pid: u32) -> Result<(Vec<String>, PathBuf), String> {
+    let uid = |pid: u32| read("/bin/ps", &["-p", &pid.to_string(), "-o", "uid="], false).map(|u| u.trim().to_owned());
+    if uid(pid)? != uid(std::process::id())? {
+        tracing::debug!(pid, "host:started another account's");
+        return Err(super::THEIRS.into());
     }
+    let argv = crate::promote::procargs(&procargs(pid)?)?;
     let text = read(
         "/usr/sbin/lsof",
         &["-a", "-p", &pid.to_string(), "-d", "cwd", "-Fn"],
@@ -95,7 +102,33 @@ pub fn llama_folder(pid: u32) -> Result<PathBuf, String> {
         .find_map(|l| l.strip_prefix('n'))
         .map(PathBuf::from)
         .filter(|p| p.is_absolute());
-    path.ok_or("lsof gave no working folder".into())
+    Ok((argv, path.ok_or("lsof gave no working folder")?))
+}
+
+/// `pid`'s `KERN_PROCARGS2`, as the kernel kept it at exec, for
+/// `promote::procargs` to read in safe Rust: `ps` joins arguments with
+/// spaces, so where one holding a space ends is lost. Keeper's one `unsafe`:
+/// its crate roots deny `unsafe_code`, and `scripts/lean_check.py`
+/// `UNSAFE_HOMES` allows it in this file alone.
+#[allow(unsafe_code)]
+fn procargs(pid: u32) -> Result<Vec<u8>, String> {
+    let pid = libc::c_int::try_from(pid).map_err(|_| "its process id is out of range")?;
+    let mut mib = [libc::CTL_KERN, libc::KERN_PROCARGS2, pid];
+    let none = std::ptr::null_mut();
+    let mut len = 0;
+    // SAFETY: `mib` holds the 3 ints passed; with no buffer the kernel
+    // writes nothing but `len`, the room it would fill.
+    if unsafe { libc::sysctl(mib.as_mut_ptr(), 3, none, &mut len, none, 0) } != 0 {
+        return Err(format!("its arguments: {}", std::io::Error::last_os_error()));
+    }
+    let mut buf = vec![0u8; len];
+    // SAFETY: `len` is `buf`'s length, past which the kernel writes nothing;
+    // it sets `len` to what it wrote.
+    if unsafe { libc::sysctl(mib.as_mut_ptr(), 3, buf.as_mut_ptr().cast(), &mut len, none, 0) } != 0 {
+        return Err(format!("its arguments: {}", std::io::Error::last_os_error()));
+    }
+    buf.truncate(len);
+    Ok(buf)
 }
 
 pub fn owns(port: u16, job: u32) -> Result<bool, String> {

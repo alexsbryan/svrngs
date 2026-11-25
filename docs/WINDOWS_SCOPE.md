@@ -76,8 +76,8 @@ upstream facts sit):
 - **Socket identity.** No cookie on Windows (W2): `lasting: false`,
   approval by `(pid, start)`, the Mac's shape. A restart holds the
   share until one click, on every platform now.
-- **The one `unsafe`.** `lean_check.py`'s `UNSAFE_HOME` allows exactly
-  one `unsafe_code` exemption in `uid.rs` (`found > (rel == UNSAFE_HOME)`
+- **The one `unsafe`.** `lean_check.py`'s `UNSAFE_HOMES` allows exactly
+  one `unsafe_code` exemption in `uid.rs` (`found > (rel in UNSAFE_HOMES)`
   fails a second). The windows-sys calls live inside that same one
   `kernel(Ask)` function, cfg'd arms within one body — not a second
   exemption. If the shape will not hold, the rule change is asked for,

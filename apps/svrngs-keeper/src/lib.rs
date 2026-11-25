@@ -3,7 +3,7 @@
 //! ([`card`]), the runtime that keeps one in rootless podman ([`runtime`],
 //! over [`podman`]'s command line and, on a Mac, its [`machine`]), and the
 //! author's [`check`] of a card; the user unit [`systemd`] keeps one in; and
-//! a suggested llama-server card ([`promote`]) from a model already running here.
+//! the command a program already running here was started with ([`promote`]).
 //! It knows no group and names no svrngs type: Give's keeper asks it to run
 //! the group's app.
 #![deny(unsafe_code)]

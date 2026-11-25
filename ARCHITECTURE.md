@@ -1019,9 +1019,11 @@ renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
 `src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
 starts, restarts and removes one, and supervises nothing. `tests/host.sh` proves it
 under a real user manager. `facts <port>` only suggests Run form fields:
-`src/host.rs` reads the listeners and asks a recognized llama-server for
-its model path, `src/promote.rs` quotes the command, and `src/facts.rs`
-returns the suggestion as JSON. No live command or environment is copied.
+`src/host.rs` reads the listeners and, for one program of this account's,
+the arguments it was started with and its folder (Linux `/proc`, a Mac's
+`KERN_PROCARGS2` and `lsof`), `src/promote.rs` parses them, and
+`src/facts.rs` quotes the command and returns it as JSON. No environment
+is read, and the arguments are never traced.
 The keeper installs an explicitly supplied command with `run --port … -- <command>`
 (`src/native_run.rs`), using the same card renderer. It refuses a port
 with a listener on any address, and waits up to 30 s for a local HTTP

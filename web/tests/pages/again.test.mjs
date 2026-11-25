@@ -405,7 +405,7 @@ test('a program found that svrngs knows by name has its fields filled, and lendi
 // its port; plan/words.rs `shared_while`) offers, under its line, to have
 // svrngs keep it running: one sentence and Keep it running, read from /lent
 // alone. Pressed, it shows the command svrngs would start it with and its
-// folder (GET /run?prefill=<port>, a llama-server's), a fold to change
+// folder (GET /run?prefill=<port>, as the copy was started), a fold to change
 // them, and Start, posted with the lend's own name and port (home.rs
 // `run_one`). What then answers is held, a job named for the lend (job.rs
 // `of`), approved at once by the token /lent lists it with, asked only as

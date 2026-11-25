@@ -1169,14 +1169,13 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         ("crates/svrngs-node/src/publication.rs", "dial: a group's page"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
-        ("apps/svrngs-keeper/src/host.rs", "dial: local prefill or readiness, without share credentials"),
+        ("apps/svrngs-keeper/src/host.rs", "dial: local readiness, without share credentials"),
         // svrngs's own API, asked only once it proves it holds the token.
         ("crates/svrngs-node/src/api.rs", "dial: svrngs's own API, proved before it is asked"),
         ("apps/give/src/record.rs", "dial: svrngs's own API, proved before it is asked, by each answer's deadline"),
         ("crates/svrngs/src/cli.rs", "dial: a group's page"),
         // The clock and randomness, at their adapters (clippy.toml).
         ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),
-        ("apps/svrngs-keeper/src/host.rs", "the local prefill probe sets its deadline at the edge"),
         ("apps/svrngs-keeper/src/host.rs", "the local readiness probe waits at the edge"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot is named for when it was taken"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot times its pause"),

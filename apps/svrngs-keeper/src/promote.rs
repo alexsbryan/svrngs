@@ -1,6 +1,5 @@
-//! Interpret listener observations and draft a llama-server command for review.
-
-use std::path::Path;
+//! Interpret listener observations, and the arguments a listener was
+//! started with, for the person to review as the command Keeper would run.
 
 /// One listening socket on the port, as `ss -ltnpH --cgroup` printed it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,36 +36,33 @@ pub fn listens(ss: &str, port: u16) -> Vec<Listen> {
         .collect()
 }
 
-/// Wildcard listeners are reached at loopback; the draft always uses loopback.
-pub fn dial(addr: &str) -> &str {
-    match addr {
-        "*" | "0.0.0.0" => "127.0.0.1",
-        "[::]" => "[::1]",
-        a => a,
+/// A Linux `/proc/<pid>/cmdline`: each argument ends in a NUL. Empty is a
+/// kernel thread's, or one that has exited.
+pub fn cmdline(bytes: &[u8]) -> Result<Vec<String>, String> {
+    if bytes.is_empty() {
+        return Err("it gave no arguments, so it may have exited".into());
     }
+    // A program that rewrites its title leaves no final NUL.
+    let args = bytes.strip_suffix(&[0]).unwrap_or(bytes);
+    args.split(|b| *b == 0).map(text).collect()
 }
 
-pub fn props(body: &str) -> Result<String, String> {
-    let v: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("/props is not JSON: {e}"))?;
-    v["model_path"]
-        .as_str()
-        .filter(|p| !p.is_empty())
-        .map(str::to_owned)
-        .ok_or_else(|| "/props gave no model_path".into())
+/// A Mac's `KERN_PROCARGS2` (xnu `sysctl_procargsx`): the argument count,
+/// the executable's path, NULs to align, then that many arguments, each
+/// ending in a NUL, then its environment, which is never read.
+pub fn procargs(bytes: &[u8]) -> Result<Vec<String>, String> {
+    const UNREAD: &str = "its arguments could not be read";
+    let (argc, rest) = bytes.split_first_chunk::<4>().ok_or(UNREAD)?;
+    let argc = usize::try_from(i32::from_ne_bytes(*argc)).map_err(|_| UNREAD)?;
+    let path = rest.iter().position(|b| *b == 0).ok_or(UNREAD)?;
+    let first = rest[path..].iter().position(|b| *b != 0).ok_or(UNREAD)?;
+    let args: Vec<&[u8]> = rest[path + first..].split(|b| *b == 0).take(argc).collect();
+    if argc == 0 || args.len() < argc {
+        return Err(UNREAD.into());
+    }
+    args.into_iter().map(text).collect()
 }
 
-/// A relative model path is relative to the program's folder, not ours.
-pub fn llama_command(folder: &Path, port: u16, reported: &str) -> Result<String, String> {
-    let model = folder.join(reported);
-    let model = model.to_str().ok_or("model path is not UTF-8")?;
-    shlex::try_join([
-        "llama-server",
-        "--model",
-        model,
-        "--host",
-        "127.0.0.1",
-        "--port",
-        &port.to_string(),
-    ])
-    .map_err(|e| e.to_string())
+fn text(arg: &[u8]) -> Result<String, String> {
+    String::from_utf8(arg.to_vec()).map_err(|_| "one of its arguments is not UTF-8 text".into())
 }

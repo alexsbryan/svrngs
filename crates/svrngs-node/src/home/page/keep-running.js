@@ -4,7 +4,7 @@
 // shared only while its program runs, by its port (plan/words.rs
 // `shared_while`: a lend kept to no job's restarts, so not one whose
 // approval follows svrngs's copy). Keep it running asks what svrngs would
-// start it with (GET /run?prefill=<port>, a llama-server's), shown with a
+// start it with (GET /run?prefill=<port>, as the person's copy was), shown with a
 // fold to change it, or two fields to fill where nothing could be said.
 // Start runs it under the lend's own name and port (POST /run): the keeper
 // refuses while the person's own copy holds the port, and stops nothing.

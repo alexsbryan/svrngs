@@ -35,7 +35,8 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
   unless --name gives one. The same card again changes nothing; a new one
   replaces it, and the one before is kept beside it as previous.yaml.
 
-  facts: suggest a llama-server command and folder to review, as JSON.
+  facts: the command and folder the program on <port> was started with, as
+  JSON, to review: read only for a program of your own account.
   list: each card kept here, and whether it runs.
   stop: stop it until you start it, including after signing in. start: run it again.
   restart: restart it if it is running.
@@ -89,8 +90,8 @@ fn places() -> anyhow::Result<Places> {
 fn run(args: &[String]) -> anyhow::Result<()> {
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
     match args.as_slice() {
-        ["facts", port] => return at_port(port, "llama-server"),
-        ["facts", port, "--name", name] => return at_port(port, name),
+        ["facts", port] => return at_port(port, None),
+        ["facts", port, "--name", name] => return at_port(port, Some(name)),
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         ["run", name, rest @ ..] => return native_run::run(name, rest),
         #[cfg(target_os = "linux")]
@@ -108,16 +109,16 @@ fn run(args: &[String]) -> anyhow::Result<()> {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn at_port(port: &str, name: &str) -> anyhow::Result<()> {
+fn at_port(port: &str, name: Option<&str>) -> anyhow::Result<()> {
     let port = port
         .parse::<std::num::NonZeroU16>()
         .context("give a port from 1 to 65535")?;
-    let name = Name::new(name)?;
-    json(&facts::read(port.get(), name.as_str()))
+    let name = name.map(Name::new).transpose()?;
+    json(&facts::read(port.get(), name.as_ref().map(Name::as_str)))
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-fn at_port(_: &str, _: &str) -> anyhow::Result<()> {
+fn at_port(_: &str, _: Option<&str>) -> anyhow::Result<()> {
     anyhow::bail!("facts needs Linux or macOS to read listeners and suggest a command")
 }
 

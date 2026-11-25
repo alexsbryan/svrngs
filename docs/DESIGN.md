@@ -2364,11 +2364,14 @@ the command and the app. Every decision branch traces at debug. New code is
 held to these from its first line; forked code is held to them as it becomes
 ours. Upstream's shape stays until a change replaces it: the node's map of
 open journals sits behind a `Mutex`, which an actor per journal replaces.
-No `unsafe` but one function's: every product crate root denies
-`unsafe_code`, so the compiler refuses any other, and the one function
-allowed it asks a Mac's libproc whose sockets this account's processes hold
-(`svrngs-node` `uid.rs`, `kernel`), each condition of each call said beside
-it; `lean_check` refuses an exemption anywhere else. This holds svrngs's
+No `unsafe` but two functions': every product crate root, Keeper's
+included, denies `unsafe_code`, so the compiler refuses any other. One
+function allowed it asks a Mac's libproc whose sockets this account's
+processes hold (`svrngs-node` `uid.rs`, `kernel`); the other asks a Mac's
+kernel the arguments one of this account's programs was started with, which
+no command gives apart (`svrngs-keeper` `host/mac.rs`, `procargs`). Each
+condition of each call is said beside it; `lean_check` refuses an exemption
+anywhere else. This holds svrngs's
 own code, not its dependencies.
 
 | Invariant | Held by | State |
