@@ -9,10 +9,10 @@
    command and the app; no `Arc` of a `Mutex` or `RwLock`, nor `Rc` of a
    `RefCell`, its path spelled any way (#195), in a crate's product code
    (ownership is a tree); no `async` in svrngs-core (it is synchronous).
-   One `unsafe`: every product crate root (crates/*/src/lib.rs and main.rs,
-   web/src/lib.rs) denies `unsafe_code`, so the compiler refuses any other,
-   and no source under crates/ or web/src/ exempts code from it but
-   `UNSAFE_HOME`'s one function, libproc's read of sockets (DESIGN §5).
+   One `unsafe` a home: every product crate root (crates/*/src/lib.rs and
+   main.rs, web/src/lib.rs, Keeper's) denies `unsafe_code`, so the compiler
+   refuses any other, and no source there exempts code from it but one
+   function in each of `UNSAFE_HOMES`, libproc's read of sockets (DESIGN §5).
 4. Lines of code — not blank, not a comment, not a test — stay under the
    caps `BUDGET` holds below, their one home (#197), scripts included. The
    budget counts the product: apps/, installed packages (any
@@ -29,8 +29,8 @@ from pathlib import Path
 TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
 ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
-# The one file whose one function may allow `unsafe_code` (its `kernel`).
-UNSAFE_HOME = "crates/svrngs-node/src/uid.rs"
+# The files whose one function each may allow `unsafe_code` (uid.rs `kernel`).
+UNSAFE_HOMES = {"crates/svrngs-node/src/uid.rs"}
 # The pure availability decision and renderer, not the executor beside them.
 PLAN_PURE = {"crates/svrngs-node/src/plan.rs", "crates/svrngs-node/src/plan/words.rs"}
 PLAN_IO = re.compile(
@@ -1279,17 +1279,17 @@ def main():
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
     roots = [*(ROOT / "crates").glob("*/src/lib.rs"), *(ROOT / "crates").glob("*/src/main.rs"),
-             ROOT / "web" / "src" / "lib.rs"]
+             ROOT / "web" / "src" / "lib.rs", ROOT / "apps/svrngs-keeper/src/lib.rs", ROOT / "apps/svrngs-keeper/src/main.rs"]
     for root in sorted(roots):
         if root.exists() and "#![deny(unsafe_code)]" not in root.read_text():
             broken.append(f"{root.relative_to(ROOT).as_posix()} lost #![deny(unsafe_code)]: every product crate root denies it (DESIGN §5)")
-    for f in [*files(ROOT / "crates"), *files(ROOT / "web" / "src")]:
+    for f in [*files(ROOT / "crates"), *files(ROOT / "web" / "src"), *files(ROOT / "apps" / "svrngs-keeper" / "src")]:
         rel = f.relative_to(ROOT).as_posix()
         if f.suffix != ".rs" or not f.is_file():
             continue
         found = len(EXEMPT.findall(f.read_text(errors="replace")))
-        if found > (rel == UNSAFE_HOME):
-            broken.append(f"{rel} exempts code from `unsafe_code`: svrngs's one `unsafe` is libproc's read of sockets, {UNSAFE_HOME}'s `kernel` (DESIGN §5); write this safe")
+        if found > (rel in UNSAFE_HOMES):
+            broken.append(f"{rel} exempts code from `unsafe_code`: svrngs's `unsafe` is one function in each of {sorted(UNSAFE_HOMES)} (DESIGN §5); write this safe")
     print("Lines of code, tests and apps/ not counted, and the most each may have:")
     for rung, cap in BUDGET.items():
         n = code_lines(ROOT, RUNG_KINDS[rung]) if rung in RUNG_KINDS else code_lines(ROOT / rung)

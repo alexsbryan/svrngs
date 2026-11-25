@@ -1,5 +1,6 @@
 //! The `svrngs-keeper` command: keep a card running on this computer.
 //! RUST_LOG=debug shows every decision, each refusal with what refused it.
+#![deny(unsafe_code)]
 
 use std::path::PathBuf;
 use std::process::ExitCode;

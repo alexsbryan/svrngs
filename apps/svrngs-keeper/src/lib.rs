@@ -6,6 +6,7 @@
 //! a suggested llama-server card ([`promote`]) from a model already running here.
 //! It knows no group and names no svrngs type: Give's keeper asks it to run
 //! the group's app.
+#![deny(unsafe_code)]
 
 pub mod card;
 pub mod check;
