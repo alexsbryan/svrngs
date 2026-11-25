@@ -2,7 +2,11 @@
 // artifacts) that can reach the site on a USB stick, with no network there.
 //
 //   node vendor.mjs key <keys dir>
-//   node vendor.mjs bundle <recipe> <keys dir> <out dir> [--version v] [--crash]
+//   node vendor.mjs bundle <recipe> <keys dir> <out dir> --source <service dir>
+//        [--version v] [--channel release|candidate] [--from <git rev>] [--crash]
+//
+// The vendor's CI runs this: a release from what was merged, a candidate
+// from a branch. The site installs only releases and only trials candidates.
 import { createHash, generateKeyPairSync, createPrivateKey, sign } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, rmSync, cpSync } from 'node:fs';
@@ -21,9 +25,12 @@ if (verb === 'key') {
   recipe.version = version;
   rmSync(out, { recursive: true, force: true });
   const stage = join(out, '.stage');
-  cpSync(join(import.meta.dirname, 'vendor/service'), stage, { recursive: true });
+  const opt1 = (k, d) => (opt.includes(k) ? opt[opt.indexOf(k) + 1] : d);
+  recipe.channel = opt1('--channel', 'release');
+  if (opt.includes('--from')) recipe.source = opt1('--from');
+  cpSync(opt1('--source', join(import.meta.dirname, 'service')), stage, { recursive: true, filter: (f) => !/(\/\.git|__pycache__|\/tests|\/fixtures)(\/|$)/.test(f) });
   const py = join(stage, 'server.py');
-  writeFileSync(py, readFileSync(py, 'utf8').replace('VERSION = "0.1.0"', `VERSION = "${version}"`).replace('CRASH = False', `CRASH = ${opt.includes('--crash') ? 'True' : 'False'}`));
+  writeFileSync(py, readFileSync(py, 'utf8').replace(/VERSION = "[^"]*"/, `VERSION = "${version}"`).replace('CRASH = False', `CRASH = ${opt.includes('--crash') ? 'True' : 'False'}`));
   execFileSync('tar', ['--sort=name', '--mtime=@0', '--owner=0', '--group=0', '-czf', join(out, 'service.tar.gz'), '-C', stage, '.']);
   rmSync(stage, { recursive: true });
   const bytes = readFileSync(join(out, 'service.tar.gz'));
@@ -31,5 +38,5 @@ if (verb === 'key') {
   const body = Buffer.from(JSON.stringify(recipe, null, 2) + '\n');
   writeFileSync(join(out, 'recipe.json'), body);
   writeFileSync(join(out, 'recipe.sig'), sign(null, body, createPrivateKey(readFileSync(join(keys, 'vendor.key'), 'utf8'))).toString('base64') + '\n');
-  console.log(`bundle ${recipe.service} ${version} in ${out}`);
+  console.log(`${recipe.channel} bundle ${recipe.service} ${version}${recipe.source ? ` from ${recipe.source}` : ''} in ${out}`);
 } else { console.error('usage: vendor.mjs key|bundle …'); process.exit(2); }

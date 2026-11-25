@@ -1,0 +1,2 @@
+passed     no name, id or note phrase in the view (8686 bytes read)
+failed     24 leak(s)

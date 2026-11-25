@@ -1,0 +1,86 @@
+[
+ {
+  "id": "2026-11-25T20-07-54-155Z-b58720b4",
+  "at": "2026-11-25T20:07:54.283Z",
+  "candidate": {
+   "version": "0.2.1-rc1",
+   "recipe": "b58720b499bd",
+   "from": "fix/cp1252-notes@e0a46f3"
+  },
+  "release": "0.2.0",
+  "inputs": 20,
+  "release_counts": {
+   "parsed": 17,
+   "error": 3
+  },
+  "candidate_counts": {
+   "parsed": 20
+  },
+  "fixed": [
+   "d186993bfa60",
+   "711b697432ee",
+   "646fc8e57bb4"
+  ],
+  "regressed": [],
+  "still_failing": [],
+  "verdict": "passed"
+ },
+ {
+  "id": "2026-11-25T20-08-57-567Z-dbd9419d",
+  "at": "2026-11-25T20:08:57.704Z",
+  "candidate": {
+   "version": "0.2.1-plant",
+   "recipe": "dbd9419dbf89",
+   "from": "plant/regress"
+  },
+  "release": "0.2.0",
+  "inputs": 20,
+  "release_counts": {
+   "parsed": 17,
+   "error": 3
+  },
+  "candidate_counts": {
+   "incomplete": 17,
+   "error": 3
+  },
+  "fixed": [],
+  "regressed": [
+   "9d50226dcaf1",
+   "d0d0d9116de1",
+   "86ba3accd3a6",
+   "d6956ca1c1ee",
+   "cbf5ee6506de",
+   "0988c3c7ca87",
+   "7b3ac5fcf877",
+   "338950c255e1",
+   "f6abba18d023",
+   "8731c1c56c7e",
+   "e1b88e6392e1",
+   "979e134d37b7",
+   "3735181acb59",
+   "aeb571884e3a",
+   "712c40e2287d",
+   "e25347172dba",
+   "201e4be7a447"
+  ],
+  "still_failing": [
+   {
+    "input": "d186993bfa60",
+    "outcome": "error",
+    "error_class": "UnicodeDecodeError"
+   },
+   {
+    "input": "711b697432ee",
+    "outcome": "error",
+    "error_class": "UnicodeDecodeError"
+   },
+   {
+    "input": "646fc8e57bb4",
+    "outcome": "error",
+    "error_class": "UnicodeDecodeError"
+   }
+  ],
+  "verdict": "failed",
+  "why": "17 input(s) the release parses, the candidate doesn't"
+ }
+]

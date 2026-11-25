@@ -1,0 +1,98 @@
+{
+ "release": "0.2.1",
+ "params": {
+  "port": 8610,
+  "data": "/srv/notes-to-forms",
+  "inbox": "/srv/notes-to-forms/inbox",
+  "version": "0.2.1"
+ },
+ "trials_allowed": true,
+ "journal": [
+  {
+   "at": "2026-11-25T20:06:28.442Z",
+   "version": "0.2.0",
+   "applying": "4f31fac6c274a52d",
+   "params": {
+    "port": 8610,
+    "data": "/srv/notes-to-forms",
+    "inbox": "/srv/notes-to-forms/inbox",
+    "version": "0.2.0"
+   }
+  },
+  {
+   "at": "2026-11-25T20:06:28.450Z",
+   "version": "0.2.0",
+   "step": "user",
+   "says": "Make an account for the service, which can't sign in",
+   "verdict": "passed",
+   "did": "made the account notes, which can't sign in"
+  },
+  {
+   "at": "2026-11-25T20:06:28.453Z",
+   "version": "0.2.0",
+   "step": "dir",
+   "says": "Make the folder it keeps its forms in, readable only by it",
+   "verdict": "passed",
+   "did": "made /srv/notes-to-forms/state, 0700, owned by notes"
+  },
+  {
+   "at": "2026-11-25T20:06:28.456Z",
+   "version": "0.2.0",
+   "step": "unpack",
+   "says": "Unpack the service, checked against the vendor's signature",
+   "verdict": "passed",
+   "did": "unpacked service.tar.gz (63659f5822df…) to /srv/notes-to-forms/app"
+  },
+  {
+   "at": "2026-11-25T20:06:28.638Z",
+   "version": "0.2.0",
+   "step": "unit",
+   "says": "Run it as that account, reading the inbox, kept running by systemd",
+   "verdict": "passed",
+   "did": "restarted notes-to-forms, kept running by systemd and started at boot"
+  },
+  {
+   "at": "2026-11-25T20:06:29.154Z",
+   "version": "0.2.0",
+   "step": "health",
+   "says": "Check it answers on its port",
+   "verdict": "passed",
+   "did": "http://127.0.0.1:8610/health answered {\"service\":\"notes-to-forms\",\"version\":\"0.2.0\"}"
+  },
+  {
+   "at": "2026-11-25T20:09:13.657Z",
+   "version": "0.2.1",
+   "applying": "064acbbd4171d3cd",
+   "params": {
+    "port": 8610,
+    "data": "/srv/notes-to-forms",
+    "inbox": "/srv/notes-to-forms/inbox",
+    "version": "0.2.1"
+   }
+  },
+  {
+   "at": "2026-11-25T20:09:13.662Z",
+   "version": "0.2.1",
+   "step": "unpack",
+   "says": "Unpack the service, checked against the vendor's signature",
+   "verdict": "passed",
+   "did": "unpacked service.tar.gz (e4332f2b88f9…) to /srv/notes-to-forms/app"
+  },
+  {
+   "at": "2026-11-25T20:09:13.847Z",
+   "version": "0.2.1",
+   "step": "unit",
+   "says": "Run it as that account, reading the inbox, kept running by systemd",
+   "verdict": "passed",
+   "did": "restarted notes-to-forms, kept running by systemd and started at boot"
+  },
+  {
+   "at": "2026-11-25T20:09:14.365Z",
+   "version": "0.2.1",
+   "step": "health",
+   "says": "Check it answers on its port",
+   "verdict": "passed",
+   "did": "http://127.0.0.1:8610/health answered {\"service\":\"notes-to-forms\",\"version\":\"0.2.1\"}"
+  }
+ ]
+}

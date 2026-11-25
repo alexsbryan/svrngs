@@ -1,0 +1,83 @@
+From e0a46f323193d27468fa235d1395ba936c36edec Mon Sep 17 00:00:00 2001
+From: Alex <alexsbryan@gmail.com>
+Date: Wed, 25 Nov 2026 12:07:47 -0800
+Subject: [PATCH] notes: read a note that isn't UTF-8 as Windows-1252
+
+At the clinic 3 of 20 inbox notes end in outcome "error",
+error_class UnicodeDecodeError (view /service/events; /service/state
+counts parsed 17, error 3). All three share one shape: no BOM, CRLF
+newlines, 5 high bytes, first invalid byte 0x97 at 7% of the file.
+0x97 is the em dash in Windows-1252, and CRLF says a Windows editor;
+the 17 that parse are LF, with valid UTF-8. read() decoded strict
+UTF-8 only, so these notes never became forms.
+
+read() now tries UTF-8 first and falls back to strict cp1252, so a
+valid UTF-8 note decodes exactly as before, and a byte cp1252 leaves
+undefined still raises rather than being guessed.
+
+Tests: synthetic fixture fixtures/cp1252-crlf.txt (CRLF, em dashes,
+curly quotes, e-acute, encoded cp1252). Before the fix
+(python3 -m unittest discover -s tests): FAILED (errors=2). After: 4 OK.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ fixtures/cp1252-crlf.txt | 7 +++++++
+ notes.py                 | 8 +++++++-
+ tests/test_notes.py      | 8 ++++++++
+ 3 files changed, 22 insertions(+), 1 deletion(-)
+ create mode 100644 fixtures/cp1252-crlf.txt
+
+diff --git a/fixtures/cp1252-crlf.txt b/fixtures/cp1252-crlf.txt
+new file mode 100644
+index 0000000..5bba203
+--- /dev/null
++++ b/fixtures/cp1252-crlf.txt
+@@ -0,0 +1,7 @@
++Session note (synthetic, no real person) — exported from a Windows editor
++Date of service: 2026-11-04
++Client ID: TEST-0002
++CPT: 90837
++Diagnosis: F43.10
++Minutes: 55
++Client said “better this week” — café visit planned.
+diff --git a/notes.py b/notes.py
+index 8553226..33f7fbd 100644
+--- a/notes.py
++++ b/notes.py
+@@ -6,7 +6,13 @@ FIELDS = {"Date of service": "date", "Client ID": "client_id", "CPT": "cpt", "Di
+ 
+ 
+ def read(raw: bytes) -> str:
+-    return raw.decode("utf-8")
++    """UTF-8 first; a note that isn't valid UTF-8 is read as Windows-1252, the
++    encoding Windows editors save in (0x97 is its em dash). Strict both ways:
++    a byte cp1252 leaves undefined (0x81, 0x8d, 0x8f, 0x90, 0x9d) still raises."""
++    try:
++        return raw.decode("utf-8")
++    except UnicodeDecodeError:
++        return raw.decode("cp1252")
+ 
+ 
+ def parse(raw: bytes) -> dict:
+diff --git a/tests/test_notes.py b/tests/test_notes.py
+index 2c17d39..ba20790 100644
+--- a/tests/test_notes.py
++++ b/tests/test_notes.py
+@@ -12,6 +12,14 @@ class Notes(unittest.TestCase):
+                 r = notes.parse(open(os.path.join(HERE, f), "rb").read())
+                 self.assertEqual(r["missing"], [])
+ 
++    def test_cp1252_note_keeps_its_values(self):
++        r = notes.parse(open(os.path.join(HERE, "cp1252-crlf.txt"), "rb").read())
++        self.assertEqual(r["form"], {"date": "2026-11-04", "client_id": "TEST-0002", "cpt": "90837", "icd10": "F43.10", "minutes": "55"})
++
++    def test_utf8_note_is_not_read_as_cp1252(self):
++        r = notes.parse("Date of service: 2026-11-03 \u2014 am\n".encode("utf-8"))
++        self.assertEqual(r["form"]["date"], "2026-11-03 \u2014 am")
++
+     def test_shape_says_no_words(self):
+         raw = open(os.path.join(HERE, sorted(os.listdir(HERE))[0]), "rb").read()
+         s = notes.shape(raw)
+-- 
+2.56.1
+

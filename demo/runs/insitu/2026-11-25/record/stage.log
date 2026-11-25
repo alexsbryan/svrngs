@@ -1,0 +1,19 @@
+release bundle notes-to-forms 0.2.0 from 2a11392 in bundles/release-0.2.0
+This machine now trusts the vendor key aacee758b32daa8e. Check it against what the vendor told you.
+passed        Make an account for the service, which can't sign in
+passed        Make the folder it keeps its forms in, readable only by it
+passed        Unpack the service, checked against the vendor's signature
+passed        Run it as that account, reading the inbox, kept running by systemd
+passed        Check it answers on its port
+
+Installed notes-to-forms 0.2.0. The journal is /var/lib/onprem/notes-to-forms.journal.
+Trials of notes-to-forms candidates may run here from now on: each replays this machine's inputs once, sandboxed, with no network and nothing kept but its verdict. Installing one still asks you. Remove /var/lib/onprem/notes-to-forms.trials-allowed to stop.
+staged: {
+ "version": "0.2.0",
+ "up_s": 4,
+ "counts": {
+  "parsed": 17,
+  "error": 3
+ },
+ "inbox_seen": 20
+}

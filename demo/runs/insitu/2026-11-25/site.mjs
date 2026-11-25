@@ -7,6 +7,17 @@
 //   node site.mjs plan  <bundle> [--set k=v]... [--auto]
 //   node site.mjs apply <bundle> --token <t> [--set k=v]... [--auto]
 //   node site.mjs status <service>
+//   node site.mjs allow-trials <service>          a standing yes for sandboxed trials
+//   node site.mjs trial <candidate bundle>       the candidate and production, same inputs
+//   node site.mjs watch <delivery dir>           trial each candidate dropped there
+//   node site.mjs view <service> [--port 8620]   the read-only view for the vendor's agent
+//
+// A bundle's channel is release or candidate. Only a release is applied.
+// A candidate is only trialed: it and the installed release each replay the
+// service's real inputs once, sandboxed (no network, inputs read-only, a
+// throwaway output), and the verdict compares them input by input. A trial
+// can't change production or send anything anywhere, which is why the admin
+// may say yes to trials once, and to each release every time.
 //
 // `plan` changes nothing. It says what it found and what it would do, and
 // prints a token for exactly that. `apply` re-plans and refuses unless the
@@ -18,6 +29,7 @@
 import { createHash, createPublicKey, verify } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, statfsSync, writeFileSync, chmodSync } from 'node:fs';
+import http from 'node:http';
 import net from 'node:net';
 import { dirname, join } from 'node:path';
 
@@ -274,6 +286,7 @@ function say(b, pl) {
 const argvSets = () => process.argv.slice(2).filter((a, i, all) => a === '--auto' || a === '--set' || all[i - 1] === '--set').map((a) => ` ${a}`).join('');
 
 async function apply(b, sets, auto, token) {
+  if (b.recipe.channel !== 'release') throw refusal(`this bundle is a ${b.recipe.channel ?? 'unlabelled'} build, not a release: it can only be trialed here (\`node site.mjs trial ${b.dir}\`), never installed`);
   const pl = await plan(b, sets, auto);
   if (pl.token !== token) {
     debug('token', token, 'but the plan now is', pl.token);
@@ -305,8 +318,116 @@ async function apply(b, sets, auto, token) {
     }
     changed = true;
   }
+  writeFileSync(applied(b.recipe.service), JSON.stringify({ recipe: b.recipe, params: pl.p, token: pl.token }, null, 1));
   console.log(`\nInstalled ${b.recipe.service} ${b.recipe.version}. The journal is ${journal}.`);
   return 0;
+}
+
+// --- Trials: a candidate beside production, on the same inputs --------------
+
+const applied = (service) => join(HOME, `${service}.applied.json`);
+const readApplied = (service) => {
+  if (!existsSync(applied(service))) throw refusal(`no release of ${service} is installed here, so there is nothing to compare a candidate with`);
+  return JSON.parse(readFileSync(applied(service), 'utf8'));
+};
+
+function sandboxed(app, t, inputs, out, user) {
+  // One replay, as the service's own account, with no network, every path
+  // read-only but its throwaway output, and nothing kept after it exits.
+  mkdirSync(out, { recursive: true });
+  execFileSync('chown', [`${user}:${user}`, out]);
+  const cmd = fill(t.exec, { app, inputs, out });
+  const r = run('systemd-run', ['--wait', '--collect', '--quiet', '-p', `User=${user}`, '-p', 'PrivateNetwork=yes', '-p', 'ProtectSystem=strict', '-p', 'ProtectHome=yes', '-p', 'PrivateTmp=yes', '-p', 'NoNewPrivileges=yes', '-p', `ReadWritePaths=${out}`, '-p', 'RuntimeMaxSec=120', '--', ...cmd]);
+  const file = join(out, t.result);
+  if (!existsSync(file)) return { unjudged: `the replay wrote no ${t.result} (systemd-run exited ${r.status}${r.stderr.trim() ? `: ${r.stderr.trim().split('\n').at(-1)}` : ''})` };
+  try { return JSON.parse(readFileSync(file, 'utf8')); } catch (e) { return { unjudged: `${t.result} isn't JSON: ${e.message}` }; }
+}
+
+function trial(b) {
+  if (b.recipe.channel !== 'candidate') throw refusal(`only a candidate is trialed; this is a ${b.recipe.channel ?? 'unlabelled'} build`);
+  const svc = b.recipe.service;
+  if (!existsSync(join(HOME, `${svc}.trials-allowed`))) throw refusal(`trials of ${svc} aren't allowed on this machine: \`node site.mjs allow-trials ${svc}\` says yes to them, once`);
+  const prod = readApplied(svc);
+  const t = b.recipe.trial;
+  if (!t || JSON.stringify(t) !== JSON.stringify(prod.recipe.trial)) throw refusal('the candidate replays differently from the installed release, so their results can\'t be compared');
+  const unit = prod.recipe.steps.find((s) => s.do === 'unit');
+  const id = `${new Date().toISOString().replace(/[:.]/g, '-')}-${sha(b.bytes).slice(0, 8)}`;
+  const dir = join(HOME, 'trials', id);
+  const unpack = prod.recipe.steps.find((s) => s.do === 'unpack');
+  const capp = join(dir, 'app');
+  mkdirSync(capp, { recursive: true });
+  execFileSync('tar', ['-xzf', join(b.dir, artifact(b, unpack.artifact).name), '-C', capp]);
+  const inputs = fill(t.inputs, prod.params);
+  const n = existsSync(inputs) ? run('ls', ['-1', inputs]).stdout.trim().split('\n').filter(Boolean).length : 0;
+  debug('trial', id, 'replays', n, 'inputs from', inputs);
+  const base = sandboxed(fill(unpack.to, prod.params), t, inputs, join(dir, 'out-release'), unit.user);
+  const cand = sandboxed(capp, t, inputs, join(dir, 'out-candidate'), unit.user);
+  rmSync(join(dir, 'out-release'), { recursive: true, force: true });
+  rmSync(join(dir, 'out-candidate'), { recursive: true, force: true });
+  rmSync(capp, { recursive: true, force: true });
+  const res = { id, at: new Date().toISOString(), candidate: { version: b.recipe.version, recipe: sha(b.bytes).slice(0, 12), from: b.recipe.source ?? null }, release: prod.recipe.version, inputs: n };
+  if (base.unjudged || cand.unjudged) Object.assign(res, { verdict: V.unjudged, why: [base.unjudged && `the release: ${base.unjudged}`, cand.unjudged && `the candidate: ${cand.unjudged}`].filter(Boolean).join('; ') });
+  else if (!n) Object.assign(res, { verdict: V.unjudged, why: `there are no inputs at ${inputs} to replay` });
+  else {
+    const by = (r) => Object.fromEntries(r.events.map((e) => [e.input, e]));
+    const B = by(base), C = by(cand);
+    const ok = (e) => e?.outcome === 'parsed';
+    const fixed = Object.keys(B).filter((k) => !ok(B[k]) && ok(C[k]));
+    const broke = Object.keys(B).filter((k) => ok(B[k]) && !ok(C[k]));
+    const still = Object.keys(B).filter((k) => !ok(B[k]) && !ok(C[k])).map((k) => ({ input: k, outcome: C[k]?.outcome ?? 'absent', error_class: C[k]?.error_class ?? null }));
+    Object.assign(res, { release_counts: base.counts, candidate_counts: cand.counts, fixed, regressed: broke, still_failing: still });
+    if (broke.length) Object.assign(res, { verdict: V.failed, why: `${broke.length} input(s) the release parses, the candidate doesn't` });
+    else if (!fixed.length) Object.assign(res, { verdict: V.failed, why: still.length ? `it fixes none of the ${still.length} input(s) the release fails` : 'the release fails no input here, so there is nothing for it to fix' });
+    else if (still.length) Object.assign(res, { verdict: V.passed, partly: `${still.length} input(s) still fail` });
+    else res.verdict = V.passed;
+  }
+  writeFileSync(join(HOME, 'trials', `${id}.json`), JSON.stringify(res, null, 1));
+  rmSync(dir, { recursive: true, force: true });
+  return res;
+}
+
+async function watchDir(dir) {
+  const done = new Set();
+  console.log(`watching ${dir} for candidates`);
+  for (;;) {
+    for (const d of existsSync(dir) ? run('ls', ['-1', dir]).stdout.trim().split('\n').filter(Boolean) : []) {
+      const path = join(dir, d);
+      if (done.has(d) || !existsSync(join(path, 'recipe.sig'))) continue;
+      done.add(d);
+      let r;
+      try { r = trial(readBundle(path)); } catch (e) { r = { verdict: V.never, why: e.message, at: new Date().toISOString(), bundle: d }; if (!(e instanceof Refusal)) r.why = `the trial broke: ${e.message}`; mkdirSync(join(HOME, 'trials'), { recursive: true }); writeFileSync(join(HOME, 'trials', `${r.at.replace(/[:.]/g, '-')}-refused.json`), JSON.stringify(r, null, 1)); }
+      console.log(`${d}: ${r.verdict}${r.why ? `: ${r.why}` : ''}`);
+    }
+    await new Promise((ok) => setTimeout(ok, 1000));
+  }
+}
+
+// --- The view: what the vendor's agent reads, and only reads ---------------
+
+function view(service, port) {
+  const prod = () => readApplied(service);
+  const routes = {
+    '/': () => ({ service, routes: Object.keys(routes), says: 'Read-only. Facts about this machine, the service\'s own telemetry, and trial results. Never a note, a form, a file name or a log line.' }),
+    '/site': () => {
+      const p = prod();
+      const j = join(HOME, `${service}.journal`);
+      return { release: p.recipe.version, params: p.params, trials_allowed: existsSync(join(HOME, `${service}.trials-allowed`)), journal: existsSync(j) ? readFileSync(j, 'utf8').trim().split('\n').slice(-10).map((l) => JSON.parse(l)) : [] };
+    },
+    '/trials': () => (existsSync(join(HOME, 'trials')) ? run('ls', ['-1', join(HOME, 'trials')]).stdout.trim().split('\n').filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(join(HOME, 'trials', f), 'utf8'))) : []),
+  };
+  const telemetry = (path) => async () => {
+    const p = prod();
+    const url = fill(p.recipe.view.telemetry[path], p.params);
+    try { return await (await fetch(url, { signal: AbortSignal.timeout(3000) })).json(); } catch (e) { return { verdict: V.unjudged, why: `the service didn't answer ${path}: ${e.cause?.code ?? e.message}` }; }
+  };
+  for (const k of Object.keys(prod().recipe.view.telemetry)) routes[`/service/${k}`] = telemetry(k);
+  http.createServer(async (req, res) => {
+    const say = (code, v) => res.writeHead(code, { 'content-type': 'application/json' }).end(JSON.stringify(v, null, 1));
+    if (req.method !== 'GET') return say(405, { error: 'this view only reads' });
+    const route = routes[new URL(req.url, 'http://x').pathname];
+    if (!route) return say(404, { error: 'no such view', routes: Object.keys(routes) });
+    try { say(200, await route()); } catch (e) { say(e instanceof Refusal ? 409 : 500, { error: e.message }); }
+  }).listen(port, '127.0.0.1', () => console.log(`view of ${service} on 127.0.0.1:${port}`));
 }
 
 // --- The command -------------------------------------------------------------
@@ -321,6 +442,7 @@ for (let i = 0; i < rest.length; i++) {
   if (rest[i] === '--set') { const [k, ...v] = rest[++i].split('='); sets[k] = v.join('='); }
   else if (rest[i] === '--auto') auto = true;
   else if (rest[i] === '--token') token = rest[++i];
+  else if (rest[i] === '--port') sets.__port = rest[++i];
   else { console.error(`site: no option ${rest[i]}`); process.exit(2); }
 }
 try {
@@ -337,7 +459,17 @@ try {
   } else if (verb === 'status') {
     const j = join(HOME, `${target}.journal`);
     console.log(existsSync(j) ? readFileSync(j, 'utf8').trim().split('\n').slice(-8).join('\n') : `${V.never}: nothing of ${target} was ever applied here`);
-  } else { console.error('usage: site.mjs trust|plan|apply|status …'); process.exitCode = 2; }
+  } else if (verb === 'allow-trials') {
+    mkdirSync(HOME, { recursive: true });
+    writeFileSync(join(HOME, `${target}.trials-allowed`), new Date().toISOString() + '\n');
+    console.log(`Trials of ${target} candidates may run here from now on: each replays this machine's inputs once, sandboxed, with no network and nothing kept but its verdict. Installing one still asks you. Remove ${join(HOME, `${target}.trials-allowed`)} to stop.`);
+  } else if (verb === 'trial') {
+    const r = trial(readBundle(target));
+    console.log(JSON.stringify(r, null, 1));
+    process.exitCode = r.verdict === V.passed ? 0 : 1;
+  } else if (verb === 'watch') await watchDir(target);
+  else if (verb === 'view') view(target, Number(sets.__port ?? 8620));
+  else { console.error('usage: site.mjs trust|plan|apply|status|allow-trials|trial|watch|view …'); process.exitCode = 2; }
 } catch (e) {
   if (!(e instanceof Refusal)) throw e;
   console.log(`Refused: ${e.message}`);
