@@ -24,6 +24,10 @@ See [Checks](docs/CHECKS.md) for focused commands and the
 [Linux container gate](scripts/gate/README.md) for running the whole suite.
 [`scripts/lean_check.py`](scripts/lean_check.py) holds the code to a line budget.
 
+To try a change on your own home page with your real groups, run
+`scripts/dev.sh`: on a Mac, your login svrngs then runs this checkout's
+build, until `scripts/dev.sh off`.
+
 To work on the group’s page in `web/`, run `scripts/build-web.sh`, then
 `node web/tests/dev.mjs`. It prints how to open the local HTTPS page in Chrome
 and point a group at it. Safari can’t save there ([why](demo/runs/security/2026-11-02-webkit-partition/README.md)).

@@ -1160,10 +1160,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # deploy-relay.sh. The remaining lines verify the publisher manifest in
 # install.sh, pair Keeper with the daemon build in plan/run.rs, and keep
 # deferred database changes from being reported as synced in sync.rs.
+# The operator approved +16 for scripts/dev.sh (2026-11-25), which runs this
+# checkout's build as the login svrngs. Its pass (2a1d9f26) cut the two items
+# only tests reached, cli.rs `share_lend` and set.rs `At::check`, -9, to
+# 28,662 and the core's 3,526; dev.sh brings the whole to 28,678.
 BUDGET = {
-    "crates/svrngs-core": 3540,
+    "crates/svrngs-core": 3527,
 
-    ".": 28672,
+    ".": 28679,
 
     "js": 8796,
 
