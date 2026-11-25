@@ -2054,8 +2054,10 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
 // driver. No test in the standard browser suite touches a login manager.
 /// Ada starts a page by hand, finds it under Already running here and lends
 /// it to house; its lend's row offers to keep it running. Keep it running
-/// asks the command and folder, svrngs suggesting none for it; Start is
-/// refused while her copy holds the port, leaving it alone; she quits it,
+/// shows the command and folder her copy was started with, as Keeper reads
+/// them (`svrngs-keeper facts`); she changes them under Change, and Start
+/// is refused while her copy holds the port, leaving it alone. She quits
+/// it, so nothing is there to read: Keep it running asks the two fields,
 /// and Start runs it as the lend's name and port. What answers then is
 /// svrngs's job for the lend, so the page approves it at once (keep-running.js
 /// `carry`): the lend is kept to that unit, through restarts. Stop and
@@ -2100,15 +2102,12 @@ async fn share_then_keep_it_running_in_webkit() {
     let cmd = format!("/usr/bin/python3 -m http.server {port} --bind {address}");
     // Ada's own copy, as a terminal starts it (`by_hand`): its first line
     // says it serves.
+    let own_tail = format!("-u -m http.server {port} --bind 127.0.0.1");
+    // What Keep it running shows of it, Keeper's shlex join of its argv in
+    // its folder: nothing in either needs quoting, so plain spaces.
+    let started = format!("/usr/bin/python3 {own_tail} in {}", site.display());
     let mut own = by_hand(Path::new("/usr/bin/python3"))
-        .args([
-            "-u",
-            "-m",
-            "http.server",
-            &port.to_string(),
-            "--bind",
-            "127.0.0.1",
-        ])
+        .args(own_tail.split(' '))
         .current_dir(&site)
         .stdout(std::process::Stdio::piped())
         .kill_on_drop(true)
@@ -2136,7 +2135,8 @@ async fn share_then_keep_it_running_in_webkit() {
                 [format!("{row} input[type=checkbox]"), true],
                 act(&format!("{row} button"), "Yes, lend it"),
                 act(&format!("{row} button"), "Lent to"),
-                act(&format!("{offer} button:has-text('Keep it running')"), "Quit the copy you started"),
+                act(&format!("{offer} button:has-text('Keep it running')"), &started),
+                [format!("{offer} summary:has-text('Change')"), null, "opens"],
                 fill("command", &cmd), fill("folder", site.to_str().unwrap()),
                 act(&format!("{offer} button:has-text('Start')"), "is in use by"),
             ],
