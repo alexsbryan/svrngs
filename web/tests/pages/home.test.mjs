@@ -925,11 +925,12 @@ test('each lend is one line with its form folded under it, and the wide button i
   assert.ok(phone.includes('<tbody id="lent">'));
 });
 
-// A lend held for what answers on its port says why on its lender's line
-// and every program that answers now (door.rs `answering` and `offered`,
-// lent-row.js `HELD`; SHARE_BINDING §5.5), and Keep sharing it approves
-// what its line showed, by the token it was listed with, with the first
-// process's pid and start, at /v1/lends/<name>/approve and nothing else
+// A lend held for what answers on its port says so first on its lender's
+// line, Closed, then why and every program that answers now (door.rs
+// `answering` and `offered`, lent-row.js `HELD`; SHARE_BINDING §5.5), and
+// Keep sharing it approves what its line showed, by the token it was listed
+// with, with the first process's pid and start, at
+// /v1/lends/<name>/approve and nothing else
 // (lend-change.js `approve`; SHARE_BINDING_REVIEWS §6 #6); one listed with
 // no token, whatever holds it, offers no approval. Planted, each watched
 // failing: lent-row.js not reading `answers` (no "Now answering"); the
@@ -952,7 +953,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
     unapproved
       .text('#lent li details summary')[0]
       .includes(
-        'shelf is closed until you approve what answers on its port now. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
+        'shelf: Closed. Nobody can open it until you approve what answers on its port now. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
       ),
   );
   await unapproved.press('#lent li button', 'Keep sharing it');
@@ -960,7 +961,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
   const another = (await page('another')).text('#lent li details summary')[0];
   assert.ok(
     another.includes(
-      'Something you didn’t approve was on shelf’s port, so shelf is closed for now. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
+      'Closed. Something you didn’t approve was on its port. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
     ),
     another,
   );
@@ -973,9 +974,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
   assert.ok(
     unjudged
       .text('#lent li details summary')[0]
-      .includes(
-        'svrngs can’t tell what answers on shelf’s port, so nobody can open shelf. Start it again.',
-      ),
+      .includes('Closed. svrngs can’t tell what answers on its port. Start it again.'),
   );
   assert.deepEqual(
     unjudged.text('#lent li button').filter((b) => b === 'Keep sharing it'),
@@ -999,11 +998,37 @@ test('a kept lend whose setup changed says so, and names the programs', async ()
   const line = page.text('#lent li details summary')[0];
   assert.ok(
     line.includes(
-      'What runs coder changed since you chose to keep sharing it when it starts again, so coder is closed for now. Now answering: coder and recipes.',
+      'coder: Closed. What runs it changed since you chose to keep sharing it when it starts again. Now answering: coder and recipes.',
     ),
     line,
   );
   assert.ok(page.text('#lent li button').includes('Keep sharing it'));
+});
+
+// A lend friends can't open leads its line with that, marked `.bad` and in
+// words, so the color is not the only sign: Closed where it is held, before
+// its program not running (door.rs `answering`), else Not running; then
+// who it is lent to, with no count of who uses it. An open lend's line is
+// as it was. Planted, watched failing: lent-row.js drawing a held lend's
+// line without the `.bad` mark.
+test('a lend friends can’t open says Closed or Not running first, marked', async () => {
+  const drawn = async (/** @type {object} */ more) => {
+    const page = await home(ada({ lent: [lend('shelf', more)] }));
+    return [page.text('#lent li details summary')[0], page.text('#lent summary strong.bad')];
+  };
+  const group = 'a group whose name this computer cannot read';
+  assert.deepEqual(await drawn({ answering: false, held: 'another', answers: [] }), [
+    `shelf: Closed. Something you didn’t approve was on its port. Nothing answers on its port now. Lent to ${group}.`,
+    ['Closed'],
+  ]);
+  assert.deepEqual(await drawn({ answering: false }), [
+    `shelf: Not running. Start it, and the groups you chose can open it again. Lent to ${group}.`,
+    ['Not running'],
+  ]);
+  assert.deepEqual(await drawn({ answering: true }), [
+    `shelf: lent to ${group}, 0 of 3 using it now.`,
+    [],
+  ]);
 });
 
 // Keep sharing it is offered by the token alone, which svrngs lists only

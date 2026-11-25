@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A lend in "What you lend", one line: its name, who can open it, paused
 // when lent to no group and a choice to make when legacy (`null`), and how
-// many use it now, of how many it lets in at once when that is limited.
+// many use it now, of how many it lets in at once when that is limited;
+// where friends can't open it, Closed or Not running first, marked (`line`).
 // Folded under that line, since five lends' forms were two screens before
 // anything was asked, and open at first only where apps cannot read it
 // until its lender does something (`undone`): who can open it, one box a
@@ -147,17 +148,14 @@ function Headers({ name, kept, state, doing, send }) {
   `;
 }
 
-// Why nobody can open a lend (door.rs `answering`, SHARE_BINDING §5.5), and
-// what answers on its port now, which Keep sharing it approves.
+// Why nobody can open a held lend (door.rs `answering`, SHARE_BINDING
+// §5.5), said after its line's Closed, so none says closed again; then what
+// answers on its port now, which Keep sharing it approves.
 const HELD = {
-  unapproved: (/** @type {string} */ name) =>
-    ` ${name} is closed until you approve what answers on its port now.`,
-  another: (/** @type {string} */ name) =>
-    ` Something you didn’t approve was on ${name}’s port, so ${name} is closed for now.`,
-  unjudged: (/** @type {string} */ name) =>
-    ` svrngs can’t tell what answers on ${name}’s port, so nobody can open ${name}. Start it again.`,
-  changed: (/** @type {string} */ name) =>
-    ` What runs ${name} changed since you chose to keep sharing it when it starts again, so ${name} is closed for now.`,
+  unapproved: 'Nobody can open it until you approve what answers on its port now.',
+  another: 'Something you didn’t approve was on its port.',
+  unjudged: 'svrngs can’t tell what answers on its port. Start it again.',
+  changed: 'What runs it changed since you chose to keep sharing it when it starts again.',
 };
 // What svrngs read answering on a held lend's port now: nothing answering
 // said apart from a read that failed, which the row names in `unread`
@@ -168,8 +166,24 @@ const answering = ({ answers = [], unread }) => {
   const now = answers.map(answered).join(' and ');
   return now ? `Now answering: ${now}.` : 'Nothing answers on its port now.';
 };
-/** @param {Lend} lend */
-const heldWords = (lend) => (lend.held ? `${HELD[lend.held](lend.name)} ${answering(lend)}` : '');
+
+// A lend's line. One friends can't open leads with that, marked and in
+// words, so the color is not the only sign: Closed when it is held, with
+// why and what answers now, else Not running (question.js `notRunning`),
+// then who it is lent to, and no count of who uses it. An open one says who
+// can open it and how many use it now.
+/**
+ * @param {Lend} lend
+ * @param {string} to who can open it (`lentTo`)
+ * @param {number | string | undefined} using
+ */
+const line = (lend, to, using) => {
+  const [state, why] = lend.held
+    ? ['Closed', `${HELD[lend.held]} ${answering(lend)}`]
+    : ['Not running', notRunning(lend, 'Start it, and the groups you chose can open it again.')];
+  if (!why) return `${lend.name}: ${to}, ${using} using it now.`;
+  return html`${lend.name}: <strong class="bad">${state}</strong>. ${why} ${to.charAt(0).toUpperCase()}${to.slice(1)}.`;
+};
 
 // Keep sharing it, offered by the token alone: svrngs lists one only where
 // approving it would be taken (share.rs `approve`), so the page doesn't
@@ -202,7 +216,6 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const limit = lend.limit;
   const limited = (limit ?? 0) > 0;
   const using = limited ? `${lend.using} of ${limit}` : lend.using;
-  const words = `${lend.name}: ${lentTo(lend, groups)}, ${using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
   // What three of the row's acts send, named so each act is one line.
@@ -216,7 +229,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   return html`
     <li>
       <details open=${undone(account, lend)} aria-label=${lend.name}>
-        <summary>${words}</summary>
+        <summary>${line(lend, lentTo(lend, groups), using)}</summary>
         ${runLink(lend.sharing)}
         <${Keep} lend=${lend} doing=${doing} send=${send} />
         <p>Who can open it:</p>
