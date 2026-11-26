@@ -59,3 +59,31 @@ knowing them in advance. Plant: the same check against R must fail.
 - F3 and F4 hinge on metrics. P does as well as R if the runtimes export
   memory metrics under code names, and worse if not.
 - R scores 4/4 on all five.
+
+## The confidence round (added 2026-11-26, before its first run)
+
+**The claim:** on the fixed projection (`b8d33b6c`), an agent with the
+projected view diagnoses these five faults as well as one with raw
+telemetry, and no personal value crosses the projection.
+
+**The design:**
+- Each fault gets 3 runs per arm. Runs already made on the fixed
+  projection count; P has one each for F1, F2, F3b and F5, and R has one
+  each for F1, F2, F3b, F4 and F5 (R's view never changed). R's F4 from
+  the first round counts.
+- F1, F2, F3b and F5 get 2 more per arm, and F4 gets 3 P and 2 R. All
+  runs for one fault start together, in the same window.
+- **Second protocol fix:** before each fault the shop's services restart,
+  so no cumulative counter carries an earlier fault. The rerun of F4
+  found F1's failed charges in checkout's counters. The collector,
+  flagd and the stores keep running.
+- F4 waits after its 4 minutes until email has restarted once, then up to
+  4 minutes more, so the fault has shown.
+- The scoring is PROTOCOL.md's rubric, by me, from each report alone.
+
+**Decision rule:**
+- **Confident** if, on every fault, P's mean is at least R's mean minus
+  0.5, and the leak check passes in every window with its plant failing.
+- **Not confident**, with the faults named, if either fails.
+- With 3 runs per cell this shows a large gap, not a small one, and the
+  report will say so.

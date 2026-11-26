@@ -6,6 +6,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 python3 -I flags.py reset >/dev/null
 [ "$1" = reset ] && { echo "reset $(date -u +%T)"; exit 0; }
+# The shop's services restart, so no cumulative counter carries an earlier
+# fault (the rerun of F4 found F1's failed charges in checkout's counters).
+# The collector, flagd and the stores keep running.
+podman restart -t 5 ad cart checkout currency email frontend frontend-proxy image-provider payment product-catalog quote recommendation shipping load-generator >/dev/null
+for i in $(seq 60); do podman exec load-generator python3 -c 'import urllib.request; urllib.request.urlopen("http://frontend-proxy:8080/", timeout=5)' 2>/dev/null && break; sleep 5; done
 # Fresh views at the reset, so a fault's window holds no earlier fault
 # (F3, 2026-11-25: R diagnosed F2's leftover errors). Each restart is
 # approved again, as the share binding asks.
