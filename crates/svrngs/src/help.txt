@@ -154,7 +154,9 @@ after it, and it checks that the new schema.sql only adds to that one's.
       Which svrngs this is: its release, and the commit it was built from.
 
   svrngs restart
-      Stop svrngs and start it again, as a new login would.
+      Stop svrngs and start it again, as a new login would, or start it
+      if it isn't running. Any command that finds an older svrngs running
+      here restarts it onto itself first.
 
   svrngs share --folder <dir> --group <group>
       Keep <dir> the same on every computer in <group> that shares a folder

@@ -103,8 +103,11 @@ pub fn past_header(out: &mut impl BufRead) {
 
 /// src/main.rs's `main`, line for line but for the build's relays, the
 /// arguments after `--`, and an exit in place of a return, so libtest
-/// says nothing after svrngs.
+/// says nothing after svrngs; and svrngs, where it starts svrngs itself
+/// (cli.rs `restart`), starts this binary as [`installed`] runs it.
 pub fn main() -> ! {
+    let before = std::env::args().skip(1).take_while(|a| a != "--");
+    let _ = cli::STARTS_AS.set(before.chain(["--".into()]).collect());
     let typed = std::env::args().skip_while(|a| a != "--").skip(1);
     let command = match cli::parse(std::iter::once("svrngs".to_string()).chain(typed)) {
         Ok(command) => command,

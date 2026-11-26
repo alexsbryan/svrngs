@@ -875,8 +875,8 @@ fn kept_by_login(home: &Path, dir: &Path) {
 /// applications menu runs it, is answered 404 at `POST /v1/proof` by the
 /// old one (1.13.2's answer), sends it none of the token, restarts svrngs
 /// as `svrngs restart` does, once, as the login service runs it over this
-/// data dir, and once the new svrngs proves itself, opens the home page and
-/// says it restarted. Here the old one is Python answering 404 and holding
+/// data dir, and once the new svrngs proves itself, opens the home page,
+/// saying that alone. Here the old one is Python answering 404 and holding
 /// the data dir's lock, and the restart stops it and starts this svrngs
 /// over the data dir, at its address. Planted, watched failing: dd2efe63
 /// refused, "the svrngs running here is older than this command: run
@@ -920,10 +920,7 @@ fn an_older_svrngs_is_restarted_once_then_asked() {
     );
     assert!(out.status.success(), "{said}\n{told}");
     assert!(said.contains("svrngs-open?code="), "{said}");
-    assert!(
-        told.contains("svrngs was updated, so it restarted to use the new one."),
-        "{told}"
-    );
+    assert!(told.trim().is_empty(), "{told}");
 }
 
 /// **What answers 404 where no svrngs holds the data dir is not svrngs,
@@ -952,42 +949,46 @@ fn a_program_answering_404_is_sent_none_of_the_token_and_restarts_nothing() {
     unproven(port, (1, told.trim().trim_start_matches("svrngs: ").into()));
 }
 
-/// **An older svrngs over another data dir than the login service's is
-/// not restarted** (the 1.13.3 proof review, finding 9): Python answering
-/// 404 holds this data dir's lock, as an older svrngs started by hand over
-/// it would, and the login service runs svrngs over another; restarting
-/// that would restart someone else's svrngs, so the command restarts
-/// nothing, sends none of the token, and says what runs here and what to
-/// do (exit 1). Planted, watched failing: 4ece5ae5 restarted the login
-/// service's svrngs.
+/// **An older svrngs started by hand is named, and how to stop it said**
+/// (the 1.13.3 proof review, finding 9): Python
+/// answering 404 holds this data dir's lock, as an older svrngs started by
+/// hand over it would, and the login service runs svrngs over another;
+/// restarting that would restart someone else's svrngs, and svrngs signals
+/// no program itself (KEEP_IT_RUNNING_RELEASE N1), so the command restarts
+/// nothing, sends none of the token, and says an older svrngs runs here,
+/// started by hand, and one step that stops it (exit 1): with the token
+/// beside its address, and with none, as a svrngs from before the token
+/// (v1.3) leaves its data dir. Planted, watched failing: 4ece5ae5
+/// restarted the login service's svrngs; 0ba18ef9 said "cannot read or
+/// keep this computer's token" with no token, and "stop that svrngs where
+/// it runs (Ctrl-C)" with one.
 #[test]
-fn an_older_svrngs_the_login_service_doesn_t_run_is_not_restarted() {
-    let (dir, stubs, other) = (
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-    );
-    let lock = dir.path().join("lock");
-    let (mut old, port, mut sent) = not_svrngs_holding(&[], OLDER, Some(&lock));
-    kept_at(dir.path(), port);
-    kept_by_login(dir.path(), other.path());
-    restarting(stubs.path(), "");
-    let (out, asked) = restarted(dir.path(), stubs.path());
-    old.kill().unwrap();
-    let mut seen = String::new();
-    sent.read_to_string(&mut seen).unwrap();
-    sent_none_of_the_token(&seen);
-    assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
-    let told = String::from_utf8_lossy(&out.stderr);
-    assert_eq!(out.status.code(), Some(1), "{told}");
-    let older = format!(
-        "the svrngs running over {} is older than this command",
-        dir.path().display()
-    );
-    assert!(
-        told.contains(&older) && told.contains("none of your token"),
-        "{told}"
-    );
+fn an_older_svrngs_started_by_hand_is_named_and_how_to_stop_it_said() {
+    for token in [true, false] {
+        let (dir, stubs, other) = (
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+        );
+        let lock = dir.path().join("lock");
+        let (mut old, port, mut sent) = not_svrngs_holding(&[], OLDER, Some(&lock));
+        kept_at(dir.path(), port);
+        if !token {
+            std::fs::remove_file(dir.path().join("token")).unwrap();
+        }
+        kept_by_login(dir.path(), other.path());
+        restarting(stubs.path(), "");
+        let (out, asked) = restarted(dir.path(), stubs.path());
+        old.kill().unwrap();
+        let mut seen = String::new();
+        sent.read_to_string(&mut seen).unwrap();
+        sent_none_of_the_token(&seen);
+        assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
+        let told = String::from_utf8_lossy(&out.stderr);
+        assert_eq!(out.status.code(), Some(1), "{told}");
+        let words = format!("svrngs: The svrngs running here is older than this one ({}), and was started by hand rather than at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", svrngs_node::api::build(), lock.display());
+        assert_eq!(told.trim(), words, "token: {token}");
+    }
 }
 
 /// **A data dir whose lock svrngs can't look at restarts nothing** (the
@@ -1049,15 +1050,16 @@ fn a_start_waits_out_a_moment_s_hold_of_its_data_dir() {
     );
 }
 
-/// **A token file that can't be read is said so, and nothing is dialled**
-/// (the 1.13.3 proof review, finding 4): with no `token` beside `api`, the
-/// command says svrngs's token can't be read, and where, exit 3, and asks
-/// nothing of what answers at svrngs's address; never that something other
-/// than svrngs answers there. Planted, watched failing: dd2efe63 asked
-/// Python for a proof under no token and said "Something other than your
-/// svrngs answers".
+/// **A data dir with no token is svrngs not running there, and nothing is
+/// dialled** (the 1.13.3 proof review, finding 4): with no `token` beside
+/// `api` and no svrngs holding the data dir, the command asks nothing of
+/// what answers at svrngs's address, and says svrngs isn't running here
+/// (exit 3); never that something other than svrngs answers there, nor a
+/// file's error. Planted, watched failing: dd2efe63 asked Python for a
+/// proof under no token and said "Something other than your svrngs
+/// answers"; 0ba18ef9 said "cannot read or keep this computer's token".
 #[tokio::test(flavor = "multi_thread")]
-async fn an_unreadable_token_is_said_and_nothing_is_asked() {
+async fn a_data_dir_with_no_token_is_svrngs_not_running_and_nothing_is_asked() {
     let held = TcpListener::bind("127.0.0.1:0").unwrap();
     held.set_nonblocking(true).unwrap();
     let dir = data_dir_at(held.local_addr().unwrap().port());
@@ -1067,9 +1069,10 @@ async fn an_unreadable_token_is_said_and_nothing_is_asked() {
     assert!(asked.is_err(), "it was asked, from {asked:?}");
     let (code, said) = refused.expect_err("refused");
     assert_eq!(code, 3, "{said}");
-    let token = dir.path().join("token").display().to_string();
-    assert!(said.contains("token") && said.contains(&token), "{said}");
-    assert!(!said.contains("Something other"), "{said}");
+    assert!(
+        said.contains("svrngs is not running on this computer"),
+        "{said}"
+    );
 }
 
 /// **What answers at svrngs's address is read no further than an answer

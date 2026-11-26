@@ -1072,11 +1072,22 @@ alone grants no session; `open` remains the authenticated way into the page.
 A browser with none is refused with what that is and how to let it in:
 `svrngs open --print` shows an open and launches nothing, for a browser that
 is not the default one. An open is single-use and each browser keeps its own.
-`svrngs restart` asks launchd or systemd to stop and start it, so it works on
-any running build and closes as a logout does; one kept by neither is refused.
-A command that finds an older svrngs running over the data directory the
-login service runs it over, as pacman's update leaves it, restarts it that
-way itself, once, before it asks (§3).
+`svrngs restart` asks launchd or systemd to stop and start it, where either
+keeps svrngs at login over this data directory, so it works on any running
+build and closes as a logout does; where neither does and none runs, it
+starts this program over the data directory apart from its terminal, its
+words in `svrngs.log` as the login service's are. Either way it says, once
+svrngs answers as this build, that it runs. One started by hand it leaves
+running, since svrngs signals no program itself, and says the one step that
+stops it.
+
+A command asks only a svrngs of its own build: `POST /v1/proof` names the
+build that proves (api.rs `build`, which `svrngs version` prints too), and
+any other is another build, as is one too old to name it, or one whose data
+directory holds no token. Another build holding the data directory, as an
+update leaves one running, the command restarts onto itself, once, before
+it asks, as `svrngs restart` does (§3); a newer one it asks nothing, and
+says to update this one.
 
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for

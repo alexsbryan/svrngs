@@ -103,13 +103,15 @@ fn every_refusal_keeps_its_exit_code() {
         R::Removal("no".into()),
         R::Meet("no".into()),
         R::RelayForNobody,
-        R::NotKept,
+        R::ByHand(path()),
+        R::Stuck("no".into()),
+        R::Newer("1.14.0".into()),
         R::Older,
         R::Readers(lend(), "no".into()),
         R::Terms("no".into()),
         R::Busy(path()),
         R::Unproven("http://127.0.0.1:1".into()),
-        R::Behind(path()),
+        R::Behind(None, path()),
         R::Unrestarted("http://127.0.0.1:1".into()),
     ];
     let unjudged = [
