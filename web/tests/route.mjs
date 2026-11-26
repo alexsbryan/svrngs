@@ -14,7 +14,8 @@
 // A real app has one database in its group, where a stand-in makes one
 // fresh each time: so each `database()` first deletes every row of every
 // table of the app's, through the route, by key, and each test starts on an
-// empty one. Its `run` reads the file itself, nothing checked, as a
+// empty one, so tests on it run one at a time, never two files at once (the
+// scene runs them under --test-concurrency=1). Its `run` reads the file itself, nothing checked, as a
 // stand-in's runs its own: what the route kept, never through it.
 // A browser opens the app's origin opened by svrngs first (SVRNGS_OPENS,
 // page.mjs `launch`), never `unopened`.

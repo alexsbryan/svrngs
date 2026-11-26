@@ -184,9 +184,14 @@ async fn magnets(engine: Engine) {
         "apps/magnets/tests/board.test.mjs",
         "apps/magnets/tests/page.test.mjs",
     ];
+    // One file at a time: the route has one database, which each test
+    // empties as it opens it (web/tests/route.mjs `database`), so a file run
+    // beside another, as node --test runs them unless told, empties the
+    // board under the other's moves.
     let ran = tokio::process::Command::new("node")
         .current_dir(repo())
-        .args(["--test", "--test-reporter=spec", "--test-timeout=120000"])
+        .args(["--test", "--test-concurrency=1", "--test-reporter=spec"])
+        .arg("--test-timeout=120000")
         .args(files)
         .env("SVRNGS_ROUTE", route.to_string())
         .env("SVRNGS_OPENS", opens.to_string())
