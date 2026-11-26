@@ -41,8 +41,8 @@ They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, 
 
 Trying a model in a terminal is fine, but that copy doesn't start again by
 itself. Once you lend it, its line under **What you lend** offers to keep it
-running: press **Keep it running**, check the command you started it with (open
-**Change** to add flags), quit the terminal copy, then press **Start**
+running: press **Keep it running**, type the command you started it with and
+its folder, quit the terminal copy, then press **Start**
 ([Lend](lend.md#keep-it-running)). Or quit the copy and run this in a
 terminal, using your model's full path and flags:
 

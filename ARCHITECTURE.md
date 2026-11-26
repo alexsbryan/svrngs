@@ -1018,12 +1018,9 @@ changed, under upstream's stock rustfmt and one clippy allowance
 renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
 `src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
 starts, restarts and removes one, and supervises nothing. `tests/host.sh` proves it
-under a real user manager. `facts <port>` only suggests Run form fields:
-`src/host.rs` reads the listeners and, for one program of this account's,
-the arguments it was started with and its folder (Linux `/proc`, a Mac's
-`KERN_PROCARGS2` and `lsof`), `src/promote.rs` parses them, and
-`src/facts.rs` quotes the command and returns it as JSON. No environment
-is read, and the arguments are never traced.
+under a real user manager. `src/host.rs` reads which program holds a
+port, which `src/promote.rs` parses; Keeper never reads how a program was
+started, so the person gives the command and folder.
 The keeper installs an explicitly supplied command with `run --port … -- <command>`
 (`src/native_run.rs`), using the same card renderer. It refuses a port
 with a listener on any address, and waits up to 30 s for a local HTTP

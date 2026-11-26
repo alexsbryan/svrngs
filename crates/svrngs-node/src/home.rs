@@ -732,19 +732,8 @@ async fn run_action(Json((name, action)): Json<(LendName, Action)>) -> Result<Js
     run_reply(answer.map(drop))
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RunQuery {
-    prefill: Option<NonZeroU16>,
-}
-
-async fn run_rows(Query(query): Query<RunQuery>) -> Response {
-    if let Some(port) = query.prefill {
-        let out = run::keeper(&plan::RunView::Page, ["facts", &port.to_string()]).await;
-        let json = out.unwrap_or_else(|_| b"null".to_vec());
-        return ([(header::CONTENT_TYPE, "application/json")], json).into_response();
-    }
-    run_reply(run::rows().await).into_response()
+async fn run_rows() -> Result<Json<serde_json::Value>, Response> {
+    run_reply(run::rows().await)
 }
 
 fn run_reply<T>(got: Result<T, String>) -> Result<Json<T>, Response> {

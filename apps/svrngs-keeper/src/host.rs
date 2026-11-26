@@ -1,10 +1,7 @@
-//! Read local listeners, how this account's listener was started, and
-//! whether a started program answers.
+//! Read local listeners, and whether a started program answers.
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
-#[cfg(target_os = "linux")]
-use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 #[cfg(target_os = "linux")]
@@ -12,7 +9,7 @@ use crate::promote::{Listen, listens};
 #[cfg(target_os = "macos")]
 mod mac;
 #[cfg(target_os = "macos")]
-pub use mac::{busy, listeners, owns, started};
+pub use mac::{busy, listeners, owns};
 #[cfg(target_os = "linux")]
 pub use ss as listeners;
 
@@ -42,30 +39,6 @@ pub fn busy(port: u16) -> Result<Option<String>, String> {
             .unwrap_or_else(|| "another program".into())
     }))
 }
-
-/// How this account's process `pid` was started: its arguments, from
-/// `/proc/<pid>/cmdline`, and its folder, `/proc/<pid>/cwd`. Its arguments
-/// can hold a secret (`--api-key`), so they are returned, never traced.
-#[cfg(target_os = "linux")]
-pub fn started(pid: u32) -> Result<(Vec<String>, PathBuf), String> {
-    use std::os::unix::fs::MetadataExt;
-    let at = |file: &str| format!("/proc/{pid}/{file}");
-    let uid = |path: &str| {
-        std::fs::metadata(path)
-            .map(|m| m.uid())
-            .map_err(|e| format!("{path}: {e}"))
-    };
-    if uid(&at(""))? != uid("/proc/self")? {
-        tracing::debug!(pid, "host:started another account's");
-        return Err(THEIRS.into());
-    }
-    let argv = crate::promote::cmdline(&std::fs::read(at("cmdline")).map_err(|e| e.to_string())?)?;
-    let folder = std::fs::read_link(at("cwd")).map_err(|e| format!("its folder: {e}"))?;
-    Ok((argv, folder))
-}
-
-/// Why another account's process is not read.
-pub const THEIRS: &str = "another account runs it, and svrngs reads only how your own programs were started";
 
 #[expect(
     clippy::disallowed_methods,

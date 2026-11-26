@@ -47,10 +47,11 @@ A program you started yourself is shared only while it runs. Its line
 under **What you lend** says so: *"House can open it only while it's
 running. svrngs can keep it running, even after a restart."*
 
-1. Press **Keep it running**. svrngs shows the command you started it with
-   and its folder; open **Change** to edit them. Where it can't read them,
-   such as a program another account runs, fill them in. Use full paths: it
-   runs without your terminal's settings.
+1. Press **Keep it running**, then type the command you started it with,
+   such as `/opt/homebrew/bin/llama-server --model /Users/sam/smol.gguf
+   --port 8102`, and the folder you started it from. svrngs doesn't read
+   them from your program. Use full paths: it runs without your terminal's
+   settings.
 2. Quit the copy you started, then press **Start**. svrngs never stops your
    copy for you.
 

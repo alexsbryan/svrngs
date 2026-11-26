@@ -16,14 +16,11 @@ use svrngs_keeper::systemd::SystemdUser;
 #[cfg(target_os = "linux")]
 mod container_run;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-mod facts;
-#[cfg(any(target_os = "linux", target_os = "macos"))]
 mod native_run;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
        svrngs-keeper run <name> --port <port> [--folder <folder>] [--json] -- <command>
        svrngs-keeper run <name> --port <port> --card <compose.yaml> [--json]
-       svrngs-keeper facts <port> [--name <name>]
        svrngs-keeper list [--json]
        svrngs-keeper stop|start|restart|remove <name>
 
@@ -35,8 +32,6 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
   unless --name gives one. The same card again changes nothing; a new one
   replaces it, and the one before is kept beside it as previous.yaml.
 
-  facts: the command and folder the program on <port> was started with, as
-  JSON, to review: read only for a program of your own account.
   list: each card kept here, and whether it runs.
   stop: stop it until you start it, including after signing in. start: run it again.
   restart: restart it if it is running.
@@ -90,8 +85,6 @@ fn places() -> anyhow::Result<Places> {
 fn run(args: &[String]) -> anyhow::Result<()> {
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
     match args.as_slice() {
-        ["facts", port] => return at_port(port, None),
-        ["facts", port, "--name", name] => return at_port(port, Some(name)),
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         ["run", name, rest @ ..] => return native_run::run(name, rest),
         #[cfg(target_os = "linux")]
@@ -106,20 +99,6 @@ fn run(args: &[String]) -> anyhow::Result<()> {
     {
         run_card(&SystemdUser::system(), &places()?, &args)
     }
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn at_port(port: &str, name: Option<&str>) -> anyhow::Result<()> {
-    let port = port
-        .parse::<std::num::NonZeroU16>()
-        .context("give a port from 1 to 65535")?;
-    let name = name.map(Name::new).transpose()?;
-    json(&facts::read(port.get(), name.as_ref().map(Name::as_str)))
-}
-
-#[cfg(not(any(target_os = "linux", target_os = "macos")))]
-fn at_port(_: &str, _: Option<&str>) -> anyhow::Result<()> {
-    anyhow::bail!("facts needs Linux or macOS to read listeners and suggest a command")
 }
 
 #[cfg(target_os = "macos")]
@@ -154,7 +133,7 @@ fn run_agent(places: &Places, args: &[&str]) -> anyhow::Result<()> {
             .map_err(anyhow::Error::msg)?;
             println!("{}: {verb} requested", name.as_str());
         }
-        _ => anyhow::bail!("on this Mac, use run, facts, list, stop, start, restart or remove"),
+        _ => anyhow::bail!("on this Mac, use run, list, stop, start, restart or remove"),
     }
     Ok(())
 }
@@ -207,7 +186,7 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
             );
             Ok(())
         }
-        _ => anyhow::bail!("the commands are run, keep, facts, list, stop, start, restart and remove"),
+        _ => anyhow::bail!("the commands are run, keep, list, stop, start, restart and remove"),
     }
 }
 

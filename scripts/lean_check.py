@@ -10,9 +10,9 @@
    `RefCell`, its path spelled any way (#195), in a crate's product code
    (ownership is a tree); no `async` in svrngs-core (it is synchronous).
    One `unsafe` a home: every product crate root (crates/*/src/lib.rs and
-   main.rs, web/src/lib.rs, Keeper's) denies `unsafe_code`, and no source
-   there exempts code from it but one function in each of `UNSAFE_HOMES`:
-   libproc's read of sockets, a Mac's process arguments (DESIGN §5).
+   main.rs, web/src/lib.rs, Keeper's) denies `unsafe_code`, so the compiler
+   refuses any other, and no source there exempts code from it but one
+   function in each of `UNSAFE_HOMES`, libproc's read of sockets (DESIGN §5).
 4. Lines of code — not blank, not a comment, not a test — stay under the
    caps `BUDGET` holds below, their one home (#197), scripts included. The
    budget counts the product: apps/, installed packages (any
@@ -29,8 +29,8 @@ from pathlib import Path
 TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
 ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
-# The files whose one function each may allow `unsafe_code` (uid.rs `kernel`, mac.rs `procargs`).
-UNSAFE_HOMES = {"crates/svrngs-node/src/uid.rs", "apps/svrngs-keeper/src/host/mac.rs"}
+# The files whose one function each may allow `unsafe_code` (uid.rs `kernel`).
+UNSAFE_HOMES = {"crates/svrngs-node/src/uid.rs"}
 # The pure availability decision and renderer, not the executor beside them.
 PLAN_PURE = {"crates/svrngs-node/src/plan.rs", "crates/svrngs-node/src/plan/words.rs"}
 PLAN_IO = re.compile(
@@ -1172,12 +1172,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # The operator approved +4 (2026-11-25) for approve's `keep: true`, refused unless svrngs keeps what answers, so the page approves nothing the person didn't see but svrngs's own job. Its pass cut 1 (the route's `named`); nothing else in the touched files was needless. 28,676; the page's guess goes, JS 8,873.
 # The found row's lend said in fewer words (2026-11-25): the review alone, its sends and kept-back paths as data for the page's Details, no terms-first step (home.rs `drawn` gone): 28,655; the drawn message one patch, the lend's row opened by its focus: JS 8,871.
 # Its review shows its groups' own rows, by whom, in Details (2026-11-25): +6 paid by cutting needless lines in lend_one (the groups' names, the name-taken check) and LEND's two let-go patches made one: 28,649; JS 8,865.
+# Keep it running reads nothing of how a program was started (2026-11-25): the /run?prefill route and the page's fill-in go: 28,641; JS 8,845.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 28650,
+    ".": 28642,
 
-    "js": 8866,
+    "js": 8846,
 
     "swift": 1,
 }

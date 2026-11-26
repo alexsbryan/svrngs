@@ -1986,11 +1986,11 @@ static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 /// A stand-in llama-server started by hand, found and lent from the page,
 /// its fields filled with the name svrngs's table knows it by; its lend's
-/// row offers to keep it running, and Keep it running shows the keeper's
-/// suggestion, the very command and folder it was started with (Keeper
-/// reads them from /proc), behind a Change fold too
-/// (web/tests/run-prefill.mjs). Nothing starts until Start; Start, the
-/// hand-started copy still on the port, is refused and leaves it alone.
+/// row offers to keep it running, and Keep it running asks its command and
+/// folder, both empty while the copy runs: svrngs reads nothing of how it
+/// was started (web/tests/run-prefill.mjs). The person types them. Nothing
+/// starts until Start; Start, the hand-started copy still on the port, is
+/// refused and leaves it alone.
 /// Plant: `SVRNGS_PREFILL_PLANT=start` presses Start before the count of
 /// Run's posts is read.
 #[cfg(target_os = "linux")]
@@ -2012,8 +2012,7 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
     std::fs::copy("/usr/bin/python3", &executable).unwrap();
     drop(held);
     let tail = format!("-u -m http.server {port} --bind 127.0.0.1");
-    // What Keeper should read back: this argv, shlex-joined. The temporary
-    // folder's name holds nothing shlex quotes, so the join is plain spaces.
+    // What the person types: the command she started it with.
     let command = format!("{} {tail}", executable.display());
     let mut listener = by_hand(&executable)
         .args(tail.split(' '))
@@ -2054,11 +2053,10 @@ async fn run_prefill_waits_for_confirmation_in_webkit() {
 // driver. No test in the standard browser suite touches a login manager.
 /// Ada starts a page by hand, finds it under Already running here and lends
 /// it to house; its lend's row offers to keep it running. Keep it running
-/// shows the command and folder her copy was started with, as Keeper reads
-/// them (`svrngs-keeper facts`); she changes them under Change, and Start
-/// is refused while her copy holds the port, leaving it alone. She quits
-/// it, so nothing is there to read: Keep it running asks the two fields,
-/// and Start runs it as the lend's name and port. What answers then is
+/// asks the command and folder, empty though her copy runs; she types them,
+/// and Start is refused while her copy holds the port, leaving it alone.
+/// She quits it; Keep it running asks the two fields again, and Start runs
+/// it as the lend's name and port. What answers then is
 /// svrngs's job for the lend, so the page approves it at once (keep-running.js
 /// `carry`): the lend is kept to that unit, through restarts. Stop and
 /// Start under Already running here write no lend, and Bo then opens it,
@@ -2103,9 +2101,6 @@ async fn share_then_keep_it_running_in_webkit() {
     // Ada's own copy, as a terminal starts it (`by_hand`): its first line
     // says it serves.
     let own_tail = format!("-u -m http.server {port} --bind 127.0.0.1");
-    // What Keep it running shows of it, Keeper's shlex join of its argv in
-    // its folder: nothing in either needs quoting, so plain spaces.
-    let started = format!("/usr/bin/python3 {own_tail} in {}", site.display());
     let mut own = by_hand(Path::new("/usr/bin/python3"))
         .args(own_tail.split(' '))
         .current_dir(&site)
@@ -2135,14 +2130,19 @@ async fn share_then_keep_it_running_in_webkit() {
                 [format!("{row} input[type=checkbox]"), true],
                 act(&format!("{row} button"), "Yes, lend it"),
                 act(&format!("{row} button"), "Lent to"),
-                act(&format!("{offer} button:has-text('Keep it running')"), &started),
-                [format!("{offer} summary:has-text('Change')"), null, "opens"],
+                act(&format!("{offer} button:has-text('Keep it running')"), "Quit the copy you started"),
+                [format!("{offer} input"), null, "reads"],
                 fill("command", &cmd), fill("folder", site.to_str().unwrap()),
                 act(&format!("{offer} button:has-text('Start')"), "is in use by"),
             ],
         }),
     )
     .await;
+    assert_eq!(
+        busy["values"],
+        json!([["", ""]]),
+        "nothing filled in while her copy runs: {busy:#}"
+    );
     println!("WebKit refused Start: {}", busy["after"]);
     assert!(
         own.try_wait().unwrap().is_none(),

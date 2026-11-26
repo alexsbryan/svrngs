@@ -3,9 +3,9 @@
 // `Lent`), and KEEP, its machine. It is made where /lent says the lend is
 // shared only while its program runs, by its port (plan/words.rs
 // `shared_while`: a lend kept to no job's restarts, so not one whose
-// approval follows svrngs's copy). Keep it running asks what svrngs would
-// start it with (GET /run?prefill=<port>, as the person's copy was), shown with a
-// fold to change it, or two fields to fill where nothing could be said.
+// approval follows svrngs's copy). Keep it running asks the command and
+// folder the person started it with, two empty fields: svrngs never reads
+// how a program was started, since its arguments can hold a secret.
 // Start runs it under the lend's own name and port (POST /run): the keeper
 // refuses while the person's own copy holds the port, and stops nothing.
 // Once svrngs's copy answers, the lend is held for it, as for anything not
@@ -24,34 +24,27 @@ import { get, post } from './routes.js?v=__VERSION__';
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
- * The offer's state: where it is; the command and folder, as svrngs said
- * them or as typed, and whether svrngs said them; and what was said last.
+ * The offer's state: where it is; the command and folder as typed; and
+ * what was said last.
  * @typedef {object} State
- * @property {{ keep: 'offered' | 'filling' | 'asked' | 'starting' | 'started' }} at
+ * @property {{ keep: 'offered' | 'asked' | 'starting' | 'started' }} at
  * @property {Record<string, number>} [asked]
  * @property {string} [command]
  * @property {string} [folder]
- * @property {boolean} [filled]
  * @property {string} [said]
  */
 
 /**
- * The messages it takes: Keep it running pressed; the command and folder
- * said, or not; one typed; Start pressed; it started, with what was said,
- * or refused, with why.
+ * The messages it takes: Keep it running pressed; the command or folder
+ * typed; Start pressed; it started, with what was said, or refused, with why.
  * @typedef {{ type: 'keep' }
- *   | { type: 'filled', command: string, folder: string, why: string }
- *   | { type: 'unfilled', why: string }
  *   | { type: 'typed', field?: string, value: string }
  *   | { type: 'start' }
  *   | { type: 'started', said: string, why: string }
  *   | { type: 'refused', why: string }} Message
  */
 
-/**
- * @typedef {{ run: 'fill', failed: 'unfilled' }
- *   | { run: 'start', command: string, folder: string, failed: 'refused' }} Effect
- */
+/** @typedef {{ run: 'start', command: string, folder: string, failed: 'refused' }} Effect */
 
 // What answers on `name`'s port once svrngs's copy does, approved by the
 // token /lent lists it with only as the job svrngs keeps (`keep: true`;
@@ -83,14 +76,8 @@ const carry = async (name, home) => {
  * @returns {Machine<State, Message, Effect>}
  */
 const KEEP = ({ name, sharing: port }, home) => ({
-  states: { keep: ['offered', 'filling', 'asked', 'starting', 'started'] },
+  states: { keep: ['offered', 'asked', 'starting', 'started'] },
   io: {
-    fill: () =>
-      get(`/run?prefill=${port}`).then((got) =>
-        got?.kind === 'prefill' && got.port === port
-          ? { type: 'filled', command: got.command, folder: got.folder, why: 'svrngs said them' }
-          : { type: 'unfilled', why: got?.why ?? 'svrngs has nothing to say of it' },
-      ),
     start: async ({ command, folder }) => {
       const said = await post('/run', { name, port, folder, command });
       const { refused, why } = await carry(name, home);
@@ -101,14 +88,6 @@ const KEEP = ({ name, sharing: port }, home) => ({
     switch (message.type) {
       case 'keep':
         if (state.at.keep !== 'offered') return no(state, `it is ${state.at.keep}`);
-        return go(state, { keep: 'filling' }, {}, { run: 'fill', failed: 'unfilled' });
-      case 'filled':
-        return go(
-          state,
-          { keep: 'asked' },
-          { command: message.command, folder: message.folder, filled: true },
-        );
-      case 'unfilled':
         return go(state, { keep: 'asked' });
       case 'typed':
         return go(state, {}, { [message.field ?? 'command']: message.value, said: '' });
@@ -145,23 +124,17 @@ const after = (lend, who) => {
 
 /** @typedef {{ state: State, doing: { state: string }, send: (message: Message) => void }} StepProps */
 
-// The step Start asks in: the command and folder svrngs said, a fold to
-// change them, or the two fields to fill where it said none; then what to
-// do first, Start, and what was said.
-/** @param {StepProps} props */
-function Ask({ state, doing, send }) {
-  // The two fields Start sends besides the lend's own name and port.
-  const fields = html`
-    <${Field} name="command" words="Command you start it with: " value=${state.command ?? ''} send=${send} />
-    <${Field} name="folder" words="Folder it starts in: " value=${state.folder ?? ''} send=${send} />
-  `;
+// The step Start asks in: the two fields Start sends besides the lend's
+// own name and port, empty, the command's example made of the lend's
+// program, where its kind is one word, and port; then what to do first,
+// Start, and what was said.
+/** @param {StepProps & { lend: Lend & { sharing?: number } }} props */
+function Ask({ state, doing, send, lend }) {
+  const program = /^[\w.+-]+$/.test(lend.kind) ? lend.kind : lend.name;
+  const example = { placeholder: `${program} --port ${lend.sharing}` };
   return html`
-    ${
-      state.filled
-        ? html`<p><code>${state.command}</code> in <code>${state.folder}</code></p>
-          <details><summary>Change</summary>${fields}</details>`
-        : fields
-    }
+    <${Field} name="command" words="The command you started it with: " value=${state.command ?? ''} attrs=${example} send=${send} />
+    <${Field} name="folder" words="The folder you started it from: " value=${state.folder ?? ''} send=${send} />
     <p>Quit the copy you started, then press Start.
       <${Act} words="Start" doing=${doing} on=${{ type: 'start' }} send=${send} /></p>
     <p role="status">${state.said}</p>
@@ -181,11 +154,11 @@ export function KeepRunning({ lend, who, home }) {
   const at = state.at.keep;
   if (at === 'started') return html`<p role="status">${state.said}${after(lend, who)}</p>`;
   if ((lend.sharing ?? 0) === 0) return null;
-  const doing = { state: at === 'filling' || at === 'starting' ? 'busy' : 'idle' };
+  const doing = { state: at === 'starting' ? 'busy' : 'idle' };
   const offer = html`<p>${who && `${who} can open it only while it’s running. `}svrngs can keep it running, even after a restart.
     <${Act} words="Keep it running" doing=${doing} on=${{ type: 'keep' }} send=${send} /></p>`;
   const asked = at === 'asked' || at === 'starting';
   return html`<div role="group" aria-label=${lend.name}>
-    ${asked ? html`<${Ask} state=${state} doing=${doing} send=${send} />` : offer}
+    ${asked ? html`<${Ask} state=${state} doing=${doing} send=${send} lend=${lend} />` : offer}
   </div>`;
 }

@@ -404,9 +404,9 @@ test('a program found that svrngs knows by name has its fields filled, and lendi
 // A lend shared only while its program runs (home.rs `lent`'s `sharing`,
 // its port; plan/words.rs `shared_while`) offers, under its line, to have
 // svrngs keep it running: one sentence and Keep it running, read from /lent
-// alone. Pressed, it shows the command svrngs would start it with and its
-// folder (GET /run?prefill=<port>, as the copy was started), a fold to change
-// them, and Start, posted with the lend's own name and port (home.rs
+// alone. Pressed, it asks the command and folder, empty: nothing is read of
+// the running copy, the command's example made of its kind and port. Then
+// Start, posted with the lend's own name and port (home.rs
 // `run_one`). What then answers is held, a job named for the lend (job.rs
 // `of`), approved at once by the token /lent lists it with, asked only as
 // the job svrngs keeps (`keep: true`, surface.rs `approve`), and the list
@@ -420,13 +420,6 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
   const posted = [];
   const at = await home({
     ...ada({ lent: [notes] }),
-    [`GET /run?prefill=${port}`]: {
-      kind: 'prefill',
-      port,
-      name: 'llama-server',
-      folder: '/Users/ada/models',
-      command,
-    },
     ...changing(
       { lent: [notes], sharing: { notes: port } },
       {
@@ -454,12 +447,17 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
     'house can open it only while it’s running. svrngs can keep it running, even after a restart.';
   assert.deepEqual(at.text('#lent li [role=group]'), [`${offer}Keep it running`]);
   await at.press('#lent li button', 'Keep it running');
-  assert.deepEqual(at.text('#lent li [role=group] code'), [command, '/Users/ada/models']);
-  assert.deepEqual(at.text('#lent li [role=group] summary'), ['Change']);
+  const inputs = () => at.all('#lent li [role=group] input');
   assert.deepEqual(
-    at.all('#lent li [role=group] input').map((input) => input.value),
-    [command, '/Users/ada/models'],
+    inputs().map((input) => [input.value, input.getAttribute('placeholder')]),
+    [
+      ['', `llama-server --port ${port}`],
+      ['', null],
+    ],
+    'nothing is filled in',
   );
+  await at.type('#lent li [role=group] input[name=command]', command);
+  await at.type('#lent li [role=group] input[name=folder]', '/Users/ada/models');
   assert.ok(row().includes('Quit the copy you started, then press Start.'), row());
   assert.deepEqual(posted, [], 'nothing started before Start');
   await at.press('#lent li [role=group] button', 'Start');
@@ -479,8 +477,8 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
 // unit (uid.rs `shown`): asked to be approved the same way, by the token
 // /lent lists and only as the job svrngs keeps, which there is the launch
 // agent svrngs runs the lend under (job/mac.rs `kept`), so the list read
-// again shares it no longer only while it runs. Where svrngs said no
-// command, the person types it and its folder; Start with one empty says so, a refusal, the
+// again shares it no longer only while it runs. The person types the
+// command and its folder; Start with one empty says so, a refusal, the
 // person's own copy on the port (svrngs-keeper native_run.rs `run`), is
 // said in one line, Start still there, and Start then says Starting… until
 // the keeper answers.
@@ -494,11 +492,6 @@ test('Start with typed fields carries over a Mac job’s process', async () => {
   let answer = () => {};
   const at = await home({
     ...ada({ lent: [notes] }),
-    [`GET /run?prefill=${port}`]: {
-      kind: 'unavailable',
-      port,
-      why: 'no known program is listening',
-    },
     ...changing(
       { lent: [notes], sharing: { notes: port }, tries: 0 },
       {
@@ -523,9 +516,8 @@ test('Start with typed fields carries over a Mac job’s process', async () => {
     ),
   });
   await at.press('#lent li button', 'Keep it running');
-  assert.deepEqual(at.text('#lent li [role=group] code'), [], 'nothing to show');
   const labels = at.all('#lent li [role=group] label').map(words);
-  assert.deepEqual(labels, ['Command you start it with:', 'Folder it starts in:']);
+  assert.deepEqual(labels, ['The command you started it with:', 'The folder you started it from:']);
   await at.press('#lent li [role=group] button', 'Start');
   assert.deepEqual(at.text('#lent li [role=status]'), ['Fill in both, then press Start.']);
   await at.type('#lent li [role=group] input[name=command]', 'python3 -m http.server 21000');
@@ -563,7 +555,6 @@ test('Start leaves Keep sharing it to press where what answers is no job svrngs 
   const posted = [];
   const at = await home({
     ...ada({ lent: [notes] }),
-    [`GET /run?prefill=${port}`]: { kind: 'unavailable', port, why: 'none' },
     ...changing(
       { lent: [notes], sharing: { notes: port } },
       {

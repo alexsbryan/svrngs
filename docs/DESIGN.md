@@ -229,9 +229,10 @@ manager state and port readiness separately (`native_run.rs`); neither
 read approves sharing. On the home page a program is run from its lend:
 a lend shared only while it runs (`plan::shared_while`: a port kept to no
 job's restarts, so not one whose approval follows the keeper's copy)
-offers Keep it running. It asks only the command and folder, prefilled from
-the read-only `/run?prefill=<port>` (the keeper's llama-server
-suggestion, when available) and changed by the person, and Start posts
+offers Keep it running. It asks the command and folder, which the person
+types: svrngs never reads how a running program was started, since its
+arguments can hold a secret and no program's are read the same way on
+every computer. Start posts
 `/run` with the lend's own name and port; the keeper parses quoting
 without running a shell, and refuses a port another program holds. A
 found listener's row only lends it. Once Run verifies the program, the
@@ -2364,15 +2365,12 @@ the command and the app. Every decision branch traces at debug. New code is
 held to these from its first line; forked code is held to them as it becomes
 ours. Upstream's shape stays until a change replaces it: the node's map of
 open journals sits behind a `Mutex`, which an actor per journal replaces.
-No `unsafe` but two functions': every product crate root, Keeper's
-included, denies `unsafe_code`, so the compiler refuses any other. One
-function allowed it asks a Mac's libproc whose sockets this account's
-processes hold (`svrngs-node` `uid.rs`, `kernel`); the other asks a Mac's
-kernel the arguments one of this account's programs was started with, which
-no command gives apart (`svrngs-keeper` `host/mac.rs`, `procargs`). Each
-condition of each call is said beside it; `lean_check` refuses an exemption
-anywhere else. This holds svrngs's
-own code, not its dependencies.
+No `unsafe` but one function's: every product crate root, Keeper's
+included, denies `unsafe_code`, so the compiler refuses any other, and the
+one function allowed it asks a Mac's libproc whose sockets this account's
+processes hold (`svrngs-node` `uid.rs`, `kernel`), each condition of each
+call said beside it; `lean_check` refuses an exemption anywhere else. This
+holds svrngs's own code, not its dependencies.
 
 | Invariant | Held by | State |
 |---|---|---|

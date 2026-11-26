@@ -30,10 +30,6 @@ thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
-# A Mac's read of how a listener was started (src/host/mac.rs `procargs`).
-[target.'cfg(target_os = "macos")'.dependencies]
-libc = "0.2"
-
 [dev-dependencies]
 # The forked systemd tests' scratch folder (src/systemd/tests.rs).
 tempfile = "3"

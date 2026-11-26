@@ -1,14 +1,14 @@
 // Browser half of run_prefill_waits_for_confirmation_in_webkit: a stand-in
 // llama-server, started by hand, is found and lent, its fields filled with
 // the name svrngs's table knows it by; its lend's row offers to keep it
-// running, and Keep it running shows the command it was started with and
-// its folder, the keeper's suggestion, behind a Change fold too; nothing
-// is started until Start, and Start, with the hand-started copy still on
-// the port, is refused, the copy left alone.
+// running, and Keep it running asks its command and folder, both empty
+// while the copy runs: svrngs reads nothing of how it was started. The
+// person types them; nothing is started until Start, and Start, with the
+// hand-started copy still on the port, is refused, the copy left alone.
 import assert from 'node:assert/strict';
 import { launch } from './page.mjs';
 
-const { engine, ask, port, folder, command: started, plant } = JSON.parse(process.argv[2]);
+const { engine, ask, port, folder, command, plant } = JSON.parse(process.argv[2]);
 const { context, close } = await launch(engine);
 try {
   await context.addInitScript(() => {
@@ -47,14 +47,11 @@ try {
 
   const offer = page.locator("#lent [role=group][aria-label='llama-server']");
   await offer.getByRole('button', { name: 'Keep it running' }).click();
-  const shown = offer.locator('code');
-  await shown.first().waitFor();
-  const [command, at] = await shown.allTextContents();
-  assert.equal(command, started);
-  assert.equal(at, folder);
-  await offer.locator('summary', { hasText: 'Change' }).click();
-  assert.equal(await offer.locator('input[name=command]').inputValue(), command);
-  assert.equal(await offer.locator('input[name=folder]').inputValue(), folder);
+  const fields = ['command', 'folder'].map((name) => offer.locator(`input[name=${name}]`));
+  for (const field of fields) assert.equal(await field.inputValue(), '', 'nothing filled in');
+  assert.equal(await offer.locator('code, details').count(), 0, 'nothing shown to change');
+  await fields[0].fill(command);
+  await fields[1].fill(folder);
   if (plant === 'start') await offer.getByRole('button', { name: 'Start' }).click();
   assert.equal(await page.evaluate(() => window.runPosts), 0, 'started without a press of Start');
 

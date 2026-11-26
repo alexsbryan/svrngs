@@ -23,20 +23,16 @@ svrngs crate and no Give (`tests/surface.rs`).
   at background priority (`Nice=10`) with the spike's settings:
   `Restart=on-failure`, `RestartSec=2`, at most 4 starts in 60 s,
   `SuccessExitStatus=143`, `WantedBy=default.target`.
-- `src/host.rs`: reads Linux listeners with `ss`, and how one of your own
-  programs was started from `/proc/<pid>/cmdline` and `cwd`; on a Mac
-  (`src/host/mac.rs`), `lsof`, `ps` and the kernel's `KERN_PROCARGS2`, in
-  Keeper's one `unsafe` function.
-- `src/promote.rs` and `src/facts.rs`: read those for the person to review
-  as the command and folder Keeper would run. They read no environment,
-  adopt no listener, and read nothing of another account's program.
+- `src/host.rs` and `src/promote.rs`: read which program holds a port,
+  with `ss` on Linux and `lsof`, `ps` and `netstat` on a Mac
+  (`src/host/mac.rs`). Keeper never reads how a program was started: you
+  give `run` its command and folder.
 - `src/kept.rs` and `src/main.rs`: the `svrngs-keeper` command.
 
 ## The command
 
 ```
 svrngs-keeper keep [--name <name>] <card>   # a native card, run here for good
-svrngs-keeper facts <port> [--name <name>]
 svrngs-keeper list [--json]
 svrngs-keeper stop <name>                   # until you start it, at boot too
 svrngs-keeper start <name>                  # clears a failed unit's start limit
@@ -57,16 +53,7 @@ or with no terminal to ask in, the unit starts at login.
 linger on, under the real user manager: kill -9 brings it back, `stop`
 stays stopped, `remove` leaves its data, and `keep` twice resets nothing.
 
-`facts` is read-only. When one program of your own listens on the port,
-it returns `kind: prefill` with the port, a name (`--name`, else the
-program's), the folder it runs in and the command it was started with,
-each argument quoted as you'd type it; else `kind: unavailable` with why.
-Its arguments can hold a secret, such as `--api-key`; they go only to your
-own home page and the settings Keeper saves on this computer, and its
-debug trace names only the program and how many arguments it has. Stop
-the copy you started yourself before running it. `tests/promote.rs`
-checks the listener parser, the argument readers and a real listener's
-command and folder read back.
+`tests/promote.rs` checks the listener parser.
 
 Give's tests exercise its runtime through Give's names (`../give/tests`).
 The queue that grows it is `ralph/next/keeper/STATE.md`.
