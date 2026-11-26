@@ -1,4 +1,0 @@
-reset 22:37:48; clean for 180 s
-{"emitRawPii": "on", "paymentFailure": "50%", "productCatalogFailure": {"if": [{"==": [{"var": "product_id"}, "OLJCESPC7Z"]}, "off", "off"]}}
-on 22:40:48; showing for 240 s
-ready 22:44:48

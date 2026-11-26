@@ -1,9 +1,0 @@
-time="2026-11-26T10:27:36-08:00" level=warning msg="StopSignal SIGTERM failed to stop container frontend-proxy in 5 seconds, resorting to SIGKILL"
-time="2026-11-26T10:27:42-08:00" level=warning msg="StopSignal SIGTERM failed to stop container payment in 5 seconds, resorting to SIGKILL"
-time="2026-11-26T10:27:47-08:00" level=warning msg="StopSignal SIGTERM failed to stop container product-catalog in 5 seconds, resorting to SIGKILL"
-time="2026-11-26T10:27:52-08:00" level=warning msg="StopSignal SIGTERM failed to stop container recommendation in 5 seconds, resorting to SIGKILL"
-time="2026-11-26T10:27:58-08:00" level=warning msg="StopSignal SIGTERM failed to stop container load-generator in 5 seconds, resorting to SIGKILL"
-reset 18:28:04; clean for 180 s
-{"emitRawPii": "on", "productCatalogFailure": {"if": [{"==": [{"var": "product_id"}, "OLJCESPC7Z"]}, "on", "off"]}}
-on 18:31:04; showing for 240 s
-ready 18:35:04

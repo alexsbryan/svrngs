@@ -1,3 +1,0 @@
-{"arm":"P","markers":9,"marker_kinds":{"emails":1,"card_like":0,"other":8},"bytes_read":1608901,"leaked":0,"leaked_kinds":{"emails":0,"card_like":0,"other":0}}
-passed     none of 9 personal values in the P arm
-failed     8 of 9 personal values in the R arm

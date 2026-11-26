@@ -1,7 +1,0 @@
-# The clinic's fresh server, for rehearsal: Fedora 45 with systemd as init,
-# Node for the site tool, and one unprivileged admin account. Nothing of the
-# vendor's service is in it; the recipe brings that.
-FROM registry.fedoraproject.org/fedora-toolbox:45
-RUN dnf -y install systemd nodejs procps-ng iproute && dnf clean all \
- && useradd -m admin && systemctl set-default multi-user.target
-CMD ["/usr/lib/systemd/systemd"]

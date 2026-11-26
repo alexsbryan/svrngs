@@ -1,4 +1,0 @@
-reset 23:23:44; clean for 180 s
-{"emitRawPii": "on", "intlShippingSlowdown": "10sec", "productCatalogFailure": {"if": [{"==": [{"var": "product_id"}, "OLJCESPC7Z"]}, "off", "off"]}}
-on 23:26:44; showing for 240 s
-ready 23:30:44

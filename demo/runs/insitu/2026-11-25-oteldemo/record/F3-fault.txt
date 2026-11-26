@@ -1,4 +1,0 @@
-reset 22:55:01; clean for 180 s
-{"emitRawPii": "on", "productCatalogFailure": {"if": [{"==": [{"var": "product_id"}, "OLJCESPC7Z"]}, "off", "off"]}, "recommendationCacheFailure": "on"}
-on 22:58:01; showing for 240 s
-ready 23:02:01

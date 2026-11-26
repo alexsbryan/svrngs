@@ -1,9 +1,0 @@
-time="2026-11-26T10:46:33-08:00" level=warning msg="StopSignal SIGTERM failed to stop container frontend-proxy in 5 seconds, resorting to SIGKILL"
-time="2026-11-26T10:46:38-08:00" level=warning msg="StopSignal SIGTERM failed to stop container payment in 5 seconds, resorting to SIGKILL"
-time="2026-11-26T10:46:44-08:00" level=warning msg="StopSignal SIGTERM failed to stop container recommendation in 5 seconds, resorting to SIGKILL"
-time="2026-11-26T10:46:49-08:00" level=warning msg="StopSignal SIGTERM failed to stop container load-generator in 5 seconds, resorting to SIGKILL"
-reset 18:46:56; clean for 180 s
-{"emailMemoryLeak": "1000x", "emitRawPii": "on", "productCatalogFailure": {"if": [{"==": [{"var": "product_id"}, "OLJCESPC7Z"]}, "off", "off"]}}
-on 18:49:56; showing for 240 s
-ready 18:53:56
-agents may start 18:59:28
