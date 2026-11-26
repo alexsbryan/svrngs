@@ -5,21 +5,15 @@
 // as it is typed (#138), each name asked of `GET /group` counted, so an
 // older answer is refused by name (`late`) and a slow answer never speaks
 // of a name typed over. Pressed, a second press is refused while it makes;
-// made, HOME says so, and again whose namesakes there are (`take`), and
-// reads the groups again, and the form is empty again; a refusal is said
-// beside the button once, the last in place of the one before.
+// made, HOME says so, and again whose namesakes there are, and reads the
+// groups again (its `again`, with `?made=`), and the form is empty again;
+// a refusal is said beside the button once, the last in place of the one
+// before.
 import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { namesakes } from '../question.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
-/** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
+/** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
-
-/**
- * HOME's message this file takes: a group made, by its name, the groups
- * of its name said, and why its folder could not be made, `null` when it
- * was.
- * @typedef {{ type: 'made', flow: 'make', q: { made: string, also: string, unplaced: string | null } }} Taken
- */
 
 /**
  * The form's state: where its make is, the names typed, what is said below
@@ -70,13 +64,10 @@ export const MAKE = (home) => ({
         )
         .then((words) => ({ type: 'checked', n: serial, words })),
     make: ({ name, person }) =>
+      // The group made, by its name, the groups of its name said, and why
+      // its folder could not be made, `null` when it was.
       post('/group', [name, person]).then(([made, unplaced, beside]) => {
-        home({
-          type: 'made',
-          flow: 'make',
-          q: { made, also: namesakes(beside, made, 'This is'), unplaced },
-        });
-        home({ type: 'again' });
+        home({ type: 'again', q: { made, also: namesakes(beside, made, 'This is'), unplaced } });
         return { type: 'made', why: 'said, the groups read again' };
       }),
   },
@@ -116,10 +107,3 @@ export const MAKE = (home) => ({
     }
   },
 });
-
-/**
- * @param {HOME.State} state
- * @param {Taken} message
- * @returns {Step<HOME.State, HOME.Effect>}
- */
-export const take = (state, message) => go(state, { said: 'made' }, { q: message.q });

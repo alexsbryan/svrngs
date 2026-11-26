@@ -3,6 +3,13 @@ use super::*;
 use crate::tests_support::key;
 
 impl Pass {
+    /// Whether this pass, presented by `holder` at `now` with no link,
+    /// opens `lend`, its app or one of its reads, as the door asks it
+    /// ([`crate::authority::resolve`]).
+    pub(crate) fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
+        crate::authority::resolve(self, None, holder, lend, now, || ())
+    }
+
     /// Whether `link`, presented by `to` at `now`, carries this pass to it
     /// for `lend`, as the door asks it ([`crate::authority::resolve`]): each
     /// opens `lend` now, `link` held by `to` and signed by this pass's

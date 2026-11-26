@@ -72,10 +72,10 @@ try {
 
   // 1. Asked, and the person says yes.
   const ask = async () => {
-    await page.evaluate(
-      (url) => location.assign(url),
-      `${shelf.ask}&back=${encodeURIComponent(args.back)}`,
-    );
+    // Navigated by Playwright, which waits for it: a navigation started in
+    // page.evaluate can swap WebKit's process and close the evaluate's own
+    // context ("Target page, context or browser has been closed").
+    await page.goto(`${shelf.ask}&back=${encodeURIComponent(args.back)}`, { waitUntil: 'load' });
     await page.waitForSelector('#ask:not([hidden])', { timeout: 90_000 });
     const asked = await page.evaluate(() => ({
       heading: document.getElementById('status').textContent,

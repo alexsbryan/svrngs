@@ -90,7 +90,7 @@ test('native arrival asks the name once and offers a literal shell command witho
   assert.equal(offer.effects[0].run, 'where');
   state = parts.step(offer.state, { type: 'offered', ...offer.effects[0], page }).state;
   const line = state.line[1];
-  assert.match(line, /^curl -fsSL https:\/\/groups.example\/install.sh/);
+  assert.match(line, /^curl -fsSL https:\/\/group\.svrnme\.sh\/install\.sh/);
   const told = said(ComputerLine({ s: state }));
   assert.ok(told.startsWith('Paste this line into Terminal and press Return.'), told);
   assert.ok(told.includes('in about a minute a page opens with the group’s shared folder'), told);

@@ -24,12 +24,24 @@
 //!   person_key}`, from svrngs-core's membership (canon-spans), null while
 //!   who stands is unsettled (#124); and `page`, the page the group's https
 //!   links print on (`Host::printed_page`), null where none is kept and
-//!   `{unread}` where it cannot be read (give-page-host);
+//!   `{unread}` where it cannot be read (give-page-host), and `link`, the
+//!   link a member opens the app by, `<page>#open=<label>`, null and
+//!   `{unread}` as `page` is (MAGNETS_BUILD S7);
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
 //!   own, `op` null to void it, and absent never (#165): the prefix put on its kind
 //!   ([`svrngs_core::grant::app_act`]), signed by this computer as its own
 //!   person, and refused for any other device's, which signs its own and
 //!   carries it (`/carry`, capability-signed).
+//!
+//! - [`SQL`], the app's own database in its group (svrngs-db), opened from
+//!   the `schema.sql` that runs as the person asking: `POST {sql, params}`
+//!   one read, answered `{rows, more}`, with `syncing: true` while another
+//!   computer of the group stands and this copy hasn't synced with one in
+//!   full, or a set faulted here since; `POST {write: [op, ...]}` a write by
+//!   key, answered `{count}`, as this computer's person alone and never as
+//!   an app that reads others' lends; `GET ?q=` the read's rows as an event
+//!   stream, now and again each time they change. A refusal is
+//!   `{refused, words}`, as `apps/magnets/tests/standin.mjs` pins the route.
 //!
 //! The route answers every act each time, from no cursor: a round may
 //! place another computer's act before one already read, and a correction
@@ -41,8 +53,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
+use std::sync::Arc;
 
-use axum::body::to_bytes;
+use axum::body::{to_bytes, Body};
 use axum::extract::{Request, State};
 use axum::http::header::{self, HeaderName, HeaderValue};
 use axum::http::{Method, StatusCode};
@@ -51,9 +64,11 @@ use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Value};
 use svrngs_core::{Admission, Append, AppendRefusal, Command, Files, Op, Placed};
-use svrngs_core::{RailAct, SignedOp, SyncPath};
+use svrngs_core::{Device, RailAct, SignedOp, SyncPath};
+use svrngs_db::{Db, Refused, Set, Took};
+use tokio::sync::watch;
 
-use super::{blob::People, dirs_of, Folders};
+use super::{blob::People, dirs_of, Asker, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
 use crate::iroh::Dialer;
 use crate::lend::{AppName, Lend, Program, Source};
@@ -64,6 +79,10 @@ use crate::surface::AppRoute;
 /// Where a carried app's page asks its own acts, and writes one, at its
 /// own origin.
 pub const ACTS: &str = "/svrngs/acts";
+
+/// Where a carried app's page asks its own database in its group, and
+/// writes it, at its own origin.
+pub const SQL: &str = "/svrngs/sql";
 
 /// The most a carried app's write reads: an act's most, and its envelope.
 const WRITE_MOST: usize = svrngs_core::MAX_PAYLOAD_BYTES + 1024;
@@ -118,6 +137,11 @@ const NOT_IN: Withheld = (
     "you can bring things only to a group you’re in",
 );
 const NO_FOLDER: Withheld = (Closed, 409, "this computer keeps no folder of that group");
+const NO_SCHEMA: Withheld = (
+    Unlent,
+    404,
+    "this app keeps no database: it has no schema.sql",
+);
 const UNWRITTEN: Withheld = (Fault, 500, "your group’s folder can’t be written here");
 
 /// svrngs's own answer for `refused`.
@@ -133,8 +157,13 @@ fn traced(group: &str, refused: Withheld, why: &dyn std::fmt::Display) -> Withhe
 }
 
 /// What the door asks of a carried app: the key asking, the path asked,
-/// and the route that path names, parsed once by the door.
-pub(crate) type Opened<'a> = (&'a str, &'a str, AppRoute);
+/// the route that path names, parsed once by the door, and the kernel's
+/// verdict on a write as the app's class, asked by the door on a non-GET of
+/// the record's route, which it refuses there, and of the database's.
+pub(crate) type Opened<'a> = (&'a str, &'a str, AppRoute, Wrote);
+
+/// Whether the app may write what the group keeps (`app::writes`).
+pub(crate) type Wrote = Result<(), eudoxia_community::app::Unwritten>;
 
 /// A carried app's answer, or why the door gives its own.
 type Given = Result<Response, Withheld>;
@@ -170,6 +199,17 @@ const SHELF: &[(&str, &str, &[File])] = include!(concat!(env!("OUT_DIR"), "/shel
 
 /// A file an app brings: its name in the app's folder, and its text.
 type File = (&'static str, &'static str);
+
+/// Whether the shelf brings a file named `file` beside the app whose
+/// `index.html` is `page`, as it places that app (`brought`): its own files
+/// and svrngs's look.css, so `svrngs check` counts them present in the
+/// app's source folder too; never for a page the shelf doesn't hold.
+pub(crate) fn brings(page: &str, file: &str) -> bool {
+    let shelved = SHELF
+        .iter()
+        .find(|(.., files)| files.contains(&("index.html", page)));
+    shelved.is_some_and(|(.., files)| files.iter().any(|(f, _)| *f == file))
+}
 
 /// The shelf as the pages list it, beside what a group's people lend.
 pub(crate) fn shelf() -> Value {
@@ -464,12 +504,13 @@ impl Folders {
     /// that key stands in the group, else the route's answer or a file's;
     /// each under [`FLOOR`].
     pub(crate) async fn open(&self, lend: &Lend, at: Opened<'_>, req: Request) -> Response {
-        let (Source::Carried(app, group), (key, path, route)) = (&lend.source, at) else {
+        let (Source::Carried(app, group), (key, path, route, wrote)) = (&lend.source, at) else {
             return said(NOT_ITS_GROUP);
         };
         let answered = match self.host.rail.standing(group) {
             Ok(Standing::Members(people)) if people.contains_key(key) => match route {
                 AppRoute::Acts => self.acts((app, group), (&people, key), req).await,
+                AppRoute::Sql => self.sql((app, group), (&people, key, wrote), req).await,
                 _ => self.file(group, app, path, (&people, key)).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
@@ -545,8 +586,16 @@ impl Folders {
             // them, so Give names it in its install line (give-page-host).
             let page = (self.host.printed_page(group)).map(|p| p.map(|p| p.as_str().to_owned()));
             tracing::debug!(target: "folder", group, %app, ?page, "carried: the page the group's links print on, none, or why it cannot be read");
-            let page = page.map_or_else(|why| json!({ "unread": why }), |p| json!(p));
-            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "page": page, "people": all, "spans": spans, "ops": ops });
+            // The link a member opens this app by, the group's page opening
+            // its label (svrn-docs MAGNETS_BUILD S7), as an app's own label
+            // is a lend's (`crate::door::LABEL_HEADER`): a page on a computer
+            // is at loopback, so it can't name one a friend can open.
+            let label = svrngs_core::pass::Label::carried(app.as_str(), group);
+            let link = (page.clone()).map(|p| p.map(|p| format!("{p}#open={}", label.as_str())));
+            let said = |p: Result<Option<String>, String>| {
+                p.map_or_else(|why| json!({ "unread": why }), |p| json!(p))
+            };
+            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "page": said(page), "link": said(link), "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
         // A write is its person's own device's (capability-signed): this
@@ -567,6 +616,357 @@ impl Folders {
         tracing::debug!(target: "folder", group, %app, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         Ok(answer)
     }
+}
+
+impl Folders {
+    /// The app `app`'s database in `group`, opened from the `schema.sql`
+    /// that runs as `who`'s person ([`runs_as`]): their yes, else the
+    /// version it was brought with, which runs as everyone; and made wider
+    /// by it where it adds to the copy here, as every computer takes the
+    /// widest version a member runs (svrn-docs APP_STATE §4, "Its schema");
+    /// or svrngs-db's refusal. Withheld where those files hold no
+    /// `schema.sql`.
+    async fn database(
+        &self,
+        (app, group): (&AppName, &str),
+        who: Who<'_>,
+    ) -> Result<Result<Arc<Db>, Refused>, Withheld> {
+        let schema = format!("apps/{app}/{}", svrngs_db::SCHEMA);
+        let schema = self.runs_at(group, app, &schema, who).await?;
+        tracing::debug!(target: "folder", group, %app, schema = schema.is_some(), "carried: an app's database asked; none without a schema.sql in the files that run as the person");
+        let schema = String::from_utf8_lossy(&schema.ok_or(NO_SCHEMA)?).into_owned();
+        // One found copied from another computer's is made again, restored
+        // whole (svrngs-db `remake`): SQLite's work, off the runtime's threads.
+        let (group, app) = (group.to_owned(), app.to_string());
+        let opened = crate::ring_sync::off(&self.host.states, move |states| {
+            let db = states.open(&group, &app, Some(&schema))?;
+            match db.copied() {
+                true => states.remake(&db),
+                false => states.widen(&db, &schema),
+            }
+            .map(|()| db)
+        });
+        Ok((opened.await).unwrap_or_else(|| Err(Refused::Fault("its task ended".into()))))
+    }
+
+    /// Every app database this computer keeps in `group`, as the round
+    /// syncs them: each carried app whose files that run as this computer's
+    /// person hold a `schema.sql`, opened here from it whether or not a page
+    /// opened it, and each already on this disk. The seat's decision
+    /// (svrn-docs APP_STATE Decisions, 2026-11-22): the yes is the consent to
+    /// the app's schema, so every computer whose person said yes keeps the
+    /// app's writes, and a lid closing on one strands none of them while
+    /// another is awake; a computer none of whose people runs a version with
+    /// a schema holds none. Each one kept is then made wider by the version
+    /// each member runs, an author's own change among them ([`runs_as`]),
+    /// so a member's newer version reaches this copy at the next round, and
+    /// a column a draft adds stays for good. None while this computer stands
+    /// in no group here.
+    pub(crate) async fn kept(&self, group: &str) -> Vec<Arc<Db>> {
+        let Ok(Standing::Members(people)) = self.host.rail.standing(group) else {
+            return Vec::new();
+        };
+        let read = self.layout(group).inspect_err(|why| tracing::warn!(target: "folder", namespace = group, %why, "carried: the group's record cannot be read, so no app's database is opened for its yes"));
+        let kinds: BTreeSet<&str> = read
+            .iter()
+            .flat_map(|r| r.placed.iter().filter_map(app_of))
+            .collect();
+        for app in kinds.into_iter().filter_map(|k| AppName::parse(k).ok()) {
+            let kept = (self.database((&app, group), (&people, &self.host.actor))).await;
+            tracing::debug!(target: "folder", group, %app, refused = ?kept.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database kept here, as the files that run as this computer's person hold its schema; or why not");
+            for key in people.keys().filter(|_| matches!(kept, Ok(Ok(_)))) {
+                let wide = self.database((&app, group), (&people, key)).await;
+                tracing::debug!(target: "folder", group, %app, key, refused = ?wide.as_ref().map(|k| k.as_ref().err()).map_err(|w| w.2), "carried: an app's database made wider by the version a member runs, where it adds to it; or why not");
+            }
+        }
+        let group = group.to_owned();
+        let held = crate::ring_sync::off(&self.host.states, move |s| s.held(&group));
+        held.await.unwrap_or_default()
+    }
+
+    /// The app `kind`'s database in `group`, for the key `key` of `people`,
+    /// opened from the `schema.sql` that runs as that key's person: a read,
+    /// a write as them, or a subscription (the module docs).
+    async fn sql(&self, app: (&AppName, &str), who: (&People, &str, Wrote), req: Request) -> Given {
+        let ((app, group), (people, key, wrote)) = (app, who);
+        let asker: Asker = (
+            group.into(),
+            app.to_string(),
+            people[key].person_key.clone(),
+        );
+        let db = match self.database((app, group), (people, key)).await? {
+            Ok(db) => db,
+            Err(r) => return Ok(refused(&r)),
+        };
+        // A copy is the group's once it has synced in full with one of the
+        // group's other computers (svrn-docs APP_STATE §7, invariant 8).
+        let others =
+            (people.iter()).any(|(k, m)| *k != self.host.actor && m.device == Device::Computer);
+        tracing::debug!(target: "folder", group, %app, others, "carried: an app's database, said syncing while another computer of the group stands and this copy isn’t the group’s yet");
+        if req.method() == Method::GET {
+            let query = form_urlencoded::parse(req.uri().query().unwrap_or_default().as_bytes());
+            let q = query
+                .into_iter()
+                .find_map(|(k, q)| (k == "q").then(|| q.into_owned()));
+            let q = q.ok_or((Malformed, 422, "a subscription asks ?q=<a SELECT>"))?;
+            if let Some(wait) = self.read_refill(&asker, app) {
+                return Ok(wait);
+            }
+            // Its place among the person's subscriptions to the app here, the
+            // oldest ended once past the most ([`SUBSCRIPTIONS_MOST`]).
+            let mut nth = 0;
+            self.opened.send_modify(|o| {
+                nth = *o.entry(asker.clone()).and_modify(|n| *n += 1).or_insert(1)
+            });
+            let (host, group, key) = (self.host.clone(), group.to_owned(), key.to_owned());
+            let stands = move || matches!(host.rail.standing(&group), Ok(Standing::Members(p)) if p.contains_key(&key));
+            let newer = (self.opened.subscribe(), asker, nth);
+            return Ok(subscribed(db, q, (others, stands), newer).await);
+        }
+        // Past the most it reads, refused in the route's own shape and in words
+        // of the database's, so a page says a pasted list too long for one write.
+        let Ok(body) = to_bytes(req.into_body(), WRITE_MOST).await else {
+            let words = format!("This is more than {} KiB, the most svrngs/sql takes at once, so nothing of it was kept. Send a long list in parts, a write of fewer rows each.", WRITE_MOST / 1024);
+            return Ok(told(413, "too-large", words));
+        };
+        let body = serde_json::from_slice(&body).unwrap_or_default();
+        let asked = svrngs_db::asked(&body);
+        // A phone's write is prepared here for its own signer (APP_STATE §4,
+        // "Phones"), held to the same refusals and refill as a write.
+        let prepare = matches!(asked, Ok(svrngs_db::Asked::Prepare(_)));
+        let answered = match asked {
+            Ok(svrngs_db::Asked::Read(sql, params)) => {
+                if let Some(wait) = self.read_refill(&asker, app) {
+                    return Ok(wait);
+                }
+                read(&db, sql.into(), params.to_vec(), others).await
+            }
+            Ok(svrngs_db::Asked::Write(ops) | svrngs_db::Asked::Prepare(ops)) => {
+                let elsewhere = key != self.host.actor && !prepare;
+                tracing::debug!(target: "folder", group, %app, elsewhere, prepare, ?wrote, "carried: a write to an app's database, or a phone's prepared, refused for an app that reads others' lends, and a write from any device but this computer");
+                if wrote.is_err() {
+                    let words = format!("{app} reads your friends’ apps, so it can’t write in your group’s database: what it read stays apart from what the group keeps.");
+                    return Ok(told(403, "reads", words));
+                }
+                if elsewhere {
+                    let words = format!("{app} writes only from your own computer for now, so this isn’t kept. Open {app} from your computer’s home page to write in it.");
+                    return Ok(told(403, "elsewhere", words));
+                }
+                if let Some(wait) = self.write_refill(&asker, app, "sets") {
+                    return Ok(wait);
+                }
+                // Its owned rows judged as the record binds this computer's
+                // person, as every copy judges them again (svrngs-db `owned.rs`).
+                let bound = crate::ring_sync::bound(&self.host.rail, group);
+                let (db, ops, phone) = (db.clone(), ops.clone(), key.to_owned());
+                // A phone's prepare seals nothing, and so wakes nothing.
+                let wrote = tokio::task::spawn_blocking(move || match prepare {
+                    true => db
+                        .prepare(&ops, (&phone, &bound))
+                        .map(|answer| (answer, None)),
+                    false => db.write(&ops, &bound),
+                });
+                let wrote = wrote.await;
+                let wrote = wrote.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())));
+                // A write that sealed a set wakes the round, so a member holds
+                // it within the round's own seconds, not its minute, on every
+                // platform (ring_sync.rs, the nudge), and a lid that closes
+                // after strands nothing. A write refused, or one that changed
+                // nothing, sealed none and wakes nothing.
+                let sealed = wrote.as_ref().ok().and_then(|(_, s)| *s);
+                tracing::debug!(target: "folder", group, %app, sealed = ?sealed.map(|s| s.get()), "carried: a write that sealed a set wakes the round, or none");
+                if sealed.is_some() {
+                    self.nudge.notify_one();
+                }
+                wrote.map(|(answer, _)| answer)
+            }
+            // A phone's set carried here is counted as a write is, in a
+            // budget of its own beside its prepare's, so no device has this
+            // computer check sets faster than a person writes, and a carry
+            // never spends a write.
+            Ok(svrngs_db::Asked::Carry(set)) => {
+                if let Some(wait) = self.write_refill(&asker, app, "carries") {
+                    return Ok(wait);
+                }
+                return Ok(self.set_carried(db, (group, app), set).await);
+            }
+            Err(r) => Err(r),
+        };
+        tracing::debug!(target: "folder", group, %app, refused = ?answered.as_ref().err(), "carried: an app's database answered a POST, or refused it and why");
+        Ok(answered.map_or_else(|r| refused(&r), |a| Json(a).into_response()))
+    }
+}
+
+impl Folders {
+    /// `set`, signed by a phone and carried here by it (svrn-docs APP_STATE
+    /// §4, "Phones", step 3): applied as any set a member sends, never
+    /// moving a mark past a gap ([`Db::carry`]), and how it ended told, so
+    /// the phone's worker forgets the set once a computer keeps it, 200, or
+    /// none ever will, 422, and carries it again with its next write after a
+    /// 503: a fault, the phone past its share here, or a phone this
+    /// computer's record doesn't bind yet. One taken wakes the round.
+    async fn set_carried(&self, db: Arc<Db>, (group, app): (&str, &AppName), set: Set) -> Response {
+        let binds = crate::ring_sync::bound(&self.host.rail, group);
+        let took = tokio::task::spawn_blocking(move || db.carry(set, &binds)).await;
+        let took = took.unwrap_or_else(|e| Err(Refused::Fault(e.to_string())));
+        tracing::debug!(target: "folder", group, %app, ?took, "carried: a set a phone signed, carried here, and how it ended");
+        let took = took.unwrap_or(Took::Fault);
+        let (status, words) = match took {
+            Took::Taken | Took::Twin => return (self.nudge.notify_one(), Json(json!({ "took": took }))).1.into_response(),
+            Took::Held => return Json(json!({ "took": took })).into_response(),
+            Took::Refused => (422, "No computer of your group takes this write, so it isn’t kept."),
+            Took::NotItsDevice => (422, "This write wasn’t signed as this phone, so no computer takes it."),
+            Took::NotYet | Took::Fault | Took::Over => (503, "This computer couldn’t keep this write yet. It stays on this phone, and is sent again before your next write."),
+        };
+        let took = json!(took);
+        told(status, took.as_str().unwrap_or_default(), words.into())
+    }
+
+    /// A write of `app` by `asker`, or a set carried, `kind`, in its
+    /// person's budget of [`SETS_AN_HOUR`] for it; or the refusal that says
+    /// how long it waits.
+    fn write_refill(&self, asker: &Asker, app: &AppName, kind: &'static str) -> Option<Response> {
+        let wait = self.refill(asker, (kind, SETS_AN_HOUR));
+        let words = format!("{app} is writing faster than an app may here, about {} writes a minute, as every computer of your group takes each one. It can write again in {wait} seconds.", SETS_AN_HOUR / 60);
+        let refused = [(header::RETRY_AFTER, wait.to_string())];
+        (wait > 0).then(|| (refused, told(429, "limit", words)).into_response())
+    }
+
+    /// A read of `app` by `asker`, in its person's budget of reads; or the
+    /// refusal that says how long it waits.
+    fn read_refill(&self, asker: &Asker, app: &AppName) -> Option<Response> {
+        let wait = self.refill(asker, ("reads", READS_AN_HOUR));
+        let words = format!("{app} is reading faster than an app may here, about {} reads a minute. It can read again in {wait} seconds.", READS_AN_HOUR / 60);
+        let refused = [(header::RETRY_AFTER, wait.to_string())];
+        (wait > 0).then(|| (refused, told(429, "limit", words)).into_response())
+    }
+
+    /// The seconds before a write of the app `app` in `group` by the person
+    /// whose first key is `person` is in [`SETS_AN_HOUR`]'s budget; none if
+    /// it is now, and then counted, so writes in flight at once can't pass
+    /// it between count and write. Each write is counted as the one set it
+    /// seals at most, never by its ops or rows, so a paste of 300 is one
+    /// (svrn-docs `app-state-diligence/app-fit.md`, N5). Kept in memory, so a
+    /// restart refills it; the acts' refill reads the record (`spent`).
+    fn refill(&self, asker: &Asker, (kind, per_hour): (&'static str, i64)) -> i64 {
+        let now = crate::door::unix_now().unwrap_or(i64::MAX / 2);
+        let (mut wait, at) = (0, (now, per_hour));
+        let key = (asker.clone(), kind);
+        self.sealed.send_if_modified(|due| {
+            let was = due.get(&key).copied().unwrap_or(0);
+            wait = wait_at(was, at);
+            (wait == 0)
+                .then(|| due.insert(key, due_after(was, now, at)))
+                .is_some()
+        });
+        tracing::debug!(target: "folder", ?asker, kind, wait, "carried: a write or read of an app's database, counted in its person's budget an hour, or the seconds it waits");
+        wait
+    }
+}
+
+/// How many change sets an app may seal as one person on this computer at
+/// once, and, one refilling every `3600 / SETS_AN_HOUR` seconds, in an hour:
+/// this number's one home. One every 2 s is xenia's clock for a tap
+/// (`demo/runs/magnets/2026-11-17-xenia-ten/README.md:90`), so a person
+/// tapping that fast for good never waits, and an hour's worth fit at once;
+/// a page writing as fast as it can stops within seconds. The app-state
+/// spike kept no refill (svrn-docs `app-state-spike/README.md:251`), so
+/// this stands until slice E sets it from Magnets' recorded taps and a page
+/// writing for 60 seconds (APP_STATE §4, "What SQL may do").
+pub(crate) const SETS_AN_HOUR: i64 = 1_800;
+
+/// How many reads of an app's database, a read or a subscription opened,
+/// one person may make on this computer at once, and, one refilling every
+/// `3600 / READS_AN_HOUR` seconds, in an hour: this number's one home.
+/// Provisional: twice [`SETS_AN_HOUR`], as a page reads once as it opens and
+/// a subscription brings the rest, until a read loop's recorded run sets it.
+pub(crate) const READS_AN_HOUR: i64 = 3_600;
+
+/// How many subscriptions to an app one person keeps open on this computer,
+/// the oldest ended past it: this number's one home. Provisional: a page
+/// keeps one, and a person a few tabs and a phone or two.
+pub(crate) const SUBSCRIPTIONS_MOST: u64 = 8;
+
+/// A refusal of an app's database, as its page reads one: `{refused,
+/// words}`, its short name and what to do.
+fn told(status: u16, refused: &str, words: String) -> Response {
+    let status = StatusCode::from_u16(status).expect("a status");
+    (status, Json(json!({ "refused": refused, "words": words }))).into_response()
+}
+
+/// `sql` read on `db`, off the runtime's threads, and `syncing: true` beside
+/// its rows while `others`, the group's other computers, stand and this copy
+/// isn't the group's yet, so a page shows no fresh board for one.
+async fn read(
+    db: &Arc<Db>,
+    sql: String,
+    params: Vec<Value>,
+    others: bool,
+) -> Result<Value, Refused> {
+    let db = db.clone();
+    let read =
+        tokio::task::spawn_blocking(move || db.read(&sql, &params).map(|r| (r, db.syncing())));
+    let (mut read, syncing) = read.await.map_err(|e| Refused::Fault(e.to_string()))??;
+    if others && syncing {
+        read["syncing"] = true.into();
+    }
+    Ok(read)
+}
+
+/// `r`, svrngs-db's refusal, [`told`].
+fn refused(r: &Refused) -> Response {
+    let (status, name) = r.said();
+    told(status, name, r.to_string())
+}
+
+/// `q`'s rows on `db` as an event stream, each event one `data:` line of
+/// the read's answer: now, then each time they differ after the database
+/// changes. Refused once, the query is answered as any refusal, in place of
+/// the stream; refused later, or once its asker `stands` no more, the
+/// stream ends, and the page's next ask is told why: a removed device
+/// reaches the group no more (svrn-docs APP_STATE §4, "A removed device").
+async fn subscribed(
+    db: Arc<Db>,
+    q: String,
+    (others, stands): (bool, impl Fn() -> bool + Clone + Send + 'static),
+    (newer, asker, nth): (watch::Receiver<BTreeMap<Asker, u64>>, Asker, u64),
+) -> Response {
+    let first = match read(&db, q.clone(), Vec::new(), others).await {
+        Ok(first) => first,
+        Err(r) => return refused(&r),
+    };
+    let rows = n0_future::stream::unfold((db.watch(), newer, Some(first), None), move |at| {
+        let (db, q, stands, asker) = (db.clone(), q.clone(), stands.clone(), asker.clone());
+        async move {
+            let (mut changed, mut newer, mut now, last) = at;
+            loop {
+                // One past its person's most here ends.
+                let opened = newer.borrow().get(&asker).copied();
+                opened
+                    .is_none_or(|n| n - nth < SUBSCRIPTIONS_MOST)
+                    .then_some(())?;
+                let rows = now.take().filter(|r| last.as_ref() != Some(r));
+                if let Some(rows) = rows {
+                    let event = Ok::<_, std::convert::Infallible>(format!("data: {rows}\n\n"));
+                    return Some((event, (changed, newer, None, Some(rows))));
+                }
+                // A change, or a subscription the person opened since, which
+                // may make this one past the most.
+                tokio::select! {
+                    moved = changed.changed() => moved.ok()?,
+                    opened = newer.changed() => opened.ok()?,
+                }
+                let stands = stands();
+                tracing::debug!(target: "folder", group = db.group, app = db.app, stands, "carried: a subscription's asker still stands in the group as its database changes, else the stream ends");
+                stands.then_some(())?;
+                let again = read(&db, q.clone(), Vec::new(), others).await;
+                tracing::debug!(target: "folder", group = db.group, app = db.app, refused = ?again.as_ref().err(), "carried: a subscription read again as its database changed, its rows pushed if they differ, or it ends");
+                now = Some(again.ok()?);
+            }
+        }
+    });
+    let kind = [(header::CONTENT_TYPE, "text/event-stream")];
+    (kind, Body::from_stream(rows)).into_response()
 }
 
 /// Whether the act `id` among `ops`, a group's acts as the wire spells
@@ -621,11 +1021,22 @@ pub(crate) fn spent(read: &Admission, app: &str, key: &str, more: usize) -> i64 
 /// pass no budget, so they can overdraw it; an empty budget is as far as it
 /// goes, or a bulk import would hold the app's page back for days.
 pub(crate) fn wait_after(stamps: impl Iterator<Item = i64>, now: i64) -> i64 {
-    let each = 3600 / WRITES_AN_HOUR;
-    let empty_at = |ts: i64| ts + WRITES_AN_HOUR * each;
-    let next = |due: i64, ts: i64| (due.max(ts.min(now)) + each).min(empty_at(ts.min(now)));
-    let due = stamps.fold(0, next);
-    (due - now - (WRITES_AN_HOUR - 1) * each).max(0)
+    let at = (now, WRITES_AN_HOUR);
+    wait_at(stamps.fold(0, |due, ts| due_after(due, ts, at)), at)
+}
+
+/// GCRA's due time after `due` and an entry at `ts`, read at `now`, of a
+/// budget refilling `per_hour` an hour, one every `3600 / per_hour` seconds,
+/// a stamp ahead of `now` counted as now, and an empty budget as far as it
+/// goes ([`wait_after`]).
+fn due_after(due: i64, ts: i64, (now, per_hour): (i64, i64)) -> i64 {
+    let (each, ts) = (3600 / per_hour, ts.min(now));
+    (due.max(ts) + each).min(ts + per_hour * each)
+}
+
+/// The seconds before an entry whose due time is `due` is in budget at `now`.
+fn wait_at(due: i64, (now, per_hour): (i64, i64)) -> i64 {
+    (due - now - (per_hour - 1) * (3600 / per_hour)).max(0)
 }
 
 /// The person told [`WRITES_AN_HOUR`] is spent, in words a developer can

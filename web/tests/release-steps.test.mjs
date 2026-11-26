@@ -263,6 +263,8 @@ test('sign signs each download, the sums and the installer, tags the commit and 
     readFileSync(join(get, 'install.sh'), 'utf8'),
     readFileSync(join(ROOT, 'web/install.sh'), 'utf8'),
   );
+  assert.match(readFileSync(join(get, 'SHA256SUMS'), 'utf8'), /^[a-f0-9]{64}  install\.sh$/m);
+  execFileSync('shasum', ['-a', '256', '-c', 'SHA256SUMS'], { cwd: get, stdio: 'ignore' });
   assert.match(f.git('ls-remote', '--tags', 'origin'), /refs\/tags\/v1\.0\.0/);
   const [, ...gh] = readFileSync(join(f.at, 'bin/gh.args'), 'utf8').split('\0').slice(0, -1);
   const notes = gh.splice(gh.indexOf('--notes'), 2)[1];

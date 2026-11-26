@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # build-release.sh — build what a computer downloads from the group's page
-# (DESIGN §7, "A computer gets svrngs from the group's link"): `svrngs` in
-# release for each platform, and Give's program (`give`, apps/give), which
+# (DESIGN §7, "A computer gets svrngs from the group's link"): `svrngs` with
+# its sibling `svrngs-keeper`, and Give's program (`give`, apps/give), which
 # install.sh gets when asked with --give, one tarball each beside one
 # SHA256SUMS, under get/ of the page's site, where install.sh fetches them.
 # Give is built here so it comes from the same page and is checked by the
@@ -52,6 +52,11 @@ TARGETS=(
 # flags, so a Linux binary that is not DYN is refused below.
 export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
 export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
+# cr-sqlite's source, the submodule at this commit's pin, and its crates,
+# which svrngs-db's build.rs takes with no network (README.md, "Work on
+# svrngs"): fetched here, so a fresh worktree, as ../svrngs-release is, builds.
+git submodule update --init --quiet && cargo fetch --quiet --manifest-path vendor/cr-sqlite/core/rs/bundle_static/Cargo.toml \
+  || { echo "build-release: cr-sqlite's source or its crates did not fetch, so nothing was built. Check the network, then run this again" >&2; exit 1; }
 # `svrngs version` names the commit each binary is built from.
 SVRNGS_COMMIT="$(git rev-parse --short HEAD)$(git diff --quiet HEAD || echo -dirty)"
 export SVRNGS_COMMIT
@@ -70,16 +75,15 @@ for t in "${TARGETS[@]}"; do
   [ -z "$ONLY" ] || [ "$platform" = "$ONLY" ] || continue
   echo "build-release: $platform ($triple) by ${build}…"
   # shellcheck disable=SC2086 # $build is a command and its subcommand
-  CARGO_INCREMENTAL=0 $build --release --locked -p svrngs -p give --target "$triple" || { echo "build-release: $platform did not build" >&2; failed+=("$platform"); continue; }
+  CARGO_INCREMENTAL=0 $build --release --locked -p svrngs -p svrngs-keeper -p give --target "$triple" || { echo "build-release: $platform did not build" >&2; failed+=("$platform"); continue; }
   # The ELF header's e_type, its bytes 16 and 17: 3 is DYN, 2 is EXEC.
   if [[ $triple == *-linux-* ]]; then
-    for p in svrngs give; do
+    for p in svrngs svrngs-keeper give; do
       [ "$(od -An -tu2 -j16 -N2 "target/$triple/release/$p" | tr -d ' \n')" = 3 ] || { echo "build-release: $platform's $p is not position-independent (readelf -h says EXEC, not DYN)" >&2; failed+=("$platform"); continue 2; }
     done
   fi
-  for p in svrngs give; do
-    COPYFILE_DISABLE=1 tar --no-xattrs -czf "$GET/$p-$platform.tar.gz" -C "target/$triple/release" $p
-  done
+  COPYFILE_DISABLE=1 tar --no-xattrs -czf "$GET/svrngs-$platform.tar.gz" -C "target/$triple/release" svrngs svrngs-keeper
+  COPYFILE_DISABLE=1 tar --no-xattrs -czf "$GET/give-$platform.tar.gz" -C "target/$triple/release" give
 done
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
 # What did build is summed, so a failed platform still leaves the rest checkable.

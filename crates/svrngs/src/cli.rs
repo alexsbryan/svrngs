@@ -12,10 +12,10 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> --group G... [--name N] [--program P] [--pid I@S] [--replace] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+//! svrngs share <port> --group G... [--name N] [--program P] [--pid I@S] [--replace] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp] [--ask-after-restart]
 //!                                          lend a service on this computer
 //! svrngs unshare <name> [--group G]...     stop lending it, or to G only
-//! svrngs approve <name> [--pid I@S] [--token T]
+//! svrngs approve <name> [--pid I@S] [--token T] [--ask-after-restart]
 //!                                          say what answers now, and keep lending it
 //!                                          to that on a y, or to what a list showed
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -33,7 +33,8 @@
 //! svrngs relay <name> [--open] [--staging] a relay, for the groups this computer is in
 //!                                          or everyone ([`crate::relay`])
 //! svrngs guide                             print the guide to building an app
-//! svrngs check <folder>                    what in an app's page the policy refuses
+//! svrngs check <folder> [<earlier>]        what in an app's page the policy refuses, and
+//!                                          its schema.sql, by the version it follows
 //! svrngs ask <route> [<json>]              svrngs's answer to a route, asked as you
 //! ```
 //!
@@ -48,7 +49,10 @@
 //!
 //! `share` and `unshare` write a lend's declaration and its secret into the
 //! data dir (`svrngs_node::lend`), which the door reads on every request,
-//! so each works whether or not svrngs is running here (u3-5). `share`
+//! so each works whether or not svrngs is running here (u3-5); `unshare`
+//! turns the lend off for the room first, as the home page's Stop does,
+//! asking svrngs running here, else the room's own owner here
+//! (`svrngs_node::room::withdraw`). `share`
 //! then runs, as the other verbs do, unless svrngs already is. The secret
 //! is read from a prompt, never from the command line, where any program on
 //! this computer may read it (`ps`); a service that keeps its own accounts
@@ -136,6 +140,7 @@ use crate::relay::{self, Relay};
 use crate::share::{self, Share, ShareRefusal, Terms};
 use svrngs_node::link::{client_link, https_link, Link, Origin};
 use svrngs_node::oidc::KeyFailure;
+use svrngs_node::plan::{self, run, Availability, Done, RunView::Terminal};
 
 pub const USAGE: &str = include_str!("help.txt");
 
@@ -178,6 +183,7 @@ pub const SHIPPED: MeetAt = MeetAt::Svrngs;
 #[derive(Debug, PartialEq, Eq)]
 pub enum Verb {
     Run,
+    RunApp(String, Vec<String>),
     New {
         name: Name,
         person: Option<Name>,
@@ -206,15 +212,17 @@ pub enum Verb {
         relays: Vec<RelayUrl>,
     },
     /// No secret: it is read from a prompt (the module docs). Each
-    /// `--group`, a name or the start of an id, as typed: who can open it.
-    Share(Share, Vec<String>),
+    /// `--group`, a name or the start of an id, as typed: who can open it;
+    /// and `--ask-after-restart` ([`share::kept`]).
+    Share(Share, Vec<String>, bool, bool),
     /// Each `--group` as typed: only those taken from its audience; none
     /// withdraws it.
     Unshare(LendName, Vec<String>),
     /// `approve`: what answers on the lend's port approved, with `--pid`
     /// the process its lender chose (svrn-docs SHARE_BINDING §5.4), and
-    /// `--token` what a lend's list showed of it (`Offered::token`).
-    Approve(LendName, Option<share::Pid>, Option<String>),
+    /// `--token` what a lend's list showed of it (`Offered::token`), and
+    /// `--ask-after-restart` ([`share::kept`]).
+    Approve(LendName, Option<share::Pid>, Option<String>, bool),
     /// `share --folder --group`, asked of svrngs running here: the
     /// directory, absolute, and the group as typed.
     Folder {
@@ -251,8 +259,9 @@ pub enum Verb {
     Help,
     /// `guide`: the guide to building an app, as this build holds it.
     Guide,
-    /// `check`: what in the app at that folder the policy refuses.
-    Check(PathBuf),
+    /// `check`: what in the app at that folder the policy refuses, and its
+    /// `schema.sql`, beside the folder of the version it follows, if named.
+    Check(PathBuf, Option<PathBuf>),
     /// `ask` ("Never send the key", V1.13.3): svrngs's answer to a route,
     /// the JSON given posted there, else got, asked as the person, so any
     /// language asks svrngs by running it.
@@ -280,6 +289,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let Some(verb) = it.next() else {
         return Ok(Verb::Run);
     };
+    if verb == "run" {
+        let name = it
+            .next()
+            .ok_or("run wants a name: `svrngs run <name> --port <port> -- <command>` (or `--card <compose.yaml>`)")?;
+        return Ok(Verb::RunApp(name, it.collect()));
+    }
     let mut positional: Option<String> = None;
     let mut person = None;
     let (mut origin, mut relays) = (None, Vec::new());
@@ -291,11 +306,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut pid, mut token) = (None, None);
     let mut replace = false;
     let mut sign_in = false;
-    let mut readers = false;
+    let (mut readers, mut ask) = (false, false);
     let mut carries = None;
     let mut run = true;
     let mut device = false;
     let mut print = false;
+    let mut preview = false;
     let (mut open, mut staging, mut here) = (false, false, None);
     let mut joined = None;
     let mut more = Vec::new();
@@ -366,8 +382,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
             "--print" if verb == "open" => print = true,
+            "--plan" if verb == "share" => preview = true,
             "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
             "--readers" if verb == "share" => readers = true,
+            "--ask-after-restart" if matches!(verb.as_str(), "share" | "approve") => ask = true,
             "--replace" if verb == "share" => replace = true,
             "--udp" | "--tcp" if verb == "share" => {
                 let said = if arg == "--udp" { lend::Raw::Udp } else { lend::Raw::Tcp };
@@ -387,7 +405,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
-            other if verb == "room" || verb == "ask" => more.push(other.to_string()),
+            other if matches!(verb.as_str(), "room" | "ask" | "check") => more.push(other.to_string()),
             other => return Err(format!("unexpected argument `{other}`")),
         }
     }
@@ -431,6 +449,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         });
     }
     match (verb.as_str(), folder, group) {
+        ("share", Some(_), _) if preview => return Err("--plan reviews a port, not a folder".into()),
         ("share", Some(dir), Some(group)) => {
             let dir = std::path::absolute(&dir).map_err(|e| format!("--folder `{dir}`: {e}"))?;
             return Ok(Verb::Folder { dir, group });
@@ -492,6 +511,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     replace,
                 },
                 groups,
+                ask,
+                preview,
             ))
         }
         "leave" => Ok(Verb::Leave(
@@ -506,7 +527,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "approve" => {
             let raw = positional.ok_or("approve wants a name: `svrngs approve <name>`")?;
-            Ok(Verb::Approve(lend_name(&raw)?, pid, token))
+            Ok(Verb::Approve(lend_name(&raw)?, pid, token, ask))
         }
         "room" => {
             let first = positional.ok_or("room wants what to serve: `svrngs room <name>...`")?;
@@ -533,8 +554,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "restart" => Ok(Verb::Restart),
         "guide" => Ok(Verb::Guide),
         "check" => {
-            let dir = positional.ok_or("check wants an app's folder: `svrngs check <folder>`")?;
-            Ok(Verb::Check(dir.into()))
+            let usage = "check wants an app's folder, then the folder of the version it follows, if any: `svrngs check <folder> [<earlier>]`";
+            let dir = positional.filter(|_| more.len() < 2).ok_or(usage)?;
+            Ok(Verb::Check(dir.into(), more.pop().map(PathBuf::from)))
         }
         "ask" => {
             let usage = "ask wants a route on svrngs, then one JSON body or none: `svrngs ask /v1/groups`, or `svrngs ask <route> '<json>'` to post it there";
@@ -585,6 +607,10 @@ refusal_from!(KeyError => Unjudged, ApiError => Unjudged, KeyFailure => Unjudged
 /// It ran and refused: exit 1.
 #[derive(Debug, thiserror::Error)]
 pub enum Refused {
+    #[error("{0}")]
+    SharePlan(String),
+    #[error("{0}")]
+    RunApp(String),
     #[error(
         "svrngs is already running on this computer ({0} is held); stop it, then run this again"
     )]
@@ -758,6 +784,10 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
         .map_err(|e| Unjudged::DataDir(root.to_path_buf(), e))?;
     let path = root.join("lock");
     let file = File::create(&path).map_err(|e| Unjudged::DataDir(path.clone(), e))?;
+    claim_file(path, file)
+}
+
+fn claim_file(path: PathBuf, file: File) -> Result<File, Refusal> {
     // A command looks whether svrngs holds it by taking it a moment
     // (`Here::ask`), so a start that finds it held looks once more.
     let taken = file.try_lock().or_else(|_| {
@@ -821,10 +851,10 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             None => format!("svrngs {}\n", env!("CARGO_PKG_VERSION")),
         },
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
-        Verb::Check(dir) => checked(&dir)?,
+        Verb::Check(dir, was) => checked(&dir, was.as_deref())?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
-        Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
-        Verb::Approve(name, pid, token) => approve(here, &name, pid, token)?,
+        Verb::Unshare(name, groups) => unshare(here, &name, &groups).await?.to_string(),
+        Verb::Approve(name, pid, token, ask) => approve(here, &name, (pid, token), ask)?,
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
         Verb::Ask(route, body) => {
             let (status, text) = here.asked(&route, body).await?;
@@ -843,6 +873,9 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             update::Outcome::Packaged(words) => format!("{words}\n"),
         },
         Verb::Restart => restart(&root)?,
+        Verb::RunApp(name, args) => run::native(&name, Terminal, args.iter().map(String::as_str))
+            .await
+            .map_err(Refused::RunApp)?,
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {
             kind,
@@ -881,10 +914,20 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let group = seed.name().clone();
             said(&seed, answer, |outcome| Said::Left { group, outcome })?.to_string()
         }
-        Verb::Share(mut asked, groups) => {
-            asked.audience = audience_of(&root, asked.port, &groups)?;
+        Verb::Share(mut asked, groups, ask, preview) => {
+            let (audience, names) = audience_of(&root, asked.port, &groups)?;
+            asked.audience = audience;
             let known = share::well_known_kind(asked.port);
-            let claimed = claim(&root);
+            let claimed = if preview {
+                let path = root.join("lock");
+                match File::open(&path) {
+                    Ok(file) => claim_file(path, file).map(Some),
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+                    Err(e) => return Err(Unjudged::DataDir(path, e).into()),
+                }
+            } else {
+                claim(&root).map(Some)
+            };
             let terms = match (&claimed, share::kind_of(&asked, known.clone())) {
                 (Err(Refusal::Refused(Refused::Busy(_))), Some(kind)) => {
                     Some(terms_of(here, &kind, &groups).await?)
@@ -895,12 +938,44 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 }
             };
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
-            let mut lend = share::lend_of(&asked, known, theirs)?;
-            share::renamed(&root, &lend, asked.replace)?;
-            let read = here.answering(lend.raw(), asked.port, asked.pid.map(|p| p.pid));
-            let (approved, answers) =
-                share::approve((asked.port, lend.raw()), read, asked.pid, None)?;
-            lend.terms.approved = Some(approved);
+            let lend = share::lend_of(&asked, known, theirs)?;
+            let terminal = here.terminal();
+            let availability = if ask || !(preview || terminal) {
+                Availability::ThisRun
+            } else {
+                Availability::Keep
+            };
+            let raw = asked.raw.unwrap_or(Raw::Tcp);
+            let read =
+                |pid: Option<share::Pid>| here.answering(raw, asked.port, pid.map(|p| p.pid));
+            let intent = |lend, groups| run::Share {
+                dir: &root,
+                lend,
+                terms: plan::Terms {
+                    groups,
+                    limit: asked.limit,
+                    availability,
+                },
+                pid: asked.pid,
+                replace: asked.replace,
+                contract: theirs,
+                door: if availability == Availability::Keep && kept_over(&root) {
+                    run::door_return(None)
+                } else {
+                    plan::Return::Unknown
+                },
+            };
+            let (observed, witness) = intent(&lend, names).observe(read)?;
+            let reviewed = plan::plan(&observed).expect("share names its audience");
+            let words = share_review(&reviewed, &witness.answers);
+            if preview {
+                return Ok(words);
+            }
+            let prompt = format!("{words}Type y, then press Enter: ");
+            if terminal && !said_yes(here, &lend.name, &prompt)? {
+                return Ok("Nothing was changed.\n".into());
+            }
+            let mut lend = lend.clone();
             if !lend.terms.sends.is_empty() && !sends_said(here, &lend)? {
                 lend.terms.sends.clear();
             }
@@ -910,20 +985,41 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
                 lend.terms.sign_in_with_svrngs = Some(client.clone());
             }
-            let secret = match share::adds_headers(&lend, theirs) {
-                false => {
-                    tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
-                    None
-                }
-                true => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
+            let secret = if share::adds_headers(&lend, theirs) {
+                here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?
+            } else {
+                tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
+                None
             };
-            share_lend(&root, &lend, secret.as_deref())?;
+            let current = intent(&lend, audience_of(&root, asked.port, &groups)?.1);
+            let (observed, witness) = current.observe(read)?;
+            let secret_header =
+                lend::Credentials::Replace(secret.as_deref().map(|s| (lend::SECRET_HEADER, s)));
+            let Some(report) = run::confirm(&reviewed.token, &observed, |ready| {
+                current.execute(ready, &witness, secret_header)
+            }) else {
+                let mut words = plan::REVIEW_AGAIN.to_string();
+                if let Some(review) = plan::plan(&observed) {
+                    words += "\n";
+                    words += &share_review(&review, &witness.answers);
+                }
+                return Err(Refused::SharePlan(words).into());
+            };
+            let line = reviewed.report_words(&report);
+            if !matches!(report, Done::Published { .. }) {
+                return Err(Refused::SharePlan(line).into());
+            }
+            eprintln!("{line}");
+            let lend = lend::read(&root, &lend.name)
+                .ok()
+                .flatten()
+                .ok_or_else(|| Unjudged::Keep(lend.name.to_string()))?;
             if asked.readers {
                 share_readers(here, &lend, (asked.port, theirs)).await?;
             }
             let sharing = Said::Shared {
                 lend: Box::new(lend),
-                answers,
+                answers: witness.answers,
                 secret: secret.is_some(),
                 accounts,
                 client,
@@ -936,7 +1032,16 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                     let api = svrngs_node::api::kept_address(&root)?.ok_or(Unjudged::NotRunning)?;
                     issued(sharing, api).to_string()
                 }
-                claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
+                claimed => {
+                    return start(
+                        Verb::Run,
+                        root,
+                        relay,
+                        claimed?.expect("the share is not a preview"),
+                        Some(sharing),
+                    )
+                    .await
+                }
             }
         }
         other => match (claim(&root), other) {
@@ -960,21 +1065,63 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
 }
 
 /// `check`: what in the app at `dir` the policy every app's answer carries
-/// refuses, each by file and line, refused when anything is, so an agent's
-/// loop reads it by the exit code (svrn-docs
-/// `rings/current/EXTENSION_POINT.md` §7, G3).
-fn checked(dir: &Path) -> Result<String, Refusal> {
+/// refuses, each by file and line (svrn-docs `rings/current/EXTENSION_POINT.md`
+/// §7, G3), and what svrngs-db refuses of its `schema.sql`, made as a
+/// database is made from it and, where `was` names the folder of the version
+/// it follows, held to only adding to that one's (`svrngs_db::check`); refused
+/// when anything is, so an agent's loop reads it by the exit code. Its
+/// all-clear names each table, owned or shared, and each file column.
+fn checked(dir: &Path, was: Option<&Path>) -> Result<String, Refusal> {
     let shown = dir.display();
-    let none = format!("{shown} holds no index.html: an app is a folder with an index.html in it");
-    let found = svrngs_node::folder::check::check(dir).ok_or(Refused::Unfit(none))?;
-    let said: Vec<_> = (found.iter())
+    let none = |d: &Path| {
+        format!(
+            "{} holds no index.html: an app is a folder with an index.html in it",
+            d.display()
+        )
+    };
+    let found = svrngs_node::folder::check::check(dir).ok_or(Refused::Unfit(none(dir)))?;
+    let mut said: Vec<_> = (found.iter())
         .map(|(file, line, r)| format!("{file}:{line}: {}", r.words()))
         .collect();
-    let fix = "this page asks for what apps can't load, so it won't work as it is";
-    match said.is_empty() {
-        true => Ok(format!("Nothing in {shown} that apps can't load.\n")),
-        false => Err(Refused::Unfit(format!("{fix}:\n{}", said.join("\n"))).into()),
+    let schema = |d: &Path| match std::fs::read_to_string(d.join(svrngs_db::SCHEMA)) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        read => read.map(Some).map_err(|e| {
+            Refused::Unfit(format!("{}'s schema.sql can't be read: {e}", d.display()))
+        }),
+    };
+    let earlier = was.map(|w| {
+        w.join("index.html")
+            .is_file()
+            .then_some(w)
+            .ok_or(Refused::Unfit(none(w)))
+    });
+    let earlier = earlier.transpose()?.map(schema).transpose()?.flatten();
+    let made = schema(dir)?.map(|s| svrngs_db::check(&s, earlier.as_deref()));
+    tracing::debug!(target: "cli", dir = %shown, page = said.len(), schema = ?made, follows = earlier.is_some(), "cli: check — the page held to the policy, and its schema.sql to svrngs-db's rule");
+    if let Some(Err(r)) = &made {
+        said.push(format!("schema.sql: {r}"));
     }
+    let fix = "this page asks for what apps can't load, so it won't work as it is";
+    if !said.is_empty() {
+        return Err(Refused::Unfit(format!("{fix}:\n{}", said.join("\n"))).into());
+    }
+    let tables = made.and_then(Result::ok).unwrap_or_default();
+    let named = |files: &[String]| -> String {
+        files
+            .iter()
+            .map(|f| format!(" {f} names a file."))
+            .collect()
+    };
+    let each = tables.into_iter().map(|(t, owned, files)| match owned {
+        true => format!(" {t}, each row its person's own.{}", named(&files)),
+        false => format!(" {t}, any member's to change.{}", named(&files)),
+    });
+    let each: String = each.collect();
+    let each = (!each.is_empty()).then(|| format!(" Its database's tables:{each} A column you add stays in every copy of your group for good, so try a new one in a group of your own first."));
+    Ok(format!(
+        "Nothing in {shown} that apps can't load.{}\n",
+        each.unwrap_or_default()
+    ))
 }
 
 /// `share --folder --group`, asked of the node running here
@@ -1082,24 +1229,36 @@ fn restart(root: &Path) -> Result<String, Refusal> {
 }
 
 /// Whether what keeps svrngs running at login runs it over `root`: the
-/// `SVRNGS_DIR` its LaunchAgent or systemd unit names, as install.sh
-/// writes them, else `~/.svrngs`, as a package's unit runs it; so its
-/// restart ([`restart`]) restarts the svrngs over `root`, and no other.
+/// `SVRNGS_DIR` its LaunchAgent or systemd unit names, else `~/.svrngs`,
+/// as a package's unit runs it. On Mac only a parsed plist may default.
+/// A restart ([`restart`]) then restarts the svrngs over `root`, and no other.
 fn kept_over(root: &Path) -> bool {
     let home = home().unwrap_or_default();
+    let resolve = |dir: Option<&str>| {
+        std::fs::canonicalize(dir.map_or_else(|| home.join(".svrngs"), PathBuf::from))
+    };
     #[cfg(target_os = "macos")]
-    let kept = home.join("Library/LaunchAgents/sh.svrnme.svrngs.plist");
+    let kept = {
+        #[derive(serde::Deserialize)]
+        struct Login {
+            #[serde(rename = "EnvironmentVariables", default)]
+            vars: std::collections::BTreeMap<String, plist::Value>,
+        }
+        plist::from_file::<_, Login>(home.join("Library/LaunchAgents/sh.svrnme.svrngs.plist"))
+            .map_err(std::io::Error::other)
+            .and_then(|mut login| match login.vars.remove("SVRNGS_DIR") {
+                Some(plist::Value::String(dir)) => resolve(Some(&dir)),
+                None => resolve(None),
+                _ => Err(std::io::Error::other("SVRNGS_DIR is not a plist string")),
+            })
+    };
     #[cfg(not(target_os = "macos"))]
-    let kept = home.join(".config/systemd/user/svrngs.service");
-    // `<key>SVRNGS_DIR</key><string><dir></string>`, `Environment=SVRNGS_DIR=<dir>`.
-    let kept = std::fs::read_to_string(kept).unwrap_or_default();
-    let named = kept
-        .split_once("SVRNGS_DIR")
-        .map(|(_, d)| d.trim_start_matches("</key><string>"));
-    let named = named.and_then(|d| d.trim_start_matches('=').split(['<', '\n']).next());
-    let kept = named
-        .map_or(home.join(".svrngs"), PathBuf::from)
-        .canonicalize();
+    let kept = resolve(
+        std::fs::read_to_string(home.join(".config/systemd/user/svrngs.service"))
+            .unwrap_or_default()
+            .split_once("SVRNGS_DIR")
+            .and_then(|(_, d)| d.trim_start_matches('=').split(['<', '\n']).next()),
+    );
     tracing::debug!(target: "cli", ?kept, root = %root.display(), "cli: the data dir svrngs is kept running over at login, against this command's");
     kept.is_ok_and(|kept| root.canonicalize().is_ok_and(|here| here == kept))
 }
@@ -1201,6 +1360,9 @@ impl Here for PathBuf {
         let token = token.map_err(|(at, e)| Unjudged::Api(ApiError::TokenFile(at, e)))?;
         let ask = || svrngs_node::api::asked(&api, route, token.trim(), body.clone());
         let mut asked = ask().await;
+        if route == PROGRAMS_ROUTE && asked == Err(Withheld::Older) {
+            return Err(Refused::Older.into());
+        }
         // An older svrngs over this data dir, its lock held, as an update
         // leaves one running: restarted once, as `svrngs restart` restarts
         // it, where the login service runs it over this data dir (the
@@ -1583,12 +1745,12 @@ impl std::fmt::Display for Said {
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
                 }
-                let (each, beside, or) = if raw.is_empty() || raw.starts_with("TCP") {
-                    ("before each connection it carries there", "While another program is on the port, it is closed. ", "")
-                } else {
-                    ("before and after each batch of datagrams it sends there", "", ", or another one is on the port")
+                let (each, beside, or) = match lend.raw() {
+                    Raw::Tcp => ("before each connection it carries there", " While another program is on the port, it is closed.", ""),
+                    Raw::Udp => ("before and after each batch of datagrams it sends there", "", ", or another one is on the port"),
                 };
-                writeln!(f, "Lent {name}: {}. svrngs checks port {port} {each}. {beside}If the program starts again{or}, {name} closes until you approve what runs there: `svrngs approve {name}`.", what_answers(answers))?;
+                let restart = match &lend.terms.keep { Some(_) => String::new(), None => format!(" If the program starts again{or}, {name} closes until you approve what runs there: `svrngs approve {name}`.") };
+                writeln!(f, "Lent {name}: {}. svrngs checks port {port} {each}.{beside}{restart}", what_answers(answers))?;
                 let ((theirs, by), kind) = (terms.clone().unwrap_or_default(), &lend.kind);
                 // How its people sign in, in the words of who wrote the group's file.
                 let shipped = share::accounts_of(kind, "");
@@ -1783,6 +1945,15 @@ fn said_yes(here: &impl Here, name: &LendName, words: &str) -> Result<bool, Refu
     Ok(["y", "yes"].contains(&said.to_lowercase().as_str()))
 }
 
+fn share_review(reviewed: &plan::Plan<'_>, answers: &[Answer]) -> String {
+    let words = reviewed.words();
+    let mut lines = vec![words.promise];
+    lines.extend(words.reason);
+    lines.extend((!answers.is_empty()).then(|| what_answers(answers)));
+    lines.extend([words.impact, words.button, String::new()]);
+    lines.join("\n")
+}
+
 /// `svrngs share --readers`: the account apps reading `lend` are let in as,
 /// signed in once where the table says how (`share::readers_of`), else
 /// what its Authorization header takes, pasted; then kept.
@@ -1863,13 +2034,13 @@ type Read = (Terms, String);
 /// (svrn-docs SHARE_BINDING §5.4), only as its lender was shown it: by
 /// `token`, what a lend's list showed; else at a terminal, what answers now
 /// said first, approved on a y by that read's token, so what changed before
-/// the y is refused; else refused, nothing approved unseen. What it approved,
-/// said.
+/// the y is refused; else refused, nothing approved unseen; with the grant
+/// it makes, unless `ask` ([`share::kept`]). What it approved, said.
 pub fn approve(
     here: &impl Here,
     name: &LendName,
-    pid: Option<share::Pid>,
-    token: Option<String>,
+    (pid, token): (Option<share::Pid>, Option<String>),
+    ask: bool,
 ) -> Result<String, Refusal> {
     let (lend, port) = share::shared(here.root(), name)?;
     let read = || here.answering(lend.raw(), port, pid.map(|p| p.pid));
@@ -1888,9 +2059,13 @@ pub fn approve(
         }
     };
     let (approved, answers) = share::approve((port, lend.raw()), read(), pid, Some(&token))?;
-    share::reapproved(here.root(), name, approved)?;
+    let keep = share::kept(&answers, ask);
+    let again = keep
+        .as_ref()
+        .map_or("", |_| ", and each time it starts again");
+    share::reapproved(here.root(), name, (approved, keep))?;
     let kept = what_answers(&answers);
-    Ok(format!("{name} is kept to {kept} now.\n"))
+    Ok(format!("{name} is kept to {kept} now{again}.\n"))
 }
 
 /// What answers on a port, as its lender is told it: each program in its
@@ -1901,17 +2076,15 @@ fn what_answers(answers: &[Answer]) -> String {
     said.join(" and ")
 }
 
-/// `svrngs share`'s write: `lend` declared in the data dir at `root`, with
-/// `secret` sent as [`lend::SECRET_HEADER`], or none.
-pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
-    lend::declare(root, lend, secret.map(|s| (lend::SECRET_HEADER, s))).map_err(|e| {
-        tracing::debug!(target: "cli", lend = %lend.name, error = %e, "cli: share — the lend cannot be kept");
-        Unjudged::Keep(lend.name.to_string()).into()
-    })
-}
-
-/// `svrngs unshare`: withdraw the lend `name` from the data dir at `root`.
-pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, Refusal> {
+/// `svrngs unshare`: withdraw the lend `name` from the data dir `here`
+/// names, as the home page's Stop withdraws it ([`withdrawn`]), or take
+/// `groups` from who can open it.
+pub async fn unshare(
+    here: &impl Here,
+    name: &LendName,
+    groups: &[String],
+) -> Result<Said, Refusal> {
+    let root = here.root();
     let keep = |e: lend::LendError| {
         tracing::debug!(target: "cli", lend = %name, error = %e, "cli: unshare — the lend cannot be withdrawn");
         Unjudged::Keep(name.to_string())
@@ -1925,7 +2098,7 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     };
     tracing::debug!(target: "cli", lend = %name, groups = ids.len(), "cli: unshare — those groups only, or none named and it is withdrawn");
     let (done, said): (_, fn(LendName) -> Said) = match ids.is_empty() {
-        true => (lend::withdraw(root, name), Said::Unshared),
+        true => (withdrawn(here, name).await?, Said::Unshared),
         false => (lend::mutate(root, name, narrowed), Said::Narrowed),
     };
     if done.map_err(keep)? {
@@ -1937,6 +2110,35 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     tracing::debug!(target: "cli", lend = %name, "cli: unshare — refused, nothing lent by that name");
     let name = name.clone();
     Err(Refused::NotLent { name, lent }.into())
+}
+
+/// The lend `name` withdrawn as svrngs withdraws every lend
+/// ([`room::withdraw`]), turned off for the room first: by svrngs running
+/// here, asked at its route as the home page asks it; else, svrngs
+/// stopped, by the room's own owner here, this command holding the data dir
+/// ([`room::withdraw_stopped`]).
+async fn withdrawn(
+    here: &impl Here,
+    name: &LendName,
+) -> Result<Result<bool, lend::LendError>, Refusal> {
+    let root = here.root();
+    let key = svrngs_node::actor_of(&identity::load_or_generate_node_key(root)?);
+    let claimed = claim(root);
+    let running = matches!(claimed, Err(Refusal::Refused(Refused::Busy(_))));
+    tracing::debug!(target: "cli", lend = %name, running, "cli: unshare — the room told by svrngs running here, else by its own owner here");
+    if running {
+        // svrngs's refusal in its words, or why it was not asked.
+        let off = async |key, name| {
+            let asked = here
+                .ask(room::ROUTE, &room::RoomAsk::Off { key, name })
+                .await;
+            let (ok, said) = asked.map_err(|refused| refused.to_string())?;
+            ok.then_some(()).ok_or(said)
+        };
+        return Ok(room::withdraw(root, &key, name, off).await);
+    }
+    let _held = claimed?;
+    Ok(room::withdraw_stopped(root, &key, name).await)
 }
 
 /// What the bare command prints: the groups held, where apps reach them,
@@ -2112,14 +2314,26 @@ fn full_name(user: &str) -> Option<String> {
 
 /// The groups `share` lends to, each `--group` the one [`group_named`]
 /// finds: refused with the next command when none is named, never all
-/// groups (LENDING_SCOPE §"User interface and commands").
-pub fn audience_of(root: &Path, port: NonZeroU16, named: &[String]) -> Result<Audience, Refusal> {
+/// groups (LENDING_SCOPE §"User interface and commands"). The declaration
+/// keeps the selected order; the review uses the canonical ID-to-name map.
+pub fn audience_of(
+    root: &Path,
+    port: NonZeroU16,
+    named: &[String],
+) -> Result<(Audience, std::collections::BTreeMap<String, String>), Refusal> {
     if named.is_empty() {
         tracing::debug!(target: "cli", port, "cli: share — refused, no group named to lend it to");
         return Err(Refused::NoAudience(port).into());
     }
-    let ids = named.iter().map(|g| group_named(root, g).map(|s| s.id()));
-    ids.collect::<Result<_, _>>().map(Audience::Selected)
+    let (mut ids, mut names) = (Vec::new(), std::collections::BTreeMap::new());
+    for reference in named {
+        let group = group_named(root, reference)?;
+        let id = group.id();
+        if names.insert(id.clone(), group.name().to_string()).is_none() {
+            ids.push(id);
+        }
+    }
+    Ok((Audience::Selected(ids), names))
 }
 
 /// The one group held under `root` that `reference` names, by its name or

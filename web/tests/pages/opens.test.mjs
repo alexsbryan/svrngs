@@ -398,7 +398,7 @@ test('native arrival asks the issuer, names once, offers a line, and never admit
     page: 'https://groups.example/',
   }).state;
   assert.equal(state.at.join, 'installing');
-  assert.ok(state.line[1].startsWith('curl -fsSL https://groups.example/install.sh'));
+  assert.ok(state.line[1].startsWith('curl -fsSL https://group.svrnme.sh/install.sh'));
   assert.ok(state.line[1].includes("--at '/#group-abcd' --as 'Bo O'\\''Brien'"), state.line[1]);
   assert.equal(step(state, { type: 'named' }).effects.length, 0);
   assert.deepEqual(runs, ['send join', 'ask', 'send offer', 'where']);

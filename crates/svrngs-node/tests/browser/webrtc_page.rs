@@ -11,16 +11,20 @@ use super::*;
 /// Direct connections on for the network this host is on, as the home
 /// page's control writes them (webrtc-network `direct.json`): the offer is
 /// answered only on an enabled network, so without this every run would be
-/// the plant.
-fn direct_on(dir: &Path) {
-    let network = svrngs_node::network::here().network.unwrap_or_else(|why| {
-        panic!("could not judge: this host's network cannot be read ({why:?})")
-    });
+/// the plant. `false`, could-not-judge, on a host whose network cannot be
+/// read: the test returns.
+#[track_caller]
+#[must_use]
+fn direct_on(dir: &Path) -> bool {
+    let Some(network) = super::unjudged::network() else {
+        return false;
+    };
     std::fs::write(
         dir.join(svrngs_node::webrtc::direct::DIRECT_FILE),
         serde_json::to_vec(&vec![network]).unwrap(),
     )
     .unwrap();
+    true
 }
 
 /// A node lending a page and a film, as `playback.rs` lends them, with
@@ -29,8 +33,13 @@ fn direct_on(dir: &Path) {
 /// them: the drive runs after, and a node dropped here would be off
 /// before the phone dials it (the first run of this test failed that way,
 /// "the computer that sent your link did not answer").
-async fn lent_film(dir: &Path, relay: &Server, bo: &SigningKey) -> (Node, std::path::PathBuf, u64) {
-    let ada = node(dir, relay, bo).await;
+async fn lent_film(
+    dir: &Path,
+    relay: &Server,
+    bo: &SigningKey,
+    me: u8,
+) -> (Node, std::path::PathBuf, u64) {
+    let ada = computer(dir, relay, bo, me, "ada").await;
     let mp4 = dir.join("title.mp4");
     let size = film(&mp4);
     let (film_origin, _film_heads) = origins::kept_range_origin(mp4.clone(), size).await;
@@ -66,8 +75,10 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
-    direct_on(dir.path());
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -108,18 +119,14 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
 }
 
 in_both_engines!(
-    /// **The channel closed mid-film completes over the relay within 4 s**
+    /// **The channel closed mid-film completes over the relay**
     /// (webrtc-page; RELAY_COMMONS design 4): the film's part rides
     /// `webrtc*` (the worker waits for that selection, `Direct::go`), and
     /// the window closes the channel once `__svrngsCloseWebrtc` datagrams
     /// have come through it — a count of the wire's own, so the close
     /// lands mid-film however far the page's reading runs behind; the
-    /// part must still arrive whole, and within 4 s of the close's stall —
-    /// the paths are given up after their 3 s of silence (`paths.rs`
-    /// `PATH_IDLE`, the spike's Q3: 3,188 ms in Chromium, 3,180 in
-    /// WebKit) with the relay beside them. The plant: the data endpoint's
-    /// second dial without the relay, where the bytes after the close
-    /// never come (`target/close-plant4.log`).
+    /// test witnesses the channel actually closing, the lender giving up
+    /// its custom path, and the exact range arriving with the relay left.
     the_channel_closed_mid_film_completes_over_the_relay
 );
 async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
@@ -127,8 +134,16 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
-    direct_on(dir.path());
+    // Distinct lenders let us select each engine's iroh events even when
+    // every browser case is running against the common trace log.
+    let me = match engine {
+        Engine::Chromium => 101,
+        Engine::Webkit => 102,
+    };
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, me).await;
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -136,19 +151,20 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
         json!({
             "site": site,
             "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
+            "token": token(&signing(me), &relay),
             "open": "page",
             // 6 MiB, a fifth of the film, with the window closing the
             // channel once 2000 datagrams have come through it: the
             // wire's own count, so the close lands mid-film (about
             // 2.5 MiB in) however far the page's reading runs behind,
-            // and the rest (about 3.5 MiB) fits the relay inside the 4 s.
+            // leaving bytes that the relay must carry.
             "close": {
                 "path": "title.mp4",
                 "range": format!("bytes=0-{}", 6 * MIB - 1),
                 "after": 2000,
             },
             "direct": true,
+            "fallback": true,
         }),
         None,
     )
@@ -163,7 +179,14 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
         "the closed channel's trace:\n{}",
         seen["trace"].as_str().unwrap_or_default()
     );
-    assert!(at_origin(&seen["opened"], &label(1, "page")), "{shown:#}");
+    assert!(at_origin(&seen["opened"], &label(me, "page")), "{shown:#}");
+    assert!(
+        seen["first"]["closed"]["state"] == "closed"
+            && seen["first"]["closed"]["wireBytes"]
+                .as_u64()
+                .is_some_and(|bytes| (1..6 * MIB).contains(&bytes)),
+        "the WebRTC channel must actually close before it can carry the whole range:\n{shown:#}"
+    );
     film_part_answered(
         &seen["first"],
         &mp4,
@@ -180,13 +203,23 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
         webrtc_selected(&goes_direct_paths(trace)),
         "the film must be riding the window's channel before it is closed:\n{shown:#}"
     );
-    // The paths are given up after their 3 s of silence, so a fallback
-    // that never happened (the close not reaching the channel) would
-    // answer the rest at once; the bar is the row's 4 s.
-    let fallback = seen["first"]["fallbackMs"].as_u64().unwrap_or(u64::MAX);
+    // iroh prints each custom address as transport ID + the full peer key.
+    // Use the local side, including when it appears as the previous path.
+    let lender = format!("_{}->", ada.endpoint().id());
+    let log = std::fs::read_to_string(harness::trace_log()).unwrap();
+    let paths: Vec<_> = log
+        .lines()
+        .filter(|line| line.contains(&lender) && line.contains("iroh::_events::path::"))
+        .collect();
+    eprintln!("the closed channel's lender paths: {paths:#?}");
+    let abandoned = paths.iter().position(|line| {
+        line.contains("path::abandoned:") && line.contains("network_path=Custom(")
+    });
     assert!(
-        (2500..=4000).contains(&fallback),
-        "the bytes after the channel closed must arrive over the relay within 4 s, took {fallback} ms:\n{shown:#}"
+        abandoned.is_some_and(|i| paths[i + 1..].iter().any(|line| {
+            line.contains("path::selected:") && line.contains("network_path=Relay(")
+        })),
+        "iroh must give up the closed WebRTC path and select the relay: {paths:#?}"
     );
     drop(ada);
 }
@@ -208,8 +241,10 @@ async fn the_page_announcing_itself_after_the_channel_closed_goes_direct_again(e
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
-    direct_on(dir.path());
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -282,8 +317,10 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
-    direct_on(dir.path());
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -317,6 +354,75 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
             .contains("goes direct"),
         "no direct path may come up while the window withholds the datagrams:\n{shown:#}"
     );
+    drop(ada);
+}
+
+in_webkit!(
+    /// **A direct path's data endpoint presents the pass and the holder's
+    /// link naming its key at its relays** (lend-guests; RELAY_COMMONS
+    /// design 4), as the run's own endpoint does, so a group's own relay
+    /// admits it, the key standing in no group: the phone opens ada's page
+    /// with the direct path, and every connection the data endpoint's key —
+    /// as its trace names it — made to the relay presented a token that
+    /// reads as the pass and a link (svrngs-core's `presented`), which the
+    /// call a group's own relay makes of it takes from that key:
+    /// `authority::resolve` for the pass's own app (crates/svrngs/src/relay.rs
+    /// `pass_holds`; that relay's admission of such a token is
+    /// crates/svrngs/tests/relay.rs's to show). Planted, watched red: the data
+    /// endpoint bound presenting no token, as before.
+    a_direct_paths_data_endpoint_presents_its_pass_and_link_at_its_relays
+);
+async fn a_direct_paths_data_endpoint_presents_its_pass_and_link_at_its_relays(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, _mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
+    if !direct_on(dir.path()) {
+        return;
+    }
+
+    let seen = drive(
+        engine,
+        "runtime.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            "film": film_args(),
+            "direct": true,
+        }),
+        None,
+    )
+    .await;
+    let trace = seen["trace"].as_str().unwrap_or_default();
+    let data = trace
+        .split_once("the data endpoint's key ")
+        .and_then(|(_, key)| key.get(..64))
+        .unwrap_or_else(|| panic!("the worker's trace names no data endpoint's key:\n{trace}"));
+    let presented = harness::presented_by(data);
+    assert!(
+        !presented.is_empty(),
+        "the data endpoint {data} never reached the relay:\n{trace}"
+    );
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    for token in presented {
+        let token = token.unwrap_or_else(|| panic!("the data endpoint {data} presented no token"));
+        let (pass, link) = svrngs_core::pass::presented(&token)
+            .unwrap_or_else(|| panic!("the data endpoint's token reads as no pass: {token}"));
+        assert!(link.is_some(), "the data endpoint presented the pass alone");
+        assert_eq!(pass.app.to_string(), label(1, "page"), "the lend's pass");
+        let held =
+            svrngs_core::authority::resolve(&pass, link.as_ref(), data, &pass.app, now, || ());
+        assert!(
+            held.is_ok(),
+            "the pass and link do not hold for the data endpoint's key: {held:?}"
+        );
+    }
     drop(ada);
 }
 

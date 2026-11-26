@@ -18,6 +18,9 @@
 import { arrived, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
+// Distinguish the completed attempt's positive origin witnesses from any
+// requests the abandoned browser already made (navigations.rs).
+const suffix = args.suffix ?? '';
 // A browser of its own: WebKit on Linux swaps a tab's process twice in one
 // cross-site redirect chain, as the hops into a lend's origin are, once
 // the tab has been to the sites before, and Playwright's server dies on
@@ -47,7 +50,7 @@ const follow = async (page, href) => {
 try {
   const page = await context.newPage();
   await page.goto(args.url);
-  await follow(page, `${args.url}own/next`);
+  await follow(page, `${args.url}own/next${suffix}`);
   const within = page.url();
   const into = [];
   const reads = await page.evaluate(() => fetch('/svrngs-reads').then((r) => r.json()));
@@ -55,45 +58,45 @@ try {
     const to = reads.lends.find((l) => l.address.startsWith(plain))?.address ?? plain;
     await page.goto(args.url);
     const bare = await page.evaluate(
-      (to) =>
-        fetch(`${to}bare`).then(
+      (url) =>
+        fetch(url).then(
           (r) => r.status,
           (e) => `${e}`,
         ),
-      plain,
+      `${plain}bare${suffix}`,
     );
     const fetched = await page.evaluate(
-      (to) =>
-        fetch(`${to}fetched`).then(
+      (url) =>
+        fetch(url).then(
           (r) => r.status,
           (e) => `${e}`,
         ),
-      to,
+      `${to}fetched${suffix}`,
     );
     const framed = await page.evaluate(
-      (to) =>
+      (src) =>
         new Promise((done) => {
-          const f = Object.assign(document.createElement('iframe'), { src: `${to}framed` });
+          const f = Object.assign(document.createElement('iframe'), { src });
           f.onload = () => done('loaded');
           document.body.append(f);
           setTimeout(() => done('no load in 10 s'), 10_000);
         }),
-      to,
+      `${to}framed${suffix}`,
     );
     await Promise.all([
       page.waitForEvent('load'),
-      page.evaluate((to) => {
+      page.evaluate((action) => {
         const form = Object.assign(document.body.appendChild(document.createElement('form')), {
           method: 'post',
-          action: `${to}posted`,
+          action,
         });
         form.submit();
-      }, to),
+      }, `${to}posted${suffix}`),
     ]);
     await arrived(page);
     const posted = page.url();
     await page.goto(args.url);
-    await follow(page, `${to}linked`);
+    await follow(page, `${to}linked${suffix}`);
     into.push({ to, bare, fetched, framed, posted, linked: page.url() });
   }
   console.log(JSON.stringify({ within, into, answered }));

@@ -10,7 +10,6 @@ import { html, useEffect, useMachine, useRef } from '../ui/view.js?v=__VERSION__
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LINK, admits, busy } from './group-link.js?v=__VERSION__';
-import { LinkCopy } from './link-copy.js?v=__VERSION__';
 import { Copy } from '../ui/copy.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -93,8 +92,8 @@ function PublicationControls({ state, send, doing }) {
 }
 
 // A link made for a group (group-link.js LINK), in the words of whom it is
-// for: a guest, or your other computer or phone; then its Copy
-// (link-copy.js).
+// for: a guest, or your other computer or phone; then its Copy, which says
+// its last answer beside it (ui/copy.js).
 const WORDS = {
   copy: 'Copy the link',
   copied: ' Copied.',
@@ -114,7 +113,7 @@ function LinkSaid({ shown, name }) {
   // The page's link when this computer has one, as a browser opens it.
   const at = answer.https ?? answer.client;
   const code = html`<code>${at}</code>`;
-  const copy = html`<${LinkCopy} key=${at} text=${at} words=${WORDS} beside=${true} />`;
+  const copy = html`<${Copy} key=${at} text=${at} words=${WORDS} beside=${true} />`;
   if (asked.guest)
     return [
       'Send this link to your guest, in any chat: ',

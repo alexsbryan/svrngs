@@ -36,13 +36,9 @@ function Open({ origin }) {
   `;
 }
 
+// Drawn once the person is in a group (home-page.js `MEMBERS`).
 /** @param {PlaceProps} props */
-function OpenPlace({ s: state }) {
-  // HOME draws its places once the groups are read (home-page.js `Home`).
-  const groups = /** @type {NonNullable<PlaceProps['s']['groups']>} */ (state.groups);
-  if (groups.length === 0) return false;
-  return html`<${Open} origin=${state.origin} />`;
-}
+const OpenPlace = ({ s: state }) => html`<${Open} origin=${state.origin} />`;
 
 /** @type {{ open: (props: PlaceProps) => Drawn }} */
 export const view = { open: OpenPlace };

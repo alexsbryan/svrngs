@@ -1,0 +1,4 @@
+[submodule "vendor/cr-sqlite"]
+	path = vendor/cr-sqlite
+	url = https://github.com/alexsbryan/cr-sqlite
+	branch = svrngs

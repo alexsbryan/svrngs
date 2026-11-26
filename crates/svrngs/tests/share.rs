@@ -153,14 +153,27 @@ fn address_in(line: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-/// Nothing a person reads says a word DESIGN §1 keeps from them.
+/// Nothing a person reads says a word DESIGN §1 keeps from them, in
+/// svrngs's own words: a path a line reports is the person's own (where a
+/// lent program runs, a checkout named `relay-link`), so it is not judged.
 fn plain(said: &[String]) {
     for line in said {
-        let lower = line.to_lowercase();
+        let words = line.split_whitespace().filter(|w| !w.starts_with('/'));
+        let lower = words.collect::<Vec<_>>().join(" ").to_lowercase();
         for word in KEPT_WORDS {
             assert!(!lower.contains(word), "{line:?} says {word}");
         }
     }
+}
+
+#[test]
+fn plain_judges_svrngs_s_words_and_not_a_path_it_reports() {
+    plain(&["Lent pad: share-1 in /Users/sam/dev/relay-link/crates/svrngs.".into()]);
+    let said = ["The relay closed.".to_string()];
+    assert!(
+        std::panic::catch_unwind(|| plain(&said)).is_err(),
+        "a kept word in svrngs's words is caught"
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -188,7 +201,12 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
         .expect("something listens there, and its kind is given");
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
+    svrngs_node::lend::declare(
+        sam.dir.path(),
+        &lend,
+        Some((svrngs_node::lend::SECRET_HEADER, SECRET)),
+    )
+    .unwrap();
     let mut said = vec![Said::Shared {
         lend: Box::new(lend.clone()),
         answers: Vec::new(),
@@ -252,7 +270,8 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     );
 
     // ── Sam stops; Alex's next ask lists nothing of Sam's.
-    let stopped = cli::unshare(sam.dir.path(), &lend.name, &[]).expect("Sam lent pad");
+    let sams = sam.dir.path().to_path_buf();
+    let stopped = (cli::unshare(&sams, &lend.name, &[]).await).expect("Sam lent pad");
     assert_eq!(stopped, Said::Unshared(lend.name.clone()));
     said.push(stopped.to_string());
     let again = cli::running(alex.dir.path(), &alex.node).await.to_string();
@@ -261,7 +280,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         "a stopped share is still listed: {again:?}"
     );
     said.push(again);
-    let refused = cli::unshare(sam.dir.path(), &lend.name, &[]).unwrap_err();
+    let refused = cli::unshare(&sams, &lend.name, &[]).await.unwrap_err();
     assert_eq!(refused.exit_code(), 1);
     said.push(refused.to_string());
     for r in [
@@ -311,7 +330,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
     let mut lend = share::lend_of(&asked, share::well_known_kind(asked.port), "")
         .expect("something listens there, and its kind is given");
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(sam.dir.path(), &lend, None).unwrap();
+    svrngs_node::lend::declare(sam.dir.path(), &lend, None).unwrap();
     let shared = Said::Shared {
         lend: Box::new(lend.clone()),
         answers: Vec::new(),
@@ -429,7 +448,7 @@ fn share_takes_no_password_on_the_command_line() {
             "{flag} is taken"
         );
     }
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&[
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&[
         "share", "8096", "--name", "box", "--limit", "2", "--refuse", "/admin",
     ])) else {
         panic!("share parses");
@@ -439,7 +458,8 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(asked.refused.len(), 1);
     assert_eq!(asked.upload, None, "no upload stated, none declared");
     assert!(cli::parse(argv(&["new", "x", "--limit", "2"])).is_err());
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&["share", "8096", "--upload", "30"]))
+    else {
         panic!("share parses an upload");
     };
     assert_eq!(asked.upload.map(|u| u.bps()), Some(30_000_000));
@@ -451,7 +471,7 @@ fn share_takes_no_password_on_the_command_line() {
     }
     assert!(cli::parse(argv(&["link", "x", "--upload", "30"])).is_err());
     // The kinds a lend reads (u5-2), each said again for more.
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&[
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&[
         "share", "8096", "--reads", "films", "--reads", "music",
     ])) else {
         panic!("share parses what it reads");
@@ -499,15 +519,16 @@ fn share_refuses_a_sign_in_the_lender_ran_itself() {
 /// words that are none, or a control character, are refused, and `--ask`
 /// is `share`'s alone. `unshare` takes it back. Planted, watched failing:
 /// the declaration not writing `asks`.
-#[test]
-fn a_lend_that_asks_keeps_its_lender_s_words() {
+#[tokio::test]
+async fn a_lend_that_asks_keeps_its_lender_s_words() {
     let argv = |rest: &[&str]| {
         std::iter::once("svrngs".to_string())
             .chain(rest.iter().map(|s| s.to_string()))
             .collect::<Vec<_>>()
     };
     let words = "the app receives ranked suggestions; your history stays where it is";
-    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&["share", "8096", "--ask", words])) else {
+    let Ok(Verb::Share(asked, _, _, _)) = cli::parse(argv(&["share", "8096", "--ask", words]))
+    else {
         panic!("share parses what it asks");
     };
     assert_eq!(asked.asks.as_deref(), Some(words));
@@ -521,7 +542,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
     let dir = tempfile::tempdir().unwrap();
     let mut lend = share::lend_of(&asked, Some(LentProgram::parse("taste").unwrap()), "").unwrap();
     svrngs_node::node::approve(&mut lend);
-    cli::share_lend(dir.path(), &lend, None).unwrap();
+    svrngs_node::lend::declare(dir.path(), &lend, None).unwrap();
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
     assert_eq!(
@@ -539,7 +560,9 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         terms: Some(Default::default()),
     };
     assert!(said.to_string().contains(words), "{said}");
-    cli::unshare(dir.path(), &name, &[]).unwrap();
+    cli::unshare(&dir.path().to_path_buf(), &name, &[])
+        .await
+        .unwrap();
     assert!(svrngs_node::lend::read(dir.path(), &name)
         .unwrap()
         .is_none());

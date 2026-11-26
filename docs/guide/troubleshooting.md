@@ -23,6 +23,9 @@ short name.
 - **`command not found: svrngs`**
   Open a new terminal window, or type the whole path,
   `~/.local/bin/svrngs`.
+- **Run is unavailable after updating.** Paste the install line again.
+  It installs the program that Run needs beside `svrngs`; `svrngs update`
+  updates only `svrngs`. If you installed with pacman, update the package instead.
 - **The home page says *"Open svrngs from your computer"*.**
   Your home page opens only from svrngs on your computer. Open svrngs from
   your Applications (on Linux, your applications menu), or type `svrngs
@@ -130,20 +133,42 @@ short name.
   it."* on the home page. Start the program, then lend it again.
 - **The terminal waits after `svrngs share`**, its last line asking about a
   password. Press Enter if the program takes none.
-- ***"You looked just now: nothing else on this computer is running at an address."***
+- ***"Nothing else on this computer is running at an address."***
   Start the program you want to lend, then press **Look for programs
   running on this computer** again.
 - ***"You already lend something called jellyfin: give it another name."***
   Use `--name` with `svrngs share`, or stop lending the other one first.
 
 - ***"Give it a name and say which program it is first: svrngs does not know what runs there."***
-  On the home page, fill in **Its name:** and **What it is:**, one word
+  On the home page, fill in **Its name:** and **Which program:**, one word
   each, such as `coder` and `llama-server`.
 - **`svrngs: you lend nothing called films from this computer; you lend …`**
   after `svrngs unshare`. Use one of the names it lists.
 - ***"films already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."***
   The secret is shown only once. Run that command for a new one, and put
   it in the app's settings.
+
+## Run it with svrngs
+
+- **"Port 8101 is in use by llama-server, the copy you started: stop it, then press Run."**
+  Stop that copy yourself, then try again. svrngs hasn't stopped anything.
+- **"Not shared; svrngs couldn't verify coder is answering."**
+  Check the reported state and the port, then check the command, folder and
+  paths you gave it. It runs without your terminal's settings. To stop it,
+  choose **Stop coder** under **Already running here** on your home page.
+  This leaves its setup in place.
+- **"Running here; not shared."**
+  Run and Share are separate. If the share couldn't be saved, fix the reason
+  shown and share again; don't Run a second copy.
+- **It runs after sign-in, but friends can't open it before then.**
+  That's expected on a Mac. On Linux, read the Share review: both the app
+  and sharing must start without sign-in, and a locked disk needs unlocking.
+- **An app is still running after uninstall.**
+  Uninstalling svrngs doesn't stop your apps or remove their setup or files.
+  Before uninstalling, choose **Stop** on your home page for any app you
+  want to stop. If you've already uninstalled, reinstall svrngs to manage
+  them again. Native apps may still start; managed Linux containers need
+  svrngs installed to start and stop.
 
 ## Programs on your computer
 

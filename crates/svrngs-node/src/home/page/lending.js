@@ -36,11 +36,10 @@ export const take = (state) => go(state, {}, { lentRead: true });
 /** @param {HOME.State} state */
 export const holds = (state) => /** @type {Groups} */ (state.groups).length > 0 && !state.lentRead;
 
+// Drawn once the person is in a group (home-page.js `MEMBERS`).
 /** @param {HOME.PlaceProps} props */
 function LendingPlace({ s: state, home }) {
-  // HOME draws its places once the groups are read (home-page.js `Home`).
   const groups = /** @type {Choice[]} */ (state.groups);
-  if (groups.length === 0) return false;
   return html`
     <${Lending} round=${state.round} groups=${groups} home=${home} told=${state.lentRead} />
   `;

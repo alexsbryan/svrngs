@@ -15,7 +15,7 @@ import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { named } from '../question.js?v=__VERSION__';
 import { go, machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Keep } from '../ui/parts.js?v=__VERSION__';
-import { LinkCopy } from './link-copy.js?v=__VERSION__';
+import { Copy } from '../ui/copy.js?v=__VERSION__';
 import { keyOf, same, turns } from './lend-key.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
@@ -148,8 +148,8 @@ const on = (state, lend) => (state.at.room === 'unread' ? undefined : state.room
 
 // Copy beside a lend in its popover (`Line`, `foot`): its address for a
 // program on this computer, shown beside it too (ui/parts.js `Keep`), and
-// what the last press said (link-copy.js `LinkCopy`, whose answer takes the
-// place of the one before, as the address's must).
+// what the last press said (ui/copy.js `Copy`, whose answer takes the place
+// of the one before, as the address's must).
 /**
  * A copy of the lend's address `at`, for a program.
  * @typedef {{ at: string }} AddressCopyProps
@@ -163,7 +163,7 @@ function AddressCopy({ at }) {
     unwritten: ` Copy it from here: ${at}`,
   };
   const beside = html`${' '}<${Keep} at=${at} />`;
-  return html`${' '}<${LinkCopy} text=${at} words=${words} beside=${beside} />`;
+  return html`${' '}<${Copy} text=${at} words=${words} beside=${beside} />`;
 }
 
 /**

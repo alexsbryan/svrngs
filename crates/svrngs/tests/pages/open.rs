@@ -28,7 +28,8 @@ async fn the_computer_s_line_is_offered_and_copied_on_v2(engine: Engine) {
     let args = json!({ "site": site(), "token": token });
     let seen = drive(engine, "pages/open.mjs", args, None).await;
     let origin = seen["origin"].as_str().unwrap();
-    let line = format!("curl -fsSL {origin}install.sh | sh -s -- '{origin}#{token}'");
+    let line =
+        format!("curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '{origin}#{token}'");
     assert_eq!(seen["line"], line, "{seen:#}");
     assert!(
         seen["words"]

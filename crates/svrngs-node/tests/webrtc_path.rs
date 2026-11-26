@@ -33,16 +33,17 @@ use svrngs_node::webrtc::wire;
 use svrngs_node::SigningKey;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
+#[path = "common/unjudged.rs"]
+mod unjudged;
+
 /// The node homed at `url`, with group `house` founded here, and that
 /// group's id. Direct connections are on for the network this host is on,
 /// as the home page turns them: an offer is answered only on a network the
 /// lender enabled (webrtc-network), and this test's lender is this host;
-/// could-not-judge on a host whose network cannot be read.
-async fn node_at(url: &str) -> (tempfile::TempDir, Node, String) {
+/// `None`, could-not-judge, on a host whose network cannot be read.
+async fn node_at(url: &str) -> Option<(tempfile::TempDir, Node, String)> {
+    let network = unjudged::network()?;
     let dir = tempfile::tempdir().unwrap();
-    let network = svrngs_node::network::here().network.unwrap_or_else(|why| {
-        panic!("could not judge: this host's network cannot be read ({why:?})")
-    });
     std::fs::write(
         dir.path().join(svrngs_node::webrtc::direct::DIRECT_FILE),
         serde_json::to_vec(&vec![network]).unwrap(),
@@ -66,7 +67,7 @@ async fn node_at(url: &str) -> (tempfile::TempDir, Node, String) {
     let name = |n: &str| svrngs_node::group::Name::parse(n).unwrap();
     let seed = svrngs_node::group::draw(name("house"), name("Ada"), key.verifying_key());
     node.host().keep_group(&seed, None, &[]).unwrap();
-    (dir, node, seed.id())
+    Some((dir, node, seed.id()))
 }
 
 /// `key` let into `group` as `person`, by a link this node mints (a test
@@ -270,7 +271,9 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
     ));
     let relay = Server::spawn(config).await.expect("a relay on 127.0.0.1");
     let url = format!("http://{}/", relay.http_addr().unwrap());
-    let (dir, node, group) = node_at(&url).await;
+    let Some((dir, node, group)) = node_at(&url).await else {
+        return;
+    };
     let by = Instant::now() + Duration::from_secs(15);
     while node
         .net()
@@ -304,6 +307,8 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
             asks: None,
             sends: Vec::new(),
             approved: None,
+            keep: None,
+            revision: None,
         },
     };
     svrngs_node::lend::declare(dir.path(), &lend, None).unwrap();

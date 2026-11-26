@@ -99,6 +99,29 @@ const ada = ({
 
 const home = (answers, path = '/?ui=a') => open(`${AT}${path}`, answers);
 
+// What a person reads of the page: its words less what B hides (`hidden`,
+// grouped.js), each run of space one.
+const read = (page) => {
+  const seen = (at) =>
+    at.attributes?.hidden === undefined ? (at.data ?? at.childNodes.map(seen).join(' ')) : '';
+  return seen(page.root).replace(/\s+/g, ' ').trim();
+};
+// The page reloaded after a write: opened again at the address it holds,
+// the last it put in place of the one it was opened at (`replaceState`),
+// else that one. It reads as the page did, less what was done, which is
+// said once (home.js `kept`).
+const reloaded = async (page, opened, answers) => {
+  const said = page.text('#home > p').find((p) => p.startsWith('You')) ?? '';
+  const was = read(page).replace(said, '').replace(/\s+/g, ' ').trim();
+  const to = page.went.filter(([how]) => how === 'replace').at(-1)?.[1] ?? opened;
+  const again = await home(answers, to);
+  assert.equal(read(again), was, `reloaded at ${to}`);
+  return again;
+};
+// Where layout A keeps the address after a write there: `/?ui=a`, the
+// whole page (home.js `kept`).
+const KEPT_A = ['replace', '/?ui=a'];
+
 // Where a thing runs, so when it opens, said before what opening it lets it
 // do: of an app the group carries, and of what a person lends. The same
 // words for one thing and for many. Planted, watched failing: index.js
@@ -579,6 +602,20 @@ test('nothing the page does is left to a terminal', () => {
   assert.ok(!/svrngs (remove|leave|new|share)/.test(INDEX), 'no line to type');
 });
 
+test('home can stop a managed app without a group', async () => {
+  const page = await home({
+    ...ada({ groups: [] }),
+    'GET /run': {
+      fields: [],
+      rows: [
+        { name: 'coder', port: 8101, text: 'Run by svrngs', action: 'stop', button: 'Stop coder' },
+      ],
+    },
+  });
+  assert.deepEqual(page.text('#run-form p button'), ['Stop coder']);
+  assert.doesNotMatch(page.text().join('\n'), /Look for programs running on this computer/);
+});
+
 // browser::the_home_page_s_links_say_what_they_open and
 // ::the_home_page_shows_less_to_puzzle_over: the index's link names the
 // lend and its kind, in a tab of its own, under what opening it does; its
@@ -594,7 +631,8 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
   assert.deepEqual(cells(page), ['ada’s shelf (k) Address']);
   const [link] = page.all('#home .index > ul > li > a');
   assert.equal(link.attributes.target, '_blank');
-  assert.equal(page.all('#lent label')[0].textContent, 'How many people at once: ');
+  const labels = page.all('#lent label').map((label) => label.textContent);
+  assert.ok(labels.includes('How many people at once: '), labels.join());
   assert.ok(!page.text('#home h2').includes('What apps use'), page.text('#home h2').join());
 });
 
@@ -857,20 +895,28 @@ test('a Stop under What acts as you is named with the app it stops', async () =>
   );
 });
 
-// "What you lend" is a line a lend, its form folded under the line, and no
-// button there is stretched: look.css's full-width button is the phone
-// page's index's alone (`tbody#lent`, web/page/lent-index.js), where the
-// home page's section, also `#lent`, once took it. Planted, watched failing:
-// lent-row.js drawing the form with no <details>.
+// "What you lend" is a line a lend, its name, who can open it and how many
+// use it now, its form folded under the line; what is seldom changed is
+// folded again, under More settings; and no button there is stretched:
+// look.css's full-width button is the phone page's index's alone
+// (`tbody#lent`, web/page/lent-index.js), where the home page's section,
+// also `#lent`, once took it. Planted, watched failing: lent-row.js drawing
+// the form with no <details>; Let in this many drawn outside More settings.
 test('each lend is one line with its form folded under it, and the wide button is the phone’s', async () => {
   const page = await home(ada({ lent: [lend('shelf')] }));
-  assert.deepEqual(page.text('#lent li details summary'), [
-    'shelf: up to 3 people at once, 0 using it now. Lent to a group whose name this computer cannot read.',
+  assert.deepEqual(page.text('#lent li > details > summary'), [
+    'shelf: lent to a group whose name this computer cannot read, 0 of 3 using it now.',
   ]);
   const folded = page.text('#lent li details button');
   for (const words of ['Let in this many', 'Save who can open this', 'Stop lending'])
     assert.ok(folded.includes(words), folded.join());
   assert.equal(page.text('#lent button').length, folded.length, 'no button outside the fold');
+  assert.deepEqual(page.text('#lent li details details > summary'), ['More settings']);
+  const more = page.text('#lent li details details button');
+  for (const words of ['Let in this many', 'Sign people in with svrngs'])
+    assert.ok(more.includes(words), more.join());
+  for (const words of ['Save who can open this', 'Stop lending'])
+    assert.ok(!more.includes(words), `${words}: ${more.join()}`);
   const look = readFileSync(new URL('look.css', HOME), 'utf8');
   assert.deepEqual(look.match(/^.*#lent button.*$/gm), [
     'tbody#lent button { width: 100%; text-align: left; }',
@@ -879,11 +925,12 @@ test('each lend is one line with its form folded under it, and the wide button i
   assert.ok(phone.includes('<tbody id="lent">'));
 });
 
-// A lend held for what answers on its port says why on its lender's line
-// and every program that answers now (door.rs `answering` and `offered`,
-// lent-row.js `HELD`; SHARE_BINDING §5.5), and Keep sharing it approves
-// what its line showed, by the token it was listed with, with the first
-// process's pid and start, at /v1/lends/<name>/approve and nothing else
+// A lend held for what answers on its port says so first on its lender's
+// line, Closed, then why and every program that answers now (door.rs
+// `answering` and `offered`, lent-row.js `HELD`; SHARE_BINDING §5.5), and
+// Keep sharing it approves what its line showed, by the token it was listed
+// with, with the first process's pid and start, at
+// /v1/lends/<name>/approve and nothing else
 // (lend-change.js `approve`; SHARE_BINDING_REVIEWS §6 #6); one listed with
 // no token, whatever holds it, offers no approval. Planted, each watched
 // failing: lent-row.js not reading `answers` (no "Now answering"); the
@@ -906,7 +953,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
     unapproved
       .text('#lent li details summary')[0]
       .includes(
-        'shelf is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each batch of datagrams, and closes it when something you didn’t choose is there. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
+        'shelf: Closed. Nobody can open it until you approve what answers on its port now. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
       ),
   );
   await unapproved.press('#lent li button', 'Keep sharing it');
@@ -914,7 +961,7 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
   const another = (await page('another')).text('#lent li details summary')[0];
   assert.ok(
     another.includes(
-      'Something you didn’t approve was on shelf’s port, so shelf is closed for now. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
+      'Closed. Something you didn’t approve was on its port. Now answering: python3 in ~/dev/garden and a program of the account _resolve.',
     ),
     another,
   );
@@ -927,14 +974,61 @@ test('a held lend says what answers now, and Keep sharing it approves that', asy
   assert.ok(
     unjudged
       .text('#lent li details summary')[0]
-      .includes(
-        'svrngs can’t tell what answers on shelf’s port, so nobody can open shelf. Start it again.',
-      ),
+      .includes('Closed. svrngs can’t tell what answers on its port. Start it again.'),
   );
   assert.deepEqual(
     unjudged.text('#lent li button').filter((b) => b === 'Keep sharing it'),
     [],
   );
+});
+
+// A held lend names the jobs without the manager's vocabulary, including
+// a description from a unit written before the availability page.
+test('a kept lend whose setup changed says so, and names the programs', async () => {
+  const unit = 'svrngs-keeper-coder.service';
+  const answers = [
+    { unit, description: 'coder, kept by svrngs-keeper' },
+    { unit: 'recipes.service' },
+  ];
+  const page = await home(
+    ada({
+      lent: [lend('coder', { answering: true, held: 'changed', answers, token: '00c0ffee' })],
+    }),
+  );
+  const line = page.text('#lent li details summary')[0];
+  assert.ok(
+    line.includes(
+      'coder: Closed. What runs it changed since you chose to keep sharing it when it starts again. Now answering: coder and recipes.',
+    ),
+    line,
+  );
+  assert.ok(page.text('#lent li button').includes('Keep sharing it'));
+});
+
+// A lend friends can't open leads its line with that, marked `.bad` and in
+// words, so the color is not the only sign: Closed where it is held, before
+// its program not running (door.rs `answering`), else Not running; then
+// who it is lent to, with no count of who uses it. An open lend's line is
+// as it was. Planted, watched failing: lent-row.js drawing a held lend's
+// line without the `.bad` mark.
+test('a lend friends can’t open says Closed or Not running first, marked', async () => {
+  const drawn = async (/** @type {object} */ more) => {
+    const page = await home(ada({ lent: [lend('shelf', more)] }));
+    return [page.text('#lent li details summary')[0], page.text('#lent summary strong.bad')];
+  };
+  const group = 'a group whose name this computer cannot read';
+  assert.deepEqual(await drawn({ answering: false, held: 'another', answers: [] }), [
+    `shelf: Closed. Something you didn’t approve was on its port. Nothing answers on its port now. Lent to ${group}.`,
+    ['Closed'],
+  ]);
+  assert.deepEqual(await drawn({ answering: false }), [
+    `shelf: Not running. Start it, and the groups you chose can open it again. Lent to ${group}.`,
+    ['Not running'],
+  ]);
+  assert.deepEqual(await drawn({ answering: true }), [
+    `shelf: lent to ${group}, 0 of 3 using it now.`,
+    [],
+  ]);
 });
 
 // Keep sharing it is offered by the token alone, which svrngs lists only
@@ -1226,11 +1320,13 @@ const join = async (page) => {
 
 // pages::join::a_group_made_is_drawn_with_no_reload, on layout B's make
 // page: Ada makes Lab; the page says so and draws Lab, its links, having
-// loaded once (home.js@19b63b2b:364 opened the page again).
+// loaded once (home.js@19b63b2b:364 opened the page again); its address is
+// All your groups, `/`, so a reload lands where the page is, not the form.
 test('a group made is said and drawn with its links, with no reload', async () => {
   const house = group({ name: 'house', made: mine });
   const [answers, add] = growing([house], [lab, trip]);
-  const page = await home({ ...answers, ...making(add) }, '/?view=make');
+  const asked = { ...answers, ...making(add) };
+  const page = await home(asked, '/?view=make');
   await make(page);
   assert.ok(page.text('#home > p').join().includes('You made Lab.'), page.text('#home > p').join());
   assert.ok(page.text('#home section button').includes('Invite people'));
@@ -1242,17 +1338,20 @@ test('a group made is said and drawn with its links, with no reload', async () =
     page.lines().some((line) => line.startsWith('MAKE: made')),
     page.lines().join('\n'),
   );
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  await reloaded(page, '/?view=make', asked);
+  assert.deepEqual([page.went, page.unanswered], [[['replace', '/']], []]);
 });
 
 // pages::join::a_group_joined_is_drawn_with_no_reload, on layout B's join
 // page: Ada pastes Sam's link to Trip and joins as Dee; the page says so
 // and draws Trip, its shelf folded as just joined, having loaded once
-// (home.js@19b63b2b:409 opened the page again).
+// (home.js@19b63b2b:409 opened the page again); its address is All your
+// groups, `/`, so a reload lands where the page is, not the form.
 test('a group joined is said and drawn, its shelf folded, with no reload', async () => {
   const house = group({ name: 'house', made: mine });
   const [answers, add] = growing([house], [lab, trip]);
-  const page = await home({ ...answers, ...making(add) }, '/?view=join');
+  const asked = { ...answers, ...making(add) };
+  const page = await home(asked, '/?view=join');
   await join(page);
   const said = page.text('#home > p').join();
   assert.ok(said.includes('You’re in Trip, as Dee.'), said);
@@ -1268,7 +1367,8 @@ test('a group joined is said and drawn, its shelf folded, with no reload', async
     page.lines().some((line) => line.startsWith('JOIN: joined')),
     page.lines().join('\n'),
   );
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  await reloaded(page, '/?view=join', asked);
+  assert.deepEqual([page.went, page.unanswered], [[['replace', '/']], []]);
 });
 
 // pages::join::a_group_made_or_joined_says_it_is_being_read_until_it_is
@@ -1301,7 +1401,7 @@ test('a group made or joined says it is being read until it is, and house keeps 
   assert.ok(!page.text('#home section[data-colour]').join().includes('Reading '));
   assert.ok(section('Lab (yours').includes('Lab’s folder is on this computer'), section('Lab'));
   assert.ok(section('Trip (Sam’s').includes('Trip’s folder is on this computer'), section('Trip'));
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  assert.deepEqual([page.went, page.unanswered], [[KEPT_A, KEPT_A], []]);
 });
 
 // home_group::the_home_page_makes_a_group_another_computer_joins_with_no_restart,
@@ -1367,7 +1467,7 @@ test('a group made says where its folder is and links on the page svrngs came fr
     ),
     said(),
   );
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  assert.deepEqual([page.went, page.unanswered], [[KEPT_A, KEPT_A], []]);
 });
 
 // home_group::the_home_page_joins_another_group_from_its_link_while_svrngs_runs,
@@ -1396,7 +1496,7 @@ test('a group joined beside one held is headed by whose, its shelf alone folded'
   assert.deepEqual(folded, ['Bring more to Trip']);
   const section = page.text('#home section[data-colour]').find((w) => w.startsWith('Trip (Sam’s'));
   assert.ok(section.includes('Trip’s folder is on this computer at /h/Trip'), section);
-  assert.deepEqual([page.went, page.unanswered], [[], []]);
+  assert.deepEqual([page.went, page.unanswered], [[KEPT_A], []]);
 });
 
 // leave_page::leaving_on_the_home_page_is_said_as_a_leave_everywhere, the
@@ -1466,7 +1566,39 @@ test('a leave is said as a leave on both pages, and a link to it again is refuse
   const again = [...anas.text('#join p'), ...anas.text('#join button')].join('\n');
   assert.ok(again.includes(refusal), again);
   assert.ok(!again.includes('Join Trip'), again);
-  assert.deepEqual([anas.went, anas.unanswered], [[], []]);
+  assert.deepEqual([anas.went, anas.unanswered], [[KEPT_A], []]);
+});
+
+// Leaving from the group's own page in layout B, the one people get
+// (home-reading.js `first`): Leave is under Manage this group, so the
+// page is at `?group=trip` when it is pressed. Left, the page is All your
+// groups: the leave said once, the groups still yours, and the way to
+// Groups you left, never "This group is not available here" over a page
+// with every place hidden; and its address, so a reload lands there too.
+// The plant is the fault this law was written for: watched failing with
+// leave.js keeping `?group=` on a leave.
+test('leaving a group from its page in layout B lands on All your groups', async () => {
+  const trip = (left) => group({ id: 'trip', name: 'Trip', keeps: false, left });
+  const state = { left: false };
+  const answers = ada({
+    groups: [group({ name: 'House' }), trip(false)],
+    'POST /v1/leaves': () => ((state.left = true), { outcome: 'left' }),
+  });
+  answers['GET /v1/groups'] = () => ({
+    groups: [group({ name: 'House' }), trip(state.left)],
+    key: ADA,
+  });
+  const page = await home(answers, '/?group=trip');
+  await page.press('#group-trip button', 'Leave Trip');
+  const drawn = read(page);
+  assert.ok(drawn.includes('You left Trip.'), drawn);
+  assert.ok(!drawn.includes('not available'), drawn);
+  assert.deepEqual(page.text('nav a[aria-current=page]'), ['All your groups']);
+  assert.deepEqual(page.text('.group-list a'), ['House']);
+  assert.ok(drawn.includes('Groups you left'), drawn);
+  const again = await reloaded(page, '/?group=trip', answers);
+  assert.deepEqual(again.text('nav a[aria-current=page]'), ['All your groups']);
+  assert.deepEqual([page.went, page.unanswered], [[['replace', '/']], []]);
 });
 
 // leave_page::a_leave_reaches_the_leavers_other_computer, the page's
@@ -1572,7 +1704,7 @@ test('a refusal or an answer is said once at each press, never one after another
   const nothing = 'That is not a link to something lent in your groups.';
   for (let n = 0; n < 2; n++)
     assert.equal(await pressed(page, '#open button', 'Open it', '#open p', nothing), 1);
-  await page.type('#lent input', '0');
+  await page.type('#lent input[type=number]', '0');
   const many = 'Say how many: 1 or more.';
   for (let n = 0; n < 2; n++)
     assert.equal(await pressed(page, '#lent button', 'Let in this many', '#lent li', many), 1);

@@ -1,0 +1,60 @@
+<!doctype html>
+<!-- Saturday: a board where friends plan a Saturday. Its script is index.js; what it reads, writes and says, board.js. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saturday</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="index.js"></script>
+</head>
+<body>
+<main>
+<h1>Saturday</h1>
+<p id="said" role="status">Opening your group’s board…</p>
+<div id="board" hidden>
+<section aria-labelledby="add-heading">
+<h2 id="add-heading">Add a plan</h2>
+<form id="add">
+<p><label for="add-title">What</label> <input id="add-title" name="title" required autocomplete="off"></p>
+<p><label for="add-at">When</label> <input id="add-at" name="at" type="time"></p>
+<p><label for="add-place">Where</label> <input id="add-place" name="place" autocomplete="off"></p>
+<p><button>Add it to the board</button></p>
+</form>
+</section>
+<section aria-labelledby="plans-heading">
+<h2 id="plans-heading" tabindex="-1">Plans</h2>
+<p id="empty">No plans yet. Add the first one above.</p>
+<ol id="plans"></ol>
+</section>
+<p id="share" hidden><button id="copy" type="button">Copy the board’s link</button> <span id="link"></span></p>
+</div>
+</main>
+<template id="plan">
+<li class="plan">
+<article>
+<h3 class="title" tabindex="-1"></h3>
+<p class="when"></p>
+<p><button class="vote" type="button" aria-pressed="false">Vote for this</button> <span class="votes"></span></p>
+<h4>To bring</h4>
+<p class="nothing">Nothing yet.</p>
+<ul class="things"></ul>
+<ul class="others"></ul>
+<form class="claim">
+<p><label>I’ll bring <input name="what" required autocomplete="off"></label>
+<button class="say">Say you’ll bring it</button>
+<button class="cancel" type="button" hidden>Keep it as it was</button></p>
+</form>
+<details>
+<summary>Paste a list of things to bring</summary>
+<form class="paste">
+<p><label>One thing a line<br><textarea name="list" rows="5" required></textarea></label></p>
+<p><button>Add these to the list</button></p>
+</form>
+</details>
+<p><button class="off" type="button">Take this plan off the board</button></p>
+</article>
+</li>
+</template>
+</body>
+</html>

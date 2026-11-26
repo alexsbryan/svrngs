@@ -12,13 +12,21 @@ something that installs svrngs for you can check the installer before it
 runs it. A package checks a download against
 the key, and a PKGBUILD names this fingerprint in `validpgpkeys`, as
 svrngs's own does ([`packaging/arch`](packaging/arch/README.md)). To check
-one yourself, run `gpg --import svrngs-release-key.asc`, then
-`gpg --verify SHA256SUMS.sig SHA256SUMS`, then
-`shasum -a 256 -c SHA256SUMS`. From V1.12.0, the installer installs
+one yourself, compare the key's fingerprint with the one above, import it,
+verify `SHA256SUMS.sig` and `install.sh.sig` against that key, and verify
+the archive against the signed sums. Only then run the installer. From
+V1.12.0, the installer installs
 exactly the file you checked, and the link's page only joins:
 `sh install.sh --archive svrngs-<os>-<arch>.tar.gz '<your link>'`. The
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/release.sh sign`).
+
+**Moving from 1.13.3 to a release with Keeper:** Run the [verified install
+command](docs/guide/start.md#start-a-group-on-your-computer) again, with the
+same account, to install both programs and keep your existing groups.
+The 1.13.3 updater replaces only `svrngs`. If you already updated that way,
+rerun the install command to add Keeper. If a package manager installed
+svrngs, update the package instead.
 
 ## V1.13.3, 21 November 2026
 

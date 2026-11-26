@@ -86,6 +86,20 @@ pub(crate) const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
 /// ([`crate::app`]): bytes the app chose, never an act's, a link's, a
 /// pass's or a consent.
 pub(crate) const APP_DOMAIN: &[u8] = b"svrngs-app:";
+/// Domain separator for a device's signature over a change set of an app's
+/// database ([`crate::set`]): never an act's, an app's bytes, a pass or a
+/// consent.
+pub(crate) const SET_DOMAIN: &[u8] = b"svrngs-db-set:";
+/// Domain separator for a computer's signature over the write it prepared
+/// for a phone to sign ([`crate::set::prepared`]): never a set's.
+pub(crate) const PREPARED_DOMAIN: &[u8] = b"svrngs/db-prepared/v1\0";
+/// Domain separator for a database's site, the hash of its device's key and
+/// the nonce made with it ([`crate::set::site`]), so a site is never the
+/// hash of anything else svrngs hashes.
+pub(crate) const SITE_DOMAIN: &[u8] = b"svrngs/db-site/v1\0";
+/// Domain separator for the hash of the `schema.sql` a set was written
+/// under ([`crate::set::schema`]).
+pub(crate) const SCHEMA_DOMAIN: &[u8] = b"svrngs/db-schema/v1\0";
 /// Domain separator for a redemption's co-signature (svrngs, U2), so the
 /// admitted key's consent is never valid as an act's signature, nor one as
 /// the other.

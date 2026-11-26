@@ -3,7 +3,7 @@
 // is in a group; each group's read told to HOME (`GroupTold`); and
 // HOME's part of it: what each group told (`take`), and the page's foot
 // held until the section has read (`holds`).
-import { html, useEffect } from '../ui/view.js?v=__VERSION__';
+import { useEffect } from '../ui/view.js?v=__VERSION__';
 import { go } from '../ui/machine.js?v=__VERSION__';
 import { Acting } from './acting.js?v=__VERSION__';
 /** @import { Group, Lends, PlaceProps } from './group.js?v=__VERSION__' */
@@ -73,12 +73,6 @@ function GroupTold({ g: group, s: state, home }) {
   return null;
 }
 
-/** @param {HOME.PlaceProps} props */
-function ActsPlace({ s: state, home }) {
-  // HOME draws its places once the groups are read (home-page.js `Home`).
-  if (/** @type {Group[]} */ (state.groups).length === 0) return false;
-  return html`<${Acting} s=${state} home=${home} />`;
-}
-
+// Drawn once the person is in a group (home-page.js `MEMBERS`).
 /** @type {{ acts: (props: HOME.PlaceProps) => Drawn, told: (props: PlaceProps) => Drawn }} */
-export const view = { acts: ActsPlace, told: GroupTold };
+export const view = { acts: Acting, told: GroupTold };

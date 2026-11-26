@@ -4,14 +4,14 @@
 //! decider of what the release is, and `release` in the data dir is the one
 //! record of what this computer installed. A computer whose record is that
 //! hash is current; one whose record differs downloads the tarball the
-//! sums name, checks it, unpacks only `svrngs`, and renames the new one
-//! over it. Nothing is guessed, and the page is not the trust: its sums
+//! sums name, checks it, and stages both executables before replacing
+//! either. The page is not the trust: its sums
 //! are read only once [`signed`] finds them signed by a key built into
 //! svrngs, the signature made no earlier than the svrngs running: its own
 //! commit ([`BUILT`]), or the signature this computer last accepted, which
 //! `release` keeps, whichever is later (DESIGN §7, "A computer updates only
-//! from a signed release"). `install.sh` trusts the page's HTTPS alone, as
-//! the install line does.
+//! from a signed release"). Keeper goes first; `plan::run` refuses a mixed
+//! pair if activation is interrupted.
 //!
 //! A refusal keeps the running binary. A check that cannot be judged — no
 //! page kept, no line for this platform, a page that does not answer — is
@@ -25,12 +25,14 @@
 
 use std::fs::{self, File};
 use std::io::ErrorKind;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 use std::time::Duration;
 
 use ring::digest::{digest, SHA256};
 use svrngs_core::link::Origin;
+
+use crate::plan::run::KEEPER;
 
 pub mod signed;
 
@@ -152,8 +154,18 @@ impl<F: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError>> Get for F {}
 pub async fn check(dir: &Path) -> Result<Check, UpdateError> {
     match std::env::current_exe().ok().as_deref().and_then(packaged) {
         Some(words) => Ok(Check::Packaged(words)),
-        None => check_by(dir, fetch, signed::RELEASE_KEYS).await,
+        None => {
+            let check = check_by(dir, fetch, signed::RELEASE_KEYS).await?;
+            Ok(match check {
+                Check::Current if !keeper_installed() => Check::Available,
+                check => check,
+            })
+        }
     }
+}
+
+fn keeper_installed() -> bool {
+    std::env::current_exe().is_ok_and(|p| p.with_file_name(KEEPER).is_file())
 }
 
 /// [`check`], the page's files read by `get`, its sums signed by one of
@@ -189,52 +201,59 @@ pub async fn apply_at(
     if let Some(words) = packaged(exe) {
         return Ok(Outcome::Packaged(words));
     }
+    let bin = exe.parent().ok_or(UpdateError::Platform)?;
     let _held = claim(dir)?;
     let latest = latest(dir, &get, keys).await?;
-    if latest.installed.as_deref() == Some(latest.want.as_str()) {
+    let keeper = exe.with_file_name(KEEPER);
+    if latest.installed.as_deref() == Some(latest.want.as_str()) && keeper.is_file() {
         tracing::debug!(target: "update", tarball = %latest.tarball, "update: the release is the one this computer installed");
         return Ok(Outcome::Current);
     }
     // Asked before the download: a svrngs that cannot write beside itself
     // was put there by someone else, who updates it.
-    let new = exe.with_extension("new");
-    let place = File::create(&new).and_then(|_| fs::remove_file(&new));
-    place.map_err(refused("whoever installed svrngs where it is updates it"))?;
+    let temp = tempfile::tempdir_in(bin)
+        .map_err(refused("whoever installed svrngs where it is updates it"))?;
     let url = format!("{}{}", latest.base, latest.tarball);
     let bytes = get(&url, MAX_TARBALL).await?;
     if hash(&bytes) != latest.want {
         tracing::debug!(target: "update", url, "update: refused — the tarball does not match the page’s checksum");
         return Err(UpdateError::Mismatch);
     }
-    let temp = Temp::new(dir)?;
-    let tarball = temp.0.join("svrngs.tar.gz");
+    let tarball = temp.path().join("svrngs.tar.gz");
     fs::write(&tarball, &bytes).map_err(refused("the update’s tarball cannot be kept"))?;
     let tar = Command::new("tar")
         .arg("-xzf")
         .arg(&tarball)
         .arg("-C")
-        .arg(&temp.0)
-        .arg("svrngs")
+        .arg(temp.path())
+        .args(["svrngs", KEEPER])
         .status()
         .map_err(refused("the update cannot be unpacked"))?;
     if !tar.success() {
         tracing::debug!(target: "update", url, "update: refused — the tarball did not unpack");
         return Err(UpdateError::Refused(
-            "the new svrngs could not be unpacked".to_string(),
+            "the release could not unpack both svrngs and its Keeper".to_string(),
         ));
     }
-    let unpacked = temp.0.join("svrngs");
-    let meta = fs::symlink_metadata(&unpacked).map_err(refused("the new svrngs cannot be read"))?;
-    if !meta.file_type().is_file() {
-        tracing::debug!(target: "update", url, "update: refused — the tarball’s svrngs is not a regular file");
-        return Err(UpdateError::Refused(
-            "the new svrngs is not a regular file".to_string(),
-        ));
+    for name in ["svrngs", KEEPER] {
+        let file = temp.path().join(name);
+        if !fs::symlink_metadata(&file)
+            .map_err(refused("the new release cannot be read"))?
+            .is_file()
+        {
+            return Err(UpdateError::Refused(format!(
+                "the new {name} is not a regular file"
+            )));
+        }
+        fs::set_permissions(&file, std::os::unix::fs::PermissionsExt::from_mode(0o755))
+            .and_then(|_| File::open(&file)?.sync_all())
+            .map_err(refused("the new release cannot be made runnable"))?;
     }
-    fs::copy(&unpacked, &new).map_err(refused("the new svrngs cannot be put where svrngs runs"))?;
-    fs::set_permissions(&new, std::os::unix::fs::PermissionsExt::from_mode(0o755))
-        .map_err(refused("the new svrngs cannot be made runnable"))?;
-    fs::rename(&new, exe).map_err(refused("the new svrngs cannot replace this one"))?;
+    fs::rename(temp.path().join(KEEPER), keeper)
+        .map_err(refused("the new Keeper cannot be installed"))?;
+    fs::rename(temp.path().join("svrngs"), exe).map_err(refused(
+        "the new svrngs cannot replace this one; run the verified installer to repair the pair",
+    ))?;
     // Keep the hash of the release now in place, and when its signature was
     // made, the floor the next is held to. A failure here is said and not
     // fatal: the bytes are already the release, and the next check reads
@@ -435,24 +454,6 @@ fn claim(dir: &Path) -> Result<File, UpdateError> {
             Err(UpdateError::Busy)
         }
         Err(std::fs::TryLockError::Error(e)) => Err(unplaced(e)),
-    }
-}
-
-/// A directory the update unpacks in, removed when it is dropped.
-struct Temp(PathBuf);
-
-impl Temp {
-    fn new(dir: &Path) -> Result<Self, UpdateError> {
-        let path = dir.join("update");
-        let _ = fs::remove_dir_all(&path);
-        fs::create_dir(&path).map_err(unplaced)?;
-        Ok(Self(path))
-    }
-}
-
-impl Drop for Temp {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
     }
 }
 

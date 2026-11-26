@@ -1,0 +1,13 @@
+services:
+  web:
+    image: docker.io/actualbudget/actual-server@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6
+    ports: ["5006:5006"]
+    volumes: ["data:/data"]
+    stop_grace_period: 2s
+volumes:
+  data: {}
+x-svrngs:
+  title: Actual
+  about: A local budget
+  door: { port: 5006, protocol: http }
+  state: [data]

@@ -196,7 +196,51 @@ it. Every change to a declaration — its groups, its limit, turning on
 sign-in, stopping it, sharing it again — holds that lend's lock (`locks/<lend>.lock`, `File::try_lock`)
 from its read to its write (`lend::mutate`), so no change writes back
 what another narrowed; one made while another holds it is refused, busy
-(409 on the home page), and changes nothing. A group taken away is
+(409 on the home page), and changes nothing. The lock also protects a
+per-name revision in `locks/<lend>.rev`. Withdrawal advances it even when
+no declaration stands and leaves it behind. A confirmed plan can publish
+its binding, grant, audience and limit in one declaration write only at
+the reviewed revision. The audience keeps its selection order; its IDs
+must match the ones reviewed, regardless of order. The executor
+(`plan::run::confirm`) rebuilds the plan before publishing and returns the
+current review on a token mismatch.
+On the home page, `/running` reviews a new share and `/running/confirm`
+publishes it with that same executor. The review binds the program and the
+terms shown as well as the audience and listener; it never replaces a
+share that already stands.
+`svrngs share --plan` prints the terminal review; at a
+terminal a yes is required before executing it. `--ask-after-restart`,
+and sharing without a terminal, share only the current run. A listener
+started by hand is shared only while it runs; sharing does not adopt,
+stop or copy it. On Linux, an enabled unit pulled in by the login target
+is evidence for sign-in, not for unattended disk unlock. Running a program
+with svrngs is separate from sharing it: `svrngs run <name> --port <port>
+-- <command>` asks the sibling keeper to start it on Linux or macOS and
+writes no share. Linux also takes `--card <compose.yaml>` for one volume-only
+HTTP container, with `--port` matching the card. On Linux the CLI shows
+the keeper's boot consent prompt at the terminal. The page has no terminal
+input and cannot turn on unattended startup. On macOS the program starts
+at sign-in; Stop takes its plist out of the login set until Start. Lifecycle
+changes require the keeper's saved card and a regular live or parked plist;
+a loaded agent must also match the live plist's path (`launchd.rs`). Run
+verifies readiness with listeners in its active unit's cgroup subtree or
+with holders descended from the active launch agent. Otherwise it reports
+manager state and port readiness separately (`native_run.rs`); neither
+read approves sharing. The home page's native Run asks for a name,
+port, folder and command; the keeper parses quoting without running a
+shell. Choosing Run on an unmanaged listener's row opens that same form.
+The home page's read-only `/run?prefill=<port>` passes through the keeper's
+llama-server suggestion, when available, without replacing edits or
+submitting the form. After Run verifies the program, the page points to
+**Already running here** to share it; the terminal gives a Share command
+for its verified port.
+The page's Start and Stop controls use only the keeper's observed jobs
+and leave sharing alone. The share review is still a separate act.
+When Share would grant a running service, it
+dials without sending bytes and checks the listeners and connection taker against
+that service and the reviewed approval before the conditional save
+(svrn-docs `rings/current/KEEP_IT_RUNNING_RELEASE.md`).
+A group taken away is
 refused at the next request, and what already streams to its people is
 cut within two seconds: every second the door re-reads the declaration
 for each answer still streaming to a member or pass holder and each
@@ -327,6 +371,36 @@ listens anew after it starts again, and a share made before this, wait on
 that approval; a share of a name already shared from another port or
 protocol is refused unless it is given `--replace`; a lend file from
 V1.12.2 written again keeps what V1.12.2 wrote.
+**A lend kept to a unit is renewed through its restarts** (svrn-docs
+`rings/current/KEEP_SHARING_ON_RESTART.md` §2). On Linux a holder that runs
+in a service of this account's user manager is handed to the front ends as
+that job (its name and `Description`, `job.rs`), not its executable. The
+home page uses the job's description or name without the manager's terms
+(`running-look.js`, checked by `vocab_check.py`). Approving one unit's
+job alone, by `svrngs share`, `svrngs approve` or Keep sharing it, grants
+it (`Terms::keep`: the unit and a hash of its files under `~/.config`),
+unless `--ask-after-restart`; a transient unit, or one with no file there,
+is never granted. Where a kept TCP lend's request is held as another's,
+the door reads the unit now (`/usr/bin/systemctl`, never `PATH`) and
+approves afresh from that same read with `Chosen::Cgroups`, its subtree's
+cgroups this boot: only when the lend isn't held, the unit's files hash to
+the grant (else `Hold::Changed`, and its lender is asked again), a
+connection's taker was read, every socket there and that taker are the
+unit's, at the address approved before, and only over the revision and
+approval it judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
+stopped lend stays stopped.
+On macOS, Share looks for the keeper's exact label from the share name.
+It grants renewal only with both login registrations verified: the svrngs
+door and the app, whose regular plist must be registered in the GUI domain,
+set to start at sign-in and not disabled (`job/mac.rs`). The CLI parses the
+door's login plist and checks that its `EnvironmentVariables.SVRNGS_DIR`
+names the same canonical data directory; only a parsed plist without that
+key may use `~/.svrngs` (`cli.rs` `kept_over`). The grant pins
+the label and plist hash. The same door check at Share and renewal requires
+every listener holder and the connection taker to trace to the current
+agent PID and start time. The name alone never confers access. Approve on
+a Mac approves only the current run; to renew again, Share under the Run
+name. Mac containers and other launch agents still share the current run.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.
 
@@ -1082,7 +1156,9 @@ The home page's layout, **B**, at `/`, gives the capabilities three places:
 an overview of groups, one group's workspace, and **This computer**. Each
 group is linked by its stable id, with maker and joining date still saying
 which namesake it is. Ordinary links, Back and refresh keep the selected
-destination; no browser preference or membership is changed. The overview is
+destination; a join, a make or a leave lands on the overview, and the
+address with it, replaced in place, not added (`home.js`), so refresh keeps
+that too. No browser preference or membership is changed. The overview is
 the heading, the one privacy line, the group cards and one row of actions:
 Join a group, Make a group, Open a link and Groups you left. Who the person
 is in their groups is said once above the cards when it is the same in
@@ -1914,7 +1990,11 @@ assume no screen, a TV one device among others.
    address. A lend is kept on across restarts, by its lender's key and its
    name, with the network it was turned on at, told apart by that
    network's router's hardware address; it is served only while this
-   computer is on that network, read again every few seconds. The network
+   computer is on that network, read again every few seconds. A lend of
+   this computer's own that it stops lending, by the home page's Stop or
+   `svrngs unshare`, svrngs running or not, is turned off here first, by
+   the room's owner (`room::withdraw`), so one lent again under its name
+   starts off this WiFi until its person opens it again. The network
    is the one the devices beside this computer stand on: when a VPN
    carries its traffic, the one interface beside the VPN's tunnel that has
    a router, never the tunnel, so a café still reads as the café; two such,
@@ -2040,13 +2120,27 @@ end-to-end encrypted QUIC, a phone's page cannot use it (a browser refuses
 plain HTTP from an HTTPS page), and it admits as below. By default it
 lets through only the computers and phones that stand in a group its
 computer holds, read from the record on disk and asked again on each
-connection, each refusal traced, and a pass's holder for the group's
-lends: the token a lend's page presents at the relay's handshake is read
-as a pass, admitted when it is signed by the person it names, is live,
-names the dialing key as its holder, and its person stands in a group
-held here (self-host) — so a group's own relay need not be `--open` for
-the lends of its members, whose pages dial from a fresh key that stands
-in no group. A computer in no group is refused the
+connection, each refusal traced, and a lend's worker for the group's
+lends (self-host). The worker dials from a key of its run, which stands
+in no group and which the pass's holder names in a link ("Lent apps",
+call 6), so the token it presents at the relay's handshake is the pass
+and that link (`pass.rs` `presenting`); with no link it is the pass
+alone, from a worker dialing as the holder itself. The relay admits the
+pair by the call the lending computer's door makes, Eudoxia's
+`authority::resolve`, for the pass's own app — the pass signed by the
+person it names and live, held by the dialing key or by the holder whose
+link, live and no wider, names it — and then the person stands in a
+group held here, read as their own key's is (`relay.rs` `pass_holds`), or
+is a guest there whom the lend's door would let in: the door's own
+`door::as_guest`, a key no group held here removed and a visit held here,
+live and opening that lend at its host, the computer the pass's label
+names (`relay.rs` `guest`; "A visit takes one of its host computer's
+slots", §6). A relay reads no lend's declaration, so whether the lend is
+a port's and lent to the visit's group, as for a member's lend, is its
+door's alone. So the relay and the door have one rule for a pass, a
+group's own relay need not be `--open` for its members' lends or its
+guests', and it lets through only keys the door would take as that
+person. A computer in no group is refused the
 verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each held to the share: 125,000 bytes a second, about a
 megabit, with an 8 MiB burst (`SHARE_RATE` and `SHARE_BURST`). The numbers
@@ -2151,7 +2245,11 @@ film's bytes need not cross a relay when the phone and its lender share a
 Wi-Fi: the lend's endpoint offers the lender a WebRTC path on the dial it
 already holds (`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend
 worker's fresh endpoint, and the window holds the channel, since a worker
-has no `RTCPeerConnection`. The offer is answered only to a dialer
+has no `RTCPeerConnection`. That endpoint's key is made for the attempt and
+named by the holder's link, so it presents the pass and that link at its
+relays, as the run's own endpoint does (`web/src/lib.rs` `direct_start`):
+a group's own relay admits it by them for the relay leg beside the channel
+("A relay anyone runs", above). The offer is answered only to a dialer
 holding a live pass for a lend this computer lends
 (`door::holder_of_offer`), only while this computer is on a network its
 lender turned direct connections on for from the home page
@@ -2180,6 +2278,7 @@ Cellular is never direct, and meets the share.
 | **apps (rngapps)** | anything served on localhost; app-specific code lives only in `apps/<app>/` | the surface in §3, and nothing else |
 | **sovereign (svrn)** | local AI on a member's computer | its OpenAI-compatible endpoint on loopback |
 | **commonwealth-ai** | the mesh for one owner's machines, and the ring code svrngs forked | nothing at runtime; `scripts/ports.py` pairs each forked file with its original |
+| **Corrosion** (superfly/corrosion) | Fly's CRDT SQLite, which an app's database learns from | nothing at runtime; each function forked carries `ported from superfly/corrosion <path>@<commit>`, which `scripts/ports.py` pairs with its original beside commonwealth-ai's |
 
 **The fork.** svrngs owns the group's code, forked from commonwealth-ai's
 ring slice at `e1a43bcd2`: the record (`commonwealth-rail-core`), the
@@ -2919,26 +3018,28 @@ is refused as before, and a browser svrngs never opened is refused by the
 home page in the same words.
 
 **A computer gets svrngs from the group's link.** On a computer the group's
-page gives one line to paste in a terminal, `curl -fsSL <page>install.sh |
+page gives one line to paste in a terminal, `curl -fsSL https://group.svrnme.sh/install.sh |
 sh -s -- '<link>'`, composed in the page from the link's `#` part, so the
-token reaches no server. The host that serves the page serves the rest
-beside it, so any host a group names serves it too: `install.sh` at the
-page's address, and under `get/` a tarball of `svrngs` for each platform
+token reaches no server. The named invite page is used for joining and
+links. The publisher's HTTPS bootstrap verifies the release key's signature
+on a manifest that binds the installer and the tarballs it gives it. The
+group's page can mirror those signed releases under `get/` for updates. A
+release has a tarball of `svrngs` and its sibling
+`svrngs-keeper` for each platform
 built — macOS on Apple silicon and on Intel, Linux on x86_64 and aarch64 as
 static-pie musl binaries with full RELRO
 (`demo/runs/hardening/2026-11-18/`), cross-built by zig (cargo-zigbuild)
 on mimalloc, since the malloc of zig's musl kept what svrngs freed
-(`demo/runs/leak/2026-10-17/`) — beside one `SHA256SUMS`. Nothing is
-fetched from anywhere else. `install.sh`, POSIX `sh`:
+(`demo/runs/leak/2026-10-17/`) — beside one `SHA256SUMS`. `install.sh`, POSIX `sh`:
 - names the platform and refuses any other;
-- fetches the tarball and the sums from the address the link names, and
-  refuses a mismatch; or, given `--archive <file>` before the link or after
+- verifies the publisher's manifest with GnuPG and fetches matching bytes
+  from the project's GitHub releases; or, given `--archive <file>` before the link or after
   it (and `--give-archive <file>` with `--give`), installs that file as
   given and asks the page for no sums for it. Whoever already checked a
   release, from its signature, installs exactly that; the page then only
   joins and is kept for links, and cannot choose the program. The release
   kept for `svrngs update` is that file's sum. A file it cannot read or
-  that holds no program is refused, and nothing is installed;
+  that lacks a required program is refused, and nothing is installed;
 - installs into `~/.local/bin`, never with `sudo`, and puts it on the PATH
   of the person's login shell when that is zsh or bash, once, in the
   profile a new terminal window reads, and says so;
@@ -2950,7 +3051,13 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
 Run again, it updates in place and joins nothing twice. With `--uninstall`
 where the link goes, it stops and takes away what it kept at login, the
 programs and the opener, and keeps the data dir and the profile's PATH line,
-saying each and how to remove it. The person is named
+saying each and how to remove it. Before removing svrngs it points to
+**Stop** on the home page, which shows jobs created by Run even without
+a group; afterward, it points to reinstalling. Stop leaves the app's
+setup and files in place. Uninstall leaves those jobs and their data:
+native jobs run their programs directly, while Linux container jobs
+need the keeper at their next start or stop (`apps/svrngs-keeper/src/unit.rs`).
+The person is named
 as their computer shows them: the full name of the account `$USER` names,
 else `$USER`. *A founder's line* has the page's address where the link goes:
 it does all of the above but join, and the home page it opens is where they
@@ -2985,10 +3092,13 @@ is signed after its commit, so its own signature passes, and a computer whose
 `release` is the hash alone, as `install.sh` leaves it, still takes nothing
 signed before the svrngs it runs. A missing, foreign or older signature is
 never offered: the home page says, where the offer would be, what stopped,
-why and the fix, and `svrngs update` says the same and exits 1. The install
-line checks no signature: it runs whatever the page serves, unless it is
-given a release already checked (`--archive`, above); pacman checks the
-release key itself (`packaging/arch`).
+why and the fix, and `svrngs update` says the same and exits 1. Pacman
+checks the release key itself (`packaging/arch`). The updater stages both
+executables before replacing either, installs Keeper first, and records the
+release after both replacements. The daemon's Keeper commands require the
+same release build, so an interrupted replacement can be retried without
+run or lifecycle commands crossing the version boundary. The 1.13.3 updater
+predates that rule: rerun the verified install line to cross that transition.
 
 *A computer that keeps apps* gets Give's program from the same line, with
 `--give` after the link or the page's address. The page host serves it
@@ -3018,6 +3128,34 @@ release's signature (`scripts/release.sh`):
    `svrngs-release-key.asc` in a keyring of its own, refuses a site without a
    valid signature, publishes one with it, and leaves none of the Vercel
    CLI's files in the site.
+
+Between build and sign, each release records svrngs-db's tests on each of
+the four targets it ships, since the gate runs on one computer and the
+database runs on all four. They are recorded under `demo/runs/<version>/targets/`,
+each with its command and its verdict: passed, failed, could-not-judge or
+never-ran.
+- macOS on Apple silicon, natively: `cargo test -p svrngs-db`.
+- macOS on Intel, under Rosetta: its test binaries, built for
+  `x86_64-apple-darwin`. A Rosetta that hangs makes this could-not-judge.
+- Linux x86_64 and aarch64: the test binaries `cargo zigbuild -p svrngs-db
+  --tests --target <triple>-unknown-linux-musl` builds. They run on a Linux
+  x86_64 computer, and in an aarch64 kernel such as a podman machine's.
+- Each with the open-files limit raised as `scripts/check.sh` raises it,
+  since W1's seeds open more than a login's 1,024 at once.
+
+Beside them, each release records the mixed scene
+(`crates/svrngs/tests/scenes/mixed.rs`): one group where a computer runs
+v1.13.3, the last release with no app databases, beside two that run the
+release's commit, until it upgrades to it. It compares a release with the
+last one, so it runs once a release and not in every check, where it is
+ignored. It is recorded under `demo/runs/<version>/mixed/`, with its
+command and its verdict.
+1. `sh crates/svrngs/tests/scenes/last-release.sh` makes v1.13.3's binary
+   in `target/last-release/`, once a checkout; or `SCENES_LAST_RELEASE`
+   names one already made.
+2. `cargo test -p svrngs --test scenes mixed::mixed::chromium -- --ignored
+   --nocapture`, under the gate lock. Without the binary the scene is
+   never-ran, and says which command makes it.
 
 sign and page read the commit's `cli::SHIPPED` (§3, "Where a computer meets
 its groups"): a build at n0's relays they go on with and say so; a build at
@@ -3067,9 +3205,11 @@ The release's record keeps its verdict.
    n0's public relays stay in every build as the emergency behind ours: a
    computer meets at n0's only while neither svrngs's relay nor its
    groups' own answers (§3), so an outage of ours is not an outage of the
-   groups. A group's own relay carries a phone's lends too: it admits a
-   pass's holder, the fresh key a lend's page dials from, by the pass its
-   person signed (§3, "A relay anyone runs"; self-host). And whoever
+   groups. A group's own relay carries a phone's lends too, a guest's
+   among them: it admits the key a lend's worker dials from, by the pass
+   its person signed and the link its holder signed naming that key, and
+   then the person's standing or visit, as the door does (§3, "A relay
+   anyone runs"; self-host). And whoever
    serves a group's page serves the code that holds the person's key, its
    bytes unsealed while the page runs, so a group that does not trust
    svrnme.sh serves the page from its own origin. Likewise a lend's own

@@ -230,7 +230,7 @@ async function opened(fragment, { kept = [house], fine = false, windows = false 
     configurable: true,
     writable: true,
   });
-  const copy = machine('COPY', COPY, { at: { copy: 'idle' }, said: [] });
+  const copy = machine('COPY', COPY, { at: { copy: 'idle' } });
   const io = {
     ...parts.io,
     look: (f) => ({
@@ -571,11 +571,16 @@ test('a computer is offered one line, a founder’s with no link and a joiner’
   const origin = 'https://page.example/';
   runtime({ tokens: { TOKEN: ADA }, computers: {} });
   for (const [fragment, says, line, words] of [
-    ['', 'founds', `curl -fsSL ${origin}install.sh | sh -s -- '${origin}'`, 'make your group'],
+    [
+      '',
+      'founds',
+      `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '${origin}'`,
+      'make your group',
+    ],
     [
       'TOKEN',
       'joins',
-      `curl -fsSL ${origin}install.sh | sh -s -- '${origin}#TOKEN'`,
+      `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '${origin}#TOKEN'`,
       'it gets svrngs, joins you',
     ],
   ]) {

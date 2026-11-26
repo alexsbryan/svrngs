@@ -2,10 +2,10 @@
 // HOME, the home page's machine: it reads the person's groups from
 // /v1/groups, and the address once (`first`): the ask (/ask), a group on a
 // screen (?screen=), or the page, with what was just done here (?made=,
-// ?joined=, ?left=). It takes `again` after a write and `visible` on coming
-// back on screen, and each reads the groups again. Every other message
-// names the feature's file that takes it (offered.js), each a file of
-// FILES.
+// ?joined=, ?left=). It takes `again` after a write, with the address that
+// says what it did when it says so, and `visible` on coming back on
+// screen, and each reads the groups again. Every other message names the
+// feature's file that takes it (offered.js), each a file of FILES.
 import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { offered } from './offered.js?v=__VERSION__';
 import { get } from './routes.js?v=__VERSION__';
@@ -16,13 +16,11 @@ import { get } from './routes.js?v=__VERSION__';
 /** @import { Taken } from './offered.js?v=__VERSION__' */
 /** @import * as acts from './acts.js?v=__VERSION__' */
 /** @import * as lending from './lending.js?v=__VERSION__' */
-/** @import * as join from './join.js?v=__VERSION__' */
-/** @import * as make from './make.js?v=__VERSION__' */
-/** @import * as leave from './leave.js?v=__VERSION__' */
 
 /**
- * What the address says, by name (`?made=`, `?screen=`, …), and what a
- * feature's `take` writes into it: `null` for a folder that was placed.
+ * What the address says, by name (`?made=`, `?screen=`, …), as the page
+ * opens or as a write's `again` gives it: `null` for a folder that was
+ * placed.
  * @typedef {Partial<Record<string, string | null>>} Said
  */
 
@@ -49,17 +47,16 @@ import { get } from './routes.js?v=__VERSION__';
  */
 
 /**
- * HOME's messages: a round of reading begun here (`again`, after a write;
+ * HOME's messages: a round of reading begun here (`again`, after a write,
+ * `q` the address that says what it did: join.js, make.js, leaving.js;
  * `visible`), the groups read or unread, and each message a feature's
  * `take` takes, which names its file (`flow`).
- * @typedef {{ type: 'again' | 'visible' }
+ * @typedef {{ type: 'again', q?: Said }
+ *   | { type: 'visible' }
  *   | { type: 'read', n: number, groups: Held[], key: string, share: number | null, round: Round['type'], why: string }
  *   | { type: 'unread', n: number, why: string }
  *   | acts.Taken
- *   | lending.Taken
- *   | join.Taken
- *   | make.Taken
- *   | leave.Taken} Message
+ *   | lending.Taken} Message
  */
 
 /**
@@ -120,27 +117,6 @@ export const FILES = /** @type {const} */ ([
   'update-line',
 ]);
 
-// After a write here (`again`), the groups drawn stay, said as read again
-// until they are: "You made Trip." over the groups as they were looked
-// done before the new one was there.
-/**
- * @param {State} state
- * @param {{ type: 'again' | 'visible' }} message
- * @returns {Step<State, Effect>}
- */
-const reading = (state, message) => {
-  const [asked, serial] = ask(state, 'groups');
-  const rereading = message.type === 'again' && state.at.groups === 'read';
-  return go(
-    state,
-    rereading ? { groups: 'rereading' } : {},
-    { asked },
-    { run: 'groups', n: serial, round: message.type, failed: 'unread' },
-  );
-};
-
-// The address, read once as the page starts, and what it says was done
-// here.
 // What the address says was done here (home-page.js `SAID`).
 const DONE = /** @type {const} */ ([
   'made',
@@ -154,7 +130,34 @@ const DONE = /** @type {const} */ ([
   'nowhere',
 ]);
 /** @typedef {'none' | typeof DONE[number]} Done */
+/** @param {Said} query @returns {Done} */
+const done = (query) => DONE.find((said) => said in query) ?? 'none';
 
+// After a write here (`again`), the groups drawn stay, said as read again
+// until they are: "You made Trip." over the groups as they were looked
+// done before the new one was there. A write that says what it did gives
+// the address that says it (`q`, `?left=Trip`), and the page is as that
+// address opens it (`first`), with no reload: in B, All your groups, not
+// the group just left (`?group=`).
+/**
+ * @param {State} state
+ * @param {{ type: 'again', q?: Said } | { type: 'visible' }} message
+ * @returns {Step<State, Effect>}
+ */
+const reading = (state, message) => {
+  const [asked, serial] = ask(state, 'groups');
+  const rereading = message.type === 'again' && state.at.groups === 'read';
+  const query = message.type === 'again' ? (message.q ?? state.q) : state.q;
+  return go(
+    state,
+    rereading ? { groups: 'rereading', said: done(query) } : { said: done(query) },
+    { asked, q: query },
+    { run: 'groups', n: serial, round: message.type, failed: 'unread' },
+  );
+};
+
+// The address, read once as the page starts, and what it says was done
+// here.
 /**
  * @param {Location} location
  * @returns {State}
@@ -163,9 +166,8 @@ export const first = ({ pathname, search, origin, hash }) => {
   const query = Object.fromEntries(new URLSearchParams(search));
   if (pathname === '/' && !query.screen && hash.startsWith('#group-'))
     query.welcome = hash.slice(7);
-  const done = DONE.find((said) => said in query);
   return {
-    at: { groups: 'reading', said: done ?? 'none' },
+    at: { groups: 'reading', said: done(query) },
     asked: { groups: 1 },
     ask: pathname === '/ask',
     q: query,
@@ -203,9 +205,6 @@ export const HOME = (flows) => ({
         const { groups, key, round, share } = message;
         return go(state, { groups: 'read' }, { groups, key, share, round: { type: round } });
       }
-      case 'made':
-      case 'joined':
-      case 'left':
       case 'told':
       default:
         return offered(flows, state, message);

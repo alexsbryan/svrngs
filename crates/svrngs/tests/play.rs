@@ -297,8 +297,14 @@ async fn stop_closes_it_and_nothing_listens_while_it_is_off() {
         let (status, off) = play(&alex, turn("off", lend)).await;
         assert_eq!(status, 200, "{off}");
         assert!(!off.to_string().contains(lend), "{lend} is off: {off}");
+        // Stop is answered once Play's owner has dropped the lend's
+        // carrying (crates/svrngs-node/src/play.rs `play`, its `was`),
+        // which asks the runtime to abort the task holding the socket; the
+        // socket closes when a worker runs that abort, after the answer on
+        // a loaded host. So the port is read until it is free, as the
+        // removal's test reads it: a listener left on still fails.
         assert!(
-            nothing_at(kept(lend)).await,
+            within(|| nothing_at(kept(lend))).await,
             "nothing listens at {lend}'s port once off"
         );
     }

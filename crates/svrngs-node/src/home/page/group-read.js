@@ -34,9 +34,9 @@ export const PLACES = /** @type {const} */ ([
 // should show as loading until they're loaded"; demo/runs/webkit-wall/
 // 2026-11-03/home-group-gate-2.txt). Read again, it keeps what it drew.
 /** @param {GroupProps} props */
-export function GroupRead({ g: group, round, places, flows, home, me, joined, grouped }) {
+export function GroupRead({ g: group, round, places, home, me, joined, grouped }) {
   const [state, send] = useMachine(() =>
-    machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: group.id }),
+    machine('GROUP', GROUP, { at: { people: 'reading', lends: 'reading' }, id: group.id }),
   );
   useEffect(() => send({ type: round.type }), [round]);
   const name = group.name ?? 'this group';
@@ -48,7 +48,7 @@ export function GroupRead({ g: group, round, places, flows, home, me, joined, gr
       const Place = places[place];
       if (!Place) return null;
       return html`
-      <${Place} g=${group} s=${state} send=${send} home=${home} me=${me} joined=${joined} />
+      <${Place} g=${group} s=${state} home=${home} me=${me} joined=${joined} />
     `;
     });
   return html`

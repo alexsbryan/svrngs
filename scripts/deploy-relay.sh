@@ -46,11 +46,9 @@ cat >"$BOX" <<'ON_BOX'
 set -eu
 id svrngs >/dev/null 2>&1 || useradd --create-home svrngs
 chmod -R a+rX /tmp/site
-(cd /tmp/site && exec python3 -m http.server 8000 --bind 127.0.0.1 >/dev/null 2>&1) & served=$!
-sleep 2
-su - svrngs -c "SVRNGS_FROM=http://127.0.0.1:8000/ sh /tmp/site/install.sh https://$NAME/ --relay $NAME --open" |
+(cd /tmp/site/get && sha256sum -c SHA256SUMS)
+su - svrngs -c "sh /tmp/site/install.sh --archive /tmp/site/get/svrngs-linux-*.tar.gz https://$NAME/ --relay $NAME --open" |
   sed -n '/^\[Unit\]/,$p' >/etc/systemd/system/svrngs-relay.service
-kill "$served"
 grep -q '^ExecStart=' /etc/systemd/system/svrngs-relay.service || { echo "install.sh printed no unit" >&2; exit 1; }
 sed -i '/^\[Service\]$/a LimitNOFILE=65536' /etc/systemd/system/svrngs-relay.service
 systemctl daemon-reload

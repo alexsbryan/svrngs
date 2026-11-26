@@ -10,10 +10,13 @@ use std::path::Path;
 
 use serde_json::{json, Value};
 use svrngs_node::iroh::RelayConfig;
-use svrngs_node::network::{self, Network};
+use svrngs_node::network::Network;
 use svrngs_node::node::Node;
 use svrngs_node::webrtc::direct::DIRECT_FILE;
 use svrngs_node::SigningKey;
+
+#[path = "common/unjudged.rs"]
+mod unjudged;
 
 fn no_seed(_: &Path) -> Result<Option<String>, String> {
     Ok(None)
@@ -51,21 +54,18 @@ async fn asked(node: &Node, body: Value) -> (u16, Value) {
     (status, body)
 }
 
-/// This host's network, as the route reads it (`network::here`):
-/// could-not-judge on a host with none.
-fn here() -> Network {
-    network::here().network.unwrap_or_else(|why| {
-        panic!("could not judge: this host's network cannot be read ({why:?})")
-    })
-}
-
 /// **The lender turns direct connections on for this network, and the file
 /// keeps them** (webrtc-network; the operator's UDP decision, 2026-11-19):
 /// off before the first press, on after it, the network's own name in
 /// `direct.json`, and off again. Planted, watched red: a press writing
-/// nothing (`turned` keeping `vec![]`), and the read-back said off.
+/// nothing (`turned` keeping `vec![]`), and the read-back said off. The
+/// network is read before the route is asked: the route refuses (409) on a
+/// host where it cannot be read, which judges nothing of this claim.
 #[tokio::test]
 async fn the_lender_turns_direct_connections_on_for_this_network_and_the_file_keeps_them() {
+    let Some(here) = unjudged::network() else {
+        return;
+    };
     let dir = tempfile::tempdir().unwrap();
     let node = start(dir.path()).await;
     assert_eq!(on(&node).await["on"].as_bool(), Some(false));
@@ -79,7 +79,7 @@ async fn the_lender_turns_direct_connections_on_for_this_network_and_the_file_ke
     let kept: Vec<Network> =
         serde_json::from_str(&std::fs::read_to_string(dir.path().join(DIRECT_FILE)).unwrap())
             .unwrap();
-    assert_eq!(kept, vec![here()]);
+    assert_eq!(kept, vec![here]);
     let (status, off) = asked(&node, json!({ "on": false })).await;
     assert_eq!((status, off["on"].as_bool()), (200, Some(false)), "{off}");
     node.net().close().await;

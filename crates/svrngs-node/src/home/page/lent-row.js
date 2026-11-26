@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// A lend in "What you lend", one line: how many it lets in at once and how
-// many use it now, and what it is lent to, paused when empty and needing
-// selection when legacy (`null`). Folded under that line, since five lends'
-// forms were two screens before anything was asked, and open at first only
-// where apps cannot read it until its lender does something (`undone`): who
-// can open it, one box a group of HOME's, each by its stable id, with a
-// button for each change (lend-change.js CHANGE), and the app form's fill
-// once signing people in is turned on (`SigningOn`).
+// A lend in "What you lend", one line: its name, who can open it, paused
+// when lent to no group and a choice to make when legacy (`null`), and how
+// many use it now, of how many it lets in at once when that is limited;
+// where friends can't open it, Closed or Not running first, marked (`line`).
+// Folded under that line, since five lends' forms were two screens before
+// anything was asked, and open at first only where apps cannot read it
+// until its lender does something (`undone`): who can open it, one box a
+// group of HOME's, each by its stable id, Keep sharing it when it is held,
+// the apps' account, and Stop lending, a button for each change
+// (lend-change.js CHANGE). What is seldom changed is folded again under
+// More settings: how many at once, a header, and signing people in with
+// svrngs, with the app form's fill once that is turned on (`SigningOn`).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
@@ -25,7 +29,7 @@ import { answered } from './running-look.js?v=__VERSION__';
  * groups to lend it to, and HOME's `dispatch`, told to read again once it
  * changes.
  * @typedef {object} LentProps
- * @property {Lend} l
+ * @property {Lend & { sharing?: [string, string] }} l
  * @property {boolean} signs
  * @property {AppsAccount} [account]
  * @property {string[]} [headers]
@@ -48,8 +52,8 @@ function SigningOn({ c: fill }) {
   return html`<p>Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide: install any required OpenID Connect plugin, then configure it with issuer <code>${fill.issuer}</code>, client id <code>${fill.client_id}</code>, client secret <code>${fill.client_secret}</code>. Reach the issuer from the app server on this computer, not the computer of the person opening the app; a container has its own loopback. Test sign-in through the group’s app list after setup. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>${after}</p>`;
 }
 
-// What the row says it is lent to: the names of the groups it holds, none
-// when paused, and needing selection when the answer gave none.
+// Who the row says can open it: the names of the groups it is lent to,
+// none when paused, and a choice to make when the answer gave none.
 /**
  * @param {Lend} lend
  * @param {Choice[]} groups
@@ -57,14 +61,14 @@ function SigningOn({ c: fill }) {
 export const lentTo = (lend, groups) => {
   // Absent is read as legacy, needing selection: never as every group.
   const ids = lend.groups ?? null;
-  if (ids === null) return 'Choose which groups can open this.';
-  if (ids.length === 0) return 'Paused: no group can open it.';
+  if (ids === null) return 'choose which groups can open it';
+  if (ids.length === 0) return 'paused, no group can open it';
   // Every id named, one this computer holds no group for by its start.
   const names = ids.map((id) => {
     const group = groups.find((held) => held.id === id);
     return group ? called(group) : `a group this computer does not hold (${id.slice(0, 8)})`;
   });
-  return `Lent to ${names.join(' and ')}.`;
+  return `lent to ${names.join(' and ')}`;
 };
 
 /**
@@ -144,15 +148,14 @@ function Headers({ name, kept, state, doing, send }) {
   `;
 }
 
-// Why nobody can open a lend (door.rs `answering`, SHARE_BINDING §5.5), and
-// what answers on its port now, which Keep sharing it approves.
+// Why nobody can open a held lend (door.rs `answering`, SHARE_BINDING
+// §5.5), said after its line's Closed, so none says closed again; then what
+// answers on its port now, which Keep sharing it approves.
 const HELD = {
-  unapproved: (/** @type {string} */ name) =>
-    ` ${name} is closed until you choose what it shares. svrngs checks what answers on its port before each connection, and before and after each batch of datagrams, and closes it when something you didn’t choose is there.`,
-  another: (/** @type {string} */ name) =>
-    ` Something you didn’t approve was on ${name}’s port, so ${name} is closed for now.`,
-  unjudged: (/** @type {string} */ name) =>
-    ` svrngs can’t tell what answers on ${name}’s port, so nobody can open ${name}. Start it again.`,
+  unapproved: 'Nobody can open it until you approve what answers on its port now.',
+  another: 'Something you didn’t approve was on its port.',
+  unjudged: 'svrngs can’t tell what answers on its port. Start it again.',
+  changed: 'What runs it changed since you chose to keep sharing it when it starts again.',
 };
 // What svrngs read answering on a held lend's port now: nothing answering
 // said apart from a read that failed, which the row names in `unread`
@@ -163,8 +166,24 @@ const answering = ({ answers = [], unread }) => {
   const now = answers.map(answered).join(' and ');
   return now ? `Now answering: ${now}.` : 'Nothing answers on its port now.';
 };
-/** @param {Lend} lend */
-const heldWords = (lend) => (lend.held ? `${HELD[lend.held](lend.name)} ${answering(lend)}` : '');
+
+// A lend's line. One friends can't open leads with that, marked and in
+// words, so the color is not the only sign: Closed when it is held, with
+// why and what answers now, else Not running (question.js `notRunning`),
+// then who it is lent to, and no count of who uses it. An open one says who
+// can open it and how many use it now.
+/**
+ * @param {Lend} lend
+ * @param {string} to who can open it (`lentTo`)
+ * @param {number | string | undefined} using
+ */
+const line = (lend, to, using) => {
+  const [state, why] = lend.held
+    ? ['Closed', `${HELD[lend.held]} ${answering(lend)}`]
+    : ['Not running', notRunning(lend, 'Start it, and the groups you chose can open it again.')];
+  if (!why) return `${lend.name}: ${to}, ${using} using it now.`;
+  return html`${lend.name}: <strong class="bad">${state}</strong>. ${why} ${to.charAt(0).toUpperCase()}${to.slice(1)}.`;
+};
 
 // Keep sharing it, offered by the token alone: svrngs lists one only where
 // approving it would be taken (share.rs `approve`), so the page doesn't
@@ -184,77 +203,60 @@ function Keep({ lend, doing, send }) {
 const undone = (/** @type {AppsAccount | undefined} */ account, /** @type {Lend} */ lend) =>
   (account !== undefined && !account.kept) || Boolean(lend.held);
 
+/** @param {LentProps['l']['sharing']} sharing */
+const runLink = (sharing) =>
+  sharing &&
+  html`<p>${sharing[0]} <a href="#run-form" onClick=${() => document.querySelector('#run-form details')?.setAttribute('open', '')}>${sharing[1]}</a></p>`;
+
 /** @param {LentProps} props */
 export function Lent({ l: lend, signs, account, headers, groups, home }) {
-  const [state, send] = useMachine(() =>
-    machine('CHANGE', CHANGE(lend.name, home), {
-      at: { change: 'idle' },
-      said: '',
-      groups: lend.groups ?? [],
-    }),
-  );
+  /** @type {() => State} */
+  const first = () => ({ at: { change: 'idle' }, said: '', groups: lend.groups ?? [] });
+  const [state, send] = useMachine(() => machine('CHANGE', CHANGE(lend.name, home), first()));
   const limit = lend.limit;
   const limited = (limit ?? 0) > 0;
-  const people = limit === 1 ? 'person' : 'people';
-  const howMany = limited ? `up to ${limit} ${people}` : 'everyone in the groups you chose';
-  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
+  const using = limited ? `${lend.using} of ${limit}` : lend.using;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
+  // What three of the row's acts send, named so each act is one line.
+  const everyone = { type: 'change', to: { limit: null } };
+  const [sign, audience] = [{ type: 'sign' }, { type: 'audience' }];
   const letEveryone =
-    limited &&
-    html`
-      <${Act}
-        words="Let everyone in"
-        doing=${doing}
-        on=${{ type: 'change', to: { limit: null } }}
-        send=${send}
-      />
-    `;
+    limited && html`<${Act} words="Let everyone in" doing=${doing} on=${everyone} send=${send} />`;
   const signIn = signs
     ? html`Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide, then test sign-in through your group’s app list. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>. `
-    : html`
-        <${Act}
-          words="Sign people in with svrngs"
-          doing=${doing}
-          on=${{ type: 'sign' }}
-          send=${send}
-        />
-      `;
-  const saveAudience = html`
-    <${Act}
-      words="Save who can open this"
-      doing=${doing}
-      on=${{ type: 'audience' }}
-      send=${send}
-    />
-  `;
+    : html`<${Act} words="Sign people in with svrngs" doing=${doing} on=${sign} send=${send} />`;
   return html`
     <li>
       <details open=${undone(account, lend)} aria-label=${lend.name}>
-      <summary>${words}</summary>
-      <${Keep} lend=${lend} doing=${doing} send=${send} />
-      <${Field}
-        words="How many people at once: "
-        value=${value}
-        attrs=${{ type: 'number', min: 1 }}
-        send=${send}
-      />
-      <${Act} words="Let in this many" doing=${doing} on=${{ type: 'many', value }} send=${send} />
-      ${letEveryone}
-      <p>Who can open it:</p>
-      <${GroupChoice}
-        groups=${groups}
-        ticked=${state.groups}
-        waiting=${state.at.change === 'changing'}
-        send=${send}
-      />
-      ${saveAudience}
-      <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
-      <${Headers} name=${lend.name} kept=${headers} state=${state} doing=${doing} send=${send} />
-      ${signIn}
-      <${Act} words="Stop lending" doing=${doing} on=${{ type: 'change', to: 'stop' }} send=${send} />
-      ${state.said}
-      ${state.shown && html`<${SigningOn} c=${state.shown} />`}
+        <summary>${line(lend, lentTo(lend, groups), using)}</summary>
+        ${runLink(lend.sharing)}
+        <${Keep} lend=${lend} doing=${doing} send=${send} />
+        <p>Who can open it:</p>
+        <${GroupChoice}
+          groups=${groups}
+          ticked=${state.groups}
+          waiting=${state.at.change === 'changing'}
+          send=${send}
+        />
+        <${Act} words="Save who can open this" doing=${doing} on=${audience} send=${send} />
+        <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
+        <details>
+          <summary>More settings</summary>
+          <${Field}
+            words="How many people at once: "
+            value=${value}
+            attrs=${{ type: 'number', min: 1 }}
+            send=${send}
+          />
+          <${Act} words="Let in this many" doing=${doing} on=${{ type: 'many', value }} send=${send} />
+          ${letEveryone}
+          <${Headers} name=${lend.name} kept=${headers} state=${state} doing=${doing} send=${send} />
+          ${signIn}
+          ${state.shown && html`<${SigningOn} c=${state.shown} />`}
+        </details>
+        <${Act} words="Stop lending" doing=${doing} on=${{ type: 'change', to: 'stop' }} send=${send} />
+        ${state.said}
       </details>
     </li>
   `;

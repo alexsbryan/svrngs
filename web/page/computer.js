@@ -55,10 +55,8 @@ export const takes = {
       ? go(state, {}, {}, { run: 'where', opens: true, failed: 'failed' })
       : no(state, 'no link offered: not a computer'),
   offered: (state, { token, page, href, name, destination }) => {
-    const source = `${page}install.sh`;
-    const download = /^[\w:/.-]+$/.test(source) ? source : quote(source);
     const more = name === undefined ? '' : ` --at ${quote(destination ?? '/')} --as ${quote(name)}`;
-    const install = `curl -fsSL ${download} | sh -s -- ${quote(`${page}${token && `#${token}`}`)}${more}`;
+    const install = `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- ${quote(`${page}${token && `#${token}`}`)}${more}`;
     const joined = token ? 'joins' : 'founds';
     const installs = name !== undefined ? 'installs' : joined;
     /** @type {Fields['line']} */

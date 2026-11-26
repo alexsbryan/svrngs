@@ -1,0 +1,27 @@
+# Serial loop. Launched by the operator, 2026-11-22: "let's kick off work"
+# (CHARTER.md, "Direction and authorization"). The loop runs in the toolbox,
+# as development does here (the operator: "the toolbox is where development
+# happens"), so its own commits meet the hook there. Its user job, from
+# `ralph.py run --install-job`, has its argv prefixed with
+# `/usr/bin/toolbox run -c sovereign-vulkan`
+# (~/.config/ralph/jobs/dev.ralph.svrngs-keeper-svrngs-keeper.json):
+# toolbox run -c sovereign-vulkan python3 ~/dev/commonwealth-ai/scripts/ralph.py run \
+#   --workdir ~/dev/svrngs-keeper --queue keeper --max-stall 3
+label = "svrngs-keeper"
+session_timeout = 7200
+worker_bin = "/home/alexbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+# The explicit final audit owns the full gate. No duplicate cadence audits.
+
+[models]
+# The operator, 2026-11-22: "after this row completes swap workers to Sol
+# 6.2 High". That is opencode's `openai/gpt-6.2-sol` at high in every role.
+# A provider/model id runs through opencode (ralph.py `client_for`), with
+# the repository's `.opencode/opencode.json` as its permissions. keeper-move
+# through avail-economize ran on Opus 5.5 at high.
+worker = "openai/gpt-6.2-sol"
+review = "openai/gpt-6.2-sol"
+resolve = "openai/gpt-6.2-sol"
+variant = "high"
+review_variant = "high"
+resolve_variant = "high"

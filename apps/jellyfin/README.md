@@ -57,8 +57,9 @@ native Jellyfin client.
 
 ### 2. Create credentials and check the server can reach the issuer
 
-On the svrngs home page, turn on **Sign people in with svrngs** for this
-lend, or use the command above. Copy the issuer, client id and secret into
+On the svrngs home page, open this lend's line under **What you lend**,
+then **More settings**, and turn on **Sign people in with svrngs**, or use
+the command above. Copy the issuer, client id and secret into
 the plugin form before reloading the page: svrngs does not show the secret
 on a fresh page load. Do not paste it into chat, a bug report or a URL.
 

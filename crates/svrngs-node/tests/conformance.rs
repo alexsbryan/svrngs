@@ -23,7 +23,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "browser/harness.rs"]
 #[macro_use]
-#[allow(unused_macros)]
+#[allow(unused_macros, dead_code)]
 mod harness;
 // The host's load and the seek bar's, the browser tests' too.
 #[path = "browser/load.rs"]

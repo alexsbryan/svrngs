@@ -416,6 +416,50 @@ test('a start page with no key the worker takes has the group’s page sign to a
   assert.equal(holders.get(OWN), anew.holder, 'kept for the next open');
 });
 
+// What a window hands the worker, each traced once, as what it is: every
+// `message` listener lend.js adds, run as the browser runs them all, is
+// handed the shim's direct-path announcement (shim.js `{webrtc: 'here'}`,
+// its port), which tries the direct path and is said as itself; one with
+// no port, and one handing nothing, are each refused once. Planted,
+// watched failing: the listener's refusal asked before `directAsked`, so
+// the announcement is traced "a message that hands over nothing, refused:
+// webrtc,label", as it was while a second listener took it.
+test('a direct path’s announcement is traced as itself, never as a message refused', async () => {
+  const heard = [];
+  const traced = [];
+  const tried = [];
+  const listeners = LEND.match(/^scope\.addEventListener\('message', [^]*?\n\}\);\n/gm);
+  const source = [
+    ...['fromHere', 'handsPass'].map((name) => constant(LEND, name)),
+    defined(LEND, 'directAsked'),
+    ...listeners,
+  ].join('\n');
+  runInNewContext(source, {
+    scope: { addEventListener: (type, on) => type === 'message' && heard.push(on) },
+    SCOPE: new URL(`${ORIGIN}/`),
+    OWN,
+    URL,
+    String,
+    trace: (line) => traced.push(line),
+    direct: async (label, port) => void tried.push([label, port]),
+    realmKept: () => false,
+  });
+  const port = { postMessage: () => assert.fail('the worker answers the shim’s port itself') };
+  const handed = async (data, ports) => {
+    traced.length = 0;
+    const event = { source: { url: `${ORIGIN}/x` }, ports, data, waitUntil: () => {} };
+    for (const on of heard) await on(event);
+    return [...traced];
+  };
+  const announced = await handed({ webrtc: 'here', label: OWN }, [port]);
+  assert.deepEqual(announced, [`RUNTIME: a window can hold the direct path for ${OWN}`]);
+  assert.deepEqual(tried, [[OWN, port]]);
+  const refused = 'RUNTIME: a message that hands over nothing, refused: ';
+  assert.deepEqual(await handed({ webrtc: 'here', label: OWN }, []), [`${refused}webrtc,label`]);
+  assert.deepEqual(await handed({}, []), [refused]);
+  assert.equal(tried.length, 1, 'no port, no attempt');
+});
+
 // ── a lend's requests through its door ───────────────────────────────────
 
 const SERVED = [

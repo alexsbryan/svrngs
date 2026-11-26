@@ -243,7 +243,8 @@ const changing = (held, routes) =>
   );
 
 // pages::index::a_lend_from_what_runs_here_is_in_the_index_at_once:
-// "Already running here" looked at, something unknown on a port (home.rs
+// "Already running here" looked at, saying nothing beside its button
+// before or after, something unknown on a port, one line (home.rs
 // `running`, each row `shown`, :632-638), named notes and said notes, its
 // group ticked, and lent (home.rs `lend_one`, answered `shown` with its
 // name); the row says so, and HOME's `again`, after LEND's `lent`, reads
@@ -270,7 +271,15 @@ test('a lend from what runs here is in the index and in What you lend at once', 
           running: held.lent.length ? [] : [shown(null, null)],
           named: [],
         }),
-        'POST /running': (held, body) => {
+        'POST /running': (_, body) => {
+          posted.push(body);
+          return {
+            token: 'reviewed',
+            terms: '',
+            review: { promise: 'House can use this copy now.', button: 'Share this run' },
+          };
+        },
+        'POST /running/confirm': (held, body) => {
           posted.push(body);
           held.lent = [notes];
           return shown('notes', 'notes');
@@ -278,20 +287,41 @@ test('a lend from what runs here is in the index and in What you lend at once', 
       },
     ),
   });
+  // Before a look and after one that found something, the button and the
+  // lines say it all: no words beside them.
+  const look = ['Look for programs running on this computer'];
+  assert.deepEqual(at.text('#running > p'), look);
   await at.press('#running button', 'Look for programs');
+  assert.deepEqual(at.text('#running > p'), look);
+  // What it found, one line, its form folded under it until she opens it.
   const row = `#running li`;
-  assert.ok(at.text(row)[0].startsWith(`Something at http://localhost:${port}.`), at.text(row)[0]);
+  assert.deepEqual(at.text(`${row} summary`), [`Something at http://localhost:${port}`]);
+  assert.deepEqual(at.all(`${row} details[open]`), []);
   await at.type(`${row} input[name=name]`, 'notes');
   await at.type(`${row} input[name=kind]`, 'notes');
   await at.tick(`${row} input[type=checkbox]`);
   await at.press(`${row} button`, 'Lend it to house');
+  assert.ok(at.text(row)[0].includes('House can use this copy now.'));
+  assert.equal(posted.length, 1);
+  assert.deepEqual(at.text('#lent > p'), ['You lend nothing yet.']);
+  await at.press(`${row} button`, 'Share this run');
   assert.deepEqual(posted, [
     { port, name: 'notes', kind: 'notes', groups: ['house'], terms: null, pid: null, start: null },
+    {
+      port,
+      name: 'notes',
+      kind: 'notes',
+      groups: ['house'],
+      terms: '',
+      pid: null,
+      start: null,
+      token: 'reviewed',
+    },
   ]);
   assert.ok(at.text(row)[0].startsWith('You lent notes'), at.text(row)[0]);
   assert.ok(at.text('#home .index').join().includes('ada’s notes'), at.text('#home .index').join());
   assert.ok(
-    at.text('#lent li')[0].startsWith('notes: everyone in the groups you chose at once'),
+    at.text('#lent li')[0].startsWith('notes: lent to house, 0 using it now.'),
     at.text('#lent li').join('\n'),
   );
   const lent = first(at, 'LEND: lent');
@@ -335,12 +365,12 @@ test('three changes to a lend are each read again in place', async () => {
     assert.equal(traced(at, 'LENDING: answered'), read + 1, `${words}: ${at.lines().join('\n')}`);
     said.push(listed()[0]);
   };
-  await at.type('#lent input', '4');
+  await at.type('#lent input[type=number]', '4');
   await press('Let in this many');
   await press('Let everyone in');
   await press('Stop lending');
-  assert.ok(said[0].startsWith('shelf: up to 4 people at once'), said[0]);
-  assert.ok(said[1].startsWith('shelf: everyone in the groups you chose at once'), said[1]);
+  assert.ok(said[0].startsWith('shelf: lent to house, 0 of 4 using it now.'), said[0]);
+  assert.ok(said[1].startsWith('shelf: lent to house, 0 using it now.'), said[1]);
   assert.deepEqual(listed(), ['You lend nothing yet.']);
   assert.deepEqual(posted, [{ limit: 4 }, { limit: null }, 'stop']);
   assert.equal(traced(at, 'HOME: again: '), 3, at.lines().join('\n'));

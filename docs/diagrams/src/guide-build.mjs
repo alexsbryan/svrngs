@@ -1,5 +1,5 @@
-// guide-build.mjs — the pictures for the guide's people, folders, apps and
-// build pages (docs/guide/), as data in the kit's look and its one legend.
+// guide-build.mjs — the pictures for the guide's people, folders and app
+// building pages (docs/guide/), as data in the kit's look and its one legend.
 // Each has one point and few words; each says what its page says, with the
 // page's names and buttons. build.mjs calls guideBuild(k, draw).
 
@@ -451,6 +451,47 @@ export function guideBuild(k, draw) {
       b,
       'Two shapes: a lent server, or a carried folder',
       'A lent server runs on Ana’s computer at 127.0.0.1:4400, lent with svrngs share 4400 --program hello; it goes with Ana and opens while Ana’s computer is on. A carried app is a folder apps/guestbook/ with index.html and index.js in Elm’s folder, reading and writing the record at svrngs/acts; every computer in Elm serves it, so it opens while any of them is on.',
+    );
+  }
+
+  // choose-an-app.md — what each computer keeps
+  {
+    const W = 760,
+      H = 628;
+    const mid = W / 2;
+    const centered = (x, y, str, size = 22) =>
+      T(x, y, str, { size, weight: 700, anchor: 'middle' });
+    const screen = (x, y, label, fill, dash) =>
+      k.computer(x, y, 176, { fill, dash }) + centered(x + 88, y + 61, label);
+    const left = 72,
+      right = W - left - 176;
+    let b = top(W, 'What does your group keep?');
+
+    b += T(46, 127, 'Magnets: a shared board', { size: 27, weight: 900 });
+    b += T(46, 152, 'Shared app data · planned', { size: 19 });
+    b += screen(left, 168, 'Board copy', C.app) + screen(right, 168, 'Board copy', C.app);
+    b += centered(left + 88, 307, 'Jo saves a move');
+    b += centered(right + 88, 307, 'Sam saves a move');
+    b += centered(mid, 202, 'Merge edits', 21);
+    b += k.arrow(267, 219, 493, 219, { sw: 2.5, head: 11 });
+    b += k.arrow(493, 237, 267, 237, { sw: 2.5, head: 11 });
+
+    b += k.line(24, 328, W - 24, 328);
+    b += T(46, 366, 'Factorio: a running game', { size: 27, weight: 900 });
+    b += T(46, 391, 'Give · available today', { size: 19 });
+    b += screen(left, 408, 'Game runs', C.app) + screen(right, 408, 'Saved copy', C.paper, '7 5');
+    b += centered(left + 88, 548, 'Jo’s computer', 21);
+    b += centered(right + 88, 548, 'Sam can take over', 21);
+    b += centered(mid, 454, 'Copies the save', 21);
+    b += k.arrow(267, 471, 493, 471, { sw: 2.5, head: 11, dash: '7 5' });
+
+    draw(
+      'guide/app-state-or-give.svg',
+      W,
+      H,
+      b,
+      'What does your group keep? A shared board or a running game',
+      'With planned shared app data, Jo and Sam can each save a Magnets move on their own computer. Their board copies merge edits when the computers reconnect. With Give, Factorio runs on Jo’s computer. Sam has a saved copy and can take over from it.',
     );
   }
 }

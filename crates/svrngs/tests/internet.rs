@@ -12,7 +12,8 @@
 //! ([`ours_answers`]), its name resolved and connected to, and an endpoint
 //! of iroh's own with it as its one relay given a home there. When it does
 //! not answer, the claim cannot be judged: why is written to
-//! `target/could-not-judge/internet.step`, which check.sh says as the
+//! `target/could-not-judge/internet.step` (tests/common/unjudged.rs in
+//! svrngs-node, every test binary's one way), which check.sh says as the
 //! step's verdict, never a pass and never a failure. When a svrngs fails
 //! and the relay is then asked again and does not answer, the same.
 //! Otherwise a failure is ours, and fails. The relay's silence is a failure
@@ -75,14 +76,11 @@ async fn ours_answers() -> Result<(), String> {
     online.map_err(|_| format!("iroh's own endpoint had no home at {OURS} in {MET:?}"))
 }
 
-/// The claim not judged, `why`: said on stderr, and written where check.sh
-/// says it as the `internet` step's verdict (scripts/check.sh `step`).
-fn unjudged(why: &str) {
-    eprintln!("could-not-judge: {why}");
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/could-not-judge");
-    std::fs::create_dir_all(&dir).unwrap();
-    std::fs::write(dir.join("internet.step"), format!("{why}\n")).unwrap();
-}
+// The claim not judged, `why`: said where check.sh says it as the
+// `internet` step's verdict, the one way every test binary says it.
+#[path = "../../svrngs-node/tests/common/unjudged.rs"]
+mod unjudged;
+use unjudged::unjudged;
 
 /// The shipped `svrngs <args>` in `home`, as a person's terminal runs it:
 /// nothing of this computer's environment but its `PATH`, every decision

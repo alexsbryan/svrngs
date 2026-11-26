@@ -31,6 +31,7 @@ mod oidc;
 #[path = "../common/on_wire.rs"]
 mod on_wire;
 mod origins;
+mod provider;
 mod refusals;
 
 use std::net::SocketAddr;

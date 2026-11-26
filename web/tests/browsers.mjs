@@ -14,10 +14,34 @@
 import { chromium, webkit } from 'playwright';
 import { IGNORING, proxied, starting } from './page.mjs';
 
-const servers = {
-  chromium: await chromium.launchServer({ ...starting(chromium), args: IGNORING }),
-  webkit: await webkit.launchServer(starting(webkit)),
-};
+const types = { chromium, webkit };
+const options = { chromium: { ...starting(chromium), args: IGNORING }, webkit: starting(webkit) };
+let ending = false;
+const servers = {};
+// A browser that exits before stdin ends crashed (a Chromium CHECK, a
+// SIGSEGV: ~/Library/Logs/DiagnosticReports/chrome-headless-shell-
+// 2026-11-23-134118.ips, -2026-11-25-145645.ips), and every test after it
+// then failed to connect, 15 of 24 scenes. It starts again at the address
+// it had, the one each driver is given: the tests driving it as it
+// crashed fail, and the tests after find it there.
+async function serve(name, at) {
+  const server = await types[name].launchServer({ ...options[name], ...at });
+  const url = new URL(server.wsEndpoint());
+  if (at) console.error(`browsers.mjs: the run's ${name} is back at ${url}`);
+  server.on('close', (code, signal) => {
+    if (ending) return;
+    console.error(
+      `browsers.mjs: the run's shared ${name} crashed (exit ${code}, signal ${signal}), failing any test driving it; starting it again at ${url} for the tests after`,
+    );
+    servers[name] = serve(name, { port: Number(url.port), wsPath: url.pathname }).catch((e) =>
+      console.error(
+        `browsers.mjs: the run's ${name} did not start again, so no test after can drive it: ${e}`,
+      ),
+    );
+  });
+  return server;
+}
+for (const name of Object.keys(types)) servers[name] = await serve(name);
 console.log(
   JSON.stringify({
     chromium: servers.chromium.wsEndpoint(),
@@ -25,7 +49,9 @@ console.log(
     proxy: await proxied(),
   }),
 );
-process.stdin.on('end', () =>
-  Promise.all(Object.values(servers).map((s) => s.close())).then(() => process.exit(0)),
-);
+process.stdin.on('end', () => {
+  ending = true;
+  const closing = Object.values(servers).map(async (s) => (await s)?.close());
+  Promise.all(closing).then(() => process.exit(0));
+});
 process.stdin.resume();

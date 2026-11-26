@@ -45,6 +45,9 @@ mod updated;
 mod playback;
 // The page's direct path (webrtc-page): a film over the window's channel.
 mod webrtc_page;
+// A claim not judged, said as scripts/check.sh `step` reads it.
+#[path = "../common/unjudged.rs"]
+mod unjudged;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;
@@ -125,20 +128,7 @@ async fn computer(
 /// 127.0.0.1 alone, its group seeded with `founder` holding
 /// `signing(founder_key)`.
 async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u8) -> Node {
-    let node = Node::start(
-        dir.to_path_buf(),
-        signing(me),
-        &RelayConfig {
-            relay_urls: vec![relay],
-            n0_services: false,
-            loopback_only: true,
-        },
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts");
-    drive::opens_at(node.api_addr().port(), &node.token());
+    let node = browser_node(dir, relay, me, no_seed).await;
     let seed = Roster::new(
         [(
             Person::parse(founder).unwrap(),
@@ -148,6 +138,29 @@ async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u
         .collect(),
     );
     node.rail().set_seed(NS, &seed).unwrap();
+    node
+}
+
+async fn browser_node(
+    dir: &Path,
+    relay: String,
+    me: u8,
+    seed_text: fn(&Path) -> Result<Option<String>, String>,
+) -> Node {
+    let node = Node::start(
+        dir.to_path_buf(),
+        signing(me),
+        &RelayConfig {
+            relay_urls: vec![relay],
+            n0_services: false,
+            loopback_only: true,
+        },
+        seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts");
+    drive::opens_at(node.api_addr().port(), &node.token());
     node
 }
 
@@ -214,10 +227,15 @@ async fn standing_on(
     founder: &str,
 ) -> Node {
     let node = seeded(dir, relay, me, founder, 1).await;
+    sync_standing(&node, NS, ada, person).await;
+    node
+}
+
+async fn sync_standing(node: &Node, ns: &str, ada: &Node, person: &str) {
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
-    let synced = node.host().sync_with(NS, &ada.endpoint().addr()).await;
+    let synced = node.host().sync_with(ns, &ada.endpoint().addr()).await;
     assert!(
         synced.stop.is_none(),
         "{person} syncs ada's record: {synced:?}"
@@ -225,7 +243,6 @@ async fn standing_on(
     // No address lookup here: ada is told where the new computer listens.
     let addrs = node.endpoint().addr().ip_addrs().copied().collect();
     ada.transport().add_known_peer(node.endpoint().id(), addrs);
-    node
 }
 
 /// A link's token naming `issuer`, reached through `relay`. Its secret
@@ -259,20 +276,7 @@ async fn keep_folder(at: &Node, folder: &Path) {
 /// holds this group, not `NS`.
 async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, String) {
     use svrngs_node::group::{draw, Name};
-    let node = Node::start(
-        dir.to_path_buf(),
-        signing(1),
-        &RelayConfig {
-            relay_urls: vec![relay_url(relay)],
-            n0_services: false,
-            loopback_only: true,
-        },
-        svrngs_node::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts");
-    drive::opens_at(node.api_addr().port(), &node.token());
+    let node = browser_node(dir, relay_url(relay), 1, svrngs_node::group::seed_text).await;
     let ada = Name::parse("ada").unwrap();
     let seed = draw(
         Name::parse("house").unwrap(),
@@ -1688,7 +1692,8 @@ async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine:
     )
     .await;
     let origin = seen["origin"].as_str().unwrap();
-    let line = format!("curl -fsSL {origin}install.sh | sh -s -- '{origin}#{token}'");
+    let line =
+        format!("curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '{origin}#{token}'");
     let computer = &seen["computer"];
     assert_eq!(computer["offered"], true, "{computer:#}");
     assert_eq!(computer["line"], line, "{computer:#}");
@@ -1979,6 +1984,205 @@ async fn slow_way(relay: &Server, by: Duration) -> String {
 /// port in both engines' runs of [`the_home_page_lends_what_runs_here`].
 static JELLYFIN: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "run in the gate with the isolated user manager"]
+async fn run_prefill_waits_for_confirmation_in_webkit() {
+    use tokio::io::{AsyncBufReadExt, BufReader};
+
+    assert_eq!(
+        std::env::var("SVRNGS_RUN_PAGE_DEMO").as_deref(),
+        Ok("scratch")
+    );
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let (ada, _) = house(dir.path(), &relay, &signing(7)).await;
+    let held = free_here(20100).await;
+    let port = held.local_addr().unwrap().port();
+    let other = free_here(port + 1).await;
+    let other_port = other.local_addr().unwrap().port();
+    let run = free_here(other_port + 1).await;
+    let run_port = run.local_addr().unwrap().port();
+    let executable = dir.path().join("llama-server");
+    std::fs::copy("/usr/bin/python3", &executable).unwrap();
+    drop(held);
+    let mut listener = tokio::process::Command::new(executable)
+        .args([
+            "-u",
+            "-c",
+            include_str!("../../../../apps/svrngs-keeper/tests/props_fixture.py"),
+            &port.to_string(),
+        ])
+        .current_dir(dir.path())
+        .stdout(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .unwrap();
+    let mut ready = String::new();
+    BufReader::new(listener.stdout.take().unwrap())
+        .read_line(&mut ready)
+        .await
+        .unwrap();
+    assert_eq!(ready.trim(), port.to_string());
+    drop(run);
+    let seen = drive(
+        Engine::Webkit,
+        "run-prefill.mjs",
+        json!({
+            "ask": format!("http://svrngs.localhost:{}/", ada.api_addr().port()),
+            "port": port, "other": other_port, "runPort": run_port, "folder": dir.path(),
+            "plant": std::env::var("SVRNGS_PREFILL_PLANT").ok(),
+        }),
+        None,
+    )
+    .await;
+    assert!(svrngs_node::lend::all(dir.path()).unwrap().is_empty());
+    assert!(
+        listener.try_wait().unwrap().is_none(),
+        "Run must leave the original alone"
+    );
+    listener.kill().await.unwrap();
+    println!("WebKit prefill: {seen}");
+}
+
+// The isolated user manager and packaged keeper are supplied by the demo
+// driver. No test in the standard browser suite touches a login manager.
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "run in the gate with the isolated user manager"]
+async fn explicit_run_then_share_in_webkit() {
+    use svrngs_node::{group, lend::Audience};
+
+    assert_eq!(
+        std::env::var("SVRNGS_RUN_PAGE_DEMO").as_deref(),
+        Ok("scratch")
+    );
+    if std::env::var_os("SVRNGS_RUN_PAGE_TTY").is_some() {
+        assert!(std::io::IsTerminal::is_terminal(&std::io::stdin()));
+        println!("Page node stdin is a PTY");
+    }
+    let engine = Engine::Webkit;
+    let dir = tempfile::tempdir().unwrap();
+    let relay = relay().await;
+    let (ada, ns) = house(dir.path(), &relay, &signing(7)).await;
+    let busy = free_here(20000).await;
+    let busy_port = busy.local_addr().unwrap().port();
+    let free = free_here(busy_port + 1).await;
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let name = "test-page-coder";
+    let site = dir.path().join("site");
+    std::fs::create_dir(&site).unwrap();
+    std::fs::write(
+        site.join("index.html"),
+        "<!doctype html><title>Run page witness</title>",
+    )
+    .unwrap();
+    let address = if std::env::var_os("SVRNGS_RUN_PAGE_PLANT").is_some() {
+        "'127.0.0.1"
+    } else {
+        "'127.0.0.1'"
+    };
+    let cmd = format!("/usr/bin/python3 -m http.server {port} --bind {address}");
+    let field = |key: &str, value: &str| json!([format!("#run-form input[name={key}]"), value]);
+    let act = |selector: &str, words: &str| json!([selector, null, true, words]);
+    let submit = "#run-form form button";
+    let ran = home_page(
+        engine,
+        &ada,
+        json!({
+            "read": "#run-form summary",
+            "all": "#running > h2, #run-form [role=status], #run-form > p:not(:first-of-type), #lent li",
+            "unfold": true,
+            "do": [
+                field("name", name), field("port", &busy_port.to_string()),
+                field("folder", site.to_str().unwrap()), field("command", &cmd),
+                act(submit, "is in use by"), field("port", &port.to_string()),
+                act(submit, "Run by svrngs"),
+                act("#run-form button:has-text('Stop test-page-coder')", "Stopped."),
+                act("#run-form button:has-text('Start test-page-coder')", "Run by svrngs"),
+            ],
+        }),
+    )
+    .await;
+    let heading = ran["after"][1][0].as_str().unwrap();
+    assert_eq!(heading, "Already running here");
+    let success = ran["after"][1][1].as_str().unwrap().trim();
+    assert_eq!(
+        success,
+        format!("{name} is running here. To share it, find it under {heading}."),
+        "Run confirmation under #run-form"
+    );
+    let still_busy = std::net::TcpListener::bind(("127.0.0.1", busy_port));
+    assert!(
+        still_busy.is_err(),
+        "the refused Run took the busy listener"
+    );
+    assert!(
+        svrngs_node::lend::all(dir.path()).unwrap().is_empty(),
+        "Run or Start published: {ran:#}"
+    );
+    println!("WebKit Run confirmation: {success}");
+    println!("WebKit Run and lifecycle: {}", ran["after"]);
+    let row = format!("#running li:has-text('localhost:{port}')");
+    let shared = home_page(
+        engine,
+        &ada,
+        json!({
+            "all": "#running li, #lent li",
+            "do": [
+                act("#running button:has-text('Look for programs')", &format!("localhost:{port}")),
+                [format!("{row} summary"), null, "opens"],
+                field_on(&row, "name", name), field_on(&row, "kind", "test-http"),
+                [format!("{row} input[type=checkbox]"), true],
+                act(&format!("{row} button"), "Share test-page-coder"),
+                act(&format!("{row} button"), "You lent test-page-coder"),
+            ],
+            "after": ["#lent details[aria-label='test-page-coder'] > summary", "lent to house"],
+        }),
+    )
+    .await;
+    let review = shared["after"][1]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(Value::as_str)
+        .find(|row| row.contains("Share test-page-coder"))
+        .unwrap();
+    assert!(review.contains("house can "), "Share review: {review}");
+    println!("WebKit Share review: {}", review.trim());
+    let saved_row = shared["later"][0].as_str().unwrap();
+    assert!(saved_row.starts_with("test-page-coder:"), "{saved_row}");
+    let saved = svrngs_node::lend::read(
+        dir.path(),
+        &svrngs_node::lend::LendName::parse(name).unwrap(),
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(saved.port().unwrap().get(), port, "{shared:#}");
+    assert_eq!(saved.terms.audience, Audience::Selected(vec![ns.clone()]));
+    assert!(
+        saved.terms.keep.is_some(),
+        "Share did not grant the observed job: {shared:#}"
+    );
+    let bo_dir = tempfile::tempdir().unwrap();
+    let bo = browser_node(bo_dir.path(), relay_url(&relay), 7, group::seed_text).await;
+    let seed = group::read_seed(&ada.rail().group_dir(&ns).unwrap())
+        .unwrap()
+        .unwrap();
+    bo.host().keep_group(&seed, None, &[]).unwrap();
+    sync_standing(&bo, &ns, &ada, "bo").await;
+    let opened = home_page(engine, &bo, json!({ "open": "test-page-coder" })).await;
+    assert_eq!(opened["opened"]["title"], "Run page witness", "{opened:#}");
+    println!("WebKit Share: {}", shared["later"]);
+    println!("WebKit Alex opened: {}", opened["opened"]);
+}
+
+#[cfg(target_os = "linux")]
+fn field_on(row: &str, key: &str, value: &str) -> Value {
+    json!([format!("{row} input[name={key}]"), value])
+}
+
 /// A port from 20000 up that nothing on this host holds now, inside the
 /// probe's span and below the system's own (Linux's from 32768), with its
 /// listener: dropped, nothing listens there.
@@ -1996,9 +2200,10 @@ in_chromium!(
     /// 3.2 bar). On ada's computer a stand-in for Jellyfin listens on
     /// 8096 and something svrngs does not know on a port of its own. Her
     /// home page looks for them only once she asks, its look knocking at
-    /// every address here; then, under "Already running here", it names
-    /// the first by the table with what it needs first (its own accounts,
-    /// and how to make one) and lends it in one tap; the second it lends only once she has
+    /// every address here; then, under "Already running here", each on a
+    /// line she opens, it names the first by the table with what it needs
+    /// first (its own accounts, and how to make one) and lends it after
+    /// review; the second it lends only once she has
     /// given it a name and said what it is, refusing it before. No
     /// terminal: each is declared through the page's `/running`, and the
     /// share line under "Done in a terminal" is gone. Then bo, on his own
@@ -2047,6 +2252,8 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     // A person ticks who can open it before lending it (SCOPE_PARALLEL.md:
     // never a default): the row offers HOME's one group.
     let tick = |port: u16| json!([format!("{} input[type=checkbox]", row(port)), true]);
+    // Each program found is one line, its form folded under it until opened.
+    let open = |port: u16| json!([format!("{} summary", row(port)), null, "opens"]);
     let look = json!(["#running button:has-text('Look for programs')", null, true]);
     let seen = home_page(
         engine,
@@ -2055,12 +2262,15 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             "read": "#lent h2",
             "timed": ["#lent h2", "#running li"],
             "all": "#running li, #running p",
-            "do": [look, tick(8096), press(8096), tick(chores.port()), press(chores.port()),
-                fill(chores.port(), "name", "chores"), fill(chores.port(), "kind", "chore-wheel"),
-                press(chores.port())],
+            "do": [look, open(8096), tick(8096), press(8096), press(8096), open(chores.port()),
+                 tick(chores.port()), press(chores.port()),
+                 fill(chores.port(), "name", "chores"), fill(chores.port(), "kind", "chore-wheel"),
+                 press(chores.port()), press(chores.port())],
             // The running row answers before HOME's lending reread. An old
             // list still matches `#lent h2 ~ *` (grouped-home check.log).
-            "after": ["#lent li", "chores: everyone in the groups you chose at once"],
+            // Its group has no seed, so no name the page can read: who can
+            // open it is held below by the lend's file.
+            "after": ["#lent li", "chores: lent to "],
             "text": true,
         }),
     )
@@ -2082,12 +2292,8 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     // Looked for only once asked: the look knocks at every address here.
     let (unasked, found) = (&seen["all"], &seen["after"][0]);
     assert!(
-        unasked.to_string().contains("only when you ask") && said(unasked, 8096).is_empty(),
+        said(unasked, 8096).is_empty(),
         "looked for before she asked:\n{seen:#}"
-    );
-    assert!(
-        found.to_string().contains("You looked just now"),
-        "that she looked, said:\n{seen:#}"
     );
     let first = said(found, 8096);
     assert!(
@@ -2115,9 +2321,11 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         let line = after[i].to_string();
         assert!(line.contains(words), "{words}: {seen:#}");
     };
-    lent(1, "You lent jellyfin");
-    lent(2, "Give it a name and say which program it is first");
-    lent(3, "You lent chores");
+    lent(1, "Share this run");
+    lent(2, "You lent jellyfin");
+    lent(3, "Give it a name and say which program it is first");
+    lent(4, "Share this run");
+    lent(5, "You lent chores");
     let page = seen["text"].as_str().unwrap_or_default();
     assert!(
         !page.contains("svrngs share"),
@@ -2125,7 +2333,7 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     );
     for lent in ["jellyfin", "chores"] {
         assert!(
-            page.contains(&format!("{lent}: everyone in the groups you chose at once")),
+            page.contains(&format!("{lent}: lent to ")),
             "what this computer lends, drawn again in place: {lent}\n{page}"
         );
     }

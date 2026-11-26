@@ -148,6 +148,66 @@ async fn ask(
     }
 }
 
+#[tokio::test]
+async fn run_routes_take_only_the_home_pages_closed_requests() {
+    let dir = tempfile::tempdir().unwrap();
+    let alex = on_wire::start(1, dir.path()).await;
+    let host = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{host}\r\n");
+    let foreign = "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\nOrigin: https://elsewhere.invalid\r\n";
+    let browser = Browser::of(&alex);
+    for (path, body) in [
+        (
+            "/run",
+            r#"{"name":"test","port":1,"folder":".","command":"/bin/false","argv":["/bin/true"]}"#,
+        ),
+        ("/run/action", r#"["test","remove"]"#),
+    ] {
+        let got = ask(&browser, "POST", &host, path, &own, body).await;
+        assert_eq!(got.status, 422, "{path}: {}", got.body);
+        let got = ask(&browser, "POST", &host, path, foreign, body).await;
+        assert_eq!(got.status, 403, "{path}: {}", got.body);
+    }
+    alex.net().close().await;
+}
+
+#[tokio::test]
+async fn prefill_is_local_and_read_only() {
+    let dir = tempfile::tempdir().unwrap();
+    let alex = on_wire::start(1, dir.path()).await;
+    let host = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{host}\r\n");
+    let foreign = "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\nOrigin: https://elsewhere.invalid\r\n";
+    let browser = Browser::of(&alex);
+    let port = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let path = format!("/run?prefill={}", port.local_addr().unwrap().port());
+    assert_eq!(
+        ask(&browser, "GET", &host, &path, foreign, "").await.status,
+        403
+    );
+    let got = ask(
+        &browser,
+        "GET",
+        &host,
+        &format!("{path}&command=/bin/true"),
+        &own,
+        "",
+    )
+    .await;
+    assert_eq!(got.status, 400, "closed prefill query: {}", got.body);
+    let got = ask(&browser, "GET", &host, &path, &own, "").await;
+    assert_eq!(got.status, 200, "{}", got.body);
+    assert!(got.json().get("command").is_none(), "{}", got.body);
+    assert!(lend::all(dir.path()).unwrap().is_empty());
+    println!(
+        "foreign: 403; extra command: 400; local unread: {}; no lend",
+        got.body
+    );
+    alex.net().close().await;
+}
+
 /// **The home page answers only itself, shows what `/v1/lends` answers, and
 /// takes only the person's yes and stop.** Typed, it serves its page and
 /// module, never to be framed, and every answer, its session's bootstrap
@@ -1658,10 +1718,48 @@ async fn what_the_page_lends_is_what_it_showed() {
     let pad = lend::LendName::parse("pad").unwrap();
     assert_eq!(lend::read(dir.path(), &pad).unwrap(), None, "nothing lent");
     on_wire::answers(&alex, port, Ok(svrngs_node::node::answering()));
+    let body = lent("pad", r#","pid":1,"start":1"#);
+    let review = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &body).await;
+    let token = review.json()["token"]
+        .as_str()
+        .expect("the page got a review")
+        .to_owned();
     assert_eq!(
-        lends(lent("pad", r#","pid":1,"start":1"#)).await,
-        (200, None)
+        lend::read(dir.path(), &pad).unwrap(),
+        None,
+        "the review alone shares nothing"
     );
+    lend::withdraw(dir.path(), &pad).unwrap();
+    let confirm = |token: &str| format!(r#"{},"token":"{token}"}}"#, body.trim_end_matches('}'));
+    let again = ask(
+        &Browser::of(&alex),
+        "POST",
+        &home,
+        "/running/confirm",
+        &own,
+        &confirm(&token),
+    )
+    .await;
+    assert_eq!(
+        lend::read(dir.path(), &pad).unwrap(),
+        None,
+        "a stale review never publishes"
+    );
+    let fresh = again.json()["token"]
+        .as_str()
+        .expect("a fresh review")
+        .to_owned();
+    assert_ne!(fresh, token);
+    let saved = ask(
+        &Browser::of(&alex),
+        "POST",
+        &home,
+        "/running/confirm",
+        &own,
+        &confirm(&fresh),
+    )
+    .await;
+    assert_eq!(saved.status, 200, "{}", saved.json());
     let approved = lend::read(dir.path(), &pad)
         .unwrap()
         .unwrap()

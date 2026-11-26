@@ -336,6 +336,31 @@ function longPage() {
 // With `own`, a browser of its own, never the run's shared one: for a
 // driver whose run can crash Playwright's server, so the crash ends this
 // driver alone (harness.rs `browsers`; navigate.mjs).
+// A context in `browser`.
+const inside = async (browser, options) => ({
+  browser,
+  context: await browser.newContext(options),
+});
+// The run's shared browser at `at` and a context in it, waited for while
+// browsers.mjs starts it again after a crash: refused, or reached as it
+// died (`Browser closed`), up to Playwright's own bound on a launch.
+async function reach(type, at, options, waited = 0) {
+  let browser;
+  try {
+    browser = await type.connect(at);
+    return await inside(browser, options);
+  } catch (e) {
+    await browser?.close().catch(() => {});
+    if (!/ECONNREFUSED|closed/.test(e.message) || waited >= 30_000) throw e;
+    if (!waited)
+      console.error(
+        `the run's shared ${type.name()} at ${at} is gone (${e.message.split('\n')[0]}): waiting while browsers.mjs starts it again`,
+      );
+    await new Promise((r) => setTimeout(r, 250));
+    return reach(type, at, options, waited + 250);
+  }
+}
+
 export async function launch(engine, { profile, device: as, args, unopened, b, own } = {}) {
   if (!(engine in ENGINES)) {
     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
@@ -367,12 +392,23 @@ export async function launch(engine, { profile, device: as, args, unopened, b, o
       // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
       // it then closes this context and lets the shared browser be.
       const shared = !args && !own && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
-      const browser = await (shared
-        ? pw[engine].connect(shared)
-        : pw[engine].launch({ ...starting(pw[engine]), args: flags }));
+      const options = { ...device, ...(await reaching()) };
+      const { browser, context } = shared
+        ? await reach(pw[engine], shared, options)
+        : await inside(await pw[engine].launch({ ...starting(pw[engine]), args: flags }), options);
+      let closing = false;
+      browser.on('disconnected', () => {
+        if (shared && !closing)
+          console.error(
+            `the run's shared ${engine} (web/tests/browsers.mjs) went away under this driver: it crashed, so this test fails; it starts again for the tests after`,
+          );
+      });
       made = {
-        context: await browser.newContext({ ...device, ...(await reaching()) }),
-        close: () => browser.close(),
+        context,
+        close: () => {
+          closing = true;
+          return browser.close();
+        },
       };
     }
   } catch (e) {

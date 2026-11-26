@@ -134,13 +134,12 @@ impl Folders {
 /// Each computer asked, by its key, with its ask's answer: one whose task
 /// failed is said as that, never dropped (#148).
 fn heard(hash: Hash, group: &str, joined: impl Iterator<Item = (String, Ended)>) -> Replies {
-    let mut answers = Vec::new();
-    for (actor, said) in joined {
+    let heard = |(actor, said): (String, Ended)| {
         let said = said.unwrap_or_else(|e| Err(format!("its ask failed: {e}")));
         tracing::debug!(target: "blob", %hash, group, holder = actor, ?said, "blob: a computer of the group asked what it holds");
-        answers.push((actor, said));
-    }
-    answers
+        (actor, said)
+    };
+    joined.map(heard).collect()
 }
 
 /// An ask's task as it ended: its answer, or how the task failed.
@@ -193,9 +192,11 @@ pub(super) async fn put(
     let tag = f.store.add_bytes(bytes).temp_tag().await;
     let tag = tag.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, format!("the store: {e}")))?;
     let hash = tag.hash();
-    // Placed before the tag goes, so the sweep never finds it unkept.
+    // Carried, then its tag handed to the store's keeper, which lets it go
+    // as it answers the next sweep's ask, the put carried (folder.rs
+    // `keeper`).
     f.carry(hash, &q.group, Some(until));
-    drop(tag);
+    f.fresh.send_modify(|fresh| fresh.push(tag));
     tracing::debug!(target: "blob", %hash, group = q.group, keep, "blob: put, placed in the group until it lapses");
     Ok(Json(json!({ "hash": hash })).into_response())
 }

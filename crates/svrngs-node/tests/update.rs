@@ -39,13 +39,14 @@ fn tarball_name() -> String {
 fn tarball(dir: &Path, name: &str, bytes: &[u8]) -> Vec<u8> {
     let src = tempfile::tempdir().unwrap();
     std::fs::write(src.path().join("svrngs"), bytes).unwrap();
+    std::fs::write(src.path().join("svrngs-keeper"), b"the new keeper").unwrap();
     let at = dir.join(name);
     let made = std::process::Command::new("tar")
         .arg("-czf")
         .arg(&at)
         .arg("-C")
         .arg(src.path())
-        .arg("svrngs")
+        .args(["svrngs", "svrngs-keeper"])
         .status()
         .unwrap();
     assert!(made.success());
@@ -56,13 +57,14 @@ fn tarball(dir: &Path, name: &str, bytes: &[u8]) -> Vec<u8> {
 fn symlink_tarball(dir: &Path, name: &str) -> Vec<u8> {
     let src = tempfile::tempdir().unwrap();
     std::os::unix::fs::symlink("/etc/passwd", src.path().join("svrngs")).unwrap();
+    std::fs::write(src.path().join("svrngs-keeper"), b"the new keeper").unwrap();
     let at = dir.join(name);
     let made = std::process::Command::new("tar")
         .arg("-czf")
         .arg(&at)
         .arg("-C")
         .arg(src.path())
-        .arg("svrngs")
+        .args(["svrngs", "svrngs-keeper"])
         .status()
         .unwrap();
     assert!(made.success());
@@ -142,6 +144,7 @@ fn page(files: &HashMap<String, Vec<u8>>) -> impl Get + '_ {
 fn installed(dir: &Path) {
     std::fs::write(dir.join(ORIGIN_FILE), PAGE).unwrap();
     std::fs::write(exe(dir), b"the old svrngs").unwrap();
+    std::fs::write(dir.join("svrngs-keeper"), b"the old keeper").unwrap();
 }
 
 /// **A page's release is checked and its verified bytes replace the
@@ -166,6 +169,8 @@ async fn a_page_s_release_replaces_the_binary_read_with_no_socket() {
     let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
     assert_eq!(applied.unwrap(), Outcome::Updated);
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the new svrngs");
+    let keeper = dir.path().join("svrngs-keeper");
+    assert_eq!(std::fs::read(&keeper).unwrap(), b"the new keeper");
     assert_eq!(
         std::fs::read_to_string(dir.path().join(RELEASE_FILE)).unwrap(),
         format!("{}\n{SIGNED_AT}\n", hex::encode(Sha256::digest(&tarball)))
@@ -174,6 +179,14 @@ async fn a_page_s_release_replaces_the_binary_read_with_no_socket() {
         check_by(dir.path(), page(&files), &keys()).await.unwrap(),
         Check::Current
     );
+    std::fs::remove_file(&keeper).unwrap();
+    assert_eq!(
+        apply_at(dir.path(), &exe(dir.path()), page(&files), &keys())
+            .await
+            .unwrap(),
+        Outcome::Updated
+    );
+    assert_eq!(std::fs::read(&keeper).unwrap(), b"the new keeper");
 }
 
 /// **A tarball that is not the page's is refused, with no socket**: the
@@ -215,6 +228,10 @@ async fn a_tarball_whose_svrngs_is_a_symlink_is_refused_read_with_no_socket() {
         "{applied:?}"
     );
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
+    assert_eq!(
+        std::fs::read(dir.path().join("svrngs-keeper")).unwrap(),
+        b"the old keeper"
+    );
 }
 
 /// **A page with no line for this computer is not judged current, with no

@@ -220,7 +220,7 @@ async fn tracked_node(
     // Replace only the interval and observe the real round; keep startup's
     // write callback and nudge, with no periodic round during this test.
     node._round = spawn_ring_sync_loop(
-        node.host.clone(),
+        node.folders().clone(),
         Duration::from_secs(86400),
         node.folders().nudge.clone(),
         progress,

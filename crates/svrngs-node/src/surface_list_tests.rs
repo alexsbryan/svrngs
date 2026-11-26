@@ -9,7 +9,7 @@ use svrngs_core::pass::Label;
 
 use crate::door::limit::READS_A_MINUTE;
 use crate::door::LendRefusal::{self, *};
-use crate::folder::carried::{ACTS, WRITES_AN_HOUR};
+use crate::folder::carried::{ACTS, SQL, WRITES_AN_HOUR};
 use crate::origin::SEND_MAX;
 use crate::surface::{AppRoute, GUIDE, LEND_PATH, READS_PATH, STOP_SUFFIX, TO_PATH};
 
@@ -27,6 +27,7 @@ fn listed(kind: &str) -> BTreeSet<String> {
 fn spelled(route: &AppRoute) -> Option<String> {
     match route {
         AppRoute::Acts => Some(ACTS.into()),
+        AppRoute::Sql => Some(SQL.into()),
         AppRoute::Reads => Some(READS_PATH.into()),
         AppRoute::Stop(_) => Some(format!("{READS_PATH}/<label>{STOP_SUFFIX}")),
         AppRoute::To => Some(TO_PATH.into()),
@@ -105,6 +106,7 @@ fn the_list_is_the_code_s_and_the_code_s_is_the_list() {
     let films = Label::of(&[2; 32], "films");
     let every = [
         AppRoute::Acts,
+        AppRoute::Sql,
         AppRoute::Reads,
         AppRoute::Stop(films.clone()),
         AppRoute::To,

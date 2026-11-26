@@ -33,30 +33,36 @@ import { get } from './routes.js?v=__VERSION__';
 
 /**
  * What holds a port, as svrngs read it to show its lender (lend.rs
- * `Answer`): a program, by its process and start, or another account.
- * @typedef {{ pid?: number, start?: number, program?: string, folder?: string, account?: string }} Answer
+ * `Answer`): a program, by its process and start, another account, or a
+ * systemd unit of this account's, by its name and description.
+ * @typedef {{ pid?: number, start?: number, program?: string, folder?: string, account?: string, unit?: string, description?: string }} Answer
  */
 
-// What answers, as its lender reads it: "python3 in ~/dev/garden".
+// The job's description, or its name without the system's filename suffix.
+// Old jobs carry a generated suffix in the description; it isn't a name.
 /** @param {Answer} answer */
-export const answered = ({ account, program, folder }) =>
-  account ? `a program of the account ${account}` : `${program}${folder ? ` in ${folder}` : ''}`;
+export const answered = ({ account, program, folder, unit, description }) => {
+  if (unit)
+    return description?.replace(/, kept by svrngs-keeper$/, '') ?? unit.replace(/\.service$/, '');
+  return account
+    ? `a program of the account ${account}`
+    : `${program}${folder ? ` in ${folder}` : ''}`;
+};
 
 /**
- * RUNNING's state: where its look is, what it found and the kinds the
- * table knows by name alone, or why it could not look.
+ * RUNNING's state: where its look is, what it found, or why it could not
+ * look.
  * @typedef {object} State
  * @property {{ running: 'unlooked' | 'looking' | 'looked' | 'unread' }} at
  * @property {Record<string, number>} [asked]
  * @property {Shown[]} [found]
- * @property {string[]} [named]
  * @property {string} [why]
  */
 
 /**
  * The messages RUNNING takes: Look pressed; look `n` answered, or why not.
  * @typedef {{ type: 'look' }
- *   | { type: 'looked', n: number, found: Shown[], named: string[], why: string }
+ *   | { type: 'looked', n: number, found: Shown[], why: string }
  *   | { type: 'unread', n: number, why: string }} Message
  */
 
@@ -86,11 +92,10 @@ export const RUNNING = {
   states: { running: ['unlooked', 'looking', 'looked', 'unread'] },
   io: {
     look: ({ n: serial }) =>
-      get('/running').then(({ running: found, named }) => ({
+      get('/running').then(({ running: found }) => ({
         type: 'looked',
         n: serial,
         found,
-        named,
         why: `${found.length} running`,
       })),
   },
@@ -100,7 +105,7 @@ export const RUNNING = {
     reading: 'looking',
     done: 'looked',
     at: 'looked',
-    fields: ['found', 'named'],
+    fields: ['found'],
     taker: 'what runs here',
   }),
 };

@@ -6,7 +6,7 @@
 # released, so nothing is linked and nothing is stripped. README.md says how
 # to build, install and remove them.
 #
-# Two packages, as install.sh gets Give only when asked (--give): Give is a
+# svrngs-bin includes its keeper from the same tarball. Give is a separate
 # program of its own that links no svrngs crate (apps/give/Cargo.toml), and
 # only it needs Podman. They share this pkgver, so Give's version here is
 # the svrngs release that carries it.
@@ -51,6 +51,10 @@ package_svrngs-bin() {
   conflicts=('svrngs')
   install=svrngs-bin.install
   install -Dm755 svrngs "$pkgdir/usr/bin/svrngs"
+  # Drop the old-version exception when scripts/arch-package.py pins the first keeper release.
+  if [[ $pkgver != 1.13.3 ]]; then
+    install -Dm755 svrngs-keeper "$pkgdir/usr/bin/svrngs-keeper" || return
+  fi
   # svrngs reads this beside itself, /usr/bin/../lib/svrngs/updated-by, and
   # then never replaces itself: `svrngs update` says its first line
   # (crates/svrngs-node/src/update.rs, UPDATED_BY and packaged).

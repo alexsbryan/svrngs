@@ -111,7 +111,7 @@ function install(why, page) {
     'p',
     ...said,
     ', then paste this line into a terminal for Give’s program: ',
-    el('code', `curl -fsSL ${at}install.sh | sh -s -- '${at}' --give`),
+    el('code', `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- '${at}' --give`),
   );
 }
 

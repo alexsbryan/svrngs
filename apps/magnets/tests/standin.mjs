@@ -6,15 +6,18 @@
 //
 // The shape it pins, as svrn-docs rings/current/APP_STATE.md §4 ("What a
 // page can do") draws it. The real route answers the same, or Magnets
-// changes with it:
+// changes with it: Magnets' tests run against it too, through
+// web/tests/route.mjs, in the scene crates/svrngs/tests/scenes/magnets.rs.
 //
 //   POST svrngs/sql, a JSON body, one of:
 //     {sql, params}       one read; `params` an array bound to its `?` in
 //                         order, none when left out. Answers 200
 //                         {rows: [{<column>: <value>, ...}]}, with
 //                         `syncing: true` beside `rows` while this copy
-//                         hasn't synced yet. A statement that writes is
-//                         refused, its words naming the write form.
+//                         hasn't synced yet; the real route says `more`
+//                         too, true past the most rows it gives. A
+//                         statement that writes is refused, its words
+//                         naming the write form.
 //     {write: [op, ...]}  one transaction. Answers 200 {count: <n>}, the
 //                         rows changed in all. A refusal keeps nothing of
 //                         the list. Each op is one of:
@@ -269,8 +272,9 @@ export async function posted(db, text) {
  * `schema` in SQLite, in a process of its own (sqlite.py), asked one thing
  * at a time: `run(statements)` runs them as one transaction, nothing
  * checked, and gives each one's answer in order; `read(sql, params)` runs
- * one statement only if SQLite finds it only reads, and gives its {rows}.
- * Either rejects with a Refused, nothing of it kept.
+ * one statement only if SQLite finds it only reads, and gives its {rows};
+ * `tables()` names the app's tables. Either rejects with a Refused,
+ * nothing of it kept.
  */
 export function database(schema = SCHEMA) {
   const child = spawn('python3', ['-I', join(APP, 'tests/sqlite.py'), schema], {
@@ -294,9 +298,12 @@ export function database(schema = SCHEMA) {
       waiting.push({ done, fail });
       child.stdin.write(`${JSON.stringify(asked)}\n`);
     });
+  const run = async (statements) => (await ask({ run: statements })).answers;
   return {
-    run: async (statements) => (await ask({ run: statements })).answers,
+    run,
     read: (sql, params = []) => ask({ read: { sql, params } }),
+    /** The app's tables, as the write form reads them (TABLES), the route's `tables` stood in for. */
+    tables: async () => [...new Set((await run([{ sql: TABLES }]))[0].rows.map((r) => r.tbl))],
     stop,
   };
 }

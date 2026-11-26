@@ -11,7 +11,14 @@ fn give_links_no_svrngs_crate() {
         .map(str::trim)
         .filter(|l| !l.is_empty() && !l.starts_with('#'))
     {
-        assert!(!line.starts_with("svrngs"), "give links a svrngs crate: {line}");
+        // svrngs-keeper, which knows no group and links no svrngs crate
+        // (../svrngs-keeper/tests/surface.rs), is the one admitted, by its
+        // exact name.
+        let keeper = line.starts_with("svrngs-keeper ") || line.starts_with("svrngs-keeper=");
+        assert!(
+            keeper || !line.starts_with("svrngs"),
+            "give links a svrngs crate: {line}"
+        );
         assert!(
             !line.contains("crates/"),
             "give links a crate of svrngs's by path: {line}"
