@@ -87,7 +87,9 @@ impl Engine {
 /// pasteboard daemon, which each browser joins as it starts and leaves as
 /// it quits (`-[_CFPasteboardStore dealloc]`, ~/Library/Logs/
 /// DiagnosticReports/pboard-*.ips, 27 from 2026-10-21 to 25), and with it
-/// every program on the Mac that touched the clipboard.
+/// every program on the Mac that touched the clipboard. One that crashes
+/// starts again at the same address (browsers.mjs `serve`), so a crash
+/// fails the tests driving it then, not every test after.
 pub fn browsers() -> &'static str {
     static SHARED: OnceLock<(std::process::Child, String)> = OnceLock::new();
     let (_, said) = SHARED.get_or_init(|| {
