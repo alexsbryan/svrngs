@@ -85,9 +85,19 @@ pub fn installed_from(dir: &Path, exe: &Path, relay: &str) -> PathBuf {
         "#!/bin/sh\n{BUILD}='{relay}' exec '{}' --exact --ignored --nocapture --quiet {NAME} -- \"$@\"\n",
         exe.display()
     );
-    std::fs::write(&path, script).unwrap();
-    let exec = std::os::unix::fs::PermissionsExt::from_mode(0o755);
-    std::fs::set_permissions(&path, exec).unwrap();
+    // Written beside it, then put in place by `install`, so this process
+    // never holds the program open for writing: a child another test thread
+    // forks meanwhile would inherit that handle until it execs, and Linux
+    // refuses to run a file open for writing ("Text file busy").
+    let source = dir.join("svrngs.in");
+    std::fs::write(&source, script).unwrap();
+    let put = std::process::Command::new("install")
+        .args(["-m", "0755"])
+        .arg(&source)
+        .arg(&path)
+        .status()
+        .unwrap();
+    assert!(put.success(), "install {}: {put}", path.display());
     path
 }
 
