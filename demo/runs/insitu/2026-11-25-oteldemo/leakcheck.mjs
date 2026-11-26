@@ -25,12 +25,15 @@ for (const r of ROUTES) { const j = JSON.parse(view('R', r)); walk(j); machine(j
 for (const m of machines) markers.delete(m);
 const arm = process.argv.includes('--plant') ? 'R' : 'P';
 const text = ROUTES.map((r) => view(arm, r)).join('\n');
-const hits = [...markers].filter((m) => text.includes(m));
+// A marker matches as a whole value, not inside a longer one: 10.89.1.6 is
+// not in 10.89.1.62 (confidence round, F3b, 2026-11-26).
+const esc = (m) => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const hits = [...markers].filter((m) => new RegExp(`(?<![\\w.@-])${esc(m)}(?![\\w.@-])`).test(text));
 // --debug keeps each hit with where it sits in the searched text, in a
 // git-ignored file, for the operator to judge; the console never shows it.
 if (process.argv.includes('--debug') && hits.length) {
   const { appendFileSync } = await import('node:fs');
-  for (const m of hits) { const i = text.indexOf(m); appendFileSync('out/leak-debug.txt', `${new Date().toISOString()} ${arm} value=${JSON.stringify(m)} context=${JSON.stringify(text.slice(Math.max(0, i - 200), i + m.length + 40))}\n`); }
+  for (const m of hits) { const i = text.search(new RegExp(`(?<![\\w.@-])${esc(m)}(?![\\w.@-])`)); appendFileSync('out/leak-debug.txt', `${new Date().toISOString()} ${arm} value=${JSON.stringify(m)} context=${JSON.stringify(text.slice(Math.max(0, i - 200), i + m.length + 40))}\n`); }
 }
 const kinds = (xs) => ({ emails: xs.filter((m) => m.includes('@')).length, card_like: xs.filter((m) => /^\d{13,19}$/.test(m)).length, other: xs.filter((m) => !m.includes('@') && !/^\d{13,19}$/.test(m)).length });
 console.log(JSON.stringify({ arm, markers: markers.size, marker_kinds: kinds([...markers]), bytes_read: text.length, leaked: hits.length, leaked_kinds: kinds(hits) }));

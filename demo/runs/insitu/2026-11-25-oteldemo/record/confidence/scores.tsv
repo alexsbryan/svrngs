@@ -1,0 +1,31 @@
+fault	arm	run	service	mechanism	scope	evidence	total	note
+F1	R	3	1	1	0	1	3	gold label read as cause (2 failures)
+F1	R	2	1	1	0	1	3	gold-only scope (2 of 8 gold failed)
+F1	P	2	1	1	1	1	4	intermittent ~10%; loyalty hash also on successes, so not the cause (correct)
+F1	P	3	1	1	1	1	4	random ~10%; loyalty also on successes (correct)
+F2	R	3	1	1	1	1	4	OLJCESPC7Z 56/56, flag targeting_match
+F2	P	2	1	1	1	1	4	one product hash 56/56, flag true
+F2	R	2	1	1	1	1	4	OLJCESPC7Z, flag targeting_match
+F2	P	3	1	1	1	1	4	one product hash 56/56, flag true
+F3b	R	2	1	1	1	1	4	count 10 to 16M, RSS 66 to 153 MB, two restarts
+F3b	P	2	1	1	1	1	4	count bands 2-3 to 8-15, restarts; said no memory metric
+F3b	P	3	1	1	1	1	4	sawtooth latency, count bands, counter resets
+F3b	R	3	1	1	1	1	4	RSS growth and restarts; tied latency to reconnects, not the cache
+F4	R	2	0	0	0	1	1	no fault named; email counter resets cited as unexplained; every order matched to a sent log
+F4	R	3	0	0	0	1	1	no fault; two counter resets as a weak lead; every order emailed
+F4	P	3	1	0	1	1	3	email degraded and restarting as best hypothesis; latency step and resets; orders near restarts
+F4	P	1	0	0	0	1	1	email restarts inferred from counter resets; no fault named, no impact found
+F4	P	2	1	0	1	1	3	email restarts the likeliest place; order 1a798174 inside the first; counts lost
+F5	R	2	1	1	1	1	4	read "Delaying international shipment" log text; 2 of 25
+F5	R	3	1	1	1	1	4	read the delay log text; 2 of 25, international per the log
+F5	P	3	1	1	1	1	4	flag and delay logs only on the 2 slow; international from the flag name, unverified
+F5	P	2	1	1	1	1	4	flag and delay logs only on the 2 slow; one currency profile; international possible, unverified
+F1	P	1	1	1	0	1	3	record/rerun: gold label read as cause
+F2	P	1	1	1	1	1	4	record/rerun
+F3b	P	1	1	1	1	1	4	record/rerun
+F5	P	1	1	1	1	1	4	record/rerun
+F1	R	1	1	1	0	1	3	round 1 (F1-scores.md)
+F2	R	1	1	1	1	1	4	round 1 (F2-scores.md)
+F3b	R	1	1	1	1	1	4	round 1 (F3b-scores.md)
+F4	R	1	1	0	1	1	3	round 1 (F4-scores.md)
+F5	R	1	1	1	0	1	3	round 1 (F5-scores.md)
