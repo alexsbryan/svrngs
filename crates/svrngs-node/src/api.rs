@@ -222,14 +222,16 @@ pub type Asked = Result<(u16, Vec<u8>), Withheld>;
 
 /// Why svrngs's command sent none of its token to what answers at the
 /// address svrngs wrote ([`asked`]): a closed set (AGENTS 9).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Withheld {
     /// Nothing takes a connection there, or answers on it: svrngs isn't
     /// running.
     Away,
-    /// What answers has no proof to give (404): a svrngs older than this
-    /// command.
-    Older,
+    /// What answers is a svrngs of another [`build`] than this command's:
+    /// the one its proof names, or none from one too old to name it (404,
+    /// or a proof with no nonce or no build); or, at 404, not svrngs at
+    /// all, which only the data dir's lock tells apart (cli.rs `Here`).
+    Another(Option<String>),
     /// Nothing answered the challenge within [`PROVE_WITHIN`].
     Unanswered,
     /// What answers is not svrngs proving, on this connection, that it
@@ -362,17 +364,32 @@ fn proven(answer: Option<Option<(u16, Vec<u8>)>>, wanted: &str) -> Result<Challe
     let (status, said) = answer.ok_or(Withheld::Unanswered)?.ok_or(Withheld::Away)?;
     let said: serde_json::Value = serde_json::from_slice(&said).unwrap_or_default();
     let shown = said["proof"].as_str().unwrap_or_default().as_bytes();
-    (status != 404).then_some(()).ok_or(Withheld::Older)?;
+    (status != 404)
+        .then_some(())
+        .ok_or(Withheld::Another(None))?;
     let proved = status == 200 && crate::oidc::provider::same(shown, wanted.as_bytes());
     proved.then_some(()).ok_or(Withheld::Unproven)?;
-    let nonce = serde_json::from_value(said["nonce"].clone());
-    nonce.map_err(|_| Withheld::Older)
+    let theirs = said["build"].as_str().map(String::from);
+    let nonce = serde_json::from_value(said["nonce"].clone()).ok();
+    let ours = theirs.as_deref() == Some(build().as_str());
+    nonce.filter(|_| ours).ok_or(Withheld::Another(theirs))
+}
+
+/// This build, as `svrngs version` says it and `POST /v1/proof` names it
+/// ([`proved`]): its release, and the commit scripts/build-release.sh
+/// built it from, which a build by hand has none of. The command asks
+/// only a svrngs of its own build ([`proven`]), so it never asks, as you,
+/// an older one an update left running.
+pub fn build() -> String {
+    let release = env!("CARGO_PKG_VERSION");
+    option_env!("SVRNGS_COMMIT").map_or(release.into(), |c| format!("{release} ({c})"))
 }
 
 /// `POST /v1/proof`, `{"challenge": "<hex>"}`: svrngs's [`proof`] that it
 /// holds the token, for a client's fresh challenge on this connection, and
 /// a nonce drawn fresh for this connection alone, which its asks' code is
-/// made for ([`ask`]), as `{"proof": "<hex>", "nonce": "<hex>"}`; a later
+/// made for ([`ask`]), and its [`build`], as `{"proof": "<hex>", "nonce":
+/// "<hex>", "build": "1.13.4 (<commit>)"}`; a later
 /// proof on the connection gives it another in its place ([`Line`]). Asked
 /// with nothing before a client asks anything else ([`asked`]). It tells no
 /// one anything of the token: a keyed proof over a challenge the client
@@ -395,7 +412,8 @@ async fn proved(State(token): State<Bearer>, request: Request) -> Response {
     let nonce = Challenge::drawn();
     line.nonce.send_replace(Some(nonce.clone()));
     let proof = proof(token.secret(), &challenge, client, server);
-    Json(serde_json::json!({ "proof": proof, "nonce": nonce.0 })).into_response()
+    let build = build();
+    Json(serde_json::json!({ "proof": proof, "nonce": nonce.0, "build": build })).into_response()
 }
 
 /// What `POST /v1/proof` is asked.

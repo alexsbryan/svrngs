@@ -143,9 +143,12 @@ fn the_proof_meets_its_vectors() {
 /// svrngs's answer): a vector's proof proves its connection, and no other,
 /// such as the one a relay opened to svrngs (planted: a proof over the
 /// challenge alone, which a relay's connection proved too), and gives its
-/// nonce; a proof with no nonce, or one that isn't 64 lowercase hex, and
-/// 404 are a svrngs older than the command; no answer is svrngs away, and
-/// none in time is unanswered; anything else is not svrngs proving itself.
+/// nonce, if it names the command's own build; one naming another is
+/// another build, the one it names; a proof with no nonce, or one that
+/// isn't 64 lowercase hex, or no build, and 404 are a svrngs older than the
+/// command, naming none; no answer is svrngs away, and none in time is
+/// unanswered; anything else is not svrngs proving itself. Planted, watched
+/// failing: the build left unread, and a proof of 1.12.2 taken.
 #[test]
 fn the_command_asks_only_where_svrngs_proved_this_connection() {
     let said =
@@ -155,8 +158,18 @@ fn the_command_asks_only_where_svrngs_proved_this_connection() {
         let (client, server): (SocketAddr, SocketAddr) =
             (client.parse().unwrap(), server.parse().unwrap());
         let wanted = proof("test-token", &challenged(byte), client, server);
-        let proved = said(200, serde_json::json!({ "proof": shown, "nonce": nonce }));
+        let built = |b: &str| {
+            said(
+                200,
+                serde_json::json!({ "proof": shown, "nonce": nonce, "build": b }),
+            )
+        };
+        let proved = built(&build());
         assert_eq!(proven(proved.clone(), &wanted), Ok(challenged("1f")));
+        let another = Withheld::Another(Some("1.12.2 (c95c6509)".into()));
+        assert_eq!(proven(built("1.12.2 (c95c6509)"), &wanted), Err(another));
+        let unnamed = said(200, serde_json::json!({ "proof": shown, "nonce": nonce }));
+        assert_eq!(proven(unnamed, &wanted), Err(Withheld::Another(None)));
         let relayed = SocketAddr::new(client.ip(), client.port() + 2);
         let elsewhere = proof("test-token", &challenged(byte), relayed, server);
         assert_eq!(
@@ -179,11 +192,14 @@ fn the_command_asks_only_where_svrngs_proved_this_connection() {
             serde_json::json!({ "proof": shown }),
             serde_json::json!({ "proof": shown, "nonce": nonce.to_uppercase() }),
         ] {
-            assert_eq!(proven(said(200, older), &wanted), Err(Withheld::Older));
+            assert_eq!(
+                proven(said(200, older), &wanted),
+                Err(Withheld::Another(None))
+            );
         }
         assert_eq!(
             proven(said(404, serde_json::json!({})), &wanted),
-            Err(Withheld::Older)
+            Err(Withheld::Another(None))
         );
         assert_eq!(
             proven(said(401, serde_json::json!({})), &wanted),
@@ -343,7 +359,7 @@ async fn svrngs_proves_it_holds_the_token_before_it_is_asked() {
 
     let (older, served) = proving(&token, false, std::time::Duration::ZERO).await;
     let _served = served.await.unwrap();
-    assert_eq!(asked_at(older, &secret).await, Err(Withheld::Older));
+    assert_eq!(asked_at(older, &secret).await, Err(Withheld::Another(None)));
 }
 
 /// [`asked`] of svrngs at `at`, as its `api` file names it.
@@ -543,7 +559,7 @@ async fn a_long_answer_is_read_whole_once_svrngs_proved_itself() {
 /// **A svrngs proving itself with no nonce is older than the command, told
 /// apart from what never proves itself, and neither is asked anything
 /// more** (the never-send-the-key review's gate): on real sockets, a right
-/// proof and no nonce, as dd2efe63's svrngs answers, is `Older`, which the
+/// proof and no nonce, as dd2efe63's svrngs answers, is `Another`, which the
 /// command restarts for or says to update; a proof under another token is
 /// `Unproven`; and nothing past the proof is sent to either. Planted,
 /// watched failing: a proof with no nonce taken (the ask sent, with a code
@@ -554,7 +570,7 @@ async fn an_older_proof_and_none_are_told_apart_and_neither_is_asked_more() {
     let dir = tempfile::tempdir().unwrap();
     let secret = kept_token(dir.path()).unwrap().secret().to_string();
     for (with, want) in [
-        (secret.clone(), Withheld::Older),
+        (secret.clone(), Withheld::Another(None)),
         ("another".into(), Withheld::Unproven),
     ] {
         let more = std::sync::Arc::new(AtomicUsize::new(0));
@@ -576,7 +592,7 @@ async fn an_older_proof_and_none_are_told_apart_and_neither_is_asked_more() {
         let bound = bind("127.0.0.1:0".parse().unwrap()).await.unwrap();
         let addr = bound.addr;
         let _served = serve(routes, bound);
-        assert_eq!(asked_at(addr, &secret).await, Err(want));
+        assert_eq!(asked_at(addr, &secret).await, Err(want.clone()));
         assert_eq!(
             more.load(Ordering::SeqCst),
             0,

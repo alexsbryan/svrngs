@@ -113,7 +113,7 @@ use std::time::Duration;
 
 use std::num::NonZeroU16;
 
-use svrngs_node::api::{ApiError, Withheld, API_FILE, PROVE_WITHIN};
+use svrngs_node::api::{build, ApiError, Withheld, API_FILE, PROVE_WITHIN};
 use svrngs_node::door::bound::{Bound, Unsent};
 use svrngs_node::folder::{FolderAsk, PROGRAMS_ROUTE};
 use svrngs_node::home::WHEN;
@@ -849,12 +849,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
     let root = here.root().to_path_buf();
     let said = match verb {
         Verb::Help => format!("{USAGE}\n"),
-        // The release (1.10.0 is V1.10) and the commit build-release.sh
-        // built it from, which a build by hand has none of.
-        Verb::Version => match option_env!("SVRNGS_COMMIT") {
-            Some(commit) => format!("svrngs {} ({commit})\n", env!("CARGO_PKG_VERSION")),
-            None => format!("svrngs {}\n", env!("CARGO_PKG_VERSION")),
-        },
+        Verb::Version => format!("svrngs {}\n", build()),
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
         Verb::Check(dir, was) => checked(&dir, was.as_deref())?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
@@ -1369,7 +1364,7 @@ impl Here for PathBuf {
         let token = token.map_err(|(at, e)| Unjudged::Api(ApiError::TokenFile(at, e)))?;
         let ask = || svrngs_node::api::asked(&api, route, token.trim(), body.clone());
         let mut asked = ask().await;
-        if route == PROGRAMS_ROUTE && asked == Err(Withheld::Older) {
+        if route == PROGRAMS_ROUTE && matches!(asked, Err(Withheld::Another(_))) {
             return Err(Refused::Older.into());
         }
         // An older svrngs over this data dir, its lock held, as an update
@@ -1379,7 +1374,7 @@ impl Here for PathBuf {
         // 100 ms apart while it stops and starts, for as long as its proof
         // is waited for. Nothing else answering 404 is restarted for.
         // Held is an older svrngs; a lock it can't look at, nothing it can tell.
-        let looked = (asked == Err(Withheld::Older)).then(|| claim(self).err());
+        let looked = (matches!(asked, Err(Withheld::Another(_)))).then(|| claim(self).err());
         let older = match looked.flatten() {
             Some(Refusal::Refused(Refused::Busy(_))) => true,
             Some(Refusal::Unjudged(Unjudged::DataDir(at, e))) => Err(Unjudged::Unlooked(at, e))?,
@@ -1388,7 +1383,7 @@ impl Here for PathBuf {
         let restarted = older && kept_over(self) && restart(self).is_ok();
         if restarted {
             let mut tries = PROVE_WITHIN.as_millis() / 100;
-            while tries > 0 && matches!(asked, Err(Withheld::Away | Withheld::Older)) {
+            while tries > 0 && matches!(asked, Err(Withheld::Away | Withheld::Another(_))) {
                 tries -= 1;
                 tokio::time::sleep(Duration::from_millis(100)).await;
                 asked = ask().await;
@@ -1403,9 +1398,11 @@ impl Here for PathBuf {
         // time, so the person tries again.
         let (status, text) = asked.map_err(|why| match why {
             Withheld::Away => Refusal::from(Unjudged::NotRunning),
-            Withheld::Older if restarted => Refused::Unrestarted(api.trim().into()).into(),
-            Withheld::Older if older => Refused::Behind(self.clone()).into(),
-            Withheld::Older | Withheld::Unproven => Refused::Unproven(api.trim().into()).into(),
+            Withheld::Another(_) if restarted => Refused::Unrestarted(api.trim().into()).into(),
+            Withheld::Another(_) if older => Refused::Behind(self.clone()).into(),
+            Withheld::Another(_) | Withheld::Unproven => {
+                Refused::Unproven(api.trim().into()).into()
+            }
             Withheld::Unanswered => Unjudged::Unanswered(api.trim().into()).into(),
         })?;
         Ok((status, String::from_utf8_lossy(&text).into()))
