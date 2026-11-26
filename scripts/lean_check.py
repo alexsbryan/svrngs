@@ -1174,10 +1174,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Its review shows its groups' own rows, by whom, in Details (2026-11-25): +6 paid by cutting needless lines in lend_one (the groups' names, the name-taken check) and LEND's two let-go patches made one: 28,649; JS 8,865.
 # Keep it running reads nothing of how a program was started (2026-11-25): the /run?prefill route and the page's fill-in go: 28,641; JS 8,845.
 # svrngs keep <port> -- <command> and the page's line for it (operator-approved raise, 2026-11-26, after an economizing pass): 28,665; JS 8,852.
+# The CLI's main path (operator-approved raise, 2026-11-26, after an economizing pass): the
+# proof names its build, another build is restarted onto this one, svrngs
+# starts apart from the terminal, and svrngs stops itself on its own route,
+# no signal. The pass cut four wait loops to one and the log path said three
+# times to one (-4 net); the rest is behaviour a person reads or a check
+# holds. 28,805.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 28666,
+    ".": 28806,
 
     "js": 8853,
 
