@@ -194,7 +194,8 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
 fn lock(places: &Places, key: &str) -> anyhow::Result<std::fs::File> {
     // Card commands still serialize writes, without reading any live process.
     let dir = places.data.join("locks");
-    std::fs::create_dir_all(&dir)?;
+    kept::private_dir(&places.data)?;
+    kept::private_dir(&dir)?;
     let file = std::fs::OpenOptions::new()
         .write(true)
         .create(true)

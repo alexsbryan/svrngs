@@ -90,7 +90,8 @@ impl SystemdUser {
             std::fs::create_dir_all(parent)
                 .map_err(|e| format!("create {}: {e}", parent.display()))?;
         }
-        std::fs::write(unit.path, unit.content)
+        // The unit holds the command, which can hold a key: its person's alone.
+        crate::kept::private(unit.path, unit.content.as_bytes())
             .map_err(|e| format!("write {}: {e}", unit.path.display()))?;
         let out = self.systemctl(&["--user", "daemon-reload"])?;
         if !out.status.success() {

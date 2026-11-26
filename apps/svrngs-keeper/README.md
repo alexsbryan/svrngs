@@ -43,6 +43,10 @@ svrngs-keeper remove <name>                 # its card and its folder stay
 A kept card lives in `~/.local/share/svrngs-keeper/<name>/compose.yaml`,
 the one it replaced beside it as `previous.yaml`; the unit goes in
 `~/.config/systemd/user/` (both follow `XDG_DATA_HOME`, `XDG_CONFIG_HOME`).
+The command can hold a key, so every file that can hold it (the unit or
+plist, the card, `previous.yaml`, `unit.hash`, and on a Mac the program's
+`program.log`) is made 0600, and Keeper's folders 0700; an older Keeper's
+open ones are closed at the next keep.
 The same card kept again resets nothing. It supervises nothing: systemd
 keeps the unit, and linger starts it at boot. While the account doesn't
 linger, `keep` asks first whether it may run with nobody logged in; on no,
