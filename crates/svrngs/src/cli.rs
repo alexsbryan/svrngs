@@ -878,11 +878,10 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         // so, as `svrngs restart`: this program, read before it is replaced.
         Verb::Update => match (program(&root), update::apply(&root).await?) {
             (_, update::Outcome::Current) => "This computer has the latest svrngs.\n".into(),
-            (Ok(mut new), update::Outcome::Updated) => {
+            (new, update::Outcome::Updated) => {
                 use std::os::unix::process::CommandExt as _;
-                Err(Refused::Stuck(new.arg("restart").exec().to_string()))?
+                Err(Refused::Stuck(new?.arg("restart").exec().to_string()))?
             }
-            (Err(why), update::Outcome::Updated) => Err(why)?,
             (_, update::Outcome::Packaged(words)) => format!("{words}\n"),
         },
         Verb::Restart => {
@@ -1239,18 +1238,33 @@ const OPEN_ROUTE: &str = "/v1/open";
 /// One line, once svrngs over `here`, just started, answers as this build
 /// ([`Here::asked`]), waited for as long as a proof is; else why not.
 async fn came_up(here: &impl Here) -> Result<String, Refusal> {
-    let mut tries = PROVE_WITHIN.as_millis() / 100;
-    loop {
-        match here.asked("/v1/groups", None).await {
-            Err(Refusal::Unjudged(Unjudged::NotRunning)) if tries > 0 => tries -= 1,
-            Err(Refusal::Unjudged(Unjudged::NotRunning)) => {
-                let log = here.root().join("svrngs.log");
-                Err(Refused::Stuck(format!("{} says why", log.display())))?
-            }
-            asked => return asked.map(|_| format!("svrngs {} is running.\n", build())),
+    let up = within(async || match here.asked("/v1/groups", None).await {
+        Err(Refusal::Unjudged(Unjudged::NotRunning)) => None,
+        asked => Some(asked),
+    });
+    up.await.unwrap_or_else(|| Err(unstarted(here.root())))?;
+    Ok(format!("svrngs {} is running.\n", build()))
+}
+
+/// `tried` again every 100 ms until it gives something, for as long as a
+/// proof is waited for ([`PROVE_WITHIN`]): what it gave, or none in time.
+async fn within<T>(mut tried: impl AsyncFnMut() -> Option<T>) -> Option<T> {
+    for _ in 0..PROVE_WITHIN.as_millis() / 100 {
+        if let Some(given) = tried().await {
+            return Some(given);
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
+    None
+}
+
+/// Where svrngs started apart from a terminal writes what it says
+/// ([`restart`]), as the login service's svrngs does.
+const LOG: &str = "svrngs.log";
+
+/// Why svrngs started over `root` never answered: its log says.
+fn unstarted(root: &Path) -> Refusal {
+    Refused::Stuck(format!("{} says why", root.join(LOG).display())).into()
 }
 
 /// svrngs over `root` started, or with `stop` restarted, so this works on
@@ -1287,19 +1301,20 @@ async fn restart(root: &Path, stop: bool) -> Result<(), Refusal> {
             false => return Ok(()),
         }
     }
-    let log = (File::options().create(true).append(true)).open(root.join("svrngs.log"));
-    let log = log.and_then(|log| Ok((log.try_clone()?, log)));
-    let log = log.map_err(|e| Refused::Stuck(e.to_string()))?;
+    let stuck = |e: std::io::Error| Refusal::from(Refused::Stuck(e.to_string()));
+    let log = File::options()
+        .create(true)
+        .append(true)
+        .open(root.join(LOG));
+    let log = log.map_err(stuck)?;
     let mut svrngs = program(root)?;
-    let quiet = svrngs
+    let said = svrngs.stdout(log.try_clone().map_err(stuck)?).stderr(log);
+    let started = said
         .stdin(std::process::Stdio::null())
-        .stdout(log.0)
-        .stderr(log.1);
-    let started = quiet.process_group(0).spawn();
+        .process_group(0)
+        .spawn();
     tracing::debug!(target: "cli", started = ?started.as_ref().map(|c| c.id()), "cli: restart — this program started over the data dir, apart from this terminal");
-    started
-        .map(drop)
-        .map_err(|e| Refused::Stuck(e.to_string()).into())
+    started.map(drop).map_err(stuck)
 }
 
 /// The svrngs holding `lock` asked, as you, to stop ([`STOP_ROUTE`]), and
@@ -1312,13 +1327,7 @@ async fn stopped(root: &Path, lock: PathBuf) -> Result<(), Refusal> {
     let (_, asked) = asked_once(root, STOP_ROUTE, Some("{}".into())).await?;
     // Its answer may be cut short as it stops: svrngs away.
     let took = matches!(asked, Ok((200..=299, _)) | Err(Withheld::Away));
-    let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(took);
-    let mut free = false;
-    while !free && tries > 0 {
-        tries -= 1;
-        tokio::time::sleep(Duration::from_millis(100)).await;
-        free = claim(root).is_ok();
-    }
+    let free = took && within(async || claim(root).ok()).await.is_some();
     tracing::debug!(target: "cli", took, free, asked = ?asked.as_ref().map(|a| a.0), "cli: restart — the svrngs holding this data dir asked, as you, to stop, and whether it let the data dir go");
     free.then_some(())
         .ok_or_else(|| Refused::Unstopped(lock).into())
@@ -1494,8 +1503,16 @@ impl Here for PathBuf {
         // restart writes them; with no token, an older one, if one holds
         // the data dir (below).
         let ask = || asked_once(self, route, body.clone());
-        let (mut api, mut asked) = ask().await?;
+        // A svrngs starting holds the lock before it writes its token, so a
+        // lock held with no token is waited on, as long as a proof is,
+        // before it is taken for a svrngs too old to keep one.
         let token = self.join(TOKEN_FILE);
+        let busy = |c| matches!(c, Err(Refusal::Refused(Refused::Busy(_))));
+        let starting = !token.exists() && busy(claim(self));
+        if starting {
+            within(async || token.exists().then_some(())).await;
+        }
+        let (mut api, mut asked) = ask().await?;
         let tokenless = !token.exists();
         let theirs = match &asked {
             Err(Withheld::Another(theirs)) => theirs.clone(),
@@ -1527,38 +1544,26 @@ impl Here for PathBuf {
                     }
                     _ => false,
                 };
-        // A svrngs starting holds the lock before it writes its token, so
-        // a lock held with no token is a svrngs too old to keep one only
-        // once none appears, for as long as a proof is waited for.
-        let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(tokenless && held);
-        while tries > 0 && !token.exists() {
-            tries -= 1;
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-        if tries > 0 {
-            tracing::debug!(target: "cli", "cli: the svrngs holding the data dir wrote its token as it started, so it is asked again");
-            return Box::pin(self.asked(route, body)).await;
-        }
         // `open` where no svrngs runs starts it, as `svrngs restart` does,
         // and waits for it as for a restart.
         let away = asked == Err(Withheld::Away) || tokenless;
         let starts = route == OPEN_ROUTE && away && !held;
         if held || starts {
             restart(self, held).await?;
+            let again = within(async || match ask().await {
+                Ok((_, Err(Withheld::Away | Withheld::Another(_)))) => None,
+                done => Some(done),
+            });
+            if let Some(done) = again.await {
+                (api, asked) = done?;
+            }
         }
-        let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(held || starts);
-        while tries > 0 && matches!(asked, Err(Withheld::Away | Withheld::Another(_))) {
-            tries -= 1;
-            tokio::time::sleep(Duration::from_millis(100)).await;
-            (api, asked) = ask().await?;
-        }
-        tracing::debug!(target: "cli", api, route, ours = build(), ?theirs, tokenless, held, starts, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs of this build answered, or what answers was sent none of the token nor a code, and why");
+        tracing::debug!(target: "cli", api, route, ours = build(), ?theirs, starting, tokenless, held, starts, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs of this build answered, or what answers was sent none of the token nor a code, and why");
         // Nothing there, or no svrngs here that kept a token; another build
         // still, restarted or not; something else there, refused; or
         // nothing proved in time, so the person tries again.
-        let log = || format!("{} says why", self.join("svrngs.log").display());
         let (status, text) = asked.map_err(|why| match why {
-            Withheld::Away | Withheld::Another(_) if starts => Refused::Stuck(log()).into(),
+            Withheld::Away | Withheld::Another(_) if starts => unstarted(self),
             Withheld::Away => Refusal::from(Unjudged::NotRunning),
             Withheld::Another(_) if tokenless && !held => Unjudged::NotRunning.into(),
             Withheld::Another(_) if held => Refused::Unrestarted(api.trim().into()).into(),

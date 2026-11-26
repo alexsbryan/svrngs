@@ -426,8 +426,7 @@ async fn proved(State(token): State<Bearer>, request: Request) -> Response {
     let nonce = Challenge::drawn();
     line.nonce.send_replace(Some(nonce.clone()));
     let proof = proof(token.secret(), &challenge, client, server);
-    let build = build();
-    Json(serde_json::json!({ "proof": proof, "nonce": nonce.0, "build": build })).into_response()
+    Json(serde_json::json!({ "proof": proof, "nonce": nonce.0, "build": build() })).into_response()
 }
 
 /// What `POST /v1/proof` is asked.
