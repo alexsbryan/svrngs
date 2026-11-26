@@ -1075,6 +1075,35 @@ async fn a_data_dir_with_no_token_is_svrngs_not_running_and_nothing_is_asked() {
     );
 }
 
+/// **A token svrngs can't read is said with the step that makes a new
+/// one, and nothing is dialled**: `token` a folder, as no svrngs writes
+/// it, so reading it fails for a reason other than its absence; the
+/// command asks nothing at svrngs's address, and says which file, why, and
+/// to delete it and run `svrngs restart` (exit 3). Planted, watched
+/// failing: 0ba18ef9's words, "cannot read or keep this computer's token",
+/// and no step.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_unreadable_token_is_said_with_the_step_that_makes_a_new_one() {
+    let held = TcpListener::bind("127.0.0.1:0").unwrap();
+    held.set_nonblocking(true).unwrap();
+    let dir = data_dir_at(held.local_addr().unwrap().port());
+    let token = dir.path().join("token");
+    std::fs::remove_file(&token).unwrap();
+    std::fs::create_dir(&token).unwrap();
+    let refused = opened(dir.path()).await;
+    let asked = held.accept().map(|(_, from)| from);
+    assert!(asked.is_err(), "it was asked, from {asked:?}");
+    let (code, said) = refused.expect_err("refused");
+    assert_eq!(code, 3, "{said}");
+    let words = format!(
+        "svrngs can't read or write its token, {} (",
+        token.display()
+    );
+    assert!(said.starts_with(&words), "{said}");
+    let step = "). svrngs makes a new one where there is none: delete that file, then run `svrngs restart`";
+    assert!(said.ends_with(step), "{said}");
+}
+
 /// **What answers at svrngs's address is read no further than an answer
 /// svrngs gives the command** (the 1.13.3 proof review, finding 7): Python
 /// answering the proof with 64 MiB stops being read past the command's

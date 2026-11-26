@@ -50,7 +50,9 @@ pub enum ApiError {
     AddressFile(std::path::PathBuf, std::io::Error),
     #[error("{0} names no address svrngs listens at: delete it, and svrngs takes a new one as it starts")]
     NoAddress(std::path::PathBuf),
-    #[error("cannot read or keep this computer's token, {0}: {1}")]
+    /// What reads or writes the token failed, other than its absence,
+    /// which is a svrngs that never ran over the data dir (cli.rs `Here`).
+    #[error("svrngs can't read or write its token, {at} ({1}). svrngs makes a new one where there is none: delete that file, then run `svrngs restart`", at = .0.display())]
     TokenFile(std::path::PathBuf, std::io::Error),
     #[error("{0} holds no token svrngs made: delete it, and svrngs makes a new one as it starts")]
     NoToken(std::path::PathBuf),
