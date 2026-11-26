@@ -12,8 +12,10 @@ database, and what to change. Name the folder of the version it follows
 after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs
-      Run for every group you are in. Leave it running.
-      Already running? Show your home page's address and how to open it.
+      Open your home page, starting svrngs first if it isn't running here,
+      or restarting it if an older svrngs is. svrngs then runs for every
+      group you are in, apart from this terminal. With no terminal, as
+      when your login runs it, svrngs runs right there instead.
 
   svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]...
       Make a group called <name> and print its link: send it to the people
@@ -132,7 +134,8 @@ after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs open [/<local destination>] [--print]
       Open your home page in your browser, as svrngs in your Applications
-      (on Linux, your applications menu) does. An optional local destination
+      (on Linux, your applications menu) does, starting svrngs first if it
+      isn't running. An optional local destination
       focuses that part of the home page. --print shows an address to open
       in another browser within a minute, once, and opens nothing.
 
@@ -146,7 +149,7 @@ after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs update
       Get the newest svrngs from the page this computer was installed
-      from, if this computer's is not it. `svrngs restart` then uses it.
+      from, if this computer's is not it, and restart svrngs onto it.
       Where a package installed svrngs, the package updates it, and this
       says how.
 

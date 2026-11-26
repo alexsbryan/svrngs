@@ -569,15 +569,19 @@ fn sent_none_of_the_token(seen: &str) {
     assert!(!shown, "it was sent the token: {seen}");
 }
 
-/// `svrngs open --print` over `dir`, as the applications menu's opener runs
-/// it, but with no browser: its words, or its refusal's, and exit code.
-async fn opened(dir: &Path) -> Result<String, (u8, String)> {
-    let relay = svrngs_node::iroh::RelayConfig {
+/// No relay, for a command asked in this process that dials none.
+fn no_relay() -> svrngs_node::iroh::RelayConfig {
+    svrngs_node::iroh::RelayConfig {
         relay_urls: Vec::new(),
         n0_services: false,
         loopback_only: true,
-    };
-    let said = cli::answer(cli::Verb::Open(None, true), &dir.to_path_buf(), &relay).await;
+    }
+}
+
+/// `svrngs open --print` over `dir`, as the applications menu's opener runs
+/// it, but with no browser: its words, or its refusal's, and exit code.
+async fn opened(dir: &Path) -> Result<String, (u8, String)> {
+    let said = cli::answer(cli::Verb::Open(None, true), &dir.to_path_buf(), &no_relay()).await;
     said.map_err(|r| (r.exit_code(), r.to_string()))
 }
 
@@ -712,9 +716,10 @@ fn svrngs_ask_prints_svrngs_s_answer_and_says_its_refusal() {
     assert!(said.contains("as %20"), "{said}");
 }
 
-/// `svrngs open` over `dir`, asked every 50 ms until svrngs answers it:
-/// never refused, exit 1, on the way. What it was told, and how long the
-/// ask that was answered waited.
+/// `svrngs ask /v1/groups` over `dir`, asked every 50 ms until svrngs
+/// answers it: never refused, exit 1, on the way. What it was told, and how
+/// long the ask that was answered waited. (Not `open`, which starts svrngs
+/// itself where none holds the data dir, as a test's program can't.)
 async fn asked_until_answered(dir: &Path) -> String {
     let (began, mut told) = (Instant::now(), Vec::new());
     loop {
@@ -723,9 +728,11 @@ async fn asked_until_answered(dir: &Path) -> String {
             "never answered: {told:?}"
         );
         let asked = Instant::now();
-        match opened(dir).await {
+        let verb = cli::Verb::Ask("/v1/groups".into(), None);
+        let said = cli::answer(verb, &dir.to_path_buf(), &no_relay()).await;
+        match said.map_err(|r| (r.exit_code(), r.to_string())) {
             Ok(said) => {
-                assert!(said.contains("svrngs-open?code="), "{said}");
+                assert!(said.contains("\"groups\""), "{said}");
                 return format!(
                     "{told:?}, then answered after waiting {:?}",
                     asked.elapsed()
@@ -741,7 +748,7 @@ async fn asked_until_answered(dir: &Path) -> String {
 /// **svrngs is never refused while it starts** (V1.13.3's fix review,
 /// findings 1 and 2): svrngs holds its address well before it takes a
 /// connection there (svrngs-node node.rs `start_on`, the endpoint and the
-/// folders between), so `svrngs open`, asked every 50 ms, is told svrngs
+/// folders between), so a command, asked every 50 ms, is told svrngs
 /// isn't running until it holds its address, then waits for its proof and
 /// is answered: as svrngs starts again over its data dir, and while it is
 /// held there for a second, holding its address and taking no connection
@@ -986,7 +993,7 @@ fn an_older_svrngs_started_by_hand_is_named_and_how_to_stop_it_said() {
         assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
         let told = String::from_utf8_lossy(&out.stderr);
         assert_eq!(out.status.code(), Some(1), "{told}");
-        let words = format!("svrngs: The svrngs running here is older than this one ({}), and was started by hand rather than at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", svrngs_node::api::build(), lock.display());
+        let words = format!("svrngs: The svrngs running here is older than this one ({}), and isn't kept running at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", svrngs_node::api::build(), lock.display());
         assert_eq!(told.trim(), words, "token: {token}");
     }
 }
@@ -1052,10 +1059,11 @@ fn a_start_waits_out_a_moment_s_hold_of_its_data_dir() {
 
 /// **A data dir with no token is svrngs not running there, and nothing is
 /// dialled** (the 1.13.3 proof review, finding 4): with no `token` beside
-/// `api` and no svrngs holding the data dir, the command asks nothing of
-/// what answers at svrngs's address, and says svrngs isn't running here
+/// `api` and no svrngs holding the data dir, `svrngs ask` asks nothing
+/// of what answers at svrngs's address, and says svrngs isn't running here
 /// (exit 3); never that something other than svrngs answers there, nor a
-/// file's error. Planted, watched failing: dd2efe63 asked Python for a
+/// file's error. (`open` starts svrngs then:
+/// open_starts_svrngs_where_none_runs_and_opens_it.) Planted, watched failing: dd2efe63 asked Python for a
 /// proof under no token and said "Something other than your svrngs
 /// answers"; 0ba18ef9 said "cannot read or keep this computer's token".
 #[tokio::test(flavor = "multi_thread")]
@@ -1064,14 +1072,52 @@ async fn a_data_dir_with_no_token_is_svrngs_not_running_and_nothing_is_asked() {
     held.set_nonblocking(true).unwrap();
     let dir = data_dir_at(held.local_addr().unwrap().port());
     std::fs::remove_file(dir.path().join("token")).unwrap();
-    let refused = opened(dir.path()).await;
+    let verb = cli::Verb::Ask("/v1/groups".into(), None);
+    let refused = cli::answer(verb, &dir.path().to_path_buf(), &no_relay()).await;
     let asked = held.accept().map(|(_, from)| from);
     assert!(asked.is_err(), "it was asked, from {asked:?}");
-    let (code, said) = refused.expect_err("refused");
-    assert_eq!(code, 3, "{said}");
+    let refused = refused.expect_err("refused");
+    let said = refused.to_string();
+    assert_eq!(refused.exit_code(), 3, "{said}");
     assert!(
         said.contains("svrngs is not running on this computer"),
         "{said}"
+    );
+}
+
+/// **`svrngs open` starts svrngs where none runs, and opens it**, as the
+/// applications menu runs it after a restart of the computer: nothing
+/// keeps svrngs at login, no svrngs holds the data dir and it holds no
+/// token yet, so `open` starts this program over it apart from its
+/// terminal, waits for it to answer as this build, and gives the open
+/// alone, one line. Planted, watched failing: 0ba18ef9 said "svrngs is not
+/// running on this computer: start it, then run this again" (exit 3).
+#[test]
+fn open_starts_svrngs_where_none_runs_and_opens_it() {
+    let (dir, program) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let svrngs = as_main::installed(program.path());
+    let out = Process::new(&svrngs)
+        .args(["open", "--print"])
+        .env("SVRNGS_DIR", dir.path())
+        .env("HOME", dir.path())
+        .output()
+        .unwrap();
+    let holder = Process::new("lsof")
+        .arg("-t")
+        .arg(dir.path().join("lock"))
+        .output()
+        .unwrap();
+    let holder = String::from_utf8_lossy(&holder.stdout).trim().to_string();
+    let _ = Process::new("kill").arg(&holder).status();
+    let said = String::from_utf8_lossy(&out.stdout);
+    let said = said.lines().filter(|l| !as_main::HEADER.contains(l));
+    let said: Vec<&str> = said.collect();
+    assert!(out.status.success(), "{said:?} {out:?}");
+    assert!(!holder.is_empty(), "no svrngs holds the data dir");
+    assert_eq!(said.len(), 1, "{said:?}");
+    assert!(
+        said[0].starts_with("Open this in your browser within a minute: http://svrngs.localhost:"),
+        "{said:?}"
     );
 }
 

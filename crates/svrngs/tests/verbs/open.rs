@@ -46,6 +46,10 @@ impl cli::Here for Opener<'_> {
         self.1.borrow_mut().push(what.to_owned());
         true
     }
+    /// A person at this terminal, as one typing `svrngs` is.
+    fn terminal(&self) -> bool {
+        true
+    }
 }
 
 impl Opener<'_> {
@@ -94,6 +98,26 @@ async fn the_opener_is_handed_the_open_and_only_this_account_s_browser_can_use_i
         (200, true),
         "this account's browser: {body}"
     );
+}
+
+/// **Bare `svrngs` at a terminal opens the home page**, in one line, as
+/// `svrngs open` does, where svrngs runs already; where none runs, `open`
+/// starts it first (address.rs
+/// `open_starts_svrngs_where_none_runs_and_opens_it`). Planted, watched
+/// failing: 0ba18ef9's reminder, "svrngs is already running. Your home
+/// page is at …", two lines, and no browser.
+#[tokio::test]
+async fn bare_svrngs_at_a_terminal_opens_the_home_page() {
+    let wire = Wire::default();
+    let alex = computer(&wire, 2).await;
+    let _held = cli::claim(alex.dir.path()).expect("svrngs running holds its data dir");
+    let opener = Opener(Running(&alex), RefCell::default());
+    let said = cli::answer(Verb::Run, &opener, &no_relay()).await;
+    assert_eq!(said.unwrap(), "Your home page is open in your browser.\n");
+    let handed = opener.1.borrow_mut().drain(..).collect::<Vec<_>>();
+    assert_eq!(handed.len(), 1, "{handed:?}");
+    let handed = handed[0].to_string_lossy();
+    assert!(handed.contains("/svrngs-open?code="), "{handed}");
 }
 
 /// `method` of `path` at `host`, asked of `node`'s routes as a browser on

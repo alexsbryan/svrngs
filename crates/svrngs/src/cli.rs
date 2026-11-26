@@ -677,13 +677,13 @@ pub enum Refused {
     /// (svrngs-node api.rs `asked`).
     #[error("Something other than your svrngs answers at {0}, where svrngs listens, so svrngs sent it none of your token. Stop that program (`lsof -nP -iTCP -sTCP:LISTEN` on a Mac, or `ss -ltnp` on Linux, names each program listening), then start svrngs again with `svrngs restart`")]
     Unproven(String),
-    /// svrngs holds `{0}`, started by hand rather than at login, so
+    /// svrngs holds `{0}`, and nothing keeps it running at login, so
     /// [`restart`] can't restart it.
-    #[error("svrngs is running here, started by hand rather than at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", .0.display())]
+    #[error("svrngs is running here, but isn't kept running at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", .0.display())]
     ByHand(PathBuf),
     /// [`Refused::ByHand`], an older svrngs than this one, the build its
     /// proof named if any, as an update leaves one running.
-    #[error("The svrngs running here{} is older than this one ({}), and was started by hand rather than at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", .0.as_ref().map(|b| format!(" ({b})")).unwrap_or_default(), build(), .1.display())]
+    #[error("The svrngs running here{} is older than this one ({}), and isn't kept running at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", .0.as_ref().map(|b| format!(" ({b})")).unwrap_or_default(), build(), .1.display())]
     Behind(Option<String>, PathBuf),
     /// Why [`restart`] started no svrngs.
     #[error("svrngs couldn't start here ({0}): run the install line from your group's page again, and it keeps svrngs running whenever you log in")]
@@ -726,7 +726,7 @@ pub enum Unjudged {
     Prompt(std::io::Error),
     #[error("cannot make a sign-in for it on this computer: {0}")]
     SignIn(#[from] KeyFailure),
-    #[error("svrngs is not running on this computer: start it, then run this again")]
+    #[error("svrngs is not running on this computer: start it with `svrngs`, then run this again")]
     NotRunning,
     /// What answers at svrngs's address has no proof to give, and its data
     /// dir's lock can't be looked at, so nothing is restarted.
@@ -758,15 +758,6 @@ fn lent_now(lent: &[LendName]) -> String {
     let names: Vec<&str> = lent.iter().map(LendName::as_str).collect();
     let said = (!lent.is_empty()).then(|| format!("; you lend {}", names.join(", ")));
     said.unwrap_or_default()
-}
-
-/// A build's release as numbers, `1.13.3 (<commit>)` as `[1, 13, 3]`, so
-/// an older svrngs is told from a newer one.
-fn release(build: &str) -> Vec<u32> {
-    build
-        .split([' ', '.'])
-        .map_while(|n| n.parse().ok())
-        .collect()
 }
 
 impl Refusal {
@@ -885,10 +876,16 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             let end = if text.ends_with('\n') { "" } else { "\n" };
             text + end
         }
-        Verb::Update => match update::apply(&root).await? {
-            update::Outcome::Current => "This computer has the latest svrngs.\n".into(),
-            update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n".into(),
-            update::Outcome::Packaged(words) => format!("{words}\n"),
+        // Updated, the new svrngs restarts svrngs onto itself and says
+        // so, as `svrngs restart`: this program, read before it is replaced.
+        Verb::Update => match (program(&root), update::apply(&root).await?) {
+            (_, update::Outcome::Current) => "This computer has the latest svrngs.\n".into(),
+            (Ok(mut new), update::Outcome::Updated) => {
+                use std::os::unix::process::CommandExt as _;
+                Err(Refused::Stuck(new.arg("restart").exec().to_string()))?
+            }
+            (Err(why), update::Outcome::Updated) => Err(why)?,
+            (_, update::Outcome::Packaged(words)) => format!("{words}\n"),
         },
         Verb::Restart => {
             restart(&root, true)?;
@@ -1069,6 +1066,9 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 }
             }
         }
+        // At a terminal, bare `svrngs` is someone opening svrngs; with none,
+        // as launchd, systemd and `restart` run it, it is svrngs running.
+        Verb::Run if here.terminal() => open(here, None, false).await?,
         other => match (claim(&root), other) {
             (Err(Refusal::Refused(Refused::Busy(_))), Verb::Run) => {
                 let api = svrngs_node::api::kept_address(&root)?.ok_or(Unjudged::NotRunning)?;
@@ -1222,7 +1222,7 @@ fn said(
 /// runs (svrngs-node session.rs `Sessions::ours`).
 async fn open(here: &impl Here, at: Option<&str>, print: bool) -> Result<String, Refusal> {
     let asked = serde_json::json!({ "at": at });
-    let (ok, text) = here.ask("/v1/open", &asked).await?;
+    let (ok, text) = here.ask(OPEN_ROUTE, &asked).await?;
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
     let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
     let at = at.ok_or_else(|| Unjudged::Unopened(text.trim().into()))?;
@@ -1233,6 +1233,10 @@ async fn open(here: &impl Here, at: Option<&str>, print: bool) -> Result<String,
         false => format!("Open this in your browser within a minute: {at}\n"),
     })
 }
+
+/// Where `open` asks svrngs for an open, which starts svrngs where none
+/// runs ([`Here::asked`]).
+const OPEN_ROUTE: &str = "/v1/open";
 
 /// One line, once svrngs over `here`, just started, answers as this build
 /// ([`Here::asked`]), waited for as long as a proof is; else why not.
@@ -1285,34 +1289,41 @@ fn restart(root: &Path, stop: bool) -> Result<(), Refusal> {
             false => Ok(()),
         };
     }
-    let stuck = |e: std::io::Error| Refused::Stuck(e.to_string());
-    let exe = std::env::current_exe().map_err(stuck)?;
-    // A program svrngs is built into starts no svrngs, but a test's that
-    // says how it starts one (tests/common/as_main.rs).
-    let args = STARTS_AS.get().cloned();
-    let ours = args.is_some() || exe.file_stem() == Some("svrngs".as_ref());
     let log = (File::options().create(true).append(true)).open(root.join("svrngs.log"));
     let log = log.and_then(|log| Ok((log.try_clone()?, log)));
+    let log = log.map_err(|e| Refused::Stuck(e.to_string()))?;
+    let mut svrngs = program(root)?;
+    let quiet = svrngs
+        .stdin(std::process::Stdio::null())
+        .stdout(log.0)
+        .stderr(log.1);
+    let started = quiet.process_group(0).spawn();
+    tracing::debug!(target: "cli", started = ?started.as_ref().map(|c| c.id()), "cli: restart — this program started over the data dir, apart from this terminal");
+    started
+        .map(drop)
+        .map_err(|e| Refused::Stuck(e.to_string()).into())
+}
+
+/// This program as it starts svrngs over `root`: svrngs's own binary, or
+/// a test's that says how it starts one ([`STARTS_AS`],
+/// tests/common/as_main.rs); any other program svrngs is built into starts
+/// none.
+fn program(root: &Path) -> Result<Command, Refusal> {
+    let exe = std::env::current_exe().map_err(|e| Refused::Stuck(e.to_string()))?;
+    let args = STARTS_AS.get().cloned();
+    let ours = args.is_some() || exe.file_stem() == Some("svrngs".as_ref());
     let mut svrngs = Command::new(&exe);
     svrngs
         .args(args.unwrap_or_default())
         .env("SVRNGS_DIR", root);
-    let started = log.and_then(|(out, err)| match ours {
-        true => svrngs
-            .stdin(std::process::Stdio::null())
-            .stdout(out)
-            .stderr(err)
-            .process_group(0)
-            .spawn(),
-        false => Err(std::io::ErrorKind::Unsupported.into()),
-    });
-    tracing::debug!(target: "cli", exe = %exe.display(), started = ?started.as_ref().map(|c| c.id()), "cli: restart — this program started over the data dir, apart from this terminal");
-    started.map(drop).map_err(|e| stuck(e).into())
+    tracing::debug!(target: "cli", exe = %exe.display(), ours, "cli: this program, as it starts svrngs");
+    let not = || Refused::Stuck(format!("{} is not svrngs", exe.display()));
+    ours.then_some(svrngs).ok_or_else(|| not().into())
 }
 
 /// How a program with svrngs built in that isn't svrngs's own binary, a
 /// test's, starts svrngs: its arguments before a verb's, said once as it
-/// starts. [`restart`] starts svrngs with them.
+/// starts ([`program`]).
 pub static STARTS_AS: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
 
 /// Whether what keeps svrngs running at login runs it over `root`: the
@@ -1457,16 +1468,16 @@ impl Here for PathBuf {
             Ok::<_, Refusal>((api, asked))
         };
         let (mut api, mut asked) = ask().await?;
-        let tokenless = !self.join(svrngs_node::api::TOKEN_FILE).exists();
+        let tokenless = read(svrngs_node::api::TOKEN_FILE).is_err();
         let theirs = match &asked {
             Err(Withheld::Another(theirs)) => theirs.clone(),
             _ => None,
         };
-        if theirs
-            .as_deref()
-            .is_some_and(|b| release(b) > release(&build()))
-        {
-            return Err(Refused::Newer(theirs.unwrap_or_default()).into());
+        // A build's release as numbers, `1.13.3 (<commit>)` as [1, 13, 3].
+        let release =
+            |b: &str| Vec::from_iter(b.split([' ', '.']).map_while(|n| n.parse::<u32>().ok()));
+        if let Some(newer) = theirs.clone().filter(|b| release(b) > release(&build())) {
+            return Err(Refused::Newer(newer).into());
         }
         let another = matches!(asked, Err(Withheld::Another(_)));
         if route == PROGRAMS_ROUTE && another && !tokenless {
@@ -1500,25 +1511,31 @@ impl Here for PathBuf {
             tracing::debug!(target: "cli", "cli: the svrngs holding the data dir wrote its token as it started, so it is asked again");
             return Box::pin(self.asked(route, body)).await;
         }
-        if held {
-            restart(self, true).map_err(|why| match why {
+        // `open` where no svrngs runs starts it, as `svrngs restart` does,
+        // and waits for it as for a restart.
+        let away = asked == Err(Withheld::Away) || tokenless;
+        let starts = route == OPEN_ROUTE && away && !held;
+        if held || starts {
+            restart(self, held).map_err(|why| match why {
                 Refusal::Refused(Refused::ByHand(lock)) => {
                     Refused::Behind(theirs.clone(), lock).into()
                 }
                 why => why,
             })?;
         }
-        let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(held);
+        let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(held || starts);
         while tries > 0 && matches!(asked, Err(Withheld::Away | Withheld::Another(_))) {
             tries -= 1;
             tokio::time::sleep(Duration::from_millis(100)).await;
             (api, asked) = ask().await?;
         }
-        tracing::debug!(target: "cli", api, route, ours = build(), ?theirs, tokenless, held, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs of this build answered, or what answers was sent none of the token nor a code, and why");
+        tracing::debug!(target: "cli", api, route, ours = build(), ?theirs, tokenless, held, starts, status = ?asked.as_ref().map(|a| a.0), "cli: svrngs of this build answered, or what answers was sent none of the token nor a code, and why");
         // Nothing there, or no svrngs here that kept a token; another build
         // still, restarted or not; something else there, refused; or
         // nothing proved in time, so the person tries again.
+        let log = || format!("{} says why", self.join("svrngs.log").display());
         let (status, text) = asked.map_err(|why| match why {
+            Withheld::Away | Withheld::Another(_) if starts => Refused::Stuck(log()).into(),
             Withheld::Away => Refusal::from(Unjudged::NotRunning),
             Withheld::Another(_) if tokenless && !held => Unjudged::NotRunning.into(),
             Withheld::Another(_) if held => Refused::Unrestarted(api.trim().into()).into(),

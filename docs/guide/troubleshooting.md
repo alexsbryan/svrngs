@@ -33,12 +33,25 @@ short name.
 - ***"This browser didn’t keep what svrngs needs to open this page: it keeps no cookies for sites on localhost."***
   Your browser blocks cookies for `localhost` sites. Allow them in its
   settings, then open svrngs again.
-- **`svrngs: svrngs is not running on this computer: start it, then run this again`**, or the home page doesn't open at all.
-  Paste the install line again: it updates svrngs and starts it. Logging
-  out and back in starts it too.
-- **`svrngs: svrngs is already running on this computer (… is held); stop it, then run this again`**, after typing `svrngs` alone.
-  Nothing is wrong: svrngs already runs whenever you log in. To open your
-  home page, type `svrngs open`.
+- **``svrngs: svrngs is not running on this computer: start it with `svrngs`, then run this again``**, or the home page doesn't open at all.
+  Type `svrngs`: it starts svrngs and opens your home page. Pasting the
+  install line again does too, and keeps svrngs running whenever you log in.
+- **`svrngs: The svrngs running here (…) is older than this one (…), and isn't kept running at login, so svrngs can't restart it for you: …`**
+  svrngs was updated while the old one kept running, with nothing to restart it, so
+  the new one can't stop it for you. Restart your computer, or paste the
+  `kill` line it shows, then type `svrngs`.
+- **`svrngs: svrngs is running here, but isn't kept running at login, so svrngs can't restart it for you: …`**
+  The same, after `svrngs restart`.
+- **`svrngs: The svrngs running here (…) is newer than this command (…)`**
+  The terminal found an older `svrngs` file than the one running. Type
+  `svrngs update`, then try again.
+- **`svrngs: svrngs couldn't start here (… says why): …`**
+  Open the file it names; its last lines say what went wrong. Paste the
+  install line again once you've dealt with it.
+- **`svrngs: svrngs can't read or write its token, …`**
+  svrngs keeps a token in that file to tell your own programs from
+  anyone else's. Delete the file, then type `svrngs restart`, which makes
+  a new one.
 
 ## Joining a group
 
@@ -199,7 +212,7 @@ short name.
   to the command, quotes included.
 - **`svrngs: more than one group here is called Trip; say which by the start of its id: …`**
   Use the first 8 letters of the id it lists in place of the name.
-- **`svrngs: svrngs is not running on this computer: start it, then run this again`**,
+- **``svrngs: svrngs is not running on this computer: start it with `svrngs`, then run this again``**,
   after `remove`, `handover` or `leave`. These ask the svrngs running on
   your computer. Open svrngs from your Applications, then run it again.
 

@@ -1064,10 +1064,14 @@ asked, every port's dial at once and each given 300 ms
 (`door::ANSWER_WAIT`), so the answer waits at most 3 s however many it
 lends.
 
-Bare `svrngs` starts the node when its data directory is free. If another
-svrngs holds it, the command succeeds with the home address read from the
-kept API port and says to run `svrngs open`, without launching a browser.
-A missing or unreadable address is refused rather than guessed. The address
+Bare `svrngs` at a terminal is someone opening svrngs: it does what
+`svrngs open` does. With no terminal, as launchd, systemd and `restart` run
+it, it starts the node when its data directory is free; if another svrngs
+holds it, the command succeeds with the home address read from the kept API
+port and says to run `svrngs open`, without launching a browser. A missing
+or unreadable address is refused rather than guessed. `svrngs open` starts
+svrngs where none runs, as `restart` does, and waits for it; so the one
+line a person reads opening svrngs is their page's. The address
 alone grants no session; `open` remains the authenticated way into the page.
 A browser with none is refused with what that is and how to let it in:
 `svrngs open --print` shows an open and launches nothing, for a browser that
@@ -1087,7 +1091,8 @@ any other is another build, as is one too old to name it, or one whose data
 directory holds no token. Another build holding the data directory, as an
 update leaves one running, the command restarts onto itself, once, before
 it asks, as `svrngs restart` does (§3); a newer one it asks nothing, and
-says to update this one.
+says to update this one. `svrngs update`, having put a new svrngs in place,
+runs the new one's `restart`, which says in one line that it runs.
 
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for
