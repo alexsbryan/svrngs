@@ -1,0 +1,4 @@
+reset 02:22:01; clean for 180 s
+{"emailMemoryLeak": "1000x", "emitRawPii": "on", "productCatalogFailure": {"if": [{"==": [{"var": "product_id"}, "OLJCESPC7Z"]}, "off", "off"]}}
+on 02:25:01; showing for 240 s
+ready 02:29:01

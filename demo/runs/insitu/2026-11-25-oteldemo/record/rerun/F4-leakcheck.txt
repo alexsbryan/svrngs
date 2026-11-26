@@ -1,0 +1,3 @@
+{"arm":"P","markers":8,"marker_kinds":{"emails":1,"card_like":0,"other":7},"bytes_read":1166715,"leaked":1,"leaked_kinds":{"emails":0,"card_like":0,"other":1}}
+failed     1 of 8 personal values in the P arm
+failed     7 of 7 personal values in the R arm
