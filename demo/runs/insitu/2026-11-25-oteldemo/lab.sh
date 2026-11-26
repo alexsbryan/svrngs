@@ -10,8 +10,9 @@ s() { HOME=$PWD/out/site-node/home SVRNGS_DIR=$PWD/out/site-node/data NO_COLOR=1
 v() { HOME=$PWD/out/vendor/home SVRNGS_DIR=$PWD/out/vendor/data NO_COLOR=1 "$@"; }
 if [ "$1" = down ]; then for p in out/site-node/pid out/vendor/pid out/viewP.pid out/viewR.pid; do [ -f $p ] && kill "$(cat $p)" 2>/dev/null; rm -f $p; done; exit 0; fi
 rm -rf out/site-node out/vendor; mkdir -p out/site-node/home out/vendor/home
-node siteview.mjs out/site/raw.jsonl --port 8721 > out/viewP.log 2>&1 & echo $! > out/viewP.pid
-node siteview.mjs out/site/raw.jsonl --port 8722 --raw > out/viewR.log 2>&1 & echo $! > out/viewR.pid
+node siteview.mjs out/site/raw.jsonl --port 8721 --fresh > out/viewP.log 2>&1 & echo $! > out/viewP.pid
+node siteview.mjs out/site/raw.jsonl --port 8722 --raw --fresh > out/viewR.log 2>&1 & echo $! > out/viewR.pid
+for p in 8721 8722; do for i in $(seq 40); do (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && break; sleep 0.5; done; done
 s env RUST_LOG=info nohup $B new Bench --as Site > out/site-node/new.out 2> out/site-node/run.log & echo $! > out/site-node/pid
 for i in $(seq 60); do L=$(grep -o 'svrngs://join/[A-Za-z0-9_-]*' out/site-node/new.out | head -1) && [ -n "$L" ] && break; sleep 0.5; done
 v env RUST_LOG=info nohup $B join "$L" --as Vendor > out/vendor/join.out 2> out/vendor/run.log & echo $! > out/vendor/pid
