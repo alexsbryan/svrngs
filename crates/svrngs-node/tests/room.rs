@@ -14,6 +14,8 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
+#[path = "common/unjudged.rs"]
+mod unjudged;
 
 use std::net::{Ipv4Addr, SocketAddr};
 use std::path::Path;
@@ -66,13 +68,11 @@ async fn start(seed: u8, dir: &Path) -> Node {
 /// This host's private address on the network it is on, where the room
 /// serves, as the room reads it (`network::here`, the one decider): not
 /// the outward route's, which a VPN carrying the traffic makes its own
-/// (10.156.8.102, Mullvad's, on the Fedora box, 2026-11-14); could-not-judge
-/// on a host with none.
-fn here() -> Ipv4Addr {
-    let read = svrngs_node::network::here();
-    read.address.unwrap_or_else(|| {
-        panic!("could not judge: this host has no private address on a network to serve a room on ({read:?})")
-    })
+/// (10.156.8.102, Mullvad's, on the Fedora box, 2026-11-14); `None`,
+/// could-not-judge, on a host with none.
+#[track_caller]
+fn here() -> Option<Ipv4Addr> {
+    unjudged::address()
 }
 
 /// Alex's computer, started over `dir`, its group holding Sam's key `sam`.
@@ -186,10 +186,12 @@ fn bare(room: &Value) -> Value {
     room
 }
 
-/// Where the room serves Sam's lend `name` of key `sam` on this host.
-fn served_at(sam: u8, name: &str) -> SocketAddr {
+/// Where the room serves Sam's lend `name` of key `sam` on this host;
+/// `None`, could-not-judge, on a host with no private address.
+#[track_caller]
+fn served_at(sam: u8, name: &str) -> Option<SocketAddr> {
     let label = Label::of(signing(sam).verifying_key().as_bytes(), name);
-    SocketAddr::new(here().into(), room::port_of(&label))
+    Some(SocketAddr::new(here()?.into(), room::port_of(&label)))
 }
 
 /// Byte `i` of the canary's 64 MiB.
@@ -250,7 +252,9 @@ async fn head_of(sock: &mut TcpStream) -> String {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_lend_turned_on_is_served_to_this_network_until_it_is_turned_off() {
     const SAM: u8 = 62;
-    let at = served_at(SAM, "app");
+    let Some(at) = served_at(SAM, "app") else {
+        return;
+    };
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let alex = alex(alex_dir.path(), SAM).await;
     let (sam, _app, app_port) = sam(SAM, sam_dir.path(), &alex).await;
@@ -279,7 +283,9 @@ async fn a_lend_turned_on_is_served_to_this_network_until_it_is_turned_off() {
         !listens(loopback).await,
         "served on loopback too: {loopback}"
     );
-    let unnamed = served_at(SAM, "other");
+    let Some(unnamed) = served_at(SAM, "other") else {
+        return;
+    };
     assert!(
         !listens(unnamed).await,
         "a lend not named is served: {unnamed}"
@@ -427,7 +433,9 @@ async fn a_lend_turned_on_is_served_to_this_network_until_it_is_turned_off() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_lend_on_while_its_lender_is_away_answers_at_once_then_serves() {
     const SAM: u8 = 63;
-    let at = served_at(SAM, "app");
+    let Some(at) = served_at(SAM, "app") else {
+        return;
+    };
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let alex = alex(alex_dir.path(), SAM).await;
     let on_app = json!({ "on": { "key": actor_of(&signing(SAM)), "name": "app" } });
@@ -465,7 +473,9 @@ async fn a_lend_on_while_its_lender_is_away_answers_at_once_then_serves() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_lend_on_at_another_network_is_not_served_and_says_why() {
     const SAM: u8 = 65;
-    let at = served_at(SAM, "app");
+    let Some(at) = served_at(SAM, "app") else {
+        return;
+    };
     let alex_dir = tempfile::tempdir().unwrap();
     let kept =
         json!([{ "key": actor_of(&signing(SAM)), "name": "app", "network": "02:00:5e:00:53:01" }]);
@@ -502,7 +512,9 @@ async fn a_lend_on_at_another_network_is_not_served_and_says_why() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_room_that_cannot_be_read_is_said_until_a_lend_is_turned_on_again() {
     const SAM: u8 = 66;
-    let at = served_at(SAM, "app");
+    let Some(at) = served_at(SAM, "app") else {
+        return;
+    };
     let (alex_dir, never) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let kept = alex_dir.path().join("room.json");
     std::fs::write(&kept, r#"{"on": "a TV"}"#).unwrap();

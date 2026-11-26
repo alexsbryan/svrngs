@@ -45,6 +45,9 @@ mod updated;
 mod playback;
 // The page's direct path (webrtc-page): a film over the window's channel.
 mod webrtc_page;
+// A claim not judged, said as scripts/check.sh `step` reads it.
+#[path = "../common/unjudged.rs"]
+mod unjudged;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;

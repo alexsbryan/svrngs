@@ -11,16 +11,20 @@ use super::*;
 /// Direct connections on for the network this host is on, as the home
 /// page's control writes them (webrtc-network `direct.json`): the offer is
 /// answered only on an enabled network, so without this every run would be
-/// the plant.
-fn direct_on(dir: &Path) {
-    let network = svrngs_node::network::here().network.unwrap_or_else(|why| {
-        panic!("could not judge: this host's network cannot be read ({why:?})")
-    });
+/// the plant. `false`, could-not-judge, on a host whose network cannot be
+/// read: the test returns.
+#[track_caller]
+#[must_use]
+fn direct_on(dir: &Path) -> bool {
+    let Some(network) = super::unjudged::network() else {
+        return false;
+    };
     std::fs::write(
         dir.join(svrngs_node::webrtc::direct::DIRECT_FILE),
         serde_json::to_vec(&vec![network]).unwrap(),
     )
     .unwrap();
+    true
 }
 
 /// A node lending a page and a film, as `playback.rs` lends them, with
@@ -72,7 +76,9 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
     let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
-    direct_on(dir.path());
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -135,7 +141,9 @@ async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
         Engine::Webkit => 102,
     };
     let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, me).await;
-    direct_on(dir.path());
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -234,7 +242,9 @@ async fn the_page_announcing_itself_after_the_channel_closed_goes_direct_again(e
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
     let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
-    direct_on(dir.path());
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -308,7 +318,9 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
     let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
-    direct_on(dir.path());
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
@@ -366,7 +378,9 @@ async fn a_direct_paths_data_endpoint_presents_its_pass_and_link_at_its_relays(e
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
     let (ada, _mp4, _size) = lent_film(dir.path(), &relay, &bo, 1).await;
-    direct_on(dir.path());
+    if !direct_on(dir.path()) {
+        return;
+    }
 
     let seen = drive(
         engine,
