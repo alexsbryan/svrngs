@@ -119,3 +119,45 @@ test('calibrated: runtime metric names and long function names are code; a word 
   for (const n of ['nodejs.eventloop.delay.p99', 'v8js.memory.heap.space.available_size', 'prepareOrderItemsAndShippingQuoteFromCart']) assert.equal(project(any(n, []), contract(), KEY)[0].name, n, n);
   for (const n of ['GET /users/jordan99', 'GET /c/OLJCESPC7Z']) assert.equal(project(any(n, []), contract(), KEY)[0].name.shape, true, n);
 });
+
+// --- The benchmark's five findings, each held -----------------------------
+
+test('a shape gives a length band, so a number shows growth but not its value', async () => {
+  const { band } = await import('./project.mjs');
+  const len = (v) => project(any('x', [s('demo.product.count', v)]), contract(), KEY)[0].attrs['demo.product.count'].len;
+  assert.equal(len('109.78'), len('9999.9')); // an amount: 6 and 6 characters, one band
+  assert.equal(len('12.50'), len('1234.56')); // amounts 100x apart, within one band
+  assert.notEqual(len('10'), len('16181115')); // F3b's growth, 2 digits to 8, still shows
+  assert.deepEqual([band(0), band(1), band(2), band(3), band(4), band(7), band(8), band(15), band(16)], ['0', '1', '2-3', '2-3', '4-7', '4-7', '8-15', '8-15', '16-31']);
+});
+
+test('an event named like a message is shaped; conventional and one-word names pass', () => {
+  const ev = (name) => project(any('x', [], { events: [{ name, attributes: [] }] }), contract(), KEY)[0].events[0].name;
+  assert.equal(ev('Error: Product Catalog Fail Feature Flag Enabled').shape, true);
+  assert.equal(ev('declined for Jordan Kowalski').shape, true);
+  for (const n of ['feature_flag.evaluation', 'fetchStart', 'responseEnd', 'message']) assert.equal(ev(n), n);
+});
+
+test('a metric attribute from its closed set passes; anything else under that key shapes', () => {
+  const pt = (k, v) => project(JSON.stringify({ resourceMetrics: [{ resource: { attributes: [] }, scopeMetrics: [{ metrics: [{ name: 'process.cpu.time', sum: { dataPoints: [{ asDouble: 0.9, attributes: [s(k, v)] }] } }] }] }] }), contract(), KEY)[0].points[0].attrs[k];
+  assert.equal(pt('type', 'user'), 'user');
+  assert.equal(pt('type', 'involuntary'), 'involuntary');
+  assert.equal(pt('system.memory.state', 'used'), 'used');
+  assert.equal(pt('v8js.heap.space.name', 'old_space'), 'old_space');
+  assert.equal(pt('type', 'Jordan Kowalski').shape, true);
+  assert.equal(pt('state', 'jordan@clinic.org').shape, true);
+});
+
+test('a convention written another way is judged as that convention', () => {
+  const [p] = project(any('x', [s('feature_flag_key', 'productCatalogFailure'), s('feature_flag_provider_name', 'flagd'), s('feature_flag_key_extra', 'Jordan'), s('rpc_service', 'oteldemo.CartService')]), contract(), KEY);
+  assert.equal(p.attrs.feature_flag_key, 'productCatalogFailure');
+  assert.equal(p.attrs.feature_flag_provider_name, 'flagd');
+  assert.equal(p.attrs.rpc_service, 'oteldemo.CartService');
+  assert.equal(p.attrs.feature_flag_key_extra.shape, true);
+  assert.equal(project(any('x', [s('feature_flag_key', 'jordan@clinic.org')]), contract(), KEY)[0].attrs.feature_flag_key.shape, true);
+});
+
+test('a log with no time of its own takes the time it was observed', () => {
+  const line = JSON.stringify({ resourceLogs: [{ resource: { attributes: [] }, scopeLogs: [{ logRecords: [{ timeUnixNano: '0', observedTimeUnixNano: '1795649437949000000', severityText: 'INFO', body: { stringValue: 'x' } }] }] }] });
+  assert.equal(project(line, contract(), KEY)[0].t, 1795649437949);
+});
