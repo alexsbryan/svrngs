@@ -23,7 +23,7 @@ fn refuses_every_listen_address_before_writing() {
         assert!(
             !got.status.success()
                 && said.contains(&format!("Port {port} is in use by "))
-                && said.contains("the copy you started: stop it, then press Start."),
+                && said.contains("the copy you started: stop it, then run this again."),
             "{addr}: {said}"
         );
         assert_eq!(scratch.path().read_dir().unwrap().count(), 0);
@@ -92,12 +92,13 @@ fn a_foreign_answer_after_the_busy_check_does_not_verify_run() {
             (
                 "systemctl",
                 format!(
-                    "#!/bin/sh\ncase \"$2\" in
+                    "#!/bin/sh\necho \"$@\" >> calls\ncase \"$2\" in
                 show) case \"$5\" in
                     LoadState) echo LoadState=not-found ;;
                     LoadState,FragmentPath,DropInPaths,NeedDaemonReload,ActiveState)
                         printf '%s\\n' LoadState=loaded \"FragmentPath=$XDG_CONFIG_HOME/systemd/user/$3\" NeedDaemonReload=no ;;
-                    *) echo ActiveState={state}; echo ControlGroup={group} ;;
+                    *) echo ActiveState={state}; echo ControlGroup={group}
+                       echo ExecMainCode=1; echo ExecMainStatus=3 ;;
                 esac ;;
                 enable) touch starting; for i in $(seq 100); do
                     if test -f bound; then exit 0; fi; sleep .02
@@ -144,7 +145,9 @@ fn a_foreign_answer_after_the_busy_check_does_not_verify_run() {
                 "--json",
                 "--port",
                 &addr.port().to_string(),
-                "--",
+                "--folder",
+                &scratch.path().display().to_string(),
+                "--command",
                 "/bin/false",
             ])
             .output()
@@ -153,8 +156,27 @@ fn a_foreign_answer_after_the_busy_check_does_not_verify_run() {
         let _foreign = serving.join().unwrap();
         let said: serde_json::Value = serde_json::from_slice(&got.stdout).unwrap();
         eprintln!("manager={state}, foreign HTTP 200: {said}");
-        assert_eq!(said["kind"], "unverified");
-        assert_eq!(said["state"], state);
-        assert_eq!(said["ready"], true);
+        assert_eq!(said["kind"], "refused");
+        let why = said["why"].as_str().unwrap();
+        assert!(
+            why.starts_with(&format!(
+                "Something answered on port {}, but not the copy svrngs started, and it stopped with exit status 3, so nothing was kept.",
+                addr.port()
+            )),
+            "{why}"
+        );
+        // Nothing unverified stays to start at boot: its unit and its card
+        // are gone, the unit disabled first.
+        let unit = scratch.path().join("systemd/user/svrngs-keeper-test-foreign.service");
+        assert!(!unit.exists(), "the unverified unit stays");
+        assert!(
+            !scratch.path().join("svrngs-keeper/test-foreign").exists(),
+            "its card stays"
+        );
+        let calls = fs::read_to_string(scratch.path().join("calls")).unwrap();
+        assert!(
+            calls.contains("disable --now svrngs-keeper-test-foreign.service"),
+            "{calls}"
+        );
     }
 }

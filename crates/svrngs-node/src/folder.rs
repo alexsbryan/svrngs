@@ -825,6 +825,17 @@ pub(crate) fn dirs_of(data_dir: &Path, group: &str) -> Result<Vec<PathBuf>, Stri
         .collect())
 }
 
+/// Every directory this computer syncs, for Run, which keeps nothing in
+/// one; or why the list cannot be read. A name that is not UTF-8 is read as
+/// near as it can be: what is in it isn't UTF-8 either, and the keeper
+/// keeps no path that isn't.
+pub(crate) fn synced(data_dir: &Path) -> Result<Vec<String>, String> {
+    let kept = synced::syncing_in(data_dir);
+    let kept = kept.map_err(|(at, why)| format!("{UNSYNCED} ({}: {why})", at.display()))?;
+    Ok(kept.values().map(|d| d.to_string_lossy().into()).collect())
+}
+const UNSYNCED: &str = "svrngs can't read which folders it syncs, so nothing was kept";
+
 /// The record API's folder and blob routes: what this computer's apps
 /// ask. POST keeps a directory in step with its folder; a blob is put and
 /// got by hash (blob.rs), a put's body as large as the app sends.

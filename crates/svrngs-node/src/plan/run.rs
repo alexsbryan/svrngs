@@ -15,13 +15,20 @@ use std::{collections::BTreeSet, path::Path, process::Stdio};
 
 pub(crate) const KEEPER: &str = "svrngs-keeper";
 
-/// Run is local only; it takes no share witness or access terms.
+/// Run is local only; it takes no share witness or access terms. It keeps
+/// nothing in a folder `data_dir` syncs; the keeper confirms a command a
+/// terminal gave (after `--`) there before it keeps it.
 pub async fn native<'a>(
+    data_dir: &Path,
     name: &'a str,
     view: RunView,
     args: impl IntoIterator<Item = &'a str>,
 ) -> Result<String, String> {
-    let out = keeper(&view, ["run", name, "--json"].into_iter().chain(args)).await?;
+    let synced = crate::folder::synced(data_dir)?;
+    let mut words = vec!["run", name, "--json"];
+    words.extend(synced.iter().flat_map(|dir| ["--synced", dir]));
+    words.extend(args.into_iter().map(|a| a as &str));
+    let out = keeper(&view, words).await?;
     let started = serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?;
     words::started(name, view, started)
 }

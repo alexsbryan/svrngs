@@ -743,7 +743,8 @@ legacy Approve on Mac grants only the current listener.
 revision, and job or publication reports without reading the host. It reuses
 an observed service or shares just the listener that's running. `plan/run.rs`
 asks the packaged keeper to handle explicit `svrngs run`, without
-publishing access. On explicit Share it replays the review and witnesses a
+publishing access, naming the folders this computer syncs
+(`folder::synced`), which the keeper keeps nothing in. On explicit Share it replays the review and witnesses a
 service's listeners and connection taker again before publishing its grant with
 the audience and limit through the same locked mutation
 as other declaration edits. The revision advances before the declaration is

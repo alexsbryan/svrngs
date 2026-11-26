@@ -19,7 +19,8 @@ mod container_run;
 mod native_run;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
-       svrngs-keeper run <name> --port <port> [--folder <folder>] [--json] -- <command>
+       svrngs-keeper run <name> --port <port> [--folder <folder>] [<check>…] -- <command>
+       svrngs-keeper run <name> --port <port> --folder <folder> --command <line> [<check>…]
        svrngs-keeper run <name> --port <port> --card <compose.yaml> [--json]
        svrngs-keeper list [--json]
        svrngs-keeper stop|start|restart|remove <name>
@@ -31,6 +32,16 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
   nobody logged in (the first keep asks). <name> is the card's title
   unless --name gives one. The same card again changes nothing; a new one
   replaces it, and the one before is kept beside it as previous.yaml.
+
+  run: start a program under the service manager and keep it only once it
+  answers on <port> as that job; anything else is stopped and removed, and
+  why is said. The words after -- are run as given, in <folder> or the one
+  this starts in; a --command line is split as a shell would split it, ~
+  read as your home, and anything only a shell understands refused. Its
+  checks: --synced <folder> (again for more) names a folder nothing kept
+  may be in; --at-boot says yes to starting before anyone logs in (Linux);
+  --json answers in JSON, its refusals too. Words after -- are shown, and
+  kept only once you press Enter in a terminal.
 
   list: each card kept here, and whether it runs.
   stop: stop it until you start it, including after signing in. start: run it again.
@@ -249,10 +260,10 @@ fn json(value: &impl serde::Serialize) -> anyhow::Result<()> {
 fn terminal(question: &str) -> Option<bool> {
     use std::io::{IsTerminal, Write};
     std::io::stdin().is_terminal().then(|| {
-        eprint!("{question} Type y, then press Enter: ");
+        eprint!("{question} [y/N] ");
         let _ = std::io::stderr().flush();
         let mut line = String::new();
         let _ = std::io::stdin().read_line(&mut line);
-        matches!(line.trim(), "y" | "yes")
+        matches!(line.trim(), "y" | "Y" | "yes")
     })
 }

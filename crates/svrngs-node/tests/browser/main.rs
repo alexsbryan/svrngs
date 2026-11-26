@@ -2158,7 +2158,7 @@ async fn share_then_keep_it_running_in_webkit() {
             "do": [
                 act(&format!("{offer} button:has-text('Keep it running')"), "Quit the copy you started"),
                 fill("command", &cmd), fill("folder", site.to_str().unwrap()),
-                act(&format!("{offer} button:has-text('Start')"), "can open it again after you sign in"),
+                act(&format!("{offer} button:has-text('Start')"), "It comes back when"),
                 act("#runs button:has-text('Stop test-page-coder')", "Stopped."),
                 act("#runs button:has-text('Start test-page-coder')", "Run by svrngs"),
             ],
@@ -2168,8 +2168,8 @@ async fn share_then_keep_it_running_in_webkit() {
     .await;
     let page = ran["text"].as_str().unwrap_or_default();
     assert!(
-        page.contains(&format!("svrngs runs {name} now. house")),
-        "Start, then its promise: {ran:#}"
+        page.contains(&format!("svrngs runs {name} now. It comes back when")),
+        "Start, then when it comes back: {ran:#}"
     );
     assert!(
         !page.contains("Keep it running"),

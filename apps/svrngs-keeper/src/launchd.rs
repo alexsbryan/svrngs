@@ -213,6 +213,13 @@ impl Agent {
         self.card.with_file_name("program.log")
     }
 
+    /// The exit code launchd last saw it end with, as `launchctl print`
+    /// says it, if it is registered.
+    pub fn last_exit(&self) -> Option<String> {
+        let shown = self.show().ok()??;
+        value(&shown, "last exit code = ").map(str::to_owned)
+    }
+
     pub fn start(&self) -> Result<(), String> {
         let plist = self.owned_plist()?;
         if self.ours()?.is_some() {

@@ -88,15 +88,30 @@ impl Places {
     }
 
     #[cfg(target_os = "macos")]
-    pub fn install_agent(&self, card: &Card, name: &Name) -> Result<(), KeptError> {
+    pub fn install_agent(&self, card: &Card, name: &Name) -> Result<Stored, KeptError> {
         let native = card
             .native
             .as_ref()
             .ok_or_else(|| KeptError::NotNative(card.title.clone()))?;
         let agent = self.agent(name)?;
         agent.require_new().map_err(KeptError::Manager)?;
-        store(self, card, name)?;
-        agent.install(native).map_err(KeptError::Manager)
+        let stored = store(self, card, name)?;
+        agent.install(native).map_err(KeptError::Manager)?;
+        Ok(stored)
+    }
+
+    /// Undo what a Run's `store` did once its program was not verified:
+    /// a card kept here new goes, with its folder; one that replaced
+    /// another gives that one back. Its unit or agent is the caller's to
+    /// remove first.
+    pub fn forget(&self, name: &Name, stored: &Stored) -> Result<(), KeptError> {
+        let dir = self.card_dir(name);
+        tracing::debug!(name = name.as_str(), ?stored, "kept: an unverified Run's card undone");
+        match stored {
+            Stored::New => std::fs::remove_dir_all(&dir).map_err(file(&dir)),
+            Stored::Changed { previous, .. } => std::fs::rename(previous, self.card_path(name)).map_err(file(previous)),
+            Stored::Same => Ok(()),
+        }
     }
 }
 
@@ -162,8 +177,7 @@ pub fn name_of(title: &str) -> String {
 
 /// The question `keep` asks before it lets this account run with nobody
 /// logged in (ralph/next/keeper/STATE.md, "The user flow").
-pub const LINGER_ASK: &str =
-    "To start it before you log in, your account needs to run when nobody is logged in. Turn that on?";
+pub const LINGER_ASK: &str = "Start it when this computer starts, even before you log in? That lets your account run programs while nobody is logged in.";
 
 /// When a kept card will start, as the answer to [`LINGER_ASK`] left it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -193,6 +207,14 @@ impl Boot {
             Boot::Lingers | Boot::TurnOn => "It starts when this computer starts, before anyone logs in,",
             Boot::Login { unread: None } => "It starts when you log in,",
             Boot::Login { unread: Some(_) } => "It starts when you log in at least,",
+        }
+    }
+
+    /// When a program kept by Run comes back, for the line after it.
+    pub fn back(&self) -> &'static str {
+        match self {
+            Boot::Lingers | Boot::TurnOn => "when this computer starts, even before you log in",
+            Boot::Login { .. } => "when you log in",
         }
     }
 }

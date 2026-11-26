@@ -27,6 +27,24 @@ svrngs crate and no Give (`tests/surface.rs`).
   with `ss` on Linux and `lsof`, `ps` and `netstat` on a Mac
   (`src/host/mac.rs`). Keeper never reads how a program was started: you
   give `run` its command and folder.
+- `src/given.rs`: what `run` is given, checked before anything is written
+  (`tests/given.rs`). The page's line is split as a shell would split it,
+  `~` read as home, and a setting (`FOO=1 prog`), `$`, a backtick or an
+  operator refused, pointing to the terminal. The folder must be whole,
+  there and a folder; the program is found as a shell finds it and kept by
+  that path. Neither may be in a folder a group syncs (`--synced`, which
+  svrngs passes), and each, through every link on the way to the program,
+  must be owned by you or root and writable by nobody else, as OpenSSH's
+  StrictModes asks of a key: root's sticky folders such as `/tmp` aside,
+  and your group's write bit only where the group is yours alone.
+- `src/native_run.rs`: `run`. The words after `--` are a terminal's: it
+  shows them, with their folder, and keeps nothing until you press Enter
+  there, nor with no terminal to answer. It keeps only what it verified:
+  started under the service manager, then seen as that job answering on
+  the port within 30 seconds. Anything else is stopped and its unit or
+  agent and card removed, and why is said, with its exit status and what
+  it last printed. On Linux linger is asked (or `--at-boot` taken, the
+  page's yes) before the start and turned on only once it is verified.
 - `src/kept.rs` and `src/main.rs`: the `svrngs-keeper` command.
 
 ## The command

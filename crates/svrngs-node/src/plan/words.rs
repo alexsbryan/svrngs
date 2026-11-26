@@ -68,15 +68,6 @@ pub(crate) enum Action {
     Stop,
 }
 
-impl Action {
-    pub(crate) fn verb(&self) -> &'static str {
-        match self {
-            Self::Start => "start",
-            Self::Stop => "stop",
-        }
-    }
-}
-
 impl Plan<'_> {
     fn audience(&self) -> String {
         let names: Vec<_> = self.terms.groups.values().map(String::as_str).collect();
@@ -149,12 +140,13 @@ impl Plan<'_> {
     }
 }
 
+/// What the keeper said of a Run: kept, verified, and when it comes back;
+/// or why nothing was kept, in the person's words.
 #[derive(Debug, serde::Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub(super) enum Started {
-    Verified { port: std::num::NonZeroU16 },
-    Unverified { state: Option<String>, ready: bool },
-    Busy { why: String },
+    Verified { back: String },
+    Refused { why: String },
 }
 
 #[derive(Debug)]
@@ -164,16 +156,10 @@ pub enum RunView {
 }
 
 pub(super) fn started(name: &str, view: RunView, started: Started) -> Result<String, String> {
-    use Started::*;
     tracing::debug!(target: "plan", ?started, ?view, "plan: Run verdict");
     match started {
-        Verified { port } => Ok(match view {
-            RunView::Page => format!("svrngs runs {name} now."),
-            RunView::Terminal => format!("{name} is running here. To share it: `svrngs share {port} --program <program> --name {name} --group <group>`.\n"),
-        }),
-        Unverified { state, ready } => Err(format!("{name}'s setup was saved and can start again. Nothing was shared. To turn it off, choose Stop. Reported state: {}. The port {}.",
-            state.as_deref().unwrap_or("unknown"), if ready { "answered" } else { "wasn't ready" })),
-        Busy { why } => Err(why),
+        Started::Verified { back } => Ok(format!("svrngs runs {name} now. It comes back {back}.")),
+        Started::Refused { why } => Err(why),
     }
 }
 

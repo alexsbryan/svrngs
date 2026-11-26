@@ -217,16 +217,30 @@ is evidence for sign-in, not for unattended disk unlock. Running a program
 with svrngs is separate from sharing it: `svrngs run <name> --port <port>
 -- <command>` asks the sibling keeper to start it on Linux or macOS and
 writes no share. Linux also takes `--card <compose.yaml>` for one volume-only
-HTTP container, with `--port` matching the card. On Linux the CLI shows
-the keeper's boot consent prompt at the terminal. The page has no terminal
-input and cannot turn on unattended startup. On macOS the program starts
+HTTP container, with `--port` matching the card. Starting before anyone
+logs in on Linux needs linger, which changes the whole account, so it is
+asked: at the terminal, a y/N after Enter; from the page, only the
+person's explicit choice (`/run`'s `boot`). Without a yes it comes back
+at login, and says so. On macOS the program starts
 at sign-in; Stop takes its plist out of the login set until Start. Lifecycle
 changes require the keeper's saved card and a regular live or parked plist;
 a loaded agent must also match the live plist's path (`launchd.rs`). Run
 verifies readiness with listeners in its active unit's cgroup subtree or
-with holders descended from the active launch agent. Otherwise it reports
-manager state and port readiness separately (`native_run.rs`); neither
-read approves sharing. On the home page a program is run from its lend:
+with holders descended from the active launch agent, within 30 seconds.
+Otherwise nothing is kept: the keeper stops it, removes its unit or agent
+and its card, and says why, with its exit status and what it last printed
+(`native_run.rs`), so nothing unverified starts at boot or respawns.
+Neither read approves sharing. What Run is given is checked first
+(svrngs-keeper `given.rs`): one shape, a program, its arguments and an
+absolute folder, run with no shell. A command a terminal's shell split,
+after `--`, is shown with its folder and kept only once the person
+presses Enter there. The page's line is split as a shell would, `~` read
+as home, and what only a shell understands is refused, pointing to the
+terminal. Nothing kept may be inside a folder this computer syncs
+(`folder::synced`, passed as `--synced`), since anyone in the group could
+change it, nor be a file or folder, through every link to the program,
+that another account could change. Every file the keeper writes that can
+hold the command is 0600, its folders 0700. On the home page a program is run from its lend:
 a lend shared only while it runs (`plan::shared_while`: a port kept to no
 job's restarts, so not one whose approval follows the keeper's copy)
 offers Keep it running. It asks the command and folder, which the person
@@ -243,8 +257,7 @@ with that grant (`share::kept`: on Linux one unit's job; on macOS the
 keeper's launch agent for the lend's name, every process approved that
 agent's, as Share keeps it). Else it approves nothing and says why, and the
 row leaves Keep sharing it to press beside what answers: the page never
-approves by itself what the person didn't see. The terminal's Run gives a
-Share command for its verified port.
+approves by itself what the person didn't see.
 The page's Start and Stop controls use only the keeper's observed jobs
 and leave sharing alone.
 When Share would grant a running service, it

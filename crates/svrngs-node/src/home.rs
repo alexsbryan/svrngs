@@ -712,23 +712,27 @@ struct ToRun {
     port: NonZeroU16,
     folder: String,
     command: String,
+    /// The person's yes to starting it before anyone logs in (Linux).
+    #[serde(default)]
+    boot: bool,
 }
 
-async fn run_one(Json(ask): Json<ToRun>) -> Result<Json<String>, Response> {
+async fn run_one(
+    State(at): State<Asking>,
+    Json(ask): Json<ToRun>,
+) -> Result<Json<String>, Response> {
     let port = ask.port.to_string();
-    let args = [
-        "--port",
-        &port,
-        "--folder",
-        &ask.folder,
-        "--command",
-        &ask.command,
-    ];
-    run_reply(run::native(ask.name.as_str(), plan::RunView::Page, args).await)
+    let (folder, command) = (ask.folder.as_str(), ask.command.as_str());
+    let args = ["--port", &port, "--folder", folder, "--command", command];
+    let args = args.into_iter().chain(ask.boot.then_some("--at-boot"));
+    let name = ask.name.as_str();
+    run_reply(run::native(&at.door.data_dir, name, plan::RunView::Page, args).await)
 }
 
 async fn run_action(Json((name, action)): Json<(LendName, Action)>) -> Result<Json<()>, Response> {
-    let answer = run::keeper(&plan::RunView::Page, [action.verb(), name.as_str()]).await;
+    // The keeper's verb is the action's name, as its button says it.
+    let verb = format!("{action:?}").to_lowercase();
+    let answer = run::keeper(&plan::RunView::Page, [verb.as_str(), name.as_str()]).await;
     run_reply(answer.map(drop))
 }
 

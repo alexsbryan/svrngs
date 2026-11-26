@@ -51,7 +51,9 @@ after it, and it checks that the new schema.sql only adds to that one's.
       here already, that svrngs makes the link, unless --origin is given.
 
   svrngs run <name> --port <port> [--folder <folder>] -- <command>
-      Run a command here (Linux or macOS). Share it separately with svrngs share.
+      Run a command here (Linux or macOS). svrngs shows what it will run
+      and where, and keeps it once you press Enter, and only if it then
+      answers on <port>. Share it separately with svrngs share.
       To stop the app, choose Stop under Already running here on your home
       page (`svrngs open`). Stop leaves its setup and files in place.
 

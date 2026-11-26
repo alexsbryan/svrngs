@@ -1,23 +1,29 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::*;
 
+/// A Run kept says so and when it comes back, the keeper's words (the
+/// command ends the line itself); one refused says the keeper's why and nothing else. Planted,
+/// watched failing: `back` left out of the line.
 #[test]
-fn terminal_run_points_to_share_by_port() {
-    let verdict =
-        serde_json::from_str(r#"{"kind":"verified","unit":"coder.service","port":8101}"#).unwrap();
-    let said = started("coder", RunView::Terminal, verdict).unwrap();
-    assert_eq!(
-        said,
-        "coder is running here. To share it: `svrngs share 8101 --program <program> --name coder --group <group>`.\n"
+fn a_run_says_it_runs_and_when_it_comes_back_or_why_not() {
+    let verified =
+        r#"{"kind":"verified","unit":"coder.service","port":8101,"back":"when you log in"}"#;
+    let page = started(
+        "coder",
+        RunView::Page,
+        serde_json::from_str(verified).unwrap(),
     );
-}
-
-#[test]
-fn page_run_says_svrngs_runs_it_and_no_more() {
-    let verdict =
-        serde_json::from_str(r#"{"kind":"verified","unit":"coder.service","port":8101}"#).unwrap();
-    let said = started("coder", RunView::Page, verdict).unwrap();
-    assert_eq!(said, "svrngs runs coder now.");
+    assert_eq!(
+        page.unwrap(),
+        "svrngs runs coder now. It comes back when you log in."
+    );
+    let refused = r#"{"kind":"refused","why":"Port 8101 is in use by python3."}"#;
+    let said = started(
+        "coder",
+        RunView::Page,
+        serde_json::from_str(refused).unwrap(),
+    );
+    assert_eq!(said.unwrap_err(), "Port 8101 is in use by python3.");
 }
 
 /// A program svrngs runs is one row of the page's Already running here,

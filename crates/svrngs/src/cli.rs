@@ -873,9 +873,12 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             update::Outcome::Packaged(words) => format!("{words}\n"),
         },
         Verb::Restart => restart(&root)?,
-        Verb::RunApp(name, args) => run::native(&name, Terminal, args.iter().map(String::as_str))
-            .await
-            .map_err(Refused::RunApp)?,
+        Verb::RunApp(name, args) => {
+            run::native(&root, &name, Terminal, args.iter().map(String::as_str))
+                .await
+                .map_err(Refused::RunApp)?
+                + "\n"
+        }
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {
             kind,
