@@ -1173,12 +1173,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # The found row's lend said in fewer words (2026-11-25): the review alone, its sends and kept-back paths as data for the page's Details, no terms-first step (home.rs `drawn` gone): 28,655; the drawn message one patch, the lend's row opened by its focus: JS 8,871.
 # Its review shows its groups' own rows, by whom, in Details (2026-11-25): +6 paid by cutting needless lines in lend_one (the groups' names, the name-taken check) and LEND's two let-go patches made one: 28,649; JS 8,865.
 # Keep it running reads nothing of how a program was started (2026-11-25): the /run?prefill route and the page's fill-in go: 28,641; JS 8,845.
+# svrngs keep <port> -- <command> and the page's line for it (operator-approved raise, 2026-11-26, after an economizing pass): 28,665; JS 8,852.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 28642,
+    ".": 28666,
 
-    "js": 8846,
+    "js": 8853,
 
     "swift": 1,
 }

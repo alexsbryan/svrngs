@@ -127,7 +127,7 @@ impl Plan<'_> {
             Published { .. } => {
                 let mut text = format!("Shared with {audience}. {}", self.promise(&audience));
                 if matches!(self.nature.runs, Runs::ByHand) {
-                    text += &format!("\n{SHARED_WHILE} To have svrngs run it: svrngs run {name} --port {} -- <the command you start it with>.", self.nature.port);
+                    text += &format!("\n{SHARED_WHILE} To have svrngs keep it running, stop it, then put svrngs keep {} -- in front of the command you started it with.", self.nature.port);
                 }
                 text
             }

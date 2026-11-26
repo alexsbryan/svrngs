@@ -184,6 +184,8 @@ pub const SHIPPED: MeetAt = MeetAt::Svrngs;
 pub enum Verb {
     Run,
     RunApp(String, Vec<String>),
+    /// `keep <port> -- <command>`: the port as typed, and what follows.
+    Keep(String, Vec<String>),
     New {
         name: Name,
         person: Option<Name>,
@@ -294,6 +296,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             .next()
             .ok_or("run wants a name: `svrngs run <name> --port <port> -- <command>` (or `--card <compose.yaml>`)")?;
         return Ok(Verb::RunApp(name, it.collect()));
+    }
+    if verb == "keep" {
+        return Ok(Verb::Keep(it.next().unwrap_or_default(), it.collect()));
     }
     let mut positional: Option<String> = None;
     let mut person = None;
@@ -879,6 +884,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 .map_err(Refused::RunApp)?
                 + "\n"
         }
+        Verb::Keep(port, args) => keep(here, &port, &args).await?,
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {
             kind,
@@ -2070,6 +2076,31 @@ pub fn approve(
     let kept = what_answers(&answers);
     Ok(format!("{name} is kept to {kept} now{again}.\n"))
 }
+
+/// `svrngs keep <port> -- <command>`: the lend on `port` kept running from
+/// the command, in this folder, as the page's Keep it running keeps it (Run,
+/// which shows it here and waits for Enter), then approved as that job. The
+/// `--` is the person's: what follows it is the command, as typed.
+async fn keep(here: &impl Here, port: &str, args: &[String]) -> Result<String, Refusal> {
+    let unlent = || Refused::RunApp(format!("Nothing is lent on port {port} here. {UNLENT}"));
+    let lent = lend::all(here.root()).map_err(|e| Refused::RunApp(e.to_string()))?;
+    let on = |l: Lend| Some((l.port().filter(|p| p.to_string() == port)?, l));
+    let (at, lend) = lent.into_iter().flatten().find_map(on).ok_or_else(unlent)?;
+    // Its folder is the one this runs in, which the keeper starts in too.
+    let args = args.strip_prefix(&["--".to_owned()]).unwrap_or(args);
+    let words = ["--port", port, "--"]
+        .into_iter()
+        .chain(args.iter().map(String::as_str));
+    let said = run::native(here.root(), lend.name.as_str(), Terminal, words).await;
+    let said = said.map_err(Refused::RunApp)?;
+    let read = here.answering(lend.raw(), at, None);
+    let (seen, _) = share::approve((at, lend.raw()), read, None, None)?;
+    let token = Some(share::token(&seen));
+    let approved = approve(here, &lend.name, (None, token), false)?;
+    Ok(format!("{said}\n{approved}"))
+}
+const UNLENT: &str =
+    "Lend it first on your home page (`svrngs open`), under Already running here, then run this again.";
 
 /// What answers on a port, as its lender is told it: each program in its
 /// folder, or the account another's runs as, "and" between them. An

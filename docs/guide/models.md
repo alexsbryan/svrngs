@@ -40,23 +40,18 @@ They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, 
 ## Run coder with svrngs
 
 Trying a model in a terminal is fine, but that copy doesn't start again by
-itself. Once you lend it, its line under **What you lend** offers to keep it
-running: press **Keep it running**, type the command you started it with and
-its folder, quit the terminal copy, then press **Start**
-([Lend](lend.md#keep-it-running)). Or quit the copy and run this in a
-terminal, using your model's full path and flags:
+itself. Once you lend it, stop the copy (Ctrl+C), then put `svrngs keep
+8101 --` in front of the same command and press Enter:
 
 ```
-svrngs run coder --port 8101 -- /usr/bin/llama-server -m "$HOME/models/my-model.gguf" --host 127.0.0.1 --port 8101
+svrngs keep 8101 -- llama-server -m ~/models/my-model.gguf --host 127.0.0.1 --port 8101
 ```
 
-Use the path where you installed `llama-server` (for example
-`/opt/homebrew/bin/llama-server` on an Apple silicon Mac). A busy port is
-refused; svrngs never stops your terminal copy for you. Once coder answers,
-[share it as `coder`](#lend-your-llama-server). If you shared the terminal
-copy before, stop lending that copy, then share this one under the same name.
-Run itself shares nothing. The Share review says when your friends can open
-it again after a restart. To stop coder, open your home page (`svrngs open`)
+svrngs shows what it will run and where, and keeps it once you press Enter
+and it answers on 8101. Didn't start it in a terminal? Its line under
+**What you lend** has **Keep it running**, to type the command and its
+folder instead ([Lend](lend.md#keep-it-running)). A busy port is refused;
+svrngs never stops your terminal copy for you. To stop coder, open your home page (`svrngs open`)
 and choose **Stop coder** under **Already running here**. Its setup and
 model files stay in place. [Lend](lend.md#keep-it-running)
 explains start times and how to stop lending it separately.

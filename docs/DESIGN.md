@@ -243,10 +243,15 @@ that another account could change. Every file the keeper writes that can
 hold the command is 0600, its folders 0700. On the home page a program is run from its lend:
 a lend shared only while it runs (`plan::shared_while`: a port kept to no
 job's restarts, so not one whose approval follows the keeper's copy)
-offers Keep it running. It asks the command and folder, which the person
-types: svrngs never reads how a running program was started, since its
-arguments can hold a secret and no program's are read the same way on
-every computer. Start posts
+offers to keep it running. svrngs never reads how a running program was
+started, since its arguments can hold a secret and no program's are read
+the same way on every computer: the person gives it. First, the line to
+put in front of their own command in the terminal they started it in,
+`svrngs keep <port> --`, whose shell does the quoting, `~`, `$VAR` and the
+folder; `svrngs keep` finds the lend on that port and runs it as the page
+does, then approves what answers as that job. Then, for anyone who didn't
+start it in a terminal, Keep it running asks the command and folder, which
+the person types, and off a Mac when it comes back. Start posts
 `/run` with the lend's own name and port; the keeper parses quoting
 without running a shell, and refuses a port another program holds. A
 found listener's row only lends it. Once Run verifies the program, the

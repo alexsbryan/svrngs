@@ -47,26 +47,44 @@ A program you started yourself is shared only while it runs. Its line
 under **What you lend** says so: *"House can open it only while it's
 running. svrngs can keep it running, even after a restart."*
 
-1. Press **Keep it running**, then type the command you started it with,
-   such as `/opt/homebrew/bin/llama-server --model /Users/sam/smol.gguf
-   --port 8102`, and the folder you started it from. svrngs doesn't read
-   them from your program. Use full paths: it runs without your terminal's
-   settings.
-2. Quit the copy you started, then press **Start**. svrngs never stops your
-   copy for you.
+svrngs doesn't read how you started it: you give it the command. The
+easiest way is the terminal you started it in.
 
-It runs under the lend's own name and port, and the row then says
-*"svrngs runs coder now. House can open it again after you sign in."*
-After a restart, svrngs starts it again when you sign in, and House can
-open it again. If something other than svrngs's copy answers on its port,
-the row says so and approves nothing: check what answers, then press **Keep
+1. Stop your copy there (Ctrl+C).
+2. Press Up to bring its command back, and Ctrl+A to go to its start.
+3. Paste the line the page shows, such as `svrngs keep 8102 -- `, so it
+   reads `svrngs keep 8102 -- llama-server --model ~/smol.gguf --port 8102`,
+   and press Enter.
+
+svrngs shows exactly what it will run and in which folder, and keeps it
+once you press Enter. On Linux it then asks whether to start it when the
+computer starts, even before you log in. That lets your account run
+programs while nobody is logged in, so it's yours to say; without a yes,
+it comes back when you log in.
+
+Didn't start it in a terminal? Press **Keep it running** and type the
+command and the folder you started it from, then press **Start**. A
+command that needs a shell, such as `FOO=1 prog` or one with `$HOME` or a
+`|`, is refused there: use the terminal instead, or put it in a script and
+give that.
+
+svrngs keeps it only if it then answers on its port within 30 seconds.
+If it doesn't, nothing is kept: svrngs stops it and says why, with what
+it last printed, so you can fix the command and try again. It also
+refuses a program or folder inside a folder your group syncs, since anyone
+in the group could change what runs as you, and one that another account
+on this computer could change; each refusal says how to fix it.
+
+Once kept, the row says *"svrngs runs coder now. It comes back when you log
+in."* If something other than svrngs's copy answers on its port, the row
+says so and approves nothing: check what answers, then press **Keep
 sharing it**.
 
 **Run by svrngs** means it starts again after a crash, up to a limit. Read
 the Share review for when friends can open it again. On a Mac, it starts
 after you sign in. On Linux, it can start before sign-in if you allow that
-when running it from a terminal, both parts start with the computer, and
-the disk unlocks on its own. A locked disk needs you to unlock it first.
+when you keep it, both parts start with the computer, and the disk unlocks
+on its own. A locked disk needs you to unlock it first.
 Nothing runs while the computer is asleep or off.
 
 Sharing through restarts trusts the service to keep answering for the same

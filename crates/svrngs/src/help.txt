@@ -50,10 +50,22 @@ after it, and it checks that the new schema.sql only adds to that one's.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
+  svrngs keep <port> -- <command>
+      Keep what you lend on <port> running, even after a restart, from
+      the command you started it with, in this folder: stop your copy,
+      then put `svrngs keep <port> --` in front of that command. svrngs
+      shows what it will run and where, and keeps it once you press
+      Enter, and only if it then answers on <port>. On Linux it asks
+      whether to start it before anyone logs in, which lets your account
+      run programs while nobody is logged in; else it comes back when you
+      log in. Nothing kept may be in a folder your groups sync, or be a
+      file another account could change.
+
   svrngs run <name> --port <port> [--folder <folder>] -- <command>
-      Run a command here (Linux or macOS). svrngs shows what it will run
-      and where, and keeps it once you press Enter, and only if it then
-      answers on <port>. Share it separately with svrngs share.
+      Run a command here (Linux or macOS) under <name>, as keep does: it
+      shows what it will run and where, and keeps it once you press Enter,
+      and only if it then answers on <port>. Share it separately with
+      svrngs share.
       To stop the app, choose Stop under Already running here on your home
       page (`svrngs open`). Stop leaves its setup and files in place.
 

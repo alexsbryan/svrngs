@@ -1,10 +1,13 @@
 // Browser half of run_prefill_waits_for_confirmation_in_webkit: a stand-in
 // llama-server, started by hand, is found and lent, its fields filled with
 // the name svrngs's table knows it by; its lend's row offers to keep it
-// running, and Keep it running asks its command and folder, both empty
-// while the copy runs: svrngs reads nothing of how it was started. The
-// person types them; nothing is started until Start, and Start, with the
-// hand-started copy still on the port, is refused, the copy left alone.
+// running, first as the line to put in front of her command in its
+// terminal, `svrngs keep <port> --`, then Keep it running, which asks its
+// command and folder, both empty while the copy runs, and, on Linux, when
+// it comes back, at login unless she chooses: svrngs reads nothing of how
+// it was started. She types them; nothing is started until Start, and
+// Start, with the hand-started copy still on the port, is refused, the
+// copy left alone.
 import assert from 'node:assert/strict';
 import { launch } from './page.mjs';
 
@@ -46,7 +49,11 @@ try {
   assert.match(await lit.textContent(), /^Lent to /);
 
   const offer = page.locator("#lent [role=group][aria-label='llama-server']");
+  assert.equal(await offer.locator('code').textContent(), `svrngs keep ${port} -- `);
+  await offer.getByRole('button', { name: 'Copy' }).waitFor();
   await offer.getByRole('button', { name: 'Keep it running' }).click();
+  const comes = offer.getByLabel('It comes back:');
+  assert.equal(await comes.inputValue(), '', 'at login unless she chooses');
   const fields = ['command', 'folder'].map((name) => offer.locator(`input[name=${name}]`));
   for (const field of fields) assert.equal(await field.inputValue(), '', 'nothing filled in');
   assert.equal(await offer.locator('code, details').count(), 0, 'nothing shown to change');

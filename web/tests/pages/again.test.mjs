@@ -403,11 +403,14 @@ test('a program found that svrngs knows by name has its fields filled, and lendi
 
 // A lend shared only while its program runs (home.rs `lent`'s `sharing`,
 // its port; plan/words.rs `shared_while`) offers, under its line, to have
-// svrngs keep it running: one sentence and Keep it running, read from /lent
-// alone. Pressed, it asks the command and folder, empty: nothing is read of
-// the running copy, the command's example made of its kind and port. Then
-// Start, posted with the lend's own name and port (home.rs
-// `run_one`). What then answers is held, a job named for the lend (job.rs
+// svrngs keep it running, read from /lent alone: first the line to put in
+// front of the person's own command in the terminal they started it in,
+// `svrngs keep <port> --`, with its Copy; then, for anyone who didn't,
+// Keep it running. Pressed, it asks the command and folder, empty: nothing
+// is read of the running copy, the command's example made of its kind and
+// port; off a Mac, when it comes back, at login unless the person chooses
+// boot. Then Start, posted with the lend's own name and port and that
+// choice (home.rs `run_one`). What then answers is held, a job named for the lend (job.rs
 // `of`), approved at once by the token /lent lists it with, asked only as
 // the job svrngs keeps (`keep: true`, surface.rs `approve`), and the list
 // read again shares it no longer only while it runs: one line says so, and
@@ -432,7 +435,7 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
         'POST /run': (held, body) => {
           posted.push(['/run', body]);
           held.lent = [{ ...notes, held: 'another', token: 'its job', answers: [job] }];
-          return 'svrngs runs notes now.';
+          return 'svrngs runs notes now. It comes back when this computer starts.';
         },
         'POST /v1/lends/notes/approve': (held, body) => {
           posted.push(['approve', body]);
@@ -445,7 +448,14 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
   const row = () => at.text('#lent li')[0];
   const offer =
     'house can open it only while it’s running. svrngs can keep it running, even after a restart.';
-  assert.deepEqual(at.text('#lent li [role=group]'), [`${offer}Keep it running`]);
+  const terminal = ` Stop your copy. In the terminal you started it in, press Up to bring its command back and Ctrl+A to go to its start, paste this, and press Enter:svrngs keep ${port} -- Copy`;
+  assert.deepEqual(at.text('#lent li [role=group]'), [
+    `${offer}${terminal}Didn’t start it in a terminal? Keep it running`,
+  ]);
+  assert.deepEqual(at.text('#lent li [role=group] code'), [`svrngs keep ${port} --`]);
+  await at.press('#lent li [role=group] button', 'Copy');
+  assert.deepEqual(at.copied, [`svrngs keep ${port} -- `]);
+  globalThis.navigator.platform = 'Linux x86_64';
   await at.press('#lent li button', 'Keep it running');
   const inputs = () => at.all('#lent li [role=group] input');
   assert.deepEqual(
@@ -458,15 +468,18 @@ test('a lend shared while it runs offers to keep it running, and Start carries i
   );
   await at.type('#lent li [role=group] input[name=command]', command);
   await at.type('#lent li [role=group] input[name=folder]', '/Users/ada/models');
+  const boot = '#lent li [role=group] select[name=boot]';
+  assert.equal(at.all(boot)[0].value, '', 'at login unless she chooses');
+  await at.type(boot, 'yes');
   assert.ok(row().includes('Quit the copy you started, then press Start.'), row());
   assert.deepEqual(posted, [], 'nothing started before Start');
   await at.press('#lent li [role=group] button', 'Start');
   assert.deepEqual(posted, [
-    ['/run', { name: 'notes', port, folder: '/Users/ada/models', command }],
+    ['/run', { name: 'notes', port, folder: '/Users/ada/models', command, boot: true }],
     ['approve', { token: 'its job', keep: true }],
   ]);
   assert.ok(
-    row().endsWith('svrngs runs notes now. house can open it again after you sign in.'),
+    row().endsWith('svrngs runs notes now. It comes back when this computer starts.'),
     row(),
   );
   assert.ok(!at.text('#lent li button').includes('Keep it running'), row());
@@ -527,17 +540,18 @@ test('Start with typed fields carries over a Mac job’s process', async () => {
   const started = at.press('#lent li [role=group] button', 'Start');
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.deepEqual(at.text('#lent li [role=status]'), ['Starting…']);
-  answer('svrngs runs notes now.');
+  answer('svrngs runs notes now. It comes back when you log in.');
   await started;
   const body = {
     name: 'notes',
     port,
     folder: '/srv/notes',
     command: 'python3 -m http.server 21000',
+    boot: false,
   };
   assert.deepEqual(posted, [body, body, { token: 'a process', keep: true }]);
   const row = at.text('#lent li')[0];
-  assert.ok(row.endsWith('svrngs runs notes now. house can open it again after you sign in.'), row);
+  assert.ok(row.endsWith('svrngs runs notes now. It comes back when you log in.'), row);
   assert.ok(!at.text('#lent li button').includes('Keep sharing it'), row);
   assert.deepEqual([at.went, at.unanswered], [[], []]);
 });
