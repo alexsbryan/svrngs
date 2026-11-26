@@ -956,19 +956,19 @@ fn a_program_answering_404_is_sent_none_of_the_token_and_restarts_nothing() {
     unproven(port, (1, told.trim().trim_start_matches("svrngs: ").into()));
 }
 
-/// **An older svrngs started by hand is named, and how to stop it said**
-/// (the 1.13.3 proof review, finding 9): Python
-/// answering 404 holds this data dir's lock, as an older svrngs started by
-/// hand over it would, and the login service runs svrngs over another;
-/// restarting that would restart someone else's svrngs, and svrngs signals
-/// no program itself (KEEP_IT_RUNNING_RELEASE N1), so the command restarts
-/// nothing, sends none of the token, and says an older svrngs runs here,
-/// started by hand, and one step that stops it (exit 1): with the token
-/// beside its address, and with none, as a svrngs from before the token
-/// (v1.3) leaves its data dir. Planted, watched failing: 4ece5ae5
-/// restarted the login service's svrngs; 0ba18ef9 said "cannot read or
-/// keep this computer's token" with no token, and "stop that svrngs where
-/// it runs (Ctrl-C)" with one.
+/// **An older svrngs started by hand, too old to be asked to stop, is
+/// said with the one step that stops it** (the 1.13.3 proof review,
+/// finding 9): Python answering 404 holds this data dir's lock, as an
+/// older svrngs started by hand over it would, and the login service runs
+/// svrngs over another; restarting that would restart someone else's
+/// svrngs, and svrngs signals no program itself (KEEP_IT_RUNNING_RELEASE
+/// N1), so the command restarts nothing, sends none of the token, and says
+/// the svrngs here didn't stop when asked and the step that stops it, once
+/// (exit 1): with the token beside its address, and with none, as a svrngs
+/// from before the token (v1.3) leaves its data dir. Planted, watched
+/// failing: 4ece5ae5 restarted the login service's svrngs; 0ba18ef9 said
+/// "cannot read or keep this computer's token" with no token, and "stop
+/// that svrngs where it runs (Ctrl-C)" with one.
 #[test]
 fn an_older_svrngs_started_by_hand_is_named_and_how_to_stop_it_said() {
     for token in [true, false] {
@@ -993,7 +993,7 @@ fn an_older_svrngs_started_by_hand_is_named_and_how_to_stop_it_said() {
         assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
         let told = String::from_utf8_lossy(&out.stderr);
         assert_eq!(out.status.code(), Some(1), "{told}");
-        let words = format!("svrngs: The svrngs running here is older than this one ({}), and isn't kept running at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", svrngs_node::api::build(), lock.display());
+        let words = format!("svrngs: The svrngs running here didn't stop when asked, as one older than this one ({}) can't: stop it with `kill $(lsof -t {})`, then run this again", svrngs_node::api::build(), lock.display());
         assert_eq!(told.trim(), words, "token: {token}");
     }
 }
@@ -1102,12 +1102,7 @@ fn open_starts_svrngs_where_none_runs_and_opens_it() {
         .env("HOME", dir.path())
         .output()
         .unwrap();
-    let holder = Process::new("lsof")
-        .arg("-t")
-        .arg(dir.path().join("lock"))
-        .output()
-        .unwrap();
-    let holder = String::from_utf8_lossy(&holder.stdout).trim().to_string();
+    let holder = holding(dir.path());
     let _ = Process::new("kill").arg(&holder).status();
     let said = String::from_utf8_lossy(&out.stdout);
     let said = said.lines().filter(|l| !as_main::HEADER.contains(l));
@@ -1118,6 +1113,66 @@ fn open_starts_svrngs_where_none_runs_and_opens_it() {
     assert!(
         said[0].starts_with("Open this in your browser within a minute: http://svrngs.localhost:"),
         "{said:?}"
+    );
+}
+
+/// The pid of the program holding `dir`'s lock, or none (`lsof`).
+fn holding(dir: &Path) -> String {
+    let lsof = Process::new("lsof")
+        .arg("-t")
+        .arg(dir.join("lock"))
+        .output();
+    String::from_utf8_lossy(&lsof.unwrap().stdout)
+        .trim()
+        .to_string()
+}
+
+/// **`svrngs restart` stops a svrngs nothing keeps at login, and starts
+/// this one in its place**: svrngs started by hand over a data dir, no
+/// login service keeping it, answers; `svrngs restart` asks it, as you, to
+/// stop (surface.rs `STOP_ROUTE`), which it does as on Ctrl-C, exit 0, its
+/// lock let go; waits for the lock to be free, starts this program over the
+/// data dir apart from its terminal, and once it answers says one line,
+/// `svrngs <build> is running.`. No signal is sent but the test's own, to
+/// end the second. Planted, watched failing: the stop route served without
+/// the token (record_api.rs, every record route); the restart starting
+/// svrngs without waiting for the lock.
+#[test]
+fn restart_stops_svrngs_started_by_hand_and_starts_this_one() {
+    let (dir, program) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let svrngs = as_main::installed(program.path());
+    let here = |args: &[&str]| {
+        let mut c = Process::new(&svrngs);
+        c.args(args)
+            .env("SVRNGS_DIR", dir.path())
+            .env("HOME", dir.path());
+        c.stdin(Stdio::null())
+            .stderr(Stdio::piped())
+            .stdout(Stdio::piped());
+        c
+    };
+    let mut first = here(&[]).spawn().unwrap();
+    let began = Instant::now();
+    while !here(&["ask", "/v1/groups"]).status().unwrap().success() {
+        assert!(began.elapsed() < Duration::from_secs(30), "never answered");
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    let restarted = here(&["restart"]).output().unwrap();
+    let (stopped, holder) = (first.wait().unwrap(), holding(dir.path()));
+    let _ = Process::new("kill").arg(&holder).status();
+    let said = String::from_utf8_lossy(&restarted.stdout);
+    let said: Vec<&str> = (said.lines().filter(|l| !as_main::HEADER.contains(l))).collect();
+    let running = format!("svrngs {} is running.", svrngs_node::api::build());
+    assert!(restarted.status.success(), "{said:?} {restarted:?}");
+    assert_eq!(said, [running.as_str()], "{restarted:?}");
+    assert!(
+        stopped.success(),
+        "the first stopped as on Ctrl-C: {stopped:?}"
+    );
+    let first = first.id().to_string();
+    assert!(
+        !holder.is_empty() && holder != first,
+        "{holder} holds it, not {first}"
     );
 }
 

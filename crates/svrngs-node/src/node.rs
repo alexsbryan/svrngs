@@ -333,6 +333,9 @@ pub struct Host {
     /// under it, the folders' sweep and synced directories: none outlives
     /// the node.
     pub(crate) stopping: tokio_util::sync::CancellationToken,
+    /// Cancelled when svrngs's command asks this svrngs, as you, to stop
+    /// ([`crate::surface::STOP_ROUTE`]), which [`Node::stopped`] waits on.
+    pub(crate) stop_asked: tokio_util::sync::CancellationToken,
     /// Each carried app's database here, by group and app, at its origin's
     /// `/svrngs/sql` (`crate::folder::carried`).
     pub(crate) states: Arc<svrngs_db::States>,
@@ -467,6 +470,7 @@ impl Node {
             minting: Default::default(),
             meeting: Default::default(),
             stopping: Default::default(),
+            stop_asked: Default::default(),
             states: Arc::new(svrngs_db::States::new(&data_dir, rail.signer().clone())),
         });
         let (folders, blobs, store) =
@@ -631,6 +635,17 @@ impl Node {
     /// The endpoint this node dials and is dialled on, and its dials.
     pub fn net(&self) -> &dyn Net {
         &*self.host.transport
+    }
+
+    /// Until this process is asked to stop ([`asked_to_stop`]), or svrngs's
+    /// command asks it to, as you ([`crate::surface::STOP_ROUTE`]), so that
+    /// `svrngs restart` stops a svrngs nothing keeps at login and no signal
+    /// is sent. Its caller then stops it as on Ctrl-C.
+    pub async fn stopped(&self) {
+        tokio::select! {
+            () = asked_to_stop() => {}
+            () = self.host.stop_asked.cancelled() => tracing::debug!(target: "node", "node: asked to stop by svrngs's command, as you"),
+        }
     }
 
     /// What the round reads, and what makes a link ([`crate::invite`]).

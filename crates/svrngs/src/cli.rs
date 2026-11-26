@@ -114,7 +114,7 @@ use std::time::Duration;
 
 use std::num::NonZeroU16;
 
-use svrngs_node::api::{build, ApiError, Withheld, API_FILE, PROVE_WITHIN};
+use svrngs_node::api::{build, ApiError, Withheld, API_FILE, PROVE_WITHIN, TOKEN_FILE};
 use svrngs_node::door::bound::{Bound, Unsent};
 use svrngs_node::folder::{FolderAsk, PROGRAMS_ROUTE};
 use svrngs_node::home::WHEN;
@@ -131,6 +131,7 @@ use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
 };
 use svrngs_node::room;
+use svrngs_node::surface::STOP_ROUTE;
 use svrngs_node::uid::{Answering, Unread};
 use svrngs_node::update;
 use svrngs_node::{Joined, Person};
@@ -677,14 +678,11 @@ pub enum Refused {
     /// (svrngs-node api.rs `asked`).
     #[error("Something other than your svrngs answers at {0}, where svrngs listens, so svrngs sent it none of your token. Stop that program (`lsof -nP -iTCP -sTCP:LISTEN` on a Mac, or `ss -ltnp` on Linux, names each program listening), then start svrngs again with `svrngs restart`")]
     Unproven(String),
-    /// svrngs holds `{0}`, and nothing keeps it running at login, so
-    /// [`restart`] can't restart it.
-    #[error("svrngs is running here, but isn't kept running at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", .0.display())]
-    ByHand(PathBuf),
-    /// [`Refused::ByHand`], an older svrngs than this one, the build its
-    /// proof named if any, as an update leaves one running.
-    #[error("The svrngs running here{} is older than this one ({}), and isn't kept running at login, so svrngs can't restart it for you: restart this computer, or stop it with `kill $(lsof -t {})`, then run `svrngs`", .0.as_ref().map(|b| format!(" ({b})")).unwrap_or_default(), build(), .1.display())]
-    Behind(Option<String>, PathBuf),
+    /// The svrngs holding `{0}`, which nothing keeps running at login,
+    /// still holds it once asked to stop ([`stopped`]): one too old to be
+    /// asked, as every svrngs before this one's release is.
+    #[error("The svrngs running here didn't stop when asked, as one older than this one ({}) can't: stop it with `kill $(lsof -t {})`, then run this again", build(), .0.display())]
+    Unstopped(PathBuf),
     /// Why [`restart`] started no svrngs.
     #[error("svrngs couldn't start here ({0}): run the install line from your group's page again, and it keeps svrngs running whenever you log in")]
     Stuck(String),
@@ -888,7 +886,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             (_, update::Outcome::Packaged(words)) => format!("{words}\n"),
         },
         Verb::Restart => {
-            restart(&root, true)?;
+            restart(&root, true).await?;
             came_up(here).await?
         }
         Verb::RunApp(name, args) => {
@@ -1257,11 +1255,11 @@ async fn came_up(here: &impl Here) -> Result<String, Refusal> {
 
 /// svrngs over `root` started, or with `stop` restarted, so this works on
 /// any build that is running: by launchd or systemd where it keeps svrngs
-/// at login over `root`, as at logout and login; else, where none runs,
-/// this program started over it apart from this terminal, which may
-/// close, its words in `svrngs.log` there, as the login service keeps
-/// them; and one started by hand refused ([`Refused::ByHand`]).
-fn restart(root: &Path, stop: bool) -> Result<(), Refusal> {
+/// at login over `root`, as at logout and login; else this program
+/// started over it apart from this terminal, which may close, its words in
+/// `svrngs.log` there, as the login service keeps them, once the svrngs
+/// running there, if one, has stopped ([`stopped`]).
+async fn restart(root: &Path, stop: bool) -> Result<(), Refusal> {
     use std::os::unix::{fs::MetadataExt as _, process::CommandExt as _};
     let uid = std::fs::metadata(root).map_or(0, |dir| dir.uid());
     let gui = format!("gui/{uid}/sh.svrnme.svrngs");
@@ -1280,14 +1278,14 @@ fn restart(root: &Path, stop: bool) -> Result<(), Refusal> {
     if kept {
         return Ok(());
     }
-    // One started by hand, which neither keeps, svrngs leaves as it is:
-    // it signals no program itself (KEEP_IT_RUNNING_RELEASE N1).
+    // One started by hand, which neither keeps, is asked to stop; one
+    // starting is left to start.
     if let Err(Refusal::Refused(Refused::Busy(lock))) = claim(root) {
-        tracing::debug!(target: "cli", stop, "cli: restart — svrngs runs here, started by hand, so none is started beside it, nor is it stopped");
-        return match stop {
-            true => Err(Refused::ByHand(lock).into()),
-            false => Ok(()),
-        };
+        tracing::debug!(target: "cli", stop, "cli: restart — svrngs runs here, started by hand, so it is asked to stop, or, starting it, none is started beside it");
+        match stop {
+            true => stopped(root, lock).await?,
+            false => return Ok(()),
+        }
     }
     let log = (File::options().create(true).append(true)).open(root.join("svrngs.log"));
     let log = log.and_then(|log| Ok((log.try_clone()?, log)));
@@ -1302,6 +1300,47 @@ fn restart(root: &Path, stop: bool) -> Result<(), Refusal> {
     started
         .map(drop)
         .map_err(|e| Refused::Stuck(e.to_string()).into())
+}
+
+/// The svrngs holding `lock` asked, as you, to stop ([`STOP_ROUTE`]), and
+/// waited on, as long as a proof is, until it lets the lock go: svrngs
+/// stops itself, and only the one whose lock and token are `root`'s,
+/// signalling no program (KEEP_IT_RUNNING_RELEASE N1). One too old to be
+/// asked, with no token or no such route, is refused at once with the step
+/// that stops it ([`Refused::Unstopped`]).
+async fn stopped(root: &Path, lock: PathBuf) -> Result<(), Refusal> {
+    let (_, asked) = asked_once(root, STOP_ROUTE, Some("{}".into())).await?;
+    // Its answer may be cut short as it stops: svrngs away.
+    let took = matches!(asked, Ok((200..=299, _)) | Err(Withheld::Away));
+    let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(took);
+    let mut free = false;
+    while !free && tries > 0 {
+        tries -= 1;
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        free = claim(root).is_ok();
+    }
+    tracing::debug!(target: "cli", took, free, asked = ?asked.as_ref().map(|a| a.0), "cli: restart — the svrngs holding this data dir asked, as you, to stop, and whether it let the data dir go");
+    free.then_some(())
+        .ok_or_else(|| Refused::Unstopped(lock).into())
+}
+
+/// `body` posted to `route`, or `route` got, of svrngs at the address
+/// `root` names, as the person holding its token ([`svrngs_node::api::asked`]),
+/// once: that address, and svrngs's answer, or why none. A data dir with no
+/// token is one no svrngs that keeps one ran over, so nothing is dialled.
+async fn asked_once(
+    root: &Path,
+    route: &str,
+    body: Option<String>,
+) -> Result<(String, svrngs_node::api::Asked), Refusal> {
+    let read = |file| std::fs::read_to_string(root.join(file));
+    let api = read(API_FILE).unwrap_or_default();
+    let asked = match read(TOKEN_FILE) {
+        Ok(token) => svrngs_node::api::asked(&api, route, token.trim(), body).await,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(Withheld::Another(None)),
+        Err(e) => Err(ApiError::TokenFile(root.join(TOKEN_FILE), e))?,
+    };
+    Ok((api, asked))
 }
 
 /// This program as it starts svrngs over `root`: svrngs's own binary, or
@@ -1451,24 +1490,13 @@ impl Here for PathBuf {
     /// anything else there is sent none of the token, nor a code, and the
     /// person is told what to do.
     async fn asked(&self, route: &str, body: Option<String>) -> Answered {
-        let read = |file| std::fs::read_to_string(self.join(file));
         // Where svrngs listens and its token, read for each ask, as a
-        // restart writes them. A data dir with no token is one no svrngs
-        // that keeps one ran over: an older one, if one holds it (below).
-        let ask = async || {
-            let api = read(API_FILE).unwrap_or_default();
-            let asked = match read(svrngs_node::api::TOKEN_FILE) {
-                Ok(token) => svrngs_node::api::asked(&api, route, token.trim(), body.clone()).await,
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(Withheld::Another(None)),
-                Err(e) => Err(ApiError::TokenFile(
-                    self.join(svrngs_node::api::TOKEN_FILE),
-                    e,
-                ))?,
-            };
-            Ok::<_, Refusal>((api, asked))
-        };
+        // restart writes them; with no token, an older one, if one holds
+        // the data dir (below).
+        let ask = || asked_once(self, route, body.clone());
         let (mut api, mut asked) = ask().await?;
-        let tokenless = read(svrngs_node::api::TOKEN_FILE).is_err();
+        let token = self.join(TOKEN_FILE);
+        let tokenless = !token.exists();
         let theirs = match &asked {
             Err(Withheld::Another(theirs)) => theirs.clone(),
             _ => None,
@@ -1503,7 +1531,7 @@ impl Here for PathBuf {
         // a lock held with no token is a svrngs too old to keep one only
         // once none appears, for as long as a proof is waited for.
         let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(tokenless && held);
-        while tries > 0 && read(svrngs_node::api::TOKEN_FILE).is_err() {
+        while tries > 0 && !token.exists() {
             tries -= 1;
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
@@ -1516,12 +1544,7 @@ impl Here for PathBuf {
         let away = asked == Err(Withheld::Away) || tokenless;
         let starts = route == OPEN_ROUTE && away && !held;
         if held || starts {
-            restart(self, held).map_err(|why| match why {
-                Refusal::Refused(Refused::ByHand(lock)) => {
-                    Refused::Behind(theirs.clone(), lock).into()
-                }
-                why => why,
-            })?;
+            restart(self, held).await?;
         }
         let mut tries = PROVE_WITHIN.as_millis() / 100 * u128::from(held || starts);
         while tries > 0 && matches!(asked, Err(Withheld::Away | Withheld::Another(_))) {
@@ -2356,7 +2379,7 @@ async fn serve(
         return Ok(());
     }
     println!("Leave this running; Ctrl-C stops it.");
-    svrngs_node::node::asked_to_stop().await;
+    node.stopped().await;
     tracing::debug!(target: "cli", "cli: stopping");
     Ok(())
 }

@@ -551,11 +551,11 @@ This guards who holds svrngs's address; it is no private channel against
 a program that can watch or change the connection itself. When what
 answers there has no proof to give (404) while a svrngs holds the data
 directory's lock, the command takes it for a svrngs older than itself,
-as an update leaves one running: where the login service runs svrngs
-over that data directory, it restarts that svrngs once, as `svrngs
-restart` does, and asks again as it comes back (the operator,
-2026-11-21: "Restart automatically"); elsewhere, or if it is still older,
-the person is told what runs there and what to do. That is a judgment
+as an update leaves one running: it restarts that svrngs once, as
+`svrngs restart` does (below), and asks again as it comes back (the
+operator, 2026-11-21: "Restart automatically"); if it is too old to be
+asked to stop, or is still older, the person is told what runs there and
+what to do. That is a judgment
 of when to restart, not a proof of who answers: a held lock says a
 svrngs runs over the data directory, not that it is what answers at the
 address, and either way what answers is sent the challenge alone. A 404
@@ -1078,21 +1078,26 @@ A browser with none is refused with what that is and how to let it in:
 is not the default one. An open is single-use and each browser keeps its own.
 `svrngs restart` asks launchd or systemd to stop and start it, where either
 keeps svrngs at login over this data directory, so it works on any running
-build and closes as a logout does; where neither does and none runs, it
-starts this program over the data directory apart from its terminal, its
-words in `svrngs.log` as the login service's are. Either way it says, once
-svrngs answers as this build, that it runs. One started by hand it leaves
-running, since svrngs signals no program itself, and says the one step that
-stops it.
+build and closes as a logout does. Where neither does, it asks the svrngs
+running there, if one, to stop: `POST /v1/stop`, as the person, behind the
+token like every route of the record, so svrngs stops itself and only the
+one whose lock and token are this data directory's, as on Ctrl-C, its node
+closed and its lock let go; svrngs signals no program. Once the lock is
+free it starts this program over the data directory apart from its
+terminal, its words in `svrngs.log` as the login service's are. Either way
+it says, once svrngs answers as this build, that it runs. A svrngs too old
+to take the ask, with no token or no such route, still holds the lock; the
+command says the one step that stops it.
 
-A command asks only a svrngs of its own build: `POST /v1/proof` names the
-build that proves (api.rs `build`, which `svrngs version` prints too), and
-any other is another build, as is one too old to name it, or one whose data
-directory holds no token. Another build holding the data directory, as an
-update leaves one running, the command restarts onto itself, once, before
-it asks, as `svrngs restart` does (§3); a newer one it asks nothing, and
-says to update this one. `svrngs update`, having put a new svrngs in place,
-runs the new one's `restart`, which says in one line that it runs.
+A command asks only a svrngs of its own build, but to stop it:
+`POST /v1/proof` names the build that proves (api.rs `build`, which
+`svrngs version` prints too), and any other is another build, as is one
+too old to name it, or one whose data directory holds no token. Another build holding
+the data directory, as an update leaves one running, the command restarts
+onto itself, once, before it asks, as `svrngs restart` does (§3); a newer
+one it asks nothing, and says to update this one. `svrngs update`, having
+put a new svrngs in place, runs the new one's `restart`, which says in one
+line that it runs.
 
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for

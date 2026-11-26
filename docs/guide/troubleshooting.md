@@ -36,12 +36,11 @@ short name.
 - **``svrngs: svrngs is not running on this computer: start it with `svrngs`, then run this again``**, or the home page doesn't open at all.
   Type `svrngs`: it starts svrngs and opens your home page. Pasting the
   install line again does too, and keeps svrngs running whenever you log in.
-- **`svrngs: The svrngs running here (…) is older than this one (…), and isn't kept running at login, so svrngs can't restart it for you: …`**
-  svrngs was updated while the old one kept running, with nothing to restart it, so
-  the new one can't stop it for you. Restart your computer, or paste the
-  `kill` line it shows, then type `svrngs`.
-- **`svrngs: svrngs is running here, but isn't kept running at login, so svrngs can't restart it for you: …`**
-  The same, after `svrngs restart`.
+- **`svrngs: The svrngs running here didn't stop when asked, as one older than this one (…) can't: …`**
+  svrngs was updated while an old one kept running, one too old to stop
+  when the new one asks. Paste the `kill` line it shows, or restart your
+  computer, then run the command again. It happens once: the new one
+  stops itself when asked.
 - **`svrngs: The svrngs running here (…) is newer than this command (…)`**
   The terminal found an older `svrngs` file than the one running. Type
   `svrngs update`, then try again.

@@ -184,7 +184,9 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
 /// while svrngs is down, of any account, in a container or a sandbox or
 /// not, or one carrying the challenge to svrngs on a connection of its
 /// own; else why not. The one way svrngs's command asks svrngs (cli.rs
-/// `Here::ask`, `svrngs ask`).
+/// `Here::ask`, `svrngs ask`). Only a svrngs of this command's [`build`] is
+/// asked, but for [`crate::surface::STOP_ROUTE`], which asks any svrngs
+/// holding the token to stop, so this build can start in its place.
 #[expect(
     clippy::disallowed_methods,
     reason = "dial: svrngs's own API, proved before it is asked"
@@ -205,7 +207,12 @@ pub async fn asked(api: &str, route: &str, token: &str, body: Option<String>) ->
     let asked = format!(r#"{{"challenge":"{}"}}"#, challenge.0);
     let answer = share::sent::<ANSWERED_WITHIN>(&mut on, at.port(), post("/v1/proof"), asked);
     let answer = tokio::time::timeout(PROVE_WITHIN, answer).await.ok();
-    let proved = proven(answer, &proof(token, &challenge, ends.local, ends.peer));
+    let stop = route == crate::surface::STOP_ROUTE;
+    let proved = proven(
+        answer,
+        &proof(token, &challenge, ends.local, ends.peer),
+        stop,
+    );
     tracing::debug!(target: "rails", %at, client = %ends.local, proved = ?proved.as_ref().map(|_| ()), "api: whether svrngs proved it holds the token on this connection and gave it a nonce, asked on it only if so");
     let code = ask(token, &proved?, ends.local, ends.peer);
     // hyper takes a second request only once the first has let it go.
@@ -360,9 +367,14 @@ fn mac(token: &str, what: &str, fresh: &Challenge, ends: (SocketAddr, SocketAddr
 /// this connection's own ends: proved, and the nonce it gave this
 /// connection; older, with no proof to give (404), or proved with no nonce,
 /// as a svrngs before it stopped taking the token; nothing answering, or
-/// nothing in time; or not svrngs proving itself. Compared in constant
-/// time (the sign-in provider's `same`).
-fn proven(answer: Option<Option<(u16, Vec<u8>)>>, wanted: &str) -> Result<Challenge, Withheld> {
+/// nothing in time; or not svrngs proving itself. A proof naming another
+/// build is taken only with `any`. Compared in constant time (the sign-in
+/// provider's `same`).
+fn proven(
+    answer: Option<Option<(u16, Vec<u8>)>>,
+    wanted: &str,
+    any: bool,
+) -> Result<Challenge, Withheld> {
     let (status, said) = answer.ok_or(Withheld::Unanswered)?.ok_or(Withheld::Away)?;
     let said: serde_json::Value = serde_json::from_slice(&said).unwrap_or_default();
     let shown = said["proof"].as_str().unwrap_or_default().as_bytes();
@@ -373,7 +385,7 @@ fn proven(answer: Option<Option<(u16, Vec<u8>)>>, wanted: &str) -> Result<Challe
     proved.then_some(()).ok_or(Withheld::Unproven)?;
     let theirs = said["build"].as_str().map(String::from);
     let nonce = serde_json::from_value(said["nonce"].clone()).ok();
-    let ours = theirs.as_deref() == Some(build().as_str());
+    let ours = any || theirs.as_deref() == Some(build().as_str());
     nonce.filter(|_| ours).ok_or(Withheld::Another(theirs))
 }
 

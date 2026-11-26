@@ -147,8 +147,9 @@ fn the_proof_meets_its_vectors() {
 /// another build, the one it names; a proof with no nonce, or one that
 /// isn't 64 lowercase hex, or no build, and 404 are a svrngs older than the
 /// command, naming none; no answer is svrngs away, and none in time is
-/// unanswered; anything else is not svrngs proving itself. Planted, watched
-/// failing: the build left unread, and a proof of 1.12.2 taken.
+/// unanswered; anything else is not svrngs proving itself. Asked to stop
+/// (surface.rs `STOP_ROUTE`), a proof of another build is taken. Planted,
+/// watched failing: the build left unread, and a proof of 1.12.2 taken.
 #[test]
 fn the_command_asks_only_where_svrngs_proved_this_connection() {
     let said =
@@ -165,21 +166,29 @@ fn the_command_asks_only_where_svrngs_proved_this_connection() {
             )
         };
         let proved = built(&build());
-        assert_eq!(proven(proved.clone(), &wanted), Ok(challenged("1f")));
+        assert_eq!(proven(proved.clone(), &wanted, false), Ok(challenged("1f")));
         let another = Withheld::Another(Some("1.12.2 (c95c6509)".into()));
-        assert_eq!(proven(built("1.12.2 (c95c6509)"), &wanted), Err(another));
+        assert_eq!(
+            proven(built("1.12.2 (c95c6509)"), &wanted, false),
+            Err(another)
+        );
+        let stopped = proven(built("1.12.2 (c95c6509)"), &wanted, true);
+        assert_eq!(stopped, Ok(challenged("1f")), "asked to stop, any build is");
         let unnamed = said(200, serde_json::json!({ "proof": shown, "nonce": nonce }));
-        assert_eq!(proven(unnamed, &wanted), Err(Withheld::Another(None)));
+        assert_eq!(
+            proven(unnamed, &wanted, false),
+            Err(Withheld::Another(None))
+        );
         let relayed = SocketAddr::new(client.ip(), client.port() + 2);
         let elsewhere = proof("test-token", &challenged(byte), relayed, server);
         assert_eq!(
-            proven(proved.clone(), &elsewhere),
+            proven(proved.clone(), &elsewhere, false),
             Err(Withheld::Unproven),
             "relayed"
         );
         let other = proof("another-token", &challenged(byte), client, server);
         assert_eq!(
-            proven(proved, &other),
+            proven(proved, &other, false),
             Err(Withheld::Unproven),
             "another svrngs"
         );
@@ -187,30 +196,34 @@ fn the_command_asks_only_where_svrngs_proved_this_connection() {
             200,
             serde_json::json!({ "proof": shown.to_uppercase(), "nonce": nonce }),
         );
-        assert_eq!(proven(shouted, &wanted), Err(Withheld::Unproven));
+        assert_eq!(proven(shouted, &wanted, false), Err(Withheld::Unproven));
         for older in [
             serde_json::json!({ "proof": shown }),
             serde_json::json!({ "proof": shown, "nonce": nonce.to_uppercase() }),
         ] {
             assert_eq!(
-                proven(said(200, older), &wanted),
+                proven(said(200, older), &wanted, false),
                 Err(Withheld::Another(None))
             );
         }
         assert_eq!(
-            proven(said(404, serde_json::json!({})), &wanted),
+            proven(said(404, serde_json::json!({})), &wanted, false),
             Err(Withheld::Another(None))
         );
         assert_eq!(
-            proven(said(401, serde_json::json!({})), &wanted),
+            proven(said(401, serde_json::json!({})), &wanted, false),
             Err(Withheld::Unproven)
         );
         assert_eq!(
-            proven(said(200, serde_json::json!({ "open": shown })), &wanted),
+            proven(
+                said(200, serde_json::json!({ "open": shown })),
+                &wanted,
+                false
+            ),
             Err(Withheld::Unproven)
         );
-        assert_eq!(proven(Some(None), &wanted), Err(Withheld::Away));
-        assert_eq!(proven(None, &wanted), Err(Withheld::Unanswered));
+        assert_eq!(proven(Some(None), &wanted, false), Err(Withheld::Away));
+        assert_eq!(proven(None, &wanted, false), Err(Withheld::Unanswered));
     }
 }
 

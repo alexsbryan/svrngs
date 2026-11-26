@@ -37,6 +37,8 @@
 //!
 //!   These three at an app's origin, and a carried app's own `/svrngs/acts`
 //!   (`crate::folder::carried`), are parsed once, into [`AppRoute`].
+//! - `POST /v1/stop` — this svrngs stops, as Ctrl-C stops it ([`stop`]):
+//!   what `svrngs restart` asks of one nothing keeps at login.
 //! - `POST /v1/sign?app=<app>` — the body's bytes signed for the app by
 //!   this computer's own key, the one that signs its acts, answered as that
 //!   key and the signature, each in hex (onair-sign, [`sign`]). The core
@@ -75,6 +77,10 @@ pub const GUIDE: &str = include_str!("../../../docs/guide/build.md");
 
 /// Where an app asks which groups this computer holds.
 pub const GROUPS_ROUTE: &str = "/v1/groups";
+
+/// Where svrngs's command asks svrngs, as you, to stop, as Ctrl-C stops
+/// it ([`stop`]): how `svrngs restart` stops one nothing keeps at login.
+pub const STOP_ROUTE: &str = "/v1/stop";
 
 /// Where an app asks what a group's people lend.
 pub const LENDS_ROUTE: &str = "/v1/lends";
@@ -163,7 +169,17 @@ pub(crate) fn router(asking: Asking) -> Router {
         .route(LENDS_ROUTE, get(lends))
         .route(SIGN_ROUTE, post(sign))
         .route(APPROVE_ROUTE, post(approve))
+        .route(STOP_ROUTE, post(stop))
         .with_state(asking)
+}
+
+/// [`STOP_ROUTE`]: this svrngs stops, its node closed and its data dir's
+/// lock let go, as on Ctrl-C ([`crate::node::Node::stopped`]); answered
+/// first, though the answer may be cut short as it stops.
+async fn stop(State(at): State<Asking>) -> Json<serde_json::Value> {
+    tracing::info!(target: "surface", "surface: asked, as you, to stop, so this svrngs stops");
+    at.host.stop_asked.cancel();
+    Json(serde_json::json!({ "stopping": true }))
 }
 
 /// What a page sends to approve what answers on a lend's port: what its
