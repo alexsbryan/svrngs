@@ -40,7 +40,9 @@ p { max-width: 72ch; }
 
 a { color: var(--link); }
 a:visited { color: var(--visited); }
-a:hover, button:hover { background: var(--lit); color: var(--on-colour); }
+/* Yellow means "do this": a form's own button, below, and nothing else, so
+   a hover is drawn in the page's ink, never lit. */
+a:hover, button:hover { background: var(--ink); color: var(--paper); }
 /* The focus, and the cell a person's popover sent the page to (`:target`). */
 :focus-visible, div.index > ul > li:has(:target) { outline: 3px solid var(--link); outline-offset: 2px; }
 
@@ -95,13 +97,15 @@ section[data-colour="11"] { --group: lightskyblue; }
 section[data-colour] > h2 { padding: 0.25rem 0.5rem; border: var(--rule); background: var(--group); color: var(--on-colour); }
 :is(h1, h2) small { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
 
-/* The door: each person a cell, lit while their computer answers, drawn off
-   when it did not, a phone's marked; the words say each, not the colour. */
+/* The door: each person a cell, ruled heavy while their computer answers,
+   drawn off when it did not, a phone's marked; the words say each, not the
+   colour. Only a screen across a room lights who is on. */
 ul.door, div.index > ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem; border: 0; }
 ul.door > li, div.index > ul > li { padding: 0.5rem; border: var(--hair); }
 ul.door > li { font-weight: 700; }
 ul.door > li > small { display: block; font-weight: 400; }
-ul.door > li.on { border: var(--rule); background: var(--lit); color: var(--on-colour); }
+ul.door > li.on { border: var(--rule); }
+body.screen ul.door > li.on { background: var(--lit); color: var(--on-colour); }
 ul.door > li.off { border-style: dashed; color: GrayText; }
 ul.door > li.phone { border-style: dotted; }
 /* On the home page's group a person is one line, the name with how they
@@ -208,8 +212,8 @@ div.index > ul > li:has(> button[popovertarget]) { position: relative; padding-r
 div.index > ul > li > button[popovertarget] { position: absolute; top: 0.2rem; right: 0.4rem; min-height: 1.5rem; margin: 0; padding: 0 0.3rem; border: var(--hair); font-size: 0.8rem; font-weight: 400; }
 /* A person in the home page's door is pressed (people.js `Person`): the
    name is a button drawn as the name it was, and the whole cell takes the
-   press. Its focus is drawn round the cell in the page's ink, since the
-   link's blue on a lit cell's yellow is 2.2 to 1 in a dark window. Its
+   press. Its focus is drawn round the cell in the page's ink, as the
+   cell's own rule is. Its
    popover sits at the window's foot, so the cell one of its links goes to,
    scrolled to the top, is not under it. */
 #home ul.door > li > button { margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; }

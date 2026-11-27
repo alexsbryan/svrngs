@@ -1061,7 +1061,8 @@ when this computer has held it, so two of one name are told apart, in a colour
 derived from its id, nothing to choose. Under it, what is in the group
 first, then who is in it (the operator, 2026-10-26: Money found first):
 - **the door**: each person once, a cell in a grid, in the order they
-  joined — lit, "on now", while their computer answers; drawn off, "did not
+  joined — ruled heavy, "on now", while their computer answers (lit only on
+  a screen across a room: yellow means "do this"); drawn off, "did not
   answer", when it did not; "in from a phone" when their only keys are a
   browser's. Presence is only "on now", never when last seen. On the home
   page a cell is one line, the name with those words beside it, so 28
