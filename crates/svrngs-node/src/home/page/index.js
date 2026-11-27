@@ -102,7 +102,7 @@ function Index({ g: group, s: state, me }) {
     return html`<div class="index"><p>Asking each computer in the group what it lends…</p></div>`;
   const people = state.people?.people ?? [];
   // One person's things sit together: a name says whose, "Kim’s navidrome".
-  const lent = once(lends.lent.map((lend) => lentBy(lend, people))).sort(
+  const lent = once(lends.lent.map((lend) => lentBy(lend, people, me))).sort(
     (one, other) => place(one, me) - place(other, me) || named(one).localeCompare(named(other)),
   );
   /** @type {Map<string, Lent[]>} */

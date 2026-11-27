@@ -293,8 +293,8 @@ test('whose computer did not answer, and who asked, are told by key', async () =
 });
 
 // browser::the_door_draws_who_is_on_now, the page's half: cy's computer
-// answers, bo's does not, and pia is in from a phone. The door lights ada
-// and cy "on now", draws bo off, "did not answer", once the lends are
+// answers, bo's does not, and pia is in from a phone. The door says ada,
+// "you" on her own page, and cy "on now", draws bo off, "did not answer", once the lends are
 // answered and never lit before, and marks pia in from a phone, claiming
 // nothing of when; nobody is left out, and no word on the page is one a
 // reader must look up. The browser's bar, bo off within 10 s, is here an
@@ -322,10 +322,10 @@ test('the door draws who is on now: lit, off once answered, and in from a phone'
   answer(lends({ unanswered: [silent('bo', BO)] }));
   await page.settle();
   assert.deepEqual(door(page), [
-    ['on', 'ada on now'],
     ['off', 'bo did not answer'],
     ['on', 'cy on now'],
     ['phone', 'pia in from a phone'],
+    ['on', 'you on now'],
   ]);
   // The page as the browser's `innerText` read it: home/index.html's body
   // as served around #home, and what the page drew into it. "What acts as
@@ -429,7 +429,7 @@ test('a lend opened to this WiFi says the address, and closed says so', async ()
   const [wifi] = page.all('#home section ul.wifi');
   assert.equal(wifi.parentNode.attributes.popover, 'auto', 'in its cell’s popover');
   const [offered] = page.text(line);
-  assert.ok(offered.startsWith('ada’s shelf (k):'), offered);
+  assert.ok(offered.startsWith('your shelf (k):'), offered);
   // What opening it does is said in its popover, over the line it is about.
   const does = 'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.';
   assert.equal(page.text('#home section p').filter((p) => p === does).length, 1);

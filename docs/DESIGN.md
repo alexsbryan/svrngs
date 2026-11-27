@@ -1065,9 +1065,9 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   answer", when it did not; "in from a phone" when their only keys are a
   browser's. Presence is only "on now", never when last seen. On the home
   page a cell is one line, the name with those words beside it, so 28
-  people are four rows above what they share (`look.css`
-  `body:not(.screen) #home ul.door`); the screen and the phone's page keep
-  the taller cell.
+  people are four rows (`look.css` `body:not(.screen) #home ul.door`), and
+  the person looking is "you" there (`question.js` `called`); the screen
+  and the phone's page keep the taller cell.
 - **the index**: what is in the group, on any port, as grids of cells, the
   door's own look. What a group shares has no bound, so no word outside a
   cell grows with it: each grid is under the one sentence true of everything
@@ -1086,10 +1086,10 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   the app's way in and never its files; a port by its name with its Play;
   its kind in its lender's word when it differs, never one of svrngs's own
   (`scripts/vocab_check.py` reads the pages' scripts too). The name says
-  whose ("Kim’s navidrome"), and cells sort by person, so one person's
-  things sit together. A cell has one way in, its name, drawn heaviest. A
-  cell says more only where it differs: a group's own app its shelf's few
-  words when it has them, and the app
+  whose ("Kim’s navidrome", and yours "your navidrome", by key), and cells
+  sort by person, so one person's things sit together. A cell has one way
+  in, its name, drawn heaviest. A cell says more only where it differs: a
+  group's own app its shelf's few words when it has them, and the app that also opens your friends' things its
   sentence on a row of its own, with "Open" on its button, since that press
   is the yes (`home/page/index.js`, `lend-name.js`; the law that draws 8
   things and 40 and holds the words outside the cells equal is

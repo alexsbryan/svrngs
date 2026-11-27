@@ -304,7 +304,7 @@ test('a person in the door is pressed for what the page holds of them', async ()
   const buttons = page.all('#home .door > li > button');
   const pops = page.all('#home .door > li > div');
   assert.deepEqual(buttons.map((button) => button.attributes['aria-label']).slice(0, 3), [
-    'ada, on now',
+    'you, on now',
     'bo, on now',
     'cy, did not answer',
   ]);
@@ -626,9 +626,9 @@ test('home can stop a managed app without a group', async () => {
 test('a lend’s link says what it opens and whose, in a tab of its own, and less to puzzle over', async () => {
   const shelf = lend('shelf');
   const page = await home(ada({ lent: [shelf] }));
-  assert.deepEqual(page.text('#home .index > ul > li > a'), ['ada’s shelf (k)']);
+  assert.deepEqual(page.text('#home .index > ul > li > a'), ['your shelf (k)']);
   assert.deepEqual(page.text('#home .index > p'), [LENT]);
-  assert.deepEqual(cells(page), ['ada’s shelf (k) Address']);
+  assert.deepEqual(cells(page), ['your shelf (k) Address']);
   const [link] = page.all('#home .index > ul > li > a');
   assert.equal(link.attributes.target, '_blank');
   const labels = page.all('#lent label').map((label) => label.textContent);
@@ -647,7 +647,7 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
 // button, where the press is the yes. Another computer's lend at an address
 // has its Play in its Address popover, so its cell has one way in, its
 // name (wifi.js `Address`); this computer's own, and an app the group's
-// folder carries, have none.
+// folder carries, have none. What is yours is "your …".
 test('each grid of the index is under the sentence its cells share, and a cell says only what differs', async () => {
   const bo = { key: BO, person: 'bo', raw: 'udp' };
   const lent = [
@@ -666,19 +666,19 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   assert.equal(page.all('#home .index table').length, 0);
   assert.deepEqual(cells(page), [
     'Money Address',
-    'ada’s shelf (k) Address',
     'bo’s notes (k) Address',
-    'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
+    'your shelf (k) Address',
+    'Open your page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
     'bo’s echo (k) Play',
     'bo’s game (k) Play',
-    'ada’s mine (k) A port this computer lends.',
+    'your mine (k) A port this computer lends.',
   ]);
   assert.deepEqual(
     [
       ...page.text('#home .index > ul > li > form button'),
       ...page.text('#home .index > ul > li > span button'),
     ],
-    ['Open ada’s page (k)', 'Play', 'Play'],
+    ['Open your page (k)', 'Play', 'Play'],
   );
   const plays = page
     .all('#home .index > ul > li > div')
@@ -690,12 +690,12 @@ test('each grid of the index is under the sentence its cells share, and a cell s
     ]);
   assert.deepEqual(plays, [
     ['Address of Money', false],
-    ['Address of ada’s shelf (k)', false],
     ['Address of bo’s notes (k)', true],
-    ['Address of ada’s page (k)', false],
+    ['Address of your shelf (k)', false],
+    ['Address of your page (k)', false],
   ]);
   const full = await home(ada({ lent: [lend('shelf', { using: 3 })] }));
-  assert.deepEqual(cells(full), ['ada’s shelf (k) Full now. Address']);
+  assert.deepEqual(cells(full), ['your shelf (k) Full now. Address']);
 });
 
 // The index for someone who cannot see where a thing sits. Each grid is a
@@ -737,10 +737,10 @@ test('each way in is described by its caption, and each button is named with wha
     ways.map((way) => [words(way), ...described(way)]),
     [
       ['Money', words(captions[0]), ''],
-      ['ada’s notes (k)', words(captions[1]), 'Full now.'],
-      ['ada’s shelf (k)', words(captions[1]), ''],
+      ['your notes (k)', words(captions[1]), 'Full now.'],
+      ['your shelf (k)', words(captions[1]), ''],
       [
-        'Open ada’s page (k)',
+        'Open your page (k)',
         words(captions[1]),
         'It also opens your friends’ films as you, and they can see what it asks.',
       ],
@@ -752,14 +752,14 @@ test('each way in is described by its caption, and each button is named with wha
   const names = page.all('#home .index > ul > li > button').map(named);
   assert.deepEqual(names, [
     'Address of Money',
-    'Address of ada’s notes (k)',
-    'Address of ada’s shelf (k)',
-    'Address of ada’s page (k)',
+    'Address of your notes (k)',
+    'Address of your shelf (k)',
+    'Address of your page (k)',
   ]);
   assert.deepEqual(
     [...ways.slice(-3), ...page.all('#home .index > ul > li > div > button')].map(named),
     [
-      'Open ada’s page (k)',
+      'Open your page (k)',
       'Play bo’s echo',
       'Play bo’s game',
       ...names.map((name) => `Close: ${name}`),
@@ -1199,7 +1199,7 @@ test('a lend’s address for a program is kept behind Address in its cell, and i
   for (const pop of pops) {
     assert.equal(pop.attributes.popover, 'auto');
     const said = pop.childNodes.filter((kid) => kid.nodeType === 1).map(words);
-    assert.equal(said[0], 'ada’s shelf (k)');
+    assert.equal(said[0], 'your shelf (k)');
     assert.ok(said[1].startsWith('Copy its address for a program'), said[1]);
     assert.ok(said[1].includes(`${shelf.origin} Bookmark this.`), said[1]);
     assert.equal(
@@ -1235,7 +1235,7 @@ test('a group’s people are drawn before its slowest computer answers, and it i
   const answers = ada({ people });
   answers['GET /v1/lends?namespace=house'] = () => held;
   const page = await home(answers);
-  assert.deepEqual(page.all('#home .door > li').map(shown), ['ada asking…', 'bo asking…']);
+  assert.deepEqual(page.all('#home .door > li').map(shown), ['you asking…', 'bo asking…']);
   assert.equal(page.all('#home .door > li.off').length, 0);
   answer(lends({ unanswered: [{ person: 'bo', person_key: BO, joined: { at: 1_791_000_000 } }] }));
   await page.settle();

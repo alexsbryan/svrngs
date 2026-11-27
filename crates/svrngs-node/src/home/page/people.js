@@ -102,7 +102,7 @@ export function People({ g: group, s: state, me, home }) {
   /** @type {NonNullable<import('../ui/door.js?v=__VERSION__').DoorProps['about']>} */
   const about = (person, name, drawn, words) =>
     html`<${Person} p=${person} name=${name ?? person.person} drawn=${drawn} words=${words} g=${group} s=${state} me=${me} home=${home} gone=${setGone} />`;
-  return html`<${Door} rows=${state.people.people} lends=${judged(state)} about=${about} /><p role="status">${gone}</p>`;
+  return html`<${Door} rows=${state.people.people} lends=${judged(state)} about=${about} me=${me} /><p role="status">${gone}</p>`;
 }
 
 // Who was removed from a group, or asked to be, under its door once its

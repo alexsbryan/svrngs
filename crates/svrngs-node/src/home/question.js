@@ -43,6 +43,7 @@
  *   open it, in the owner's own `/lent` answer: `[]` paused, `null` legacy
  *   and needing selection (SCOPE_PARALLEL.md, owner `GET /lent`)
  * @property {string} [called] its lender, as `called` tells namesakes apart
+ * @property {boolean} [yours] whether its lender is the person looking (`lentBy`)
  * @property {string | null} [check] what `svrngs check` finds in a carried
  *   app's folder here, in words for its card (surface.rs `lends`)
  */
@@ -90,7 +91,8 @@
 // by its kind alone, "Money", its lend name holding the group's id
 // (lend.rs `carried`) and its copies everyone's, a `-` in it said as a
 // space: a kind is one word (declared.rs `valid_header_name`), and
-// "House-rules" reads "House rules".
+// "House-rules" reads "House rules". On your own page yours is "your
+// navidrome", by key (`lentBy`), never by a name anyone can take.
 /** @param {string} kind */
 export const spoken = (kind) => kind.replaceAll('-', ' ');
 // A lend's label, the first name of its origin here: what /to, /choices
@@ -101,11 +103,11 @@ export const spoken = (kind) => kind.replaceAll('-', ' ');
  * @returns {string}
  */
 export const label = (lend) => /** @type {string} */ (new URL(lend.origin).hostname.split('.')[0]);
-/** @param {Pick<Lend, 'name' | 'kind' | 'person' | 'group' | 'called'>} lend */
+/** @param {Pick<Lend, 'name' | 'kind' | 'person' | 'group' | 'called' | 'yours'>} lend */
 export const named = (lend) => {
   if (lend.group) return spoken(lend.kind);
   const name = lend.name === lend.kind ? lend.name : `${lend.name} (${lend.kind})`;
-  return `${lend.called ?? lend.person}’s ${name}`;
+  return `${lend.yours ? 'your' : `${lend.called ?? lend.person}’s`} ${name}`;
 };
 
 // What opening `lend` in `group` agrees to, said beside its open on
@@ -269,14 +271,18 @@ export const joinedSaid = (joined) =>
 // day in UTC, `joinedSaid`), as the command tells them apart (cli.rs
 // `joined_said`); undefined for a key no row holds. Who did something is
 // told by key, never by name.
+// `you`, the first key of the person looking, says them "you" on their
+// own pages (ui/door.js).
 /**
  * @param {Named[]} rows
  * @param {string | undefined} key
  * @param {(joined: Joined) => string} [when]
+ * @param {string} [you]
  */
-export const called = (rows, key, when = joinedSaid) => {
+export const called = (rows, key, when = joinedSaid, you) => {
   const person = rows.find((row) => row.person_key === key);
   if (!person) return undefined;
+  if (key === you) return 'you';
   const namesake = rows.some((row) => row.person === person.person && row.person_key !== key);
   return namesake ? `${person.person} (${when(person.joined)})` : person.person;
 };
@@ -289,16 +295,22 @@ export const personOf = (rows, key) => rows.find((row) => row.key === key)?.pers
 // `lend` given `called`, its lender as `called` says them by the key of
 // the computer lending it, so `named` tells two lenders of one
 // name apart: the one way a lend read from a group is given whose it is.
+// Given `me`, this device's key, one its person lends is `yours`.
 /**
  * @template {{ key: string }} T
  * @param {T} lend
  * @param {PeopleRow[]} rows
- * @returns {T & { called: string | undefined }}
+ * @param {string} [me]
+ * @returns {T & { called: string | undefined, yours: boolean }}
  */
-export const lentBy = (lend, rows) => ({
-  ...lend,
-  called: called(rows, rows.find((row) => row.key === lend.key)?.person_key),
-});
+export const lentBy = (lend, rows, me) => {
+  const by = personOf(rows, lend.key);
+  return {
+    ...lend,
+    called: called(rows, by),
+    yours: by !== undefined && by === personOf(rows, me),
+  };
+};
 
 // Each of `lent` given `called` in place, as `lentBy` gives it.
 /**

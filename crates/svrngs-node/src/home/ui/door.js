@@ -7,7 +7,8 @@
 // while `lends` is not yet answered (undefined); "not known now" when it
 // could not be read (null); then lit, "on now", while their computer
 // answers, drawn off when it did not, and one in only from a phone marked
-// so, with no presence claimed. Given `lent`, as the screen gives it, each
+// so, with no presence claimed; given `me`, as the home page gives it, its
+// own person said "you" (question.js `called`). Given `lent`, as the screen gives it, each
 // person's own lends in their window, a link each, opened in a tab, the
 // screen's `newest` marked new; an app the group carries is the group's,
 // in nobody's window. `counted` is what the screen counts of it
@@ -54,14 +55,15 @@ const when = (/** @type {Joined} */ joined) =>
 // Each person once, with their name as the door says it and what holds their keys.
 /**
  * @param {PeopleRow[]} rows
+ * @param {string} [me]
  * @returns {Person[]}
  */
-const people = (rows) =>
+const people = (rows, me) =>
   [...new Map(rows.map((row) => [row.person_key, row])).values()]
     .sort((left, right) => since(left) - since(right))
     .map((person) => [
       person,
-      called(rows, person.person_key, when),
+      called(rows, person.person_key, when, personOf(rows, me)),
       rows.filter((row) => row.person_key === person.person_key).map((row) => row.device),
     ]);
 
@@ -148,6 +150,7 @@ const cell = ({ rows, lent, lends, newest, about }, [person, name, devices]) => 
  * @property {DoorLent[]} [lent]
  * @property {Unanswered | null} [lends]
  * @property {string} [newest]
+ * @property {string} [me] this device's key, whose person is "you"
  * @property {(person: PeopleRow, name: string | undefined, drawn: string, words: string) => Drawn} [about]
  *   what stands for a person's name, where a page makes it a control (the
  *   home page's, page/people.js); not given, the name alone, as the phone's
@@ -155,8 +158,8 @@ const cell = ({ rows, lent, lends, newest, about }, [person, name, devices]) => 
  */
 
 /** @param {DoorProps} props */
-export function Door({ rows, lent = [], lends, newest, about }) {
-  const cells = people(rows).map((person) => cell({ rows, lent, lends, newest, about }, person));
+export function Door({ lent = [], ...props }) {
+  const cells = people(props.rows, props.me).map((person) => cell({ ...props, lent }, person));
   return html`<ul class="door">${cells}</ul>`;
 }
 
