@@ -794,12 +794,12 @@ test('the words outside the index’s cells are the same for 8 things and for 40
 });
 
 // A group's page is what is, then what is done: under the banner what
-// needs the person, then the door, what the group shares and its files;
+// needs the person, then what the group shares, its people and its files;
 // after those who you have over, who else is visiting, and inviting; then
 // the folds. Planted, watched failing: grouped.js `GroupPlaces` drawing
 // who is visiting and the invitations under People, above Shared apps, as
 // it did.
-test('a group’s page is its banner, what needs you, its people, what they share, then inviting', async () => {
+test('a group’s page is its banner, what needs you, what they share, its people, then inviting', async () => {
   const visiting = [
     { id: 'v1', guest: 'jo', host: 'ada', host_key: ADA, until: 1_893_000_000, yours: true },
     { id: 'v2', guest: 'sy', host: 'bo', host_key: BO, until: 1_893_000_000, yours: false },
@@ -819,8 +819,8 @@ test('a group’s page is its banner, what needs you, its people, what they shar
     )
     .map((at) => (at.localName === 'details' ? words(at.firstChild) : words(at)));
   assert.deepEqual(heads, [
-    'People',
     'Shared apps',
+    'People: 2, 2 on now',
     'Shared files',
     'Who you have over',
     'Visiting now',
@@ -828,6 +828,33 @@ test('a group’s page is its banner, what needs you, its people, what they shar
     'Add an app',
     'Manage this group',
   ]);
+});
+
+// People on a group's page is one line past a handful, how many and how
+// many are on now, opened by its summary, and open up to it. On now is
+// said only once the lends answered who is on, never "0 on now" while they
+// are asked. Planted, each watched failing: grouped.js `GroupPlaces` saying
+// on now with the lends unanswered, and drawing People open past 8.
+test('people are one line past a handful, saying who is on only once that is known', async () => {
+  const people = [row('ada', ADA, 'started'), row('bo', BO), row('cy', CY), row('dee', DEE)];
+  for (const n of [5, 6, 7, 8, 9]) people.push(row(`p${n}`, String(n).repeat(64)));
+  let answer;
+  const held = new Promise((resolve) => (answer = resolve));
+  const answers = ada({ people });
+  answers['GET /v1/lends?namespace=house'] = () => held;
+  const page = await home(answers, '/?group=house');
+  const fold = () =>
+    page.all('#group-house > details').find((at) => words(at.firstChild).startsWith('People'));
+  const opened = (at) => at.attributes.open !== undefined && at.attributes.open !== false;
+  assert.deepEqual([words(fold().firstChild), opened(fold())], ['People: 9', false]);
+  answer(lends({ unanswered: [{ person: 'bo', person_key: BO }] }));
+  await page.settle();
+  assert.equal(words(fold().firstChild), 'People: 9, 8 on now');
+  const few = await home(ada({ people: people.slice(0, 8) }), '/?group=house');
+  const open = few
+    .all('#group-house > details')
+    .find((at) => words(at.firstChild).startsWith('People'));
+  assert.deepEqual([words(open.firstChild), opened(open)], ['People: 8, 8 on now', true]);
 });
 
 // "Add an app" on a group's page opens on what an app here is, a folder

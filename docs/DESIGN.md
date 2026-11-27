@@ -1175,9 +1175,11 @@ of 2026-11-06 (the operator). An old `/?ui=b` bookmark opens B
 
 B's workspace is what is, then what is done. Under the banner, first what
 needs the person: a new version to review (`home/page/grouped.js`
-`Notice`). Then **People**, open at first, the door and any removals: who
-is here, a few rows however many. Then what a person opens the page for:
-**Shared apps**, the app index, and **Shared files**: **Open shared files
+`Notice`). Then what a person opens the page for: **Shared apps**, the app
+index. Then **People**, the door and any removals, open up to 8 people and
+one line past them, its summary how many and how many are on now ("People:
+28, 20 on now"), said only once their computers answered. Then **Shared
+files**: **Open shared files
 in Finder**, or "in your file manager" off a Mac, opens the group's folder
 in a window of its own, each of several folders named by its own name, and
 **Folder location**, closed at first, says where it is

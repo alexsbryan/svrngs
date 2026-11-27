@@ -18,6 +18,7 @@ test('B places every original group capability exactly once', () => {
       placed.push(...names);
       return null;
     },
+    s: { at: { people: 'reading', lends: 'reading' }, id: 'house' },
   });
   assert.deepEqual(placed.toSorted(), [...PLACES].sort());
 });

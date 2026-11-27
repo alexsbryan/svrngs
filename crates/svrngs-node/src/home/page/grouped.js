@@ -10,6 +10,7 @@ import { counted } from '../ui/door.js?v=__VERSION__';
 /** @import { PlaceName } from './group-read.js?v=__VERSION__' */
 /** @import { Group } from './group.js?v=__VERSION__' */
 /** @import { Told } from './acts.js?v=__VERSION__' */
+/** @import { State as Read } from './group-reading.js?v=__VERSION__' */
 
 /** @type {Record<string, readonly string[]>} */
 const VIEWS = {
@@ -132,22 +133,28 @@ export function ArrivalLinks({ s: state, g: group }) {
   return html`<p>${state.grouped && group && html`<a href=${address('groups', group.id)}>Continue to ${group.name ?? 'your group'}</a> `}<a href="/">All your groups</a></p>`;
 }
 
-// A group's page, what is before what is done: who is here, the door, a
-// few rows however many; then what they share, which is what a person
-// opens the page for, and its files. After those, what a person does to
-// the group now and then: who they have over, with who else is visiting,
-// and the invitation buttons, never folded with leaving. Last the folds.
+// A group's page, what is before what is done: what they share, which is
+// what a person opens the page for, then who is here, then its files.
+// People are one line past a handful, how many and how many are on now,
+// opened by its summary; on now is said once their computers answered,
+// and kept while they are asked again, never as none before nor when the
+// last ask failed. After those, what a person does to the
+// group now and then: who they have over, with who else is visiting, and
+// the invitation buttons, never folded with leaving. Last the folds.
 // "Add an app" opens on what an app here is, a folder anyone can put in
 // the group's files, so the shelf's apps under it read as the examples
 // they are, never as the list of what a group may have.
 // An app's address and its WiFi line are in its own cell's popover
 // (wifi.js `Address`), being about that app, not about managing the group.
-/** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
-export function GroupPlaces({ draw }) {
+const HANDFUL = 8;
+/** @param {{ draw: (names: readonly PlaceName[]) => Drawn, s: Read }} props */
+export function GroupPlaces({ draw, s: state }) {
+  const [all, on] = counted(state.people?.people ?? [], [], state.lends);
+  const asked = state.lends && state.at.lends !== 'unread' ? `, ${on} on now` : '';
   return html`
-    <details class="group-place" open><summary>People</summary>${draw(['people', 'removals'])}</details>
     <h2>Shared apps</h2>
     ${draw(['index'])}
+    <details class="group-place" open=${all <= HANDFUL}><summary>People${all > 0 && `: ${all}${asked}`}</summary>${draw(['people', 'removals'])}</details>
     <h2>Shared files</h2>
     ${draw(['folder'])}
     ${draw(['visits', 'links'])}
