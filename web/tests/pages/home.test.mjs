@@ -128,9 +128,9 @@ const KEPT_A = ['replace', '/?ui=a'];
 // watched failing: index.js `says` saying of a lend what is true of a
 // carried app.
 const CARRIED =
-  'On every computer in the group. Each opens as you, reading and writing only its own entries.';
+  'On every computer in the group. Each opens as you in your group, reading and writing only its own entries.';
 const LENT =
-  'On its lender’s computer, while it’s on. Each opens as you, and may write its own part of the record.';
+  'On its lender’s computer, while it’s on. Each opens as you in your group, and may write its own part of the record.';
 const PLAYS = 'Play opens one on this computer, for a program here to connect to.';
 
 // The index's cells, each by its words less its popover's (wifi.js

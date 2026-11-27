@@ -60,22 +60,23 @@ const place = (lend, me) => {
 // runs, so when it opens, an app the group carries in its folder on every
 // computer (DESIGN §3, "Or a folder the group carries") and a lend on its
 // lender's, so a person never learns the difference by one not opening;
-// then what opening one lets it do, as you, the consent `may` says beside
+// then what opening one lets it do, as you in that group, the consent `may` says beside
 // one open, said for many in a line read at a glance: a newcomer reads 20
 // to 40 words a step, and the two captions were 71. "Each" says it of one
 // and of many alike.
 // Or what Play does; none for this computer's port.
-const CARRIED =
-  'On every computer in the group. Each opens as you, reading and writing only its own entries.';
-const READING = 'On every computer in the group. Each opens as you, reading but never writing.';
-const LENT =
-  'On its lender’s computer, while it’s on. Each opens as you, and may write its own part of the record.';
-/** @param {Lent} lend @param {string} me */
-const says = (lend, me) => {
+/** @param {Lent} lend @param {PlaceProps['g']} group @param {string} me */
+const says = (lend, group, me) => {
   if (place(lend, me) === 3) return '';
   if (lend.raw) return PLAYS;
-  if (!lend.group) return LENT;
-  return (lend.reads ?? []).length > 0 ? READING : CARRIED;
+  const as = `Each opens as you in ${group.name ?? 'your group'}`;
+  if (!lend.group)
+    return `On its lender’s computer, while it’s on. ${as}, and may write its own part of the record.`;
+  const what =
+    (lend.reads ?? []).length > 0
+      ? 'reading but never writing'
+      : 'reading and writing only its own entries';
+  return `On every computer in the group. ${as}, ${what}.`;
 };
 
 /**
@@ -108,7 +109,7 @@ function Index({ g: group, s: state, me }) {
   /** @type {Map<string, Lent[]>} */
   const grids = new Map();
   for (const lend of lent) {
-    const caption = says(lend, me);
+    const caption = says(lend, group, me);
     grids.set(caption, [...(grids.get(caption) ?? []), lend]);
   }
   const under = unsaid(lends, people) || (lent.length ? '' : 'Nobody lends anything here yet.');

@@ -1072,16 +1072,16 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
 - **the index**: what is in the group, on any port, as grids of cells, the
   door's own look. What a group shares has no bound, so no word outside a
   cell grows with it: each grid is under the one sentence true of everything
-  in it, which names nothing, in one short line read at a glance (a
+  in it, which names only the group, in one short line read at a glance (a
   newcomer reads 20 to 40 words a step): where its things are, so when they
   open, since both kinds sit under one heading, then what opening one lets
-  it do, as you — the group's own apps ("On every computer in the group.
-  Each opens as you, reading and writing only its own entries."), what
-  people's computers lend that opens in a tab ("On its lender’s computer,
-  while it’s on. Each opens as you, and may write its own part of the
-  record."), and ports ("Play opens one on this computer, for a program
-  here to connect to."), each said of one thing and of many alike. A grid
-  with nothing in it is not drawn. Beside one open the consent is said
+  it do, as you in that group — the group's own apps ("On every computer
+  in the group. Each opens as you in Garden, reading and writing only its
+  own entries."), what people's computers lend that opens in a tab ("On
+  its lender’s computer, while it’s on. Each opens as you in Garden, and
+  may write its own part of the record."), and ports ("Play opens one on
+  this computer, for a program here to connect to."), each said of one
+  thing and of many alike. A grid with nothing in it is not drawn. Beside one open the consent is said
   whole (`question.js` `may`). A cell is a
   thing's name as its way in, a link that opens it in a tab, so it reads as
   the app's way in and never its files; a port by its name with its Play;
