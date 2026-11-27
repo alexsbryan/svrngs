@@ -442,7 +442,7 @@ seconds, whatever their own computer does (`door::udp::serve`).
   as you", "Open on this computer: <name> (<lender>’s), while Play is
   on.", whose Stop is the row's own.
 - **Play at an address.** Another computer's lend at an address, an app
-  on a port such as a model, has Play too, beside its Address; a carried
+  on a port such as a model, has Play too, in its Address popover; a carried
   app has none. Nothing more listens: while it is on, the lend's address
   on that computer, `http://<label>.localhost:<port>/`, which its row says
   and copies, also lets in a program's request with no key. It must not be
@@ -1087,8 +1087,8 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   its kind in its lender's word when it differs, never one of svrngs's own
   (`scripts/vocab_check.py` reads the pages' scripts too). The name says
   whose ("Kim’s navidrome"), and cells sort by person, so one person's
-  things sit together. A cell says more only where it differs: a group's own
-  app its one line, and the app that also opens your friends' things its
+  things sit together. A cell has one way in, its name, drawn heaviest. A
+  cell says more only where it differs: a group's own app its one line, and the app
   sentence on a row of its own, with "Open" on its button, since that press
   is the yes (`home/page/index.js`, `lend-name.js`; the law that draws 8
   things and 40 and holds the words outside the cells equal is
@@ -1097,10 +1097,11 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   is this computer's own, and "Full now." What is for other devices and programs is about one
   thing and no part of deciding to open it, so it is behind **Address** in
   that thing's cell, a button that opens the browser's own popover
-  (`popover`, `popovertarget`; no script of ours opens or closes it): there
-  it can be opened to this WiFi, or closed (the operator, 2026-10-26), under
-  the sentence saying what that does, and its address copied for a program
-  (`home/page/wifi.js` `Address`). Only detail about one thing goes in a
+  (`popover`, `popovertarget`; no script of ours opens or closes it). It
+  says first the thing's name, so a wrong press shows at once, then its
+  address, copied for a program, then its Play when it has one, then it can
+  be opened to this WiFi, or closed (the operator, 2026-10-26), under the
+  sentence saying what that does (`home/page/wifi.js` `Address`). Only detail about one thing goes in a
   popover; a consent sentence, or a state that needs the person, never does.
   The button is always there to be seen: nothing a person can press waits
   for a hover or a focus to be painted. The door's second use of a popover:

@@ -125,6 +125,8 @@ body:not(.screen) #home ul.door > li.off { color: inherit; }
    the gap between cells. */
 div.index > ul + ul { margin-top: 0; }
 div.index > ul > li { overflow-wrap: anywhere; }
+/* A cell's name is its one way in (lend-name.js), drawn heaviest. */
+div.index > ul > li > a[id^="at-"] { font-weight: 800; }
 div.index > ul > li > :is(span, form) button { margin: 0; }
 /* Forty things are a screen of cells, so a cell is as tight as the door's:
    a line of words and little around it, its Play no taller than the line. */

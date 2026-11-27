@@ -645,8 +645,9 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
 // row of its own; then ports, this computer's own port last, with no
 // caption: it has no Play. A lend that opens friends' lends as you keeps "Open" on its
 // button, where the press is the yes. Another computer's lend at an address
-// has Play after its Address (lend-name.js `played`); this computer's own,
-// and an app the group's folder carries, have none.
+// has its Play in its Address popover, so its cell has one way in, its
+// name (wifi.js `Address`); this computer's own, and an app the group's
+// folder carries, have none.
 test('each grid of the index is under the sentence its cells share, and a cell says only what differs', async () => {
   const bo = { key: BO, person: 'bo', raw: 'udp' };
   const lent = [
@@ -670,7 +671,7 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   assert.deepEqual(cells(page), [
     'Money This app’s shared entries. Address',
     'ada’s shelf (k) Address',
-    'bo’s notes (k) Address Play',
+    'bo’s notes (k) Address',
     'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
     'bo’s echo (k) Play',
     'bo’s game (k) Play',
@@ -681,8 +682,22 @@ test('each grid of the index is under the sentence its cells share, and a cell s
       ...page.text('#home .index > ul > li > form button'),
       ...page.text('#home .index > ul > li > span button'),
     ],
-    ['Open ada’s page (k)', 'Play', 'Play', 'Play'],
+    ['Open ada’s page (k)', 'Play', 'Play'],
   );
+  const plays = page
+    .all('#home .index > ul > li > div')
+    .map((pop) => [
+      pop.attributes['aria-label'],
+      pop.childNodes
+        .filter((kid) => kid.nodeType === 1)
+        .some((kid) => words(kid).endsWith(' Play')),
+    ]);
+  assert.deepEqual(plays, [
+    ['Address of Money', false],
+    ['Address of ada’s shelf (k)', false],
+    ['Address of bo’s notes (k)', true],
+    ['Address of ada’s page (k)', false],
+  ]);
   const full = await home(ada({ lent: [lend('shelf', { using: 3 })] }));
   assert.deepEqual(cells(full), ['ada’s shelf (k) Full now. Address']);
 });
@@ -1167,8 +1182,9 @@ test('what acts as you names groups with the same deciders in one line, and head
 // browser::the_home_page_copies_a_lend_s_address_for_a_program: a lend's
 // address to keep, and its Copy, which writes that address and says where
 // a program takes it, are in its own cell, behind "Address": a button that
-// opens the browser's popover by its id (`popovertarget`), which holds what
-// opening it to this WiFi does over the button it is about. A port has
+// opens the browser's popover by its id (`popovertarget`), which says first
+// the lend it is of, then its address, then what opening it to this WiFi
+// does over the button it is about. A port has
 // none; and a lend two groups share has a popover in each, each with an id
 // of its own, or one group's button would open the other's. That the
 // clipboard then holds what the page wrote is Chromium's
@@ -1180,8 +1196,6 @@ test('a lend’s address for a program is kept behind Address in its cell, and i
   const shelf = lend('shelf');
   const groups = [group(), group({ id: 'flat', name: 'Flat' })];
   const page = await home(ada({ lent: [shelf, lend('port', { raw: 'tcp' })], groups }));
-  const foot = page.text('#home section ul.wifi li');
-  assert.ok(foot[0].includes(`${shelf.origin} Bookmark this.`), foot[0]);
   const pops = page.all('#home .index > ul > li > div');
   const opens = page.all('#home .index > ul > li > button');
   assert.deepEqual(opens.map(words), ['Address', 'Address'], 'one a lend with an address, a group');
@@ -1193,12 +1207,14 @@ test('a lend’s address for a program is kept behind Address in its cell, and i
   for (const pop of pops) {
     assert.equal(pop.attributes.popover, 'auto');
     const said = pop.childNodes.filter((kid) => kid.nodeType === 1).map(words);
+    assert.equal(said[0], 'ada’s shelf (k)');
+    assert.ok(said[1].startsWith('Copy its address for a program'), said[1]);
+    assert.ok(said[1].includes(`${shelf.origin} Bookmark this.`), said[1]);
     assert.equal(
-      said[0],
+      said[2],
       'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.',
     );
-    assert.ok(said[1].includes('Open it to this WiFi'), said[1]);
-    assert.ok(said[1].includes('Copy its address for a program'), said[1]);
+    assert.ok(said[3].includes('Open it to this WiFi'), said[3]);
     // Last, its Close, the browser's own: it names the popover it hides.
     const close = pop.childNodes.filter((kid) => kid.nodeType === 1).at(-1);
     assert.deepEqual(
@@ -1206,15 +1222,13 @@ test('a lend’s address for a program is kept behind Address in its cell, and i
       ['Close', pop.id, 'hide'],
     );
   }
-  await page.press('#home section ul.wifi li button', 'Copy its address for a program');
+  const copy = '#home section [popover] > p';
+  await page.press(`${copy} button`, 'Copy its address for a program');
   assert.deepEqual(page.copied, [shelf.origin]);
+  const copied = `Copied: ${shelf.origin}. Paste it where a program on this computer, such as a chat app, asks for an address.`;
   assert.ok(
-    page
-      .text('#home section ul.wifi li')[0]
-      .includes(
-        `Copied: ${shelf.origin}. Paste it where a program on this computer, such as a chat app, asks for an address.`,
-      ),
-    page.text('#home section ul.wifi li')[0],
+    page.text(copy).some((p) => p.includes(copied)),
+    page.text(copy).join('\n'),
   );
 });
 
@@ -1751,14 +1765,14 @@ test('a refusal or an answer is said once at each press, never one after another
     assert.equal(
       await pressed(
         page,
-        '#home section ul.wifi li button',
+        '#home section [popover] > p button',
         copy,
-        '#home section ul.wifi li',
+        '#home section [popover] > p',
         ' Copy it from here: ',
       ),
       1,
     );
-  assert.ok(!page.text('#home section ul.wifi li').join().includes(' Copied: '));
+  assert.ok(!page.text('#home section [popover] > p').join().includes(' Copied: '));
   assert.deepEqual(page.went, []);
 });
 
