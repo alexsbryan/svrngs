@@ -3,14 +3,15 @@
 // drawn from GROUP's last read of its people and what they lend, so each
 // read draws it again. What is shared grows without bound, so it is drawn
 // as grids of cells, one grid under each sentence true of everything in it:
-// what opening one lets it do (question.js `may`), and what Play does for a
-// port another computer lends. The sentence names nothing, so the words
+// where it runs and what opening one lets it do (question.js `may`, said
+// short for many), and what Play does for a port another computer lends.
+// The sentence names nothing, so the words
 // outside the cells are the same for eight things and for eighty; a cell is
 // a thing's name as its way in (lend-name.js), and a remark only where it
 // differs. Then, in one line, the computers whose lends are not listed,
 // said by why, so what a computer lends is never stale and never nobody's.
 import { html } from '../ui/view.js?v=__VERSION__';
-import { called, computers, lentBy, may, named, once } from '../question.js?v=__VERSION__';
+import { called, computers, lentBy, named, once } from '../question.js?v=__VERSION__';
 import { LendName } from './lend-name.js?v=__VERSION__';
 import { PLAYS } from './play.js?v=__VERSION__';
 /** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
@@ -55,27 +56,26 @@ const place = (lend, me) => {
   return (lend.reads ?? []).length > 0 ? 1.5 : 1;
 };
 
-// Where a thing someone lends runs, which is when it opens: both kinds sit
-// under "Shared apps", and a person should not have to learn the difference
-// by one of them not opening. Said of one thing or of many alike, and with
-// no " it " of its own: `Grid` says the caption's first as "one of these".
-const LENT =
-  'What is here runs on the computer of whoever lends it, and opens only while that computer is on.';
-
 // The sentences true of everything in a lend's grid, its caption: where it
-// is, so when it opens, an app the group carries in its folder on every
+// runs, so when it opens, an app the group carries in its folder on every
 // computer (DESIGN §3, "Or a folder the group carries") and a lend on its
-// lender's; then what opening one lets it do, a sentence of its own, so it
-// is heard whole. Or what Play does; none for this computer's port.
-/** @param {Lent} lend @param {PlaceProps['g']} group @param {string} me */
-const says = (lend, group, me) => {
+// lender's, so a person never learns the difference by one not opening;
+// then what opening one lets it do, as you, the consent `may` says beside
+// one open, said for many in a line read at a glance: a newcomer reads 20
+// to 40 words a step, and the two captions were 71. "Each" says it of one
+// and of many alike.
+// Or what Play does; none for this computer's port.
+const CARRIED =
+  'On every computer in the group. Each opens as you, reading and writing only its own entries.';
+const READING = 'On every computer in the group. Each opens as you, reading but never writing.';
+const LENT =
+  'On its lender’s computer, while it’s on. Each opens as you, and may write its own part of the record.';
+/** @param {Lent} lend @param {string} me */
+const says = (lend, me) => {
   if (place(lend, me) === 3) return '';
   if (lend.raw) return PLAYS;
-  const name = group.name ?? 'your group';
-  const where = lend.group
-    ? `What is here is in ${name}’s folder on every computer in ${name}, and opens while any of them is on.`
-    : LENT;
-  return `${where} ${may(lend, group)}`;
+  if (!lend.group) return LENT;
+  return (lend.reads ?? []).length > 0 ? READING : CARRIED;
 };
 
 /**
@@ -83,19 +83,16 @@ const says = (lend, group, me) => {
  * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { caption: string, lent: Lent[], by: string, shelf: Lends['shelf'] }} GridProps
  */
 
-// A grid under its caption, a list named by it. Over several the caption
-// says "one of these" where a lend alone is "it": "Opening one of these
-// lets it …". A function, so a `$` is only a `$`. `role="list"`: a list
+// A grid under its caption, a list named by it. `role="list"`: a list
 // drawn with no markers is no list to VoiceOver without it. A lend's
 // origin is its own, so it keys its cell.
 /** @param {GridProps} props */
 function Grid({ caption, lent, by, ...props }) {
-  const said = lent.length > 1 ? caption.replace(' it ', () => ' one of these ') : caption;
   const id = caption ? by : undefined;
   const cells = lent.map(
     (lend) => html`<li key=${lend.origin}><${LendName} l=${lend} by=${id} ...${props} /></li>`,
   );
-  return html`${caption && html`<p id=${by}>${said}</p>`}<ul role="list" aria-labelledby=${id}>${cells}</ul>`;
+  return html`${caption && html`<p id=${by}>${caption}</p>`}<ul role="list" aria-labelledby=${id}>${cells}</ul>`;
 }
 
 /** @param {PlaceProps} props */
@@ -111,7 +108,7 @@ function Index({ g: group, s: state, me }) {
   /** @type {Map<string, Lent[]>} */
   const grids = new Map();
   for (const lend of lent) {
-    const caption = says(lend, group, me);
+    const caption = says(lend, me);
     grids.set(caption, [...(grids.get(caption) ?? []), lend]);
   }
   const under = unsaid(lends, people) || (lent.length ? '' : 'Nobody lends anything here yet.');

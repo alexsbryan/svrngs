@@ -128,8 +128,8 @@ export const play = machine(
   [{ run: 'read', n: 1, failed: 'unread' }],
 );
 // What Play does, said once as the caption of the index's ports that have
-// one (index.js), never beside each Play.
-export const PLAYS = 'Play opens it on this computer, for a program here to connect to.';
+// one (index.js), never beside each Play, of one port and of many alike.
+export const PLAYS = 'Play opens one on this computer, for a program here to connect to.';
 
 /**
  * A port's Play or Stop: the port; in "What acts as you", what is said of

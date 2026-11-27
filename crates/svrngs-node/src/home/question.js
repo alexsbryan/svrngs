@@ -126,12 +126,13 @@ export const named = (lend) => {
 // done on her behalf without her yes ("Money can read and write who owes
 // whom on my behalf, and I never agreed to that", the fifth set, `together`
 // run 1; demo/xenia/findings/said-too-much-the-group-s-page.md).
+// An app the shelf has no words for says none beside its open, where
+// "this app's shared entries" told nobody anything.
 /**
  * @param {string} kind
  * @param {Shelved[]} shelf
  */
-const does = (kind, shelf) =>
-  shelf.find((app) => app.name === kind)?.words ?? 'this app’s shared entries.';
+const does = (kind, shelf) => shelf.find((app) => app.name === kind)?.words;
 // What opening `lend` lets it do, in one sentence: `agreed` says it beside
 // the open, and the home page's index says it once, as the caption of the
 // apps that share it (home/page/index.js).
@@ -162,9 +163,7 @@ export const agreed = (lend, shelf, group, above = []) => {
     !lend.reading &&
     `It also opens your friends’ ${reads.map(spoken).join(' and ')} as you, and they can see what it asks.`;
   const words = lend.group ? does(lend.kind, shelf) : '';
-  // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
-  // sentence for the app, or its own.
-  const what = words && `${/** @type {string} */ (words[0]).toUpperCase()}${words.slice(1)}`;
+  const what = words && `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
   const opening = may(lend, group);
   // What its page asks that apps can't load, before anyone opens it
   // (EXTENSION_POINT §6.3): else a blank page says nothing.
@@ -416,7 +415,7 @@ export const namesakes = (same, name, verb) => {
  * @param {Shelved[]} shelf
  */
 export const carrying = ({ kind, reads = [] }, shelf) =>
-  `${spoken(kind)} ${reads.length ? 'reads' : 'reads and writes'} ${does(kind, shelf).replace(/\.$/, '')}, when you open it.`;
+  `${spoken(kind)} ${reads.length ? 'reads' : 'reads and writes'} ${(does(kind, shelf) ?? 'this app’s shared entries').replace(/\.$/, '')}, when you open it.`;
 
 // What the person said, `said`, of `lend` opening their friends' lends as
 // them, since or on its day; `lend` undefined when it is not lent now. A

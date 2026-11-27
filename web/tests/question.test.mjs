@@ -90,10 +90,7 @@ test('the open says what an app does in one wording', () => {
         'Money',
         'Who owes whom, and for what. Opening it lets it read and write only its own entries, as you in House.',
       ],
-      [
-        'Quiz',
-        'This app’s shared entries. Opening it lets it read and write only its own entries, as you in House.',
-      ],
+      ['Quiz', 'Opening it lets it read and write only its own entries, as you in House.'],
       [
         'cy’s notes',
         'Opening it lets it write its own part of House’s record, as you. It also opens your friends’ films and music as you, and they can see what it asks.',
@@ -130,7 +127,7 @@ test('the real browser writer and reader rows keep their complete wording', () =
   const film = { person: 'cy', name: 'films', kind: 'films' };
   assert.equal(
     `Open ${q.named(reader)}${q.readLine([film], 1, ['films'])} ${q.named(film)} ${q.agreed(reader, [], {})}`,
-    'Open ProbeReads cy’s films. They can see it’s you, and what it asks for. cy’s films This app’s shared entries. Opening it lets it read but never write, as you in your group.',
+    'Open ProbeReads cy’s films. They can see it’s you, and what it asks for. cy’s films Opening it lets it read but never write, as you in your group.',
   );
 });
 

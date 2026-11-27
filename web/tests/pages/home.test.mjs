@@ -123,13 +123,15 @@ const reloaded = async (page, opened, answers) => {
 const KEPT_A = ['replace', '/?ui=a'];
 
 // Where a thing runs, so when it opens, said before what opening it lets it
-// do: of an app the group carries, and of what a person lends. The same
-// words for one thing and for many. Planted, watched failing: index.js
-// `says` saying of a lend what is true of a carried app.
+// do, as you: of an app the group carries, and of what a person lends; and
+// what Play does. The same words for one thing and for many. Planted,
+// watched failing: index.js `says` saying of a lend what is true of a
+// carried app.
 const CARRIED =
-  'What is here is in your group’s folder on every computer in your group, and opens while any of them is on. ';
+  'On every computer in the group. Each opens as you, reading and writing only its own entries.';
 const LENT =
-  'What is here runs on the computer of whoever lends it, and opens only while that computer is on. ';
+  'On its lender’s computer, while it’s on. Each opens as you, and may write its own part of the record.';
+const PLAYS = 'Play opens one on this computer, for a program here to connect to.';
 
 // The index's cells, each by its words less its popover's (wifi.js
 // `Address`): what a person reads in the cell before pressing Address.
@@ -625,9 +627,7 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
   const shelf = lend('shelf');
   const page = await home(ada({ lent: [shelf] }));
   assert.deepEqual(page.text('#home .index > ul > li > a'), ['ada’s shelf (k)']);
-  assert.deepEqual(page.text('#home .index > p'), [
-    `${LENT}Opening it lets it write its own part of your group’s record, as you.`,
-  ]);
+  assert.deepEqual(page.text('#home .index > p'), [LENT]);
   assert.deepEqual(cells(page), ['ada’s shelf (k) Address']);
   const [link] = page.all('#home .index > ul > li > a');
   assert.equal(link.attributes.target, '_blank');
@@ -661,15 +661,11 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   ];
   const people = [row('ada', ADA, 'started'), row('bo', BO)];
   const page = await home(ada({ lent, people }));
-  assert.deepEqual(page.text('#home .index > p'), [
-    `${CARRIED}Opening it lets it read and write only its own entries, as you in your group.`,
-    `${LENT}Opening one of these lets it write its own part of your group’s record, as you.`,
-    'Play opens one of these on this computer, for a program here to connect to.',
-  ]);
+  assert.deepEqual(page.text('#home .index > p'), [CARRIED, LENT, PLAYS]);
   assert.equal(page.all('#home .index > ul').length, 4);
   assert.equal(page.all('#home .index table').length, 0);
   assert.deepEqual(cells(page), [
-    'Money This app’s shared entries. Address',
+    'Money Address',
     'ada’s shelf (k) Address',
     'bo’s notes (k) Address',
     'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
@@ -740,7 +736,7 @@ test('each way in is described by its caption, and each button is named with wha
   assert.deepEqual(
     ways.map((way) => [words(way), ...described(way)]),
     [
-      ['Money', words(captions[0]), 'This app’s shared entries.'],
+      ['Money', words(captions[0]), ''],
       ['ada’s notes (k)', words(captions[1]), 'Full now.'],
       ['ada’s shelf (k)', words(captions[1]), ''],
       [
@@ -800,11 +796,7 @@ test('the words outside the index’s cells are the same for 8 things and for 40
     return said;
   };
   const [few, many] = [await drawn(8), await drawn(40)];
-  assert.deepEqual(few, [
-    `${CARRIED}Opening one of these lets it read and write only its own entries, as you in your group.`,
-    `${LENT}Opening one of these lets it write its own part of your group’s record, as you.`,
-    'Play opens one of these on this computer, for a program here to connect to.',
-  ]);
+  assert.deepEqual(few, [CARRIED, LENT, PLAYS]);
   assert.deepEqual(many, few);
 });
 
