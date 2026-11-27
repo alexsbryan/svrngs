@@ -282,6 +282,11 @@ export const called = (rows, key, when = joinedSaid) => {
   return namesake ? `${person.person} (${when(person.joined)})` : person.person;
 };
 
+// The first key of the person whose device key is `key`, of the people
+// rows: who a computer or phone is, by key, never by name.
+/** @param {PeopleRow[]} rows @param {string | undefined} key */
+export const personOf = (rows, key) => rows.find((row) => row.key === key)?.person_key;
+
 // `lend` given `called`, its lender as `called` says them by the key of
 // the computer lending it, so `named` tells two lenders of one
 // name apart: the one way a lend read from a group is given whose it is.

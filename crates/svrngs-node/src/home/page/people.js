@@ -8,7 +8,7 @@ import { html, useEffect, useMachine, useState } from '../ui/view.js?v=__VERSION
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Door } from '../ui/door.js?v=__VERSION__';
 import { LEAVE } from './leaving.js?v=__VERSION__';
-import { computers, joinedSaid, label, removal } from '../question.js?v=__VERSION__';
+import { computers, joinedSaid, label, personOf, removal } from '../question.js?v=__VERSION__';
 /** @import { Lends, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { PeopleRow, Removal } from '../question.js?v=__VERSION__' */
 
@@ -51,8 +51,7 @@ function Person({ p: person, name, drawn, words, g: group, s: state, me, home, g
   const [asking, send] = useMachine(() =>
     machine('LEAVE', LEAVE(home), { at: { leave: 'idle' }, said: [], to: 0, name: place }),
   );
-  const whose = (/** @type {string} */ key) =>
-    state.people?.people.find((row) => row.key === key)?.person_key;
+  const whose = (/** @type {string} */ key) => personOf(state.people?.people ?? [], key);
   const id = `person-${group.id}-${person.person_key}`;
   // Removed: the focus goes to the fold the door is in, People, before
   // their cell goes with the groups' next read, where it would fall to the

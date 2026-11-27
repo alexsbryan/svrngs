@@ -14,7 +14,7 @@
 // (group-screen.js): its people, those on now, and the things in their
 // windows.
 import { html } from './view.js?v=__VERSION__';
-import { called } from '../question.js?v=__VERSION__';
+import { called, personOf } from '../question.js?v=__VERSION__';
 /** @import { Joined, Named, PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import { Drawn } from './view.js?v=__VERSION__' */
 
@@ -115,10 +115,7 @@ function judged(person, devices, lends) {
  */
 const theirs = (rows, lent, person, newest) =>
   lent
-    .filter(
-      (lend) =>
-        !lend.group && rows.find((row) => row.key === lend.key)?.person_key === person.person_key,
-    )
+    .filter((lend) => !lend.group && personOf(rows, lend.key) === person.person_key)
     .map((lend) => {
       const fresh = lend.origin === newest && html`${' '}<mark>new</mark>`;
       return html`${' '}<a href=${lend.origin} target="_blank">${lend.name}</a>${fresh}`;
