@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::words::{self, RUN_UNREAD};
 use super::{
-    plan, step, Availability, Done, Event, Method, Nature, Plan, Platform, Return, RunView, Runs,
-    State, Terms,
+    plan, step, Availability, Done, Event, Method, Nature, Plan, Return, RunView, Runs, State,
+    Terms,
 };
 use crate::{
     door::bound,
@@ -148,17 +148,11 @@ impl Share<'_> {
             Some(grant) => (Runs::Kept(grant.clone()), Return::SignIn, Some(grant)),
             None => (runs, app, keep),
         };
-        let platform = if cfg!(target_os = "macos") {
-            Platform::Mac
-        } else {
-            Platform::Linux
-        };
         let events = [
             Event::Revision(rev),
             Event::Nature(Nature {
                 name: lend.name.clone(),
                 port,
-                platform,
                 raw,
                 runs,
                 pid: self.pid.or(pid),

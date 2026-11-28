@@ -1,15 +1,11 @@
 {
   "returns": [
-    ["boot", "unlock", "login", "run", "door"],
-    ["unlock", "unlock", "login", "run", "door"],
-    ["login", "login", "login", "run", "door"],
-    ["run", "run", "run", "run", "door"],
-    ["app", "app", "app", "app", "app"]
+    ["login", "run", "door"],
+    ["run", "run", "door"],
+    ["app", "app", "app"]
   ],
-  "deployments": ["by-hand", "container", "reuse", "reuse", "account", "transient"],
+  "deployments": ["by-hand", "reuse", "reuse", "account", "transient"],
   "promise": {
-    "boot": "House can open it again after this computer starts, even before you sign in.",
-    "unlock": "House can open it again after you unlock the disk.",
     "login": "House can open it again after you sign in.",
     "run": "House can use it while it’s running."
   },
@@ -21,7 +17,6 @@
   "reason": {
     "udp": "this program shares a UDP port",
     "by-hand": "Coder was started by hand",
-    "container": "svrngs can’t verify what will answer on this port when the container starts again",
     "account": "Coder runs as the account other",
     "transient": "Coder has no saved setup to start it again",
     "app": "svrngs couldn’t verify when Coder will start again",
