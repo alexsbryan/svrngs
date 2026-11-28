@@ -27,11 +27,12 @@ V1.14.0 keeps what you lend running after a restart, makes the `svrngs`
 command start and update svrngs in one step, and makes a group's page
 quicker to read.
 
-**Moving from 1.13.3:** run the [verified install
-command](docs/guide/start.md#start-a-group-on-your-computer) again, with the
-same account. It installs svrngs and the new Keeper program and keeps your
-groups. The 1.13.3 updater replaces only `svrngs`, so if you already
-updated that way, run the install command to add Keeper. If a package
+**Moving from 1.13.3:** update as you always do, with **Update and
+restart** on your home page or `svrngs update`. The first time V1.14.0
+starts, it adds the new Keeper program beside `svrngs` by itself, from
+the same signed release, with no second restart and nothing for you to
+do. If your computer is offline then, svrngs tries again the next time it
+starts, or when you press **Update and restart** again. If a package
 manager installed svrngs, update the package instead.
 
 **Keep it running.** A program you lend is shared only while it runs. Its

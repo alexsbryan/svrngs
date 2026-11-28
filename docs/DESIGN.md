@@ -3169,8 +3169,16 @@ checks the release key itself (`packaging/arch`). The updater stages both
 executables before replacing either, installs Keeper first, and records the
 release after both replacements. The daemon's Keeper commands require the
 same release build, so an interrupted replacement can be retried without
-run or lifecycle commands crossing the version boundary. The 1.13.3 updater
-predates that rule: rerun the verified install line to cross that transition.
+run or lifecycle commands crossing the version boundary. The release
+running is never put over itself: when it is the page's and its Keeper is
+missing, as the 1.13.3 updater, which replaced svrngs alone, leaves it,
+the update puts that Keeper in place alone and nothing restarts. svrngs
+does the same each time it starts, with no step from the person, but
+never takes a newer release there (`update.rs` `complete`, `Scope`); a
+page it cannot reach is said and tried at the next start or Update, on
+no timer. `crates/svrngs/tests/upgrade` holds this: the last release's own
+test binary, updated by its own updater from a page signed by a test key
+both builds pin, must end with both programs working after one start.
 
 *A computer that keeps apps* gets Give's program from the same line, with
 `--give` after the link or the page's address. The page host serves it

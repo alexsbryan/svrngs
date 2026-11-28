@@ -431,7 +431,7 @@ impl Net for IrohTransport {
             .relays
             .iter()
             .map(|r| TransportAddr::Relay(r.clone().into()));
-        let mut ea = iroh::EndpointAddr::from_parts(peer.key, relays);
+        let ea = iroh::EndpointAddr::from_parts(peer.key, relays);
         let seeded = self
             .known_addrs
             .lock()
@@ -440,9 +440,8 @@ impl Net for IrohTransport {
             .unwrap_or_default();
         // The address set is iroh's `BTreeSet`, so a hint given twice is
         // one address (iroh-base-1.0.2 `endpoint_addr.rs:118-121`).
-        for a in peer.iroh_direct_addrs.iter().copied().chain(seeded) {
-            ea = ea.with_ip_addr(a);
-        }
+        let addrs = peer.iroh_direct_addrs.iter().copied().chain(seeded);
+        let ea = addrs.fold(ea, |ea, a| ea.with_ip_addr(a));
         if !ea.is_empty() {
             return Some(ea);
         }

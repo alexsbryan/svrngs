@@ -72,7 +72,7 @@ pub async fn link_to(
         ..Linking::default()
     };
     let made = node.linked(asked).await.map_err(|e| match e {
-        Unlinked::Closed(why) => Refusal::from(Refused::Meet(why)),
+        Unlinked::Closed(why) => Refusal::from(Refused::Said(why)),
         Unlinked::Unminted(Unminted::NotIn) => Refused::NotIn(seed.name().clone()).into(),
         Unlinked::Unminted(_) => Unjudged::Keep(seed.name().to_string()).into(),
     })?;

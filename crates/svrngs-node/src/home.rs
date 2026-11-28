@@ -366,7 +366,7 @@ async fn update_check(State(at): State<Asking>) -> Response {
 /// so the one that starts in its place is the new binary. A refusal keeps
 /// the running one and says why.
 async fn update_apply(State(at): State<Asking>) -> Response {
-    match crate::update::apply(&at.door.data_dir).await {
+    match crate::update::apply(&at.door.data_dir, crate::update::Scope::Release).await {
         Ok(crate::update::Outcome::Current) => update_state("current"),
         Ok(crate::update::Outcome::Packaged(_)) => update_state("packaged"),
         Ok(crate::update::Outcome::Updated) => {

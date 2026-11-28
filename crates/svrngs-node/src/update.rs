@@ -11,7 +11,9 @@
 //! commit ([`BUILT`]), or the signature this computer last accepted, which
 //! `release` keeps, whichever is later (DESIGN §7, "A computer updates only
 //! from a signed release"). Keeper goes first; `plan::run` refuses a mixed
-//! pair if activation is interrupted.
+//! pair if activation is interrupted. The release running is never put
+//! over itself: a Keeper missing beside it is put there alone, at start
+//! with no step from the person ([`complete`]).
 //!
 //! A refusal keeps the running binary. A check that cannot be judged — no
 //! page kept, no line for this platform, a page that does not answer — is
@@ -25,7 +27,7 @@
 
 use std::fs::{self, File};
 use std::io::ErrorKind;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
@@ -149,6 +151,36 @@ impl UpdateError {
 pub trait Get: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError> {}
 impl<F: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError>> Get for F {}
 
+/// What an update may put in place: the page's release, as the person
+/// asks; or, at start, only the Keeper of the release svrngs runs
+/// ([`complete`]), never a newer svrngs the person did not ask for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Scope {
+    Release,
+    Keeper,
+}
+
+/// At start: the Keeper of the release this svrngs runs, put beside it if
+/// it is missing, as V1.13.3's updater leaves it, which replaced svrngs
+/// alone. The person chose this release already, so it is completed in
+/// place, with no button and no restart. Each way it cannot be is said at
+/// warn; the next start tries again, as does the home page's Update.
+/// Neither runs on a timer, so nothing loops.
+pub async fn complete(dir: PathBuf) {
+    let missing = !keeper_installed();
+    tracing::debug!(target: "update", missing, "update: at start, whether Keeper is missing beside this svrngs");
+    if !missing {
+        return;
+    }
+    let why = match apply(&dir, Scope::Keeper).await {
+        Ok(Outcome::Packaged(words)) => words,
+        // Put in place, which `apply_at` says.
+        Ok(_) => return,
+        Err(e) => e.to_string(),
+    };
+    tracing::warn!(target: "update", why, "update: Keeper is missing beside this svrngs, and was not added; the next start tries again");
+}
+
 /// Whether the page offers a svrngs this computer does not run, unless a
 /// package updates this one; then the page is not asked.
 pub async fn check(dir: &Path) -> Result<Check, UpdateError> {
@@ -182,11 +214,12 @@ pub async fn check_by(dir: &Path, get: impl Get, keys: &[[u8; 32]]) -> Result<Ch
 }
 
 /// Put the page’s release in place over this computer’s svrngs, unless it
-/// is the one running. The caller restarts the node after `Updated`.
-pub async fn apply(dir: &Path) -> Result<Outcome, UpdateError> {
+/// is the one running, as far as `scope` lets. The caller restarts the
+/// node after `Updated`.
+pub async fn apply(dir: &Path, scope: Scope) -> Result<Outcome, UpdateError> {
     let exe =
         std::env::current_exe().map_err(refused("this computer cannot find the svrngs it runs"))?;
-    apply_at(dir, &exe, fetch, signed::RELEASE_KEYS).await
+    apply_at(dir, &exe, fetch, signed::RELEASE_KEYS, scope).await
 }
 
 /// [`apply`] over `exe`, the page's files read by `get`, its sums signed by
@@ -197,6 +230,7 @@ pub async fn apply_at(
     exe: &Path,
     get: impl Get,
     keys: &[[u8; 32]],
+    scope: Scope,
 ) -> Result<Outcome, UpdateError> {
     if let Some(words) = packaged(exe) {
         return Ok(Outcome::Packaged(words));
@@ -205,10 +239,18 @@ pub async fn apply_at(
     let _held = claim(dir)?;
     let latest = latest(dir, &get, keys).await?;
     let keeper = exe.with_file_name(KEEPER);
-    if latest.installed.as_deref() == Some(latest.want.as_str()) && keeper.is_file() {
-        tracing::debug!(target: "update", tarball = %latest.tarball, "update: the release is the one this computer installed");
+    let current = latest.installed.as_deref() == Some(latest.want.as_str());
+    tracing::debug!(target: "update", tarball = %latest.tarball, current, keeper = keeper.is_file(), ?scope, "update: whether the release is the one this computer installed, and its Keeper beside svrngs");
+    if current && keeper.is_file() {
         return Ok(Outcome::Current);
     }
+    if !current && scope == Scope::Keeper {
+        let why = "the page offers a newer svrngs: Update on the home page puts it in place, with its Keeper";
+        return Err(UpdateError::Refused(why.into()));
+    }
+    // The release running is never put over itself, so nothing restarts
+    // for it: its Keeper alone.
+    let names = &["svrngs", KEEPER][usize::from(current)..];
     // Asked before the download: a svrngs that cannot write beside itself
     // was put there by someone else, who updates it.
     let temp = tempfile::tempdir_in(bin)
@@ -226,16 +268,15 @@ pub async fn apply_at(
         .arg(&tarball)
         .arg("-C")
         .arg(temp.path())
-        .args(["svrngs", KEEPER])
+        .args(names)
         .status()
         .map_err(refused("the update cannot be unpacked"))?;
     if !tar.success() {
         tracing::debug!(target: "update", url, "update: refused — the tarball did not unpack");
-        return Err(UpdateError::Refused(
-            "the release could not unpack both svrngs and its Keeper".to_string(),
-        ));
+        let why = format!("the release could not unpack {}", names.join(" and its "));
+        return Err(UpdateError::Refused(why));
     }
-    for name in ["svrngs", KEEPER] {
+    for name in names {
         let file = temp.path().join(name);
         if !fs::symlink_metadata(&file)
             .map_err(refused("the new release cannot be read"))?
@@ -251,6 +292,10 @@ pub async fn apply_at(
     }
     fs::rename(temp.path().join(KEEPER), keeper)
         .map_err(refused("the new Keeper cannot be installed"))?;
+    if current {
+        tracing::info!(target: "update", exe = %exe.display(), "update: Keeper is in place beside the svrngs this computer runs, from its release");
+        return Ok(Outcome::Current);
+    }
     fs::rename(temp.path().join("svrngs"), exe).map_err(refused(
         "the new svrngs cannot replace this one; run the verified installer to repair the pair",
     ))?;

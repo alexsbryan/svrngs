@@ -127,7 +127,7 @@ async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
     assert!(
         matches!(
             refused,
-            Err(svrngs::cli::Refusal::Refused(svrngs::cli::Refused::Meet(_)))
+            Err(svrngs::cli::Refusal::Refused(svrngs::cli::Refused::Said(_)))
         ),
         "the command refuses before it mints a link"
     );

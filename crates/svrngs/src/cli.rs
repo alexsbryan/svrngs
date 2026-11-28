@@ -133,7 +133,7 @@ use svrngs_node::removal::{
 use svrngs_node::room;
 use svrngs_node::surface::STOP_ROUTE;
 use svrngs_node::uid::{Answering, Unread};
-use svrngs_node::update;
+use svrngs_node::update::{self, Scope};
 use svrngs_node::{Joined, Person};
 
 use crate::group::{self, Name, Seed};
@@ -614,10 +614,12 @@ refusal_from!(KeyError => Unjudged, ApiError => Unjudged, KeyFailure => Unjudged
 /// It ran and refused: exit 1.
 #[derive(Debug, thiserror::Error)]
 pub enum Refused {
+    /// Refused in the words of what refused it: a share's plan, a run, a
+    /// group's own terms for the program, `room` or `link --relay` by the
+    /// svrngs running here, `check`'s findings or the folder holding no
+    /// page, and `remove` or `handover` in the words [`Said::Removal`] says.
     #[error("{0}")]
-    SharePlan(String),
-    #[error("{0}")]
-    RunApp(String),
+    Said(String),
     #[error(
         "svrngs is already running on this computer ({0} is held); stop it, then run this again"
     )]
@@ -649,27 +651,12 @@ pub enum Refused {
     Share(#[from] ShareRefusal),
     #[error("{0}'s readers were not let in: {1}")]
     Readers(LendName, String),
-    /// A group's own terms for the program refused, in their words.
-    #[error("{0}")]
-    Terms(String),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
     NotLent { name: LendName, lent: Vec<LendName> },
     #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Use a host that serves your page at every name under it, as group.svrnme.sh does")]
     NoAppAddress(String),
-    /// `room` refused by svrngs running here, in its words.
-    #[error("{0}")]
-    Room(String),
-    /// `check`'s findings, or the folder holding no page.
-    #[error("{0}")]
-    Unfit(String),
     #[error("the folder was refused: {0}")]
     Folder(String),
-    /// `remove` or `handover` refused, in the words [`Said::Removal`] says.
-    #[error("{0}")]
-    Removal(String),
-    /// `link --relay` refused, in the node's words.
-    #[error("{0}")]
-    Meet(String),
     #[error("you are in no group on this computer, so a relay for your groups would let nobody through: join one first, or say --open to relay for everyone")]
     RelayForNobody,
     #[error("svrngs approve shows you what answers on {0}'s port before it keeps sharing {0}, and there's no terminal here to ask you: run it in a terminal, or press Keep sharing it on your home page")]
@@ -876,7 +863,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         }
         // Updated, the new svrngs restarts svrngs onto itself and says
         // so, as `svrngs restart`: this program, read before it is replaced.
-        Verb::Update => match (program(&root), update::apply(&root).await?) {
+        Verb::Update => match (program(&root), update::apply(&root, Scope::Release).await?) {
             (_, update::Outcome::Current) => "This computer has the latest svrngs.\n".into(),
             (new, update::Outcome::Updated) => {
                 use std::os::unix::process::CommandExt as _;
@@ -891,7 +878,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
         Verb::RunApp(name, args) => {
             run::native(&root, &name, Terminal, args.iter().map(String::as_str))
                 .await
-                .map_err(Refused::RunApp)?
+                .map_err(Refused::Said)?
                 + "\n"
         }
         Verb::Keep(port, args) => keep(here, &port, &args).await?,
@@ -1022,11 +1009,11 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                     words += "\n";
                     words += &share_review(&review, &witness.answers);
                 }
-                return Err(Refused::SharePlan(words).into());
+                return Err(Refused::Said(words).into());
             };
             let line = reviewed.report_words(&report);
             if !matches!(report, Done::Published { .. }) {
-                return Err(Refused::SharePlan(line).into());
+                return Err(Refused::Said(line).into());
             }
             eprintln!("{line}");
             let lend = lend::read(&root, &lend.name)
@@ -1101,21 +1088,21 @@ fn checked(dir: &Path, was: Option<&Path>) -> Result<String, Refusal> {
             d.display()
         )
     };
-    let found = svrngs_node::folder::check::check(dir).ok_or(Refused::Unfit(none(dir)))?;
+    let found = svrngs_node::folder::check::check(dir).ok_or(Refused::Said(none(dir)))?;
     let mut said: Vec<_> = (found.iter())
         .map(|(file, line, r)| format!("{file}:{line}: {}", r.words()))
         .collect();
     let schema = |d: &Path| match std::fs::read_to_string(d.join(svrngs_db::SCHEMA)) {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        read => read.map(Some).map_err(|e| {
-            Refused::Unfit(format!("{}'s schema.sql can't be read: {e}", d.display()))
-        }),
+        read => read
+            .map(Some)
+            .map_err(|e| Refused::Said(format!("{}'s schema.sql can't be read: {e}", d.display()))),
     };
     let earlier = was.map(|w| {
         w.join("index.html")
             .is_file()
             .then_some(w)
-            .ok_or(Refused::Unfit(none(w)))
+            .ok_or(Refused::Said(none(w)))
     });
     let earlier = earlier.transpose()?.map(schema).transpose()?.flatten();
     let made = schema(dir)?.map(|s| svrngs_db::check(&s, earlier.as_deref()));
@@ -1125,7 +1112,7 @@ fn checked(dir: &Path, was: Option<&Path>) -> Result<String, Refusal> {
     }
     let fix = "this page asks for what apps can't load, so it won't work as it is";
     if !said.is_empty() {
-        return Err(Refused::Unfit(format!("{fix}:\n{}", said.join("\n"))).into());
+        return Err(Refused::Said(format!("{fix}:\n{}", said.join("\n"))).into());
     }
     let tables = made.and_then(Result::ok).unwrap_or_default();
     let named = |files: &[String]| -> String {
@@ -1166,7 +1153,7 @@ async fn folder(here: &impl Here, dir: PathBuf, reference: &str) -> Result<Strin
 async fn room(here: &impl Here, names: Vec<LendName>) -> Result<Said, Refusal> {
     let answer = here.ask(room::ROUTE, &room::RoomAsk::Names(names)).await?;
     tracing::debug!(target: "cli", ok = answer.0, text = answer.1, "cli: room — svrngs running here answered");
-    let refused = |told: Option<Told>| Refused::Room(told.map_or(answer.1.clone(), |t| t.error));
+    let refused = |told: Option<Told>| Refused::Said(told.map_or(answer.1.clone(), |t| t.error));
     answered(&answer)
         .map(Said::Room)
         .map_err(|told| refused(told).into())
@@ -1207,7 +1194,7 @@ fn said(
     match outcome {
         _ if ok => Ok(said(outcome)),
         Outcome::Fault => Err(Unjudged::Unchanged(seed.name().clone()).into()),
-        _ => Err(Refused::Removal(said(outcome).to_string().trim_end().to_string()).into()),
+        _ => Err(Refused::Said(said(outcome).to_string().trim_end().to_string()).into()),
     }
 }
 
@@ -1614,6 +1601,9 @@ async fn start(
     if let Some(sharing) = sharing {
         println!("{}", issued(sharing, node.api_addr()));
     }
+    // The release this svrngs runs, completed beside it if its Keeper is
+    // missing, as V1.13.3's updater leaves it: no restart, no button.
+    tokio::spawn(update::complete(root.clone()));
     let ran = serve(command, &root, &node, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
     // first, on a refusal as on Ctrl-C.
@@ -2192,7 +2182,7 @@ async fn terms_of(here: &impl Here, kind: &Program, groups: &[String]) -> Result
     match (ok, serde_json::from_str::<(String, String)>(&text)) {
         (true, Ok((text, by))) => Ok((text.leak(), by)),
         (false, _) => Err(serde_json::from_str(&text)
-            .map_or(Refused::Older, Refused::Terms)
+            .map_or(Refused::Older, Refused::Said)
             .into()),
         (true, Err(_)) => Err(Refused::Older.into()),
     }
@@ -2246,8 +2236,8 @@ pub fn approve(
 /// which shows it here and waits for Enter), then approved as that job. The
 /// `--` is the person's: what follows it is the command, as typed.
 async fn keep(here: &impl Here, port: &str, args: &[String]) -> Result<String, Refusal> {
-    let unlent = || Refused::RunApp(format!("Nothing is lent on port {port} here. {UNLENT}"));
-    let lent = lend::all(here.root()).map_err(|e| Refused::RunApp(e.to_string()))?;
+    let unlent = || Refused::Said(format!("Nothing is lent on port {port} here. {UNLENT}"));
+    let lent = lend::all(here.root()).map_err(|e| Refused::Said(e.to_string()))?;
     let on = |l: Lend| Some((l.port().filter(|p| p.to_string() == port)?, l));
     let (at, lend) = lent.into_iter().flatten().find_map(on).ok_or_else(unlent)?;
     // Its folder is the one this runs in, which the keeper starts in too.
@@ -2256,7 +2246,7 @@ async fn keep(here: &impl Here, port: &str, args: &[String]) -> Result<String, R
         .into_iter()
         .chain(args.iter().map(String::as_str));
     let said = run::native(here.root(), lend.name.as_str(), Terminal, words).await;
-    let said = said.map_err(Refused::RunApp)?;
+    let said = said.map_err(Refused::Said)?;
     let read = here.answering(lend.raw(), at, None);
     let (seen, _) = share::approve((at, lend.raw()), read, None, None)?;
     let token = Some(share::token(&seen));
@@ -2628,7 +2618,7 @@ async fn link_running(
         match kind.as_str() {
             "not_in" => Refused::NotIn(seed.name().clone()).into(),
             "unkept" => Unjudged::Keep(seed.name().to_string()).into(),
-            _ => Refused::Meet(error).into(),
+            _ => Refused::Said(error).into(),
         }
     })?;
     // An older svrngs says nothing of a relay: nor does the command, then.

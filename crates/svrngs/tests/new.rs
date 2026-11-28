@@ -517,7 +517,7 @@ fn room_names_lends_and_says_who_can_open_them() {
         "{said}"
     );
     println!("{said}");
-    let refusals = [Refusal::Refused(Refused::Room(
+    let refusals = [Refusal::Refused(Refused::Said(
         "nobody in your groups lends jellyfin to this computer now".into(),
     ))];
     for line in refusals.iter().map(ToString::to_string).chain([said]) {

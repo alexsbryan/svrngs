@@ -15,14 +15,16 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use ring::digest;
-use ring::signature::{Ed25519KeyPair, KeyPair};
+use ring::signature::Ed25519KeyPair;
 use sha2::{Digest, Sha256};
 use svrngs_node::invite::ORIGIN_FILE;
 use svrngs_node::update::signed::{verify, Refusal, RELEASE_KEYS};
+#[path = "common/signing.rs"]
+mod signing;
+use signing::{framed, point, test_key, Packet};
 use svrngs_node::update::{
-    apply_at, check_by, fetch, packaged as packaged_words, Check, Get, Outcome, UpdateError, BUILT,
-    RELEASE_FILE,
+    apply_at, check_by, fetch, packaged as packaged_words, Check, Get, Outcome, Scope, UpdateError,
+    BUILT, RELEASE_FILE,
 };
 
 /// The tarball’s name, as `install.sh` and `scripts/build-release.sh`
@@ -121,7 +123,7 @@ async fn an_update_already_running_is_refused() {
     std::fs::write(exe(dir.path()), b"the old svrngs").unwrap();
 
     assert!(matches!(
-        apply_at(dir.path(), &exe(dir.path()), fetch, &keys()).await,
+        apply_at(dir.path(), &exe(dir.path()), fetch, &keys(), Scope::Release).await,
         Err(UpdateError::Busy)
     ));
 }
@@ -166,7 +168,14 @@ async fn a_page_s_release_replaces_the_binary_read_with_no_socket() {
         check_by(dir.path(), page(&files), &keys()).await.unwrap(),
         Check::Available
     );
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&files),
+        &keys(),
+        Scope::Release,
+    )
+    .await;
     assert_eq!(applied.unwrap(), Outcome::Updated);
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the new svrngs");
     let keeper = dir.path().join("svrngs-keeper");
@@ -179,14 +188,75 @@ async fn a_page_s_release_replaces_the_binary_read_with_no_socket() {
         check_by(dir.path(), page(&files), &keys()).await.unwrap(),
         Check::Current
     );
+}
+
+/// **The release running, its Keeper missing, gets its Keeper alone and is
+/// never put over itself**, as V1.13.3's updater leaves a computer (update.rs
+/// `apply_at`): `release` the page's hash, no Keeper beside svrngs; `apply`,
+/// as the person asks it and as svrngs asks it at start, puts the Keeper
+/// there and says Current, svrngs's own bytes untouched, so nothing
+/// restarts, and the release file kept. `check` still says Available while
+/// the Keeper is missing (update.rs `check`), so Update stays the person's
+/// way to finish it. Planted, watched failing: V1.14.0 as prepared
+/// (689a4985), whose `apply_at` said Updated and put the tarball's svrngs
+/// over the one running.
+#[tokio::test]
+async fn the_release_running_gets_its_missing_keeper_and_is_never_put_over_itself() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let files = release(&name, tarball.clone(), SIGNED_AT);
+    installed(dir.path());
+    let kept = format!("{}\n{SIGNED_AT}\n", hex::encode(Sha256::digest(&tarball)));
+    std::fs::write(dir.path().join(RELEASE_FILE), &kept).unwrap();
+    std::fs::write(exe(dir.path()), b"the svrngs running").unwrap();
+    let keeper = dir.path().join("svrngs-keeper");
+
+    for scope in [Scope::Release, Scope::Keeper] {
+        std::fs::remove_file(&keeper).unwrap();
+        let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys(), scope).await;
+        assert_eq!(applied.unwrap(), Outcome::Current, "{scope:?}");
+        assert_eq!(std::fs::read(&keeper).unwrap(), b"the new keeper");
+        assert_eq!(
+            std::fs::read(exe(dir.path())).unwrap(),
+            b"the svrngs running"
+        );
+        let release = std::fs::read_to_string(dir.path().join(RELEASE_FILE)).unwrap();
+        assert_eq!(release, kept);
+    }
+}
+
+/// **At start, a Keeper missing beside a svrngs the page has moved past is
+/// not taken, nor the newer svrngs** (update.rs `apply_at`, `Scope::Keeper`):
+/// `release` not the page's hash; Refused, saying Update puts the newer one
+/// in place with its Keeper; nothing put in place, since a Keeper of another
+/// build is refused by the svrngs running (plan::run `keeper`, 78), and the
+/// person did not ask for the newer svrngs. Planted: the scope not read
+/// (Updated, the newer svrngs put over the running one at start).
+#[tokio::test]
+async fn at_start_a_newer_release_is_never_put_in_place() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let files = release(&name, tarball, SIGNED_AT);
+    updated_at(dir.path(), SIGNED_AT - 1);
+    let keeper = dir.path().join("svrngs-keeper");
     std::fs::remove_file(&keeper).unwrap();
-    assert_eq!(
-        apply_at(dir.path(), &exe(dir.path()), page(&files), &keys())
-            .await
-            .unwrap(),
-        Outcome::Updated
+
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&files),
+        &keys(),
+        Scope::Keeper,
+    )
+    .await;
+    assert!(
+        matches!(&applied, Err(UpdateError::Refused(why)) if why.contains("Update on the home page")),
+        "{applied:?}"
     );
-    assert_eq!(std::fs::read(&keeper).unwrap(), b"the new keeper");
+    assert!(!keeper.exists());
+    assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
 }
 
 /// **A tarball that is not the page's is refused, with no socket**: the
@@ -204,7 +274,14 @@ async fn a_tarball_not_the_page_s_is_refused_read_with_no_socket() {
     files.insert(format!("get/{name}"), tarball);
     installed(dir.path());
 
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&files),
+        &keys(),
+        Scope::Release,
+    )
+    .await;
     assert!(matches!(applied, Err(UpdateError::Mismatch)), "{applied:?}");
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the old svrngs");
     assert!(!dir.path().join(RELEASE_FILE).exists());
@@ -222,7 +299,14 @@ async fn a_tarball_whose_svrngs_is_a_symlink_is_refused_read_with_no_socket() {
     let files = release(&name, tarball, SIGNED_AT);
     installed(dir.path());
 
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&files),
+        &keys(),
+        Scope::Release,
+    )
+    .await;
     assert!(
         matches!(applied, Err(UpdateError::Refused(_))),
         "{applied:?}"
@@ -301,7 +385,7 @@ async fn a_svrngs_a_package_updates_never_replaces_itself() {
     let files = release(&name, tarball, SIGNED_AT);
     let exe = packaged(dir.path(), "\n  Updated with pacman.  \nignored\n");
 
-    let applied = apply_at(dir.path(), &exe, page(&files), &keys()).await;
+    let applied = apply_at(dir.path(), &exe, page(&files), &keys(), Scope::Release).await;
     assert_eq!(
         applied.unwrap(),
         Outcome::Packaged("Updated with pacman.".into())
@@ -339,7 +423,7 @@ async fn a_svrngs_that_cannot_write_beside_itself_is_refused_before_the_download
         asked.lock().unwrap().push(url.to_string());
         page(&files)(url, max).await
     };
-    let applied = apply_at(dir.path(), &exe, watched, &keys()).await;
+    let applied = apply_at(dir.path(), &exe, watched, &keys(), Scope::Release).await;
     std::fs::set_permissions(&held, std::fs::Permissions::from_mode(0o755)).unwrap();
 
     assert!(
@@ -397,6 +481,7 @@ async fn an_unsigned_page_offers_nothing_and_says_why() {
         &exe(dir.path()),
         asked_of(&files, &asked),
         &keys(),
+        Scope::Release,
     )
     .await;
     assert!(
@@ -423,7 +508,14 @@ async fn a_release_signed_by_another_key_offers_nothing() {
     files.insert("get/SHA256SUMS.sig".to_string(), theirs);
     installed(dir.path());
 
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&files), &keys()).await;
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&files),
+        &keys(),
+        Scope::Release,
+    )
+    .await;
     let Err(refused) = applied else {
         panic!("{applied:?}")
     };
@@ -470,7 +562,14 @@ async fn a_signed_release_older_than_the_last_accepted_is_refused() {
         matches!(&checked, Err(UpdateError::Older(at)) if at == "page.invalid"),
         "{checked:?}"
     );
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&older), &keys()).await;
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&older),
+        &keys(),
+        Scope::Release,
+    )
+    .await;
     let Err(refused) = applied else {
         panic!("{applied:?}")
     };
@@ -500,7 +599,14 @@ async fn a_newer_signed_release_installs_and_keeps_its_time() {
     let newer = release(&name, tarball.clone(), SIGNED_AT + 1);
     updated_at(dir.path(), SIGNED_AT);
 
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&newer), &keys()).await;
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&newer),
+        &keys(),
+        Scope::Release,
+    )
+    .await;
     assert_eq!(applied.unwrap(), Outcome::Updated);
     assert_eq!(std::fs::read(exe(dir.path())).unwrap(), b"the new svrngs");
     let hash = hex::encode(Sha256::digest(&tarball));
@@ -533,7 +639,14 @@ async fn a_fresh_install_takes_no_release_signed_before_its_own() {
         matches!(&checked, Err(UpdateError::Older(at)) if at == "page.invalid"),
         "{checked:?}"
     );
-    let applied = apply_at(dir.path(), &exe(dir.path()), page(&older), &keys()).await;
+    let applied = apply_at(
+        dir.path(),
+        &exe(dir.path()),
+        page(&older),
+        &keys(),
+        Scope::Release,
+    )
+    .await;
     let Err(refused) = applied else {
         panic!("{applied:?}")
     };
@@ -609,11 +722,6 @@ fn sig_changed(at: usize, was: u8, to: u8) -> Vec<u8> {
     sig
 }
 
-/// `body` as one signature packet, in the old format the release key's is.
-fn framed(body: Vec<u8>) -> Vec<u8> {
-    [vec![0x88, u8::try_from(body.len()).unwrap()], body].concat()
-}
-
 /// SIG with one more hashed subpacket, its counts said again.
 fn sig_with_subpacket(kind: u8, said: &[u8]) -> Vec<u8> {
     let end = 8 + usize::from(u16::from_be_bytes([SIG[6], SIG[7]]));
@@ -624,72 +732,6 @@ fn sig_with_subpacket(kind: u8, said: &[u8]) -> Vec<u8> {
     body[4..6].copy_from_slice(&hashed.to_be_bytes());
     body.extend(&SIG[end..]);
     framed(body)
-}
-
-/// A key of the test's own, never the release key.
-fn test_key(seed: u8) -> Ed25519KeyPair {
-    Ed25519KeyPair::from_seed_unchecked(&[seed; 32]).unwrap()
-}
-
-fn point(key: &Ed25519KeyPair) -> [u8; 32] {
-    key.public_key().as_ref().try_into().unwrap()
-}
-
-/// A signature packet made by hand, shaped as the release key's: its
-/// fields, and its hashed subpackets as (type, body).
-struct Packet {
-    version: u8,
-    kind: u8,
-    algorithm: u8,
-    hash: u8,
-    hashed: Vec<(u8, Vec<u8>)>,
-}
-
-impl Packet {
-    /// The release key's shape, made at `created`.
-    fn at(created: u32) -> Self {
-        Self {
-            version: 4,
-            kind: 0x00,
-            algorithm: 22,
-            hash: 10,
-            hashed: vec![(33, vec![4; 21]), (2, created.to_be_bytes().to_vec())],
-        }
-    }
-
-    /// The packet over `sums`, by `key`: its digest SHA-256 where it says
-    /// 8, else SHA-512, whatever it says.
-    fn sign(&self, sums: &[u8], key: &Ed25519KeyPair) -> Vec<u8> {
-        let mut body = vec![self.version, self.kind, self.algorithm, self.hash];
-        let subpackets: Vec<u8> = self
-            .hashed
-            .iter()
-            .flat_map(|(kind, said)| [vec![said.len() as u8 + 1, *kind], said.clone()].concat())
-            .collect();
-        body.extend(u16::try_from(subpackets.len()).unwrap().to_be_bytes());
-        body.extend(subpackets);
-        let algorithm = match self.hash {
-            8 => &digest::SHA256,
-            _ => &digest::SHA512,
-        };
-        let mut digest = digest::Context::new(algorithm);
-        digest.update(sums);
-        digest.update(&body);
-        digest.update(&[4, 0xFF]);
-        digest.update(&u32::try_from(body.len()).unwrap().to_be_bytes());
-        let digest = digest.finish();
-        let made = key.sign(digest.as_ref());
-        // Unhashed: the issuer's key ID, as gpg puts it, read by no one.
-        body.extend([0, 10, 9, 16, 0, 0, 0, 0, 0, 0, 0, 0]);
-        body.extend(&digest.as_ref()[..2]);
-        for half in made.as_ref().chunks(32) {
-            let first = half.iter().position(|&b| b != 0).unwrap();
-            let bits = (32 - first) * 8 - half[first].leading_zeros() as usize;
-            body.extend(u16::try_from(bits).unwrap().to_be_bytes());
-            body.extend(&half[first..]);
-        }
-        framed(body)
-    }
 }
 
 /// **v1.11.2's own sums verify against the release key**, as its signature

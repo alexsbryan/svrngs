@@ -86,12 +86,12 @@ async fn the_keepers_remove_is_the_cut() {
 
     let nobody = ask(remove("Dee")).await;
     assert!(
-        matches!(&nobody, Err(Refusal::Refused(Refused::Removal(w))) if w == "Nobody called Dee is in trip."),
+        matches!(&nobody, Err(Refusal::Refused(Refused::Said(w))) if w == "Nobody called Dee is in trip."),
         "{nobody:?}"
     );
     let own = ask(remove("Sam")).await;
     assert!(
-        matches!(&own, Err(Refusal::Refused(Refused::Removal(w))) if w.starts_with("Sam decides who is removed from trip")),
+        matches!(&own, Err(Refusal::Refused(Refused::Said(w))) if w.starts_with("Sam decides who is removed from trip")),
         "{own:?}"
     );
     assert!(ask(remove("Bo")).await.is_ok());
@@ -168,7 +168,7 @@ async fn the_keeper_removes_one_of_two_people_of_one_name() {
     };
     for v in ["handover", "remove"] {
         let refused = ask(verb(v, &[]).unwrap()).await;
-        let Err(Refusal::Refused(Refused::Removal(words))) = &refused else {
+        let Err(Refusal::Refused(Refused::Said(words))) = &refused else {
             panic!("{v} Bo: {refused:?}")
         };
         eprintln!("{v} Bo: {words}");
@@ -185,7 +185,7 @@ async fn the_keeper_removes_one_of_two_people_of_one_name() {
             "{v} Bo: the refusal names a way to name each Bo: {words}"
         );
     }
-    let Err(Refusal::Refused(Refused::Removal(words))) = ask(verb("remove", &[]).unwrap()).await
+    let Err(Refusal::Refused(Refused::Said(words))) = ask(verb("remove", &[]).unwrap()).await
     else {
         unreachable!("refused above")
     };
