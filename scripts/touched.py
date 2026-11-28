@@ -167,7 +167,11 @@ def main(base, given=None):
         reach(["clippy"], next(f for f in sorted(files) if f.endswith((".rs", "Cargo.toml"))), "Rust")
     # The steps: one a binary in it was reached, or named; `tests` the rest.
     runs = {s: set(re.findall(r"--test (\w+)", cmd)) for s, cmd in steps.items()}
-    run_ = {s for s in steps if s in reached or any(b in bins and b[1] in runs[s] for b in reached)}
+    # A step that runs a script in a test binary's own folder (the upgrade
+    # gate's gate.sh) runs that binary as the script sets it up: reached as
+    # the binary is, never folded into `tests`, which would run it bare.
+    scripted = {s: {b for b, (path, _, _) in bins.items() if f" {path}/" in f" {cmd}"} for s, cmd in steps.items() if cmd.startswith("sh ")}
+    run_ = {s for s in steps if s in reached or any(b in bins and b[1] in runs[s] for b in reached) or scripted.get(s, set()) & reached}
     # A step running named test binaries is folded into `tests`, which runs
     # their tests docs/seams.tsv does not call fragile (`deterministic`).
     folded = {s for s in run_ if runs[s]}
@@ -179,7 +183,7 @@ def main(base, given=None):
     pick += [f"--test {b[1]}" for b in sorted(gate) if (b[0] in whole if whole else b in plain)]
     run_ = run_ - folded | ({"tests"} if plain else set())
     for s in sorted(steps):
-        hit = next((why[b] for b in sorted(reached, key=str) if b == s or (b in bins and b[1] in runs[s])), None)
+        hit = next((why[b] for b in sorted(reached, key=str) if b == s or (b in bins and b[1] in runs[s]) or b in scripted.get(s, ())), None)
         said = "folded" if s in folded else "reached" if s in run_ else "untouched"
         print(f"{said:<10} {s}{f' ({hit})' if hit and s in run_ | folded else ''}", file=sys.stderr)
     listed = "\n".join(sorted(run_))

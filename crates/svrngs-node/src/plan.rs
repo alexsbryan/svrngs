@@ -28,7 +28,6 @@ pub enum Event {
 pub struct Nature {
     pub name: LendName,
     pub port: NonZeroU16,
-    pub platform: Platform,
     pub raw: Option<Raw>,
     pub runs: Runs,
     /// Ports with several holders are witnessed by the binding alone.
@@ -37,16 +36,9 @@ pub struct Nature {
     pub binding: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-pub enum Platform {
-    Linux,
-    Mac,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Runs {
     ByHand,
-    Container { pod: String },
     Kept(Keep),
     OwnService(Keep),
     OtherAccount(String),
@@ -69,8 +61,6 @@ pub enum Availability {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub enum Return {
-    Startup,
-    AfterUnlock,
     SignIn,
     ThisRun,
     Unknown,
@@ -113,7 +103,6 @@ enum Reason<'a> {
     OtherAccount(&'a str),
     Transient,
     ByHand,
-    Container,
     AppStart,
     DoorStart,
 }
@@ -144,7 +133,6 @@ pub fn plan(state: &State) -> Option<Plan<'_>> {
         (Some(Raw::Udp), _) => Err(Reason::Udp),
         (_, Runs::Kept(job) | Runs::OwnService(job)) => Ok(Method::Reuse(job)),
         (_, Runs::ByHand) => Err(Reason::ByHand),
-        (_, Runs::Container { .. }) => Err(Reason::Container),
         (_, Runs::OtherAccount(account)) => Err(Reason::OtherAccount(account)),
         (_, Runs::Transient) => Err(Reason::Transient),
     };
@@ -152,7 +140,6 @@ pub fn plan(state: &State) -> Option<Plan<'_>> {
     let verified = match later {
         Return::ThisRun | Return::Unknown if app >= door => Err(Reason::AppStart),
         Return::ThisRun | Return::Unknown => Err(Reason::DoorStart),
-        _ if nature.platform == Platform::Mac => Ok(Return::SignIn),
         _ => Ok(later),
     };
     // Deployment refusals explain the fallback before an unverified start does.

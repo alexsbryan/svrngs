@@ -284,6 +284,8 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
         source: Source::Port(NonZeroU16::new(8096).unwrap()),
         kind: lend::Program::parse("k").unwrap(),
         terms: crate::lend::Terms {
+            since: None,
+            for_programs: false,
             audience: lend::Audience::Selected(groups.iter().map(|g| g.to_string()).collect()),
             limit: NonZeroU16::new(3),
             refused: Vec::new(),

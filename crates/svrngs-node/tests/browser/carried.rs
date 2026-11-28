@@ -84,7 +84,7 @@ Promise.all([
 }});
 "#
     );
-    let page = "<!doctype html><title>trying</title><body><script src=probe.js></script>";
+    let page = "<!doctype html><title>Probe</title><body><script src=probe.js></script>";
     carry(
         &folder,
         "Probe",
@@ -197,7 +197,7 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of ?? o.p
     // Independent exact copy lives in the fast question contract. This check
     // establishes that the real phone renders the shared formatter's result.
     let consent = in_question(
-        "`Money ${q.agreed({group: 'g', kind: 'Money'}, [{name: 'Money', words: 'who owes whom, and for what.'}], {name: 'house'})}`",
+        "`Money ${q.agreed({group: 'g', kind: 'Money'}, {name: 'house'})}`",
         Value::Null,
     );
     assert!(
@@ -379,8 +379,8 @@ async fn an_app_s_entry_is_approved_by_the_group_s_signer_and_carried(engine: En
 };
 document.title = 'ready';
 ";
-    let page = "<!doctype html><title>…</title><script type=module src=app.js></script>";
-    let walled = "<!doctype html><meta http-equiv=Content-Security-Policy content=\"frame-src 'none'\"><title>…</title><script type=module src=app.js></script>";
+    let page = "<!doctype html><title></title><script type=module src=app.js></script>";
+    let walled = "<!doctype html><meta http-equiv=Content-Security-Policy content=\"frame-src 'none'\"><title></title><script type=module src=app.js></script>";
     for (app, page) in [("Money", page), ("Notes", page), ("Walled", walled)] {
         carry(
             &folder,
@@ -490,7 +490,7 @@ async fn a_font_in_the_folder_loads(engine: Engine) {
     let folder = dir.path().join("house");
     std::fs::create_dir(&folder).unwrap();
     keep_folder(&ada, &folder).await;
-    let page = "<!doctype html><title>trying</title><link rel=stylesheet href=look.css>\
+    let page = "<!doctype html><title>Lettered</title><link rel=stylesheet href=look.css>\
         <p style=\"font-family: Own\">O</p><script type=module src=probe.js></script>";
     let look = "@font-face { font-family: Own; src: url(own.woff2) format('woff2'); }";
     let probe = "document.fonts.load('16px Own', 'O').then(\

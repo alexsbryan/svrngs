@@ -47,11 +47,11 @@ const unsaid = (lends, people) =>
 // Where a lend's grid comes: the group's own apps, then what people's
 // computers lend that opens in a tab, the one that asks a yes last, since
 // its cell takes a row of its own and a cell is read and tabbed in the
-// order it is drawn; then their ports, this computer's own last, which has
-// no Play.
+// order it is drawn; then their ports and what their lenders say is for
+// programs, which lead with Play, this computer's own last, which has none.
 /** @param {Lent} lend @param {string} me */
 const place = (lend, me) => {
-  if (lend.raw) return lend.key === me ? 3 : 2;
+  if (lend.raw || lend.for_programs) return lend.key === me ? 3 : 2;
   if (lend.group) return 0;
   return (lend.reads ?? []).length > 0 ? 1.5 : 1;
 };
@@ -68,7 +68,7 @@ const place = (lend, me) => {
 /** @param {Lent} lend @param {PlaceProps['g']} group @param {string} me */
 const says = (lend, group, me) => {
   if (place(lend, me) === 3) return '';
-  if (lend.raw) return PLAYS;
+  if (lend.raw || lend.for_programs) return PLAYS;
   const as = `Each opens as you in ${group.name ?? 'your group'}`;
   if (!lend.group)
     return `On its lender’s computer, while it’s on. ${as}, and may write its own part of the record.`;
@@ -81,7 +81,7 @@ const says = (lend, group, me) => {
 
 /**
  * A grid's caption, its lends, the caption's id, and what a cell is drawn with.
- * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { caption: string, lent: Lent[], by: string, shelf: Lends['shelf'] }} GridProps
+ * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { caption: string, lent: Lent[], by: string }} GridProps
  */
 
 // A grid under its caption, a list named by it. `role="list"`: a list
@@ -117,7 +117,7 @@ function Index({ g: group, s: state, me }) {
     <div class="index">
       ${[...grids].map(
         ([caption, each], at) =>
-          html`<${Grid} caption=${caption} lent=${each} by=${`says-${group.id}-${at}`} shelf=${lends.shelf} g=${group} s=${state} me=${me} />`,
+          html`<${Grid} caption=${caption} lent=${each} by=${`says-${group.id}-${at}`} g=${group} s=${state} me=${me} />`,
       )}
       ${under && html`<p>${under}</p>`}
     </div>

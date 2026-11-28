@@ -21,6 +21,8 @@ fn shelf(upload: Option<u64>) -> Lend {
         source: crate::lend::Source::Port(NonZeroU16::new(8096).unwrap()),
         kind: Program::parse("k").unwrap(),
         terms: crate::lend::Terms {
+            since: None,
+            for_programs: false,
             audience: Audience::Selected(vec!["house".to_string()]),
             limit: NonZeroU16::new(3),
             refused: Vec::new(),

@@ -426,6 +426,9 @@ enum LendChange {
         name: String,
         value: String,
     },
+    /// Whether it is for programs ([`lend::Terms::for_programs`]).
+    #[serde(rename = "for-programs")]
+    ForPrograms(bool),
     Stop,
 }
 
@@ -494,6 +497,10 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Res
         LendChange::Limit(limit) => lend::mutate(dir, &c.lend, |lend| {
             tracing::debug!(target: "lend", lend = %c.lend, was = ?lend.terms.limit, now = ?limit, "lend: its limit changed");
             lend.terms.limit = limit;
+        }),
+        LendChange::ForPrograms(on) => lend::mutate(dir, &c.lend, |lend| {
+            tracing::debug!(target: "lend", lend = %c.lend, was = lend.terms.for_programs, now = on, "lend: whether it is for programs changed");
+            lend.terms.for_programs = on;
         }),
         LendChange::Groups(groups) => match chosen(&at, &groups) {
             Ok(()) => lend::set_audience(dir, &c.lend, groups),
@@ -599,6 +606,7 @@ fn kind_of(change: &LendChange) -> &'static str {
         LendChange::Readers { .. } => "readers",
         LendChange::Key(_) => "key",
         LendChange::Header { .. } => "header",
+        LendChange::ForPrograms(_) => "for-programs",
         LendChange::Stop => "stop",
     }
 }

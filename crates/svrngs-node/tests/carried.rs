@@ -2745,6 +2745,65 @@ async fn a_carried_app_the_policy_blanks_is_listed_with_why() {
     ana.net().close().await;
 }
 
+/// **A carried app says its own name and line, and who brought it** (a
+/// group's page): Ana brings Money, whose page names no line, and Fridge,
+/// whose page names itself and says what it is. Ana's computer lists each
+/// with what its page says, as the version that runs as her, and who first
+/// placed it and when, by her first key, which the page names "you".
+/// Planted, watched failing: surface.rs `lends` asking no app what it says
+/// of itself (who last changed it is svrngs-core's `synced` test).
+#[tokio::test]
+async fn a_carried_app_says_its_own_name_and_line_and_who_brought_it() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 61, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    carry(&folder, "Money");
+    let fridge = folder.join("apps/fridge");
+    std::fs::create_dir_all(&fridge).unwrap();
+    let page = "<!doctype html><title>Fridge  words</title>\n\
+        <meta name=\"description\" content=\"Word magnets your group shares.\">\n";
+    std::fs::write(fridge.join("index.html"), page).unwrap();
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        let both = ["fridge", "Money"].map(|k| {
+            of_kind(&seen, k)
+                .first()
+                .is_some_and(|l| l["brought"].is_object())
+        });
+        if both == [true, true] {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let (fridge, money) = (of_kind(&seen, "fridge")[0], of_kind(&seen, "Money")[0]);
+    assert_eq!(
+        (&fridge["title"], &fridge["about"]),
+        (
+            &json!("Fridge words"),
+            &json!("Word magnets your group shares.")
+        ),
+        "{seen:#}"
+    );
+    assert_eq!(
+        (&money["title"], &money["about"]),
+        (&json!("Money"), &Value::Null),
+        "{seen:#}"
+    );
+    let ana_key = actor_of(&signing(1));
+    assert_eq!(fridge["brought"]["by_key"], json!(ana_key), "{seen:#}");
+    assert!(
+        fridge["brought"]["at"]
+            .as_i64()
+            .is_some_and(|at| at > 1_700_000_000),
+        "{seen:#}"
+    );
+    ana.net().close().await;
+}
+
 /// **A yes runs an app's new version for its person alone, said from a
 /// computer or a phone** (canon-pin (c); svrn-docs
 /// `rings/current/WHAT_RUNS_AS_YOU.md` §3): Ana brings Money, Ben changes

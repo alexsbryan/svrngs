@@ -192,10 +192,9 @@ const NOT_PROGRAMS: Withheld = (
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
-/// stranger's (COMMUNITY_APPS §6.2). Each its name, what it is in a
-/// sentence, and its files, as `src/shelf.txt` lists them and build.rs
-/// embeds them.
-const SHELF: &[(&str, &str, &[File])] = include!(concat!(env!("OUT_DIR"), "/shelf.rs"));
+/// stranger's (COMMUNITY_APPS §6.2). Each its name and its files, as
+/// `src/shelf.txt` lists them and build.rs embeds them.
+const SHELF: &[(&str, &[File])] = include!(concat!(env!("OUT_DIR"), "/shelf.rs"));
 
 /// A file an app brings: its name in the app's folder, and its text.
 type File = (&'static str, &'static str);
@@ -207,15 +206,71 @@ type File = (&'static str, &'static str);
 pub(crate) fn brings(page: &str, file: &str) -> bool {
     let shelved = SHELF
         .iter()
-        .find(|(.., files)| files.contains(&("index.html", page)));
-    shelved.is_some_and(|(.., files)| files.iter().any(|(f, _)| *f == file))
+        .find(|(_, files)| files.contains(&("index.html", page)));
+    shelved.is_some_and(|(_, files)| files.iter().any(|(f, _)| *f == file))
 }
 
-/// The shelf as the pages list it, beside what a group's people lend.
+/// The shelf as the pages list it, beside what a group's people lend: each
+/// app by its name, and what it is in its own page's words ([`own`]), so
+/// the shelf and the app's cell say the one line its page declares.
 pub(crate) fn shelf() -> Value {
-    (SHELF.iter())
-        .map(|(name, words, _)| json!({ "name": name, "words": words }))
-        .collect()
+    let page = |files: &[File]| {
+        (files.iter())
+            .find(|(f, _)| *f == "index.html")
+            .map(|(_, p)| own(p))
+    };
+    let said = |(name, files): &(&str, &[File])| json!({ "name": name, "words": page(files).and_then(|o| o.1) });
+    SHELF.iter().map(said).collect()
+}
+
+/// What `text` says as plain text, at most `most` characters: the
+/// entities a page writes in words decoded, its spaces made one, and none for empty,
+/// too long, or holding a `<`, a control or a direction override, which
+/// could make one name read as another. Drawn as text, never markup, and
+/// as the app's own words.
+fn plain(text: Option<&str>, most: usize) -> Option<String> {
+    let entities = [("&quot;", "\""), ("&#39;", "'"), ("&amp;", "&")];
+    let text = (entities.iter()).fold(text?.to_string(), |t, (e, c)| t.replace(e, c));
+    let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let odd = |c: char| {
+        c == '<' || c.is_control() || matches!(c, '\u{202a}'..='\u{202e}' | '\u{2066}'..='\u{2069}')
+    };
+    let fits = (1..=most).contains(&text.chars().count()) && !text.chars().any(odd);
+    tracing::debug!(target: "folder", text, fits, most, "carried: an app's own words, shown as plain text where they fit, else not at all");
+    fits.then_some(text)
+}
+
+/// The value of the attribute `name` in `tag`, a tag as written, quoted or
+/// not; none where it names none.
+fn attr<'t>(tag: &'t str, name: &str) -> Option<&'t str> {
+    let low = tag.to_ascii_lowercase();
+    let named = |(i, _): &(usize, &str)| {
+        low[..*i].ends_with(char::is_whitespace)
+            && low[i + name.len()..].trim_start().starts_with('=')
+    };
+    let (at, _) = low.match_indices(name).find(named)?;
+    let value = tag[at + name.len()..].trim_start()[1..].trim_start();
+    match value.chars().next()? {
+        q @ ('"' | '\'') => Some(value[1..].split_once(q)?.0),
+        _ => value.split([' ', '>', '\n']).next(),
+    }
+}
+
+/// What an app's page `page` says of itself, as every web page declares
+/// it: its name, its `<title>`, at most 32 characters, and its one line,
+/// its `<meta name="description">`, at most 90, each as [`plain`] reads it.
+pub(crate) fn own(page: &str) -> (Option<String>, Option<String>) {
+    let low = page.to_ascii_lowercase();
+    let open = low
+        .find("<title")
+        .and_then(|s| low[s..].find('>').map(|e| s + e + 1));
+    let title = open.and_then(|o| Some(&page[o..o + low[o..].find("</title")?]));
+    let mut tags = low
+        .match_indices("<meta")
+        .map(|(s, _)| &page[s..low[s..].find('>').map_or(low.len(), |e| s + e)]);
+    let about = |t: &&str| attr(t, "name").is_some_and(|n| n.eq_ignore_ascii_case("description"));
+    let line = tags.find(about).and_then(|t| attr(t, "content"));
+    (plain(title, 32), plain(line, 90))
 }
 
 /// What a page asks brought to a group's table: the group's id, and the
@@ -250,7 +305,7 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Given {
     let dir = dir.ok_or(NO_FOLDER)?;
     let root = super::confined::Root::open(dir).map_err(|e| traced(group, UNWRITTEN, &e))?;
     let mut said = Vec::new();
-    for (name, _, files) in SHELF.iter().filter(|(n, ..)| apps.iter().any(|a| a == n)) {
+    for (name, files) in SHELF.iter().filter(|(n, _)| apps.iter().any(|a| a == n)) {
         let at = Path::new("apps").join(name);
         let there = root.metadata(&at.join("index.html")).is_ok();
         let put = |(f, text): &(&str, &str)| root.write(&at.join(f), text.as_bytes());
@@ -480,6 +535,44 @@ impl Folders {
         }
         tracing::debug!(target: "folder", asker, changed = out.len(), "carried: the apps whose files now are not those that run as the asker");
         Value::Array(out)
+    }
+
+    /// Each carried app of `lent`, a group's lends as a page is given them,
+    /// with what it says of itself, `title` and `about` ([`own`]), from its
+    /// page as it runs as the person of the key `asker` (canon-pin), so the
+    /// words are the version they would open; and `brought`, who first
+    /// placed its files and when, by first key, which the page names. Each
+    /// app read once, however many computers lend a copy of it.
+    pub(crate) async fn said(&self, lent: &mut [Value], groups: &[(String, People)], asker: &str) {
+        let mut read: BTreeMap<(String, String), Value> = BTreeMap::new();
+        for shown in lent.iter_mut() {
+            let (Some(group), Some(kind)) = (shown["group"].as_str(), shown["kind"].as_str())
+            else {
+                continue;
+            };
+            let at = (group.to_string(), kind.to_string());
+            let people = groups.iter().find(|(g, _)| *g == at.0).map(|(_, p)| p);
+            let (Some(people), Ok(app)) = (people, AppName::parse(kind)) else {
+                continue;
+            };
+            if !read.contains_key(&at) {
+                let path = format!("apps/{kind}/index.html");
+                let page = self.runs_at(&at.0, &app, &path, (people, asker)).await;
+                let text = page.as_ref().ok().and_then(Option::as_ref);
+                let (title, about) = text
+                    .map(|p| own(&String::from_utf8_lossy(p)))
+                    .unwrap_or_default();
+                let by =
+                    (self.layout(&at.0).ok()).and_then(|r| r.runs.brought_by.get(kind).cloned());
+                let brought = by.map(|(key, _, when)| json!({ "by_key": key, "at": when }));
+                tracing::debug!(target: "folder", group, kind, asker, ?title, ?about, read = text.is_some(), ?brought, "carried: what an app says of itself in its page as it runs as the asker, and who brought it");
+                let said = json!({ "title": title, "about": about, "brought": brought });
+                read.insert(at.clone(), said);
+            }
+            for field in ["title", "about", "brought"] {
+                shown[field] = read[&at][field].clone();
+            }
+        }
     }
 
     /// What `svrngs check` finds in the app `kind` in a folder of `group`

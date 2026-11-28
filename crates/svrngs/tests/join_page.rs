@@ -218,6 +218,8 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
             sends: Vec::new(),
             approved: None,
             keep: None,
+            since: None,
+            for_programs: false,
             revision: None,
         },
     };
@@ -541,6 +543,8 @@ async fn phone_joins_through(
             sends: Vec::new(),
             approved: None,
             keep: None,
+            since: None,
+            for_programs: false,
             revision: None,
         },
     };

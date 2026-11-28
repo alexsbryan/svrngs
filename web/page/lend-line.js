@@ -50,7 +50,7 @@ export function LendLine({ state, lend, send }) {
   const lent = /** @type {Lent[]} */ (state.lent);
   const reading = reads.length ? readingOf(lend, lent, state.group.reads?.[lend.label]) : undefined;
   const line = reading ? ` ${readLine(reading, reading.length, reads)}` : '';
-  const agrees = `${line} ${agreed({ ...lend, reading }, state.shelf, state.group)}${full}`;
+  const agrees = `${line} ${agreed({ ...lend, reading }, state.group)}${full}`;
   const keep = state.fine && html`${' '}<${Keep} at=${kept(state, lend)} />`;
   return html`
     <span>

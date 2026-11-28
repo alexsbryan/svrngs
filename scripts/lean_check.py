@@ -1188,12 +1188,23 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # seven Refused variants that each said their String into one and a loop
 # into a fold (-7); the keep plan's test-only states and the CLI-only Share
 # fields are design changes left for their own work. 28,827.
+# The group page's three pieces (operator-approved raise, 2026-11-27, after
+# an economizing pass): an app's own name and line, read from its page's
+# title and description as bounded plain text (carried.rs `own`); "brought
+# by", who first placed a carried app (svrngs-core `Runs::brought_by`, +3
+# core) and when a lend was first lent; and a lender's "for programs", which
+# leads a lend with Play and its address; and the touched tier reaching the
+# upgrade gate (+1). The pass cut the keep plan's states no host reaches,
+# Startup, AfterUnlock, Container and Platform (-20), and the shelf
+# parameter threaded through `agreed`; the CLI-only Share fields and
+# test-only `lend::declare` are reshapes left for their own work.
+# Core 3,529; 28,908; JS 8,877.
 BUDGET = {
-    "crates/svrngs-core": 3527,
+    "crates/svrngs-core": 3530,
 
-    ".": 28828,
+    ".": 28909,
 
-    "js": 8853,
+    "js": 8878,
 
     "swift": 1,
 }

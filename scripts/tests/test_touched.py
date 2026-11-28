@@ -46,7 +46,7 @@ class Plans(unittest.TestCase):
 
     def test_core_reaches_its_dependents_and_the_wasm(self):
         steps, tests = plan("crates/svrngs-core/src/pass.rs")
-        self.assertEqual(steps, {"web rustfmt and clippy", "clippy", "tests"})
+        self.assertEqual(steps, {"web rustfmt and clippy", "clippy", "tests", "upgrade"})
         self.assertTrue(tests.startswith("-p svrngs -p svrngs-core -p svrngs-db -p svrngs-node -p svrngs-runtime --lib --bins --test"))
         self.assertLessEqual(SITE | {"canaries", "scale", "carried"}, binaries(tests))
 
@@ -55,6 +55,15 @@ class Plans(unittest.TestCase):
         self.assertEqual(binaries(tests) & {"browser", "canaries", "conformance", "carried"}, set())
         self.assertTrue(tests.startswith("-p svrngs --lib --bins --test"))
         self.assertLessEqual({"scenes", "verbs", "internet"}, binaries(tests))
+
+    # The upgrade gate is a script in its test binary's folder (gate.sh sets
+    # the key and builds the last release), so a change the binary reads
+    # runs its step, and `tests` never runs the binary bare. Planted,
+    # watched failing: the step reached only by gate.sh's own path.
+    def test_the_updater_reaches_the_upgrade_gate_by_its_script(self):
+        steps, tests = plan("crates/svrngs-node/src/update.rs")
+        self.assertIn("upgrade", steps)
+        self.assertNotIn("upgrade", binaries(tests))
 
     def test_a_test_file_reaches_its_binary_alone(self):
         self.assertEqual(plan("crates/svrngs-node/tests/browser/keep_going.rs"), ({"tests", "clippy"}, "-p svrngs-node --test browser"))

@@ -84,7 +84,8 @@ terminal after this.
 ## The scene
 
 **5. Ana brings House rules.** On Ana's home page, under Elm, **Bring
-things to the table** lists Money, Events and House rules, each with a box to tick.
+things to the table** lists svrngs's examples, House rules among them,
+each with a box to tick.
 Tick House rules, and press **Bring the ticked ones to Elm**. The
 page says *"You brought House rules to Elm: everyone in it can open it in
 a few seconds."* (221 ms in the run).
@@ -101,9 +102,10 @@ them."*
 **Your rule** and press **Propose this rule to everyone in your house**.
 Under **What’s proposed** it says *"You proposed it on"* and today's date.
 
-**8. Cy objects.** Reload Cy's home page until Elm's table lists **Open
-House rules** (under a second after Ana brought it, in the run), and press
-it. Under **What’s proposed**, beside the quiet hours, press **Object**.
+**8. Cy objects.** Reload Cy's home page until Elm's table lists **House
+rules**, *"“The rules your house agrees on.”"* beside it (under a second
+after Ana brought it, in the run), and press it. Under **What’s
+proposed**, beside the quiet hours, press **Object**.
 The page asks *"Why do you object?"*: type `I work late on Fridays` and
 press **Send your objection**. It says *"You object: “I work late on
 Fridays”"*, and the quiet hours are still proposed.

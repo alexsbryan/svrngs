@@ -130,6 +130,8 @@ fn lend(name: &str, port: u16) -> Lend {
         source: Source::Port(NonZeroU16::new(port).unwrap()),
         kind: Program::parse("k").unwrap(),
         terms: crate::lend::Terms {
+            since: None,
+            for_programs: false,
             audience: Audience::Selected(vec!["house".to_string()]),
             limit: NonZeroU16::new(3),
             refused: vec![refused("/admin")],
@@ -223,6 +225,47 @@ fn a_lend_from_v1_12_2_written_again_keeps_what_v1_12_2_wrote() {
     assert_eq!(now["owner"], serde_json::json!(501));
     assert_eq!(now["sandbox"], serde_json::json!("no"));
     assert_eq!(now["command"]["digest"], serde_json::json!("5f1c"));
+}
+
+/// **A lend says when it was first lent, and keeps it** (a group's page,
+/// "Lent on"): published new, it is lent now; one lent on a day keeps that
+/// day when it is changed and when it is published again; one from before
+/// this, which says none, stays none through a change, never today.
+/// Planted, watched failing: `changed` stamping each write with now.
+#[test]
+fn a_lend_keeps_when_it_was_first_lent_and_an_old_one_says_none() {
+    let root = tempfile::tempdir().unwrap();
+    let shelf = lend("shelf", 8096);
+    let since = |name: &str| {
+        read(root.path(), &LendName::parse(name).unwrap())
+            .unwrap()
+            .unwrap()
+            .terms
+            .since
+    };
+    let again = |lend: &Lend| {
+        let rev = revision(root.path(), &lend.name).unwrap();
+        publish(root.path(), lend.clone(), rev, Credentials::Keep).unwrap();
+    };
+    again(&shelf);
+    let now = crate::door::unix_now().unwrap();
+    assert!(since("shelf").is_some_and(|s| (now - 60..=now).contains(&s)));
+    let dir = lends_dir(root.path());
+    for (name, then) in [("then", r#","since":1000"#), ("old", "")] {
+        let text = format!(r#"{{"port":8097,"kind":"k","groups":["g"]{then}}}"#);
+        std::fs::write(dir.join(format!("{name}.json")), text).unwrap();
+        mutate(root.path(), &LendName::parse(name).unwrap(), |l| {
+            l.terms.for_programs = true
+        })
+        .unwrap();
+    }
+    assert_eq!((since("then"), since("old")), (Some(1000), None));
+    again(&lend("then", 8097));
+    assert_eq!(
+        since("then"),
+        Some(1000),
+        "published again, it keeps its day"
+    );
 }
 
 /// A declaration holding a sign-in of the lender's own is refused as a
@@ -453,6 +496,8 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
     let house = |g: &str| g == "house";
     let offered = |groups: Option<Vec<String>>, carried: Option<&str>| Offered {
         token: None,
+        since: None,
+        for_programs: false,
         name: LendName::parse("jellyfin").unwrap(),
         kind: Program::parse("k").unwrap(),
         limit: None,

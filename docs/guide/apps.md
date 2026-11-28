@@ -21,12 +21,12 @@ with svrngs are examples of that, and it says so: *"These are svrngs’s
 examples, to use or to change. Tick what you want and press the button: it
 goes in Elm’s folder, and everyone in Elm can open it in a few seconds."*
 Under the list, **See how they’re made** leads to [Examples](examples.md).
-Each is listed with a tick box and a line saying what it's for:
+Each is listed with a tick box and the line its own page gives:
 
-- **Money**: who owes whom, and for what.
-- **Events**: get-togethers, and who’s coming.
-- **House rules**: the rules your house agrees.
-- **Movie Night**: the films your friends lend. It reads what they lend, once you open it from your home page, and writes nothing.
+- **Money**: Who owes whom in your group, and for what.
+- **Events**: Plan get-togethers and see who’s coming.
+- **House rules**: The rules your house agrees on.
+- **Movie Night**: Pick tonight’s film from the ones your friends lend. It reads what they lend, once you open it from your home page, and writes nothing.
 
 Tick the ones you want and press **Bring the ticked ones to Elm** (the
 button names your group). The page says *"You brought Money to Elm:
@@ -36,11 +36,17 @@ bring first."*
 
 The app then shows up under **Shared apps** on everyone's home page and in
 the group's list on everyone's phone, as a link of its name, such as **Money**. Pressing that
-link is how you open it. Apps already brought drop off the tick list and
+link is how you open it. Beside it are the app's own line, in quotes, and
+who brought it: *"Brought by Kim on 3 Oct."*, or *"you"* if it was you. Apps already brought drop off the tick list and
 are named in one line: *"Money and Events are already in Elm."*
 
 An app of your own goes in the same place, the group's folder, under
-`apps` ([build.md](build.md)), and shows up the same way. A program already
+`apps` ([build.md](build.md)), and shows up the same way. Its name and its
+line are what its `index.html` says of itself, as any web page does: its
+`<title>`, at most 32 characters, and its
+`<meta name="description" content="…">`, at most 90. They're shown as
+plain text; a longer one, or one with a `<` in it, isn't shown at all, and
+the app goes by its folder's name. A program already
 running on your computer is something else: it is lent from **This
 computer**, under **Already running here** ([lend.md](lend.md)). **Add an
 app** says both.

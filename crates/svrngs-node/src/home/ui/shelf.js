@@ -244,7 +244,7 @@ export function drawn(state, send, { g: group, lent, shelf, joined, more }) {
   // boxes and never in their legend, which is read with each box.
   const how = html`<p><a href="https://github.com/alexsbryan/svrngs/blob/main/docs/guide/examples.md">See how they’re made</a>, and how to change one.</p>`;
   const boxes = offered.map((app) => {
-    const words = ` ${spoken(app.name)}: ${app.words}`;
+    const words = ` ${spoken(app.name)}${app.words ? `: ${app.words}` : ''}`;
     return html`<${Tick}
       disabled=${bringing}
       on=${state.ticked.includes(app.name)}

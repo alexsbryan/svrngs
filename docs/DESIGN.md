@@ -479,7 +479,14 @@ seconds, whatever their own computer does (`door::udp::serve`).
   on.", whose Stop is the row's own.
 - **Play at an address.** Another computer's lend at an address, an app
   on a port such as a model, has Play too, in its Address popover; a carried
-  app has none. Nothing more listens: while it is on, the lend's address
+  app has none. A lend its lender says is for programs (`for_programs`,
+  ticked in its row under What you lend) is drawn as a port is: its name,
+  then its Play, under the caption that says what Play does, and its
+  Address after; its name opens no tab. What it is for is the lender's to
+  say, never read from its kind: a model's own chat page answers at its
+  root as any page does, so what answers there can't tell a page meant for
+  a person from one a program came for, and people who came for its
+  address pressed its name (the group page's A/B, 0 of 4 copied it). Nothing more listens: while it is on, the lend's address
   on that computer, `http://<label>.localhost:<port>/`, which its row says
   and copies, also lets in a program's request with no key. It must not be
   a page's, so no `Origin` and no `Sec-Fetch-Site`, which a browser sends
@@ -1152,7 +1159,19 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   whose ("Kim’s navidrome", and yours "your navidrome", by key), and cells
   sort by person, so one person's things sit together. A cell has one way
   in, its name, drawn heaviest. A cell says more only where it differs: a
-  group's own app its shelf's few words when it has them, and the app that also opens your friends' things its
+  group's own app is named and described in its own words, the `<title>` and
+  `<meta name="description">` its page declares, as any web page does, read
+  from the version that runs as the person looking, as plain text, at most
+  32 and 90 characters, and nothing where it says none or says more
+  (`carried.rs` `own`, `said`); its line is in quotes, so it reads as the
+  app's and never svrngs's, before svrngs's own sentence of what opening it
+  allows. Its cell then says who brought it and when, "Brought by Ana on
+  3 Oct.", from who first placed its files in the record (svrngs-core
+  `Runs::brought_by`), by first key, so "you" to the one who did: a group's
+  own apps are few however much its people lend, and a friend's name is how
+  one is found without a notification. A lent thing's name says whose
+  already, so when it was first lent is in its Address, which keeps the
+  forty cells of a large house their length. The app that also opens your friends' things its
   sentence on a row of its own, with "Open" on its button, since that press
   is the yes (`home/page/index.js`, `lend-name.js`; the law that draws 8
   things and 40 and holds the words outside the cells equal is
@@ -1162,11 +1181,14 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   thing and no part of deciding to open it, so it is behind **Address** in
   that thing's cell, a button that opens the browser's own popover
   (`popover`, `popovertarget`; no script of ours opens or closes it). It
-  says first the thing's name, so a wrong press shows at once, then a line
+  says first the thing's name, so a wrong press shows at once, and when it
+  was first lent, where its lender's declaration says (lend.rs
+  `Terms::since`, written with a new lend and kept through each change, so
+  one from before says none, never today), then a line
   for each place a person wants it, named by where they are, and only the
   ones that differ for that kind of thing: "For this browser", its address
   to bookmark; "For a program on this computer", its Play, only for
-  another computer's lend no folder carries, since its address lets no
+  another computer's lend no folder carries and whose cell has no Play, since its address lets no
   other program in while Play is off ("Play at an address", above) and
   Play copies the address as it is turned on; "For a TV or phone on this
   WiFi", opened to this WiFi, or closed (the operator, 2026-10-26), under
@@ -1317,7 +1339,8 @@ On either layout a person can:
   two groups of one name are told apart by who made each;
 - bring things to the table: the shelf, svrngs's own apps (Money, Events,
   House rules, Movie Night), listed as data in `crates/svrngs-node/src/shelf.txt` and
-  embedded at build so svrngs's code names none, each brought into the
+  embedded at build so svrngs's code names none, each saying what it is in
+  its own page's line, as every app does (`carried.rs` `shelf`), each brought into the
   group's own folder by one button, never over one there already: the
   folder of the group's name (or that name and `-<id8>` where it was
   placed apart), never another folder shared in the group, and refused
@@ -1330,7 +1353,8 @@ On either layout a person can:
   or everyone; change who can open it, the groups it is lent to, shown as
   the selected groups, "Paused" when none and "Choose which groups" when a
   lend from before the change has none chosen yet, saved apart from every
-  other setting; or stop lending it;
+  other setting; say it is for programs, so friends see its address first;
+  or stop lending it;
 - say yes to an app, or stop it;
 - show a group on a screen — a TV, a spare laptop, a projector — at
   `/?screen=<its id>`, opened in a tab of its own from "Show <group> on a
@@ -1950,8 +1974,8 @@ Seven calls:
    group page's open, the line beside it naming what it reads (`readLine`,
    as the computer's), is the yes, and the pass it signs names just that. An app this computer lends
    reads what its person declared. Beside the open of an app the group
-   carries is first what it is for, the shelf's words or "its own part of
-   the group’s record", then "Opening it lets it read and write that, as
+   carries is first what it is for, in its own page's line, in quotes, or
+   "its own part of the group’s record", then "Opening it lets it read and write that, as
    you." (or "read that, and never write it", where it reads lends), then
    what it opens of your friends', as a lent app's line says
    it, so its first version runs as a person once they open it so named

@@ -12,7 +12,6 @@ fn facts() -> (Nature, Terms) {
         Nature {
             name: LendName::parse("Coder").unwrap(),
             port: 8101_u16.try_into().unwrap(),
-            platform: Platform::Linux,
             raw: None,
             runs: Runs::ByHand,
             pid: Some(Pid {
@@ -48,8 +47,8 @@ fn p1_every_prefix_replays_and_material_changes_invalidate_the_token() {
     let events = observation(
         nature.clone(),
         terms.clone(),
-        Return::Startup,
-        Return::Startup,
+        Return::SignIn,
+        Return::SignIn,
     );
     let whole = fold(&events, State::default());
     let shown = plan(&whole).unwrap();
@@ -66,8 +65,8 @@ fn p1_every_prefix_replays_and_material_changes_invalidate_the_token() {
         (
             "return",
             Event::Starts {
-                app: Return::Startup,
-                door: Return::SignIn,
+                app: Return::SignIn,
+                door: Return::Unknown,
             },
         ),
     ];
@@ -170,12 +169,9 @@ fn p2_host_product_matches_the_written_plans_and_words() {
     use Return::*;
     let (base, terms) = facts();
     let cases: Value = serde_json::from_str(include_str!("../src/plan/cases.json")).unwrap();
-    let returns = [Startup, AfterUnlock, SignIn, ThisRun, Unknown];
+    let returns = [SignIn, ThisRun, Unknown];
     let runs = [
         Runs::ByHand,
-        Runs::Container {
-            pod: "coder".into(),
-        },
         Runs::Kept(Keep {
             unit: "coder".into(),
             files: "v1".into(),
@@ -188,14 +184,13 @@ fn p2_host_product_matches_the_written_plans_and_words() {
         Runs::Transient,
     ];
     let mut checked = 0;
-    for (host, platform) in [("linux", Platform::Linux), ("mac", Platform::Mac)] {
+    {
         for raw in [None, Some(Raw::Tcp), Some(Raw::Udp)] {
             for (kind, runs) in runs.iter().enumerate() {
                 for (a, &app) in returns.iter().enumerate() {
                     for (d, &door) in returns.iter().enumerate() {
                         for availability in [Availability::Keep, Availability::ThisRun] {
                             let nature = Nature {
-                                platform,
                                 raw,
                                 runs: runs.clone(),
                                 ..base.clone()
@@ -213,9 +208,7 @@ fn p2_host_product_matches_the_written_plans_and_words() {
                                 match (availability, raw, deployment, point) {
                                     (Availability::ThisRun, _, _, _) => ("run", "run", None),
                                     (_, Some(Raw::Udp), _, _) => ("run", "run", Some("udp")),
-                                    (_, _, "reuse", "boot" | "unlock" | "login") => {
-                                        ("reuse", if host == "mac" { "login" } else { point }, None)
-                                    }
+                                    (_, _, "reuse", "login") => ("reuse", point, None),
                                     (_, _, "reuse", reason) => (
                                         "run",
                                         "run",
@@ -231,12 +224,10 @@ fn p2_host_product_matches_the_written_plans_and_words() {
                                     ),
                                     (_, _, reason, _) => ("run", "run", Some(reason)),
                                 };
-                            let context = (host, raw, kind, app, door, availability);
+                            let context = (raw, kind, app, door, availability);
                             assert_eq!(
                                 plan.when,
                                 match arrival {
-                                    "boot" => Startup,
-                                    "unlock" => AfterUnlock,
                                     "login" => SignIn,
                                     "run" => ThisRun,
                                     _ => unreachable!(),
@@ -268,10 +259,8 @@ fn p2_host_product_matches_the_written_plans_and_words() {
             }
         }
     }
-    assert_eq!(checked, 1800);
-    println!(
-        "P2: {checked} host combinations, including the rehearsal hosts and the passphrase disk"
-    );
+    assert_eq!(checked, 270);
+    println!("P2: {checked} combinations of deployment, return and availability");
 }
 
 #[test]
@@ -287,7 +276,7 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
     let selected = Audience::Selected(vec!["trip-id".into(), "house-id".into()]);
     let observe = |nature: Nature| {
         let rev = lend::revision(dir.path(), &nature.name).unwrap();
-        let mut observed = observation(nature, terms.clone(), Return::Startup, Return::Startup);
+        let mut observed = observation(nature, terms.clone(), Return::SignIn, Return::SignIn);
         observed[3] = Event::Revision(rev);
         fold(&observed, State::default())
     };
@@ -403,7 +392,7 @@ fn w2_failed_publication_leaves_the_listener_running_and_review_reuses_it() {
 #[test]
 fn p3_changed_revision_requests_review_before_publishing() {
     let (nature, terms) = facts();
-    let reviewed = observation(nature, terms, Return::Startup, Return::Startup);
+    let reviewed = observation(nature, terms, Return::SignIn, Return::SignIn);
     let original = fold(&reviewed, State::default());
     let current = step(original.clone(), Event::Revision(14));
     let result = run::confirm(&plan(&original).unwrap().token, &current, |_| {

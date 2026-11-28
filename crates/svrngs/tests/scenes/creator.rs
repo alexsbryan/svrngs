@@ -49,8 +49,10 @@ async fn opened(who: &Person, group: &str, name: &str) -> Value {
         "home.mjs",
         json!({
             "ask": format!("{}?group={group}", who.home_page()),
-            // The group's index once it lists `name`: its caption and cells.
-            "heading": false, "b": true, "after": [format!("#group-{group} .index"), name], "open": name,
+            // The group's index once it lists `name`: its caption and cells,
+            // and its open there, as both of Jo's groups carry the rota.
+            "heading": false, "b": true, "after": [format!("#group-{group} .index"), name],
+            "open": [format!("#group-{group} .index"), name],
         }),
     )
     .await
@@ -127,7 +129,10 @@ async fn creator(engine: Engine) {
     )
     .await;
     jo.opens(&test, "Try-rota").await;
-    let initial = opened(&jo, &test, "Try rota").await;
+    // Its cell says the name its page gives itself, its <title>, whatever
+    // its folder is called (carried.rs `own`); it says no line, having no
+    // <meta name="description">.
+    let initial = opened(&jo, &test, "Garden rota").await;
     let trial_url = initial["opened"]["url"].as_str().unwrap();
     steps(
         &mut browsers,

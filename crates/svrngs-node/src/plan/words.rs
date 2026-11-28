@@ -76,8 +76,6 @@ impl Plan<'_> {
 
     fn promise(&self, audience: &str) -> String {
         let after = match self.when {
-            Return::Startup => "this computer starts, even before you sign in.",
-            Return::AfterUnlock => "you unlock the disk.",
             Return::SignIn => "you sign in.",
             Return::ThisRun | Return::Unknown => {
                 return format!("{audience} can use it while it’s running.")
@@ -95,11 +93,14 @@ impl Plan<'_> {
                 Reason::OtherAccount(account) => format!("{name} runs as the account {account}"),
                 Reason::Transient => format!("{name} has no saved setup to start it again"),
                 Reason::ByHand => format!("{name} was started by hand"),
-                Reason::Container => "svrngs can’t verify what will answer on this port when the container starts again".into(),
                 Reason::AppStart => format!("svrngs couldn’t verify when {name} will start again"),
-                Reason::DoorStart => "svrngs couldn’t verify when sharing itself will start again".into(),
+                Reason::DoorStart => {
+                    "svrngs couldn’t verify when sharing itself will start again".into()
+                }
             };
-            format!("svrngs can’t verify that sharing will come back by itself with this setup: {why}.")
+            format!(
+                "svrngs can’t verify that sharing will come back by itself with this setup: {why}."
+            )
         });
         let (impact, button) = match self.method {
             Method::Reuse(job) => (

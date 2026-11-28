@@ -298,6 +298,8 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
         source: svrngs_node::lend::Source::Port(std::num::NonZeroU16::new(8096).unwrap()),
         kind: svrngs_node::lend::Program::parse("page").unwrap(),
         terms: svrngs_node::lend::Terms {
+            since: None,
+            for_programs: false,
             audience: svrngs_node::lend::Audience::Selected(vec![group.clone()]),
             limit: std::num::NonZeroU16::new(4),
             refused: Vec::new(),

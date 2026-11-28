@@ -423,6 +423,18 @@ pub struct Terms {
     /// asked to choose again after each. An svrngs from before refuses it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub keep: Option<crate::job::Keep>,
+    /// When it was first lent, in Unix seconds, which a group's page says
+    /// ("Lent on 3 Oct"): written with a new lend and kept through each
+    /// change ([`changed`]), so one lent before this says none, never
+    /// today. An svrngs from before refuses it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<i64>,
+    /// Its lender's choice that it is for programs, such as a chat app, not
+    /// for a tab (`POST /lent`): what it can do, never its kind's name, so
+    /// its cell on a group's page leads with Play and the address it
+    /// copies. An svrngs from before refuses it.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub for_programs: bool,
     /// A disk snapshot for renewal, absent in a draft or during a concurrent edit.
     #[serde(skip)]
     pub revision: Option<u64>,
@@ -626,6 +638,13 @@ pub struct Offered {
     /// passed over by an svrngs from before sends.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sends: Vec<SendRow>,
+    /// When it was first lent ([`Terms::since`]), absent where its lender's
+    /// declaration says none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub since: Option<i64>,
+    /// Its lender's choice that it is for programs ([`Terms::for_programs`]).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub for_programs: bool,
     /// Whether its service took a connection on its lender's computer as it
     /// listed it (`door::offered`): `false` is a lend whose program is not
     /// running, so a friend is told before opening it, not by a 502. Absent
@@ -1076,9 +1095,13 @@ fn changed(
         tracing::debug!(target: "lend", %name, ?if_rev, rev, "lend: publication refused at a stale revision");
         return Err(LendError::RevisionChanged(name.clone()));
     }
-    let Some(lend) = edit(stored(dir, name, Some(rev))?) else {
+    let had = stored(dir, name, Some(rev))?;
+    let since = (had.as_ref()).map_or_else(crate::door::unix_now, |l| l.terms.since);
+    let Some(mut lend) = edit(had) else {
         return Ok(None);
     };
+    tracing::debug!(target: "lend", %name, ?since, "lend: when it was first lent, kept, or now for a new one");
+    lend.terms.since = since;
     let rev = advance(&slot, rev)?;
     if let Credentials::Replace(secret) = secret {
         replace_secret(dir, &lend, secret)?;

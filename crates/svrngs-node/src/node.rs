@@ -1178,7 +1178,9 @@ async fn people_lends(
         removals = ?removals.as_ref().map(Vec::len), meets = ?meets.as_ref().map(|m| m.len()),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
     let mut body = serde_json::json!(unlisted);
-    body["lent"] = serde_json::json!(lent);
+    let mut lent = Vec::from_iter(lent.iter().filter_map(|l| serde_json::to_value(l).ok()));
+    at.door.folders.said(&mut lent, &groups, &asker).await;
+    body["lent"] = lent.into();
     body["removals"] = serde_json::json!(removals);
     body["meets"] = serde_json::json!(meets);
     body["visiting"] = serde_json::json!(on.map(|each| each.concat()));

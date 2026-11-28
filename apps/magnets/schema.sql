@@ -8,3 +8,18 @@ CREATE TABLE magnets (
   id TEXT NOT NULL PRIMARY KEY,
   position INTEGER
 );
+-- Each sentence someone kept as they started a new one: its prompt, its
+-- magnets' IDs in order apart by spaces, and when, by that page's clock.
+-- Put back on the fridge, its row goes, as the fridge shows it again.
+CREATE TABLE kept (
+  id TEXT NOT NULL PRIMARY KEY,
+  prompt TEXT,
+  words TEXT,
+  at INTEGER
+);
+-- The prompt the sentence is under: one row, 'now', and none until a
+-- sentence is first kept, when the pack's first prompt is the one.
+CREATE TABLE showing (
+  id TEXT NOT NULL PRIMARY KEY,
+  prompt TEXT
+);

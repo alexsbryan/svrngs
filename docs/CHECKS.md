@@ -42,7 +42,10 @@ decider: a row moved to `deterministic` joins with no second list. A test with
 no row runs, as do the doctests; a Node file runs whole, or not at all when a
 row of it is fragile. Each skipped test is named in
 `target/could-not-judge/<step>.txt` and the step said could-not-judge, never
-passed. Not nextest (no dependency here), nor a binary per kind (moves tests).
+passed. A step that runs a script in a test binary's own folder (`upgrade`,
+`sh crates/svrngs/tests/upgrade/gate.sh`) is reached as that binary is and
+never folded, since `tests` would run the binary without what its script
+sets up. Not nextest (no dependency here), nor a binary per kind (moves tests).
 It shares `target/` with the gate, so either warms the other; its own would
 start cold and double the disk.
 
