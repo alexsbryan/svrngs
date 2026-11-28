@@ -51,6 +51,15 @@ offline meanwhile.
 runs"; `crates/svrngs/src/cli.rs`, the `Verb::New` arm handed to the running
 svrngs). This computer never got it: see 3.
 
+The stop, the restart in the foreground and the reset of the unit after
+an update: **Fixed in the release after V1.13.3**
+(`crates/svrngs/src/cli.rs`, `Verb::Update` and `restart`): `svrngs
+update` restarts svrngs onto the new one itself, by the login service
+where it keeps svrngs, else by asking the svrngs running to stop
+(`POST /v1/stop`, `crates/svrngs-node/src/surface.rs` `stop`) and starting
+the new one apart from the terminal, and says "svrngs <version> is
+running.".
+
 ### 3. This computer was two minor versions behind and nothing said so
 
 1.11.1 ran here while 1.13.3 was released. Neither the refusal in 2 nor
@@ -60,6 +69,13 @@ update was waiting, or that the update fixes the very refusal being shown.
 Better: a refusal that a newer release removes says so ("svrngs 1.12 does
 this while svrngs runs: `svrngs update`, then `svrngs restart`"), as
 `Refused::Older` already does for the running process.
+
+Where it applies: **Fixed in the release after V1.13.3**
+(`crates/svrngs/src/cli.rs`, `Here::asked`). A command that finds another
+build of svrngs running restarts it onto its own before it asks, and one
+that finds a newer one says "run `svrngs update`, then this again"; bare
+`svrngs` opens the home page in place of "already running". A refusal
+that a release removes still doesn't say so.
 
 ### 4. Two groups with one name
 
@@ -121,3 +137,11 @@ Better: a missing token where the lock is held is an older svrngs
 running, and goes the `Withheld::Older` way (restart it, ask again); and
 the installer waits for the svrngs it stopped to be the new one before it
 joins.
+
+The first half: **Fixed in the release after V1.13.3**
+(`crates/svrngs/src/cli.rs`, `Here::asked`, `stopped`): a data dir with no
+token whose lock is held is a svrngs too old to keep one, restarted onto
+this one as any other build is, by the login service where it keeps
+svrngs; by hand, one that old can't be asked to stop, and the command
+says the one step that stops it, then to run it again. The installer's
+wait is not yet done (`web/install.sh`).

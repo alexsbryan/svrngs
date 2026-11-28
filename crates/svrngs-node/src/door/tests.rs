@@ -1169,14 +1169,13 @@ fn every_dial_of_a_share_s_port_goes_through_its_check() {
         ("crates/svrngs-node/src/publication.rs", "dial: a group's page"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
         ("crates/svrngs-node/src/http.rs", "dial: the one client"),
-        ("apps/svrngs-keeper/src/host.rs", "dial: local prefill or readiness, without share credentials"),
+        ("apps/svrngs-keeper/src/host.rs", "dial: local readiness, without share credentials"),
         // svrngs's own API, asked only once it proves it holds the token.
         ("crates/svrngs-node/src/api.rs", "dial: svrngs's own API, proved before it is asked"),
         ("apps/give/src/record.rs", "dial: svrngs's own API, proved before it is asked, by each answer's deadline"),
         ("crates/svrngs/src/cli.rs", "dial: a group's page"),
         // The clock and randomness, at their adapters (clippy.toml).
         ("apps/give/src/main.rs", "the keeper program's clock, read here and passed in"),
-        ("apps/svrngs-keeper/src/host.rs", "the local prefill probe sets its deadline at the edge"),
         ("apps/svrngs-keeper/src/host.rs", "the local readiness probe waits at the edge"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot is named for when it was taken"),
         ("apps/svrngs-keeper/src/runtime.rs", "a snapshot times its pause"),
@@ -2075,29 +2074,32 @@ fn a_transient_job_is_never_named_a_unit_so_never_granted() {
         None,
         "a system service"
     );
-    let program = Answer::Program {
-        pid: 1,
-        start: 1,
-        program: "llama-server".into(),
-        folder: None,
-    };
-    let job = |unit: &str| Answer::Job {
-        unit: unit.into(),
-        description: None,
-    };
-    assert_eq!(crate::share::kept(&[program.clone()], false), None);
-    assert_eq!(
-        crate::share::kept(&[job("a.service"), program], false),
-        None
-    );
-    assert_eq!(
-        crate::share::kept(&[job("a.service"), job("b.service")], false),
-        None
-    );
-    assert_eq!(
-        crate::share::kept(&[job("a.service")], true),
-        None,
-        "asked after each restart"
-    );
-    assert_eq!(crate::share::kept(&[], false), None);
+    let doc = port_lend("doc", &[]);
+    let approved = binding::approve(&alone(1), None).unwrap();
+    let kept = |answers: &[Answer], ask| crate::share::kept(&doc, (&approved, answers), ask);
+    assert_eq!(kept(&[], true), None, "asked after each restart");
+    // Linux's grant is read from what answers; a Mac's from the agent it
+    // runs under (job/mac/tests.rs).
+    #[cfg(not(target_os = "macos"))]
+    {
+        let program = Answer::Program {
+            pid: 1,
+            start: 1,
+            program: "llama-server".into(),
+            folder: None,
+        };
+        let job = |unit: &str| Answer::Job {
+            unit: unit.into(),
+            description: None,
+        };
+        assert_eq!(kept(&[program.clone()], false), None);
+        assert_eq!(kept(&[job("a.service"), program], false), None);
+        assert_eq!(kept(&[job("a.service"), job("b.service")], false), None);
+        assert_eq!(
+            kept(&[job("a.service")], true),
+            None,
+            "asked after each restart"
+        );
+        assert_eq!(kept(&[], false), None);
+    }
 }

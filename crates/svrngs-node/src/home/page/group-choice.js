@@ -29,12 +29,15 @@ import { whose } from '../question.js?v=__VERSION__';
  */
 
 /**
- * A group as the boxes and a lend's row both say it: its name, and who made
- * it, so two of one name are told apart.
+ * A group as the boxes and a lend's row both say it: its name, and, where
+ * another of HOME's `groups` has that name, who made it and since when, so
+ * the two are told apart.
  * @param {Choice} group
+ * @param {Choice[]} groups
  */
-export const called = (group) => {
-  const made = group.made && whose(group.made);
+export const called = (group, groups) => {
+  const twin = groups.some((other) => other.id !== group.id && other.name === group.name);
+  const made = twin && group.made ? whose(group.made) : null;
   return `${group.name ?? 'a group whose name this computer cannot read'}${made ? ` (${made})` : ''}`;
 };
 
@@ -59,6 +62,6 @@ export function GroupChoice({ groups, ticked, waiting = false, send }) {
         disabled=${waiting}
         on=${ticked.includes(group.id)}
         change=${tick(group.id)}
-      >${called(group)}<//>`,
+      >${called(group, groups)}<//>`,
   );
 }

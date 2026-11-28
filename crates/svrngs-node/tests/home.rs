@@ -172,42 +172,6 @@ async fn run_routes_take_only_the_home_pages_closed_requests() {
     alex.net().close().await;
 }
 
-#[tokio::test]
-async fn prefill_is_local_and_read_only() {
-    let dir = tempfile::tempdir().unwrap();
-    let alex = on_wire::start(1, dir.path()).await;
-    let host = format!("svrngs.localhost:{}", alex.api_addr().port());
-    let own =
-        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{host}\r\n");
-    let foreign = "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\nOrigin: https://elsewhere.invalid\r\n";
-    let browser = Browser::of(&alex);
-    let port = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let path = format!("/run?prefill={}", port.local_addr().unwrap().port());
-    assert_eq!(
-        ask(&browser, "GET", &host, &path, foreign, "").await.status,
-        403
-    );
-    let got = ask(
-        &browser,
-        "GET",
-        &host,
-        &format!("{path}&command=/bin/true"),
-        &own,
-        "",
-    )
-    .await;
-    assert_eq!(got.status, 400, "closed prefill query: {}", got.body);
-    let got = ask(&browser, "GET", &host, &path, &own, "").await;
-    assert_eq!(got.status, 200, "{}", got.body);
-    assert!(got.json().get("command").is_none(), "{}", got.body);
-    assert!(lend::all(dir.path()).unwrap().is_empty());
-    println!(
-        "foreign: 403; extra command: 400; local unread: {}; no lend",
-        got.body
-    );
-    alex.net().close().await;
-}
-
 /// **The home page answers only itself, shows what `/v1/lends` answers, and
 /// takes only the person's yes and stop.** Typed, it serves its page and
 /// module, never to be framed, and every answer, its session's bootstrap
@@ -1775,9 +1739,14 @@ async fn what_the_page_lends_is_what_it_showed() {
 /// with what answers now and a token for it, though only its approved
 /// socket answers now. Approving with that token after what answers changed
 /// is refused in words that say so; with none, refused; with the token of
-/// what answers, approved, and listed held no more. Planted, each watched
-/// failing: `share::approve` not comparing the token (the changed set
-/// approved); the list reading no hold from the file (shelf listed open).
+/// what answers but asked to keep it to the job svrngs runs (`keep`, as the
+/// page's Keep it running asks), refused, nothing saved, since svrngs keeps
+/// no job of it (`share::kept`: on Linux a program in no unit, on a Mac no
+/// launch agent of shelf's name); with that token alone, approved, and
+/// listed held no more. Planted, each watched failing: `share::approve` not
+/// comparing the token (the changed set approved); the list reading no hold
+/// from the file (shelf listed open); the route ignoring `keep` (approved,
+/// 200).
 #[tokio::test]
 async fn keep_sharing_it_approves_only_what_the_page_showed() {
     // A port nothing listens on, so the wire's socket 1 is what answers.
@@ -1832,8 +1801,15 @@ async fn keep_sharing_it_approves_only_what_the_page_showed() {
     let unshown = ask(browser, "POST", home, path, own, "null").await;
     assert_eq!(unshown.status, 422, "no token: {}", unshown.body);
     on_wire::answers(&alex, port, Ok(svrngs_node::node::answering()));
+    let shelf = || lend::read(dir.path(), &lend::LendName::parse("shelf").unwrap());
+    let kept = format!(r#"{{"token":"{token}","pid":1,"start":1,"keep":true}}"#);
+    let unkept = "svrngs doesn't run what answers on shelf's port, so it wasn't approved. Check what answers there, then approve it.";
+    assert_eq!(approve(kept).await, (403, Some(unkept.into())));
+    let still = shelf().unwrap().unwrap().terms;
+    assert!(still.approved.is_some_and(|a| a.held), "nothing approved");
+    assert_eq!(still.keep, None, "nothing kept");
     assert_eq!(approve(with).await.0, 200);
-    let shelf = lend::read(dir.path(), &lend::LendName::parse("shelf").unwrap());
+    let shelf = shelf();
     let approved = shelf.unwrap().unwrap().terms.approved.unwrap();
     assert_eq!(approved, svrngs_node::node::approval(), "held no more");
     assert_eq!(row().await["held"], serde_json::Value::Null);

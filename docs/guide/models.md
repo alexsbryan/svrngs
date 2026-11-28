@@ -14,7 +14,7 @@ llama-server -m my-model.gguf --host 127.0.0.1 --port 8101
 
 When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, it's ready. (Without `--port`, llama-server uses 8080.)
 
-**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so its line names the program answering there, *"llama-server in …, at http://localhost:8101"*. Open it, type a name in **Its name:** (`coder`) and `llama-server` in **Which program:**, tick who can open it, then press **Lend it to House** (the button names the groups you ticked). The first press lends nothing yet: the row says *"People in your group can use all of llama-server that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at /v1/embeddings, each app only after the friend who opened it says yes. To lend it with these, press Lend again."* Press it again to lend it.
+**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so its line names the program answering there, *"llama-server, at localhost:8101"*. Open it, type a name in **Its name:** (`coder`) and `llama-server` in **Which program:**, tick who can open it, then press **Lend it to House** (the button names the groups you ticked). The first press lends nothing yet: the row says *"House can use it while it’s running. Apps your friends open can also send it requests, each after that friend says yes."*, with where under **Details** (/v1/embeddings). Press **Yes, lend it** to lend it.
 
 **From a terminal:**
 
@@ -39,26 +39,21 @@ They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, 
 
 ## Run coder with svrngs
 
-Trying a model in a terminal is fine. A **Shared while you run it** copy
-doesn't start again by itself. To have svrngs run coder, look for your
-terminal copy under **Already running here** and choose **Run it with svrngs**
-on its row. Review the suggested model path and command, and add any flags
-you need. Stop the terminal copy, then press Run. Or stop the copy and run
-this in a terminal, using your model's full path and flags:
+Trying a model in a terminal is fine, but that copy doesn't start again by
+itself. Once you lend it, stop the copy (Ctrl+C), then put `svrngs keep
+8101 --` in front of the same command and press Enter:
 
 ```
-svrngs run coder --port 8101 -- /usr/bin/llama-server -m "$HOME/models/my-model.gguf" --host 127.0.0.1 --port 8101
+svrngs keep 8101 -- llama-server -m ~/models/my-model.gguf --host 127.0.0.1 --port 8101
 ```
 
-Use the path where you installed `llama-server` (for example
-`/opt/homebrew/bin/llama-server` on an Apple silicon Mac). A busy port is
-refused; svrngs never stops your terminal copy for you. Once coder answers,
-[share it as `coder`](#lend-your-llama-server). If you shared the terminal
-copy before, stop lending that copy, then share this one under the same name.
-Run itself shares nothing. The Share review says when your friends can open
-it again after a restart. To stop coder, open your home page (`svrngs open`)
+svrngs shows what it will run and where, and keeps it once you press Enter
+and it answers on 8101. Didn't start it in a terminal? Its line under
+**What you lend** has **Keep it running**, to type the command and its
+folder instead ([Lend](lend.md#keep-it-running)). A busy port is refused;
+svrngs never stops your terminal copy for you. To stop coder, open your home page (`svrngs open`)
 and choose **Stop coder** under **Already running here**. Its setup and
-model files stay in place. [Lend](lend.md#run-it-with-svrngs-then-share-it)
+model files stay in place. [Lend](lend.md#keep-it-running)
 explains start times and how to stop lending it separately.
 
 ## What svrngs keeps back, and why

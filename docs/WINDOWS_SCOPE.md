@@ -76,8 +76,8 @@ upstream facts sit):
 - **Socket identity.** No cookie on Windows (W2): `lasting: false`,
   approval by `(pid, start)`, the Mac's shape. A restart holds the
   share until one click, on every platform now.
-- **The one `unsafe`.** `lean_check.py`'s `UNSAFE_HOME` allows exactly
-  one `unsafe_code` exemption in `uid.rs` (`found > (rel == UNSAFE_HOME)`
+- **The one `unsafe`.** `lean_check.py`'s `UNSAFE_HOMES` allows exactly
+  one `unsafe_code` exemption in `uid.rs` (`found > (rel in UNSAFE_HOMES)`
   fails a second). The windows-sys calls live inside that same one
   `kernel(Ask)` function, cfg'd arms within one body — not a second
   exemption. If the shape will not hold, the rule change is asked for,
@@ -116,8 +116,8 @@ type-checking):
 3. `update.rs:227` chmod 0o755 and `:229` rename — the rename-aside
    dance; `platform_of` gains `"windows"`.
 4. `cli.rs:1012` `MetadataExt` uid and `:1015` launchd/systemd — the
-   schtasks arm, forked from sovereign-service; `NotKept` refusal keeps
-   its meaning.
+   schtasks arm, forked from sovereign-service; `restart`'s start of
+   svrngs where nothing keeps it (`process_group`) gains a detached arm.
 5. `cli.rs:1074-1079` `stty` echo — a console-mode arm.
 6. `home.rs:1104` `opened` — `ShellExecuteW` or `explorer.exe`; the
    `browse` trait boundary is unchanged.

@@ -7,7 +7,8 @@
 //! A kept card lives in `<data>/svrngs-keeper/<name>/compose.yaml`, with the
 //! card it replaced beside it as `previous.yaml`, for a later "go back".
 //! Removing a card stops its unit and deletes the unit file; the card and
-//! the program's folder stay.
+//! the program's folder stay. Every file here can hold the command, and a
+//! command can hold a key, so each is its person's alone ([`private`]).
 
 use std::path::{Path, PathBuf};
 
@@ -87,16 +88,56 @@ impl Places {
     }
 
     #[cfg(target_os = "macos")]
-    pub fn install_agent(&self, card: &Card, name: &Name) -> Result<(), KeptError> {
+    pub fn install_agent(&self, card: &Card, name: &Name) -> Result<Stored, KeptError> {
         let native = card
             .native
             .as_ref()
             .ok_or_else(|| KeptError::NotNative(card.title.clone()))?;
         let agent = self.agent(name)?;
         agent.require_new().map_err(KeptError::Manager)?;
-        store(self, card, name)?;
-        agent.install(native).map_err(KeptError::Manager)
+        let stored = store(self, card, name)?;
+        agent.install(native).map_err(KeptError::Manager)?;
+        Ok(stored)
     }
+
+    /// Undo what a Run's `store` did once its program was not verified:
+    /// a card kept here new goes, with its folder; one that replaced
+    /// another gives that one back. Its unit or agent is the caller's to
+    /// remove first.
+    pub fn forget(&self, name: &Name, stored: &Stored) -> Result<(), KeptError> {
+        let dir = self.card_dir(name);
+        tracing::debug!(name = name.as_str(), ?stored, "kept: an unverified Run's card undone");
+        match stored {
+            Stored::New => std::fs::remove_dir_all(&dir).map_err(file(&dir)),
+            Stored::Changed { previous, .. } => std::fs::rename(previous, self.card_path(name)).map_err(file(previous)),
+            Stored::Same => Ok(()),
+        }
+    }
+}
+
+/// Write `bytes` at `path` for its owner alone: a new file is made 0600,
+/// and an old one is made so before its bytes change, so no other account
+/// ever reads what it holds.
+pub fn private(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    use std::io::Write;
+    use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+    let mut f = std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .mode(0o600)
+        .open(path)?;
+    f.set_permissions(std::fs::Permissions::from_mode(0o600))?;
+    f.set_len(0)?;
+    f.write_all(bytes)
+}
+
+/// Make `dir` and any folder above it that is missing 0700, and `dir`
+/// itself so if it was there already: a folder of Keeper's own.
+pub fn private_dir(dir: &Path) -> std::io::Result<()> {
+    use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
+    std::fs::DirBuilder::new().recursive(true).mode(0o700).create(dir)?;
+    std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700))
 }
 
 /// What `keep` did with the card it was given.
@@ -104,7 +145,7 @@ impl Places {
 pub enum Stored {
     /// Kept here for the first time.
     New,
-    /// The same card was kept already: nothing was written or restarted.
+    /// The same card was kept already: nothing changed or restarted.
     Same,
     /// It replaced another card, now `previous.yaml`, and the unit started
     /// again from the new one if its unit changed.
@@ -136,8 +177,7 @@ pub fn name_of(title: &str) -> String {
 
 /// The question `keep` asks before it lets this account run with nobody
 /// logged in (ralph/next/keeper/STATE.md, "The user flow").
-pub const LINGER_ASK: &str =
-    "To start it before you log in, your account needs to run when nobody is logged in. Turn that on?";
+pub const LINGER_ASK: &str = "Start it when this computer starts, even before you log in? That lets your account run programs while nobody is logged in.";
 
 /// When a kept card will start, as the answer to [`LINGER_ASK`] left it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -167,6 +207,14 @@ impl Boot {
             Boot::Lingers | Boot::TurnOn => "It starts when this computer starts, before anyone logs in,",
             Boot::Login { unread: None } => "It starts when you log in,",
             Boot::Login { unread: Some(_) } => "It starts when you log in at least,",
+        }
+    }
+
+    /// When a program kept by Run comes back, for the line after it.
+    pub fn back(&self) -> &'static str {
+        match self {
+            Boot::Lingers | Boot::TurnOn => "when this computer starts, even before you log in",
+            Boot::Login { .. } => "when you log in",
         }
     }
 }
@@ -250,7 +298,7 @@ pub fn install(
     let stored = store(places, card, &name)?;
     let seal = places.card_dir(&name).join("unit.hash");
     regular_text(&seal)?;
-    std::fs::write(&seal, blake3::hash(content.as_bytes()).to_hex().as_str()).map_err(file(&seal))?;
+    private(&seal, blake3::hash(content.as_bytes()).to_hex().as_bytes()).map_err(file(&seal))?;
     let user_unit = UserUnit {
         name: &unit,
         path: &unit_path,
@@ -299,13 +347,24 @@ fn store(places: &Places, card: &Card, name: &Name) -> Result<Stored, KeptError>
         },
     };
     tracing::debug!(name = name.as_str(), ?stored, "card read");
+    // An older Keeper's card and folders, readable by everyone, are made
+    // private whatever this keep writes; the same card is left as it was.
+    private_dir(&places.data).map_err(file(&places.data))?;
+    private_dir(&dir).map_err(file(&dir))?;
+    let owner_only = |at: &Path| {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(at, std::fs::Permissions::from_mode(0o600)).map_err(file(at))
+    };
+    if regular_text(&previous)?.is_some() {
+        owner_only(&previous)?;
+    }
+    match &before {
+        Some(_) if stored == Stored::Same => owner_only(&path)?,
+        Some(before) => private(&previous, before.as_bytes()).map_err(file(&previous))?,
+        None => {}
+    }
     if stored != Stored::Same {
-        std::fs::create_dir_all(&dir).map_err(file(&dir))?;
-        if let Some(before) = &before {
-            regular_text(&previous)?;
-            std::fs::write(&previous, before).map_err(file(&previous))?;
-        }
-        std::fs::write(&path, text).map_err(file(&path))?;
+        private(&path, text.as_bytes()).map_err(file(&path))?;
     }
     Ok(stored)
 }

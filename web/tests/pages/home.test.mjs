@@ -600,13 +600,12 @@ test('home can stop a managed app without a group', async () => {
   const page = await home({
     ...ada({ groups: [] }),
     'GET /run': {
-      fields: [],
       rows: [
         { name: 'coder', port: 8101, text: 'Run by svrngs', action: 'stop', button: 'Stop coder' },
       ],
     },
   });
-  assert.deepEqual(page.text('#run-form p button'), ['Stop coder']);
+  assert.deepEqual(page.text('#runs p button'), ['Stop coder']);
   assert.doesNotMatch(page.text().join('\n'), /Look for programs running on this computer/);
 });
 

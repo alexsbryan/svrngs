@@ -23,7 +23,8 @@ import { get } from './routes.js?v=__VERSION__';
  * them sign people in with svrngs, by name, which take an account apps read
  * them through, each with whether one is kept and how to make it, by name,
  * which may have headers svrngs adds to each request, each with the names of
- * those kept, by name, and why it could not be read.
+ * those kept, by name, and why it could not be read. A lend shared only
+ * while its program runs carries its port as `sharing` (home.rs `lent`).
  * @typedef {object} State
  * @property {{ lent: 'reading' | 'read' | 'unread' }} at
  * @property {Record<string, number>} [asked]
@@ -53,7 +54,7 @@ export const LENDING = {
   io: {
     read: ({ n: serial }) =>
       get('/lent').then(
-        /** @param {{ lent: Lend[], signing: string[], readers: Record<string, AppsAccount>, headers: Record<string, string[]>, sharing?: Record<string, [string, string]> }} answer */
+        /** @param {{ lent: Lend[], signing: string[], readers: Record<string, AppsAccount>, headers: Record<string, string[]>, sharing?: Record<string, number> }} answer */
         ({ lent, signing, readers, headers, sharing }) => ({
           type: 'answered',
           n: serial,

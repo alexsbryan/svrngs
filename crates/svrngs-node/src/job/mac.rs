@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Read an exact login registration, never discover agents by name alone.
 
+#[cfg(target_os = "macos")]
+use super::{Keep, Read, Scope};
+#[cfg(target_os = "macos")]
+use crate::lend::{Approved, Lend, Raw};
 use std::path::Path;
 #[cfg(target_os = "macos")]
 use std::path::PathBuf;
@@ -88,6 +92,30 @@ pub fn now(label: &str) -> super::Read {
         keep,
         scope: super::Scope::Agent((pid, start)),
     })
+}
+
+/// A Mac lend's grant through restarts, the one decider of it for Share
+/// (plan/run.rs `observe`) and an approval (share.rs `kept`): where its
+/// lender chose to keep sharing it (`chose`) and it is no UDP share, the
+/// launch agent svrngs-keeper runs it under, its label [`PREFIX`] and the
+/// lend's name, as `read` says it now ([`now`]), when every process
+/// `approved` holds, one at least, descends from that agent's root
+/// ([`crate::uid::descends`]). Else none, and why, traced.
+#[cfg(target_os = "macos")]
+pub fn kept(read: fn(&str) -> Read, lend: &Lend, approved: &Approved, chose: bool) -> Option<Keep> {
+    let chosen = chose && lend.raw() != Raw::Udp;
+    let held = &approved.processes;
+    let theirs = |root| !held.is_empty() && held.iter().all(|&p| crate::uid::descends(p, root));
+    let keep = match chosen.then(|| read(&format!("{PREFIX}{}", lend.name))) {
+        None => Err("its lender chooses again after each restart, or it is UDP"),
+        Some(now) => now.and_then(|now| match now.scope {
+            Scope::Agent(root) if theirs(root) => Ok(now.keep),
+            Scope::Agent(_) => Err("it approves no process, or one that isn't the agent's"),
+            Scope::Cgroups(_) => Err("it isn't a launch agent"),
+        }),
+    };
+    tracing::debug!(target: "job", lend = %lend.name, chose, ?held, ?keep, "job: a Mac lend's grant, the launch agent svrngs runs it under, or why not");
+    keep.ok()
 }
 
 #[cfg(test)]

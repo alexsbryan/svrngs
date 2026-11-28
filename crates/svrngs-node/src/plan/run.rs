@@ -15,13 +15,20 @@ use std::{collections::BTreeSet, path::Path, process::Stdio};
 
 pub(crate) const KEEPER: &str = "svrngs-keeper";
 
-/// Run is local only; it takes no share witness or access terms.
+/// Run is local only; it takes no share witness or access terms. It keeps
+/// nothing in a folder `data_dir` syncs; the keeper confirms a command a
+/// terminal gave (after `--`) there before it keeps it.
 pub async fn native<'a>(
+    data_dir: &Path,
     name: &'a str,
     view: RunView,
     args: impl IntoIterator<Item = &'a str>,
 ) -> Result<String, String> {
-    let out = keeper(&view, ["run", name, "--json"].into_iter().chain(args)).await?;
+    let synced = crate::folder::synced(data_dir)?;
+    let mut words = vec!["run", name, "--json"];
+    words.extend(synced.iter().flat_map(|dir| ["--synced", dir]));
+    words.extend(args.into_iter().map(|a| a as &str));
+    let out = keeper(&view, words).await?;
     let started = serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?;
     words::started(name, view, started)
 }
@@ -71,17 +78,15 @@ enum Row {
 pub(crate) async fn rows() -> Result<serde_json::Value, String> {
     let out = keeper(&RunView::Page, ["list", "--json"]).await?;
     let rows: Vec<Row> = serde_json::from_slice(&out).map_err(|_| RUN_UNREAD)?;
-    Ok(words::run_form(
-        rows.into_iter()
-            .filter_map(|row| match row {
-                Row::Kept(kept) => Some(words::owned(kept)),
-                Row::Unread { name } => {
-                    Some(serde_json::json!({ "name": name, "text": RUN_UNREAD }))
-                }
-                Row::Removed => None,
-            })
-            .collect(),
-    ))
+    let rows: Vec<_> = rows
+        .into_iter()
+        .filter_map(|row| match row {
+            Row::Kept(kept) => Some(words::owned(kept)),
+            Row::Unread { name } => Some(serde_json::json!({ "name": name, "text": RUN_UNREAD })),
+            Row::Removed => None,
+        })
+        .collect();
+    Ok(serde_json::json!({ "rows": rows }))
 }
 
 /// Replay first; only a current review may publish access.
@@ -139,21 +144,10 @@ impl Share<'_> {
             (Runs::Transient, Return::Unknown, None, None)
         };
         #[cfg(target_os = "macos")]
-        let (runs, app, keep) =
-            match select.then(|| job::now(&format!("{}{}", job::mac::PREFIX, lend.name))) {
-                Some(Ok(job::Now {
-                    keep: grant,
-                    scope: job::Scope::Agent(root),
-                })) if !approved.processes.is_empty()
-                    && approved
-                        .processes
-                        .iter()
-                        .all(|&p| crate::uid::descends(p, root)) =>
-                {
-                    (Runs::Kept(grant.clone()), Return::SignIn, Some(grant))
-                }
-                _ => (runs, app, keep),
-            };
+        let (runs, app, keep) = match job::mac::kept(job::now, lend, &approved, select) {
+            Some(grant) => (Runs::Kept(grant.clone()), Return::SignIn, Some(grant)),
+            None => (runs, app, keep),
+        };
         let platform = if cfg!(target_os = "macos") {
             Platform::Mac
         } else {

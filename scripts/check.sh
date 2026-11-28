@@ -122,7 +122,7 @@ step "web rustfmt and clippy" scripts/build-web.sh --lint
 # (main.rs `film_answered`); its playing is the `playback` step's, below.
 step "browser" cargo test --quiet --workspace --test browser -- --skip playback::
 # The ignored keeper cases need WebKit, the built keeper and private user managers.
-step "keeper e2e" python3 -B crates/svrngs-node/tests/keeper_gate.py --test browser explicit_run_then_share_in_webkit run_prefill_waits_for_confirmation_in_webkit --lib uid::tests::a_unit_s_program_is_named_granted_and_renewed_after_it_restarts
+step "keeper e2e" python3 -B crates/svrngs-node/tests/keeper_gate.py --test browser share_then_keep_it_running_in_webkit run_prefill_waits_for_confirmation_in_webkit --lib uid::tests::a_unit_s_program_is_named_granted_and_renewed_after_it_restarts
 # The pages' types (jsconfig.json, and the service workers' in
 # jsconfig.workers.json, by scripts/types.mjs), checked against the wasm
 # glue's declaration built here, target/web/site/wasm/: the browser step

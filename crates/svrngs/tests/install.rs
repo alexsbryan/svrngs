@@ -1702,12 +1702,16 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
     }
 }
 
-/// `svrngs restart` asks what keeps svrngs running, and says so plainly
-/// when nothing does (cli.rs `restart`): this build's svrngs, which
-/// starts no node for it, so its build's relay is never dialled, asked
-/// where install.sh kept the stand-in at login, then where nothing does.
+/// `svrngs restart` asks what keeps svrngs running to restart it (cli.rs
+/// `restart`), and where nothing does, and no svrngs runs, starts this one
+/// itself, apart from its terminal, and says once it answers as this build
+/// that it runs; where what it restarted never answers, where to read why.
+/// This build's svrngs, asked where install.sh kept the stand-in at login,
+/// which starts no node, then where nothing does. Planted, watched
+/// failing: 0ba18ef9 refused the second, "svrngs is not kept running at
+/// login here, so nothing can restart it: stop it where it runs (Ctrl-C)".
 #[test]
-fn restart_asks_launchd_or_systemd_and_refuses_where_neither_keeps_svrngs() {
+fn restart_asks_launchd_or_systemd_and_starts_svrngs_where_neither_keeps_it() {
     let site = stand_in_site(None);
     let home = tempfile::tempdir().unwrap();
     let _started = Started(home.path().to_path_buf());
@@ -1725,21 +1729,43 @@ fn restart_asks_launchd_or_systemd_and_refuses_where_neither_keeps_svrngs() {
             .output()
             .unwrap()
     };
+    let running = format!("svrngs {} is running.\n", svrngs_node::api::build());
+    // The stand-in install.sh kept answers nothing: said, with where why is.
     let kept = restart();
-    assert!(kept.status.success(), "{kept:?}");
     let said = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
     let asked = match cfg!(target_os = "macos") {
         true => "launchctl kickstart -k gui/",
         false => "systemctl --user restart svrngs.service",
     };
     assert!(said.contains(asked), "{said}");
+    let log = home.path().join(".svrngs/svrngs.log");
+    let why = String::from_utf8_lossy(&kept.stderr);
+    assert!(
+        why.contains(&format!(
+            "svrngs couldn't start here ({} says why)",
+            log.display()
+        )),
+        "{why}"
+    );
 
     let pid = std::fs::read_to_string(home.path().join("stubs/pid")).unwrap();
     let stopped = std::process::Command::new("kill").arg(pid.trim()).status();
     assert!(stopped.unwrap().success());
     std::fs::remove_file(home.path().join("stubs/pid")).unwrap();
-    let not = restart();
-    assert!(!not.status.success(), "{not:?}");
-    let why = String::from_utf8_lossy(&not.stderr);
-    assert!(why.contains("not kept running at login"), "{why}");
+    let dir = home.path().join(".svrngs");
+    while svrngs::cli::claim(&dir).is_err() {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    let started = restart();
+    let holder = std::process::Command::new("lsof")
+        .arg("-t")
+        .arg(dir.join("lock"))
+        .output()
+        .unwrap();
+    let holder = String::from_utf8_lossy(&holder.stdout).trim().to_string();
+    let _ = std::process::Command::new("kill").arg(&holder).status();
+    let told = String::from_utf8_lossy(&started.stdout);
+    assert!(started.status.success(), "{started:?}");
+    assert!(told.ends_with(&running), "{told}");
+    assert!(!holder.is_empty(), "no svrngs holds the data dir");
 }

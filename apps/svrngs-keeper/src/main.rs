@@ -1,5 +1,6 @@
 //! The `svrngs-keeper` command: keep a card running on this computer.
 //! RUST_LOG=debug shows every decision, each refusal with what refused it.
+#![deny(unsafe_code)]
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -15,14 +16,12 @@ use svrngs_keeper::systemd::SystemdUser;
 #[cfg(target_os = "linux")]
 mod container_run;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-mod facts;
-#[cfg(any(target_os = "linux", target_os = "macos"))]
 mod native_run;
 
 const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
-       svrngs-keeper run <name> --port <port> [--folder <folder>] [--json] -- <command>
+       svrngs-keeper run <name> --port <port> [--folder <folder>] [<check>…] -- <command>
+       svrngs-keeper run <name> --port <port> --folder <folder> --command <line> [<check>…]
        svrngs-keeper run <name> --port <port> --card <compose.yaml> [--json]
-       svrngs-keeper facts <port> [--name <name>]
        svrngs-keeper list [--json]
        svrngs-keeper stop|start|restart|remove <name>
 
@@ -34,7 +33,16 @@ const USAGE: &str = "usage: svrngs-keeper keep [--name <name>] <card>
   unless --name gives one. The same card again changes nothing; a new one
   replaces it, and the one before is kept beside it as previous.yaml.
 
-  facts: suggest a llama-server command and folder to review, as JSON.
+  run: start a program under the service manager and keep it only once it
+  answers on <port> as that job; anything else is stopped and removed, and
+  why is said. The words after -- are run as given, in <folder> or the one
+  this starts in; a --command line is split as a shell would split it, ~
+  read as your home, and anything only a shell understands refused. Its
+  checks: --synced <folder> (again for more) names a folder nothing kept
+  may be in; --at-boot says yes to starting before anyone logs in (Linux);
+  --json answers in JSON, its refusals too. Words after -- are shown, and
+  kept only once you press Enter in a terminal.
+
   list: each card kept here, and whether it runs.
   stop: stop it until you start it, including after signing in. start: run it again.
   restart: restart it if it is running.
@@ -88,8 +96,6 @@ fn places() -> anyhow::Result<Places> {
 fn run(args: &[String]) -> anyhow::Result<()> {
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
     match args.as_slice() {
-        ["facts", port] => return at_port(port, "llama-server"),
-        ["facts", port, "--name", name] => return at_port(port, name),
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         ["run", name, rest @ ..] => return native_run::run(name, rest),
         #[cfg(target_os = "linux")]
@@ -104,20 +110,6 @@ fn run(args: &[String]) -> anyhow::Result<()> {
     {
         run_card(&SystemdUser::system(), &places()?, &args)
     }
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn at_port(port: &str, name: &str) -> anyhow::Result<()> {
-    let port = port
-        .parse::<std::num::NonZeroU16>()
-        .context("give a port from 1 to 65535")?;
-    let name = Name::new(name)?;
-    json(&facts::read(port.get(), name.as_str()))
-}
-
-#[cfg(not(any(target_os = "linux", target_os = "macos")))]
-fn at_port(_: &str, _: &str) -> anyhow::Result<()> {
-    anyhow::bail!("facts needs Linux or macOS to read listeners and suggest a command")
 }
 
 #[cfg(target_os = "macos")]
@@ -152,7 +144,7 @@ fn run_agent(places: &Places, args: &[&str]) -> anyhow::Result<()> {
             .map_err(anyhow::Error::msg)?;
             println!("{}: {verb} requested", name.as_str());
         }
-        _ => anyhow::bail!("on this Mac, use run, facts, list, stop, start, restart or remove"),
+        _ => anyhow::bail!("on this Mac, use run, list, stop, start, restart or remove"),
     }
     Ok(())
 }
@@ -205,7 +197,7 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
             );
             Ok(())
         }
-        _ => anyhow::bail!("the commands are run, keep, facts, list, stop, start, restart and remove"),
+        _ => anyhow::bail!("the commands are run, keep, list, stop, start, restart and remove"),
     }
 }
 
@@ -213,7 +205,8 @@ fn run_card(systemd: &SystemdUser, places: &Places, args: &[&str]) -> anyhow::Re
 fn lock(places: &Places, key: &str) -> anyhow::Result<std::fs::File> {
     // Card commands still serialize writes, without reading any live process.
     let dir = places.data.join("locks");
-    std::fs::create_dir_all(&dir)?;
+    kept::private_dir(&places.data)?;
+    kept::private_dir(&dir)?;
     let file = std::fs::OpenOptions::new()
         .write(true)
         .create(true)
@@ -267,10 +260,10 @@ fn json(value: &impl serde::Serialize) -> anyhow::Result<()> {
 fn terminal(question: &str) -> Option<bool> {
     use std::io::{IsTerminal, Write};
     std::io::stdin().is_terminal().then(|| {
-        eprint!("{question} Type y, then press Enter: ");
+        eprint!("{question} [y/N] ");
         let _ = std::io::stderr().flush();
         let mut line = String::new();
         let _ = std::io::stdin().read_line(&mut line);
-        matches!(line.trim(), "y" | "yes")
+        matches!(line.trim(), "y" | "Y" | "yes")
     })
 }

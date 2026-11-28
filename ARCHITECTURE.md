@@ -743,7 +743,8 @@ legacy Approve on Mac grants only the current listener.
 revision, and job or publication reports without reading the host. It reuses
 an observed service or shares just the listener that's running. `plan/run.rs`
 asks the packaged keeper to handle explicit `svrngs run`, without
-publishing access. On explicit Share it replays the review and witnesses a
+publishing access, naming the folders this computer syncs
+(`folder::synced`), which the keeper keeps nothing in. On explicit Share it replays the review and witnesses a
 service's listeners and connection taker again before publishing its grant with
 the audience and limit through the same locked mutation
 as other declaration edits. The revision advances before the declaration is
@@ -1018,10 +1019,9 @@ changed, under upstream's stock rustfmt and one clippy allowance
 renders to `svrngs-keeper-<name>.service` in `src/unit.rs`; `src/kept.rs` and
 `src/main.rs` are the `svrngs-keeper` command, which keeps, lists, stops,
 starts, restarts and removes one, and supervises nothing. `tests/host.sh` proves it
-under a real user manager. `facts <port>` only suggests Run form fields:
-`src/host.rs` reads the listeners and asks a recognized llama-server for
-its model path, `src/promote.rs` quotes the command, and `src/facts.rs`
-returns the suggestion as JSON. No live command or environment is copied.
+under a real user manager. `src/host.rs` reads which program holds a
+port, which `src/promote.rs` parses; Keeper never reads how a program was
+started, so the person gives the command and folder.
 The keeper installs an explicitly supplied command with `run --port … -- <command>`
 (`src/native_run.rs`), using the same card renderer. It refuses a port
 with a listener on any address, and waits up to 30 s for a local HTTP

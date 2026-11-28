@@ -507,3 +507,35 @@ fn an_account_that_lingers_already_is_not_asked() {
     assert_eq!((&boot, turned_on), (&Boot::Lingers, false));
     assert!(boot.starts().contains("when this computer starts"), "{}", boot.starts());
 }
+
+/// The unit and the card hold the command, which can hold a key: each file
+/// is made its person's alone, and Keeper's folders too, and an older
+/// Keeper's open ones are closed at the next keep, though it changes
+/// nothing else.
+#[test]
+fn every_file_it_keeps_is_its_person_s_alone() {
+    let here = Here::new();
+    let dir = here.places.data.join("coder");
+    let files = [here.unit(), dir.join("compose.yaml"), dir.join("unit.hash")];
+    let modes = || {
+        let at = |p: &Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+        let mut seen: Vec<u32> = files.iter().map(|f| at(f)).collect();
+        seen.extend([at(&dir), at(&here.places.data)]);
+        seen
+    };
+    here.keep(CODER).unwrap();
+    assert_eq!(modes(), [0o600, 0o600, 0o600, 0o700, 0o700]);
+    for (path, mode) in files
+        .iter()
+        .map(|f| (f, 0o644))
+        .chain([(&dir, 0o755), (&here.places.data, 0o755)])
+    {
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode)).unwrap();
+    }
+    assert_eq!(here.keep(CODER).unwrap().stored, Stored::Same);
+    assert_eq!(modes(), [0o600, 0o600, 0o600, 0o700, 0o700]);
+    let changed = here.keep(&CODER.replace("8101", "8102")).unwrap();
+    assert!(matches!(changed.stored, Stored::Changed { .. }));
+    let previous = std::fs::metadata(dir.join("previous.yaml")).unwrap();
+    assert_eq!(previous.permissions().mode() & 0o777, 0o600);
+}

@@ -33,12 +33,24 @@ short name.
 - ***"This browser didn’t keep what svrngs needs to open this page: it keeps no cookies for sites on localhost."***
   Your browser blocks cookies for `localhost` sites. Allow them in its
   settings, then open svrngs again.
-- **`svrngs: svrngs is not running on this computer: start it, then run this again`**, or the home page doesn't open at all.
-  Paste the install line again: it updates svrngs and starts it. Logging
-  out and back in starts it too.
-- **`svrngs: svrngs is already running on this computer (… is held); stop it, then run this again`**, after typing `svrngs` alone.
-  Nothing is wrong: svrngs already runs whenever you log in. To open your
-  home page, type `svrngs open`.
+- **``svrngs: svrngs is not running on this computer: start it with `svrngs`, then run this again``**, or the home page doesn't open at all.
+  Type `svrngs`: it starts svrngs and opens your home page. Pasting the
+  install line again does too, and keeps svrngs running whenever you log in.
+- **`svrngs: The svrngs running here didn't stop when asked, as one older than this one (…) can't: …`**
+  svrngs was updated while an old one kept running, one too old to stop
+  when the new one asks. Paste the `kill` line it shows, or restart your
+  computer, then run the command again. It happens once: the new one
+  stops itself when asked.
+- **`svrngs: The svrngs running here (…) is newer than this command (…)`**
+  The terminal found an older `svrngs` file than the one running. Type
+  `svrngs update`, then try again.
+- **`svrngs: svrngs couldn't start here (… says why): …`**
+  Open the file it names; its last lines say what went wrong. Paste the
+  install line again once you've dealt with it.
+- **`svrngs: svrngs can't read or write its token, …`**
+  svrngs keeps a token in that file to tell your own programs from
+  anyone else's. Delete the file, then type `svrngs restart`, which makes
+  a new one.
 
 ## Joining a group
 
@@ -148,10 +160,10 @@ short name.
   The secret is shown only once. Run that command for a new one, and put
   it in the app's settings.
 
-## Run it with svrngs
+## Keep it running
 
-- **"Port 8101 is in use by llama-server, the copy you started: stop it, then press Run."**
-  Stop that copy yourself, then try again. svrngs hasn't stopped anything.
+- **"Port 8101 is in use by llama-server, the copy you started: stop it, then press Start."**
+  Quit that copy yourself, then press **Start** again. svrngs hasn't stopped anything.
 - **"Not shared; svrngs couldn't verify coder is answering."**
   Check the reported state and the port, then check the command, folder and
   paths you gave it. It runs without your terminal's settings. To stop it,
@@ -199,7 +211,7 @@ short name.
   to the command, quotes included.
 - **`svrngs: more than one group here is called Trip; say which by the start of its id: …`**
   Use the first 8 letters of the id it lists in place of the name.
-- **`svrngs: svrngs is not running on this computer: start it, then run this again`**,
+- **``svrngs: svrngs is not running on this computer: start it with `svrngs`, then run this again``**,
   after `remove`, `handover` or `leave`. These ask the svrngs running on
   your computer. Open svrngs from your Applications, then run it again.
 

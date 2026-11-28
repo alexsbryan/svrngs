@@ -634,7 +634,7 @@ async fn an_app_has_this_computers_key_sign_its_bytes() {
 }
 
 /// Every route of the record, as an app asks it: its method and path.
-const RECORD_ROUTES: [(&str, &str); 16] = [
+const RECORD_ROUTES: [(&str, &str); 17] = [
     ("POST", "/v1/rail/append?namespace=house"),
     ("GET", "/v1/rail/log?namespace=house"),
     ("POST", "/v1/rail/live?namespace=house"),
@@ -654,6 +654,7 @@ const RECORD_ROUTES: [(&str, &str); 16] = [
     ("POST", "/v1/leaves"),
     ("GET", "/v1/room"),
     ("POST", "/v1/room"),
+    ("POST", "/v1/stop"),
 ];
 
 /// `node`'s answer to `method` `path`, with `shown` as its
@@ -695,11 +696,12 @@ fn token_in(dir: &std::path::Path) -> String {
 /// code, or with a Bearer that isn't this computer's token, 401 `unasked`,
 /// and one that shows the token itself, 401 `no_bearer`, each saying how
 /// to ask; the same request asked as you, with the code for its
-/// connection, is answered as before. Sign-in's routes keep their own
-/// client secret and are not asked for it. The failing input: the check
-/// skipped in `api::router`, every caller on loopback served; for the
-/// token itself, 96ea3da7, which took it; and for another Bearer, one
-/// said to be the token.
+/// connection, is answered as before; `svrngs restart`'s ask that svrngs
+/// stop among them. Sign-in's routes keep their own client secret and are
+/// not asked for it. The failing input: the check skipped in
+/// `api::router`, every caller on loopback served; for the token itself,
+/// 96ea3da7, which took it; for another Bearer, one said to be the token;
+/// and the stop route let past `holds_the_token`.
 #[tokio::test]
 async fn a_program_not_asking_as_you_is_refused_on_every_record_route() {
     let dir = tempfile::tempdir().unwrap();

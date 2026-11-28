@@ -9,10 +9,10 @@
    command and the app; no `Arc` of a `Mutex` or `RwLock`, nor `Rc` of a
    `RefCell`, its path spelled any way (#195), in a crate's product code
    (ownership is a tree); no `async` in svrngs-core (it is synchronous).
-   One `unsafe`: every product crate root (crates/*/src/lib.rs and main.rs,
-   web/src/lib.rs) denies `unsafe_code`, so the compiler refuses any other,
-   and no source under crates/ or web/src/ exempts code from it but
-   `UNSAFE_HOME`'s one function, libproc's read of sockets (DESIGN §5).
+   One `unsafe` a home: every product crate root (crates/*/src/lib.rs and
+   main.rs, web/src/lib.rs, Keeper's) denies `unsafe_code`, so the compiler
+   refuses any other, and no source there exempts code from it but one
+   function in each of `UNSAFE_HOMES`, libproc's read of sockets (DESIGN §5).
 4. Lines of code — not blank, not a comment, not a test — stay under the
    caps `BUDGET` holds below, their one home (#197), scripts included. The
    budget counts the product: apps/, installed packages (any
@@ -29,8 +29,8 @@ from pathlib import Path
 TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
 ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
 FOREIGN = re.compile(r'^name = "(commonwealth-[\w-]+|sovereign-[\w-]+|oicp-[\w-]+|kernel-types|oplog(-types)?|corpus-engine|host-kit|mesh-[\w-]+)"$', re.M)
-# The one file whose one function may allow `unsafe_code` (its `kernel`).
-UNSAFE_HOME = "crates/svrngs-node/src/uid.rs"
+# The files whose one function each may allow `unsafe_code` (uid.rs `kernel`).
+UNSAFE_HOMES = {"crates/svrngs-node/src/uid.rs"}
 # The pure availability decision and renderer, not the executor beside them.
 PLAN_PURE = {"crates/svrngs-node/src/plan.rs", "crates/svrngs-node/src/plan/words.rs"}
 PLAN_IO = re.compile(
@@ -1164,12 +1164,28 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # checkout's build as the login svrngs. Its pass (2a1d9f26) cut the two items
 # only tests reached, cli.rs `share_lend` and set.rs `At::check`, -9, to
 # 28,662 and the core's 3,526; dev.sh brings the whole to 28,678.
+# The operator approved up to +97 JS (2026-11-25) for lending first, then
+# the lend's offer to keep its program running (keep-running.js). Its pass
+# cut the standalone Run form, its prefill and the found row's Run link
+# (-30) and trimmed the offer (-8): 8,892, to come down with the Mac keep.
+# The Mac keep (2026-11-25): +7 for one decider and the Mac approval, past -13 cut (the Run button's if, /run's starting): 28,672; the offer reads /lent alone: 8,880.
+# The operator approved +4 (2026-11-25) for approve's `keep: true`, refused unless svrngs keeps what answers, so the page approves nothing the person didn't see but svrngs's own job. Its pass cut 1 (the route's `named`); nothing else in the touched files was needless. 28,676; the page's guess goes, JS 8,873.
+# The found row's lend said in fewer words (2026-11-25): the review alone, its sends and kept-back paths as data for the page's Details, no terms-first step (home.rs `drawn` gone): 28,655; the drawn message one patch, the lend's row opened by its focus: JS 8,871.
+# Its review shows its groups' own rows, by whom, in Details (2026-11-25): +6 paid by cutting needless lines in lend_one (the groups' names, the name-taken check) and LEND's two let-go patches made one: 28,649; JS 8,865.
+# Keep it running reads nothing of how a program was started (2026-11-25): the /run?prefill route and the page's fill-in go: 28,641; JS 8,845.
+# svrngs keep <port> -- <command> and the page's line for it (operator-approved raise, 2026-11-26, after an economizing pass): 28,665; JS 8,852.
+# The CLI's main path (operator-approved raise, 2026-11-26, after an economizing pass): the
+# proof names its build, another build is restarted onto this one, svrngs
+# starts apart from the terminal, and svrngs stops itself on its own route,
+# no signal. The pass cut four wait loops to one and the log path said three
+# times to one (-4 net); the rest is behaviour a person reads or a check
+# holds. 28,805.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 28679,
+    ".": 28806,
 
-    "js": 8796,
+    "js": 8853,
 
     "swift": 1,
 }
@@ -1271,17 +1287,17 @@ def main():
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
     roots = [*(ROOT / "crates").glob("*/src/lib.rs"), *(ROOT / "crates").glob("*/src/main.rs"),
-             ROOT / "web" / "src" / "lib.rs"]
+             ROOT / "web" / "src" / "lib.rs", ROOT / "apps/svrngs-keeper/src/lib.rs", ROOT / "apps/svrngs-keeper/src/main.rs"]
     for root in sorted(roots):
         if root.exists() and "#![deny(unsafe_code)]" not in root.read_text():
             broken.append(f"{root.relative_to(ROOT).as_posix()} lost #![deny(unsafe_code)]: every product crate root denies it (DESIGN §5)")
-    for f in [*files(ROOT / "crates"), *files(ROOT / "web" / "src")]:
+    for f in [*files(ROOT / "crates"), *files(ROOT / "web" / "src"), *files(ROOT / "apps" / "svrngs-keeper" / "src")]:
         rel = f.relative_to(ROOT).as_posix()
         if f.suffix != ".rs" or not f.is_file():
             continue
         found = len(EXEMPT.findall(f.read_text(errors="replace")))
-        if found > (rel == UNSAFE_HOME):
-            broken.append(f"{rel} exempts code from `unsafe_code`: svrngs's one `unsafe` is libproc's read of sockets, {UNSAFE_HOME}'s `kernel` (DESIGN §5); write this safe")
+        if found > (rel in UNSAFE_HOMES):
+            broken.append(f"{rel} exempts code from `unsafe_code`: svrngs's `unsafe` is one function in each of {sorted(UNSAFE_HOMES)} (DESIGN §5); write this safe")
     print("Lines of code, tests and apps/ not counted, and the most each may have:")
     for rung, cap in BUDGET.items():
         n = code_lines(ROOT, RUNG_KINDS[rung]) if rung in RUNG_KINDS else code_lines(ROOT / rung)

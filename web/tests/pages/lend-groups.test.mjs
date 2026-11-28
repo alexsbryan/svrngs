@@ -85,12 +85,16 @@ test('a lend sends the process its look showed, and its start', () => {
   assert.deepEqual([out[1][0].pid, out[1][0].start], [812, 1_763_600_000]);
 });
 
-// The terms a group's own programs file adds, drawn by the first press
-// (home.rs `drawn`), are posted back by the next, so the lend keeps what its
-// lender saw (CONTRACTS §6.8); a tick lets them go, to be read again.
-// Planted, watched failing: the effect's `terms` always null.
+// The terms a group's own programs file adds, drawn by the first press's
+// review (home.rs `lend_one`), are posted back by the next with its token,
+// so the lend keeps what its lender saw (CONTRACTS §6.8); a tick lets them
+// go, to be read again. Planted, watched failing: the effect's `terms`
+// always null.
 test('terms drawn are posted back with the next press, and a tick lets them go', () => {
-  const drawn = { type: 'drawn', terms: '- notes keeps: /admin\n', why: 'Your group’s terms…' };
+  const review = { token: 'reviewed', keeps: ['/admin'], sends: [] };
+  const terms = '- notes keeps: /admin\n';
+  const said = 'house can use it while it’s running.';
+  const drawn = { type: 'drawn', drawn: { terms, said, review } };
   const [s, out] = run(
     LEND,
     NEW,
@@ -100,7 +104,11 @@ test('terms drawn are posted back with the next press, and a tick lets them go',
     { type: 'lend' },
   );
   assert.deepEqual([s.at.lend, out[2]], ['lending', []]);
-  assert.equal(out[3][0].terms, '- notes keeps: /admin\n', 'the text drawn, posted back');
+  assert.deepEqual(
+    [out[3][0].terms, out[3][0].token],
+    [terms, 'reviewed'],
+    'the text drawn, posted back with its review',
+  );
   const [after, again] = run(
     LEND,
     s,
@@ -178,19 +186,18 @@ test('a row’s words read paused from [], legacy needing selection from null, n
   );
 });
 
+// Who made a group and since when is said only where another of HOME's
+// groups has its name. Planted, watched failing: `called` naming the maker
+// of every group (the lone Trip said "Trip (sam’s, since …)").
 test('two groups of one name are told apart in the boxes by who made them', () => {
-  const boxes = words(
-    GroupChoice({
-      groups: [
-        { id: 'a', name: 'Trip', made: { name: 'Trip', maker: 'sam', since: 1 } },
-        { id: 'b', name: 'Trip', made: null },
-      ],
-      ticked: [],
-      send: () => {},
-    }),
-  );
-  assert.ok(boxes.includes('Trip (sam’s'), boxes);
-  assert.ok(boxes.includes('Trip'), 'the person’s own group keeps the bare name');
+  const boxes = (groups) => words(GroupChoice({ groups, ticked: [], send: () => {} }));
+  const sams = { id: 'a', name: 'Trip', made: { name: 'Trip', maker: 'sam', since: 1 } };
+  const both = boxes([sams, { id: 'b', name: 'Trip', made: null }]);
+  assert.ok(both.includes('Trip (sam’s'), both);
+  assert.ok(both.includes('Trip'), 'the person’s own group keeps the bare name');
+  const mine = { id: 'h', name: 'House', made: { name: 'House', maker: null, since: 1 } };
+  assert.equal(boxes([sams, mine]), 'TripHouse', 'no namesake, no maker said');
+  assert.equal(lentTo({ groups: ['a', 'h'] }, [sams, mine]), 'lent to Trip and House');
 });
 
 // A row names every id of its audience (audit F10): one this computer holds

@@ -217,25 +217,54 @@ is evidence for sign-in, not for unattended disk unlock. Running a program
 with svrngs is separate from sharing it: `svrngs run <name> --port <port>
 -- <command>` asks the sibling keeper to start it on Linux or macOS and
 writes no share. Linux also takes `--card <compose.yaml>` for one volume-only
-HTTP container, with `--port` matching the card. On Linux the CLI shows
-the keeper's boot consent prompt at the terminal. The page has no terminal
-input and cannot turn on unattended startup. On macOS the program starts
+HTTP container, with `--port` matching the card. Starting before anyone
+logs in on Linux needs linger, which changes the whole account, so it is
+asked: at the terminal, a y/N after Enter; from the page, only the
+person's explicit choice (`/run`'s `boot`). Without a yes it comes back
+at login, and says so. On macOS the program starts
 at sign-in; Stop takes its plist out of the login set until Start. Lifecycle
 changes require the keeper's saved card and a regular live or parked plist;
 a loaded agent must also match the live plist's path (`launchd.rs`). Run
 verifies readiness with listeners in its active unit's cgroup subtree or
-with holders descended from the active launch agent. Otherwise it reports
-manager state and port readiness separately (`native_run.rs`); neither
-read approves sharing. The home page's native Run asks for a name,
-port, folder and command; the keeper parses quoting without running a
-shell. Choosing Run on an unmanaged listener's row opens that same form.
-The home page's read-only `/run?prefill=<port>` passes through the keeper's
-llama-server suggestion, when available, without replacing edits or
-submitting the form. After Run verifies the program, the page points to
-**Already running here** to share it; the terminal gives a Share command
-for its verified port.
+with holders descended from the active launch agent, within 30 seconds.
+Otherwise nothing is kept: the keeper stops it, removes its unit or agent
+and its card, and says why, with its exit status and what it last printed
+(`native_run.rs`), so nothing unverified starts at boot or respawns.
+Neither read approves sharing. What Run is given is checked first
+(svrngs-keeper `given.rs`): one shape, a program, its arguments and an
+absolute folder, run with no shell. A command a terminal's shell split,
+after `--`, is shown with its folder and kept only once the person
+presses Enter there. The page's line is split as a shell would, `~` read
+as home, and what only a shell understands is refused, pointing to the
+terminal. Nothing kept may be inside a folder this computer syncs
+(`folder::synced`, passed as `--synced`), since anyone in the group could
+change it, nor be a file or folder, through every link to the program,
+that another account could change. Every file the keeper writes that can
+hold the command is 0600, its folders 0700. On the home page a program is run from its lend:
+a lend shared only while it runs (`plan::shared_while`: a port kept to no
+job's restarts, so not one whose approval follows the keeper's copy)
+offers to keep it running. svrngs never reads how a running program was
+started, since its arguments can hold a secret and no program's are read
+the same way on every computer: the person gives it. First, the line to
+put in front of their own command in the terminal they started it in,
+`svrngs keep <port> --`, whose shell does the quoting, `~`, `$VAR` and the
+folder; `svrngs keep` finds the lend on that port and runs it as the page
+does, then approves what answers as that job. Then, for anyone who didn't
+start it in a terminal, Keep it running asks the command and folder, which
+the person types, and off a Mac when it comes back. Start posts
+`/run` with the lend's own name and port; the keeper parses quoting
+without running a shell, and refuses a port another program holds. A
+found listener's row only lends it. Once Run verifies the program, the
+lend is held for what now answers; the page asks the lender's approve
+route, by the token `/lent` listed, to approve it only as the job svrngs
+keeps it to through restarts (`"keep": true`), and the route takes it only
+with that grant (`share::kept`: on Linux one unit's job; on macOS the
+keeper's launch agent for the lend's name, every process approved that
+agent's, as Share keeps it). Else it approves nothing and says why, and the
+row leaves Keep sharing it to press beside what answers: the page never
+approves by itself what the person didn't see.
 The page's Start and Stop controls use only the keeper's observed jobs
-and leave sharing alone. The share review is still a separate act.
+and leave sharing alone.
 When Share would grant a running service, it
 dials without sending bytes and checks the listeners and connection taker against
 that service and the reviewed approval before the conditional save
@@ -356,15 +385,18 @@ told it is closed for now, and its lender's line says what answers now with
 one button, Keep sharing it (`POST /v1/lends/<name>/approve` with the
 token its list gave for what it showed, refused once that changed, and a
 `pid` without its `start` or the reverse refused 422), which changes only
-`approved`. `svrngs approve <name>` says what answers now at a terminal and
-approves it on a y, by that read's token, so what took the port while its
-person read is refused; without a terminal it approves only with
-`--token`, and is refused otherwise. The list gives that token only
-where approving it would be taken, decided by `share::approve`, the one
-decider. The home page offers the button by the token alone; the panel
-offers it by the token too, but not for a port or program on its own deny
-list. Nothing answering, no reader, a read that failed, and a socket whose
-program can't be read are each refused, and so given none. A port that
+`approved` and the grant it makes. With `"keep": true` the route approves
+only where that grant keeps the lend to its job through restarts, and
+otherwise approves nothing, refused in words. `svrngs approve <name>` says
+what answers now at a terminal and approves it on a y, by that read's
+token, so what took the port while its person read is refused; without
+a terminal it approves only with `--token`, and is refused otherwise.
+The list gives that token only where approving it would be taken,
+decided by `share::approve`, the one decider. The home page offers the
+button by the token alone; the panel offers it by the token too, but not
+for a port or program on its own deny list. Nothing answering, no
+reader, a read that failed, and a socket whose program can't be read are
+each refused, and so given none. A port that
 couldn't be read is said so, its reason a closed set (`unread`,
 `uid::Unread`), never as nothing answering (`answers: []`). A program that
 listens anew after it starts again, and a share made before this, wait on
@@ -389,18 +421,22 @@ connection's taker was read, every socket there and that taker are the
 unit's, at the address approved before, and only over the revision and
 approval it judged (`lend::mutate`). Never on unjudged or away, never for UDP; a
 stopped lend stays stopped.
-On macOS, Share looks for the keeper's exact label from the share name.
-It grants renewal only with both login registrations verified: the svrngs
-door and the app, whose regular plist must be registered in the GUI domain,
-set to start at sign-in and not disabled (`job/mac.rs`). The CLI parses the
+On macOS, Share and an approval (Keep sharing it, `svrngs approve`) look
+for the keeper's exact label from the lend's name, and grant renewal by
+one check (`job::mac::kept`): the lender keeps sharing it through restarts
+(Share's Keep; an approval without `--ask-after-restart`), it is no UDP
+share, the app's regular plist is registered in the GUI domain, set to
+start at sign-in and not disabled (`job/mac.rs`), and every process the
+approval names, one at least, descends from that agent's current PID and
+start time. Share grants it only with the svrngs door's own login
+registration verified too; an approval does not ask that. The CLI parses the
 door's login plist and checks that its `EnvironmentVariables.SVRNGS_DIR`
 names the same canonical data directory; only a parsed plist without that
 key may use `~/.svrngs` (`cli.rs` `kept_over`). The grant pins
 the label and plist hash. The same door check at Share and renewal requires
 every listener holder and the connection taker to trace to the current
-agent PID and start time. The name alone never confers access. Approve on
-a Mac approves only the current run; to renew again, Share under the Run
-name. Mac containers and other launch agents still share the current run.
+agent PID and start time. The name alone never confers access. Mac
+containers and other launch agents share only the current run.
 The pure decisions are Eudoxia's (`eudoxia-community`'s `binding`); the
 readers are `uid.rs`.
 
@@ -515,11 +551,11 @@ This guards who holds svrngs's address; it is no private channel against
 a program that can watch or change the connection itself. When what
 answers there has no proof to give (404) while a svrngs holds the data
 directory's lock, the command takes it for a svrngs older than itself,
-as an update leaves one running: where the login service runs svrngs
-over that data directory, it restarts that svrngs once, as `svrngs
-restart` does, and asks again as it comes back (the operator,
-2026-11-21: "Restart automatically"); elsewhere, or if it is still older,
-the person is told what runs there and what to do. That is a judgment
+as an update leaves one running: it restarts that svrngs once, as
+`svrngs restart` does (below), and asks again as it comes back (the
+operator, 2026-11-21: "Restart automatically"); if it is too old to be
+asked to stop, or is still older, the person is told what runs there and
+what to do. That is a judgment
 of when to restart, not a proof of who answers: a held lock says a
 svrngs runs over the data directory, not that it is what answers at the
 address, and either way what answers is sent the challenge alone. A 404
@@ -1028,19 +1064,40 @@ asked, every port's dial at once and each given 300 ms
 (`door::ANSWER_WAIT`), so the answer waits at most 3 s however many it
 lends.
 
-Bare `svrngs` starts the node when its data directory is free. If another
-svrngs holds it, the command succeeds with the home address read from the
-kept API port and says to run `svrngs open`, without launching a browser.
-A missing or unreadable address is refused rather than guessed. The address
+Bare `svrngs` at a terminal is someone opening svrngs: it does what
+`svrngs open` does. With no terminal, as launchd, systemd and `restart` run
+it, it starts the node when its data directory is free; if another svrngs
+holds it, the command succeeds with the home address read from the kept API
+port and says to run `svrngs open`, without launching a browser. A missing
+or unreadable address is refused rather than guessed. `svrngs open` starts
+svrngs where none runs, as `restart` does, and waits for it; so the one
+line a person reads opening svrngs is their page's. The address
 alone grants no session; `open` remains the authenticated way into the page.
 A browser with none is refused with what that is and how to let it in:
 `svrngs open --print` shows an open and launches nothing, for a browser that
 is not the default one. An open is single-use and each browser keeps its own.
-`svrngs restart` asks launchd or systemd to stop and start it, so it works on
-any running build and closes as a logout does; one kept by neither is refused.
-A command that finds an older svrngs running over the data directory the
-login service runs it over, as pacman's update leaves it, restarts it that
-way itself, once, before it asks (§3).
+`svrngs restart` asks launchd or systemd to stop and start it, where either
+keeps svrngs at login over this data directory, so it works on any running
+build and closes as a logout does. Where neither does, it asks the svrngs
+running there, if one, to stop: `POST /v1/stop`, as the person, behind the
+token like every route of the record, so svrngs stops itself and only the
+one whose lock and token are this data directory's, as on Ctrl-C, its node
+closed and its lock let go; svrngs signals no program. Once the lock is
+free it starts this program over the data directory apart from its
+terminal, its words in `svrngs.log` as the login service's are. Either way
+it says, once svrngs answers as this build, that it runs. A svrngs too old
+to take the ask, with no token or no such route, still holds the lock; the
+command says the one step that stops it.
+
+A command asks only a svrngs of its own build, but to stop it:
+`POST /v1/proof` names the build that proves (api.rs `build`, which
+`svrngs version` prints too), and any other is another build, as is one
+too old to name it, or one whose data directory holds no token. Another build holding
+the data directory, as an update leaves one running, the command restarts
+onto itself, once, before it asks, as `svrngs restart` does (§3); a newer
+one it asks nothing, and says to update this one. `svrngs update`, having
+put a new svrngs in place, runs the new one's `restart`, which says in one
+line that it runs.
 
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for
@@ -2362,12 +2419,12 @@ the command and the app. Every decision branch traces at debug. New code is
 held to these from its first line; forked code is held to them as it becomes
 ours. Upstream's shape stays until a change replaces it: the node's map of
 open journals sits behind a `Mutex`, which an actor per journal replaces.
-No `unsafe` but one function's: every product crate root denies
-`unsafe_code`, so the compiler refuses any other, and the one function
-allowed it asks a Mac's libproc whose sockets this account's processes hold
-(`svrngs-node` `uid.rs`, `kernel`), each condition of each call said beside
-it; `lean_check` refuses an exemption anywhere else. This holds svrngs's
-own code, not its dependencies.
+No `unsafe` but one function's: every product crate root, Keeper's
+included, denies `unsafe_code`, so the compiler refuses any other, and the
+one function allowed it asks a Mac's libproc whose sockets this account's
+processes hold (`svrngs-node` `uid.rs`, `kernel`), each condition of each
+call said beside it; `lean_check` refuses an exemption anywhere else. This
+holds svrngs's own code, not its dependencies.
 
 | Invariant | Held by | State |
 |---|---|---|

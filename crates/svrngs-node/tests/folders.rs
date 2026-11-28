@@ -1833,15 +1833,15 @@ async fn on_the_page(
 /// (CONTRACTS §2, "The lend is the yes", "The terms kept are the terms
 /// shown"; §6.8; EXTENSION_POINT §10 row 12, gap 6). Ben writes
 /// `programs/notes.txt`, keeping `/admin`, in films. On Ana's home page the
-/// first press to lend notes to films draws those terms, naming who wrote
-/// them where, and lends nothing; the next, posting the text drawn, reviews
-/// the share. Confirming that review lends notes keeping `/admin`. Ben
-/// changes the file to keep `/other`; confirming a separate review of the
-/// text drawn before keeps `/admin`, not `/other`. Text no file
-/// may hold is refused, saying so. Planted, each watched failing: the lend
-/// made with `""` for its terms (it keeps only what ships, no `/admin`);
-/// and the posted text set aside for the groups' file read at the press (the
-/// lend keeps `/other`).
+/// first press to lend notes to films reviews it with those terms, `/admin`
+/// among what it keeps back, and lends nothing; confirming the review,
+/// posting the text drawn, lends notes keeping `/admin`. Ben changes the
+/// file to keep `/other`; confirming a separate review of the text drawn
+/// before keeps `/admin`, not `/other`. Text no file may hold is refused,
+/// saying so. Planted, each watched failing: the lend made with `""` for its
+/// terms (it keeps only what ships, no `/admin`); the posted text set aside
+/// for the groups' file read at the press (the lend keeps `/other`); the
+/// review drawing no `keeps`.
 #[tokio::test]
 async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
     let group = Group::new().await;
@@ -1865,8 +1865,13 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
         "{first}"
     );
     assert_eq!(
-        first["said"],
-        "Your group's terms for notes, as ben wrote in films's programs/notes.txt: notes keeps: /admin. To lend it with these, press Lend again."
+        first["details"]["keeps"],
+        serde_json::json!(["/admin"]),
+        "{first}"
+    );
+    assert!(
+        first["token"].is_string(),
+        "the first press reviews it: {first}"
     );
     let kept = |name: &str| {
         let lend = svrngs_node::lend::read(group._dirs[0].path(), &LendName::parse(name).unwrap());
@@ -1878,16 +1883,8 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
                 .collect::<Vec<_>>()
         })
     };
-    assert_eq!(
-        kept("notes"),
-        None,
-        "nothing lent until it is pressed again"
-    );
-    let (status, review) =
-        lend_from_the_page(&group.ana, asked("notes", first["terms"].as_str()), None).await;
-    assert_eq!((status, review["terms"].as_str()), (200, Some(drawn)));
     assert_eq!(kept("notes"), None, "review alone shares nothing");
-    let (status, lent) = lend_from_the_page(&group.ana, asked("notes", None), Some(&review)).await;
+    let (status, lent) = lend_from_the_page(&group.ana, asked("notes", None), Some(&first)).await;
     assert_eq!(
         (status, &lent["keeps"]),
         (200, &serde_json::json!(["/admin"])),
@@ -1895,12 +1892,9 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
     );
     assert_eq!(kept("notes"), Some(vec!["/admin".to_string()]));
 
-    let (status, first) = lend_from_the_page(&group.ana, asked("again", None), None).await;
-    assert_eq!((status, first["terms"].as_str()), (200, Some(drawn)));
-    let (status, again) =
-        lend_from_the_page(&group.ana, asked("again", first["terms"].as_str()), None).await;
+    let (status, again) = lend_from_the_page(&group.ana, asked("again", None), None).await;
     assert_eq!((status, again["terms"].as_str()), (200, Some(drawn)));
-    assert_ne!(again["token"], review["token"]);
+    assert_ne!(again["token"], first["token"]);
     std::fs::write(ben.join("programs/notes.txt"), "- notes keeps: /other\n").unwrap();
     assert!(
         answers(&group, &group.ana, "notes", 200, "/other").await,
@@ -1931,8 +1925,11 @@ async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
 /// Ben's `programs/notes.txt` says notes takes a key in `x-notes-key`; Ana's
 /// lend of notes to films is then listed by her home page as read with a
 /// key, said as Ben wrote it in films; once Ben writes a row no file may
-/// hold, the lend says why in its place, and what to do. Planted, watched
-/// failing: `/lent` reading svrngs's terms alone (notes takes no key).
+/// hold, the lend says why in its place, and what to do. Before the yes,
+/// the review gives those rows and who wrote them for the page's Details
+/// (CONTRACTS §2, "The terms kept are the terms shown"). Planted, each
+/// watched failing: `/lent` reading svrngs's terms alone (notes takes no
+/// key); the review drawing no `rows`.
 #[tokio::test]
 async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
     let group = Group::new().await;
@@ -1947,9 +1944,17 @@ async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
     );
     let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = running.local_addr().unwrap().port();
-    let asked = serde_json::json!({ "port": port, "name": "notes", "kind": "notes", "groups": [seed("films", 9).id()], "terms": terms });
+    let asked = serde_json::json!({ "port": port, "name": "notes", "kind": "notes", "groups": [seed("films", 9).id()], "terms": null });
     let (status, review) = lend_from_the_page(&group.ana, asked.clone(), None).await;
     assert_eq!((status, review["terms"].as_str()), (200, Some(terms)));
+    assert_eq!(
+        (&review["details"]["rows"], &review["details"]["by"]),
+        (
+            &serde_json::json!(["readers: key x-notes-key", "accounts: Settings, Keys, New"]),
+            &serde_json::json!(", as ben wrote in films's programs/notes.txt")
+        ),
+        "{review}"
+    );
     let (status, lent) = lend_from_the_page(&group.ana, asked, Some(&review)).await;
     assert_eq!(status, 200, "{lent}");
     let lent = || {
@@ -1986,10 +1991,11 @@ async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
 /// **The home page shows where apps would send before it keeps a send**
 /// (svrn-docs `rings/current/CONTRACTS.md` §2, "The lend is the yes"):
 /// llama-server's shipped terms let apps send to `POST /v1/embeddings`, so
-/// the first Lend of it lends nothing and says so, with no group's file at
-/// all; the press after that line asks for a review. Confirming the review
-/// keeps the row. Planted, watched failing: `lend_one` drawing only a group's
-/// own file (the first press lends it, the send kept unshown).
+/// the first Lend of it lends nothing and its review draws that path, with
+/// no group's file at all, and what svrngs keeps back. Confirming the review
+/// keeps the row. Planted, each watched failing: `lend_one` drawing only a
+/// group's own file (the first press lends it, the send kept unshown); the
+/// review drawing no `sends`.
 #[tokio::test]
 async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
     let group = Group::new().await;
@@ -2004,8 +2010,13 @@ async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
         "{first}"
     );
     assert_eq!(
-        first["said"],
-        "People in your group can use all of llama-server that isn't kept back. Apps your friends open on their computers only read it; lent with these, they may also send to it at /v1/embeddings, each app only after the friend who opened it says yes. To lend it with these, press Lend again."
+        first["details"]["sends"],
+        serde_json::json!(["/v1/embeddings"]),
+        "{first}"
+    );
+    assert!(
+        (first["details"]["keeps"].as_array()).is_some_and(|k| k.contains(&"/slots".into())),
+        "{first}"
     );
     let sends = || {
         let lend =
@@ -2018,12 +2029,8 @@ async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
                 .collect::<Vec<_>>()
         })
     };
-    assert_eq!(sends(), None, "nothing lent until it is pressed again");
-    let (status, review) =
-        lend_from_the_page(&group.ana, asked(first["terms"].as_str()), None).await;
-    assert_eq!((status, review["terms"].as_str()), (200, Some("")));
     assert_eq!(sends(), None, "review alone shares nothing");
-    let (status, lent) = lend_from_the_page(&group.ana, asked(None), Some(&review)).await;
+    let (status, lent) = lend_from_the_page(&group.ana, asked(None), Some(&first)).await;
     assert_eq!(status, 200, "{lent}");
     assert_eq!(sends(), Some(vec!["POST /v1/embeddings".to_string()]));
     drop(running);

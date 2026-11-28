@@ -181,7 +181,16 @@ impl Agent {
             .nth(2)
             .and_then(Path::to_str)
             .ok_or("the home path is not UTF-8")?;
-        let log = self.card.with_file_name("program.log");
+        let log = self.log();
+        // Made before launchd opens it, so what the program says is its
+        // person's alone too: launchd appends to a file that is there.
+        fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .mode(0o600)
+            .open(&log)
+            .and_then(|f| f.set_permissions(std::os::unix::fs::PermissionsExt::from_mode(0o600)))
+            .map_err(|e| format!("write {}: {e}", log.display()))?;
         let content = render(
             &self.label,
             native,
@@ -197,6 +206,18 @@ impl Agent {
             .and_then(|mut file| file.write_all(content.as_bytes()))
             .map_err(|e| format!("write {}: {e}", self.path.display()))?;
         self.start()
+    }
+
+    /// Where launchd writes what the program says, beside its card.
+    pub fn log(&self) -> PathBuf {
+        self.card.with_file_name("program.log")
+    }
+
+    /// The exit code launchd last saw it end with, as `launchctl print`
+    /// says it, if it is registered.
+    pub fn last_exit(&self) -> Option<String> {
+        let shown = self.show().ok()??;
+        value(&shown, "last exit code = ").map(str::to_owned)
     }
 
     pub fn start(&self) -> Result<(), String> {

@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>? | "opens"], ...], "timed"?: [<selector>, ...], "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>? | "opens" | "reads"], ...], "timed"?: [<selector>, ...], "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
 //
 // A `do` step's fourth element, `until`, is words `all`'s text holds before
 // it is read. `visible` hides the page, then shows it, once the `do` steps
@@ -81,6 +81,7 @@ try {
   // (b): what runs here) — and in Chromium the clipboard then. Either is
   // read once the page is at rest (`atRest`, below).
   const after = [];
+  const values = [];
   let clipboard = null;
   // `all`'s words changed from `b` and no longer "…": what a press says.
   const settled = ([s, b]) =>
@@ -127,6 +128,11 @@ try {
     // program found to lend it. It changes no words, so none is waited for.
     if (stays === 'opens') {
       await page.locator(selector).first().click({ timeout: 30_000 });
+      continue;
+    }
+    // `stays` 'reads': what the boxes `selector` names hold now, into `values`.
+    if (stays === 'reads') {
+      values.push(await page.locator(selector).evaluateAll((boxes) => boxes.map((b) => b.value)));
       continue;
     }
     // A value `true` ticks the box (the shelf, its boxes unticked to start).
@@ -235,6 +241,7 @@ try {
       all,
       look,
       after,
+      values,
       later,
       clipboard,
       links,

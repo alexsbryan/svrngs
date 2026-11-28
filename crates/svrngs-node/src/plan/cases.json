@@ -11,7 +11,7 @@
     "boot": "House can open it again after this computer starts, even before you sign in.",
     "unlock": "House can open it again after you unlock the disk.",
     "login": "House can open it again after you sign in.",
-    "run": "House can use this copy now. If it stops, you’ll need to share it again."
+    "run": "House can use it while it’s running."
   },
   "impact": {
     "reuse": "Trust your service {service} to answer after a restart. The share can follow it even if the program at the same path is replaced.",

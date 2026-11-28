@@ -13,15 +13,17 @@ pub struct Review {
 pub const REVIEW_AGAIN: &str = "Something changed since you reviewed this.";
 pub(crate) const RUN_UNREAD: &str =
     "svrngs couldn’t verify this. Check it from your terminal, then look again.";
-pub(crate) const RUN: &str = "Run it with svrngs";
-pub(crate) const STARTING: &str = "Starting…";
 pub(crate) const SHARED_WHILE: &str = "Shared while you run it.";
 
-pub(crate) fn shared_while(lend: &crate::lend::Lend) -> Option<(&'static str, &'static str)> {
-    (cfg!(any(target_os = "linux", target_os = "macos"))
-        && matches!(lend.source, crate::lend::Source::Port(_))
-        && lend.terms.keep.is_none())
-    .then_some((SHARED_WHILE, RUN))
+/// The port of a lend shared only while its program runs, which the home
+/// page offers to have svrngs keep running (lent-row.js `Lent`): one
+/// kept to no job's restarts, on a system whose keeper can run it.
+pub(crate) fn shared_while(lend: &crate::lend::Lend) -> Option<std::num::NonZeroU16> {
+    let crate::lend::Source::Port(port) = lend.source else {
+        return None;
+    };
+    (cfg!(any(target_os = "linux", target_os = "macos")) && lend.terms.keep.is_none())
+        .then_some(port)
 }
 
 #[derive(serde::Deserialize)]
@@ -50,39 +52,20 @@ pub(super) fn owned(Kept { name, port, status }: Kept) -> serde_json::Value {
     let (text, action) = match status.running {
         Since(Some(at)) => (format!("Run by svrngs, since {at}."), Stop),
         Since(None) => ("Run by svrngs.".into(), Stop),
-        Starting => (STARTING.into(), Stop),
+        Starting => ("Starting…".into(), Stop),
         Stopped => ("Stopped.".into(), Start),
         Failed(why) => (format!("{name} stopped ({why}). {RUN_UNREAD}"), Start),
     };
-    let button = format!(
-        "{} {name}",
-        if matches!(action, Start) {
-            "Start"
-        } else {
-            "Stop"
-        }
-    );
+    // Its button names its action, Start or Stop, and the program.
+    let button = format!("{action:?} {name}");
     serde_json::json!({ "name": name, "port": port, "text": text, "action": action, "button": button })
 }
 
-#[derive(serde::Deserialize, Serialize)]
+#[derive(Debug, serde::Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum Action {
     Start,
     Stop,
-}
-
-impl Action {
-    pub(crate) fn verb(&self) -> &'static str {
-        match self {
-            Self::Start => "start",
-            Self::Stop => "stop",
-        }
-    }
-}
-
-pub(super) fn run_form(rows: Vec<serde_json::Value>) -> serde_json::Value {
-    serde_json::json!({ "run": RUN, "fields": [["name", "Name"], ["port", "Port"], ["folder", "Folder"], ["command", "What to run as you and start again at login"]], "starting": STARTING, "rows": rows })
 }
 
 impl Plan<'_> {
@@ -97,8 +80,7 @@ impl Plan<'_> {
             Return::AfterUnlock => "you unlock the disk.",
             Return::SignIn => "you sign in.",
             Return::ThisRun | Return::Unknown => {
-                let now = "can use this copy now. If it stops, you’ll need to share it again.";
-                return format!("{audience} {now}");
+                return format!("{audience} can use it while it’s running.")
             }
         };
         format!("{audience} can open it again after {after}")
@@ -145,7 +127,7 @@ impl Plan<'_> {
             Published { .. } => {
                 let mut text = format!("Shared with {audience}. {}", self.promise(&audience));
                 if matches!(self.nature.runs, Runs::ByHand) {
-                    text += &format!("\n{SHARED_WHILE} To have svrngs run it: svrngs run {name} --port {} -- <the command you start it with>.", self.nature.port);
+                    text += &format!("\n{SHARED_WHILE} To have svrngs keep it running, stop it, then put svrngs keep {} -- in front of the command you started it with.", self.nature.port);
                 }
                 text
             }
@@ -158,12 +140,13 @@ impl Plan<'_> {
     }
 }
 
+/// What the keeper said of a Run: kept, verified, and when it comes back;
+/// or why nothing was kept, in the person's words.
 #[derive(Debug, serde::Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub(super) enum Started {
-    Verified { port: std::num::NonZeroU16 },
-    Unverified { state: Option<String>, ready: bool },
-    Busy { why: String },
+    Verified { back: String },
+    Refused { why: String },
 }
 
 #[derive(Debug)]
@@ -173,16 +156,10 @@ pub enum RunView {
 }
 
 pub(super) fn started(name: &str, view: RunView, started: Started) -> Result<String, String> {
-    use Started::*;
     tracing::debug!(target: "plan", ?started, ?view, "plan: Run verdict");
     match started {
-        Verified { port } => Ok(format!("{name} is running here. {}\n", match view {
-            RunView::Page => "To share it, find it under Already running here.".into(),
-            RunView::Terminal => format!("To share it: `svrngs share {port} --program <program> --name {name} --group <group>`."),
-        })),
-        Unverified { state, ready } => Err(format!("{name}'s setup was saved and can start again. Nothing was shared. To turn it off, choose Stop. Reported state: {}. The port {}.",
-            state.as_deref().unwrap_or("unknown"), if ready { "answered" } else { "wasn't ready" })),
-        Busy { why } => Err(why),
+        Started::Verified { back } => Ok(format!("svrngs runs {name} now. It comes back {back}.")),
+        Started::Refused { why } => Err(why),
     }
 }
 

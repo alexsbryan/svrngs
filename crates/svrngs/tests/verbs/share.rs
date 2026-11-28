@@ -461,7 +461,7 @@ async fn terminal_review_is_read_only_and_refuses_a_listener_that_changed_after_
         .await
         .unwrap();
     assert!(
-        reviewed.contains("Lab can use this copy now."),
+        reviewed.contains("Lab can use it while it’s running."),
         "{reviewed}"
     );
     assert!(

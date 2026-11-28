@@ -1,9 +1,7 @@
-//! Read local listeners and ask a known program what model it is serving.
+//! Read local listeners, and whether a started program answers.
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
-#[cfg(target_os = "linux")]
-use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 #[cfg(target_os = "linux")]
@@ -11,7 +9,7 @@ use crate::promote::{Listen, listens};
 #[cfg(target_os = "macos")]
 mod mac;
 #[cfg(target_os = "macos")]
-pub use mac::{busy, listeners, llama_folder, owns};
+pub use mac::{busy, listeners, owns};
 #[cfg(target_os = "linux")]
 pub use ss as listeners;
 
@@ -42,37 +40,11 @@ pub fn busy(port: u16) -> Result<Option<String>, String> {
     }))
 }
 
-/// Recognize llama-server, and resolve a relative model path in its folder.
-#[cfg(target_os = "linux")]
-pub fn llama_folder(pid: u32) -> Result<PathBuf, String> {
-    let link = |file| {
-        let path = format!("/proc/{pid}/{file}");
-        std::fs::read_link(&path).map_err(|e| format!("{path}: {e}"))
-    };
-    if link("exe")?.file_name().and_then(|name| name.to_str()) != Some("llama-server") {
-        return Err("no known program is listening".into());
-    }
-    link("cwd")
-}
-
-/// `GET /props` over HTTP/1.0. Bound the reply's size and the entire read.
 #[expect(
     clippy::disallowed_methods,
-    reason = "the local prefill probe sets its deadline at the edge"
+    reason = "dial: local readiness, without share credentials"
 )]
-pub fn props(addr: &str, port: u16) -> Result<String, String> {
-    let (status, body) = http(addr, port, "/props", true, Instant::now() + Duration::from_secs(3))?;
-    if status != 200 {
-        return Err(format!("/props did not answer 200 ({status})"));
-    }
-    crate::promote::props(&body)
-}
-
-#[expect(
-    clippy::disallowed_methods,
-    reason = "dial: local prefill or readiness, without share credentials"
-)]
-fn http(addr: &str, port: u16, path: &str, body: bool, end: Instant) -> Result<(u16, String), String> {
+fn http(addr: &str, port: u16, path: &str, end: Instant) -> Result<u16, String> {
     let at = format!("{addr}:{port}");
     let sock = at.parse().map_err(|e| format!("{at}: {e}"))?;
     let left = || {
@@ -93,27 +65,17 @@ fn http(addr: &str, port: u16, path: &str, body: bool, end: Instant) -> Result<(
         s.set_read_timeout(Some(left)).map_err(|e| e.to_string())?;
         let n = s.read(&mut buf).map_err(|e| format!("{at}: {e}"))?;
         got.extend_from_slice(&buf[..n]);
-        if n == 0 || (!body && got.windows(2).any(|w| w == b"\r\n")) {
+        if n == 0 || got.windows(2).any(|w| w == b"\r\n") {
             break;
         }
     }
     let got = String::from_utf8_lossy(&got);
-    let (head, rest) = got.split_once("\r\n").ok_or("did not answer HTTP")?;
-    let status = head
-        .strip_prefix("HTTP/")
+    let (head, _) = got.split_once("\r\n").ok_or("did not answer HTTP")?;
+    head.strip_prefix("HTTP/")
         .and_then(|h| h.split_whitespace().nth(1))
         .and_then(|s| s.parse::<u16>().ok())
         .filter(|s| (200..600).contains(s))
-        .ok_or("did not answer HTTP")?;
-    let text = if body {
-        rest.split_once("\r\n\r\n")
-            .map(|(_, b)| b)
-            .or_else(|| rest.strip_prefix("\r\n"))
-            .ok_or("did not finish its HTTP headers")?
-    } else {
-        ""
-    };
-    Ok((status, text.to_owned()))
+        .ok_or_else(|| "did not answer HTTP".into())
 }
 
 /// Wait for an HTTP answer, not merely an open socket. A known model is
@@ -124,15 +86,9 @@ pub fn wait_for_answer(port: u16, llama: bool, within: Duration) -> bool {
     let path = if llama { "/health" } else { "/" };
     while Instant::now() < end {
         for addr in ["127.0.0.1", "[::1]"] {
-            let answer = http(
-                addr,
-                port,
-                path,
-                false,
-                end.min(Instant::now() + Duration::from_secs(1)),
-            );
+            let answer = http(addr, port, path, end.min(Instant::now() + Duration::from_secs(1)));
             tracing::debug!(port, addr, path, ?answer, "run: readiness answer");
-            if answer.is_ok_and(|(status, _)| !llama || status == 200) {
+            if answer.is_ok_and(|status| !llama || status == 200) {
                 return true;
             }
         }

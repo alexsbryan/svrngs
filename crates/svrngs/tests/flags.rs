@@ -103,13 +103,14 @@ fn every_refusal_keeps_its_exit_code() {
         R::Removal("no".into()),
         R::Meet("no".into()),
         R::RelayForNobody,
-        R::NotKept,
+        R::Unstopped(path()),
+        R::Stuck("no".into()),
+        R::Newer("1.14.0".into()),
         R::Older,
         R::Readers(lend(), "no".into()),
         R::Terms("no".into()),
         R::Busy(path()),
         R::Unproven("http://127.0.0.1:1".into()),
-        R::Behind(path()),
         R::Unrestarted("http://127.0.0.1:1".into()),
     ];
     let unjudged = [
@@ -138,4 +139,40 @@ fn every_refusal_keeps_its_exit_code() {
             assert_eq!(r.exit_code(), code, "{r:?}");
         }
     }
+}
+
+/// `svrngs keep <port> -- <command>` takes every word after the port as
+/// typed, the command's own flags too, since svrngs's flags never reach it;
+/// and a port nothing is lent on is refused, saying how to lend it first,
+/// before the keeper is asked. Planted, watched failing: the `--` taken as
+/// svrngs's own and dropped.
+#[tokio::test]
+async fn keep_takes_the_command_as_typed_and_refuses_a_port_nothing_is_lent_on() {
+    let typed = [
+        "keep",
+        "8102",
+        "--",
+        "llama-server",
+        "--port",
+        "8102",
+        "--name",
+        "x",
+    ];
+    let verb = cli::parse(argv(&typed)).unwrap();
+    let rest = typed[2..].iter().map(|w| w.to_string()).collect();
+    assert_eq!(verb, cli::Verb::Keep("8102".into(), rest));
+    let dir = tempfile::tempdir().unwrap();
+    let relay = svrngs_node::iroh::RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: true,
+    };
+    let refused = cli::answer(verb, &dir.path().to_path_buf(), &relay)
+        .await
+        .unwrap_err();
+    assert_eq!(refused.exit_code(), 1, "{refused}");
+    assert_eq!(
+        refused.to_string(),
+        "Nothing is lent on port 8102 here. Lend it first on your home page (`svrngs open`), under Already running here, then run this again."
+    );
 }

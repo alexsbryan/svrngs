@@ -12,8 +12,10 @@ database, and what to change. Name the folder of the version it follows
 after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs
-      Run for every group you are in. Leave it running.
-      Already running? Show your home page's address and how to open it.
+      Open your home page, starting svrngs first if it isn't running here,
+      or restarting it if an older svrngs is. svrngs then runs for every
+      group you are in, apart from this terminal. With no terminal, as
+      when your login runs it, svrngs runs right there instead.
 
   svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]...
       Make a group called <name> and print its link: send it to the people
@@ -50,8 +52,22 @@ after it, and it checks that the new schema.sql only adds to that one's.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
+  svrngs keep <port> -- <command>
+      Keep what you lend on <port> running, even after a restart, from
+      the command you started it with, in this folder: stop your copy,
+      then put `svrngs keep <port> --` in front of that command. svrngs
+      shows what it will run and where, and keeps it once you press
+      Enter, and only if it then answers on <port>. On Linux it asks
+      whether to start it before anyone logs in, which lets your account
+      run programs while nobody is logged in; else it comes back when you
+      log in. Nothing kept may be in a folder your groups sync, or be a
+      file another account could change.
+
   svrngs run <name> --port <port> [--folder <folder>] -- <command>
-      Run a command here (Linux or macOS). Share it separately with svrngs share.
+      Run a command here (Linux or macOS) under <name>, as keep does: it
+      shows what it will run and where, and keeps it once you press Enter,
+      and only if it then answers on <port>. Share it separately with
+      svrngs share.
       To stop the app, choose Stop under Already running here on your home
       page (`svrngs open`). Stop leaves its setup and files in place.
 
@@ -118,7 +134,8 @@ after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs open [/<local destination>] [--print]
       Open your home page in your browser, as svrngs in your Applications
-      (on Linux, your applications menu) does. An optional local destination
+      (on Linux, your applications menu) does, starting svrngs first if it
+      isn't running. An optional local destination
       focuses that part of the home page. --print shows an address to open
       in another browser within a minute, once, and opens nothing.
 
@@ -132,7 +149,7 @@ after it, and it checks that the new schema.sql only adds to that one's.
 
   svrngs update
       Get the newest svrngs from the page this computer was installed
-      from, if this computer's is not it. `svrngs restart` then uses it.
+      from, if this computer's is not it, and restart svrngs onto it.
       Where a package installed svrngs, the package updates it, and this
       says how.
 
@@ -140,7 +157,9 @@ after it, and it checks that the new schema.sql only adds to that one's.
       Which svrngs this is: its release, and the commit it was built from.
 
   svrngs restart
-      Stop svrngs and start it again, as a new login would.
+      Stop svrngs and start it again, or start it if it isn't running.
+      Any command that finds an older svrngs running here restarts it
+      onto itself first.
 
   svrngs share --folder <dir> --group <group>
       Keep <dir> the same on every computer in <group> that shares a folder

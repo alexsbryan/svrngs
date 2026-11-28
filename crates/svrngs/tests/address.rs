@@ -569,15 +569,19 @@ fn sent_none_of_the_token(seen: &str) {
     assert!(!shown, "it was sent the token: {seen}");
 }
 
-/// `svrngs open --print` over `dir`, as the applications menu's opener runs
-/// it, but with no browser: its words, or its refusal's, and exit code.
-async fn opened(dir: &Path) -> Result<String, (u8, String)> {
-    let relay = svrngs_node::iroh::RelayConfig {
+/// No relay, for a command asked in this process that dials none.
+fn no_relay() -> svrngs_node::iroh::RelayConfig {
+    svrngs_node::iroh::RelayConfig {
         relay_urls: Vec::new(),
         n0_services: false,
         loopback_only: true,
-    };
-    let said = cli::answer(cli::Verb::Open(None, true), &dir.to_path_buf(), &relay).await;
+    }
+}
+
+/// `svrngs open --print` over `dir`, as the applications menu's opener runs
+/// it, but with no browser: its words, or its refusal's, and exit code.
+async fn opened(dir: &Path) -> Result<String, (u8, String)> {
+    let said = cli::answer(cli::Verb::Open(None, true), &dir.to_path_buf(), &no_relay()).await;
     said.map_err(|r| (r.exit_code(), r.to_string()))
 }
 
@@ -712,9 +716,10 @@ fn svrngs_ask_prints_svrngs_s_answer_and_says_its_refusal() {
     assert!(said.contains("as %20"), "{said}");
 }
 
-/// `svrngs open` over `dir`, asked every 50 ms until svrngs answers it:
-/// never refused, exit 1, on the way. What it was told, and how long the
-/// ask that was answered waited.
+/// `svrngs ask /v1/groups` over `dir`, asked every 50 ms until svrngs
+/// answers it: never refused, exit 1, on the way. What it was told, and how
+/// long the ask that was answered waited. (Not `open`, which starts svrngs
+/// itself where none holds the data dir, as a test's program can't.)
 async fn asked_until_answered(dir: &Path) -> String {
     let (began, mut told) = (Instant::now(), Vec::new());
     loop {
@@ -723,9 +728,11 @@ async fn asked_until_answered(dir: &Path) -> String {
             "never answered: {told:?}"
         );
         let asked = Instant::now();
-        match opened(dir).await {
+        let verb = cli::Verb::Ask("/v1/groups".into(), None);
+        let said = cli::answer(verb, &dir.to_path_buf(), &no_relay()).await;
+        match said.map_err(|r| (r.exit_code(), r.to_string())) {
             Ok(said) => {
-                assert!(said.contains("svrngs-open?code="), "{said}");
+                assert!(said.contains("\"groups\""), "{said}");
                 return format!(
                     "{told:?}, then answered after waiting {:?}",
                     asked.elapsed()
@@ -741,7 +748,7 @@ async fn asked_until_answered(dir: &Path) -> String {
 /// **svrngs is never refused while it starts** (V1.13.3's fix review,
 /// findings 1 and 2): svrngs holds its address well before it takes a
 /// connection there (svrngs-node node.rs `start_on`, the endpoint and the
-/// folders between), so `svrngs open`, asked every 50 ms, is told svrngs
+/// folders between), so a command, asked every 50 ms, is told svrngs
 /// isn't running until it holds its address, then waits for its proof and
 /// is answered: as svrngs starts again over its data dir, and while it is
 /// held there for a second, holding its address and taking no connection
@@ -875,8 +882,8 @@ fn kept_by_login(home: &Path, dir: &Path) {
 /// applications menu runs it, is answered 404 at `POST /v1/proof` by the
 /// old one (1.13.2's answer), sends it none of the token, restarts svrngs
 /// as `svrngs restart` does, once, as the login service runs it over this
-/// data dir, and once the new svrngs proves itself, opens the home page and
-/// says it restarted. Here the old one is Python answering 404 and holding
+/// data dir, and once the new svrngs proves itself, opens the home page,
+/// saying that alone. Here the old one is Python answering 404 and holding
 /// the data dir's lock, and the restart stops it and starts this svrngs
 /// over the data dir, at its address. Planted, watched failing: dd2efe63
 /// refused, "the svrngs running here is older than this command: run
@@ -920,10 +927,7 @@ fn an_older_svrngs_is_restarted_once_then_asked() {
     );
     assert!(out.status.success(), "{said}\n{told}");
     assert!(said.contains("svrngs-open?code="), "{said}");
-    assert!(
-        told.contains("svrngs was updated, so it restarted to use the new one."),
-        "{told}"
-    );
+    assert!(told.trim().is_empty(), "{told}");
 }
 
 /// **What answers 404 where no svrngs holds the data dir is not svrngs,
@@ -952,42 +956,46 @@ fn a_program_answering_404_is_sent_none_of_the_token_and_restarts_nothing() {
     unproven(port, (1, told.trim().trim_start_matches("svrngs: ").into()));
 }
 
-/// **An older svrngs over another data dir than the login service's is
-/// not restarted** (the 1.13.3 proof review, finding 9): Python answering
-/// 404 holds this data dir's lock, as an older svrngs started by hand over
-/// it would, and the login service runs svrngs over another; restarting
-/// that would restart someone else's svrngs, so the command restarts
-/// nothing, sends none of the token, and says what runs here and what to
-/// do (exit 1). Planted, watched failing: 4ece5ae5 restarted the login
-/// service's svrngs.
+/// **An older svrngs started by hand, too old to be asked to stop, is
+/// said with the one step that stops it** (the 1.13.3 proof review,
+/// finding 9): Python answering 404 holds this data dir's lock, as an
+/// older svrngs started by hand over it would, and the login service runs
+/// svrngs over another; restarting that would restart someone else's
+/// svrngs, and svrngs signals no program itself (KEEP_IT_RUNNING_RELEASE
+/// N1), so the command restarts nothing, sends none of the token, and says
+/// the svrngs here didn't stop when asked and the step that stops it, once
+/// (exit 1): with the token beside its address, and with none, as a svrngs
+/// from before the token (v1.3) leaves its data dir. Planted, watched
+/// failing: 4ece5ae5 restarted the login service's svrngs; 0ba18ef9 said
+/// "cannot read or keep this computer's token" with no token, and "stop
+/// that svrngs where it runs (Ctrl-C)" with one.
 #[test]
-fn an_older_svrngs_the_login_service_doesn_t_run_is_not_restarted() {
-    let (dir, stubs, other) = (
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-    );
-    let lock = dir.path().join("lock");
-    let (mut old, port, mut sent) = not_svrngs_holding(&[], OLDER, Some(&lock));
-    kept_at(dir.path(), port);
-    kept_by_login(dir.path(), other.path());
-    restarting(stubs.path(), "");
-    let (out, asked) = restarted(dir.path(), stubs.path());
-    old.kill().unwrap();
-    let mut seen = String::new();
-    sent.read_to_string(&mut seen).unwrap();
-    sent_none_of_the_token(&seen);
-    assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
-    let told = String::from_utf8_lossy(&out.stderr);
-    assert_eq!(out.status.code(), Some(1), "{told}");
-    let older = format!(
-        "the svrngs running over {} is older than this command",
-        dir.path().display()
-    );
-    assert!(
-        told.contains(&older) && told.contains("none of your token"),
-        "{told}"
-    );
+fn an_older_svrngs_started_by_hand_is_named_and_how_to_stop_it_said() {
+    for token in [true, false] {
+        let (dir, stubs, other) = (
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+            tempfile::tempdir().unwrap(),
+        );
+        let lock = dir.path().join("lock");
+        let (mut old, port, mut sent) = not_svrngs_holding(&[], OLDER, Some(&lock));
+        kept_at(dir.path(), port);
+        if !token {
+            std::fs::remove_file(dir.path().join("token")).unwrap();
+        }
+        kept_by_login(dir.path(), other.path());
+        restarting(stubs.path(), "");
+        let (out, asked) = restarted(dir.path(), stubs.path());
+        old.kill().unwrap();
+        let mut seen = String::new();
+        sent.read_to_string(&mut seen).unwrap();
+        sent_none_of_the_token(&seen);
+        assert_eq!(asked, Vec::<String>::new(), "nothing restarted");
+        let told = String::from_utf8_lossy(&out.stderr);
+        assert_eq!(out.status.code(), Some(1), "{told}");
+        let words = format!("svrngs: The svrngs running here didn't stop when asked, as one older than this one ({}) can't: stop it with `kill $(lsof -t {})`, then run this again", svrngs_node::api::build(), lock.display());
+        assert_eq!(told.trim(), words, "token: {token}");
+    }
 }
 
 /// **A data dir whose lock svrngs can't look at restarts nothing** (the
@@ -1049,27 +1057,152 @@ fn a_start_waits_out_a_moment_s_hold_of_its_data_dir() {
     );
 }
 
-/// **A token file that can't be read is said so, and nothing is dialled**
-/// (the 1.13.3 proof review, finding 4): with no `token` beside `api`, the
-/// command says svrngs's token can't be read, and where, exit 3, and asks
-/// nothing of what answers at svrngs's address; never that something other
-/// than svrngs answers there. Planted, watched failing: dd2efe63 asked
-/// Python for a proof under no token and said "Something other than your
-/// svrngs answers".
+/// **A data dir with no token is svrngs not running there, and nothing is
+/// dialled** (the 1.13.3 proof review, finding 4): with no `token` beside
+/// `api` and no svrngs holding the data dir, `svrngs ask` asks nothing
+/// of what answers at svrngs's address, and says svrngs isn't running here
+/// (exit 3); never that something other than svrngs answers there, nor a
+/// file's error. (`open` starts svrngs then:
+/// open_starts_svrngs_where_none_runs_and_opens_it.) Planted, watched failing: dd2efe63 asked Python for a
+/// proof under no token and said "Something other than your svrngs
+/// answers"; 0ba18ef9 said "cannot read or keep this computer's token".
 #[tokio::test(flavor = "multi_thread")]
-async fn an_unreadable_token_is_said_and_nothing_is_asked() {
+async fn a_data_dir_with_no_token_is_svrngs_not_running_and_nothing_is_asked() {
     let held = TcpListener::bind("127.0.0.1:0").unwrap();
     held.set_nonblocking(true).unwrap();
     let dir = data_dir_at(held.local_addr().unwrap().port());
     std::fs::remove_file(dir.path().join("token")).unwrap();
+    let verb = cli::Verb::Ask("/v1/groups".into(), None);
+    let refused = cli::answer(verb, &dir.path().to_path_buf(), &no_relay()).await;
+    let asked = held.accept().map(|(_, from)| from);
+    assert!(asked.is_err(), "it was asked, from {asked:?}");
+    let refused = refused.expect_err("refused");
+    let said = refused.to_string();
+    assert_eq!(refused.exit_code(), 3, "{said}");
+    assert!(
+        said.contains("svrngs is not running on this computer"),
+        "{said}"
+    );
+}
+
+/// **`svrngs open` starts svrngs where none runs, and opens it**, as the
+/// applications menu runs it after a restart of the computer: nothing
+/// keeps svrngs at login, no svrngs holds the data dir and it holds no
+/// token yet, so `open` starts this program over it apart from its
+/// terminal, waits for it to answer as this build, and gives the open
+/// alone, one line. Planted, watched failing: 0ba18ef9 said "svrngs is not
+/// running on this computer: start it, then run this again" (exit 3).
+#[test]
+fn open_starts_svrngs_where_none_runs_and_opens_it() {
+    let (dir, program) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let svrngs = as_main::installed(program.path());
+    let out = Process::new(&svrngs)
+        .args(["open", "--print"])
+        .env("SVRNGS_DIR", dir.path())
+        .env("HOME", dir.path())
+        .output()
+        .unwrap();
+    let holder = holding(dir.path());
+    let _ = Process::new("kill").arg(&holder).status();
+    let said = String::from_utf8_lossy(&out.stdout);
+    let said = said.lines().filter(|l| !as_main::HEADER.contains(l));
+    let said: Vec<&str> = said.collect();
+    assert!(out.status.success(), "{said:?} {out:?}");
+    assert!(!holder.is_empty(), "no svrngs holds the data dir");
+    assert_eq!(said.len(), 1, "{said:?}");
+    assert!(
+        said[0].starts_with("Open this in your browser within a minute: http://svrngs.localhost:"),
+        "{said:?}"
+    );
+}
+
+/// The pid of the program holding `dir`'s lock, or none (`lsof`).
+fn holding(dir: &Path) -> String {
+    let lsof = Process::new("lsof")
+        .arg("-t")
+        .arg(dir.join("lock"))
+        .output();
+    String::from_utf8_lossy(&lsof.unwrap().stdout)
+        .trim()
+        .to_string()
+}
+
+/// **`svrngs restart` stops a svrngs nothing keeps at login, and starts
+/// this one in its place**: svrngs started by hand over a data dir, no
+/// login service keeping it, answers; `svrngs restart` asks it, as you, to
+/// stop (surface.rs `STOP_ROUTE`), which it does as on Ctrl-C, exit 0, its
+/// lock let go; waits for the lock to be free, starts this program over the
+/// data dir apart from its terminal, and once it answers says one line,
+/// `svrngs <build> is running.`. No signal is sent but the test's own, to
+/// end the second. Planted, watched failing: the stop route served without
+/// the token (record_api.rs, every record route); the restart starting
+/// svrngs without waiting for the lock.
+#[test]
+fn restart_stops_svrngs_started_by_hand_and_starts_this_one() {
+    let (dir, program) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let svrngs = as_main::installed(program.path());
+    let here = |args: &[&str]| {
+        let mut c = Process::new(&svrngs);
+        c.args(args)
+            .env("SVRNGS_DIR", dir.path())
+            .env("HOME", dir.path());
+        c.stdin(Stdio::null())
+            .stderr(Stdio::piped())
+            .stdout(Stdio::piped());
+        c
+    };
+    let mut first = here(&[]).spawn().unwrap();
+    let began = Instant::now();
+    while !here(&["ask", "/v1/groups"]).status().unwrap().success() {
+        assert!(began.elapsed() < Duration::from_secs(30), "never answered");
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    let restarted = here(&["restart"]).output().unwrap();
+    let (stopped, holder) = (first.wait().unwrap(), holding(dir.path()));
+    let _ = Process::new("kill").arg(&holder).status();
+    let said = String::from_utf8_lossy(&restarted.stdout);
+    let said: Vec<&str> = (said.lines().filter(|l| !as_main::HEADER.contains(l))).collect();
+    let running = format!("svrngs {} is running.", svrngs_node::api::build());
+    assert!(restarted.status.success(), "{said:?} {restarted:?}");
+    assert_eq!(said, [running.as_str()], "{restarted:?}");
+    assert!(
+        stopped.success(),
+        "the first stopped as on Ctrl-C: {stopped:?}"
+    );
+    let first = first.id().to_string();
+    assert!(
+        !holder.is_empty() && holder != first,
+        "{holder} holds it, not {first}"
+    );
+}
+
+/// **A token svrngs can't read is said with the step that makes a new
+/// one, and nothing is dialled**: `token` a folder, as no svrngs writes
+/// it, so reading it fails for a reason other than its absence; the
+/// command asks nothing at svrngs's address, and says which file, why, and
+/// to delete it and run `svrngs restart` (exit 3). Planted, watched
+/// failing: 0ba18ef9's words, "cannot read or keep this computer's token",
+/// and no step.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_unreadable_token_is_said_with_the_step_that_makes_a_new_one() {
+    let held = TcpListener::bind("127.0.0.1:0").unwrap();
+    held.set_nonblocking(true).unwrap();
+    let dir = data_dir_at(held.local_addr().unwrap().port());
+    let token = dir.path().join("token");
+    std::fs::remove_file(&token).unwrap();
+    std::fs::create_dir(&token).unwrap();
     let refused = opened(dir.path()).await;
     let asked = held.accept().map(|(_, from)| from);
     assert!(asked.is_err(), "it was asked, from {asked:?}");
     let (code, said) = refused.expect_err("refused");
     assert_eq!(code, 3, "{said}");
-    let token = dir.path().join("token").display().to_string();
-    assert!(said.contains("token") && said.contains(&token), "{said}");
-    assert!(!said.contains("Something other"), "{said}");
+    let words = format!(
+        "svrngs can't read or write its token, {} (",
+        token.display()
+    );
+    assert!(said.starts_with(&words), "{said}");
+    let step = "). svrngs makes a new one where there is none: delete that file, then run `svrngs restart`";
+    assert!(said.ends_with(step), "{said}");
 }
 
 /// **What answers at svrngs's address is read no further than an answer

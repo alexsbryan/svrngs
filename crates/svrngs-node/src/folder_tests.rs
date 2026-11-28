@@ -97,3 +97,34 @@ fn an_overdrawn_write_budget_waits_one_refill_and_no_more() {
         "refilled"
     );
 }
+
+/// Run is told every directory this computer syncs, each group's, the one
+/// list `both_ways` keeps (synced.rs `syncing_in`); none where none was
+/// ever kept; and a list that can't be read refuses, so nothing is kept
+/// past it. Planted, watched failing: one group's directories alone.
+#[test]
+fn run_is_told_every_synced_directory_or_refuses() {
+    let data = tempfile::tempdir().unwrap();
+    assert_eq!(synced(data.path()), Ok(vec![]));
+    let asks = [("/home/ada/svrngs/house", "g1"), ("/srv/shared", "g2")];
+    let asks: Vec<_> = (asks.iter())
+        .map(|(dir, group)| FolderAsk {
+            dir: dir.into(),
+            group: group.to_string(),
+        })
+        .collect();
+    std::fs::write(
+        data.path().join("synced.json"),
+        serde_json::to_vec(&asks).unwrap(),
+    )
+    .unwrap();
+    let mut said = synced(data.path()).unwrap();
+    said.sort();
+    assert_eq!(said, ["/home/ada/svrngs/house", "/srv/shared"]);
+    std::fs::write(data.path().join("synced.json"), "not a list").unwrap();
+    let refused = synced(data.path()).unwrap_err();
+    assert!(
+        refused.starts_with("svrngs can't read which folders it syncs, so nothing was kept ("),
+        "{refused}"
+    );
+}

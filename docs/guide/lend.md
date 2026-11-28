@@ -10,14 +10,14 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 
 1. Start the program as you always do. Say Sam starts Jellyfin.
 2. Open your home page (open svrngs from your Applications). Under **Already running here**, press **Look for programs running on this computer**. Looking takes a few seconds.
-3. The page lists what it found, one line each: *"jellyfin, at http://localhost:8096"*. Press the line to open it. It says what the program needs first, such as *"It keeps its own accounts, so make each person one in it: …"*
+3. The page lists what it found, one line each: *"jellyfin, at localhost:8096"*. Press the line to open it. It says what the program needs first, such as *"It keeps its own accounts, so make each person one in it: …"*
 4. Tick the groups who can open it, then press **Lend jellyfin to House** (the button names the groups you ticked).
 
-The row then says *"You lent jellyfin, at http://localhost:8096: the groups you chose can open it now."*, and it shows under **What you lend**.
+The first press lends nothing yet: the row says who can use it and when, such as *"House can use it while it’s running."*, and the button becomes **Yes, lend it**. **Details** under it lists the parts svrngs keeps private. Press **Yes, lend it**: the row says *"Lent to House."*, and the lend opens under **What you lend**.
 
-If svrngs doesn't know the program, its line names the program answering there and its address. Open it, fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
+If svrngs doesn't know the program, its line names the program answering there and its address. Open it, fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked). For a program svrngs knows by its name, such as llama-server, both are filled in for you; change them if you like.
 
-For a program apps may also send to, such as llama-server, the first press lends nothing yet: the row says where apps your friends open could send to it, and pressing again lends it ([models.md](models.md#lend-your-llama-server)).
+For a program apps may also send to, such as llama-server, the review adds *"Apps your friends open can also send it requests, each after that friend says yes."*, and **Details** lists where ([models.md](models.md#lend-your-llama-server)).
 
 The home page asks for a password in two places: the account apps read through, in the next paragraph, and a header the program wants on each request, such as its API key (below). Each goes to this computer and nowhere else.
 
@@ -41,31 +41,55 @@ For a program apps may also send to, such as llama-server, `share` first asks wh
 
 If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ctrl-C stops it."* Usually it already runs, and `share` ends with *"svrngs is running here already, so they can open it now."*
 
-## Run it with svrngs, then share it
+## Keep it running
 
-**Shared while you run it** means svrngs doesn't restart your copy. If you
-stop it or restart your computer, start it yourself and share it again when
-asked. For a program you want to keep available, have svrngs run it instead.
+A program you started yourself is shared only while it runs. Its line
+under **What you lend** says so: *"House can open it only while it's
+running. svrngs can keep it running, even after a restart."*
 
-1. Stop the copy you started. Under **Already running here** on your home
-   page, choose **Run it with svrngs**. Give it a name, port, folder and the
-   command you use to start it. It runs as you and is set to start again at
-   login, even if svrngs can't verify that it answered. It runs without your
-   terminal's settings; use full paths if the command or its files aren't found.
-2. Once it says it's running, find it under **Already running here** and
-   share it with the groups you choose. Use the same name for Run and Share.
-   Run on its own gives no one access.
+svrngs doesn't read how you started it: you give it the command. The
+easiest way is the terminal you started it in.
+
+1. Stop your copy there (Ctrl+C).
+2. Press Up to bring its command back, and Ctrl+A to go to its start.
+3. Paste the line the page shows, such as `svrngs keep 8102 -- `, so it
+   reads `svrngs keep 8102 -- llama-server --model ~/smol.gguf --port 8102`,
+   and press Enter.
+
+svrngs shows exactly what it will run and in which folder, and keeps it
+once you press Enter. On Linux it then asks whether to start it when the
+computer starts, even before you log in. That lets your account run
+programs while nobody is logged in, so it's yours to say; without a yes,
+it comes back when you log in.
+
+Didn't start it in a terminal? Press **Keep it running** and type the
+command and the folder you started it from, then press **Start**. A
+command that needs a shell, such as `FOO=1 prog` or one with `$HOME` or a
+`|`, is refused there: use the terminal instead, or put it in a script and
+give that.
+
+svrngs keeps it only if it then answers on its port within 30 seconds.
+If it doesn't, nothing is kept: svrngs stops it and says why, with what
+it last printed, so you can fix the command and try again. It also
+refuses a program or folder inside a folder your group syncs, since anyone
+in the group could change what runs as you, and one that another account
+on this computer could change; each refusal says how to fix it.
+
+Once kept, the row says *"svrngs runs coder now. It comes back when you log
+in."* If something other than svrngs's copy answers on its port, the row
+says so and approves nothing: check what answers, then press **Keep
+sharing it**.
 
 **Run by svrngs** means it starts again after a crash, up to a limit. Read
 the Share review for when friends can open it again. On a Mac, it starts
 after you sign in. On Linux, it can start before sign-in if you allow that
-when running it from a terminal, both parts start with the computer, and
-the disk unlocks on its own. A locked disk needs you to unlock it first.
+when you keep it, both parts start with the computer, and the disk unlocks
+on its own. A locked disk needs you to unlock it first.
 Nothing runs while the computer is asleep or off.
 
 Sharing through restarts trusts the service to keep answering for the same
 app. An update that replaces its program at the same path can keep the
-share. Use **Share this run** if you only want to share the running copy.
+share.
 
 On your home page (`svrngs open`), use **Stop** under **Already running
 here**. Apps you run with svrngs appear there even before you join a group.

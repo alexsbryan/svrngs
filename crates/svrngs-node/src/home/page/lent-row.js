@@ -11,13 +11,18 @@
 // (lend-change.js CHANGE). What is seldom changed is folded again under
 // More settings: how many at once, a header, and signing people in with
 // svrngs, with the app form's fill once that is turned on (`SigningOn`).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+// Under the fold, never in it, the offer to keep its program running,
+// where it is shared only while that runs (keep-running.js). Just lent from
+// its found row, whose line still holds the focus (running-here.js
+// `Found`), it opens and takes the focus, in view with that offer under it.
+import { html, useEffect, useMachine, useRef } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
 import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
 import { notRunning } from '../question.js?v=__VERSION__';
 import { answered } from './running-look.js?v=__VERSION__';
+import { KeepRunning } from './keep-running.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 /** @import { AppsAccount } from './lent-read.js?v=__VERSION__' */
 /** @import { State, Message } from './lend-change.js?v=__VERSION__' */
@@ -29,7 +34,7 @@ import { answered } from './running-look.js?v=__VERSION__';
  * groups to lend it to, and HOME's `dispatch`, told to read again once it
  * changes.
  * @typedef {object} LentProps
- * @property {Lend & { sharing?: [string, string] }} l
+ * @property {Lend & { sharing?: number }} l
  * @property {boolean} signs
  * @property {AppsAccount} [account]
  * @property {string[]} [headers]
@@ -52,6 +57,22 @@ function SigningOn({ c: fill }) {
   return html`<p>Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide: install any required OpenID Connect plugin, then configure it with issuer <code>${fill.issuer}</code>, client id <code>${fill.client_id}</code>, client secret <code>${fill.client_secret}</code>. Reach the issuer from the app server on this computer, not the computer of the person opening the app; a container has its own loopback. Test sign-in through the group’s app list after setup. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>${after}</p>`;
 }
 
+// The names of the groups a lend is lent to, "House and Trip", every id
+// named, one this computer holds no group for by its start; '' for none.
+/**
+ * @param {Lend} lend
+ * @param {Choice[]} groups
+ */
+const groupNames = (lend, groups) =>
+  (lend.groups ?? [])
+    .map((id) => {
+      const group = groups.find((held) => held.id === id);
+      return group
+        ? called(group, groups)
+        : `a group this computer does not hold (${id.slice(0, 8)})`;
+    })
+    .join(' and ');
+
 // Who the row says can open it: the names of the groups it is lent to,
 // none when paused, and a choice to make when the answer gave none.
 /**
@@ -60,15 +81,9 @@ function SigningOn({ c: fill }) {
  */
 export const lentTo = (lend, groups) => {
   // Absent is read as legacy, needing selection: never as every group.
-  const ids = lend.groups ?? null;
-  if (ids === null) return 'choose which groups can open it';
-  if (ids.length === 0) return 'paused, no group can open it';
-  // Every id named, one this computer holds no group for by its start.
-  const names = ids.map((id) => {
-    const group = groups.find((held) => held.id === id);
-    return group ? called(group) : `a group this computer does not hold (${id.slice(0, 8)})`;
-  });
-  return `lent to ${names.join(' and ')}`;
+  if (!lend.groups) return 'choose which groups can open it';
+  if (lend.groups.length === 0) return 'paused, no group can open it';
+  return `lent to ${groupNames(lend, groups)}`;
 };
 
 /**
@@ -203,16 +218,18 @@ function Keep({ lend, doing, send }) {
 const undone = (/** @type {AppsAccount | undefined} */ account, /** @type {Lend} */ lend) =>
   (account !== undefined && !account.kept) || Boolean(lend.held);
 
-/** @param {LentProps['l']['sharing']} sharing */
-const runLink = (sharing) =>
-  sharing &&
-  html`<p>${sharing[0]} <a href="#run-form" onClick=${() => document.querySelector('#run-form details')?.setAttribute('open', '')}>${sharing[1]}</a></p>`;
-
 /** @param {LentProps} props */
 export function Lent({ l: lend, signs, account, headers, groups, home }) {
   /** @type {() => State} */
   const first = () => ({ at: { change: 'idle' }, said: '', groups: lend.groups ?? [] });
   const [state, send] = useMachine(() => machine('CHANGE', CHANGE(lend.name, home), first()));
+  const fold = useRef(/** @type {HTMLDetailsElement | null} */ (null));
+  // Focus scrolls what takes it into view, so the offer under it shows.
+  useEffect(() => {
+    if (!fold.current || document.activeElement?.getAttribute('data-lent') !== lend.name) return;
+    fold.current.open = true;
+    fold.current.querySelector('summary')?.focus();
+  }, []);
   const limit = lend.limit;
   const limited = (limit ?? 0) > 0;
   const using = limited ? `${lend.using} of ${limit}` : lend.using;
@@ -228,9 +245,8 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
     : html`<${Act} words="Sign people in with svrngs" doing=${doing} on=${sign} send=${send} />`;
   return html`
     <li>
-      <details open=${undone(account, lend)} aria-label=${lend.name}>
+      <details ref=${fold} open=${undone(account, lend)} aria-label=${lend.name}>
         <summary>${line(lend, lentTo(lend, groups), using)}</summary>
-        ${runLink(lend.sharing)}
         <${Keep} lend=${lend} doing=${doing} send=${send} />
         <p>Who can open it:</p>
         <${GroupChoice}
@@ -258,6 +274,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
         <${Act} words="Stop lending" doing=${doing} on=${{ type: 'change', to: 'stop' }} send=${send} />
         ${state.said}
       </details>
+      <${KeepRunning} lend=${lend} who=${groupNames(lend, groups)} home=${home} />
     </li>
   `;
 }

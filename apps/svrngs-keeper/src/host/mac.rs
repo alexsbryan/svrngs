@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{collections::HashMap, path::Path, process::Command};
 
 use crate::promote::Listen;
 
@@ -79,23 +75,6 @@ fn program(pid: u32) -> Result<String, String> {
         .and_then(|p| p.to_str())
         .map(str::to_owned)
         .ok_or("ps gave no program".into())
-}
-
-pub fn llama_folder(pid: u32) -> Result<PathBuf, String> {
-    if program(pid)? != "llama-server" {
-        return Err("no known program is listening".into());
-    }
-    let text = read(
-        "/usr/sbin/lsof",
-        &["-a", "-p", &pid.to_string(), "-d", "cwd", "-Fn"],
-        false,
-    )?;
-    let path = text
-        .lines()
-        .find_map(|l| l.strip_prefix('n'))
-        .map(PathBuf::from)
-        .filter(|p| p.is_absolute());
-    path.ok_or("lsof gave no working folder".into())
 }
 
 pub fn owns(port: u16, job: u32) -> Result<bool, String> {

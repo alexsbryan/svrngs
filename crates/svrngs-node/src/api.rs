@@ -50,7 +50,9 @@ pub enum ApiError {
     AddressFile(std::path::PathBuf, std::io::Error),
     #[error("{0} names no address svrngs listens at: delete it, and svrngs takes a new one as it starts")]
     NoAddress(std::path::PathBuf),
-    #[error("cannot read or keep this computer's token, {0}: {1}")]
+    /// What reads or writes the token failed, other than its absence,
+    /// which is a svrngs that never ran over the data dir (cli.rs `Here`).
+    #[error("svrngs can't read or write its token, {at} ({1}). svrngs makes a new one where there is none: delete that file, then run `svrngs restart`", at = .0.display())]
     TokenFile(std::path::PathBuf, std::io::Error),
     #[error("{0} holds no token svrngs made: delete it, and svrngs makes a new one as it starts")]
     NoToken(std::path::PathBuf),
@@ -182,7 +184,9 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
 /// while svrngs is down, of any account, in a container or a sandbox or
 /// not, or one carrying the challenge to svrngs on a connection of its
 /// own; else why not. The one way svrngs's command asks svrngs (cli.rs
-/// `Here::ask`, `svrngs ask`).
+/// `Here::ask`, `svrngs ask`). Only a svrngs of this command's [`build`] is
+/// asked, but for [`crate::surface::STOP_ROUTE`], which asks any svrngs
+/// holding the token to stop, so this build can start in its place.
 #[expect(
     clippy::disallowed_methods,
     reason = "dial: svrngs's own API, proved before it is asked"
@@ -203,7 +207,12 @@ pub async fn asked(api: &str, route: &str, token: &str, body: Option<String>) ->
     let asked = format!(r#"{{"challenge":"{}"}}"#, challenge.0);
     let answer = share::sent::<ANSWERED_WITHIN>(&mut on, at.port(), post("/v1/proof"), asked);
     let answer = tokio::time::timeout(PROVE_WITHIN, answer).await.ok();
-    let proved = proven(answer, &proof(token, &challenge, ends.local, ends.peer));
+    let stop = route == crate::surface::STOP_ROUTE;
+    let proved = proven(
+        answer,
+        &proof(token, &challenge, ends.local, ends.peer),
+        stop,
+    );
     tracing::debug!(target: "rails", %at, client = %ends.local, proved = ?proved.as_ref().map(|_| ()), "api: whether svrngs proved it holds the token on this connection and gave it a nonce, asked on it only if so");
     let code = ask(token, &proved?, ends.local, ends.peer);
     // hyper takes a second request only once the first has let it go.
@@ -222,14 +231,16 @@ pub type Asked = Result<(u16, Vec<u8>), Withheld>;
 
 /// Why svrngs's command sent none of its token to what answers at the
 /// address svrngs wrote ([`asked`]): a closed set (AGENTS 9).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Withheld {
     /// Nothing takes a connection there, or answers on it: svrngs isn't
     /// running.
     Away,
-    /// What answers has no proof to give (404): a svrngs older than this
-    /// command.
-    Older,
+    /// What answers is a svrngs of another [`build`] than this command's:
+    /// the one its proof names, or none from one too old to name it (404,
+    /// or a proof with no nonce or no build); or, at 404, not svrngs at
+    /// all, which only the data dir's lock tells apart (cli.rs `Here`).
+    Another(Option<String>),
     /// Nothing answered the challenge within [`PROVE_WITHIN`].
     Unanswered,
     /// What answers is not svrngs proving, on this connection, that it
@@ -356,23 +367,43 @@ fn mac(token: &str, what: &str, fresh: &Challenge, ends: (SocketAddr, SocketAddr
 /// this connection's own ends: proved, and the nonce it gave this
 /// connection; older, with no proof to give (404), or proved with no nonce,
 /// as a svrngs before it stopped taking the token; nothing answering, or
-/// nothing in time; or not svrngs proving itself. Compared in constant
-/// time (the sign-in provider's `same`).
-fn proven(answer: Option<Option<(u16, Vec<u8>)>>, wanted: &str) -> Result<Challenge, Withheld> {
+/// nothing in time; or not svrngs proving itself. A proof naming another
+/// build is taken only with `any`. Compared in constant time (the sign-in
+/// provider's `same`).
+fn proven(
+    answer: Option<Option<(u16, Vec<u8>)>>,
+    wanted: &str,
+    any: bool,
+) -> Result<Challenge, Withheld> {
     let (status, said) = answer.ok_or(Withheld::Unanswered)?.ok_or(Withheld::Away)?;
     let said: serde_json::Value = serde_json::from_slice(&said).unwrap_or_default();
     let shown = said["proof"].as_str().unwrap_or_default().as_bytes();
-    (status != 404).then_some(()).ok_or(Withheld::Older)?;
+    (status != 404)
+        .then_some(())
+        .ok_or(Withheld::Another(None))?;
     let proved = status == 200 && crate::oidc::provider::same(shown, wanted.as_bytes());
     proved.then_some(()).ok_or(Withheld::Unproven)?;
-    let nonce = serde_json::from_value(said["nonce"].clone());
-    nonce.map_err(|_| Withheld::Older)
+    let theirs = said["build"].as_str().map(String::from);
+    let nonce = serde_json::from_value(said["nonce"].clone()).ok();
+    let ours = any || theirs.as_deref() == Some(build().as_str());
+    nonce.filter(|_| ours).ok_or(Withheld::Another(theirs))
+}
+
+/// This build, as `svrngs version` says it and `POST /v1/proof` names it
+/// ([`proved`]): its release, and the commit scripts/build-release.sh
+/// built it from, which a build by hand has none of. The command asks
+/// only a svrngs of its own build ([`proven`]), so it never asks, as you,
+/// an older one an update left running.
+pub fn build() -> String {
+    let release = env!("CARGO_PKG_VERSION");
+    option_env!("SVRNGS_COMMIT").map_or(release.into(), |c| format!("{release} ({c})"))
 }
 
 /// `POST /v1/proof`, `{"challenge": "<hex>"}`: svrngs's [`proof`] that it
 /// holds the token, for a client's fresh challenge on this connection, and
 /// a nonce drawn fresh for this connection alone, which its asks' code is
-/// made for ([`ask`]), as `{"proof": "<hex>", "nonce": "<hex>"}`; a later
+/// made for ([`ask`]), and its [`build`], as `{"proof": "<hex>", "nonce":
+/// "<hex>", "build": "1.13.4 (<commit>)"}`; a later
 /// proof on the connection gives it another in its place ([`Line`]). Asked
 /// with nothing before a client asks anything else ([`asked`]). It tells no
 /// one anything of the token: a keyed proof over a challenge the client
@@ -395,7 +426,7 @@ async fn proved(State(token): State<Bearer>, request: Request) -> Response {
     let nonce = Challenge::drawn();
     line.nonce.send_replace(Some(nonce.clone()));
     let proof = proof(token.secret(), &challenge, client, server);
-    Json(serde_json::json!({ "proof": proof, "nonce": nonce.0 })).into_response()
+    Json(serde_json::json!({ "proof": proof, "nonce": nonce.0, "build": build() })).into_response()
 }
 
 /// What `POST /v1/proof` is asked.

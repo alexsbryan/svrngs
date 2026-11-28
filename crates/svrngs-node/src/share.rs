@@ -293,6 +293,8 @@ pub enum ShareRefusal {
     UdpBeside(NonZeroU16),
     #[error("svrngs can't share port {0}: what answers on port {0} changed; choose it again.")]
     Changed(NonZeroU16),
+    #[error("svrngs doesn't run what answers on {0}'s port, so it wasn't approved. Check what answers there, then approve it.")]
+    NotKept(LendName),
     #[error("{0} is already shared from {1}: give this one another name, or add --replace to share {0} from here instead.")]
     Taken(LendName, String),
     #[error("nothing is shared from a port here by the name {0}")]
@@ -388,21 +390,28 @@ pub fn approve(
     approved
 }
 
-/// The grant an approval of what `answers` names makes, unless its lender
-/// asks to choose again after each restart (`ask`; svrn-docs
-/// KEEP_SHARING_ON_RESTART §2): when they are one unit's job (`approve`
-/// says each socket's holders once, in order), not transient and with a
-/// file of theirs ([`crate::job::now`]), that unit; else none.
-pub fn kept(answers: &[Answer], ask: bool) -> Option<Keep> {
+/// The grant an approval of the lend `lend` makes, unless its lender asks
+/// to choose again after each restart (`ask`; svrn-docs
+/// KEEP_SHARING_ON_RESTART §2): when what `answers` names is one unit's
+/// job (`approve` says each socket's holders once, in order), not transient
+/// and with a file of theirs ([`crate::job::now`]), that unit; else none.
+#[cfg(not(target_os = "macos"))]
+pub fn kept(_: &Lend, (_, answers): (&Approved, &[Answer]), ask: bool) -> Option<Keep> {
     let keep = match answers {
-        // Mac reapproval is instance-only; Share alone verifies the agent before saving.
-        [Answer::Job { unit, .. }] if !ask && !cfg!(target_os = "macos") => {
-            Some(crate::job::now(unit).map(|now| now.keep))
-        }
+        [Answer::Job { unit, .. }] if !ask => Some(crate::job::now(unit).map(|now| now.keep)),
         _ => None,
     };
     tracing::debug!(target: "share", ?answers, ask, ?keep, "share: the grant an approval makes, one unit's job renewed through its restarts, or none");
     keep.and_then(Result::ok)
+}
+
+/// A Mac's, where a job's processes answer, never a unit: unless its lender
+/// asks to choose again after each restart (`ask`), the launch agent
+/// svrngs-keeper runs the lend under, when every process `approved` holds
+/// is that agent's, decided as Share decides it ([`crate::job::mac::kept`]).
+#[cfg(target_os = "macos")]
+pub fn kept(lend: &Lend, (approved, _): (&Approved, &[Answer]), ask: bool) -> Option<Keep> {
+    crate::job::mac::kept(crate::job::now, lend, approved, !ask)
 }
 
 /// An opaque name for what `approved` approves, the same for the same

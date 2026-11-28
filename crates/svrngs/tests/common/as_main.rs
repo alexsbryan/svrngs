@@ -85,9 +85,19 @@ pub fn installed_from(dir: &Path, exe: &Path, relay: &str) -> PathBuf {
         "#!/bin/sh\n{BUILD}='{relay}' exec '{}' --exact --ignored --nocapture --quiet {NAME} -- \"$@\"\n",
         exe.display()
     );
-    std::fs::write(&path, script).unwrap();
-    let exec = std::os::unix::fs::PermissionsExt::from_mode(0o755);
-    std::fs::set_permissions(&path, exec).unwrap();
+    // Written beside it, then put in place by `install`, so this process
+    // never holds the program open for writing: a child another test thread
+    // forks meanwhile would inherit that handle until it execs, and Linux
+    // refuses to run a file open for writing ("Text file busy").
+    let source = dir.join("svrngs.in");
+    std::fs::write(&source, script).unwrap();
+    let put = std::process::Command::new("install")
+        .args(["-m", "0755"])
+        .arg(&source)
+        .arg(&path)
+        .status()
+        .unwrap();
+    assert!(put.success(), "install {}: {put}", path.display());
     path
 }
 
@@ -103,8 +113,11 @@ pub fn past_header(out: &mut impl BufRead) {
 
 /// src/main.rs's `main`, line for line but for the build's relays, the
 /// arguments after `--`, and an exit in place of a return, so libtest
-/// says nothing after svrngs.
+/// says nothing after svrngs; and svrngs, where it starts svrngs itself
+/// (cli.rs `restart`), starts this binary as [`installed`] runs it.
 pub fn main() -> ! {
+    let before = std::env::args().skip(1).take_while(|a| a != "--");
+    let _ = cli::STARTS_AS.set(before.chain(["--".into()]).collect());
     let typed = std::env::args().skip_while(|a| a != "--").skip(1);
     let command = match cli::parse(std::iter::once("svrngs".to_string()).chain(typed)) {
         Ok(command) => command,

@@ -37,6 +37,8 @@
 //!
 //!   These three at an app's origin, and a carried app's own `/svrngs/acts`
 //!   (`crate::folder::carried`), are parsed once, into [`AppRoute`].
+//! - `POST /v1/stop` — this svrngs stops, as Ctrl-C stops it ([`stop`]):
+//!   what `svrngs restart` asks of one nothing keeps at login.
 //! - `POST /v1/sign?app=<app>` — the body's bytes signed for the app by
 //!   this computer's own key, the one that signs its acts, answered as that
 //!   key and the signature, each in hex (onair-sign, [`sign`]). The core
@@ -76,6 +78,10 @@ pub const GUIDE: &str = include_str!("../../../docs/guide/build.md");
 /// Where an app asks which groups this computer holds.
 pub const GROUPS_ROUTE: &str = "/v1/groups";
 
+/// Where svrngs's command asks svrngs, as you, to stop, as Ctrl-C stops
+/// it ([`stop`]): how `svrngs restart` stops one nothing keeps at login.
+pub const STOP_ROUTE: &str = "/v1/stop";
+
 /// Where an app asks what a group's people lend.
 pub const LENDS_ROUTE: &str = "/v1/lends";
 
@@ -84,9 +90,10 @@ pub const SIGN_ROUTE: &str = "/v1/sign";
 
 /// Where its lender approves what answers on a lend's port now
 /// (SHARE_BINDING §5.4): `POST /v1/lends/<name>/approve` with `{"token"}`,
-/// what its list showed answering, and `"pid"` and `"start"` when it showed
-/// a process, both or neither (422 for one). Only its approval changes
-/// ([`approve`]).
+/// what its list showed answering, `"pid"` and `"start"` when it showed a
+/// process, both or neither (422 for one), and `"keep": true` to approve it
+/// only as the job svrngs keeps it to through restarts. Only its approval
+/// changes ([`approve`]).
 pub const APPROVE_ROUTE: &str = "/v1/lends/{name}/approve";
 
 /// Where a lent page asks, at its own origin, the lends it reads: the one
@@ -162,17 +169,32 @@ pub(crate) fn router(asking: Asking) -> Router {
         .route(LENDS_ROUTE, get(lends))
         .route(SIGN_ROUTE, post(sign))
         .route(APPROVE_ROUTE, post(approve))
+        .route(STOP_ROUTE, post(stop))
         .with_state(asking)
 }
 
+/// [`STOP_ROUTE`]: this svrngs stops, its node closed and its data dir's
+/// lock let go, as on Ctrl-C ([`crate::node::Node::stopped`]); answered
+/// first, though the answer may be cut short as it stops.
+async fn stop(State(at): State<Asking>) -> Json<serde_json::Value> {
+    tracing::info!(target: "surface", "surface: asked, as you, to stop, so this svrngs stops");
+    at.host.stop_asked.cancel();
+    Json(serde_json::json!({ "stopping": true }))
+}
+
 /// What a page sends to approve what answers on a lend's port: what its
-/// list showed (`Offered::token`), and the process it showed, if one.
+/// list showed (`Offered::token`), the process it showed, if one, and
+/// whether to approve it only where svrngs keeps it to its job through
+/// restarts (`keep`; keep-running.js `carry` asks it, since the person
+/// didn't see what it approves).
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Approving {
     token: String,
     pid: Option<u32>,
     start: Option<u64>,
+    #[serde(default)]
+    keep: bool,
 }
 
 /// What a process named by half is answered, its pid without its start or
@@ -193,8 +215,10 @@ pub(crate) fn process(pid: Option<u32>, start: Option<u64>) -> Result<Option<Pid
 
 /// [`APPROVE_ROUTE`]: the lend `name`'s port read as a share reads it, and
 /// what answers there approved ([`crate::share::approve`]), only as its
-/// lender was shown it, with the process shown; nothing else of it changed.
-/// What answers, as its lender is shown it; or why not, in their words.
+/// lender was shown it, with the process shown, and, asked to `keep`, only
+/// with the grant that keeps it to its job ([`crate::share::kept`]); nothing
+/// else of it changed. What answers, as its lender is shown it; or why not,
+/// in their words, nothing approved.
 async fn approve(
     State(at): State<Asking>,
     axum::extract::Path(named): axum::extract::Path<Vec<(String, String)>>,
@@ -209,8 +233,7 @@ async fn approve(
         tracing::debug!(target: "share", lend = name, error = %e, "share: refused — nothing approved");
         LendRefusal::closed(e.to_string())
     };
-    let named = crate::lend::LendName::parse(&name);
-    let name = named
+    let name = crate::lend::LendName::parse(&name)
         .map_err(|_| LendRefusal::closed(format!("Nothing is shared here by the name {name}.")))?;
     let (lend, port) = crate::share::shared(dir, &name).map_err(refused)?;
     // Half a process is refused, never approved as the token alone.
@@ -218,7 +241,10 @@ async fn approve(
     let read = (at.host.transport).answering(lend.raw(), port.get(), pid.map(|p| p.pid));
     let approving = crate::share::approve((port, lend.raw()), read.await, pid, Some(&asked.token));
     let (approved, answers) = approving.map_err(refused)?;
-    let keep = crate::share::kept(&answers, false);
+    let keep = crate::share::kept(&lend, (&approved, &answers), false);
+    if asked.keep && keep.is_none() {
+        return Err(refused(crate::share::ShareRefusal::NotKept(name)));
+    }
     crate::share::reapproved(dir, &name, (approved, keep)).map_err(refused)?;
     Ok(Json(serde_json::json!({ "name": name, "answers": answers })).into_response())
 }
