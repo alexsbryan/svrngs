@@ -21,12 +21,52 @@ exactly the file you checked, and the link's page only joins:
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/release.sh sign`).
 
-**Moving from 1.13.3 to a release with Keeper:** Run the [verified install
+## V1.14.0, 27 November 2026
+
+V1.14.0 keeps what you lend running after a restart, makes the `svrngs`
+command start and update svrngs in one step, and makes a group's page
+quicker to read.
+
+**Moving from 1.13.3:** run the [verified install
 command](docs/guide/start.md#start-a-group-on-your-computer) again, with the
-same account, to install both programs and keep your existing groups.
-The 1.13.3 updater replaces only `svrngs`. If you already updated that way,
-rerun the install command to add Keeper. If a package manager installed
-svrngs, update the package instead.
+same account. It installs svrngs and the new Keeper program and keeps your
+groups. The 1.13.3 updater replaces only `svrngs`, so if you already
+updated that way, run the install command to add Keeper. If a package
+manager installed svrngs, update the package instead.
+
+**Keep it running.** A program you lend is shared only while it runs. Its
+row under **What you lend** now offers to keep it running, even after the
+computer restarts. You give svrngs the command yourself: in the terminal
+where you started it, paste the line the page shows, such as `svrngs keep
+8102 -- `, before your command, and press Enter. Or press **Keep it
+running** and type the command and its folder. svrngs shows exactly what
+it will run before it keeps anything, keeps it only if it answers on its
+port within 30 seconds, and refuses a command or folder that someone else
+could change, saying how to fix it. It never reads how a program was
+started. On Linux it asks whether to start the program even before you
+log in; without a yes, it comes back when you log in. See [Keep it
+running](docs/guide/lend.md#keep-it-running).
+
+**One command to open svrngs.** `svrngs` and `svrngs open` start svrngs
+if it isn't running, apart from the terminal, and open your home page:
+"Your home page is open in your browser." You no longer need to leave a
+terminal open or press Ctrl-C afterwards. `svrngs restart` and `svrngs
+update` end by saying which version is running. If an older svrngs is
+still running after an update, the command restarts it onto the new one.
+svrngs stops only itself, by asking its own address, so nothing else on
+your computer is touched. A token svrngs can't read is said with the step
+that makes a new one.
+
+**A group's page reads at a glance.** A group's apps come first, then
+**People**: each person in the group, lit yellow while their computer is
+on, like a building's doorbell. On your own pages you're "you", and what
+you lend reads as "your …". Two people with one name are "Ana (1st)" and
+"Ana (2nd)", by who joined first. Each app or lent thing opens from its
+name, and **Address** says the other ways to use it by where you are: in
+this browser, from a program on this computer (**Play**), or on a TV or
+phone on your WiFi. The words above each list are a line each, and still
+say that an app opens as you in that group. The guest limit now says
+"Guest limit: 2 at a time on each computer in the group."
 
 ## V1.13.3, 21 November 2026
 

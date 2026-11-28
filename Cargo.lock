@@ -4650,7 +4650,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "svrngs"
-version = "1.13.3"
+version = "1.14.0"
 dependencies = [
  "axum",
  "base64 0.22.1",
@@ -4685,7 +4685,7 @@ dependencies = [
 
 [[package]]
 name = "svrngs-core"
-version = "1.13.3"
+version = "1.14.0"
 dependencies = [
  "base64 0.22.1",
  "blake3",
@@ -4702,7 +4702,7 @@ dependencies = [
 
 [[package]]
 name = "svrngs-db"
-version = "1.13.3"
+version = "1.14.0"
 dependencies = [
  "base64 0.22.1",
  "cc",
@@ -4739,7 +4739,7 @@ dependencies = [
 
 [[package]]
 name = "svrngs-node"
-version = "1.13.3"
+version = "1.14.0"
 dependencies = [
  "axum",
  "base64 0.22.1",
@@ -4797,7 +4797,7 @@ dependencies = [
 
 [[package]]
 name = "svrngs-runtime"
-version = "1.13.3"
+version = "1.14.0"
 dependencies = [
  "serde",
  "serde_json",

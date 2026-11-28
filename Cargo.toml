@@ -11,7 +11,7 @@ members = ["crates/svrngs-core", "crates/svrngs-runtime", "crates/svrngs-node", 
 exclude = ["vendor", ".claude/worktrees"]
 
 [workspace.package]
-version = "1.13.3"
+version = "1.14.0"
 edition = "2024"
 license = "AGPL-3.0-or-later"
 
