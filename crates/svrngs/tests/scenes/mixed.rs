@@ -47,7 +47,7 @@ const LAST: &str = "v1.13.3";
 /// scenes' build relay as this build's people are. With neither, the scene
 /// never ran, said in its place with the command that makes it.
 fn last_release(scene: &Scene) -> Option<PathBuf> {
-    let made = repo().join(format!("target/last-release/svrngs-{LAST}"));
+    let made = repo().join(format!("target/last-release/svrngs-{LAST}-test-key"));
     let exe = std::env::var_os("SCENES_LAST_RELEASE").map_or(made, PathBuf::from);
     if !exe.is_file() {
         scene.never_ran(&format!(

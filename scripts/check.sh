@@ -31,7 +31,10 @@ unset SVRNGS_STEPS SVRNGS_TESTS SVRNGS_RUN  # set only by --touched, below
 # `playback`, new on 2026-11-12, has no queue's gates behind it: with the
 # night scene's playing in it, it took 225 s on the Mac that day
 # (demo/runs/flakes/2026-11-12/mac/night-playback-step.log), so 225.
-slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; playback) echo 225 ;; *) echo 60 ;; esac; }
+# `upgrade`, new on 2026-11-27: 33 s warm and 99 s after a product change
+# on the Mac, but cold it builds v1.13.3 (3 min 29 s that day) and this
+# build in target/upgrade/ first, so 240.
+slowest() { case $1 in tests) echo 307 ;; upgrade) echo 240 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; playback) echo 225 ;; *) echo 60 ;; esac; }
 # A step whose test could judge nothing of its claim, its seam silent
 # before any of our code ran (the `internet` step: the relay not answering),
 # writes why to target/could-not-judge/<step>.step, a directory emptied
@@ -211,6 +214,15 @@ elif reached playback; then echo "never-ran  WebKit's seeks back to back, a rate
 # with why (`step`, above); release.sh is where its silence fails. A
 # failure with it answering is ours.
 step "internet" cargo test -p svrngs --test internet
+# An existing install reaches a complete new one by its usual path
+# (crates/svrngs/tests/upgrade): the last release's own test binary, its
+# own `svrngs update` taking this build from a page on 127.0.0.1 that the
+# tests' key signs, then one start, after which Keeper is beside svrngs and
+# both answer, with no restart and no step more. gate.sh makes the last
+# release once a checkout and builds this one trusting that key in
+# target/upgrade/, so no other step's build does; cold, both builds take
+# minutes.
+step "upgrade" sh crates/svrngs/tests/upgrade/gate.sh
 step "app laws" ${SVRNGS_RUN:-} node web/tests/run.mjs apps
 rm -f /tmp/svrngs-check.$$; echo "note       took $SECONDS s in all"
 exit $failed

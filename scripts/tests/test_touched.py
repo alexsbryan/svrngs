@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 # The binaries that build the phone's site (harness.rs `site`).
 SITE = {"browser", "conformance", "join_page", "pages", "scenes"}
-EVERY = {"app laws", "clippy", "page integration", "tests", "typed lint", "types", "web rustfmt and clippy"}
+EVERY = {"app laws", "clippy", "page integration", "tests", "typed lint", "types", "upgrade", "web rustfmt and clippy"}
 
 
 def plan(*files):
