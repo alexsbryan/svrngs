@@ -35,7 +35,7 @@ For any other game, use its port and whichever of the two it speaks.
 ## Join a friend's game
 
 Ana opens the home page. Sam's row reads *Sam’s minecraft*, with
-*Play opens it on this computer, for a program here to connect to.* and a
+*Play opens one on this computer, for a program here to connect to.* and a
 **Play** button.
 
 ![Ana’s Minecraft connects to 127.0.0.1:41821 on Ana’s own computer, and svrngs carries it to Sam’s server on 25565.](../diagrams/guide/play.svg)

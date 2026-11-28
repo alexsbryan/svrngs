@@ -165,8 +165,8 @@ that is the model, not svrngs.
 ![Sam's model answering Bo](runs/start/2026-10-13-story/data/shots/bo-chat-chromium.png)
 
 **9. A program on Bo's computer** — a chat app, an editor's assistant, a
-script — can ask Sam's model too. On Bo's home page, press **Play** beside
-**Sam’s llama-server**: the row says *"Connect to http://….localhost:…/."*
+script — can ask Sam's model too. On Bo's home page, press **Address** beside
+**Sam’s llama-server**, then **Play** in it: it says *"Connect to http://….localhost:…/."*
 and copies that address. Paste it where the program asks for an address
 (often called its *base URL*, or *OpenAI-compatible API*). The address
 stays the same when svrngs or the computer starts again, and Play stays on
@@ -202,8 +202,8 @@ do.
 - **A program says "Missing credentials. Please pass an `api_key`"**
   (Python's `openai`). Give it any text, such as `none`, as its key (step 9).
 - **A program gets a page saying *"Open svrngs from your computer"***.
-  Play is off for that lend: press **Play** beside it on your home page
-  (step 9).
+  Play is off for that lend: press **Address** beside it on your home
+  page, then **Play** (step 9).
 - **A program gets *"svrngs doesn't take its token from a program any
   more"***. It was given svrngs's token as its key. Give it any text
   instead, with Play on (step 9).

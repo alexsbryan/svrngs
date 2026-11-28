@@ -40,7 +40,10 @@ p { max-width: 72ch; }
 
 a { color: var(--link); }
 a:visited { color: var(--visited); }
-a:hover, button:hover { background: var(--lit); color: var(--on-colour); }
+/* Yellow means "do this", a form's own button, below, and one thing more:
+   the door's doorbell, a person whose computer is on, lit as a window is
+   when someone is home. So a hover is drawn in the page's ink, never lit. */
+a:hover, button:hover { background: var(--ink); color: var(--paper); }
 /* The focus, and the cell a person's popover sent the page to (`:target`). */
 :focus-visible, div.index > ul > li:has(:target) { outline: 3px solid var(--link); outline-offset: 2px; }
 
@@ -95,8 +98,9 @@ section[data-colour="11"] { --group: lightskyblue; }
 section[data-colour] > h2 { padding: 0.25rem 0.5rem; border: var(--rule); background: var(--group); color: var(--on-colour); }
 :is(h1, h2) small { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
 
-/* The door: each person a cell, lit while their computer answers, drawn off
-   when it did not, a phone's marked; the words say each, not the colour. */
+/* The door: each person a cell, a doorbell on a building's panel, lit while
+   their computer answers, drawn off when it did not, a phone's marked; the
+   words say each, not the colour. */
 ul.door, div.index > ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem; border: 0; }
 ul.door > li, div.index > ul > li { padding: 0.5rem; border: var(--hair); }
 ul.door > li { font-weight: 700; }
@@ -125,6 +129,8 @@ body:not(.screen) #home ul.door > li.off { color: inherit; }
    the gap between cells. */
 div.index > ul + ul { margin-top: 0; }
 div.index > ul > li { overflow-wrap: anywhere; }
+/* A cell's name is its one way in (lend-name.js), drawn heaviest. */
+div.index > ul > li > a[id^="at-"] { font-weight: 800; }
 div.index > ul > li > :is(span, form) button { margin: 0; }
 /* Forty things are a screen of cells, so a cell is as tight as the door's:
    a line of words and little around it, its Play no taller than the line. */
@@ -245,8 +251,6 @@ body.layout-b section[data-colour] { border-top: 0; padding-top: 0; }
 .publication svg.qr path { fill: black; }
 .group-place { margin: 1rem 0; padding: 0.75rem 0; border-top: var(--hair); }
 .group-place > summary { font-size: 1.1rem; }
-/* People, first under the group's banner, needs no rule of its own above it. */
-section > .group-place:first-of-type { margin-top: 0; border-top: 0; }
 /* "Add an app" opens straight to the shelf: its own heading, in other words, is the fold's. */
 .group-place > section > h3:first-child { display: none; }
 .grouped-notice { border-left: 0.3rem solid var(--link); padding-left: 0.75rem; }

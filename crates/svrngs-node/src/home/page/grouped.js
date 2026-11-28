@@ -132,22 +132,25 @@ export function ArrivalLinks({ s: state, g: group }) {
   return html`<p>${state.grouped && group && html`<a href=${address('groups', group.id)}>Continue to ${group.name ?? 'your group'}</a> `}<a href="/">All your groups</a></p>`;
 }
 
-// A group's page, what is before what is done: who is here, the door, a
-// few rows however many; then what they share, which is what a person
-// opens the page for, and its files. After those, what a person does to
-// the group now and then: who they have over, with who else is visiting,
-// and the invitation buttons, never folded with leaving. Last the folds.
+// A group's page, what is before what is done: what they share, which is
+// what a person opens the page for, then who is here, the door, always
+// drawn whole, a doorbell lit for each person who is on, however many,
+// then its files. After those, what a person does to the
+// group now and then: who they have over, with who else is visiting, and
+// the invitation buttons, never folded with leaving. Last the folds.
 // "Add an app" opens on what an app here is, a folder anyone can put in
 // the group's files, so the shelf's apps under it read as the examples
 // they are, never as the list of what a group may have.
 // An app's address and its WiFi line are in its own cell's popover
 // (wifi.js `Address`), being about that app, not about managing the group.
+// People's heading takes the focus when someone is removed (people.js).
 /** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
 export function GroupPlaces({ draw }) {
   return html`
-    <details class="group-place" open><summary>People</summary>${draw(['people', 'removals'])}</details>
     <h2>Shared apps</h2>
     ${draw(['index'])}
+    <h2 tabindex="-1">People</h2>
+    ${draw(['people', 'removals'])}
     <h2>Shared files</h2>
     ${draw(['folder'])}
     ${draw(['visits', 'links'])}

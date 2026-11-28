@@ -3,10 +3,9 @@
 // WiFi, or closed, for any device on it, a TV among them, said as /v1/room
 // says it (room.rs `Served::said`). ROOM is the page's one read of
 // /v1/room, asked as this file loads, beside HOME's read of the groups, so
-// a lend's cell has it to draw. It feeds two lists: each
-// lend's cell in the index (`Address`, `ul.wifi`), with its address
-// for a program, and "Open to this WiFi" under "What acts as you"
-// (`part`, for acting.js, `ul#room`). Each read is counted, so an older
+// a lend's cell has it to draw. It feeds two lists: each lend's cell in
+// the index (`Address`, `ul.wifi`), and "Open to this WiFi" under "What
+// acts as you" (`part`, for acting.js, `ul#room`). Each read is counted, so an older
 // answer is refused by name, and is asked again on each of the groups'
 // rounds, once a round however many cells ask. What is open that
 // cannot be read is said once, in `part`, never read as none; a press in a
@@ -15,9 +14,9 @@ import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { named } from '../question.js?v=__VERSION__';
 import { go, machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Keep } from '../ui/parts.js?v=__VERSION__';
-import { Copy } from '../ui/copy.js?v=__VERSION__';
 import { keyOf, same, turns } from './lend-key.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
+import { Turn } from './play.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Lent } from './group.js?v=__VERSION__' */
@@ -146,30 +145,9 @@ export const room = machine(
  */
 const on = (state, lend) => (state.at.room === 'unread' ? undefined : state.room?.find(same(lend)));
 
-// Copy beside a lend in its popover (`Line`, `foot`): its address for a
-// program on this computer, shown beside it too (ui/parts.js `Keep`), and
-// what the last press said (ui/copy.js `Copy`, whose answer takes the place
-// of the one before, as the address's must).
 /**
- * A copy of the lend's address `at`, for a program.
- * @typedef {{ at: string }} AddressCopyProps
- */
-
-/** @param {AddressCopyProps} props */
-function AddressCopy({ at }) {
-  const words = {
-    copy: 'Copy its address for a program',
-    copied: ` Copied: ${at}. Paste it where a program on this computer, such as a chat app, asks for an address.`,
-    unwritten: ` Copy it from here: ${at}`,
-  };
-  const beside = html`${' '}<${Keep} at=${at} />`;
-  return html`${' '}<${Copy} text=${at} words=${words} beside=${beside} />`;
-}
-
-/**
- * One lend's line: the lend, at its origin in its cell's popover, what is
- * said of it before its press, and whether it is there (`foot`), with its Copy.
- * @typedef {{ l: Which & { origin?: string }, words: string, foot?: boolean }} LineProps
+ * One lend's line: the lend, and what is said of it before its press.
+ * @typedef {{ l: Which, words: string }} LineProps
  */
 
 const CLOSED = 'Closed to this WiFi: nobody on it can open it through this computer now. ';
@@ -181,7 +159,7 @@ const CLOSED = 'Closed to this WiFi: nobody on it can open it through this compu
 // It stays beside ROOM, whose store it reads, as `rooms` draws it, and
 // web/tests/pages/rooms.test.mjs imports ROOM and `rooms` from this file.
 /** @param {LineProps} props */
-export function Line({ l: lend, words, foot }) {
+export function Line({ l: lend, words }) {
   const state = useStore(room);
   const open = on(state, lend);
   const said = open?.said ?? (state.closed.some(same(lend)) ? CLOSED : '');
@@ -191,7 +169,6 @@ export function Line({ l: lend, words, foot }) {
     l: open ?? { key: lend.key, name: lend.name },
     off: Boolean(open),
   };
-  const copy = foot && html`<${AddressCopy} at=${lend.origin} />`;
   const act = open ? 'Close it to this WiFi' : 'Open it to this WiFi';
   return html`
     <li>
@@ -207,30 +184,40 @@ export function Line({ l: lend, words, foot }) {
         />
         ${state.said[keyOf(lend)]}
       </span>
-      ${copy}
     </li>
   `;
 }
 
 // "Address" in a lend's cell of the index (lend-name.js): a button that
 // opens the browser's own popover, holding what is for other devices and
-// programs and is no part of deciding to open the lend: its line (`Line`),
-// with its WiFi button, and its address for a program with its Copy. What
-// opening it to this WiFi does is said in the popover, over the button it
-// is about, never out of sight of it. It was a fold at the group's foot,
-// three lines a lend. It is drawn once ROOM has answered, so no line says a
-// lend is closed before ROOM has said what is open, and it asks ROOM again
-// on each round of its group's reads, once a round however many cells ask.
-const OPEN_IT = 'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.';
+// programs and is no part of deciding to open the lend: first its name, so
+// a wrong press shows at once, then a line for each place a person wants
+// it, each named by where they are and none doing what another does. For
+// this browser, its address to bookmark, which opens it again by the home
+// page's session (origin.rs `homeward`). For a program on this computer,
+// another computer's lend no folder carries has Play: the address lets in
+// a browser's session or svrngs's own client and no other program while
+// Play is off (play.rs `shown`), so Play is the one way in for a chat app,
+// and it copies the address as it is turned on (play.js `copy`). A carried
+// app is a page, and this computer's own lend is at its own port here, so
+// neither has one. For a TV or phone on this WiFi, its line (`Line`),
+// under what opening it to this WiFi does, never out of sight of its
+// button. It is drawn once ROOM has answered, so no line says a lend is
+// closed before ROOM has said what is open, and it asks ROOM again on each
+// round of its group's reads, once a round however many cells ask.
+const OPEN_IT =
+  'For a TV or phone on this WiFi: open it to the WiFi, and anyone on it can open it as you while svrngs runs.';
+const PROGRAM =
+  'For a program on this computer, such as a chat app: press Play, then paste the address it copies.';
 
 /**
- * The lend, its popover's id, one of its own in the page, and the round of
- * its group's reads.
- * @typedef {{ l: Lent, id: string, round: number }} AddressProps
+ * The lend, its popover's id, one of its own in the page, the round of
+ * its group's reads, and this computer's key, by which a lend is another's.
+ * @typedef {{ l: Lent, id: string, round: number, me: string }} AddressProps
  */
 
 /** @param {AddressProps} props */
-export function Address({ l: lend, id, round }) {
+export function Address({ l: lend, id, round, me }) {
   useEffect(() => room.dispatch({ type: 'read', round }), [round]);
   const roomState = useStore(room);
   if (roomState.room === undefined && roomState.at.room !== 'unread') return null;
@@ -245,8 +232,11 @@ export function Address({ l: lend, id, round }) {
   return html`
     <button type="button" popovertarget=${id} aria-label=${name}>Address</button>
     <div popover="auto" id=${id} role="dialog" aria-label=${name} tabindex="-1" autofocus>
+      <p><strong>${named(lend)}</strong></p>
+      <p>For this browser: <${Keep} at=${lend.origin} /></p>
+      ${lend.key !== me && !lend.group && html`<p>${PROGRAM} <${Turn} l=${lend} round=${round} /></p>`}
       <p>${OPEN_IT}</p>
-      <ul class="wifi"><${Line} l=${lend} words=${`${named(lend)}:`} foot /></ul>
+      <ul class="wifi"><${Line} l=${lend} words=${`${named(lend)}:`} /></ul>
       <button type="button" popovertarget=${id} popovertargetaction="hide" aria-label=${`Close: ${name}`}>Close</button>
     </div>
   `;

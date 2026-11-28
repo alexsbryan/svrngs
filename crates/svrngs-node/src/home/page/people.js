@@ -8,7 +8,7 @@ import { html, useEffect, useMachine, useState } from '../ui/view.js?v=__VERSION
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Door } from '../ui/door.js?v=__VERSION__';
 import { LEAVE } from './leaving.js?v=__VERSION__';
-import { computers, joinedSaid, label, removal } from '../question.js?v=__VERSION__';
+import { computers, joinedSaid, label, personOf, removal } from '../question.js?v=__VERSION__';
 /** @import { Lends, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { PeopleRow, Removal } from '../question.js?v=__VERSION__' */
 
@@ -51,14 +51,13 @@ function Person({ p: person, name, drawn, words, g: group, s: state, me, home, g
   const [asking, send] = useMachine(() =>
     machine('LEAVE', LEAVE(home), { at: { leave: 'idle' }, said: [], to: 0, name: place }),
   );
-  const whose = (/** @type {string} */ key) =>
-    state.people?.people.find((row) => row.key === key)?.person_key;
+  const whose = (/** @type {string} */ key) => personOf(state.people?.people ?? [], key);
   const id = `person-${group.id}-${person.person_key}`;
-  // Removed: the focus goes to the fold the door is in, People, before
-  // their cell goes with the groups' next read, where it would fall to the
-  // top of the page.
+  // Removed: the focus goes to the door's heading, People, before their
+  // cell goes with the groups' next read, where it would fall to the top
+  // of the page.
   useEffect(() => {
-    const fold = document.querySelector(`#${id}`)?.closest('details')?.firstElementChild;
+    const fold = document.querySelector(`#${id}`)?.closest('ul.door')?.previousElementSibling;
     if (asking.on && asking.at.leave === 'idle') {
       gone(
         `${name} is no longer in ${place}. What they already have stays with them; nothing new reaches them.`,
@@ -103,7 +102,7 @@ export function People({ g: group, s: state, me, home }) {
   /** @type {NonNullable<import('../ui/door.js?v=__VERSION__').DoorProps['about']>} */
   const about = (person, name, drawn, words) =>
     html`<${Person} p=${person} name=${name ?? person.person} drawn=${drawn} words=${words} g=${group} s=${state} me=${me} home=${home} gone=${setGone} />`;
-  return html`<${Door} rows=${state.people.people} lends=${judged(state)} about=${about} /><p role="status">${gone}</p>`;
+  return html`<${Door} rows=${state.people.people} lends=${judged(state)} about=${about} me=${me} /><p role="status">${gone}</p>`;
 }
 
 // Who was removed from a group, or asked to be, under its door once its

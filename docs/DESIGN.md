@@ -442,7 +442,7 @@ seconds, whatever their own computer does (`door::udp::serve`).
   as you", "Open on this computer: <name> (<lender>’s), while Play is
   on.", whose Stop is the row's own.
 - **Play at an address.** Another computer's lend at an address, an app
-  on a port such as a model, has Play too, beside its Address; a carried
+  on a port such as a model, has Play too, in its Address popover; a carried
   app has none. Nothing more listens: while it is on, the lend's address
   on that computer, `http://<label>.localhost:<port>/`, which its row says
   and copies, also lets in a program's request with no key. It must not be
@@ -1061,34 +1061,41 @@ when this computer has held it, so two of one name are told apart, in a colour
 derived from its id, nothing to choose. Under it, what is in the group
 first, then who is in it (the operator, 2026-10-26: Money found first):
 - **the door**: each person once, a cell in a grid, in the order they
-  joined — lit, "on now", while their computer answers; drawn off, "did not
+  joined, like the doorbells of a large building, lit when someone is home:
+  lit, "on now", while their computer answers; drawn off, "did not
   answer", when it did not; "in from a phone" when their only keys are a
-  browser's. Presence is only "on now", never when last seen. On the home
-  page a cell is one line, the name with those words beside it, so 28
-  people are four rows above what they share (`look.css`
-  `body:not(.screen) #home ul.door`); the screen and the phone's page keep
-  the taller cell.
+  browser's. Yellow means "do this" everywhere else on the pages, a form's
+  own button; the doorbell is the one other place it stays (`look.css`).
+  Presence is only "on now", never when last seen. Two of one name are told
+  apart by which joined first, "Ana (1st)" and "Ana (2nd)", true however
+  close they joined, and a person's popover says the day (`ui/door.js`
+  `people`). On the home page a cell is one line, the name with those
+  words beside it, so 28 people are four rows (`look.css`
+  `body:not(.screen) #home ul.door`), and the person looking is "you"
+  there (`question.js` `called`); the screen and the phone's page keep the
+  taller cell.
 - **the index**: what is in the group, on any port, as grids of cells, the
   door's own look. What a group shares has no bound, so no word outside a
   cell grows with it: each grid is under the one sentence true of everything
-  in it, which names nothing — the group's own apps ("Opening one of these
-  lets it read and write only its own entries, as you in House."), what
-  people's computers lend that opens in a tab ("… lets it write its own
-  part of House’s record, as you."), and ports ("Play opens one of these on
-  this computer, for a program here to connect to."). A grid with nothing in
-  it is not drawn, and a thing alone in its grid is "it". Before that
-  sentence each caption says, in one of its own, where its things are and
-  so when they open, since both kinds sit under one heading: an app the
-  group carries "is in House’s folder on every computer in House, and opens
-  while any of them is on"; what a person lends "runs on the computer of
-  whoever lends it, and opens only while that computer is on". A cell is a
+  in it, which names only the group, in one short line read at a glance (a
+  newcomer reads 20 to 40 words a step): where its things are, so when they
+  open, since both kinds sit under one heading, then what opening one lets
+  it do, as you in that group — the group's own apps ("On every computer
+  in the group. Each opens as you in Garden, reading and writing only its
+  own entries."), what people's computers lend that opens in a tab ("On
+  its lender’s computer, while it’s on. Each opens as you in Garden, and
+  may write its own part of the record."), and ports ("Play opens one on
+  this computer, for a program here to connect to."), each said of one
+  thing and of many alike. A grid with nothing in it is not drawn. Beside one open the consent is said
+  whole (`question.js` `may`). A cell is a
   thing's name as its way in, a link that opens it in a tab, so it reads as
   the app's way in and never its files; a port by its name with its Play;
   its kind in its lender's word when it differs, never one of svrngs's own
   (`scripts/vocab_check.py` reads the pages' scripts too). The name says
-  whose ("Kim’s navidrome"), and cells sort by person, so one person's
-  things sit together. A cell says more only where it differs: a group's own
-  app its one line, and the app that also opens your friends' things its
+  whose ("Kim’s navidrome", and yours "your navidrome", by key), and cells
+  sort by person, so one person's things sit together. A cell has one way
+  in, its name, drawn heaviest. A cell says more only where it differs: a
+  group's own app its shelf's few words when it has them, and the app that also opens your friends' things its
   sentence on a row of its own, with "Open" on its button, since that press
   is the yes (`home/page/index.js`, `lend-name.js`; the law that draws 8
   things and 40 and holds the words outside the cells equal is
@@ -1097,10 +1104,17 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   is this computer's own, and "Full now." What is for other devices and programs is about one
   thing and no part of deciding to open it, so it is behind **Address** in
   that thing's cell, a button that opens the browser's own popover
-  (`popover`, `popovertarget`; no script of ours opens or closes it): there
-  it can be opened to this WiFi, or closed (the operator, 2026-10-26), under
-  the sentence saying what that does, and its address copied for a program
-  (`home/page/wifi.js` `Address`). Only detail about one thing goes in a
+  (`popover`, `popovertarget`; no script of ours opens or closes it). It
+  says first the thing's name, so a wrong press shows at once, then a line
+  for each place a person wants it, named by where they are, and only the
+  ones that differ for that kind of thing: "For this browser", its address
+  to bookmark; "For a program on this computer", its Play, only for
+  another computer's lend no folder carries, since its address lets no
+  other program in while Play is off ("Play at an address", above) and
+  Play copies the address as it is turned on; "For a TV or phone on this
+  WiFi", opened to this WiFi, or closed (the operator, 2026-10-26), under
+  the sentence saying it opens as you there (`home/page/wifi.js`
+  `Address`). Only detail about one thing goes in a
   popover; a consent sentence, or a state that needs the person, never does.
   The button is always there to be seen: nothing a person can press waits
   for a hover or a focus to be painted. The door's second use of a popover:
@@ -1175,9 +1189,10 @@ of 2026-11-06 (the operator). An old `/?ui=b` bookmark opens B
 
 B's workspace is what is, then what is done. Under the banner, first what
 needs the person: a new version to review (`home/page/grouped.js`
-`Notice`). Then **People**, open at first, the door and any removals: who
-is here, a few rows however many. Then what a person opens the page for:
-**Shared apps**, the app index, and **Shared files**: **Open shared files
+`Notice`). Then what a person opens the page for: **Shared apps**, the app
+index. Then **People**, the door and any removals, drawn whole at any
+size under its own heading, never folded or said as a count: a lit cell
+says who is on at a glance. Then **Shared files**: **Open shared files
 in Finder**, or "in your file manager" off a Mac, opens the group's folder
 in a window of its own, each of several folders named by its own name, and
 **Folder location**, closed at first, says where it is

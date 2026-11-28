@@ -319,7 +319,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
     },
   ]);
   assert.ok(at.text(row)[0].startsWith('You lent notes'), at.text(row)[0]);
-  assert.ok(at.text('#home .index').join().includes('ada’s notes'), at.text('#home .index').join());
+  assert.ok(at.text('#home .index').join().includes('your notes'), at.text('#home .index').join());
   assert.ok(
     at.text('#lent li')[0].startsWith('notes: lent to house, 0 using it now.'),
     at.text('#lent li').join('\n'),
