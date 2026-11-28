@@ -1180,10 +1180,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # no signal. The pass cut four wait loops to one and the log path said three
 # times to one (-4 net); the rest is behaviour a person reads or a check
 # holds. 28,805.
+# An update completes its own install (operator-approved raise, 2026-11-27,
+# after an economizing pass): V1.13.3's updater replaces only svrngs, so
+# V1.14.0 puts a missing Keeper beside itself at start, from the signed
+# release it runs, never over itself and never a newer one (update.rs
+# `Scope`, `complete`), and check.sh runs the upgrade gate. The pass merged
+# seven Refused variants that each said their String into one and a loop
+# into a fold (-7); the keep plan's test-only states and the CLI-only Share
+# fields are design changes left for their own work. 28,827.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 28806,
+    ".": 28828,
 
     "js": 8853,
 
