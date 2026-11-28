@@ -1,10 +1,17 @@
 {
   "prompt": "I can explain the",
+  "prompts": [
+    "Nobody warned me about the",
+    "We need to talk about the",
+    "Please do not feed the",
+    "Tonight I am bringing the",
+    "Never trust the"
+  ],
   "magnets": [
     { "id": "goose", "word": "goose" },
     { "id": "invoice", "word": "invoice" },
     { "id": "moon", "word": "moon" },
-    { "id": "group-chat", "word": "group chat" },
+    { "id": "cousin", "word": "cousin" },
     { "id": "landlord", "word": "landlord" },
     { "id": "lasagna", "word": "lasagna" },
     { "id": "raccoon", "word": "raccoon" },

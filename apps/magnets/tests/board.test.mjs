@@ -56,14 +56,132 @@ async function unchecked(app, sql) {
 const ids = (answer) => answer.rows.map((r) => r.id);
 
 export const LAWS = {
-  /** The sentence is the rows' magnets in their order; the tray the pack's others in its order; a row the pack doesn't name, neither. */
+  /**
+   * The sentence is the magnet rows' magnets in their order; the tray the
+   * pack's others in its order; a row the pack doesn't name, neither; the
+   * prompt the one shown, else the pack's; each kept sentence its own words.
+   */
   'the board is drawn from the rows'(app) {
     const pack = { prompt: 'p', magnets: ['a', 'b', 'c', 'd'].map((id) => ({ id, word: id })) };
-    const drawn = app.order(pack, [{ id: 'c' }, { id: 'gone' }, { id: 'a' }]);
-    return differ(
-      [drawn.sentence.map((m) => m.id), drawn.tray.map((m) => m.id), drawn.unknown],
-      [['c', 'a'], ['b', 'd'], ['gone']],
-      'sentence, tray and unknown',
+    const magnet = (id) => ({ kind: 'magnet', id, position: 1 });
+    const rows = [magnet('c'), magnet('gone'), magnet('a')];
+    const drawn = app.order(pack, rows);
+    const old = { kind: 'kept', id: 'k', prompt: 'q', words: 'd gone b' };
+    const later = app.order(pack, [...rows, old, { kind: 'showing', id: 'now', prompt: 'r' }]);
+    return (
+      differ(
+        [drawn.sentence.map((m) => m.id), drawn.tray.map((m) => m.id), drawn.unknown, drawn.prompt],
+        [['c', 'a'], ['b', 'd'], ['gone'], 'p'],
+        'sentence, tray, unknown and prompt',
+      ) ??
+      differ(
+        [later.prompt, later.kept.map((k) => [k.prompt, k.sentence.map((m) => m.id)])],
+        ['r', [['q', ['d', 'b']]]],
+        'the prompt shown, and the kept sentence',
+      )
+    );
+  },
+  /**
+   * A swap of two neighbors is two ops in one write, and each takes the
+   * other's position: no other word's moves. Two at one position swap too.
+   */
+  async 'a swap keeps every other position'(app) {
+    const db = app.database(app.schema);
+    const post = (body) => app.posted(db, JSON.stringify(body));
+    const board = async () => app.order(app.pack, (await post({ sql: app.BOARD })).rows).sentence;
+    const at = (sentence) => sentence.map((m) => [m.id, m.position]);
+    try {
+      await post({
+        write: [
+          ['goose', 1],
+          ['moon', 3],
+          ['tiny', 7],
+          ['again', 9],
+        ].map(([id, p]) => app.put(id, p)),
+      });
+      const [, moon, tiny] = await board();
+      const ops = app.swap(moon, tiny);
+      const changed = await post({ write: ops });
+      const swapped = at(await board());
+      await post({ write: [app.put('raccoon', 9)] });
+      const [, , , again, raccoon] = await board();
+      await post({ write: app.swap(again, raccoon) });
+      const tied = (await board()).map((m) => m.id);
+      return (
+        differ(
+          [ops.length, changed],
+          [2, { count: 2 }],
+          'the ops a swap writes, and what changed',
+        ) ??
+        differ(
+          swapped,
+          [
+            ['goose', 1],
+            ['tiny', 3],
+            ['moon', 7],
+            ['again', 9],
+          ],
+          'moon and tiny swapped',
+        ) ??
+        differ(tied.slice(3), ['raccoon', 'again'], 'two at one position swapped')
+      );
+    } finally {
+      db.stop();
+    }
+  },
+  /**
+   * Keeping a sentence empties the fridge under the next prompt, and puts it
+   * on the kept list, words in order; putting it back keeps the sentence
+   * then on the fridge first, so nothing anyone made is lost.
+   */
+  async 'a kept sentence comes back, and nothing is lost'(app) {
+    const db = app.database(app.schema);
+    const post = (body) => app.posted(db, JSON.stringify(body));
+    const board = async () => app.order(app.pack, (await post({ sql: app.BOARD })).rows);
+    const line = (b) => [b.prompt, b.sentence.map((m) => m.id)];
+    try {
+      await post({ write: ['haunted', 'lasagna', 'situation'].map((id, i) => app.put(id, i + 1)) });
+      await post({ write: app.keep(app.pack, await board(), 'first', 1) });
+      const fresh = await board();
+      await post({ write: [app.put('goose', 1)] });
+      const goose = await board();
+      await post({ write: app.restore(goose, goose.kept[0], 'second', 2) });
+      const back = await board();
+      return (
+        differ(
+          [line(fresh), fresh.kept.map(line)],
+          [[app.pack.prompts[0], []], [[app.pack.prompt, ['haunted', 'lasagna', 'situation']]]],
+          'kept, and a new one started',
+        ) ??
+        differ(
+          [line(back), back.kept.map(line)],
+          [
+            [app.pack.prompt, ['haunted', 'lasagna', 'situation']],
+            [[app.pack.prompts[0], ['goose']]],
+          ],
+          'put back, the one it replaced kept',
+        )
+      );
+    } finally {
+      db.stop();
+    }
+  },
+  /** New to a viewer is what the sentence they last saw lacked; what goes to the chat is the sentence and its link. */
+  'what is new, and what is sent'(app) {
+    const board = {
+      prompt: 'I can explain the',
+      sentence: [{ word: 'haunted' }, { word: 'lasagna' }],
+    };
+    return (
+      differ(app.fresh(['moon', 'goose'], ['goose', 'tiny', 'moon']), ['tiny'], 'new since') ??
+      differ(
+        [app.sent(board, 'https://g/#open=M'), app.sent(board, null)],
+        [
+          'I can explain the haunted lasagna. Change it: https://g/#open=M',
+          'I can explain the haunted lasagna.',
+        ],
+        'sent',
+      )
     );
   },
   /**
@@ -159,7 +277,7 @@ export const LAWS = {
       db.stop();
     }
   },
-  /** Every magnet has an ID of its own and a word, under one prompt. */
+  /** Every magnet has an ID of its own and a word; every prompt has words, each once. */
   'the pack names each magnet once'(app) {
     const seen = new Set();
     for (const m of app.pack.magnets) {
@@ -169,9 +287,10 @@ export const LAWS = {
       if (seen.has(m.id)) return `${m.id} is in the pack twice`;
       seen.add(m.id);
     }
-    return typeof app.pack.prompt === 'string' && app.pack.prompt.trim() && seen.size
-      ? null
-      : 'no prompt, or no magnets';
+    const prompts = [app.pack.prompt, ...(app.pack.prompts ?? [])];
+    if (prompts.some((p) => typeof p !== 'string' || !p.trim())) return 'a prompt with no words';
+    if (new Set(prompts).size < prompts.length) return 'a prompt in the pack twice';
+    return seen.size ? null : 'no magnets';
   },
   // cr-sqlite's own limits (superfly/cr-sqlite core/rs/core/src/tableinfo.rs),
   // read here from SQLite's pragmas until `svrngs check` loads cr-sqlite and
@@ -216,7 +335,7 @@ test('each law catches its plant', async () => {
   // Each plant, or plants, and the words its law must break with.
   const PLANTS = {
     'the board is drawn from the rows': {
-      why: /^sentence, tray and unknown: \[\["a","c"\]/,
+      why: /^sentence, tray, unknown and prompt: \[\["a","c"\]/,
       // The sentence in the pack's order, not the rows'.
       order: (pack, rows) => {
         const placed = new Set(rows.map((r) => r.id));
@@ -257,9 +376,49 @@ test('each law catches its plant', async () => {
         return { ...db, read };
       },
     },
-    'the pack names each magnet once': {
-      why: /^goose is in the pack twice$/,
-      pack: { ...PACK, magnets: [...PACK.magnets, { id: 'goose', word: 'goose' }] },
+    'the pack names each magnet once': [
+      {
+        why: /^goose is in the pack twice$/,
+        pack: { ...PACK, magnets: [...PACK.magnets, { id: 'goose', word: 'goose' }] },
+      },
+      {
+        why: /^a prompt in the pack twice$/,
+        pack: { ...PACK, prompts: [...PACK.prompts, PACK.prompt] },
+      },
+    ],
+    'a swap keeps every other position': [
+      {
+        why: /^the ops a swap writes, and what changed: \[4,\{"count":4\}\]/,
+        // A swap that numbers the whole sentence again, from 1.
+        swap: (a, b) => [
+          board.put(b.id, 2),
+          board.put(a.id, 3),
+          board.put('goose', 1),
+          board.put('again', 4),
+        ],
+      },
+      {
+        why: /^two at one position swapped: \["again","raccoon"\]/,
+        // A swap that only trades positions, which two at one can't.
+        swap: (a, b) => [board.put(a.id, b.position), board.put(b.id, a.position)],
+      },
+    ],
+    'a kept sentence comes back, and nothing is lost': [
+      {
+        why: /^put back, the one it replaced kept: .*\],\[\]\], not /,
+        // Put back over the sentence on the fridge, which goes unkept.
+        restore: (b, old, id, at) => board.restore({ ...b, sentence: [] }, old, id, at),
+      },
+      {
+        why: /^kept, and a new one started: \[\["I can explain the",\[\]\]/,
+        // A new one started under the same prompt: a pack with one.
+        keep: (pack, b, id, at) => board.keep({ ...pack, prompts: [] }, b, id, at),
+      },
+    ],
+    'what is new, and what is sent': {
+      why: /^new since: \["goose","tiny","moon"\]/,
+      // Every word new, whatever was seen.
+      fresh: (before, now) => now,
     },
   };
   for (const [name, plants] of Object.entries(PLANTS))

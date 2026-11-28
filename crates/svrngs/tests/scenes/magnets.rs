@@ -59,14 +59,19 @@ pub(crate) fn carry(folder: &Path) {
     }
 }
 
-/// The words of the sentence the page `seen` said, after its prompt: none
-/// where it shows its blank, `____`.
+/// The words of the sentence the page `seen` said, after its prompt and
+/// before its hint: none where it shows its blank, `____`, nor the "new"
+/// a screen reader hears before a word another person just placed
+/// (index.js `mark`), which no magnet in pack.json is.
 fn sentence(seen: &Value) -> Vec<String> {
     let said = seen["said"].as_str().unwrap_or_default();
     let after = said.split_once("I can explain the").map(|(_, s)| s);
-    let words = after.and_then(|s| s.split("Your group sees this sentence").next());
+    let words = after.and_then(|s| s.split("Anyone in your group can change it").next());
     let words = words.unwrap_or_default().split_whitespace();
-    words.filter(|w| *w != "____").map(str::to_string).collect()
+    words
+        .filter(|w| !["____", "new"].contains(w))
+        .map(str::to_string)
+        .collect()
 }
 
 /// `who`'s svrngs's port and token, from its data dir, as a program there

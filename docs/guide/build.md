@@ -242,6 +242,24 @@ your app is left off the list until it's fixed.
 - **Check what the record will accept before you send it**, as Money and
   Events do: each entry stays in the group's record for good, and a
   correction counts only from the person who wrote the entry.
+- **Your app's content never names one of its own controls.** A word on a
+  magnet that reads "group chat", or a hint that ends "go ahead", looks like
+  something to press, and people press it.
+
+Magnets does four small things any app can copy:
+
+- **Send it to your group.** The thing itself and `link` from `GET
+  svrngs/acts`, through `navigator.share` on a phone or copied on a
+  computer, then "Copied. Paste it in your group's chat." (`send` in
+  `apps/magnets/index.js`).
+- **Changed since you last looked.** Keep what this person last saw in
+  `localStorage`, inside `try`, as a convenience only, and outline what's
+  new since, with a visually hidden "new" for screen readers and no motion
+  under `prefers-reduced-motion` (`answered` and `mark`).
+- **A warm outage.** When no computer answers, keep the last answer on
+  screen, read-only, in svrngs's goodnight colors, never a blank (`draw`).
+- **Nothing lost.** Starting over keeps the old one where anyone can put it
+  back ([keep, don't clear](database-patterns.md#keep-dont-clear)).
 
 ## The reference
 

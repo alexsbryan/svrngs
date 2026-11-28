@@ -58,6 +58,9 @@
 //   unreachable  every request answered 503, and every open stream cut
 //   refusing     {status, refused, words}: every POST answered with it
 //
+// `GET svrngs/acts` gives only `link`, LINK, and no ops: the one field
+// Magnets reads.
+//
 // Alone, `node apps/magnets/tests/standin.mjs [port] [address]` prints where
 // it serves: on 127.0.0.1 unless given an address of this computer's, such
 // as its WiFi's, for a phone on the same WiFi to play (demo/magnets.md,
@@ -75,6 +78,8 @@ const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 export const SCHEMA = join(APP, 'schema.sql');
 /** What the stand-in says unreachable with, as a route would. */
 export const AWAY = 'None of your group’s computers is on.';
+/** The link the stand-in's `svrngs/acts` gives, as the real one's `<page>#open=<label>`. */
+export const LINK = 'https://group.example/#open=Magnets';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -331,6 +336,9 @@ export async function serve({ port = 0, host = '127.0.0.1' } = {}) {
     const url = new URL(req.url, 'http://app');
     const json = (status, body) =>
       res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(body));
+    // The link a member opens the app by, as the real route gives it, for
+    // the page to send with its sentence.
+    if (url.pathname === '/svrngs/acts') return json(200, { link: LINK, ops: [] });
     if (url.pathname === '/svrngs/sql') {
       if (switches.unreachable) return json(503, { unreachable: true, words: AWAY });
       try {

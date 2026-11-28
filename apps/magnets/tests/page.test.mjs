@@ -18,8 +18,8 @@ import { test } from 'node:test';
 
 import { launch } from '../../../web/tests/page.mjs';
 import * as route from '../../../web/tests/route.mjs';
-import { refused, SAID } from '../board.js';
-import { serve as standinAt } from './standin.mjs';
+import { CHANGED, COPIED, NIGHT, refused, SAID } from '../board.js';
+import { LINK, serve as standinAt } from './standin.mjs';
 
 const WAIT = { timeout: 15_000 };
 // The real route's origin is opened by svrngs first, as a person's browser is.
@@ -54,8 +54,28 @@ async function open(context, at) {
     shown: () => page.locator('#board').waitFor(WAIT),
     word: (list, name) => page.locator(`#${list}`).getByRole('button', { name, exact: true }),
     focus: () => page.evaluate(() => document.activeElement?.textContent),
+    /** A word's move from its popover: the word in the sentence pressed, then the move named with it. */
+    moves: async (word, name, how = 'click') => {
+      await page.locator('#placed').getByRole('button', { name: word, exact: true })[how]();
+      await page.getByRole('button', { name, exact: true })[how]();
+    },
+    /** The words of the sentence outlined as new, each said "new" before it. */
+    fresh: () =>
+      page.$$eval('#placed .fresh', (bs) =>
+        bs.map((b) => `${b.previousElementSibling?.textContent} ${b.textContent}`),
+      ),
   };
 }
+
+/** What the page hands the clipboard and the share sheet, kept on `window`, so a test reads what it sent and no real pasteboard is touched. */
+const HANDED = () => {
+  const keep = (as) => async (given) => {
+    window.handed = { as, given };
+  };
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText: keep('copied') } });
+  if ('share' in navigator || matchMedia('(pointer: coarse)').matches)
+    navigator.share = keep('shared');
+};
 
 /** Every debug line `p` must have traced: each branch a move took. */
 function traced(p, what) {
@@ -66,9 +86,10 @@ function traced(p, what) {
     );
 }
 
-test('a word goes in and out by mouse, then by keyboard (chromium)', async () => {
+test('a word goes in, moves, is sent and kept, by mouse, then by keyboard (chromium)', async () => {
   const standin = await serve();
   const { context, close } = await launch('chromium', OPEN);
+  await context.addInitScript(HANDED);
   try {
     const p = await open(context, standin.at);
     await p.shown();
@@ -81,10 +102,60 @@ test('a word goes in and out by mouse, then by keyboard (chromium)', async () =>
     await p.word('tray', 'goose').click();
     await p.reads(['goose']);
     assert.ok(!(await p.tray()).includes('goose'), 'out of the tray');
+    const keeping = p.page.getByRole('button', { name: 'Keep it and start a new one' });
+    assert.equal(await keeping.count(), 0, 'no keeping a sentence of one word');
     assert.deepEqual(await p.word('tray', 'invoice').boundingBox(), before, 'invoice stays put');
-    await p.word('placed', 'goose').click();
+    // A word in the sentence opens its moves; Take out puts it back in the pile.
+    await p.moves('goose', 'Take “goose” out');
     await p.reads([]);
     assert.equal((await p.tray())[0], 'goose', 'back at its place in the tray');
+
+    // Earlier and Later swap a word with its neighbor; each is named with its word.
+    for (const w of ['goose', 'invoice', 'moon']) await p.word('tray', w).click();
+    await p.reads(['goose', 'invoice', 'moon']);
+    await p.moves('moon', 'Move “moon” earlier');
+    await p.reads(['goose', 'moon', 'invoice']);
+    await p.moves('goose', 'Move “goose” later');
+    await p.reads(['moon', 'goose', 'invoice']);
+    await p.word('placed', 'moon').click();
+    assert.equal(
+      await p.page.getByRole('button', { name: 'Move “moon” earlier' }).count(),
+      0,
+      'the first word has no Earlier',
+    );
+    await p.page.keyboard.press('Escape');
+
+    // Send it copies the sentence and its link, and says where to paste it.
+    await p.page.getByRole('button', { name: 'Send it to your group' }).click();
+    await p.page.waitForFunction(
+      (w) => document.querySelector('#sent').textContent === w,
+      COPIED,
+      WAIT,
+    );
+    const { as, given } = await p.page.evaluate(() => window.handed);
+    assert.equal(as, 'copied');
+    assert.match(given, /^I can explain the moon goose invoice\.( Change it: \S+)?$/);
+    if (!route.real) assert.ok(given.endsWith(LINK), given);
+
+    // Keep it and start a new one: the fridge empties under the next prompt,
+    // the sentence goes on the list, and Put it back returns it.
+    const prompt = () => p.page.textContent('#prompt');
+    await keeping.click();
+    await p.reads([]);
+    assert.equal(await prompt(), 'Nobody warned me about the');
+    const back = p.page.getByRole('button', {
+      name: 'Put it back I can explain the moon goose invoice',
+    });
+    await p.word('tray', 'tiny').click();
+    await p.reads(['tiny']);
+    await back.click();
+    await p.reads(['moon', 'goose', 'invoice']);
+    assert.equal(await prompt(), 'I can explain the');
+    await p.page
+      .getByRole('button', { name: 'Put it back Nobody warned me about the tiny' })
+      .waitFor(WAIT);
+    for (const w of ['moon', 'goose', 'invoice']) await p.moves(w, `Take “${w}” out`);
+    await p.reads([]);
 
     // The keyboard alone, from the page opened again: Tab reaches the first
     // word, Enter puts it on, and focus stays in the tray on the word that
@@ -98,21 +169,33 @@ test('a word goes in and out by mouse, then by keyboard (chromium)', async () =>
     assert.equal(await p.focus(), 'invoice');
     const ring = await p.page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle);
     assert.notEqual(ring, 'none', 'focus is drawn');
-    // Shift+Tab back to it in the sentence, and Space takes it out; focus
-    // goes with it, as the sentence has no word left.
+    // Shift+Tab back past Send it to the word in the sentence, and Space
+    // opens its moves, focus on Take out, which Enter presses; focus goes
+    // with the word, as the sentence has no word left.
+    await p.page.keyboard.press('Shift+Tab');
+    assert.equal(await p.focus(), 'Send it to your group');
     await p.page.keyboard.press('Shift+Tab');
     assert.equal(await p.focus(), 'goose');
     await p.page.keyboard.press('Space');
+    assert.equal(await p.focus(), 'Take “goose” out');
+    await p.page.keyboard.press('Enter');
     await p.reads([]);
     assert.equal(await p.focus(), 'goose');
 
-    const [{ rows }] = await standin.db.run([{ sql: 'SELECT id, position FROM magnets' }]);
-    assert.deepEqual(rows, [{ id: 'goose', position: null }], 'one row, back in the tray');
+    const [{ rows }] = await standin.db.run([
+      { sql: 'SELECT id, position FROM magnets WHERE position IS NOT NULL' },
+    ]);
+    assert.deepEqual(rows, [], 'every word back in the tray');
     traced(p, [
       'the word pack read',
       'the board answered',
       'a magnet goes on the sentence',
       'a magnet goes back to the tray',
+      'a magnet moves earlier',
+      'a magnet moves later',
+      'the sentence is copied',
+      'the sentence is kept, and a new one starts',
+      'a kept sentence goes back on the fridge',
       'the move was made',
     ]);
     assert.deepEqual(p.errors, []);
@@ -122,15 +205,22 @@ test('a word goes in and out by mouse, then by keyboard (chromium)', async () =>
   }
 });
 
-test('a word goes in and out by touch (webkit as an iPhone)', async () => {
+test('a word goes in, is sent and comes out by touch (webkit as an iPhone)', async () => {
   const standin = await serve();
   const { context, close } = await launch('webkit', OPEN);
+  await context.addInitScript(HANDED);
   try {
     const p = await open(context, standin.at);
     await p.shown();
     await p.word('tray', 'goose').tap();
     await p.reads(['goose']);
-    await p.word('placed', 'goose').tap();
+    // On a phone, Send it opens the share sheet with the sentence and its link.
+    await p.page.getByRole('button', { name: 'Send it to your group' }).tap();
+    await p.page.waitForFunction(() => window.handed, null, WAIT);
+    const { as, given } = await p.page.evaluate(() => window.handed);
+    assert.equal(as, 'shared');
+    assert.match(given.text, /^I can explain the goose\.( Change it: \S+)?$/);
+    await p.moves('goose', 'Take “goose” out', 'tap');
     await p.reads([]);
     assert.equal((await p.tray())[0], 'goose');
     assert.deepEqual(p.errors, []);
@@ -140,7 +230,7 @@ test('a word goes in and out by touch (webkit as an iPhone)', async () => {
   }
 });
 
-test('a computer and a phone on one board each see the other’s moves', async () => {
+test('a computer and a phone on one board each see the other’s moves, new ones marked', async () => {
   const standin = await serve();
   const [computer, phone] = [await launch('chromium', OPEN), await launch('webkit', OPEN)];
   try {
@@ -151,9 +241,29 @@ test('a computer and a phone on one board each see the other’s moves', async (
     await b.reads(['goose']);
     await b.word('tray', 'invoice').tap();
     await a.reads(['goose', 'invoice']);
-    await b.word('placed', 'goose').tap();
+    await b.reads(['goose', 'invoice']);
+    // A word that arrives while someone watches is outlined, said "new";
+    // never their own.
+    assert.deepEqual(await a.fresh(), ['new invoice'], 'the phone’s word, new to the computer');
+    assert.deepEqual(await b.fresh(), [], 'nothing new to the one who moved it');
+    await b.moves('goose', 'Take “goose” out', 'tap');
     await a.reads(['invoice']);
     await b.reads(['invoice']);
+
+    // The computer comes back after the phone moved: what changed since it
+    // last looked is said, and outlined.
+    await a.page.goto('about:blank');
+    await b.word('tray', 'moon').tap();
+    await b.reads(['invoice', 'moon']);
+    await a.page.goto(standin.at);
+    await a.says(CHANGED);
+    assert.equal(
+      await a.page.getAttribute('#said', 'data-state'),
+      'changed',
+      'said, never as a fault',
+    );
+    await a.reads(['invoice', 'moon']);
+    assert.deepEqual(await a.fresh(), ['new moon'], 'only what came while it was away');
     assert.deepEqual([...a.errors, ...b.errors], []);
   } finally {
     await Promise.all([computer.close(), phone.close()]);
@@ -165,7 +275,7 @@ const ON_STANDIN = {
   skip: route.real ? 'its switches are the stand-in’s: the real route has none' : false,
 };
 test(
-  'still syncing, unreachable and a refused move are said, and no fresh fridge drawn (chromium)',
+  'still syncing, unreachable and a refused move are said, no fresh fridge drawn, and the last sentence kept through goodnight (chromium)',
   ON_STANDIN,
   async () => {
     const standin = await serve();
@@ -192,18 +302,27 @@ test(
       await p.says('');
 
       // Unreachable: the open stream cut, then the board asked again and
-      // answered 503, and only then the switch lifted.
+      // answered 503, and only then the switch lifted. Meanwhile the last
+      // sentence stays, inert, in the goodnight look.
       await standin.set({ unreachable: true });
-      await p.says(SAID.unreachable);
-      assert.equal(await p.page.getByRole('button').count(), 0, 'no word to tap while unreachable');
+      await p.says(NIGHT);
+      assert.ok(await p.word('placed', 'goose').isVisible(), 'the last sentence stays on screen');
+      const inert = p.page.locator('button:enabled:visible');
+      assert.equal(await inert.count(), 0, 'no word to tap while unreachable');
+      assert.equal(
+        await p.page.evaluate(() => getComputedStyle(document.body).backgroundColor),
+        'rgb(25, 25, 112)',
+        'midnightblue, as svrngs says goodnight',
+      );
       for (let waited = 0; !p.traced.some((l) => l.includes('status: 503')); waited += 100) {
         assert.ok(waited < WAIT.timeout, `no 503 asked: ${p.traced.join(' | ')}`);
         await new Promise((done) => setTimeout(done, 100));
       }
-      await p.says(SAID.unreachable);
+      await p.says(NIGHT);
       await standin.set({ unreachable: false });
-      await p.shown();
+      await p.says('');
       await p.reads(['goose']);
+      assert.equal(await p.page.locator('body.night').count(), 0, 'the morning look again');
       traced(p, [
         'the board is still syncing',
         'svrngs/sql refused',

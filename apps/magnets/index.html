@@ -6,6 +6,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Magnets</title>
+<meta name="description" content="A fridge of word magnets your group shares. Add a word to the sentence.">
 <link rel="stylesheet" href="style.css">
 <script type="module" src="index.js"></script>
 </head>
@@ -16,13 +17,27 @@
 <div id="board" hidden>
 <section aria-label="Your group’s sentence">
 <p id="sentence" aria-live="polite" aria-atomic="true"><span id="prompt"></span><span id="placed"></span><span id="blank" aria-hidden="true">____</span></p>
-<p class="hint">Your group sees this sentence and can change it: go ahead.</p>
-<p id="out" class="hint unseen">Tap a word in the sentence to take it out.</p>
+<p class="hint">Anyone in your group can change it.</p>
+<div id="play">
+<p id="how" class="hint unseen">Tap a word in the sentence to move it or take it out.</p>
+<p id="acts"><button id="send" type="button" class="unseen">Send it to your group</button> <button id="keep" type="button" class="unseen">Keep it and start a new one</button></p>
+<p id="sent" role="status"></p>
+</div>
 </section>
-<section aria-labelledby="add">
+<section id="pile" aria-labelledby="add">
 <h2 id="add">Tap a word to add it</h2>
 <ul id="tray" aria-labelledby="add"></ul>
 </section>
+<section id="before" aria-labelledby="before-heading" hidden>
+<h2 id="before-heading">On the fridge before</h2>
+<ul id="kept"></ul>
+</section>
+</div>
+<!-- A word's moves, opened by the word in the sentence (index.js `choose`). -->
+<div id="moves" popover>
+<button id="out" type="button" autofocus></button>
+<button id="earlier" type="button">Earlier</button>
+<button id="later" type="button">Later</button>
 </div>
 </main>
 </body>

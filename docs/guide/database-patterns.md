@@ -41,6 +41,22 @@ To order a list, the page computes a text key between the two neighbors a
 row goes between, then orders by that key and then by id. Appending is the
 largest key plus one, as Magnets does in `board.js`.
 
+## Move by swapping neighbors
+
+To move a row one place earlier or later, swap its position with its
+neighbor's: two ops in one write, so no other row's position changes and a
+move made apart elsewhere in the list still lands. Two rows that share a
+position, left by two moves made apart, can't trade it, so give the one
+going first that position and the other one past it (`swap` in
+`apps/magnets/board.js`).
+
+## Keep, don't clear
+
+To start over, write what's there into a `kept` table first, in the same
+write that clears it, and let anyone put a kept one back, keeping what it
+replaces the same way. Nobody needs to ask before starting over when
+nothing is lost (`keep` and `restore` in `apps/magnets/board.js`).
+
 ## Values that change together go in one column
 
 Columns merge one at a time. If a card's move sets `col` and `pos`, two

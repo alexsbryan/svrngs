@@ -23,3 +23,24 @@ button:focus-visible { outline: 4px solid blue; outline-offset: 2px; }
 .hint { color: dimgray; font-size: 0.95rem; margin: 0.5rem 0 0; }
 /* Said only once there's a word to take out, its room kept, so nothing moves when it is. */
 .unseen { visibility: hidden; }
+/* Said to a screen reader alone: "new" before a word new to this viewer. */
+.heard { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* A word new to this viewer, outlined; it drops in only where motion is welcome. */
+#placed .fresh { box-shadow: 0 0 0 4px gold; }
+@media (prefers-reduced-motion: no-preference) { #placed .fresh { animation: arrive 0.5s ease-out; } }
+@keyframes arrive { from { transform: translateY(-0.5rem); } }
+#acts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0 0; }
+#sent { margin: 0.5rem 0 0; overflow-wrap: anywhere; }
+#sent:empty { margin: 0; }
+#kept { margin: 0; padding: 0 0 0 1.2rem; }
+#kept li { margin: 0 0 0.5rem; }
+/* A word's moves, in the middle of the screen, Take out first. */
+#moves { border: 3px solid black; padding: 1rem; color: black; background: white; }
+#moves:popover-open { display: flex; flex-direction: column; gap: 0.5rem; }
+#moves::backdrop { background: rgb(0 0 0 / 0.3); }
+/* No computer answering: svrngs's goodnight look (home/away.html), the last sentence inert. */
+body.night { color: lavender; background: midnightblue; }
+.night #said[data-state] { color: gold; }
+.night #sentence { color: gold; background: midnightblue; border-color: lavender; }
+.night button:disabled { color: inherit; background: transparent; border-color: lavender; cursor: default; }
+.night .hint { color: lavender; }
