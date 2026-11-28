@@ -666,6 +666,39 @@ test('three changes to a lend are each read again in place', async () => {
   assert.deepEqual([at.went, at.unanswered], [[], []]);
 });
 
+// A lend's row says whether it is for programs, a tick its lender changes
+// (home.rs `change`, `for-programs`): ticked, it posts yes, "What you lend"
+// is read again and the box stays ticked; unticked, it posts no. A port's
+// own row has none, being Play's already. Planted, watched failing: the
+// tick posting what it was, not what it is now.
+test('a lend’s row ticks whether it is for programs, read again in place', async () => {
+  const posted = [];
+  const answers = changing(
+    { lent: [lend('coder', { kind: 'llama-server' }), lend('game', { raw: 'udp' })] },
+    {
+      'GET /lent': (held) => ({ lent: held.lent, signing: [], readers: {} }),
+      'POST /lent': (held, { lend: name, to }) => {
+        posted.push(to);
+        const on = to['for-programs'];
+        held.lent = held.lent.map((one) =>
+          one.name === name ? { ...one, for_programs: on } : one,
+        );
+        return NONE;
+      },
+    },
+  );
+  const at = await home({ ...ada(), ...answers });
+  const BOX = '#lent li label input';
+  const boxes = () => at.all(BOX).filter((box) => words(box.parentNode).includes('For programs'));
+  const nth = () => at.all(BOX).indexOf(boxes()[0]);
+  assert.equal(boxes().length, 1, 'the port’s row has none');
+  await at.tick(BOX, nth());
+  assert.equal(boxes()[0].checked, true, 'ticked, read again');
+  await at.tick(BOX, nth());
+  assert.deepEqual(posted, [{ 'for-programs': true }, { 'for-programs': false }]);
+  assert.equal(traced(at, 'HOME: again: '), 2, at.lines().join('\n'));
+});
+
 // pages::index::the_secret_stays_shown_when_the_page_is_read_again: signing
 // people in with svrngs turned on for shelf (home.rs `sign_in`, its fill
 // :586-593), the secret is shown in the row; the page hidden and shown,
@@ -721,6 +754,7 @@ const SHELVED = [
 ];
 const money = lend('house Money', {
   kind: 'Money',
+  about: 'Who owes whom, and for what.',
   group: 'house',
   limit: null,
   origin: 'http://money0lbl.localhost:4000/',
@@ -750,7 +784,7 @@ test('a bring is in the home’s index, read again, with no reload', async () =>
   await at.tick('#home label input');
   await at.press('#home button', 'Bring the ticked ones');
   assert.ok(
-    at.text('#home .index li').some((tr) => tr.includes('Money Who owes')),
+    at.text('#home .index li').some((tr) => tr.includes('Money “Who owes')),
     at.text('#home .index li').join('\n'),
   );
   assert.ok(first(at, 'SHELF: brought (') < first(at, 'HOME: again: '), at.lines().join('\n'));

@@ -132,7 +132,7 @@ export function Acting({ s: homeState, home }) {
   /** @param {Group} group */
   const readsIn = (group) => {
     const shared = once(lends(group).lent).filter((lend) => lend.group);
-    const carried = shared.map((lend) => html`<p>${carrying(lend, lends(group).shelf)}</p>`);
+    const carried = shared.map((lend) => html`<p>${carrying(lend)}</p>`);
     const changes = Changes({
       g: group,
       changed: changedIn(group.id, lends(group), state.acted),

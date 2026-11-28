@@ -747,6 +747,8 @@ pub(crate) async fn offered(door: &Door, lender: bool) -> Result<Vec<Offered>, R
             groups,
             raw,
             sends: lend.terms.sends,
+            since: lend.terms.since,
+            for_programs: lend.terms.for_programs,
             answering,
             held: held.filter(|_| lender),
             answers,

@@ -128,3 +128,44 @@ fn run_is_told_every_synced_directory_or_refuses() {
         "{refused}"
     );
 }
+
+/// **An app says its own name and one line, as plain text, in bounds** (a
+/// group's page): its `<title>` and its `<meta name="description">`, in any
+/// case, quoted either way or not, after a `<meta>` of another name, the
+/// entities a page writes in words decoded and its spaces made one; none
+/// past 32 and 90 characters, holding a `<` or a direction override, or
+/// where the page says none. The shelf says each of its apps by the same
+/// reading of the page it brings. Planted, each watched failing: the first
+/// `<meta>` read as the line; no bound on its length.
+#[test]
+fn an_app_says_its_own_name_and_line_as_plain_text_in_bounds() {
+    use super::carried::{own, shelf};
+    let page = "<!doctype html><TITLE>Fridge  &amp; words</TITLE>\n<meta charset=utf-8>\n\
+        <META content='A fridge of &quot;word&quot; magnets.' NAME=Description>";
+    let said = (
+        Some("Fridge & words".into()),
+        Some("A fridge of \"word\" magnets.".into()),
+    );
+    assert_eq!(own(page), said);
+    let line = |n: usize| format!("<meta name=description content=\"{}\">", "a".repeat(n));
+    assert_eq!(own(&line(90)).1.map(|l| l.len()), Some(90));
+    assert_eq!(own(&line(91)).1, None, "past 90 characters");
+    assert_eq!(own(&format!("<title>{}</title>", "b".repeat(33))).0, None);
+    let markup = "<meta name=\"description\" content=\"&lt;b&gt;bold\">";
+    assert_eq!(own(&markup.replace("&lt;", "<")).1, None, "markup");
+    assert_eq!(
+        own("<title>Ana\u{202e}sdrawkcab</title>").0,
+        None,
+        "an override"
+    );
+    assert_eq!(
+        own("<title> </title><meta name=viewport content=width>"),
+        (None, None)
+    );
+    let money = shelf().as_array().unwrap()[0].clone();
+    let words = "Who owes whom in your group, and for what.";
+    assert_eq!(
+        money,
+        serde_json::json!({ "name": "Money", "words": words })
+    );
+}

@@ -483,7 +483,7 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
         let kinds = (at.door.folders).words(&lend, SENDS).await;
         sending.insert(lend.label(&at.door.key), kinds.unwrap_or_default());
     }
-    let lent: Vec<serde_json::Value> = (lent.iter())
+    let mut lent: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
             let origin = host.origin(&l.key, &l.offered, l.version)?;
             let mut shown = serde_json::to_value(l).ok()?;
@@ -498,6 +498,9 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
             Some(shown)
         })
         .collect();
+    (at.door.folders)
+        .said(&mut lent, &groups, &at.host.actor)
+        .await;
     tracing::debug!(target: "surface", namespace, lent = lent.len(), ?unlisted,
         "surface: lends — answered what the group's people lend, this computer's own among them, each at its origin");
     let mut body = serde_json::json!(unlisted);

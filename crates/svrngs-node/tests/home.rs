@@ -681,6 +681,23 @@ async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
         !listed.to_string().contains("k-1"),
         "what is kept is never answered: {listed:#}"
     );
+
+    // Whether it is for programs, its lender's choice from the same row
+    // (a group's page leads its cell with Play): kept, and listed, until
+    // turned off. Planted, watched failing: the change written to nothing.
+    for on in [true, false] {
+        let to = format!(r#"{{"lend":"photos","to":{{"for-programs":{on}}}}}"#);
+        let said = ask(browser, "POST", &home, "/lent", &own, &to).await;
+        assert_eq!(said.status, 204, "{}", said.body);
+        let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+        let photos = listed["lent"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|l| l["name"] == "photos");
+        let shown = photos.map(|l| l["for_programs"] == true);
+        assert_eq!(shown, Some(on), "{listed:#}");
+    }
 }
 
 /// **A header the door adds to each request is given on the home page**

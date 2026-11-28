@@ -1629,6 +1629,56 @@ test('every group left is listed under Groups you left, by whose it is', async (
     );
 });
 
+// A lend its lender says is for programs, a model's, is drawn as a port
+// is: named, with the Play that copies its address, under the caption that
+// says what Play does, never a link to a tab, and its Address after it,
+// which says when it was lent and offers no second Play. An app the group
+// carries is named in its own words, with its own line in quotes, and who
+// brought it, "you" to its bringer. Planted, each watched failing: index.js
+// and lend-name.js leading by `raw` alone (the model's name a link to its
+// chat page); lend-name.js saying no `brought`.
+test('a lend for programs leads with Play, and a carried app says who brought it', async () => {
+  const at = 1_791_100_000;
+  const coder = lend('coder', {
+    key: CY,
+    person: 'cy',
+    kind: 'llama-server',
+    for_programs: true,
+    since: at,
+  });
+  const fridge = lend('fridge', {
+    kind: 'fridge',
+    group: 'house',
+    limit: null,
+    title: 'Word fridge',
+    about: 'Word magnets your group shares.',
+    brought: { by_key: ADA, at },
+  });
+  const people = [row('ada', ADA, 'started'), row('cy', CY)];
+  const lent = lends({ lent: [coder, fridge] });
+  const page = await home(ada({ people, 'GET /v1/lends?namespace=house': lent }));
+  const all = cells(page);
+  const model = all.find((cell) => cell.startsWith('cy’s coder (llama-server)'));
+  assert.equal(model, 'cy’s coder (llama-server) Play Address', all.join('\n'));
+  assert.ok(
+    page.text('#home .index > p').includes(PLAYS),
+    page.text('#home .index > p').join('\n'),
+  );
+  const ways = page.all('#home .index a').filter((a) => a.attributes.id?.startsWith('at-'));
+  assert.deepEqual(ways.map(words), ['Word fridge'], 'its name opens no tab');
+  const pop = page
+    .all('#home .index > ul > li > div')
+    .map(words)
+    .find((p) => p.startsWith('cy’s coder'));
+  assert.ok(pop?.startsWith(`cy’s coder (llama-server) Lent on ${q.day(at)}.`), pop);
+  assert.ok(!pop?.includes('press Play'), pop);
+  const brought = `Word fridge “Word magnets your group shares.” Brought by you on ${q.day(at)}.`;
+  assert.ok(
+    all.some((cell) => cell.startsWith(brought)),
+    all.join('\n'),
+  );
+});
+
 // pages::rooms::play_in_one_index_is_said_on_in_every_list: cy, in ada's
 // house and flat, lends `played`, a UDP port, so each index lists it with
 // Play; Play pressed in house's, flat's says where to connect too, from

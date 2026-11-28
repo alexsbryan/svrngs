@@ -223,7 +223,8 @@ until you open it there again. If svrngs runs films for you, it keeps running.
 
 - **On a computer:** on their home page, under your group's **Shared apps**, they click *"Sam’s films (jellyfin)"*. It opens in a tab of its own.
 - **On a phone:** on the group's page (the link they joined from, or the icon on their Home Screen), they tap *"Sam’s films (jellyfin)"*. It opens in that tab.
-- **Bookmark it.** Every lend has an address that doesn't change. On the home page, press **Address** beside a lend: it shows its address, `http://<…>.localhost:<port>/`, with *"Bookmark this."* On a computer that joined in a browser, the group's page shows one too.
+- **For programs.** A lend you've ticked *"For programs, such as a chat app"* under **What you lend** shows **Play** beside its name instead, which copies its address for a program on their computer ([models.md](models.md)).
+- **Bookmark it.** Every lend has an address that doesn't change. On the home page, press **Address** beside a lend: it shows when you lent it, *"Lent on 3 Oct."*, and its address, `http://<…>.localhost:<port>/`, with *"Bookmark this."* On a computer that joined in a browser, the group's page shows one too.
 - **Send it in the chat.** `#open=films@Sam` after your group's page opens Sam's films: `https://group.svrnme.sh/#open=films@Sam`. Added after a group link, it's `&open=films@Sam`: the link joins, then opens it.
 - **Two people called Sam?** The name says when each joined: `films@Sam (joined 24 Oct)`. A name that matches nothing says *"Nothing in Lab goes by films@Sam now."*; one that matches two says which to pick from the list.
 

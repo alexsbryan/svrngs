@@ -147,6 +147,9 @@ pub struct Runs {
     /// Who last changed its files, by first key and by name for display,
     /// and when (Unix seconds).
     pub changed: BTreeMap<String, (String, Person, i64)>,
+    /// Who first placed its files, so brought it, as [`Self::changed`]
+    /// says who last changed them.
+    pub brought_by: BTreeMap<String, (String, Person, i64)>,
 }
 
 impl Runs {
@@ -195,7 +198,9 @@ pub(crate) fn written<'a>(
             if let ["apps", kind, _, ..] = path.as_str().split('/').collect::<Vec<_>>()[..] {
                 let brought = out.2.brought.entry(kind.into()).or_default();
                 brought.entry(path.clone()).or_insert(hash);
-                (out.2.changed).insert(kind.into(), (first.into(), person.clone(), op.ts_unix));
+                let by = (String::from(first), person.clone(), op.ts_unix);
+                out.2.brought_by.entry(kind.into()).or_insert(by.clone());
+                (out.2.changed).insert(kind.into(), by);
             }
             let entry = Entry { key, seq, path };
             let placed = Placed {

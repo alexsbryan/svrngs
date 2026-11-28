@@ -11,7 +11,7 @@
 // cannot be read is said once, in `part`, never read as none; a press in a
 // line then writes it over.
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
-import { named } from '../question.js?v=__VERSION__';
+import { day, named } from '../question.js?v=__VERSION__';
 import { go, machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Keep } from '../ui/parts.js?v=__VERSION__';
 import { keyOf, same, turns } from './lend-key.js?v=__VERSION__';
@@ -191,11 +191,12 @@ export function Line({ l: lend, words }) {
 // "Address" in a lend's cell of the index (lend-name.js): a button that
 // opens the browser's own popover, holding what is for other devices and
 // programs and is no part of deciding to open the lend: first its name, so
-// a wrong press shows at once, then a line for each place a person wants
+// a wrong press shows at once, and when it was first lent, then a line for each place a person wants
 // it, each named by where they are and none doing what another does. For
 // this browser, its address to bookmark, which opens it again by the home
 // page's session (origin.rs `homeward`). For a program on this computer,
-// another computer's lend no folder carries has Play: the address lets in
+// another computer's lend no folder carries has Play, unless its cell leads
+// with Play already, for programs: the address lets in
 // a browser's session or svrngs's own client and no other program while
 // Play is off (play.rs `shown`), so Play is the one way in for a chat app,
 // and it copies the address as it is turned on (play.js `copy`). A carried
@@ -232,9 +233,9 @@ export function Address({ l: lend, id, round, me }) {
   return html`
     <button type="button" popovertarget=${id} aria-label=${name}>Address</button>
     <div popover="auto" id=${id} role="dialog" aria-label=${name} tabindex="-1" autofocus>
-      <p><strong>${named(lend)}</strong></p>
+      <p><strong>${named(lend)}</strong>${lend.since === undefined ? '' : ` Lent on ${day(lend.since)}.`}</p>
       <p>For this browser: <${Keep} at=${lend.origin} /></p>
-      ${lend.key !== me && !lend.group && html`<p>${PROGRAM} <${Turn} l=${lend} round=${round} /></p>`}
+      ${lend.key !== me && !lend.group && !lend.for_programs && html`<p>${PROGRAM} <${Turn} l=${lend} round=${round} /></p>`}
       <p>${OPEN_IT}</p>
       <ul class="wifi"><${Line} l=${lend} words=${`${named(lend)}:`} /></ul>
       <button type="button" popovertarget=${id} popovertargetaction="hide" aria-label=${`Close: ${name}`}>Close</button>

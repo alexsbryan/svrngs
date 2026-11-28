@@ -33,11 +33,11 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * stopped; or the account apps read it through, its name and password
  * typed on this row and sent once, to this computer alone, or the key
  * pasted there, or a header svrngs adds to each request, an empty value
- * stopping it. An audience-only change preserves every other setting
- * (SCOPE_PARALLEL.md, `POST /lent`).
+ * stopping it; or whether it is for programs. An audience-only change
+ * preserves every other setting (SCOPE_PARALLEL.md, `POST /lent`).
  * @typedef {{ limit: number | null } | { groups: string[] } | 'stop'
  *   | { readers: { name: string, password: string } } | { key: string }
- *   | { header: { name: string, value: string } }} To
+ *   | { header: { name: string, value: string } } | { 'for-programs': boolean }} To
  */
 
 /**

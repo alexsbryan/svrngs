@@ -296,7 +296,7 @@ async fn the_house_keeps_going_through_the_home_relay_and_comes_back(engine: Eng
     std::fs::create_dir(&folder).unwrap();
     keep_folder_in(&ada, &folder, &id).await;
     let script = "window.title = document.title = 'Money';";
-    let page = "<!doctype html><title>…</title><script type=module src=money.js></script>";
+    let page = "<!doctype html><title>Money</title><script type=module src=money.js></script>";
     super::carried::carry(
         &folder,
         "Money",

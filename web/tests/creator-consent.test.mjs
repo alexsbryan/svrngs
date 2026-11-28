@@ -7,15 +7,15 @@ import { agreed } from '../../crates/svrngs-node/src/home/question.js?v=__VERSIO
 const rota = { key: 'jo', person: 'Jo', group: 'garden-id', name: 'rota', kind: 'Garden-rota' };
 
 test('an unfamiliar carried app names its own entries and the actual group at consent', () => {
-  const words = agreed(rota, [], { name: 'Garden' });
+  const words = agreed(rota, { name: 'Garden' });
   assert.match(words, /read and write only (those|its own) (shared )?entries/);
   assert.match(words, /as you in Garden\./);
   assert.doesNotMatch(words, /part of the group’s record/);
-  assert.doesNotMatch(agreed(rota, [], { name: 'House' }), /Garden/);
+  assert.doesNotMatch(agreed(rota, { name: 'House' }), /Garden/);
 });
 
 test('a reader declaration never describes permission to write', () => {
-  const words = agreed({ ...rota, reads: ['calendar'] }, [], { name: 'Garden' });
+  const words = agreed({ ...rota, reads: ['calendar'] }, { name: 'Garden' });
   assert.match(words, /never write/);
   assert.match(words, /as you in Garden\./);
   assert.doesNotMatch(words, /read and write/);

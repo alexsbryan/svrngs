@@ -21,11 +21,11 @@ fn main() {
         .lines()
         .filter(|l| !l.starts_with('#') && !l.trim().is_empty());
     for fields in lines.map(|l| l.split('\t').collect::<Vec<_>>()) {
-        let [name, app, beside, words]: [&str; 4] = fields.try_into().expect("four shelf fields");
+        let [name, app, beside]: [&str; 3] = fields.try_into().expect("three shelf fields");
         let (app, beside) = (here.join("../../apps").join(app), beside.split(' '));
         let files = Vec::from_iter(["index.html", "index.js"].into_iter().chain(beside));
         let files: Vec<_> = files.into_iter().map(|f| file(&app, f)).collect();
-        shelf += &format!("({name:?}, {words:?}, &[{}, {look}]),", files.join(", "));
+        shelf += &format!("({name:?}, &[{}, {look}]),", files.join(", "));
     }
     let out = PathBuf::from(std::env::var_os("OUT_DIR").expect("cargo sets OUT_DIR"));
     std::fs::write(out.join("shelf.rs"), shelf + "]").expect("the shelf is written");

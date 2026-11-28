@@ -7,7 +7,8 @@
 // anything was asked, and open at first only where apps cannot read it
 // until its lender does something (`undone`): who can open it, one box a
 // group of HOME's, each by its stable id, Keep sharing it when it is held,
-// the apps' account, and Stop lending, a button for each change
+// whether it is for programs, so friends see its address first, the apps'
+// account, and Stop lending, a button for each change
 // (lend-change.js CHANGE). What is seldom changed is folded again under
 // More settings: how many at once, a header, and signing people in with
 // svrngs, with the app form's fill once that is turned on (`SigningOn`).
@@ -17,7 +18,7 @@
 // `Found`), it opens and takes the focus, in view with that offer under it.
 import { html, useEffect, useMachine, useRef } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
-import { Act, Field } from '../ui/parts.js?v=__VERSION__';
+import { Act, Field, Tick } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
 import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
 import { notRunning } from '../question.js?v=__VERSION__';
@@ -28,6 +29,7 @@ import { KeepRunning } from './keep-running.js?v=__VERSION__';
 /** @import { State, Message } from './lend-change.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
+/** @import { Targeted } from '../ui/view.js?v=__VERSION__' */
 
 /**
  * A lend's row: the lend, whether it signs people in with svrngs, HOME's
@@ -213,6 +215,21 @@ function Keep({ lend, doing, send }) {
   return html`<${Act} words="Keep sharing it" doing=${doing} on=${{ type: 'approve', shown }} send=${send} />`;
 }
 
+// How friends' cells lead with a lend that opens in a tab: its name, or,
+// ticked, for a program such as a chat app or a coding tool, Play and the
+// address it copies (lend-name.js). The lender's to say, since what answers
+// on its port never says which its friends want; a tick is said as one to
+// a screen reader, ticked or not, and posts as it changes.
+/** @param {{ lend: Lend, doing: { state: string }, send: (message: Message) => void }} props */
+function Programs({ lend, doing, send }) {
+  if (lend.raw) return null;
+  /** @param {Targeted<HTMLInputElement>} box */
+  const change = (box) =>
+    send({ type: 'change', to: { 'for-programs': box.currentTarget.checked } });
+  const words = ' For programs, such as a chat app: your friends see its address first.';
+  return html`<${Tick} on=${Boolean(lend.for_programs)} disabled=${doing.state === 'busy'} change=${change}>${words}<//>`;
+}
+
 // Whether the lend waits on its lender: an account or key for apps to make,
 // or what answers on its port to approve.
 const undone = (/** @type {AppsAccount | undefined} */ account, /** @type {Lend} */ lend) =>
@@ -256,6 +273,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
           send=${send}
         />
         <${Act} words="Save who can open this" doing=${doing} on=${audience} send=${send} />
+        <${Programs} lend=${lend} doing=${doing} send=${send} />
         <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
         <details>
           <summary>More settings</summary>

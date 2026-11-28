@@ -37,6 +37,8 @@ You lend coder (port 8101) to the groups you chose, as many at once as want it. 
 They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, /lora-adapters, /metrics, /tools, /cors-proxy, /models: svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.
 ```
 
+**Show your friends its address first.** Most friends come to a model for its address, to paste into a chat app or a coding tool, not for llama-server's chat page. Under **What you lend**, press coder's line to open it and tick *"For programs, such as a chat app: your friends see its address first."* Their home page then shows **Play** beside coder, and pressing its name no longer opens the chat page; it's still under **Address**, **For this browser**. Untick it to go back.
+
 ## Run coder with svrngs
 
 Trying a model in a terminal is fine, but that copy doesn't start again by
@@ -82,7 +84,7 @@ A chat app, an editor's assistant such as opencode or aider, or a script on your
 
 ![A program on Bo’s computer calls the address Bo copied while Play is on, with any text as its key; Bo’s svrngs lets in only Bo’s own programs, drops the key, and asks Sam’s computer as Bo.](../diagrams/guide/models.svg)
 
-1. On your home page, under your group's **Shared apps**, find Sam's model, press **Address** beside it, then **Play** in what opens. It says *"Connect to http://….localhost:…/."* and copies that address. The address stays the same when svrngs or your computer restarts, and Play stays on until you press **Stop**.
+1. On your home page, under your group's **Shared apps**, find Sam's model and press **Play** beside it, or, if it has none, **Address** beside it, then **Play** in what opens. It says *"Connect to http://….localhost:…/."* and copies that address. The address stays the same when svrngs or your computer restarts, and Play stays on until you press **Stop**.
 2. In the program, set the OpenAI base URL to that address with `v1` on the end.
 3. If the program insists on an API key, type any text, such as `none`, never a real key. svrngs removes it unread before Sam's computer sees the request, in whichever header your program sends it: `Authorization`, `X-Api-Key`, `Api-Key` or `X-Goog-Api-Key`.
 

@@ -538,7 +538,7 @@ test('what acts as you is said part by part, and its Stop is posted and said', a
   for (const part of [
     'What acts as you',
     'Reads and writes for you',
-    'Money reads and writes who owes whom, and for what, when you open it.',
+    'Money reads and writes its own entries, when you open it.',
     'Opens friends’ things as you',
     'Each Stop holds from the app’s next request.',
     `cy’s notes opens the films you chose, as you. Since ${today}.`,

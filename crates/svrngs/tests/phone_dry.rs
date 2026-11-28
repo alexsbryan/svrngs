@@ -80,6 +80,8 @@ async fn sam_through_a_relay_on_this_computer() {
         source: svrngs_node::lend::Source::Port(port),
         kind: Program::parse("film").unwrap(),
         terms: svrngs_node::lend::Terms {
+            since: None,
+            for_programs: false,
             // Lent to House, the group just made (LENDING_SCOPE).
             audience: svrngs_node::lend::Audience::Selected(vec![house.id().to_string()]),
             limit: Some(limit),

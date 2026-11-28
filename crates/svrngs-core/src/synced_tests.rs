@@ -255,6 +255,21 @@ fn an_app_runs_as_it_was_brought_whoever_changes_it() {
     assert_eq!((by_key, by), (&actor_of(&key(2)), &p("bo")));
 }
 
+/// **Who brought an app is who first placed its files** (the group's
+/// page says "brought by"): alex brought Money and bo changed it after, so
+/// it stays alex's bringing, at its first placing, before bo's change.
+/// Planted: `brought_by` written over as `changed` is — it names bo.
+#[test]
+fn who_brought_an_app_is_who_first_placed_its_files() {
+    let runs = admitted(&brought_then_changed()).runs().clone();
+    let (by_key, by, at) = &runs.brought_by["Money"];
+    assert_eq!((by_key, by), (&actor_of(&key(1)), &p("alex")));
+    assert!(
+        *at < runs.changed["Money"].2,
+        "brought before bo changed it"
+    );
+}
+
 /// The yeses `ops` hold, by kind and first key, each with whether it names
 /// `files`; bo's phone (key 4) stands beside his computer.
 fn said(ops: &[Op<SignedOp>], files: &Files) -> Vec<(String, String, bool)> {

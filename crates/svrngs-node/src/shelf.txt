@@ -3,16 +3,14 @@
 # the home page or a phone (crates/svrngs-node/src/carried.rs, `bring`). Kept as
 # data, as src/programs/ is, so svrngs's code names no app (scripts/
 # vocab_check.py): build.rs embeds each line's files. One app a line, its
-# fields apart by a tab: its name in a group, its folder under apps/, its
-# files beside index.html and index.js, apart by a space, and what it is, in
-# the words the pages say after its name, after "reads and writes" in "What
-# acts as you", and beside its open (home/question.js `agreed`, `carrying`),
-# so what it holds, a few words, as they are read before a first tap and
-# beside every other app's, a `-` in its name
-# said as a space (`spoken`). Each is brought as index.html, index.js, those
-# files and svrngs's look.css.
-Money	expenses	expenses.js	who owes whom, and for what.
-Events	events	events.js	get-togethers, and who’s coming.
-House-rules	canon	house.js vendor/canon.js vendor/call.mjs vendor/LICENSE	the rules your house agrees.
-Movie-Night	movie-night	match.js plant.js style.css reads.txt	the films your friends lend.
-Magnets	magnets	board.js style.css pack.json schema.sql	the word magnets on your group’s fridge.
+# fields apart by a tab: its name in a group, a `-` in it said as a space
+# (home/question.js `spoken`), its folder under apps/, and its files beside
+# index.html and index.js, apart by a space. What it is, it says itself, in
+# its page's own <meta name="description">, as every app does (carried.rs
+# `own`). Each is brought as index.html, index.js, those files and svrngs's
+# look.css.
+Money	expenses	expenses.js
+Events	events	events.js
+House-rules	canon	house.js vendor/canon.js vendor/call.mjs vendor/LICENSE
+Movie-Night	movie-night	match.js plant.js style.css reads.txt
+Magnets	magnets	board.js style.css pack.json schema.sql

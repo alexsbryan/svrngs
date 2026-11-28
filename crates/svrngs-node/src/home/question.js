@@ -46,6 +46,17 @@
  * @property {boolean} [yours] whether its lender is the person looking (`lentBy`)
  * @property {string | null} [check] what `svrngs check` finds in a carried
  *   app's folder here, in words for its card (surface.rs `lends`)
+ * @property {string | null} [title] a carried app's own name, its page's
+ *   `<title>`, and `about`, its own line, its `<meta name="description">`,
+ *   each plain text in bounds or null (carried.rs `said`, `own`)
+ * @property {string | null} [about]
+ * @property {{ by_key: string, at: number } | null} [brought] who first
+ *   placed a carried app's files, by first key, and when, in seconds
+ * @property {number} [since] when a lend was first lent, in seconds, where
+ *   its lender's declaration says (lend.rs `Terms::since`)
+ * @property {boolean} [for_programs] its lender's choice that it is for
+ *   programs: its cell leads with Play and the address it copies
+ * @property {'udp' | 'tcp' | null} [raw] a port's own bytes, not a page's
  */
 
 /**
@@ -81,17 +92,17 @@
  */
 
 /**
- * An app on the group's shelf, by its kind, and the shelf's words for what
- * it is.
- * @typedef {{ name: string, words?: string }} Shelved
+ * An app on the group's shelf, by its kind, and what it is in its own
+ * page's line, null where its page says none (carried.rs `shelf`).
+ * @typedef {{ name: string, words?: string | null }} Shelved
  */
 
 // A lend as a person reads it: "Ana’s taste", and "Sam’s tonights-picks
 // (movie-night)" when its name and kind differ; an app the group carries
-// by its kind alone, "Money", its lend name holding the group's id
-// (lend.rs `carried`) and its copies everyone's, a `-` in it said as a
-// space: a kind is one word (declared.rs `valid_header_name`), and
-// "House-rules" reads "House rules". On your own page yours is "your
+// by the name its page gives itself, its `title`, else by its kind,
+// "Money", its lend name holding the group's id (lend.rs `carried`) and
+// its copies everyone's, a `-` in it said as a space: a kind is one word
+// (declared.rs `valid_header_name`), and "House-rules" reads "House rules". On your own page yours is "your
 // navidrome", by key (`lentBy`), never by a name anyone can take.
 /** @param {string} kind */
 export const spoken = (kind) => kind.replaceAll('-', ' ');
@@ -103,9 +114,9 @@ export const spoken = (kind) => kind.replaceAll('-', ' ');
  * @returns {string}
  */
 export const label = (lend) => /** @type {string} */ (new URL(lend.origin).hostname.split('.')[0]);
-/** @param {Pick<Lend, 'name' | 'kind' | 'person' | 'group' | 'called' | 'yours'>} lend */
+/** @param {Pick<Lend, 'name' | 'kind' | 'person' | 'group' | 'called' | 'yours' | 'title'>} lend */
 export const named = (lend) => {
-  if (lend.group) return spoken(lend.kind);
+  if (lend.group) return lend.title ?? spoken(lend.kind);
   const name = lend.name === lend.kind ? lend.name : `${lend.name} (${lend.kind})`;
   return `${lend.yours ? 'your' : `${lend.called ?? lend.person}’s`} ${name}`;
 };
@@ -115,8 +126,9 @@ export const named = (lend) => {
 // (svrn-docs WHAT_CAN_ACT_AS_YOU §9); said on the button,
 // these words read as a grant asked of the person, Ana's 5 of 5 times
 // (demo/xenia/findings/first-set/after-join-reads-as-permissions.md; the
-// operator, 2026-10-26). An app the group carries reads and writes what the
-// shelf, `shelf`, says it is, else its own part of the group's record; an
+// operator, 2026-10-26). An app the group carries reads and writes its own
+// part of the group's record, and says what it is for in its own line,
+// `about`, in quotes, as its words and never svrngs's; an
 // app on a port may write its own part as you, by naming it
 // (capability-signed's F1), which svrngs cannot know it does until it does,
 // so the words say what opening it allows, never that it writes (one agent
@@ -128,13 +140,8 @@ export const named = (lend) => {
 // done on her behalf without her yes ("Money can read and write who owes
 // whom on my behalf, and I never agreed to that", the fifth set, `together`
 // run 1; demo/xenia/findings/said-too-much-the-group-s-page.md).
-// An app the shelf has no words for says none beside its open, where
-// "this app's shared entries" told nobody anything.
-/**
- * @param {string} kind
- * @param {Shelved[]} shelf
- */
-const does = (kind, shelf) => shelf.find((app) => app.name === kind)?.words;
+// An app whose page says no line says none beside its open, where "this
+// app's shared entries" told nobody anything.
 // What opening `lend` lets it do, in one sentence: `agreed` says it beside
 // the open, and the home page's index says it once, as the caption of the
 // apps that share it (home/page/index.js).
@@ -152,11 +159,10 @@ export const may = (lend, group) => {
 // in, which it does not say again.
 /**
  * @param {Lend} lend
- * @param {Shelved[]} shelf
  * @param {{ name?: string | null }} group
  * @param {string[]} [above]
  */
-export const agreed = (lend, shelf, group, above = []) => {
+export const agreed = (lend, group, above = []) => {
   const reads = lend.reads ?? [];
   // The open's own line names them (`readLine`) where it was told what it
   // reads; this computer's own app, which needs no yes, says it by kind.
@@ -164,8 +170,7 @@ export const agreed = (lend, shelf, group, above = []) => {
     reads.length > 0 &&
     !lend.reading &&
     `It also opens your friends’ ${reads.map(spoken).join(' and ')} as you, and they can see what it asks.`;
-  const words = lend.group ? does(lend.kind, shelf) : '';
-  const what = words && `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
+  const what = lend.group && lend.about && `“${lend.about}”`;
   const opening = may(lend, group);
   // What its page asks that apps can't load, before anyone opens it
   // (EXTENSION_POINT §6.3): else a blank page says nothing.
@@ -421,15 +426,30 @@ export const namesakes = (same, name, verb) => {
   return `You’re already in ${groups}. ${verb} ${which} group called ${name}.`;
 };
 
-// An app the group carries, as "What acts as you" says it: what it reads
-// and, unless it reads friends' lends, writes (CARRIED_APP_READS §5.5), the
-// shelf's words, and no Stop, as it runs only when opened.
+// An app the group carries, as "What acts as you" says it: what it reads,
+// the kinds it declares, or what it reads and writes, its own entries
+// (CARRIED_APP_READS §5.5), and no Stop, as it runs only when opened.
+/** @param {Lend} lend */
+export const carrying = (lend) => {
+  const reads = (lend.reads ?? []).map(spoken).join(' and ');
+  return `${lend.title ?? spoken(lend.kind)} ${reads ? `reads your friends’ ${reads}` : 'reads and writes its own entries'}, when you open it.`;
+};
+
+// Who brought a carried app, and on which day: "Brought by you on 3 Oct.",
+// by first key, as `called` names a person of the people `read` holds, "you"
+// to the person of `me`, this device's key; the day alone where nobody in
+// `rows` holds that key now, and nothing where the record says none.
 /**
- * @param {Pick<Lend, 'kind' | 'reads'>} lend
- * @param {Shelved[]} shelf
+ * @param {Lend} lend
+ * @param {{ people: PeopleRow[] } | null | undefined} read
+ * @param {string} me
  */
-export const carrying = ({ kind, reads = [] }, shelf) =>
-  `${spoken(kind)} ${reads.length ? 'reads' : 'reads and writes'} ${(does(kind, shelf) ?? 'this app’s shared entries').replace(/\.$/, '')}, when you open it.`;
+export const brought = ({ brought: by }, read, me) => {
+  const rows = read?.people ?? [];
+  if (!by) return '';
+  const who = called(rows, by.by_key, joinedSaid, personOf(rows, me));
+  return ` Brought${who ? ` by ${who}` : ''} on ${day(by.at)}.`;
+};
 
 // What the person said, `said`, of `lend` opening their friends' lends as
 // them, since or on its day; `lend` undefined when it is not lent now. A
