@@ -37,8 +37,9 @@ const trace = (what, detail = '') => console.debug(`Magnets: ${what}`, detail);
 /**
  * What the page knows: the pack, the rows last read and whether any were,
  * its state, what it says and whether the sentence changed since this viewer
- * last looked, the link to send, and the words new to this viewer, with the
- * ones they saw last.
+ * last looked, the link to send, the words new to this viewer, with the
+ * ones they saw last, and the ones they put on themselves that no answer
+ * has shown yet.
  */
 const seen = {
   pack: null,
@@ -51,6 +52,7 @@ const seen = {
   link: null,
   fresh: new Set(),
   last: null,
+  own: new Set(),
 };
 
 // The sentence this viewer last saw, kept in this browser alone, so the page
@@ -125,7 +127,12 @@ function answered(answer) {
     const now = board.sentence.map((m) => m.id);
     const opening = seen.last === null;
     const before = opening ? recalled() : seen.last;
-    const arrived = Array.isArray(before) ? fresh(before, now) : [];
+    // What this viewer put on is never new to them, though an answer from
+    // before their move arrives first (another's move, in flight).
+    const arrived = Array.isArray(before)
+      ? fresh(before, now).filter((id) => !seen.own.has(id))
+      : [];
+    for (const id of now) seen.own.delete(id);
     trace(opening ? 'new since this viewer last looked' : 'new while they watch', arrived);
     seen.changed ||= opening && arrived.length > 0;
     for (const id of arrived) {
@@ -162,8 +169,8 @@ async function listen() {
 async function write(ops, what) {
   Object.assign(seen, { note: '', changed: false });
   seen.fresh.clear();
-  // What this viewer places is never new to them.
-  for (const op of ops) if (op.insert === 'magnets') seen.last?.push(op.row.id);
+  const placing = ops.filter((op) => op.insert === 'magnets').map((op) => op.row.id);
+  for (const id of placing) seen.own.add(id);
   let words = null;
   try {
     const res = await fetch('svrngs/sql', {
@@ -177,6 +184,7 @@ async function write(ops, what) {
     words = NONE;
   }
   trace(words ? 'the move was refused' : 'the move was made', words ?? what);
+  if (words) for (const id of placing) seen.own.delete(id);
   seen.note = words ? refused(what, words) : '';
   draw();
 }

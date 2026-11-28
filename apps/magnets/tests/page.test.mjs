@@ -14,6 +14,7 @@
 // skips.
 
 import assert from 'node:assert/strict';
+import http from 'node:http';
 import { test } from 'node:test';
 
 import { launch } from '../../../web/tests/page.mjs';
@@ -67,15 +68,62 @@ async function open(context, at) {
   };
 }
 
-/** What the page hands the clipboard and the share sheet, kept on `window`, so a test reads what it sent and no real pasteboard is touched. */
+/**
+ * What the page hands the clipboard and the share sheet, kept on `window`,
+ * so a test reads what it sent and no real pasteboard is touched; and what
+ * the engine has, `window.sheet`: a share sheet only where it has one of
+ * its own (the Mac's WebKit does, Linux's WPE doesn't), never one a test
+ * made up.
+ */
 const HANDED = () => {
   const keep = (as) => async (given) => {
     window.handed = { as, given };
   };
+  const share = typeof navigator.share === 'function';
+  window.sheet = share;
   Object.defineProperty(navigator, 'clipboard', { value: { writeText: keep('copied') } });
-  if ('share' in navigator || matchMedia('(pointer: coarse)').matches)
-    navigator.share = keep('shared');
+  if (share) navigator.share = keep('shared');
 };
+
+/**
+ * Whether the engine of `context` hands a page a streamed write whole once
+ * it is sent: a server on 127.0.0.1 streams a short event, then one of 400
+ * bytes, and the page reads its body until both are in, for 5 s. Linux's
+ * WebKit (Playwright's WPE) gave a page only the first ~124 bytes of each
+ * write after the first, the rest only with the next write, so a board read
+ * by subscription there draws each push one push late (apps/magnets/index.js
+ * never saw the bytes: its `fetch` body's reader was given them so). Where
+ * it doesn't, what a page sees pushed can't be judged by timing.
+ */
+async function streamsWhole(context) {
+  const server = http.createServer((req, res) => {
+    if (req.url !== '/stream') return res.writeHead(200, { 'content-type': 'text/html' }).end('');
+    res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store' });
+    res.write('data: {}\n\n');
+    setTimeout(() => res.write(`data: ${'x'.repeat(400)}\n\n`), 200);
+  });
+  await new Promise((done) => server.listen(0, '127.0.0.1', done));
+  const page = await context.newPage();
+  try {
+    await page.goto(`http://127.0.0.1:${server.address().port}/`);
+    return await page.evaluate(async () => {
+      const reader = (await fetch('stream')).body.getReader();
+      const late = new Promise((done) => setTimeout(() => done(null), 5_000));
+      let got = 0;
+      while (got < 418) {
+        const read = await Promise.race([reader.read(), late]);
+        if (!read || read.done) break;
+        got += read.value.length;
+      }
+      reader.cancel();
+      return got === 418;
+    });
+  } finally {
+    await page.close();
+    server.closeAllConnections();
+    server.close();
+  }
+}
 
 /** Every debug line `p` must have traced: each branch a move took. */
 function traced(p, what) {
@@ -205,7 +253,7 @@ test('a word goes in, moves, is sent and kept, by mouse, then by keyboard (chrom
   }
 });
 
-test('a word goes in, is sent and comes out by touch (webkit as an iPhone)', async () => {
+test('a word goes in, is sent and comes out by touch (webkit as an iPhone)', async (t) => {
   const standin = await serve();
   const { context, close } = await launch('webkit', OPEN);
   await context.addInitScript(HANDED);
@@ -214,12 +262,32 @@ test('a word goes in, is sent and comes out by touch (webkit as an iPhone)', asy
     await p.shown();
     await p.word('tray', 'goose').tap();
     await p.reads(['goose']);
-    // On a phone, Send it opens the share sheet with the sentence and its link.
+    // On a phone, Send it opens the share sheet with the sentence and its
+    // link. An engine as an iPhone that has no share sheet, or whose pointer
+    // is not a finger (Linux's WPE has neither), is a computer to the page,
+    // which copies them: so judged, and the share sheet said unjudged.
     await p.page.getByRole('button', { name: 'Send it to your group' }).tap();
     await p.page.waitForFunction(() => window.handed, null, WAIT);
-    const { as, given } = await p.page.evaluate(() => window.handed);
-    assert.equal(as, 'shared');
-    assert.match(given.text, /^I can explain the goose\.( Change it: \S+)?$/);
+    const { engine, handed } = await p.page.evaluate(() => ({
+      // Whether its pointer is a finger, read as the page reads it, once
+      // it ran: the Mac's WebKit says no at the document's start.
+      engine: { share: window.sheet, coarse: matchMedia('(pointer: coarse)').matches },
+      handed: window.handed,
+    }));
+    const sheet = engine.share && engine.coarse;
+    if (!sheet)
+      t.diagnostic(
+        `could-not-judge: the share sheet, as this WebKit ${engine.share ? '' : 'has no navigator.share'}${engine.share || engine.coarse ? '' : ' and '}${engine.coarse ? '' : 'matches no (pointer: coarse)'}; its copy judged`,
+      );
+    assert.equal(handed.as, sheet ? 'shared' : 'copied');
+    const given = sheet ? handed.given.text : handed.given;
+    assert.match(given, /^I can explain the goose\.( Change it: \S+)?$/);
+    if (!sheet)
+      await p.page.waitForFunction(
+        (w) => document.querySelector('#sent').textContent === w,
+        COPIED,
+        WAIT,
+      );
     await p.moves('goose', 'Take “goose” out', 'tap');
     await p.reads([]);
     assert.equal((await p.tray())[0], 'goose');
@@ -230,31 +298,44 @@ test('a word goes in, is sent and comes out by touch (webkit as an iPhone)', asy
   }
 });
 
-test('a computer and a phone on one board each see the other’s moves, new ones marked', async () => {
+test('a computer and a phone on one board each see the other’s moves, new ones marked', async (t) => {
   const standin = await serve();
   const [computer, phone] = [await launch('chromium', OPEN), await launch('webkit', OPEN)];
   try {
+    // What the phone is pushed is judged only where its engine hands a
+    // page what was streamed (`streamsWhole`); elsewhere the phone opens
+    // the board again to see it, and the computer's half is judged always.
+    const whole = await streamsWhole(phone.context);
+    if (!whole)
+      t.diagnostic(
+        'could-not-judge: moves pushed to the phone, as its engine holds back what was streamed until more comes; the phone read them by opening the board again',
+      );
+    const pushed = async (p, want) => {
+      if (!whole) await p.page.reload();
+      await p.reads(want);
+    };
     const a = await open(computer.context, standin.at);
     const b = await open(phone.context, standin.at);
     await Promise.all([a.shown(), b.shown()]);
     await a.word('tray', 'goose').click();
-    await b.reads(['goose']);
+    await a.reads(['goose']);
+    await pushed(b, ['goose']);
     await b.word('tray', 'invoice').tap();
     await a.reads(['goose', 'invoice']);
-    await b.reads(['goose', 'invoice']);
+    await pushed(b, ['goose', 'invoice']);
     // A word that arrives while someone watches is outlined, said "new";
     // never their own.
     assert.deepEqual(await a.fresh(), ['new invoice'], 'the phone’s word, new to the computer');
-    assert.deepEqual(await b.fresh(), [], 'nothing new to the one who moved it');
+    if (whole) assert.deepEqual(await b.fresh(), [], 'nothing new to the one who moved it');
     await b.moves('goose', 'Take “goose” out', 'tap');
     await a.reads(['invoice']);
-    await b.reads(['invoice']);
+    await pushed(b, ['invoice']);
 
     // The computer comes back after the phone moved: what changed since it
     // last looked is said, and outlined.
     await a.page.goto('about:blank');
     await b.word('tray', 'moon').tap();
-    await b.reads(['invoice', 'moon']);
+    await pushed(b, ['invoice', 'moon']);
     await a.page.goto(standin.at);
     await a.says(CHANGED);
     assert.equal(
@@ -274,6 +355,51 @@ test('a computer and a phone on one board each see the other’s moves, new ones
 const ON_STANDIN = {
   skip: route.real ? 'its switches are the stand-in’s: the real route has none' : false,
 };
+// A move is held by holding the page's request in Playwright's route: on
+// the real route, svrngs's worker sends it, and the route never saw it
+// (the scene, 2026-11-28: the held move was made at once).
+const HELD = {
+  skip: route.real
+    ? 'a move is held in Playwright’s route, which svrngs’s worker passes by'
+    : false,
+};
+test(
+  'a word you put on is never new to you, though another’s move reaches you first (chromium)',
+  HELD,
+  async () => {
+    const standin = await serve();
+    const [one, other] = [await launch('chromium', OPEN), await launch('chromium', OPEN)];
+    try {
+      const a = await open(one.context, standin.at);
+      const b = await open(other.context, standin.at);
+      await Promise.all([a.shown(), b.shown()]);
+      // b's move held on its way, while a's is made and pushed to b first:
+      // the answer b is given then is from before b's own move.
+      let release;
+      const held = new Promise((done) => (release = done));
+      await b.page.route('**/svrngs/sql', async (r) =>
+        r.request().method() === 'POST' ? (await held, r.continue()) : r.continue(),
+      );
+      await b.word('tray', 'goose').click();
+      await a.word('tray', 'moon').click();
+      await a.reads(['moon']);
+      await b.reads(['moon']);
+      release();
+      // Both on, in whichever order their places fall.
+      await b.page.waitForFunction(
+        () => document.querySelectorAll('#placed button').length === 2,
+        null,
+        WAIT,
+      );
+      assert.ok(!(await b.fresh()).includes('new goose'), 'b’s own word is never new to b');
+      assert.deepEqual([...a.errors, ...b.errors], []);
+    } finally {
+      await Promise.all([one.close(), other.close()]);
+      standin.stop();
+    }
+  },
+);
+
 test(
   'still syncing, unreachable and a refused move are said, no fresh fridge drawn, and the last sentence kept through goodnight (chromium)',
   ON_STANDIN,

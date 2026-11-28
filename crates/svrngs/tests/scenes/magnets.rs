@@ -214,9 +214,11 @@ async fn magnets(engine: Engine) {
         ran.status.success(),
         "Magnets' tests on Ana's route: {said}"
     );
-    // Five, and the states', whose switches are the stand-in's alone.
+    // Five, and two skipped: the states', whose switches are the
+    // stand-in's alone, and a held move's, which svrngs's worker sends past
+    // Playwright's route.
     assert!(
-        said.contains("ℹ pass 5") && said.contains("ℹ skipped 1"),
+        said.contains("ℹ pass 5") && said.contains("ℹ skipped 2"),
         "{said}"
     );
     drop(ana);
