@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>? | "opens" | "reads"], ...], "timed"?: [<selector>, ...], "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>? | "opens" | "reads"], ...], "timed"?: [<selector>, ...], "text"?: true, "open"?: "<a link's words>" | [<selector>, "<a link's words>"], "labelled"?: "<a link's whole name>", "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
 //
 // A `do` step's fourth element, `until`, is words `all`'s text holds before
 // it is read. `visible` hides the page, then shows it, once the `do` steps
@@ -192,13 +192,16 @@ try {
   const [afterAt, laterWords] = [args.after].flat();
   await until(afterAt, laterWords);
   const later = afterAt ? await page.locator(afterAt).allTextContents() : null;
-  // With `open`, a link's words: the tab it opens, once loaded, its
-  // address and title (v1ui-lend (b): bo opening what ada lent).
+  // With `open`, a link's words, or a selector and the words of a link in
+  // it, as two groups may each carry an app of one name: the tab it opens,
+  // once loaded, its address and title (v1ui-lend (b): bo opening what ada
+  // lent).
   let opened = null;
   if (args.open) {
+    const [within, words] = Array.isArray(args.open) ? args.open : ['body', args.open];
     const [tab] = await Promise.all([
       context.waitForEvent('page'),
-      page.locator('a', { hasText: args.open }).first().click({ timeout: 30_000 }),
+      page.locator(within).locator('a', { hasText: words }).first().click({ timeout: 30_000 }),
     ]);
     await arrived(tab);
     opened = { url: tab.url(), title: await tab.title() };
