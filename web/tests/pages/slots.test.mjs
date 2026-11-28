@@ -1,4 +1,4 @@
-// How many each computer can have visiting at once, on the home page
+// The guest limit, how many each computer can host at a time, on the home page
 // (home/page/visits.js `Slots` and its machine SLOTS), drawn whole by the
 // twin (twin.mjs) from recorded answers in the shape the node writes
 // (surface.rs `Held` for /v1/groups, home.rs `slots` for /slots).
@@ -60,7 +60,7 @@ const row = (page) => page.text('#home p.slots');
 
 test('a member who does not keep the group reads how many, and changes nothing', async () => {
   const page = await home(ada(() => [group(2, false)]));
-  assert.deepEqual(row(page), ['Each computer can have 2 visiting at once']);
+  assert.deepEqual(row(page), ['Guest limit: 2 at a time on each computer in the group.']);
   assert.deepEqual(page.all('#home p.slots button'), []);
 });
 
@@ -71,22 +71,26 @@ test('the keeper’s One more posts the next number, and the groups read again s
     'POST /slots': (body) => (posted.push(body), (each = body[1])),
   });
   const page = await home(answers);
-  assert.deepEqual(row(page), ['Each computer can have 2 visiting at once One fewer One more']);
+  assert.deepEqual(row(page), [
+    'Guest limit: 2 at a time on each computer in the group. One fewer One more',
+  ]);
   await page.press('#home p.slots button', 'One more');
   assert.deepEqual(posted, [['house', 3]]);
-  assert.deepEqual(row(page), ['Each computer can have 3 visiting at once One fewer One more']);
+  assert.deepEqual(row(page), [
+    'Guest limit: 3 at a time on each computer in the group. One fewer One more',
+  ]);
   assert.ok(page.lines().some((line) => line.startsWith('SLOTS: changed')));
 });
 
 test('a change refused says why, and the number stays', async () => {
-  const most = 'each computer can have at most 8 visiting at once';
+  const most = 'the guest limit is at most 8 at a time on each computer';
   const answers = ada(() => [group(8, true)], {
     'POST /slots': { status: 403, body: { error: most } },
   });
   const page = await home(answers);
   await page.press('#home p.slots button', 'One more');
   const [said] = row(page);
-  assert.ok(said.startsWith('Each computer can have 8 visiting at once'), said);
+  assert.ok(said.startsWith('Guest limit: 8 at a time on each computer in the group.'), said);
   assert.ok(said.endsWith(most), said);
   assert.equal(words(page.all('#home p.slots')[0]).split(most).length - 1, 1, said);
 });

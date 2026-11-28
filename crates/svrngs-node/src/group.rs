@@ -237,10 +237,10 @@ impl crate::node::Host {
         tracing::debug!(target: "group", group, per_computer, most, "group: slots per computer, at most the profile's most");
         if per_computer > most {
             return Err(format!(
-                "each computer can have at most {most} visiting at once"
+                "the guest limit is at most {most} at a time on each computer"
             ));
         }
-        let only = "only the group's keeper decides how many each computer can have visiting";
+        let only = "only the group's keeper sets the guest limit";
         self.by_keeper(group, &svrngs_core::SlotsAt(per_computer), only.into())
     }
 
