@@ -3,10 +3,9 @@
 // WiFi, or closed, for any device on it, a TV among them, said as /v1/room
 // says it (room.rs `Served::said`). ROOM is the page's one read of
 // /v1/room, asked as this file loads, beside HOME's read of the groups, so
-// a lend's cell has it to draw. It feeds two lists: each
-// lend's cell in the index (`Address`, `ul.wifi`), with its address
-// for a program, and "Open to this WiFi" under "What acts as you"
-// (`part`, for acting.js, `ul#room`). Each read is counted, so an older
+// a lend's cell has it to draw. It feeds two lists: each lend's cell in
+// the index (`Address`, `ul.wifi`), and "Open to this WiFi" under "What
+// acts as you" (`part`, for acting.js, `ul#room`). Each read is counted, so an older
 // answer is refused by name, and is asked again on each of the groups'
 // rounds, once a round however many cells ask. What is open that
 // cannot be read is said once, in `part`, never read as none; a press in a
@@ -15,7 +14,6 @@ import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { named } from '../question.js?v=__VERSION__';
 import { go, machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Keep } from '../ui/parts.js?v=__VERSION__';
-import { Copy } from '../ui/copy.js?v=__VERSION__';
 import { keyOf, same, turns } from './lend-key.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 import { Turn } from './play.js?v=__VERSION__';
@@ -192,21 +190,29 @@ export function Line({ l: lend, words }) {
 
 // "Address" in a lend's cell of the index (lend-name.js): a button that
 // opens the browser's own popover, holding what is for other devices and
-// programs and is no part of deciding to open the lend. First the lend's
-// name, so a wrong press shows at once; then its address for a program
-// with its Copy, what someone who came for an address came for; its Play,
-// when it has one; then its line (`Line`) with its WiFi button. What opening
-// it to this WiFi does is said in the popover, over the button it is
-// about, never out of sight of it. It was a fold at the group's foot,
-// three lines a lend. It is drawn once ROOM has answered, so no line says a
-// lend is closed before ROOM has said what is open, and it asks ROOM again
-// on each round of its group's reads, once a round however many cells ask.
-const OPEN_IT = 'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.';
+// programs and is no part of deciding to open the lend: first its name, so
+// a wrong press shows at once, then a line for each place a person wants
+// it, each named by where they are and none doing what another does. For
+// this browser, its address to bookmark, which opens it again by the home
+// page's session (origin.rs `homeward`). For a program on this computer,
+// another computer's lend no folder carries has Play: the address lets in
+// a browser's session or svrngs's own client and no other program while
+// Play is off (play.rs `shown`), so Play is the one way in for a chat app,
+// and it copies the address as it is turned on (play.js `copy`). A carried
+// app is a page, and this computer's own lend is at its own port here, so
+// neither has one. For a TV or phone on this WiFi, its line (`Line`),
+// under what opening it to this WiFi does, never out of sight of its
+// button. It is drawn once ROOM has answered, so no line says a lend is
+// closed before ROOM has said what is open, and it asks ROOM again on each
+// round of its group's reads, once a round however many cells ask.
+const OPEN_IT =
+  'For a TV or phone on this WiFi: open it to the WiFi, and anyone on it can open it as you while svrngs runs.';
+const PROGRAM =
+  'For a program on this computer, such as a chat app: press Play, then paste the address it copies.';
 
 /**
  * The lend, its popover's id, one of its own in the page, the round of
- * its group's reads, and this computer's key: another computer's lend no
- * folder carries has a Play, which lets a program here in at its address.
+ * its group's reads, and this computer's key, by which a lend is another's.
  * @typedef {{ l: Lent, id: string, round: number, me: string }} AddressProps
  */
 
@@ -223,22 +229,12 @@ export function Address({ l: lend, id, round, me }) {
   // in it, "Close", the browser's own too (`popovertargetaction="hide"`):
   // Escape and a press outside close it, and nobody is told so.
   const name = `Address of ${named(lend)}`;
-  // Its Copy: its address for a program on this computer, shown beside it
-  // too (ui/parts.js `Keep`), and what the last press said (ui/copy.js
-  // `Copy`, whose answer takes the place of the one before, as the
-  // address's must).
-  const at = lend.origin;
-  const copy = {
-    copy: 'Copy its address for a program',
-    copied: ` Copied: ${at}. Paste it where a program on this computer, such as a chat app, asks for an address.`,
-    unwritten: ` Copy it from here: ${at}`,
-  };
   return html`
     <button type="button" popovertarget=${id} aria-label=${name}>Address</button>
     <div popover="auto" id=${id} role="dialog" aria-label=${name} tabindex="-1" autofocus>
       <p><strong>${named(lend)}</strong></p>
-      <p><${Copy} text=${at} words=${copy} beside=${html`${' '}<${Keep} at=${at} />`} /></p>
-      ${lend.key !== me && !lend.group && html`<p>Open it for a program on this computer: <${Turn} l=${lend} round=${round} /></p>`}
+      <p>For this browser: <${Keep} at=${lend.origin} /></p>
+      ${lend.key !== me && !lend.group && html`<p>${PROGRAM} <${Turn} l=${lend} round=${round} /></p>`}
       <p>${OPEN_IT}</p>
       <ul class="wifi"><${Line} l=${lend} words=${`${named(lend)}:`} /></ul>
       <button type="button" popovertarget=${id} popovertargetaction="hide" aria-label=${`Close: ${name}`}>Close</button>

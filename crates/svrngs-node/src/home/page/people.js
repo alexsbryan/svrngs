@@ -53,11 +53,11 @@ function Person({ p: person, name, drawn, words, g: group, s: state, me, home, g
   );
   const whose = (/** @type {string} */ key) => personOf(state.people?.people ?? [], key);
   const id = `person-${group.id}-${person.person_key}`;
-  // Removed: the focus goes to the fold the door is in, People, before
-  // their cell goes with the groups' next read, where it would fall to the
-  // top of the page.
+  // Removed: the focus goes to the door's heading, People, before their
+  // cell goes with the groups' next read, where it would fall to the top
+  // of the page.
   useEffect(() => {
-    const fold = document.querySelector(`#${id}`)?.closest('details')?.firstElementChild;
+    const fold = document.querySelector(`#${id}`)?.closest('ul.door')?.previousElementSibling;
     if (asking.on && asking.at.leave === 'idle') {
       gone(
         `${name} is no longer in ${place}. What they already have stays with them; nothing new reaches them.`,

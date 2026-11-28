@@ -53,7 +53,7 @@ export function GroupRead({ g: group, round, places, home, me, joined, grouped }
     });
   return html`
     ${first && html`<p class="said">Reading ${name}…</p>`}
-    ${grouped ? html`<${GroupPlaces} draw=${drawn} s=${state} />` : drawn(PLACES)}
+    ${grouped ? html`<${GroupPlaces} draw=${drawn} />` : drawn(PLACES)}
     ${unread && html`<p>This computer cannot read what ${name} lends: ${state.why}</p>`}
   `;
 }

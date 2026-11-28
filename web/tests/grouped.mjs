@@ -251,14 +251,13 @@ try {
 
   // The plants, set once A's controls are read, each a file of the page
   // served changed. `missing-wifi`: B is served each lend's popover without
-  // its line, so B lacks every "Open it to this WiFi", Copy and address that
-  // A has, and the inventory below must say so. `no-focus` and
-  // `no-person-focus`: a lend's popover, or a person's, is served without
-  // `autofocus`, so opening it leaves the focus on its button, and the
-  // keyboard walks below must say so.
+  // its line, so B lacks every "Open it to this WiFi" that A has, and the
+  // inventory below must say so. `no-focus` and `no-person-focus`: a lend's
+  // popover, or a person's, is served without `autofocus`, so opening it
+  // leaves the focus on its button, and the keyboard walks below must say so.
   const [file, ...change] =
     {
-      'missing-wifi': ['wifi.js', /<\$\{Line\} l=\$\{lend\}[^>]*foot \/>/, ''],
+      'missing-wifi': ['wifi.js', /<\$\{Line\} l=\$\{lend\}[^>]*\/>/, ''],
       'no-focus': ['wifi.js', ' tabindex="-1" autofocus>', '>'],
       'no-person-focus': ['people.js', ' tabindex="-1" autofocus>', '>'],
     }[process.env.GROUPED_HOME_PLANT] ?? [];

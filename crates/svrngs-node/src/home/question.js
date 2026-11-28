@@ -272,7 +272,7 @@ export const joinedSaid = (joined) =>
 // `joined_said`); undefined for a key no row holds. Who did something is
 // told by key, never by name.
 // `you`, the first key of the person looking, says them "you" on their
-// own pages (ui/door.js).
+// own pages (ui/door.js), so "you" tells them from a namesake already.
 /**
  * @param {Named[]} rows
  * @param {string | undefined} key
@@ -283,7 +283,9 @@ export const called = (rows, key, when = joinedSaid, you) => {
   const person = rows.find((row) => row.person_key === key);
   if (!person) return undefined;
   if (key === you) return 'you';
-  const namesake = rows.some((row) => row.person === person.person && row.person_key !== key);
+  const namesake = rows.some(
+    (row) => row.person === person.person && ![key, you].includes(row.person_key),
+  );
   return namesake ? `${person.person} (${when(person.joined)})` : person.person;
 };
 

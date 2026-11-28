@@ -274,7 +274,7 @@ test('whose computer did not answer, and who asked, are told by key', async () =
   });
   const page = await home(answers);
   const cys = door(page)
-    .filter(([, said]) => said.startsWith('cy (joined '))
+    .filter(([, said]) => said.startsWith('cy ('))
     .map(([drawn, said]) => [drawn, said.split(') ').at(-1)])
     .sort();
   assert.deepEqual(cys, [
@@ -431,7 +431,8 @@ test('a lend opened to this WiFi says the address, and closed says so', async ()
   const [offered] = page.text(line);
   assert.ok(offered.startsWith('your shelf (k):'), offered);
   // What opening it does is said in its popover, over the line it is about.
-  const does = 'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.';
+  const does =
+    'For a TV or phone on this WiFi: open it to the WiFi, and anyone on it can open it as you while svrngs runs.';
   assert.equal(page.text('#home section p').filter((p) => p === does).length, 1);
   assert.ok(!offered.includes('anyone on it'), offered);
   await page.press(`${line} button`, 'Open it to this WiFi');

@@ -236,31 +236,23 @@ test('a register that cannot be read, and a removal, are each said, and nothing 
   }
 });
 
-// browser::the_home_page_tells_two_people_of_one_name_apart: the door
-// names each person once, no two alike, each cy by when they joined, in
-// the form `svrngs remove --joined` takes (home.rs WHEN, `%Y-%m-%d
-// %H:%M:%S %z`), read back to the instant, and no word of the record.
-test('the door tells two people of one name apart by when each joined, to the second', async () => {
-  const joined = [1_791_000_000, 1_791_000_001];
+// The door names each person once, no two alike, two of one name by which
+// of them joined first, the same day or the same second, a short word that
+// keeps a cell one line, and no word of the record. Planted, watched
+// failing: door.js `people` counting namesakes in the order of the rows,
+// and counting the person looking among them.
+test('the door tells two people of one name apart by which joined first', async () => {
   const people = [
     row('ada', ADA, 'started'),
+    row('cy', CY2, { at: 1_791_000_001 }),
     row('bo', BO),
-    row('cy', CY, { at: joined[0] }),
-    row('cy', CY2, { at: joined[1] }),
+    row('cy', CY, { at: 1_791_000_000 }),
+    row('ada', EVE, { at: 1_791_000_002 }),
   ];
   const page = await home(ada({ people }));
   const names = page.text('#home .door strong');
-  assert.equal(names.length, 4, names.join());
-  assert.equal(new Set(names).size, 4, names.join());
-  const WHEN = /^cy \(joined (\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) ([+-])(\d\d)(\d\d)\)$/;
-  const read = names
-    .filter((name) => name.startsWith('cy'))
-    .map((name) => {
-      const [, y, mo, d, h, mi, s, sign, oh, om] = name.match(WHEN) ?? assert.fail(name);
-      const offset = (sign === '-' ? -1 : 1) * (Number(oh) * 60 + Number(om)) * 60;
-      return Date.UTC(y, mo - 1, d, h, mi, s) / 1000 - offset;
-    });
-  assert.deepEqual(read.sort(), joined);
+  // "you" tells the person looking from their namesake already.
+  assert.deepEqual(names, ['you', 'bo', 'cy (1st)', 'cy (2nd)', 'ada']);
   for (const kept of ['key', 'member', 'keeper', 'ring', ' act', 'journal'])
     assert.ok(!names.join(', ').toLowerCase().includes(kept), names.join());
 });
@@ -405,7 +397,7 @@ test('removing a person is two presses in their popover, and every answer is sai
   assert.deepEqual([out, again], ['', 1], 'removed: the groups are read again, which draw it');
   assert.deepEqual(asked.pop(), { group: 'house', person: 'bo', joined: { at: 1_791_000_000 } });
   // Of two people of one name, the one pressed, by when they joined.
-  await pressed(true, 'eve (joined', answer('out'));
+  await pressed(true, 'eve (1st)', answer('out'));
   assert.deepEqual(asked.pop(), { group: 'house', person: 'eve', joined: { at: 1_791_000_001 } });
   // Who decides is named when the node names them.
   const named = (body) => (asked.push(body), { outcome: 'asked', decides: 'cy' });
@@ -827,7 +819,7 @@ test('a group’s page is its banner, what needs you, what they share, its peopl
     .map((at) => (at.localName === 'details' ? words(at.firstChild) : words(at)));
   assert.deepEqual(heads, [
     'Shared apps',
-    'People: 2, 2 on now',
+    'People',
     'Shared files',
     'Who you have over',
     'Visiting now',
@@ -837,12 +829,11 @@ test('a group’s page is its banner, what needs you, what they share, its peopl
   ]);
 });
 
-// People on a group's page is one line past a handful, how many and how
-// many are on now, opened by its summary, and open up to it. On now is
-// said only once the lends answered who is on, never "0 on now" while they
-// are asked. Planted, each watched failing: grouped.js `GroupPlaces` saying
-// on now with the lends unanswered, and drawing People open past 8.
-test('people are one line past a handful, saying who is on only once that is known', async () => {
+// People on a group's page is the door, drawn whole however many: a
+// doorbell for each person, lit once their computer answered, under a
+// heading of its own, never in a fold nor said as a count. Planted, watched
+// failing: grouped.js `GroupPlaces` drawing the door in a fold closed past 8.
+test('people are a door drawn whole, a cell lit for each computer on', async () => {
   const people = [row('ada', ADA, 'started'), row('bo', BO), row('cy', CY), row('dee', DEE)];
   for (const n of [5, 6, 7, 8, 9]) people.push(row(`p${n}`, String(n).repeat(64)));
   let answer;
@@ -850,18 +841,14 @@ test('people are one line past a handful, saying who is on only once that is kno
   const answers = ada({ people });
   answers['GET /v1/lends?namespace=house'] = () => held;
   const page = await home(answers, '/?group=house');
-  const fold = () =>
-    page.all('#group-house > details').find((at) => words(at.firstChild).startsWith('People'));
-  const opened = (at) => at.attributes.open !== undefined && at.attributes.open !== false;
-  assert.deepEqual([words(fold().firstChild), opened(fold())], ['People: 9', false]);
+  const cells = () => page.all('#group-house .door > li');
+  const heads = page.all('#group-house > h2').map(words);
+  assert.ok(heads.includes('People'), heads.join());
+  assert.equal(page.all('#group-house > ul.door').length, 1, 'the door is in no fold');
+  assert.deepEqual([cells().length, cells().filter((at) => at.className === 'on').length], [9, 0]);
   answer(lends({ unanswered: [{ person: 'bo', person_key: BO }] }));
   await page.settle();
-  assert.equal(words(fold().firstChild), 'People: 9, 8 on now');
-  const few = await home(ada({ people: people.slice(0, 8) }), '/?group=house');
-  const open = few
-    .all('#group-house > details')
-    .find((at) => words(at.firstChild).startsWith('People'));
-  assert.deepEqual([words(open.firstChild), opened(open)], ['People: 8, 8 on now', true]);
+  assert.equal(cells().filter((at) => at.className === 'on').length, 8);
 });
 
 // "Add an app" on a group's page opens on what an app here is, a folder
@@ -1171,20 +1158,20 @@ test('what acts as you names groups with the same deciders in one line, and head
   assert.ok(!said.includes('Flat: This computer.'), said.join('\n'));
 });
 
-// browser::the_home_page_copies_a_lend_s_address_for_a_program: a lend's
-// address to keep, and its Copy, which writes that address and says where
-// a program takes it, are in its own cell, behind "Address": a button that
-// opens the browser's popover by its id (`popovertarget`), which says first
-// the lend it is of, then its address, then what opening it to this WiFi
-// does over the button it is about. A port has
-// none; and a lend two groups share has a popover in each, each with an id
-// of its own, or one group's button would open the other's. That the
-// clipboard then holds what the page wrote is Chromium's
-// (browser::the_page_offers_a_computer_one_line_and_sends_the_token_nowhere).
+// A lend's ways in beside its name are in its own cell, behind "Address":
+// a button that opens the browser's popover by its id (`popovertarget`),
+// which says first the lend it is of, then a line for each place a person
+// wants it, named by where they are: this browser, its address to
+// bookmark; a program on this computer, Play, only for another computer's
+// lend, whose address lets no other program in; a TV or phone on this
+// WiFi, what opening it to the WiFi does, over its button. None copies
+// the address apart from Play, which copies it as it is turned on. A
+// port has none; and a lend two groups share has a popover in each, each
+// with an id of its own, or one group's button would open the other's.
 // Planted, watched failing: lend-name.js naming the popover by its lend
 // alone, with no group, so both groups' popovers shared one id; and, for
 // its Close, wifi.js `Address` drawing Close with no `popovertarget`.
-test('a lend’s address for a program is kept behind Address in its cell, and its Copy writes it and says so', async () => {
+test('a lend’s Address says a way in for each place a person is, and copies nothing Play does not', async () => {
   const shelf = lend('shelf');
   const groups = [group(), group({ id: 'flat', name: 'Flat' })];
   const page = await home(ada({ lent: [shelf, lend('port', { raw: 'tcp' })], groups }));
@@ -1199,13 +1186,11 @@ test('a lend’s address for a program is kept behind Address in its cell, and i
   for (const pop of pops) {
     assert.equal(pop.attributes.popover, 'auto');
     const said = pop.childNodes.filter((kid) => kid.nodeType === 1).map(words);
-    assert.equal(said[0], 'your shelf (k)');
-    assert.ok(said[1].startsWith('Copy its address for a program'), said[1]);
-    assert.ok(said[1].includes(`${shelf.origin} Bookmark this.`), said[1]);
-    assert.equal(
-      said[2],
-      'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.',
-    );
+    assert.deepEqual(said.slice(0, 3), [
+      'your shelf (k)',
+      `For this browser: ${shelf.origin} Bookmark this.`,
+      'For a TV or phone on this WiFi: open it to the WiFi, and anyone on it can open it as you while svrngs runs.',
+    ]);
     assert.ok(said[3].includes('Open it to this WiFi'), said[3]);
     // Last, its Close, the browser's own: it names the popover it hides.
     const close = pop.childNodes.filter((kid) => kid.nodeType === 1).at(-1);
@@ -1214,14 +1199,7 @@ test('a lend’s address for a program is kept behind Address in its cell, and i
       ['Close', pop.id, 'hide'],
     );
   }
-  const copy = '#home section [popover] > p';
-  await page.press(`${copy} button`, 'Copy its address for a program');
-  assert.deepEqual(page.copied, [shelf.origin]);
-  const copied = `Copied: ${shelf.origin}. Paste it where a program on this computer, such as a chat app, asks for an address.`;
-  assert.ok(
-    page.text(copy).some((p) => p.includes(copied)),
-    page.text(copy).join('\n'),
-  );
+  assert.ok(!page.text('#home section [popover] button').some((at) => at.startsWith('Copy')));
 });
 
 // browser::the_home_page_shows_a_group_before_its_slowest_computer, as an
@@ -1715,8 +1693,8 @@ const ancestorId = (el) => (el.id ? el.id : ancestorId(el.parentNode));
 
 // pages::join::a_group_not_made_is_said_once,
 // ::a_link_to_nothing_lent_is_said_once,
-// ::a_link_s_copy_is_answered_once, pages::index::why_a_number_is_refused_is_said_once
-// and pages::rooms::a_copied_address_is_said_once: each refusal or answer
+// ::a_link_s_copy_is_answered_once and
+// pages::index::why_a_number_is_refused_is_said_once: each refusal or answer
 // said once at each press, the second in the first's place.
 test('a refusal or an answer is said once at each press, never one after another', async () => {
   // The node's words for a group with no name (svrngs-core lib.rs `Name`,
@@ -1752,19 +1730,6 @@ test('a refusal or an answer is said once at each press, never one after another
       await pressed(page, '#home p.link button', 'Copy the link', '#home p.link', select),
       1,
     );
-  const copy = 'Copy its address for a program';
-  for (let n = 0; n < 2; n++)
-    assert.equal(
-      await pressed(
-        page,
-        '#home section [popover] > p button',
-        copy,
-        '#home section [popover] > p',
-        ' Copy it from here: ',
-      ),
-      1,
-    );
-  assert.ok(!page.text('#home section [popover] > p').join().includes(' Copied: '));
   assert.deepEqual(page.went, []);
 });
 

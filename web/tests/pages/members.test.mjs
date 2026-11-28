@@ -66,10 +66,13 @@ const ROWS = [
   { person: 'dee', person_key: 'd', key: 'd', device: 'computer', joined: { at: 1_791_000_400 } },
   { person: 'dee', person_key: 'd', key: 'd2', device: 'browser', joined: { at: 1_791_000_500 } },
 ];
+// v1 told the two cys apart by when each joined, to the second; the door
+// now says which joined first (ui/door.js `people`), its one change.
 const judged = (lends, lent) => {
   const [ul, judge] = v1.door(ROWS, lent);
   if (lends !== undefined) judge(lends ?? undefined);
-  return out(ul);
+  const nth = ['1st', '2nd'];
+  return out(ul).replace(/cy \(joined [^)]+\)/g, () => `cy (${nth.shift()})`);
 };
 
 test('the door as question.js `door` draws it: unjudged, judged, not known now', () => {

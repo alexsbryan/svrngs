@@ -1061,14 +1061,19 @@ when this computer has held it, so two of one name are told apart, in a colour
 derived from its id, nothing to choose. Under it, what is in the group
 first, then who is in it (the operator, 2026-10-26: Money found first):
 - **the door**: each person once, a cell in a grid, in the order they
-  joined — ruled heavy, "on now", while their computer answers (lit only on
-  a screen across a room: yellow means "do this"); drawn off, "did not
+  joined, like the doorbells of a large building, lit when someone is home:
+  lit, "on now", while their computer answers; drawn off, "did not
   answer", when it did not; "in from a phone" when their only keys are a
-  browser's. Presence is only "on now", never when last seen. On the home
-  page a cell is one line, the name with those words beside it, so 28
-  people are four rows (`look.css` `body:not(.screen) #home ul.door`), and
-  the person looking is "you" there (`question.js` `called`); the screen
-  and the phone's page keep the taller cell.
+  browser's. Yellow means "do this" everywhere else on the pages, a form's
+  own button; the doorbell is the one other place it stays (`look.css`).
+  Presence is only "on now", never when last seen. Two of one name are told
+  apart by which joined first, "Ana (1st)" and "Ana (2nd)", true however
+  close they joined, and a person's popover says the day (`ui/door.js`
+  `people`). On the home page a cell is one line, the name with those
+  words beside it, so 28 people are four rows (`look.css`
+  `body:not(.screen) #home ul.door`), and the person looking is "you"
+  there (`question.js` `called`); the screen and the phone's page keep the
+  taller cell.
 - **the index**: what is in the group, on any port, as grids of cells, the
   door's own look. What a group shares has no bound, so no word outside a
   cell grows with it: each grid is under the one sentence true of everything
@@ -1100,10 +1105,16 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   thing and no part of deciding to open it, so it is behind **Address** in
   that thing's cell, a button that opens the browser's own popover
   (`popover`, `popovertarget`; no script of ours opens or closes it). It
-  says first the thing's name, so a wrong press shows at once, then its
-  address, copied for a program, then its Play when it has one, then it can
-  be opened to this WiFi, or closed (the operator, 2026-10-26), under the
-  sentence saying what that does (`home/page/wifi.js` `Address`). Only detail about one thing goes in a
+  says first the thing's name, so a wrong press shows at once, then a line
+  for each place a person wants it, named by where they are, and only the
+  ones that differ for that kind of thing: "For this browser", its address
+  to bookmark; "For a program on this computer", its Play, only for
+  another computer's lend no folder carries, since its address lets no
+  other program in while Play is off ("Play at an address", above) and
+  Play copies the address as it is turned on; "For a TV or phone on this
+  WiFi", opened to this WiFi, or closed (the operator, 2026-10-26), under
+  the sentence saying it opens as you there (`home/page/wifi.js`
+  `Address`). Only detail about one thing goes in a
   popover; a consent sentence, or a state that needs the person, never does.
   The button is always there to be seen: nothing a person can press waits
   for a hover or a focus to be painted. The door's second use of a popover:
@@ -1179,10 +1190,9 @@ of 2026-11-06 (the operator). An old `/?ui=b` bookmark opens B
 B's workspace is what is, then what is done. Under the banner, first what
 needs the person: a new version to review (`home/page/grouped.js`
 `Notice`). Then what a person opens the page for: **Shared apps**, the app
-index. Then **People**, the door and any removals, open up to 8 people and
-one line past them, its summary how many and how many are on now ("People:
-28, 20 on now"), said only once their computers answered. Then **Shared
-files**: **Open shared files
+index. Then **People**, the door and any removals, drawn whole at any
+size under its own heading, never folded or said as a count: a lit cell
+says who is on at a glance. Then **Shared files**: **Open shared files
 in Finder**, or "in your file manager" off a Mac, opens the group's folder
 in a window of its own, each of several folders named by its own name, and
 **Folder location**, closed at first, says where it is
