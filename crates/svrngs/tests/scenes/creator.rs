@@ -189,7 +189,7 @@ async fn creator(engine: Engine) {
         computer["later"][0]
             .as_str()
             .unwrap()
-            .contains("as you in Garden."),
+            .contains("as you in Garden,"),
         "{computer:#}"
     );
     let phone = page.to_string();

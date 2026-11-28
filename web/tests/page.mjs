@@ -219,11 +219,18 @@ export const IGNORING = ['--ignore-certificate-errors'];
 // starts with its media disk cache off: with it, a film loaded whole
 // before playing paused "for buffering" and was never restarted, on a
 // plain origin as under a lend's worker, so the playback step failed
-// there every run (demo/runs/webkit-media/2026-11-15). Anything else
-// starts as Playwright starts it.
+// there every run (demo/runs/webkit-media/2026-11-15). It also compiles
+// on the thread that runs the page (JSC_useConcurrentJIT=0): a compile on
+// a helper thread pauses the page's thread by a signal whose handler
+// leaves errno at EINTR, and WebRTC's number parser, reading errno, then
+// refused a valid ICE candidate and WebKit aborted, "Page crashed" on a
+// lent page (iroh's wasm beside shim.js's RTCPeerConnection) one whole
+// check in a few. Anything else starts as Playwright starts it.
 export function starting(type) {
   if (type.name() === 'webkit' && process.platform === 'linux')
-    return { env: { ...process.env, WPE_SHELL_DISABLE_MEDIA_DISK_CACHE: '1' } };
+    return {
+      env: { ...process.env, WPE_SHELL_DISABLE_MEDIA_DISK_CACHE: '1', JSC_useConcurrentJIT: '0' },
+    };
   if (type.name() !== 'webkit' || process.platform !== 'darwin') return {};
   return {
     executablePath: fileURLToPath(new URL('./webkit.sh', import.meta.url)),

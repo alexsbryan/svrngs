@@ -72,8 +72,9 @@ export const SLOTS = (home) => ({
 });
 
 /**
- * How many each computer can have visiting at once: the keeper changes it by
- * one, anyone else reads it.
+ * The guest limit, how many each computer can host at a time, said beside
+ * "Have a guest" in its words: the keeper changes it by one, anyone else
+ * reads it.
  * @param {{ g: Group, n: number, home: Home }} props
  */
 function Slots({ g: group, n, home }) {
@@ -83,7 +84,7 @@ function Slots({ g: group, n, home }) {
   const change = (/** @type {number} */ to) => () => send({ type: 'change', g: group.id, n: to });
   const fewer = group.keeps && n > 0 && html`<button onClick=${change(n - 1)}>One fewer</button>`;
   const more = group.keeps && html`<button onClick=${change(n + 1)}>One more</button>`;
-  return html`<p class="slots">Each computer can have ${n} visiting at once ${fewer} ${more}${state.said}</p>`;
+  return html`<p class="slots">Guest limit: ${n} at a time on each computer in the group. ${fewer} ${more}${state.said}</p>`;
 }
 
 // A visit you host, with its Stop (visit.js VISITS). The line says what

@@ -185,8 +185,8 @@ short name.
 ## Programs on your computer
 
 - **A program gets a page saying *"Open svrngs from your computer"***, or
-  a 401, at a friend's lend's address. Press **Play** beside the lend on
-  your home page: while Play is on, a program of yours reaches it there
+  a 401, at a friend's lend's address. Press **Address** beside the lend on
+  your home page, then **Play**: while Play is on, a program of yours reaches it there
   with any text as its key. [Models](models.md) has examples.
 - ***"Play lets in programs of your own account on this computer, and …"***
   Play is on, and the request came from a program another account runs,

@@ -13,7 +13,7 @@
 // (ui/acts.js).
 import { html } from './view.js?v=__VERSION__';
 import { Act, Fold } from './parts.js?v=__VERSION__';
-import { called, day, spoken } from '../question.js?v=__VERSION__';
+import { called, day, personOf, spoken } from '../question.js?v=__VERSION__';
 /** @import { Drawn } from './view.js?v=__VERSION__' */
 /** @import { Doing } from './parts.js?v=__VERSION__' */
 /** @import { PeopleRow } from '../question.js?v=__VERSION__' */
@@ -49,9 +49,7 @@ export function Changes({ g: group, changed, rows, me, doing = {}, open, send })
       html`<p>This computer can’t say whether anyone changed an app in ${group.name ?? 'your group'}.</p>`,
     ];
   const you = (/** @type {Change} */ change) =>
-    change.by_key
-      ? change.by_key === rows.find((row) => row.key === me)?.person_key
-      : change.by === group.person;
+    change.by_key ? change.by_key === personOf(rows, me) : change.by === group.person;
   const each = (changed ?? [])
     .filter((change) => change.group === group.id)
     .map((change) => {

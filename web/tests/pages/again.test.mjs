@@ -350,7 +350,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
     `the focus at its row, not ${words(focused)}`,
   );
   assert.equal(fold.open, true, 'opened, in view as its summary takes the focus');
-  assert.ok(at.text('#home .index').join().includes('ada’s notes'), at.text('#home .index').join());
+  assert.ok(at.text('#home .index').join().includes('your notes'), at.text('#home .index').join());
   assert.ok(
     at.text('#lent li')[0].startsWith('notes: lent to house, 0 using it now.'),
     at.text('#lent li').join('\n'),

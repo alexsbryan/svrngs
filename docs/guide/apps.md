@@ -24,9 +24,9 @@ Under the list, **See how they’re made** leads to [Examples](examples.md).
 Each is listed with a tick box and a line saying what it's for:
 
 - **Money**: who owes whom, and for what.
-- **Events**: the get-togethers people post, and who’s coming.
-- **House rules**: the rules your house agrees, and how you agree them.
-- **Movie Night**: the films your friends lend, and who has each. It reads what they lend, once you open it from your home page, and writes nothing.
+- **Events**: get-togethers, and who’s coming.
+- **House rules**: the rules your house agrees.
+- **Movie Night**: the films your friends lend. It reads what they lend, once you open it from your home page, and writes nothing.
 
 Tick the ones you want and press **Bring the ticked ones to Elm** (the
 button names your group). The page says *"You brought Money to Elm:

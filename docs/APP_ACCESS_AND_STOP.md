@@ -32,7 +32,7 @@ host selection, stable-routing redesign, or change to handover consent.
 that says what opening it does.** As first built the link said `Open
 <displayed name>`. Since 2026-11-16, the operator's choice of wording, the
 home page lists what a group shares as grids of cells, and the verb is said
-once, in the caption above each grid ("Opening one of these lets it …"), so
+once, in the caption above each grid ("Each opens as you, …"), so
 a plain link is the name alone ("Kim’s navidrome"). A button where the
 press is the yes, an app that also opens friends' things, still reads `Open
 <displayed name>`. Either way it goes
